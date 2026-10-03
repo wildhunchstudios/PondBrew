@@ -122,7 +122,7 @@ namespace EvolutionShop.Tests
                 Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
                 Assert.That(slot.game.version, Is.EqualTo(2));
                 Assert.That(slot.game.prices, Is.Empty);
-                Assert.That(slot.trades.version, Is.EqualTo(3));
+                Assert.That(slot.trades.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
                 Assert.That(JsonUtility.ToJson(slot.trades), Is.EqualTo(expectedReport));
                 Assert.That(restored.Currency, Is.EqualTo(6));
                 Assert.That(restored.GetPrice("bubblebelly").Value.Price, Is.EqualTo(10));
@@ -193,6 +193,7 @@ namespace EvolutionShop.Tests
             // Start from each format's true inner versions, then break exactly one thing.
             if (format == 3) { game.version = 1; game.prices = null; trades.version = 1; }
             if (format == 4) trades.version = 2;
+            if (format == 5 || format == 6) trades.version = 3;
             switch (problem)
             {
                 case "tags-in-format-3": game.prices = new[] { new PriceSave { speciesId = "pondlet", price = 8 } }; break;

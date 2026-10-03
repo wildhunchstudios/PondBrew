@@ -17,6 +17,8 @@ namespace EvolutionShop
         public int pathProblems;
         // Report version 2. Version 1 reports had no price refusals.
         public int tooExpensive;
+        // Report version 4. A deliberate slap cancels an unpaid visit without income.
+        public int slapped;
         public int stockedAtOpen;
         public int stockedAtClose;
         public int restocked;
@@ -43,7 +45,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed class ShopTradeLedger
     {
-        public const int SaveVersion = 3;
+        public const int SaveVersion = 4;
         public const int MaxCounter = 1000000;
         public const long MaxRevenue = 1000000000000L;
         /// <summary>Unresolved visitors at once; above the shop's visitor cap so it never limits play.</summary>
@@ -95,6 +97,7 @@ namespace EvolutionShop
                 case CustomerOutcome.OrderLost: current.interrupted++; break;
                 case CustomerOutcome.PathBlocked: current.pathProblems++; break;
                 case CustomerOutcome.TooExpensive: current.tooExpensive++; break;
+                case CustomerOutcome.Slapped: current.slapped++; break;
                 default: return false;
             }
             pending.Remove(id);
@@ -143,6 +146,8 @@ namespace EvolutionShop
             // Version 1 had no price refusals; a nonzero count there is corrupt rather than migrated.
             if (save.version == 1 && ((save.current != null && save.current.tooExpensive != 0) ||
                 (save.last != null && save.last.tooExpensive != 0))) return false;
+            if (save.version < 4 && ((save.current != null && save.current.slapped != 0) ||
+                (save.last != null && save.last.slapped != 0))) return false;
             var unresolved = new List<string>();
             if (save.version < 3)
             {
@@ -199,12 +204,12 @@ namespace EvolutionShop
             if (day.dayNumber < 1 || day.dayNumber == int.MaxValue ||
                 !Counter(day.visitors) || !Counter(day.sales) || !Counter(day.noStock) ||
                 !Counter(day.impatient) || !Counter(day.closed) || !Counter(day.interrupted) ||
-                !Counter(day.pathProblems) || !Counter(day.tooExpensive) ||
+                !Counter(day.pathProblems) || !Counter(day.tooExpensive) || !Counter(day.slapped) ||
                 !Counter(day.stockedAtOpen) || !Counter(day.stockedAtClose) ||
                 !Counter(day.restocked) || day.revenue < 0 || day.revenue > MaxRevenue ||
                 day.revenue > (long)day.sales * int.MaxValue) return false;
             long outcomes = (long)day.sales + day.noStock + day.impatient + day.closed + day.interrupted +
-                day.pathProblems + day.tooExpensive;
+                day.pathProblems + day.tooExpensive + day.slapped;
             return outcomes + unresolved == day.visitors;
         }
 
@@ -214,7 +219,7 @@ namespace EvolutionShop
         {
             return day == null || (day.dayNumber == 0 && !day.partial && day.visitors == 0 && day.sales == 0 &&
                 day.noStock == 0 && day.impatient == 0 && day.closed == 0 && day.interrupted == 0 &&
-                day.pathProblems == 0 && day.tooExpensive == 0 && day.stockedAtOpen == 0 && day.stockedAtClose == 0 &&
+                day.pathProblems == 0 && day.tooExpensive == 0 && day.slapped == 0 && day.stockedAtOpen == 0 && day.stockedAtClose == 0 &&
                 day.restocked == 0 && day.revenue == 0);
         }
         static TradeDaySave Copy(TradeDaySave day)
@@ -224,7 +229,7 @@ namespace EvolutionShop
             {
                 dayNumber = day.dayNumber, partial = day.partial, visitors = day.visitors,
                 sales = day.sales, noStock = day.noStock, impatient = day.impatient, closed = day.closed,
-                interrupted = day.interrupted, pathProblems = day.pathProblems, tooExpensive = day.tooExpensive,
+                interrupted = day.interrupted, pathProblems = day.pathProblems, tooExpensive = day.tooExpensive, slapped = day.slapped,
                 stockedAtOpen = day.stockedAtOpen, stockedAtClose = day.stockedAtClose,
                 restocked = day.restocked, revenue = day.revenue
             };

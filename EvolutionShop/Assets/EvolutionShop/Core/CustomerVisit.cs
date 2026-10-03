@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace EvolutionShop
 {
     public enum CustomerPhase { Arriving, Browsing, ToCounter, Queued, Paid, Leaving, Finished }
-    public enum CustomerOutcome { None, Sold, NoStock, Impatient, Closed, PathBlocked, OrderLost, TooExpensive }
+    public enum CustomerOutcome { None, Sold, NoStock, Impatient, Closed, PathBlocked, OrderLost, TooExpensive, Slapped }
 
     public sealed class CustomerRules
     {
@@ -58,6 +58,9 @@ namespace EvolutionShop
         public int QuotedPrice { get; private set; }
         public int PriceRejections { get; private set; }
         public float QueueSecondsRemaining => Phase == CustomerPhase.Queued ? Math.Max(0f, phaseSeconds) : 0f;
+        public bool CanBeSlapped => Outcome == CustomerOutcome.None &&
+            (Phase == CustomerPhase.Arriving || Phase == CustomerPhase.Browsing ||
+             Phase == CustomerPhase.ToCounter || Phase == CustomerPhase.Queued);
 
         /// <param name="archetype">The visitor's type; null means the shared rules' standard customer.</param>
         /// <param name="contended">Whether another visitor is already heading to or browsing a display.
@@ -147,6 +150,14 @@ namespace EvolutionShop
             Outcome = CustomerOutcome.Sold;
             SetPhase(CustomerPhase.Paid, rules.PaidReactionSeconds);
             return result;
+        }
+
+        /// <summary>Cancel one unpaid visit; targeting, input and the shared cooldown belong to runtime.</summary>
+        public bool Slap(ShopDayPhase shopPhase)
+        {
+            if (!CanBeSlapped || (shopPhase != ShopDayPhase.Open && shopPhase != ShopDayPhase.Closing)) return false;
+            Cancel(CustomerOutcome.Slapped);
+            return true;
         }
 
         public void Cancel(CustomerOutcome reason)

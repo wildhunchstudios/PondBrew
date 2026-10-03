@@ -31,7 +31,7 @@ namespace EvolutionShop
         {
             if (ledger == null || !ledger.ResolveVisit(id, outcome, price)) return false;
             int change = outcome == CustomerOutcome.Sold ? 2 :
-                outcome == CustomerOutcome.TooExpensive || outcome == CustomerOutcome.Impatient ? -1 : 0;
+                outcome == CustomerOutcome.TooExpensive || outcome == CustomerOutcome.Impatient || outcome == CustomerOutcome.Slapped ? -1 : 0;
             points = Math.Max(0, Math.Min(MaxPoints, points + change));
             return true;
         }

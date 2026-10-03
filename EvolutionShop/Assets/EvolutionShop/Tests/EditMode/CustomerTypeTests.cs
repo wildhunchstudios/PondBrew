@@ -320,7 +320,7 @@ namespace EvolutionShop.Tests
             Assert.That(ledger.PendingCount, Is.EqualTo(2));
             Assert.That(ledger.IsPending("visitor-1"), Is.True);
             var save = ledger.CaptureSave();
-            Assert.That(save.version, Is.EqualTo(3));
+            Assert.That(save.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
             Assert.That(save.pendingCustomerIds, Is.EqualTo(new[] { "visitor-1", "visitor-2" }));
             var cycle = new ShopDayCycle();
             Assert.That(cycle.OpenShop(), Is.True);
@@ -351,7 +351,7 @@ namespace EvolutionShop.Tests
             Assert.That(restored.PendingCount, Is.EqualTo(1));
             Assert.That(restored.IsPending("waiting"), Is.True);
             var upgraded = restored.CaptureSave();
-            Assert.That(upgraded.version, Is.EqualTo(3));
+            Assert.That(upgraded.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
             Assert.That(upgraded.pendingCustomerIds, Is.EqualTo(new[] { "waiting" }));
             Assert.That(upgraded.pendingCustomerId, Is.Null.Or.Empty);
         }

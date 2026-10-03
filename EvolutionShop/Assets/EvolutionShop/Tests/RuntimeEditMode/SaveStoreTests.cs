@@ -111,7 +111,7 @@ namespace EvolutionShop.Tests
             Assert.That(slot.game.version,Is.EqualTo(2)); Assert.That(slot.cycle.version,Is.EqualTo(1));
             Assert.That(slot.cycle.phase,Is.EqualTo(ShopDayPhase.Night)); Assert.That(slot.cycle.dayNumber,Is.EqualTo(1));
             Assert.That(slot.cycle.secondsRemaining,Is.Zero);
-            Assert.That(slot.trades.version,Is.EqualTo(3));
+            Assert.That(slot.trades.version,Is.EqualTo(ShopTradeLedger.SaveVersion));
             Assert.That(slot.game.prices,Is.Empty); Assert.That(model.GetPrice("pondlet").Value.Price,Is.EqualTo(6));
             Assert.That(slot.trades.current,Is.Null); Assert.That(slot.trades.last,Is.Null);
             Assert.That(SaveStore.Read(PathFor(),config,out var again,out var repeated,out error),Is.True,error);
@@ -280,7 +280,7 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
             byte[] bytes = File.ReadAllBytes(PathFor());
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out error), Is.True, error);
-            Assert.That(loaded.formatVersion, Is.EqualTo(6));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(loaded.reputation.version, Is.EqualTo(1));
             Assert.That(loaded.reputation.points, Is.EqualTo(points));
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(JsonUtility.ToJson(slot.game)));
@@ -355,7 +355,7 @@ namespace EvolutionShop.Tests
             for (int i = 0; i < 2; i++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var model, out var slot, out var error), Is.True, error);
-                Assert.That(slot.formatVersion, Is.EqualTo(6)); Assert.That(slot.reputation.version, Is.EqualTo(1));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.reputation.version, Is.EqualTo(1));
                 Assert.That(slot.reputation.points, Is.Zero); Assert.That(model.Currency, Is.EqualTo(6));
                 Assert.That(model.GetTank("tank-a"), Is.Null);
                 if (format >= 3) { Assert.That(slot.trades.current.sales, Is.EqualTo(1)); Assert.That(slot.trades.current.revenue, Is.EqualTo(6)); }
@@ -420,9 +420,9 @@ namespace EvolutionShop.Tests
                 case "points-overmax": payload = "{\"version\":1,\"points\":" + (ShopReputation.MaxPoints + 1) + "}"; break;
             }
             var slot = FreshSlot();
-            string json = "{\"formatVersion\":6,\"game\":" + JsonUtility.ToJson(slot.game) +
+            string json = "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
                 ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
-                (problem == "missing" ? "" : ",\"reputation\":" + payload) + ",\"sensitivity\":1,\"volume\":0.5}";
+                (problem == "missing" ? "" : ",\"reputation\":" + payload) + ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.5}";
             File.WriteAllText(PathFor(), json);
             Assert.That(SaveStore.Read(PathFor(), config, out var model, out var loaded, out var error), Is.False);
             Assert.That(model, Is.Null); Assert.That(loaded, Is.Null); Assert.That(error, Is.Not.Empty);
@@ -451,11 +451,11 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void FormatSixRetainsExplicitHistoricalGameAndReportPairings()
+        public void FormatSevenRetainsExplicitHistoricalGameAndReportPairings()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(6));
-            int[] games = { 0, 1, 1, 1, 2, 2, 2 }, reports = { 0, 0, 0, 1, 2, 3, 3 };
-            for (int format = 1; format <= 6; format++)
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(7));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4 };
+            for (int format = 1; format <= 7; format++)
             {
                 Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
                 Assert.That(SaveStore.ReportVersionFor(format), Is.EqualTo(reports[format]));

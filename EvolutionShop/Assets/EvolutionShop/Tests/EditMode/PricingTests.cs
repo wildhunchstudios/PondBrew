@@ -351,7 +351,7 @@ namespace EvolutionShop.Tests
             Assert.That(ledger.Current.visitors, Is.EqualTo(1));
             Assert.That(ledger.Current.revenue, Is.Zero);
             var save = ledger.CaptureSave();
-            Assert.That(save.version, Is.EqualTo(3));
+            Assert.That(save.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
             Assert.That(ShopTradeLedger.TryRestore(JsonUtility.FromJson<TradeLedgerSave>(JsonUtility.ToJson(save)),
                 cycle.CaptureSave(), out var restored), Is.True);
             Assert.That(restored.Current.tooExpensive, Is.EqualTo(1));
@@ -371,7 +371,7 @@ namespace EvolutionShop.Tests
             var legacy = ledger.CaptureSave();
             legacy.version = 1;
             Assert.That(ShopTradeLedger.TryRestore(legacy, cycle.CaptureSave(), out var restored), Is.True);
-            Assert.That(restored.CaptureSave().version, Is.EqualTo(3));
+            Assert.That(restored.CaptureSave().version, Is.EqualTo(ShopTradeLedger.SaveVersion));
             Assert.That(restored.Current.sales, Is.EqualTo(1));
             Assert.That(restored.Current.tooExpensive, Is.Zero);
 

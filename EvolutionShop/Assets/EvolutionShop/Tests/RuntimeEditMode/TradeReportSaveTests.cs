@@ -66,7 +66,7 @@ namespace EvolutionShop.Tests
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(File.Exists(PathFor() + ".bak"), Is.False);
             Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
-            Assert.That(slot.trades.version, Is.EqualTo(3));
+            Assert.That(slot.trades.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
             Assert.That(JsonUtility.ToJson(slot.trades), Is.EqualTo(JsonUtility.ToJson(source.trades)));
             Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(JsonUtility.ToJson(source.cycle)));
             Assert.That(slot.sensitivity, Is.EqualTo(1.6f)); Assert.That(slot.volume, Is.EqualTo(0.38f));
@@ -143,7 +143,7 @@ namespace EvolutionShop.Tests
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
                 Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.game.version, Is.EqualTo(2));
-                Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(3));
+                Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
                 Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
                 Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedCycle));
                 Assert.That(slot.sensitivity, Is.EqualTo(1.3f)); Assert.That(slot.volume, Is.EqualTo(0.27f));
@@ -255,7 +255,9 @@ namespace EvolutionShop.Tests
                 case "unearned-revenue": slot.trades.current.revenue = 1; break;
             }
             string json = problem == "missing"
-                ? "{\"formatVersion\":4,\"game\":" + JsonUtility.ToJson(slot.game) + ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + "}"
+                ? "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
+                    ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) +
+                    ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false}"
                 : JsonUtility.ToJson(slot);
             File.WriteAllText(PathFor(), json);
             byte[] original = File.ReadAllBytes(PathFor());

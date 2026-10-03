@@ -14,20 +14,24 @@ namespace EvolutionShop
         public ReputationSave reputation = new ShopReputation().CaptureSave();
         public float sensitivity = 1f;
         public float volume = 0.65f;
+        public string slapKey = "F";
+        public float humorVolume = 1f;
+        public bool reducedGags;
     }
 
     public static class SaveStore
     {
         // 4: price tags (game 2) and price refusals (report 2). 5: several unresolved visitors (report 3).
-        // 6: reputation. Formats 1-5 migrate in memory without historical reputation rewards.
-        public const int CurrentFormatVersion = 6;
+        // 6: reputation. 7: slap outcomes and intentional slap/audio/motion settings.
+        // Formats 1-6 migrate in memory; historical reports never invent new outcomes or rewards.
+        public const int CurrentFormatVersion = 7;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 6 ? 2 : 0;
+            format >= 4 && format <= 7 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format == 7 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -38,6 +42,8 @@ namespace EvolutionShop
             public int formatVersion = 0;
             public ReportHeader trades = null;
             public ReputationHeader reputation = null;
+            // A missing current-format binding must not silently become SlotData's default F.
+            public string slapKey = null;
         }
 
         [Serializable]
@@ -63,9 +69,10 @@ namespace EvolutionShop
                 data.trades.version != ShopTradeLedger.SaveVersion || !Finite(data.sensitivity) || !Finite(data.volume) ||
                 !ShopDayCycle.TryRestore(data.cycle, out _) ||
                 !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _) ||
-                !ShopReputation.TryRestore(data.reputation, out _))
+                !ShopReputation.TryRestore(data.reputation, out _) ||
+                !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume))
             {
-                error = "Could not save: the current slot, day clock, trading report, or reputation is invalid. Original file preserved.";
+                error = "Could not save: the current slot, day clock, trading report, reputation, or gag settings are invalid. Original file preserved.";
                 return false;
             }
 
@@ -163,6 +170,19 @@ namespace EvolutionShop
                     candidate.reputation = restoredReputation.CaptureSave();
                 }
 
+                if (header.formatVersion < 7)
+                {
+                    candidate.slapKey = "F";
+                    candidate.humorVolume = 1f;
+                    candidate.reducedGags = false;
+                }
+                else if (!SlapRules.IsAllowedKey(header.slapKey) || !SlapRules.IsAllowedKey(candidate.slapKey) ||
+                    !ValidHumorVolume(candidate.humorVolume))
+                {
+                    error = "Saved gag settings could not be validated. Your original file is preserved.";
+                    return false;
+                }
+
                 // A version 1 game restores with standard prices; capture it in the current form.
                 candidate.game = restoredGame.CaptureSave();
                 candidate.formatVersion = CurrentFormatVersion;
@@ -195,5 +215,6 @@ namespace EvolutionShop
         }
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        private static bool ValidHumorVolume(float value) => Finite(value) && value >= 0f && value <= 1f;
     }
 }
