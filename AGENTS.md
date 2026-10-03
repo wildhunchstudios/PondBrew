@@ -223,8 +223,11 @@ Gate: known baseline issues are explicit, the user can complete the manual loop,
 Depends on: R01. Output: a playable preparation/trading/report cycle with one real customer type.
 
 - [x] R02.1 Implement phase/day/clock UI, pause behavior, open/close commands, bounded closing and phase persistence. Owner: root. Verified: 128 EditMode cases; final Windows player 108 checks; old-save migration and exact unsold stock retained through closing/reload. Human pacing and button-click acceptance remain pending. Customer-dependent closing behavior belongs to R02.2–R02.5.
-- [ ] R02.2 Add one navigable customer with browse/reserve/queue/pay/leave states and a low concurrency cap; prevent customers entering the lab.
-- [ ] R02.3 Replace normal instant remote selling with personal counter service tied to the reserved specimen; keep simple default prices initially.
+- [~] R02.2 Add one navigable customer with browse/reserve/queue/pay/leave states and a low concurrency cap; prevent customers entering the lab. Active with R02.3 as one complete customer-service slice.
+  - [x] R02.2a Authoritative specimen reservations and atomic fixed-price checkout (scope_review); 28 new cases passed for duplicate/wrong-owner/overflow/cancellation transactions. Runtime integration remains active.
+  - [~] R02.2b Front-store-only runtime navigation and a readable original placeholder customer (world_presentation); verify reachable entry/displays/counter/exit and excluded lab.
+  - [x] R02.2c Pure visit state machine and bounded recovery (project_records); 19 new cases passed for empty stock, patience, failed travel, closing and restore policy. Real navigation/runtime validation remains active.
+- [~] R02.3 Replace normal instant remote selling with personal counter service tied to the reserved specimen; keep simple default prices initially. Owner: root; integrate HUD, physical counter proximity, pause, save/reset, actual runtime smoke and Windows package.
 - [ ] R02.4 Connect night preparation, day stock depletion, restocking, and a useful daily report. Preserve the free recovery route.
 - [ ] R02.5 Test two consecutive cycles, closing with a queued customer, empty stock, full outputs, pause/reload in each phase, and rapid open/close/pay input. Build and launch the slice.
 
@@ -393,10 +396,10 @@ Current limitations: procedural placeholder art/audio and provisional balance. T
 
 | Active record | Value |
 |---|---|
-| Current request | Completed R01 baseline safeguards and R02.1 day/night foundation; guide updated after each bounded assignment |
-| Runtime changes in this request | Implemented, tested, built and packaged; source/player checkpoint `r02-1-day-night` |
+| Current request | Continue with R02.2 and the tightly related R02.3 checkout integration; daily reports/pricing/expansion remain planned |
+| Runtime changes in this request | Active; baseline source/player `0e8dfc0`, tag `r02-1-day-night`; new validation pending |
 | User feedback | User reports playing growing → sale → siphon upgrade with no major issues (2026-10-03) |
-| Next implementation assignment | R02.2: one customer type with bounded navigation, browse/reserve/queue/pay/leave states; restrict customers to the front store. Preserve exact specimen/price ownership and saves before R02.3 replaces prototype selling |
+| Next implementation assignment | Finish the first customer-service slice: one active visitor/queue slot, deterministic free-stock selection, fixed-price specimen reservation and personal counter checkout, then build/playtest |
 | Human acceptance still needed | Day/night pacing, ending and comedy tone as these defaults become playable; separate audio/settings checks |
 | Technical blocker | None known. No active Unity editor/MCP is left connected; reverify before the next editor operation |
 
@@ -413,5 +416,7 @@ When resuming implementation, select the first unfinished ready task, record its
 | 2026-10-03 | One canonical root guide; R01–R11 replace old draft future milestone labels | This document request; preserve earlier files as historical evidence |
 | 2026-10-03 | R01.1–R01.4 baseline gate completed; update this guide after every assignment | User's no-major-issues playthrough plus executed safety checks; tag `r01-baseline-safety`. Next: R02.1 clock integration only |
 | 2026-10-03 | R02.1 day/night foundation delivered; remaining R02 tasks stay planned | Tag `r02-1-day-night`; 128 EditMode cases, final player 108 checks, build/package verified. Next: R02.2 customer loop; human day/night playtest pending |
+| 2026-10-03 | R02.2/R02.3 active scope and acceptance | One customer at a time. Build NavMesh from current room colliders with lab excluded. Preserve creatures until atomic checkout. On reload, cancel unpaid visitors/reservations without income or stock changes; paid sales remain committed. Keep save schema 2/inner 1 because visitors are deliberately transient. Bounded travel/patience/closing recovery; no report, pricing system, staff or new assets in this slice |
+| 2026-10-03 | R02.2a/R02.2c rule checkpoint | `r02-customer-rules`: `Docs/Evidence/r02-customer-domain-results.xml` 175/175 EditMode cases passed, exit 0 (128 previous + 28 reservation + 19 visit). Actual live customer/navigation/UI integration is still in progress; no new build is claimed at this checkpoint |
 
 At future checkpoints append a concise row with task IDs, commit/tag, actual evidence, remaining risk, and exact next action. Keep this section current and short; put large raw outputs in evidence files. Do not erase history to turn an unverified or failed attempt into a pass.

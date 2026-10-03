@@ -9,7 +9,8 @@ namespace EvolutionShop
         None, InvalidCulture, GrowerEmpty, ReservoirFull, InsufficientCulture,
         IncubatorBusy, InvalidRecipe, AlreadyEmpty, UnknownSpecies,
         UndiscoveredRecipe, UnknownTank, TankFull, TankEmpty, OutputNotReady,
-        InsufficientFunds, AlreadyUpgraded, CurrencyOverflow, InvalidSave
+        InsufficientFunds, AlreadyUpgraded, CurrencyOverflow, InvalidSave,
+        TankReserved, InvalidCustomer, ReservationMismatch, NoCustomerReady
     }
 
     [Serializable]
@@ -120,6 +121,20 @@ namespace EvolutionShop
         public readonly string Id;
         public readonly string SpeciesId;
         internal SpecimenView(string id, string speciesId) { Id = id; SpeciesId = speciesId; }
+    }
+
+    public readonly struct ReservationView
+    {
+        public readonly string TankId;
+        public readonly string CustomerId;
+        public readonly string SpecimenId;
+        public readonly string SpeciesId;
+        public readonly int Price;
+        internal ReservationView(string tankId, string customerId, string specimenId, string speciesId, int price)
+        {
+            TankId = tankId; CustomerId = customerId; SpecimenId = specimenId;
+            SpeciesId = speciesId; Price = price;
+        }
     }
 
     [Serializable]

@@ -13,6 +13,7 @@ namespace EvolutionShop
         private readonly GameConfig config;
         private readonly Dictionary<string, SpeciesDefinition> species;
         private readonly Dictionary<string, SpecimenView?> tanks;
+        private readonly Dictionary<string, ReservationView> reservations = new Dictionary<string, ReservationView>(StringComparer.Ordinal);
         private readonly HashSet<string> discoveries = new HashSet<string>(StringComparer.Ordinal);
         private readonly int[] available = new int[2];
         private readonly int[] staged = new int[2];
@@ -73,6 +74,10 @@ namespace EvolutionShop
         public SpecimenView? GetTank(string tankId)
         {
             return tankId != null && tanks.TryGetValue(tankId, out var value) ? value : null;
+        }
+        public ReservationView? GetReservation(string tankId)
+        {
+            return tankId != null && reservations.TryGetValue(tankId, out var value) ? value : (ReservationView?)null;
         }
         public SpeciesDefinition GetSpecies(string speciesId)
         {
@@ -212,6 +217,7 @@ namespace EvolutionShop
         public ActionResult SellFromTank(string tankId)
         {
             if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
+            if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
             if (!value.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             var specimen = value.Value;
             int price = species[specimen.SpeciesId].SaleValue;
@@ -220,6 +226,51 @@ namespace EvolutionShop
             Currency += price;
             return ActionResult.Ok(specimen.SpeciesId, specimen.Id);
         }
+
+        public ActionResult ReserveTank(string tankId, string customerId)
+        {
+            if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
+            if (!ValidCustomer(customerId)) return ActionResult.Fail(FailureCode.InvalidCustomer);
+            if (!value.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
+            if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            foreach (var reservation in reservations.Values)
+                if (reservation.CustomerId == customerId) return ActionResult.Fail(FailureCode.ReservationMismatch);
+
+            var specimen = value.Value;
+            reservations.Add(tankId, new ReservationView(tankId, customerId, specimen.Id,
+                specimen.SpeciesId, species[specimen.SpeciesId].SaleValue));
+            return ActionResult.Ok(specimen.SpeciesId, specimen.Id);
+        }
+
+        public ActionResult ReleaseReservation(string tankId, string customerId)
+        {
+            if (tankId == null || !tanks.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.UnknownTank);
+            if (!ValidCustomer(customerId)) return ActionResult.Fail(FailureCode.InvalidCustomer);
+            if (!reservations.TryGetValue(tankId, out var reservation) || reservation.CustomerId != customerId)
+                return ActionResult.Fail(FailureCode.ReservationMismatch);
+            reservations.Remove(tankId);
+            return ActionResult.Ok(reservation.SpeciesId, reservation.SpecimenId);
+        }
+
+        public ActionResult SellReservedTank(string tankId, string customerId, string expectedSpecimenId)
+        {
+            if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
+            if (!ValidCustomer(customerId)) return ActionResult.Fail(FailureCode.InvalidCustomer);
+            if (!reservations.TryGetValue(tankId, out var reservation) || reservation.CustomerId != customerId ||
+                reservation.SpecimenId != expectedSpecimenId || !value.HasValue ||
+                value.Value.Id != reservation.SpecimenId || value.Value.SpeciesId != reservation.SpeciesId)
+                return ActionResult.Fail(FailureCode.ReservationMismatch);
+            if ((long)Currency + reservation.Price > int.MaxValue) return ActionResult.Fail(FailureCode.CurrencyOverflow);
+
+            // All checks precede the single stock/payment commit. The visitor owns no separate stock copy.
+            tanks[tankId] = null;
+            reservations.Remove(tankId);
+            Currency += reservation.Price;
+            return ActionResult.Ok(reservation.SpeciesId, reservation.SpecimenId);
+        }
+
+        /// <summary>Visit teardown releases unpaid claims without moving stock or granting payment.</summary>
+        public void ClearReservations() { reservations.Clear(); }
 
         public ActionResult BuyUpgrade()
         {
@@ -232,6 +283,7 @@ namespace EvolutionShop
 
         public SaveData CaptureSave()
         {
+            // Visits are transient. Save the unpaid stock, so loading cancels visitors safely.
             var save = new SaveData
             {
                 version = 1, currency = Currency, upgradeOwned = UpgradeOwned,
@@ -393,6 +445,7 @@ namespace EvolutionShop
         }
 
         private static bool ValidCulture(int index) { return index >= 0 && index < 2; }
+        private static bool ValidCustomer(string customerId) { return !string.IsNullOrWhiteSpace(customerId) && customerId.Length <= 128; }
         private static int CultureIndexOrThrow(CultureKind culture)
         {
             if (!ValidCulture((int)culture)) throw new ArgumentOutOfRangeException(nameof(culture));
