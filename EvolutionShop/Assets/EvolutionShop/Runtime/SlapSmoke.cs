@@ -190,8 +190,8 @@ namespace EvolutionShop
             Check(shop.ReloadSaved() && shop.Reputation.Points == 30 && shop.SlapKey == "F" && shop.HumorVolume == 1 && !shop.ReducedGags &&
                 File.ReadAllText(shop.SavePath) == legacy, "Format-six migration preserves earned reputation and supplies safe new controls without writing");
             Check(shop.SaveNow() && File.ReadAllText(shop.SavePath + ".v6.bak") == legacy &&
-                JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).formatVersion == 7,
-                "First new save preserves exact format-six bytes and writes format seven");
+                JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).formatVersion == SaveStore.CurrentFormatVersion,
+                "First new save preserves exact format-six bytes and writes the current envelope");
         }
 
         IEnumerator SlapKeys(params Key[] keys)
