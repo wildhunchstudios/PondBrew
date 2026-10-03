@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-**R03.1 price tags and R03.2 customer types with a two-visitor queue are implemented and technically validated (2026-10-03); the user has not yet playtested either.** R02 is accepted for progression ("i playtested currently works great"). R03.3 (reputation and capped demand/premium) is ready, not started. Detailed balance/audio/settings coverage remains unverified; do not infer checklist results from general approval.
+**R03.1 price tags and R03.2 customer types with a two-visitor queue are implemented and technically validated (2026-10-03); the user has not yet playtested either.** R02 is accepted for progression ("i playtested currently works great"). R03.3 (reputation and capped demand/premium) is active. The user explicitly requested provisional tuning before the R03 pricing/type playtest. Detailed balance/audio/settings coverage remains unverified; do not infer checklist results from general approval.
 
 Updated: 2026-10-03. Working title only. Current source checkpoint: commit `c478fe5`, tag **r03-2-customer-types**; later documentation-only commits do not change source or builds. Earlier: tag `r03-1-pricing` (`0067e95`); patched source `fb4e4d2`. Preserved failed-shutdown candidate checkpoint: **9197e1c**, tag **r02-cycle-validation-candidate**; its gameplay source was **2ab4929**. Continuous-cycle rule checkpoint: **4b28bfe**. Previous player tag: `r02-daily-report`; report implementation: `de2de99`. Customer rule checkpoint: `b711bc7`, tag `r02-customer-rules`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
 
@@ -572,3 +572,15 @@ At the technical handoff no later milestone had been implemented, and human acce
 - Do not infer exactly two completed cycles, measured waiting time, an eight-minute shift, a separate audio/settings pass or individual physical-key checks. These were not reported and remain future validation coverage; they do not reopen the user's accepted gate.
 - Ready next: **R03.1**, validated display prices, immutable agreed-price snapshots while queued, and clear affordable/too-expensive reactions. It is not implemented or active yet. Keep R03.2–R03.5 and later milestones planned.
 - This assignment changed documentation only. No Unity launch, new code, tests, build, archive, save or protected-project change was performed. Prior technical results and archive hashes remain unchanged. Feedback receipt: `Docs/Evidence/r02-human-playtest-acceptance.md`.
+
+### R03.3 active assignment — 2026-10-03
+
+User feedback: **"Not yet—continue with provisional tuning"** for pricing and the two-customer build. Start from clean `ce00084`, source `c478fe5`. R03.3 only; no R03.4 slap, later systems, packages, engine upgrade or protected-project access.
+
+- [x] R03.3a Domain: one score per ledger-resolved visit; +2 paid sale, -1 terminal price refusal or impatience; stockouts/closing/reload/technical failures neutral. Score 0–100. Tiers 0/10/30, arrivals 6/5/4 seconds, tolerance bonus 0/10/20 percentage points and budget bonus 0/2/4 credits; maximum two visitors. Routine provisional values, not human-approved balance.
+- [ ] R03.3b Persistence/runtime: envelope 6 / game 2 / cycle 1 / report 3 / reputation 1. Formats 1–5 receive zero reputation without replaying history, mandatory version presence, byte-preserving legacy archive. Customer traits copied at arrival; committed price remains unchanged. Failed reset preserves current state.
+- [ ] R03.3c Presentation: current reputation/tier in HUD and actual future-customer effects in counter, price preview and journal. Report labels any score as current, not an invented daily delta.
+- [ ] R03.3d Validation/delivery: actual EditMode, targeted Editor and Windows reputation scenario, relevant regression, clean process exits, screenshot inspection, preserved normal user save/scene hashes, small source checkpoint and playable package. No tests/builds claimed yet.
+
+Environment reverified: approved exact path, pinned and installed Unity 6000.3.21f1_c02631ffc030 with Windows Mono support; no Unity Editor process, Unity CLI count0/STATUS_NO_INSTANCES, no exposed Unity MCP. Use explicit guarded project-targeted processes. Root owns runtime/validation; delegated domain, save tests and HUD have distinct files. Canonical task status remains this file.
+R03.3 domain checkpoint: actual full EditMode suite **488/488 passed, 0 failed/skipped, process exit 0** (424 prior +35 domain +29 save cases), Docs/Evidence/r03-3-editmode-initial-results.xml and -process.json. Runtime/build pending. Independent static review found and corrected a pre-write reset assignment before this run; failed-reset runtime coverage is included. No test was disabled.
