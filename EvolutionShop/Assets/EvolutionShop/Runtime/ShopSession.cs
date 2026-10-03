@@ -197,6 +197,8 @@ namespace EvolutionShop
             return true;
         }
         public string SelectedTank => selectedTank;
+        /// <summary>Scrolls the open panel; large values reach the end.</summary>
+        public void ScrollPanel(float y) => panelScroll.y = Mathf.Max(0, y);
         public ActionResult TransferToDisplay(string tankId)
         {
             var result = Model.TransferToTank(tankId);
@@ -221,7 +223,7 @@ namespace EvolutionShop
         {
             if (Paused || Panel != ShopPanel.Counter || !IsAtCounter)
             { Notify("Use the front counter in person to serve the waiting customer."); return false; }
-            int agreed = Customers.Visit == null ? 0 : Customers.Visit.Price;
+            int agreed = Customers.NextToServe == null ? 0 : Customers.NextToServe.Price;
             var result = Customers.Serve();
             if (!result.HasValue) { Notify("No customer is waiting to check out yet."); return false; }
             bool success = Perform(result.Value).Success;
@@ -236,8 +238,8 @@ namespace EvolutionShop
             {
                 var species = Model.GetSpecies(speciesId);
                 var tag = Model.GetPrice(speciesId).Value;
-                Notify(species.DisplayName + " now costs " + tag.Price + " credits. Customers will think: " +
-                    ReactionLabel(Customers.Preview(tag)) + ".");
+                Notify(species.DisplayName + " now costs " + tag.Price + " credits. " + Customers.BuyerTypes(tag) + " of " +
+                    Customers.ArrivingTypes + " customer types will buy at this price.");
             }
             return result;
         }
@@ -247,8 +249,12 @@ namespace EvolutionShop
             sound.Feedback(false);
             var species = Model.GetSpecies(visit.QuotedSpeciesId);
             var tag = Model.GetPrice(visit.QuotedSpeciesId);
-            Notify("A customer refused the " + (species == null ? "creature" : species.DisplayName) + " at " + visit.QuotedPrice +
-                " credits: too expensive" + (tag.HasValue ? " (standard " + tag.Value.Standard + ")" : "") + ". Nothing was reserved.", 6);
+            string who = "A " + visit.ArchetypeName.ToLowerInvariant();
+            string what = species == null ? "creature" : species.DisplayName;
+            Notify(visit.RefusedOverBudget
+                ? who + " refused the " + what + " at " + visit.QuotedPrice + " credits: over their budget of " + visit.Budget + ". Nothing was reserved."
+                : who + " refused the " + what + " at " + visit.QuotedPrice + " credits: too expensive" +
+                    (tag.HasValue ? " (standard " + tag.Value.Standard + ")" : "") + ". Nothing was reserved.", 6);
         }
         public static string ReactionLabel(PriceReaction reaction)
         {

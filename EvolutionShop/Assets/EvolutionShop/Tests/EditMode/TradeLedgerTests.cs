@@ -60,7 +60,6 @@ namespace EvolutionShop.Tests
             ledger.BeginDay(1, 2);
             Assert.That(ledger.BeginVisit("visitor-a"), Is.True);
             AtomicFailure(() => ledger.BeginVisit("visitor-a"));
-            AtomicFailure(() => ledger.BeginVisit("visitor-b"));
             AtomicFailure(() => ledger.ResolveVisit("VISITOR-A", CustomerOutcome.Sold, 6));
             AtomicFailure(() => ledger.ResolveVisit(null, CustomerOutcome.Sold, 6));
             Assert.That(ledger.ResolveVisit("visitor-a", CustomerOutcome.Sold, 6), Is.True);
@@ -217,7 +216,7 @@ namespace EvolutionShop.Tests
             ledger.Last.revenue = 999;
             save.current.dayNumber = 999;
             save.last.revenue = 999;
-            save.pendingCustomerId = "changed";
+            save.pendingCustomerIds[0] = "changed";
             Assert.That(Snapshot(), Is.EqualTo(before));
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(before));
             Assert.That(restored.ResolveVisit("pending", CustomerOutcome.Closed), Is.True);
@@ -250,7 +249,7 @@ namespace EvolutionShop.Tests
             {
                 hasCurrent = true,
                 current = new TradeDaySave { dayNumber = 1, visitors = 601, sales = 600, revenue = ShopTradeLedger.MaxRevenue - 5 },
-                pendingCustomerId = "last-sale"
+                pendingCustomerIds = new[] { "last-sale" }
             };
             // Above int.MaxValue: actual JSON round trip must preserve the long value.
             save = JsonUtility.FromJson<TradeLedgerSave>(JsonUtility.ToJson(save));
@@ -324,18 +323,18 @@ namespace EvolutionShop.Tests
             switch (problem)
             {
                 case "null": save = null; break;
-                case "version": save.version = 3; break;
+                case "version": save.version = ShopTradeLedger.SaveVersion + 1; break;
                 case "missing-current": save.current = null; break;
                 case "wrong-current-day": save.current.dayNumber = 3; break;
                 case "wrong-last-day": save.last.dayNumber = 2; break;
                 case "future-last-day": save.last.dayNumber = 3; break;
                 case "last-unresolved": save.last.visitors++; break;
                 case "outcomes-exceed-visitors": save.current.noStock++; break;
-                case "unresolved-without-id": save.pendingCustomerId = null; break;
+                case "unresolved-without-id": save.pendingCustomerIds = new string[0]; break;
                 case "id-without-unresolved": save.current.visitors--; break;
                 case "two-unresolved": save.current.visitors++; break;
-                case "whitespace-id": save.pendingCustomerId = " "; break;
-                case "long-id": save.pendingCustomerId = new string('a', 129); break;
+                case "whitespace-id": save.pendingCustomerIds = new[] { " " }; break;
+                case "long-id": save.pendingCustomerIds = new[] { new string('a', 129) }; break;
                 case "current-close-stock": save.current.stockedAtClose = 1; break;
                 case "negative-visitors": save.current.visitors = -1; break;
                 case "negative-sales": save.current.sales = -1; break;
@@ -371,7 +370,7 @@ namespace EvolutionShop.Tests
         {
             ledger.BeginDay(1, 1); ledger.BeginVisit("pending");
             Assert.That(ShopTradeLedger.TryRestore(ledger.CaptureSave(), Cycle(1, ShopDayPhase.Night), out _), Is.False);
-            Assert.That(ShopTradeLedger.TryRestore(new TradeLedgerSave { pendingCustomerId = "pending" }, Cycle(1, ShopDayPhase.Night), out _), Is.False);
+            Assert.That(ShopTradeLedger.TryRestore(new TradeLedgerSave { pendingCustomerIds = new[] { "pending" } }, Cycle(1, ShopDayPhase.Night), out _), Is.False);
             Assert.That(ShopTradeLedger.TryRestore(new TradeLedgerSave(), Cycle(1, ShopDayPhase.Open), out _), Is.False);
             Assert.That(ShopTradeLedger.TryRestore(new TradeLedgerSave(), Cycle(1, ShopDayPhase.Closing), out _), Is.False);
             Assert.That(ShopTradeLedger.TryRestore(new TradeLedgerSave { pendingCustomerId = "" }, Cycle(1, ShopDayPhase.Night), out var empty), Is.True);
@@ -421,7 +420,7 @@ namespace EvolutionShop.Tests
             Assert.That(after.hasLast, Is.EqualTo(before.hasLast));
             Assert.That(after.current == null, Is.EqualTo(!before.hasCurrent));
             Assert.That(after.last == null, Is.EqualTo(!before.hasLast));
-            Assert.That(after.pendingCustomerId, Is.EqualTo(before.pendingCustomerId));
+            Assert.That(after.pendingCustomerIds, Is.EqualTo(before.pendingCustomerIds));
             Assert.That(JsonUtility.ToJson(after), Is.EqualTo(JsonUtility.ToJson(before)));
         }
 

@@ -13,7 +13,13 @@ namespace EvolutionShop
         public int AgentTypeId => surface ? surface.agentTypeID : 0;
         public Vector3 EntryPoint => WorldPoint(new Vector3(0, 0, -4.8f));
         public Vector3 ExitPoint => EntryPoint;
-        public Vector3 QueuePoint => WorldPoint(new Vector3(-3.8f, 0, -2.8f));
+        public Vector3 QueuePoint => QueueSpot(0);
+        /// <summary>Places in the counter queue: one per visitor allowed in the shop.</summary>
+        public const int QueueCapacity = 2;
+        /// <summary>Visitors that can look at one display side by side.</summary>
+        public const int BrowseSpotsPerDisplay = 2;
+
+        static readonly Vector3[] queueSpots = { new Vector3(-3.8f, 0, -2.8f), new Vector3(-2.85f, 0, -3.55f) };
 
         ShopWorld world;
         NavMeshSurface surface;
@@ -24,10 +30,18 @@ namespace EvolutionShop
         Vector3 WorldPoint(Vector3 point) => world ? world.transform.TransformPoint(point) : point;
         NavMeshQueryFilter Filter => new NavMeshQueryFilter { agentTypeID = AgentTypeId, areaMask = NavMesh.AllAreas };
 
-        public Vector3 BrowsePoint(string tankId)
+        public Vector3 BrowsePoint(string tankId) => BrowseSpot(tankId, 0);
+
+        /// <summary>Spot 0 faces the display; spot 1 stands beside it, toward the middle of the store.</summary>
+        public Vector3 BrowseSpot(string tankId, int spot)
         {
-            return WorldPoint(new Vector3(3.7f, 0, tankId == "tank-b" ? -3.85f : -1.2f));
+            float z = tankId == "tank-b" ? -3.85f : -1.2f;
+            return spot <= 0 ? WorldPoint(new Vector3(3.7f, 0, z))
+                : WorldPoint(new Vector3(3.05f, 0, tankId == "tank-b" ? z + .75f : z - .75f));
         }
+
+        /// <summary>Spot 0 is at the counter; later spots wait behind it.</summary>
+        public Vector3 QueueSpot(int spot) => WorldPoint(queueSpots[Mathf.Clamp(spot, 0, queueSpots.Length - 1)]);
 
         /// <summary>Call once, after ShopWorld.Build and two rendered frames of collider cleanup.</summary>
         public bool Build(ShopWorld shopWorld)
@@ -60,9 +74,13 @@ namespace EvolutionShop
             ownedData = surface.navMeshData;
             if (!ownedData) return FailBuild("The store navigation bake produced no data.");
             Ready = true;
-            if (!CanReach(EntryPoint, BrowsePoint("tank-a")) || !CanReach(EntryPoint, BrowsePoint("tank-b")) ||
-                !CanReach(BrowsePoint("tank-a"), QueuePoint) || !CanReach(QueuePoint, ExitPoint))
-                return FailBuild("A required customer route is not completely walkable.");
+            foreach (string tank in new[] { "tank-a", "tank-b" })
+                for (int spot = 0; spot < BrowseSpotsPerDisplay; spot++)
+                    for (int place = 0; place < QueueCapacity; place++)
+                        if (!CanReach(EntryPoint, BrowseSpot(tank, spot)) || !CanReach(BrowseSpot(tank, spot), QueueSpot(place)))
+                            return FailBuild("A required customer route is not completely walkable: " + tank + " spot " + spot + " to queue place " + place + ".");
+            for (int place = 0; place < QueueCapacity; place++)
+                if (!CanReach(QueueSpot(place), ExitPoint)) return FailBuild("Queue place " + place + " has no walkable exit.");
             // Probe the bake itself, independently of destination validation, to catch a missing modifier.
             if (HasNavigationAt(WorldPoint(new Vector3(0, 0, 1)), .1f) ||
                 HasNavigationAt(WorldPoint(new Vector3(0, 0, 3)), .1f))

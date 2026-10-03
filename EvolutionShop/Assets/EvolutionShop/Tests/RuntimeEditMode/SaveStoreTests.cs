@@ -47,7 +47,7 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Write(PathFor(),slot,out var error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out var restored,out var loaded,out error),Is.True,error);
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()),Is.EqualTo(JsonUtility.ToJson(model.CaptureSave())));
-            Assert.That(loaded.formatVersion,Is.EqualTo(4)); Assert.That(loaded.game.version,Is.EqualTo(2));
+            Assert.That(loaded.formatVersion,Is.EqualTo(5)); Assert.That(loaded.game.version,Is.EqualTo(2));
             Assert.That(loaded.sensitivity,Is.EqualTo(1.7f)); Assert.That(loaded.volume,Is.EqualTo(0.31f));
             Assert.That(SaveStore.Write(PathFor(),loaded,out error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out restored,out _,out error),Is.True,error);
@@ -79,7 +79,7 @@ namespace EvolutionShop.Tests
             slot.trades=ShopTradeLedger.LegacyForCycle(slot.cycle,0).CaptureSave();
             Assert.That(SaveStore.Write(PathFor(),slot,out var error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out _,out var loaded,out error),Is.True,error);
-            Assert.That(loaded.formatVersion,Is.EqualTo(4));
+            Assert.That(loaded.formatVersion,Is.EqualTo(5));
             Assert.That(loaded.game.version,Is.EqualTo(2));
             Assert.That(ShopDayCycle.TryRestore(loaded.cycle,out var restored),Is.True);
             Assert.That(restored.DayNumber,Is.EqualTo(2)); Assert.That(restored.Phase,Is.EqualTo(phase));
@@ -99,11 +99,11 @@ namespace EvolutionShop.Tests
             Assert.That(model.DiscoveredSpeciesIds.Count,Is.EqualTo(3)); Assert.That(model.Incubator.Phase,Is.EqualTo(IncubatorPhase.Incubating));
             Assert.That(model.Incubator.SpecimenId,Is.EqualTo("657d8c9c16744f6ab0436867af9d82d2"));
             Assert.That(model.Incubator.SecondsRemaining,Is.EqualTo(10)); Assert.That(slot.sensitivity,Is.EqualTo(1));
-            Assert.That(slot.volume,Is.EqualTo(0.65f)); Assert.That(slot.formatVersion,Is.EqualTo(4));
+            Assert.That(slot.volume,Is.EqualTo(0.65f)); Assert.That(slot.formatVersion,Is.EqualTo(5));
             Assert.That(slot.game.version,Is.EqualTo(2)); Assert.That(slot.cycle.version,Is.EqualTo(1));
             Assert.That(slot.cycle.phase,Is.EqualTo(ShopDayPhase.Night)); Assert.That(slot.cycle.dayNumber,Is.EqualTo(1));
             Assert.That(slot.cycle.secondsRemaining,Is.Zero);
-            Assert.That(slot.trades.version,Is.EqualTo(2));
+            Assert.That(slot.trades.version,Is.EqualTo(3));
             Assert.That(slot.game.prices,Is.Empty); Assert.That(model.GetPrice("pondlet").Value.Price,Is.EqualTo(6));
             Assert.That(slot.trades.current,Is.Null); Assert.That(slot.trades.last,Is.Null);
             Assert.That(SaveStore.Read(PathFor(),config,out var again,out var repeated,out error),Is.True,error);
@@ -128,7 +128,7 @@ namespace EvolutionShop.Tests
             Assert.That(File.ReadAllBytes(PathFor()+".v1.bak"),Is.EqualTo(original));
             Assert.That(SaveStore.Read(PathFor(),config,out var restored,out var loaded,out error),Is.True,error);
             Assert.That(restored.Currency,Is.EqualTo(2)); Assert.That(restored.UpgradeOwned,Is.True);
-            Assert.That(loaded.formatVersion,Is.EqualTo(4)); Assert.That(loaded.volume,Is.EqualTo(0.2f));
+            Assert.That(loaded.formatVersion,Is.EqualTo(5)); Assert.That(loaded.volume,Is.EqualTo(0.2f));
         }
 
         [Test] public void MigrationDoesNotReplaceAnExistingLegacyArchive()

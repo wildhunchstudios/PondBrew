@@ -17,8 +17,15 @@ namespace EvolutionShop
 
     public static class SaveStore
     {
-        // 4: price tags (game 2) and price refusals (report 2). Formats 1-3 migrate in memory.
-        public const int CurrentFormatVersion = 4;
+        // 4: price tags (game 2) and price refusals (report 2). 5: several unresolved visitors (report 3).
+        // Formats 1-4 migrate in memory.
+        public const int CurrentFormatVersion = 5;
+
+        /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
+        public static int GameVersionFor(int format) => format >= 4 ? GameModel.SaveVersion : 1;
+
+        /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
+        public static int ReportVersionFor(int format) => format >= 5 ? ShopTradeLedger.SaveVersion : format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
         // Zero distinguishes an omitted envelope version from a current save.
@@ -88,7 +95,7 @@ namespace EvolutionShop
                 // Each envelope carries exactly one game version: price tags arrived with format 4.
                 if (header == null || header.formatVersion < 1 || header.formatVersion > CurrentFormatVersion ||
                     candidate == null || candidate.game == null ||
-                    candidate.game.version != (header.formatVersion == CurrentFormatVersion ? GameModel.SaveVersion : 1) ||
+                    candidate.game.version != GameVersionFor(header.formatVersion) ||
                     !Finite(candidate.sensitivity) || !Finite(candidate.volume) ||
                     !GameModel.TryRestore(config, candidate.game, out var restoredGame, out _))
                 {
@@ -116,7 +123,7 @@ namespace EvolutionShop
                 }
                 else
                 {
-                    int reportVersion = header.formatVersion == CurrentFormatVersion ? ShopTradeLedger.SaveVersion : 1;
+                    int reportVersion = ReportVersionFor(header.formatVersion);
                     if (header.trades == null || header.trades.version != reportVersion ||
                         !ShopTradeLedger.TryRestore(candidate.trades, candidate.cycle, out var restoredTrades))
                     {

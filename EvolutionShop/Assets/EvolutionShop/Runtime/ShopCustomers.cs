@@ -1,29 +1,69 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace EvolutionShop
 {
-    /// <summary>One active visit. Domain rules own orders; this component connects them to navigation.</summary>
+    /// <summary>
+    /// Up to MaxVisitors concurrent visits and the counter line. Domain rules own orders and money;
+    /// this director connects each visit to its actor, browse spot and queue place.
+    /// </summary>
     public sealed class ShopCustomers : MonoBehaviour
     {
+        sealed class Visitor
+        {
+            public CustomerVisit Visit;
+            public CustomerActor Actor;
+            public string LastCaption;
+            public int HeardRejections;
+            public int BrowseSpot;
+            public int QueuePlace = -1;
+        }
+
         ShopSession shop;
         readonly CustomerRules rules = new CustomerRules();
+        readonly List<Visitor> visitors = new List<Visitor>(); // arrival order
+        readonly List<Visitor> line = new List<Visitor>();     // agreed orders, in the order they were agreed
+        CustomerArchetype[] catalog;
+        int maxVisitors = 1;
         float untilArrival;
-        string lastCaption;
-        int heardRejections;
+
         public ShopCustomerNavigation Navigation { get; private set; }
-        public CustomerActor Actor { get; private set; }
-        public CustomerVisit Visit { get; private set; }
         public bool ArrivalsEnabled { get; set; } = true;
         public bool Ready => Navigation != null && Navigation.Ready;
         public string NavigationIssue { get; private set; }
-        public int ActiveCount => Visit == null ? 0 : 1;
-        /// <summary>How this customer type would judge a tag; the visit applies the same rules.</summary>
-        public PriceReaction Preview(PriceView tag) => rules.Judge(tag.Price, tag.Standard);
+        public int ActiveCount => visitors.Count;
+        /// <summary>Visitors in the shop at once, bounded by the counter queue's places.</summary>
+        public int MaxVisitors
+        {
+            get => maxVisitors;
+            set => maxVisitors = Mathf.Clamp(value, 1, ShopCustomerNavigation.QueueCapacity);
+        }
+        /// <summary>Validation only: pins every new visitor to one type. Normal play leaves it null.</summary>
+        public string ForcedArchetypeId { get; set; }
+        /// <summary>Validation only: types for the next arrivals, used before ForcedArchetypeId.</summary>
+        public readonly Queue<string> ScriptedArchetypes = new Queue<string>();
+        /// <summary>Copies of the customer types, for presentation; changing them changes nothing.</summary>
+        public IReadOnlyList<CustomerArchetype> Archetypes { get; private set; }
+        public IReadOnlyList<CustomerVisit> Visits => visitors.ConvertAll(v => v.Visit);
+        /// <summary>The order the counter serves next: the first one waiting, else the next one on its way.</summary>
+        public CustomerVisit NextToServe => (FirstQueued() ?? Front())?.Visit;
+        /// <summary>The visitor the HUD and earlier single-visitor checks follow.</summary>
+        public CustomerVisit Visit => Front()?.Visit;
+        public CustomerActor Actor => Front()?.Actor;
+        public int WaitingCount => line.FindAll(v => v.Visit.Phase == CustomerPhase.Queued).Count;
+        public CustomerActor ActorOf(CustomerVisit visit) => Find(visit)?.Actor;
+        public int QueuePlaceOf(CustomerVisit visit) => Find(visit)?.QueuePlace ?? -1;
+        public int BrowseSpotOf(CustomerVisit visit) => Find(visit)?.BrowseSpot ?? -1;
 
         public void Initialize(ShopSession session)
         {
             shop = session;
+            MaxVisitors = rules.MaxVisitors;
+            catalog = CustomerArchetypes.Validate(CustomerArchetypes.CreateDefault(), id => session.Config != null &&
+                Array.Exists(session.Config.Species, s => s.Id == id));
+            Archetypes = Array.AsReadOnly(Array.ConvertAll(catalog, a => a.Copy()));
             Navigation = gameObject.AddComponent<ShopCustomerNavigation>();
             untilArrival = rules.ArrivalDelaySeconds;
             StartCoroutine(BuildAfterWorldSettles());
@@ -40,97 +80,261 @@ namespace EvolutionShop
                 shop.Notify(NavigationIssue, 10);
             }
         }
+
+        /// <summary>How the casual visitor (the R03.1 customer) takes a tag.</summary>
+        public PriceReaction Preview(PriceView tag) => Preview(CustomerArchetypes.Find(catalog, CustomerArchetypes.Casual), tag);
+        public PriceReaction Preview(CustomerArchetype type, PriceView tag) =>
+            type == null ? rules.Judge(tag.Price, tag.Standard) : type.Judge(tag.SpeciesId, tag.Price, tag.Standard);
+        /// <summary>How many arriving customer types would buy at this tag.</summary>
+        public int BuyerTypes(PriceView tag)
+        {
+            int buyers = 0;
+            foreach (var type in catalog) if (type.Weight > 0 && type.Judge(tag.SpeciesId, tag.Price, tag.Standard) != PriceReaction.TooExpensive) buyers++;
+            return buyers;
+        }
+        public int ArrivingTypes { get { int count = 0; foreach (var type in catalog) if (type.Weight > 0) count++; return count; } }
+
         public void Tick(float seconds)
         {
             if (!Ready || shop.Paused || float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0) return;
-            if (Visit == null)
-            {
-                if (shop.Cycle.Phase != ShopDayPhase.Open) { untilArrival = rules.ArrivalDelaySeconds; return; }
-                if (!ArrivalsEnabled) return;
-                untilArrival -= seconds;
-                if (untilArrival <= 0) BeginVisit();
-                return;
-            }
+            foreach (var visitor in visitors.ToArray()) AdvanceVisitor(visitor, seconds);
+            RefreshLine();
+            StaggerCaptions();
+            if (shop.Cycle.Phase != ShopDayPhase.Open) { untilArrival = rules.ArrivalDelaySeconds; return; }
+            // The timer pauses while the shop is full, so a freed place fills NextArrivalSeconds later.
+            if (!ArrivalsEnabled || visitors.Count >= maxVisitors) return;
+            untilArrival -= seconds;
+            if (untilArrival > 0) return;
+            BeginVisit();
+            untilArrival = rules.NextArrivalSeconds;
+        }
 
-            var previous = Visit.Phase;
-            if (!Actor)
+        /// <summary>Validation only: starts an arrival now if the shop is open and has room.</summary>
+        public bool SpawnNow()
+        {
+            if (!Ready || shop.Paused || shop.Cycle.Phase != ShopDayPhase.Open || visitors.Count >= maxVisitors) return false;
+            int before = visitors.Count;
+            BeginVisit();
+            untilArrival = rules.NextArrivalSeconds;
+            return visitors.Count == before + 1;
+        }
+
+        void AdvanceVisitor(Visitor visitor, float seconds)
+        {
+            var visit = visitor.Visit;
+            var previous = visit.Phase;
+            string previousTarget = visit.TargetTankId;
+            if (!visitor.Actor)
             {
-                Visit.Cancel(CustomerOutcome.PathBlocked);
-                RecordOutcome();
-                ResetVisitors();
+                visit.Cancel(CustomerOutcome.PathBlocked);
+                RecordOutcome(visitor);
+                Remove(visitor);
                 shop.Notify("A visitor could not reach the shop. Their unpaid stock is available again.");
                 return;
             }
-            if (Actor.PathFailed && (previous == CustomerPhase.Arriving || previous == CustomerPhase.ToCounter || previous == CustomerPhase.Leaving))
+            if (visitor.Actor.PathFailed && (previous == CustomerPhase.Arriving || previous == CustomerPhase.ToCounter || previous == CustomerPhase.Leaving))
             {
-                if (previous == CustomerPhase.Leaving) { EndVisit(); return; }
-                Visit.Cancel(CustomerOutcome.PathBlocked);
+                if (previous == CustomerPhase.Leaving) { EndVisit(visitor); return; }
+                visit.Cancel(CustomerOutcome.PathBlocked);
             }
-            else Visit.Advance(seconds, Actor.Arrived, shop.Cycle.Phase);
-            if (Visit.PriceRejections > heardRejections)
+            else visit.Advance(seconds, visitor.Actor.Arrived, shop.Cycle.Phase);
+            if (visit.PriceRejections > visitor.HeardRejections)
             {
-                heardRejections = Visit.PriceRejections;
-                shop.PriceRefused(Visit);
+                visitor.HeardRejections = visit.PriceRejections;
+                shop.PriceRefused(visit);
             }
-            RecordOutcome();
+            RecordOutcome(visitor);
 
-            if (Visit.Phase == CustomerPhase.Finished) { EndVisit(); return; }
-            if (Visit.Phase != previous) ApplyDestination();
-            RefreshCaption();
+            if (visit.Phase == CustomerPhase.Finished) { EndVisit(visitor); return; }
+            if (visit.Phase != previous || visit.TargetTankId != previousTarget) ApplyDestination(visitor);
+            RefreshCaption(visitor);
         }
+
         void BeginVisit()
         {
-            Visit = new CustomerVisit(shop.Model, shop.Config.TankIds, rules);
-            shop.Reports.BeginVisit(Visit.Id);
-            Actor = new GameObject("Store customer").AddComponent<CustomerActor>();
-            Actor.Initialize(Navigation);
-            Actor.SetPaused(shop.Paused);
-            shop.Notify("A customer arrived. They will browse your front displays.");
-            ApplyDestination();
-            RefreshCaption();
+            var report = shop.Reports.Current;
+            var type = ChooseArchetype(report == null ? 0 : report.visitors);
+            var entry = new Visitor();
+            var visit = new CustomerVisit(shop.Model, shop.Config.TankIds, rules, type, tank => Contended(tank, entry));
+            if (!shop.Reports.BeginVisit(visit.Id))
+            {
+                Debug.LogWarning("EVOLUTION_CUSTOMER_LEDGER the day report could not record a new visitor; arrival skipped.");
+                return;
+            }
+            entry.Visit = visit;
+            entry.Actor = new GameObject("Store customer / " + type.DisplayName).AddComponent<CustomerActor>();
+            entry.Actor.Initialize(Navigation, type.PresentationId);
+            entry.Actor.SetPaused(shop.Paused);
+            visitors.Add(entry);
+            shop.Notify("A " + type.DisplayName.ToLowerInvariant() + " arrived. They will browse your front displays.");
+            ApplyDestination(entry);
+            RefreshCaption(entry);
             shop.SaveNow();
         }
-        void ApplyDestination()
+
+        CustomerArchetype ChooseArchetype(int visitorIndex)
         {
-            if (Visit == null || !Actor) return;
+            string id = ScriptedArchetypes.Count > 0 ? ScriptedArchetypes.Dequeue() : ForcedArchetypeId;
+            if (id != null)
+                return CustomerArchetypes.Find(catalog, id) ?? throw new InvalidOperationException("Unknown scripted customer type " + id);
+            return CustomerArchetypes.Pick(catalog, shop.Cycle.DayNumber, visitorIndex);
+        }
+
+        bool Contended(string tankId, Visitor self)
+        {
+            foreach (var other in visitors)
+                if (other != self && other.Visit != null && other.Visit.TargetTankId == tankId &&
+                    (other.Visit.Phase == CustomerPhase.Arriving || other.Visit.Phase == CustomerPhase.Browsing)) return true;
+            return false;
+        }
+
+        void ApplyDestination(Visitor visitor)
+        {
+            if (visitor.Visit == null || !visitor.Actor) return;
             Vector3 destination;
-            switch (Visit.Phase)
+            switch (visitor.Visit.Phase)
             {
-                case CustomerPhase.Arriving: destination = Navigation.BrowsePoint(Visit.TargetTankId); break;
-                case CustomerPhase.ToCounter: destination = Navigation.QueuePoint; break;
+                case CustomerPhase.Arriving:
+                    visitor.BrowseSpot = ChooseBrowseSpot(visitor);
+                    destination = Navigation.BrowseSpot(visitor.Visit.TargetTankId, visitor.BrowseSpot);
+                    break;
+                case CustomerPhase.ToCounter:
+                    JoinLine(visitor);
+                    destination = Navigation.QueueSpot(visitor.QueuePlace);
+                    break;
                 case CustomerPhase.Leaving: destination = Navigation.ExitPoint; break;
                 default: return;
             }
-            if (Actor.MoveTo(destination)) return;
-            if (Visit.Phase == CustomerPhase.Leaving) { EndVisit(); return; }
-            Visit.Cancel(CustomerOutcome.PathBlocked);
-            RecordOutcome();
-            if (!Actor.MoveTo(Navigation.ExitPoint)) EndVisit();
+            if (visitor.Actor.MoveTo(destination)) return;
+            if (visitor.Visit.Phase == CustomerPhase.Leaving) { EndVisit(visitor); return; }
+            visitor.Visit.Cancel(CustomerOutcome.PathBlocked);
+            RecordOutcome(visitor);
+            if (!visitor.Actor.MoveTo(Navigation.ExitPoint)) EndVisit(visitor);
         }
+
+        /// <summary>Spot 0 at the display unless another visitor already stands or walks there.</summary>
+        int ChooseBrowseSpot(Visitor visitor)
+        {
+            foreach (var other in visitors)
+                if (other != visitor && other.Visit.TargetTankId == visitor.Visit.TargetTankId && other.BrowseSpot == 0 &&
+                    (other.Visit.Phase == CustomerPhase.Arriving || other.Visit.Phase == CustomerPhase.Browsing)) return 1;
+            return 0;
+        }
+
+        static bool InLine(CustomerPhase phase) => phase == CustomerPhase.ToCounter || phase == CustomerPhase.Queued || phase == CustomerPhase.Paid;
+
+        void JoinLine(Visitor visitor)
+        {
+            if (!line.Contains(visitor)) line.Add(visitor);
+            visitor.QueuePlace = line.IndexOf(visitor);
+        }
+
+        /// <summary>Drops finished orders from the line and walks everyone behind them one place forward.</summary>
+        void RefreshLine()
+        {
+            line.RemoveAll(v => !visitors.Contains(v) || !InLine(v.Visit.Phase));
+            foreach (var visitor in visitors)
+                if (!line.Contains(visitor)) visitor.QueuePlace = -1;
+            for (int place = 0; place < line.Count; place++)
+            {
+                var visitor = line[place];
+                if (visitor.QueuePlace == place) continue;
+                visitor.QueuePlace = place;
+                // A paid customer finishes their reaction where they stand; the others move up.
+                if (visitor.Visit.Phase == CustomerPhase.Paid || !visitor.Actor) continue;
+                if (!visitor.Actor.MoveTo(Navigation.QueueSpot(place)))
+                    Debug.LogWarning("EVOLUTION_CUSTOMER_QUEUE could not move a waiting customer forward: " + visitor.Actor.LastError);
+            }
+        }
+
+        /// <summary>
+        /// Two signs 1.6 m wide overlap when their visitors stand close together. The visitor behind
+        /// (second queue place or second browse spot, else the later arrival) raises its sign above the other.
+        /// </summary>
+        void StaggerCaptions()
+        {
+            const float closeEnough = 1.8f, gap = .34f;
+            foreach (var visitor in visitors) if (visitor.Actor) visitor.Actor.SetCaptionLift(0f);
+            for (int i = 0; i < visitors.Count; i++)
+                for (int j = i + 1; j < visitors.Count; j++)
+                {
+                    var first = visitors[i];
+                    var second = visitors[j];
+                    if (!first.Actor || !second.Actor) continue;
+                    Vector3 delta = first.Actor.transform.position - second.Actor.transform.position;
+                    delta.y = 0;
+                    if (delta.magnitude > closeEnough) continue;
+                    bool firstBehind = first.QueuePlace > second.QueuePlace && second.QueuePlace >= 0 ||
+                        (first.QueuePlace < 0 && second.QueuePlace < 0 && first.BrowseSpot > second.BrowseSpot);
+                    var upper = firstBehind ? first : second;
+                    var lower = upper == first ? second : first;
+                    upper.Actor.SetCaptionLift(Mathf.Max(0f, lower.Actor.CaptionBaseHeight + gap - upper.Actor.CaptionBaseHeight));
+                }
+        }
+
+        Visitor FirstQueued()
+        {
+            foreach (var visitor in line) if (visitor.Visit.Phase == CustomerPhase.Queued) return visitor;
+            return null;
+        }
+
+        Visitor Front()
+        {
+            var queued = FirstQueued();
+            if (queued != null) return queued;
+            foreach (var visitor in line) if (visitor.Visit.Phase == CustomerPhase.ToCounter) return visitor;
+            return visitors.Count > 0 ? visitors[0] : null;
+        }
+
+        Visitor Find(CustomerVisit visit)
+        {
+            if (visit == null) return null;
+            foreach (var visitor in visitors) if (visitor.Visit == visit) return visitor;
+            return null;
+        }
+
+        /// <summary>Serves the first waiting order. With nobody waiting, reports why on the next visitor.</summary>
         public ActionResult? Serve()
         {
-            if (Visit == null) return null;
-            var result = Visit.Serve(shop.Cycle.Phase);
-            RecordOutcome(!result.Success);
-            if (Visit.Phase == CustomerPhase.Leaving) ApplyDestination();
-            RefreshCaption();
+            var target = FirstQueued() ?? Front();
+            if (target == null) return null;
+            var result = target.Visit.Serve(shop.Cycle.Phase);
+            RecordOutcome(target, !result.Success);
+            if (target.Visit.Phase == CustomerPhase.Leaving) ApplyDestination(target);
+            RefreshLine();
+            RefreshCaption(target);
             return result;
         }
-        public void SetPaused(bool paused) { if (Actor) Actor.SetPaused(paused); }
+
+        public void SetPaused(bool paused) { foreach (var visitor in visitors) if (visitor.Actor) visitor.Actor.SetPaused(paused); }
+
         public void ResetVisitors()
         {
-            if (Visit != null) Visit.Cancel(CustomerOutcome.Closed);
-            if (Actor) { Actor.gameObject.SetActive(false); Destroy(Actor.gameObject); }
-            Actor = null; Visit = null; lastCaption = null; heardRejections = 0;
+            foreach (var visitor in visitors)
+            {
+                if (visitor.Visit != null) visitor.Visit.Cancel(CustomerOutcome.Closed);
+                if (visitor.Actor) { visitor.Actor.gameObject.SetActive(false); Destroy(visitor.Actor.gameObject); }
+            }
+            visitors.Clear();
+            line.Clear();
             untilArrival = rules.ArrivalDelaySeconds;
         }
-        void EndVisit()
+
+        void Remove(Visitor visitor)
         {
-            var outcome = Visit == null ? CustomerOutcome.None : Visit.Outcome;
-            RecordOutcome();
-            ResetVisitors();
-            untilArrival = rules.NextArrivalSeconds;
-            switch (outcome)
+            if (visitor.Actor) { visitor.Actor.gameObject.SetActive(false); Destroy(visitor.Actor.gameObject); }
+            visitor.Actor = null;
+            visitors.Remove(visitor);
+            line.Remove(visitor);
+            RefreshLine();
+        }
+
+        void EndVisit(Visitor visitor)
+        {
+            var visit = visitor.Visit;
+            RecordOutcome(visitor);
+            Remove(visitor);
+            switch (visit.Outcome)
             {
                 case CustomerOutcome.NoStock: shop.Notify("The visitor found no available creature. Stock a front display for the next customer."); break;
                 case CustomerOutcome.Impatient: shop.Notify("The customer ran out of patience. Their creature is available again."); break;
@@ -139,72 +343,93 @@ namespace EvolutionShop
                 case CustomerOutcome.TooExpensive: shop.Notify("The customer left without buying: your prices were too high for them. Lower a price tag with E at the display."); break;
             }
         }
-        void RecordOutcome(bool save = true)
+
+        void RecordOutcome(Visitor visitor, bool save = true)
         {
-            if (Visit == null || Visit.Outcome == CustomerOutcome.None) return;
-            int price = Visit.Outcome == CustomerOutcome.Sold ? Visit.Price : 0;
-            if (shop.Reports.ResolveVisit(Visit.Id, Visit.Outcome, price) && save && shop.Cycle.Phase != ShopDayPhase.Night)
+            var visit = visitor.Visit;
+            if (visit == null || visit.Outcome == CustomerOutcome.None) return;
+            int price = visit.Outcome == CustomerOutcome.Sold ? visit.Price : 0;
+            if (shop.Reports.ResolveVisit(visit.Id, visit.Outcome, price) && save && shop.Cycle.Phase != ShopDayPhase.Night)
                 shop.SaveNow(); // Night saves once after the report is finalized with the new day clock.
         }
-        void RefreshCaption()
+
+        void RefreshCaption(Visitor visitor)
         {
-            if (Visit == null || !Actor) return;
-            string caption = Caption;
-            if (caption == lastCaption) return;
-            lastCaption = caption;
-            bool upset = Visit.Outcome == CustomerOutcome.TooExpensive ||
-                (Visit.Phase == CustomerPhase.Arriving && Visit.PriceRejections > 0);
-            Actor.Present(Visit.Phase, caption, upset);
+            if (visitor.Visit == null || !visitor.Actor) return;
+            string caption = CaptionOf(visitor.Visit);
+            if (caption == visitor.LastCaption) return;
+            visitor.LastCaption = caption;
+            var visit = visitor.Visit;
+            bool upset = visit.Outcome == CustomerOutcome.TooExpensive ||
+                (visit.Phase == CustomerPhase.Arriving && visit.PriceRejections > 0);
+            visitor.Actor.Present(visit.Phase, caption, upset);
         }
-        public string Caption
+
+        public string Caption => CaptionOf(Visit);
+
+        public string CaptionOf(CustomerVisit visit)
         {
-            get
+            if (visit == null) return "";
+            switch (visit.Phase)
             {
-                if (Visit == null) return "";
-                switch (Visit.Phase)
-                {
-                    case CustomerPhase.Arriving: return Visit.PriceRejections > 0 ? "Too pricey! What else is here?" : "Taking a look";
-                    case CustomerPhase.Browsing: return "Hmm... this one?";
-                    case CustomerPhase.ToCounter:
-                        switch (Visit.Reaction)
-                        {
-                            case PriceReaction.Bargain: return "A bargain at " + Visit.Price + "!";
-                            case PriceReaction.Fair: return "Fair price. I'll take it!";
-                            case PriceReaction.Pricey: return "Pricey... but I want it";
-                            default: return "Ready to buy";
-                        }
-                    case CustomerPhase.Queued: return "Checkout please!  " + Mathf.CeilToInt(Visit.QueueSecondsRemaining) + "s";
-                    case CustomerPhase.Paid: return "Thanks! A new friend!";
-                    case CustomerPhase.Leaving:
-                        switch (Visit.Outcome)
-                        {
-                            case CustomerOutcome.Sold: return "See you next time!";
-                            case CustomerOutcome.TooExpensive: return Visit.QuotedPrice + " credits?! Too expensive!";
-                            case CustomerOutcome.NoStock: return "I'll try again later";
-                            default: return "Maybe another time";
-                        }
-                    default: return "";
-                }
+                case CustomerPhase.Arriving:
+                    if (visit.PriceRejections == 0) return "Taking a look";
+                    return visit.RefusedOverBudget ? "Over my budget! What else?" : "Too pricey! What else is here?";
+                case CustomerPhase.Browsing: return "Hmm... this one?";
+                case CustomerPhase.ToCounter:
+                    bool favourite = visit.Likes(visit.SpeciesId);
+                    switch (visit.Reaction)
+                    {
+                        case PriceReaction.Bargain: return "A bargain at " + visit.Price + "!";
+                        case PriceReaction.Fair: return favourite ? "Just what I collect!" : "Fair price. I'll take it!";
+                        case PriceReaction.Pricey: return favourite ? "Pricey, but I collect these!" : "Pricey... but I want it";
+                        default: return "Ready to buy";
+                    }
+                case CustomerPhase.Queued: return "Checkout please!  " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + "s";
+                case CustomerPhase.Paid: return "Thanks! A new friend!";
+                case CustomerPhase.Leaving:
+                    switch (visit.Outcome)
+                    {
+                        case CustomerOutcome.Sold: return "See you next time!";
+                        case CustomerOutcome.TooExpensive:
+                            return visit.QuotedPrice + (visit.RefusedOverBudget ? " credits? Over my budget!" : " credits?! Too expensive!");
+                        case CustomerOutcome.NoStock: return "I'll try again later";
+                        default: return "Maybe another time";
+                    }
+                default: return "";
             }
         }
+
         public string Status
         {
             get
             {
                 if (!string.IsNullOrEmpty(NavigationIssue)) return NavigationIssue;
                 if (!Ready) return "Preparing customer routes...";
-                if (Visit == null) return shop.Cycle.Phase == ShopDayPhase.Open ? "Waiting for the next visitor" : "Shop closed to new visitors";
-                switch (Visit.Phase)
-                {
-                    case CustomerPhase.Arriving: return Visit.PriceRejections > 0 ? "A customer refused a price and is checking another display" : "A customer is walking to the displays";
-                    case CustomerPhase.Browsing: return "A customer is browsing your creatures";
-                    case CustomerPhase.ToCounter: return "Order at " + Visit.Price + " credits (" + ShopSession.ReactionLabel(Visit.Reaction) + ")";
-                    case CustomerPhase.Queued: return "Serve the counter / " + Mathf.CeilToInt(Visit.QueueSecondsRemaining) + "s patience";
-                    case CustomerPhase.Paid: return "Purchase complete";
-                    default: return Visit.Outcome == CustomerOutcome.TooExpensive ? "The customer left: too expensive" : "The customer is leaving";
-                }
+                if (visitors.Count == 0) return shop.Cycle.Phase == ShopDayPhase.Open ? "Waiting for the next visitor" : "Shop closed to new visitors";
+                if (visitors.Count == 1) return StatusOf(visitors[0].Visit);
+                var waiting = FirstQueued();
+                if (waiting != null)
+                    return "Serve the counter / " + WaitingCount + " waiting / " + Mathf.CeilToInt(waiting.Visit.QueueSecondsRemaining) + "s patience";
+                return visitors.Count + " customers in the shop. " + StatusOf(Front().Visit);
             }
         }
+
+        public string StatusOf(CustomerVisit visit)
+        {
+            if (visit == null) return "";
+            string type = visit.ArchetypeName;
+            switch (visit.Phase)
+            {
+                case CustomerPhase.Arriving: return visit.PriceRejections > 0 ? "A customer refused a price and is checking another display" : "A customer is walking to the displays";
+                case CustomerPhase.Browsing: return "A customer is browsing your creatures";
+                case CustomerPhase.ToCounter: return type + ": order at " + visit.Price + " credits (" + ShopSession.ReactionLabel(visit.Reaction) + ")";
+                case CustomerPhase.Queued: return "Serve the counter / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + "s patience";
+                case CustomerPhase.Paid: return "Purchase complete";
+                default: return visit.Outcome == CustomerOutcome.TooExpensive ? "The customer left: too expensive" : "The customer is leaving";
+            }
+        }
+
         void OnDestroy() { ResetVisitors(); }
     }
 }

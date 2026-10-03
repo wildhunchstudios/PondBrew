@@ -65,15 +65,15 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(File.Exists(PathFor() + ".bak"), Is.False);
-            Assert.That(slot.formatVersion, Is.EqualTo(4));
-            Assert.That(slot.trades.version, Is.EqualTo(2));
+            Assert.That(slot.formatVersion, Is.EqualTo(5));
+            Assert.That(slot.trades.version, Is.EqualTo(3));
             Assert.That(JsonUtility.ToJson(slot.trades), Is.EqualTo(JsonUtility.ToJson(source.trades)));
             Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(JsonUtility.ToJson(source.cycle)));
             Assert.That(slot.sensitivity, Is.EqualTo(1.6f)); Assert.That(slot.volume, Is.EqualTo(0.38f));
             Assert.That(restored.Currency, Is.EqualTo(6)); Assert.That(restored.GetTank("tank-a"), Is.Null);
             Assert.That(restored.GetTank("tank-b").Value.Id, Is.EqualTo(unsold));
             Assert.That(restored.GetReservation("tank-b"), Is.Null);
-            Assert.That(slot.trades.pendingCustomerId, Is.EqualTo("waiting-second"));
+            Assert.That(slot.trades.pendingCustomerIds, Is.EqualTo(new[] { "waiting-second" }));
             Assert.That(reports.HasPending, Is.True, "Read must not mutate the running ledger.");
 
             Assert.That(ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var loadedReports), Is.True);
@@ -87,7 +87,7 @@ namespace EvolutionShop.Tests
             slot.trades = loadedReports.CaptureSave();
             Write(slot);
             Assert.That(SaveStore.Read(PathFor(), config, out var again, out var repeated, out error), Is.True, error);
-            Assert.That(repeated.trades.pendingCustomerId, Is.Null.Or.Empty);
+            Assert.That(repeated.trades.pendingCustomerIds, Is.Empty);
             Assert.That(repeated.trades.current.interrupted, Is.EqualTo(1));
             Assert.That(repeated.trades.current.sales, Is.EqualTo(1));
             Assert.That(repeated.trades.current.revenue, Is.EqualTo(6L));
@@ -142,13 +142,13 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
-                Assert.That(slot.formatVersion, Is.EqualTo(4)); Assert.That(slot.game.version, Is.EqualTo(2));
-                Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(2));
+                Assert.That(slot.formatVersion, Is.EqualTo(5)); Assert.That(slot.game.version, Is.EqualTo(2));
+                Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(3));
                 Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
                 Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedCycle));
                 Assert.That(slot.sensitivity, Is.EqualTo(1.3f)); Assert.That(slot.volume, Is.EqualTo(0.27f));
                 Assert.That(restored.Currency, Is.EqualTo(6)); Assert.That(slot.trades.last, Is.Null);
-                Assert.That(slot.trades.pendingCustomerId, Is.Null.Or.Empty);
+                Assert.That(slot.trades.pendingCustomerIds, Is.Null.Or.Empty);
                 if (phase == ShopDayPhase.Night) Assert.That(slot.trades.current, Is.Null);
                 else
                 {
@@ -251,7 +251,7 @@ namespace EvolutionShop.Tests
                 case "missing-current": slot.trades.current = null; break;
                 case "night-current": slot.cycle.phase = ShopDayPhase.Night; slot.cycle.secondsRemaining = 0; break;
                 case "wrong-last": slot.trades.last = new TradeDaySave { dayNumber = 1 }; break;
-                case "pending-owner": slot.trades.pendingCustomerId = " "; slot.trades.current.visitors = 1; break;
+                case "pending-owner": slot.trades.pendingCustomerIds = new[] { " " }; slot.trades.current.visitors = 1; break;
                 case "unearned-revenue": slot.trades.current.revenue = 1; break;
             }
             string json = problem == "missing"

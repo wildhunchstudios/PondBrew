@@ -65,7 +65,7 @@ namespace EvolutionShop.Tests
             byte[] originalBytes = File.ReadAllBytes(path);
             Assert.That(SaveStore.Read(path, config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(path), Is.EqualTo(originalBytes), "Read must not rewrite the saved slot.");
-            Assert.That(slot.formatVersion, Is.EqualTo(4)); Assert.That(slot.game.version, Is.EqualTo(2));
+            Assert.That(slot.formatVersion, Is.EqualTo(5)); Assert.That(slot.game.version, Is.EqualTo(2));
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
             Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedClock));
             Assert.That(slot.sensitivity, Is.EqualTo(1.25f)); Assert.That(slot.volume, Is.EqualTo(0.42f));
@@ -149,7 +149,7 @@ namespace EvolutionShop.Tests
         {
             var slot = new SlotData
             {
-                formatVersion = 4, game = model.CaptureSave(), cycle = cycle.CaptureSave(),
+                formatVersion = 5, game = model.CaptureSave(), cycle = cycle.CaptureSave(),
                 trades = ShopTradeLedger.LegacyForCycle(cycle.CaptureSave(),
                     (model.GetTank("tank-a").HasValue ? 1 : 0) + (model.GetTank("tank-b").HasValue ? 1 : 0)).CaptureSave(),
                 sensitivity = 1.25f, volume = 0.42f

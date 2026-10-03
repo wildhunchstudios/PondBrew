@@ -45,7 +45,16 @@ namespace EvolutionShop
             bool continuous = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionCycleSmoke") >= 0;
             bool nativeUi = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionUiSmoke") >= 0;
             bool pricing = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPricingSmoke") >= 0;
-            stack.Push(nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() : Scenario());
+            bool customerTypes = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionCustomerTypesSmoke") >= 0;
+            if (!customerTypes)
+            {
+                // Earlier scenarios were written for one visitor of the R02/R03.1 customer type at a time.
+                shop.Customers.MaxVisitors = 1;
+                shop.Customers.ForcedArchetypeId = CustomerArchetypes.Casual;
+                limitations.Add("Pinned to one casual visitor at a time (R03.2 validation hook) to keep this earlier scenario's assumptions; customer types and two concurrent visitors are covered by the customer-types scenario.");
+            }
+            stack.Push(nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
+                customerTypes ? CustomerTypesScenario() : Scenario());
             bool failed = false;
             while (stack.Count > 0)
             {
@@ -65,7 +74,8 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" : "Integrated regression",
+                scenario = nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" :
+                    customerTypes ? "R03.2 customer types and two-visitor queue" : "Integrated regression",
                 context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
                 unityVersion = Application.unityVersion,
                 graphics = SystemInfo.graphicsDeviceName,

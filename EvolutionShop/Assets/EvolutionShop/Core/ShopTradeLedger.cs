@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace EvolutionShop
 {
@@ -30,27 +31,34 @@ namespace EvolutionShop
         public bool hasLast;
         public TradeDaySave current;
         public TradeDaySave last;
+        // Versions 1-2: at most one unresolved visitor.
         public string pendingCustomerId;
+        // Version 3: every unresolved visitor, in arrival order.
+        public string[] pendingCustomerIds;
     }
 
     /// <summary>
     /// Observes committed shop events without owning stock, payment, rewards or the day clock.
-    /// Keeps only the current day, last completed day, and one unresolved visitor identity.
+    /// Keeps only the current day, last completed day, and the unresolved visitor identities.
     /// </summary>
     public sealed class ShopTradeLedger
     {
-        public const int SaveVersion = 2;
+        public const int SaveVersion = 3;
         public const int MaxCounter = 1000000;
         public const long MaxRevenue = 1000000000000L;
+        /// <summary>Unresolved visitors at once; above the shop's visitor cap so it never limits play.</summary>
+        public const int MaxPending = 4;
 
         TradeDaySave current;
         TradeDaySave last;
-        string pendingCustomerId;
+        readonly List<string> pending = new List<string>();
 
         public TradeDaySave Current => Copy(current);
         public TradeDaySave Last => Copy(last);
         public int LastDayNumber => last == null ? 0 : last.dayNumber;
-        public bool HasPending => pendingCustomerId != null;
+        public bool HasPending => pending.Count > 0;
+        public int PendingCount => pending.Count;
+        public bool IsPending(string id) => id != null && pending.Contains(id);
 
         public bool BeginDay(int dayNumber, int stockedCount)
         {
@@ -62,16 +70,17 @@ namespace EvolutionShop
 
         public bool BeginVisit(string id)
         {
-            if (current == null || HasPending || !CustomerId(id) || current.visitors == MaxCounter) return false;
+            if (current == null || pending.Count >= MaxPending || !CustomerId(id) || pending.Contains(id) ||
+                current.visitors == MaxCounter) return false;
             current.visitors++;
-            pendingCustomerId = id;
+            pending.Add(id);
             return true;
         }
 
         /// <summary>Record Sold at payment, not departure. Resolve other outcomes when a visit is cancelled.</summary>
         public bool ResolveVisit(string id, CustomerOutcome outcome, int price = 0)
         {
-            if (current == null || !HasPending || pendingCustomerId != id || price < 0 ||
+            if (current == null || !IsPending(id) || price < 0 ||
                 (outcome != CustomerOutcome.Sold && price != 0)) return false;
             switch (outcome)
             {
@@ -88,7 +97,7 @@ namespace EvolutionShop
                 case CustomerOutcome.TooExpensive: current.tooExpensive++; break;
                 default: return false;
             }
-            pendingCustomerId = null;
+            pending.Remove(id);
             return true;
         }
 
@@ -102,16 +111,19 @@ namespace EvolutionShop
         public bool FinishDay(int stockedCount)
         {
             if (current == null || !Counter(stockedCount)) return false;
-            if (HasPending) ResolveVisit(pendingCustomerId, CustomerOutcome.Closed);
+            foreach (string id in pending.ToArray()) ResolveVisit(id, CustomerOutcome.Closed);
             current.stockedAtClose = stockedCount;
             last = current;
             current = null;
             return true;
         }
 
+        /// <summary>Reloading cancels every unpaid visit: each counts once as interrupted.</summary>
         public bool CancelPendingForReload()
         {
-            return HasPending && ResolveVisit(pendingCustomerId, CustomerOutcome.OrderLost);
+            if (!HasPending) return false;
+            foreach (string id in pending.ToArray()) ResolveVisit(id, CustomerOutcome.OrderLost);
+            return true;
         }
 
         public TradeLedgerSave CaptureSave()
@@ -119,26 +131,42 @@ namespace EvolutionShop
             return new TradeLedgerSave
             {
                 version = SaveVersion, hasCurrent = current != null, hasLast = last != null,
-                current = Copy(current), last = Copy(last), pendingCustomerId = pendingCustomerId
+                current = Copy(current), last = Copy(last), pendingCustomerIds = pending.ToArray()
             };
         }
 
         public static bool TryRestore(TradeLedgerSave save, ShopDaySave cycle, out ShopTradeLedger ledger)
         {
             ledger = null;
-            if (save == null || (save.version != 1 && save.version != SaveVersion) ||
+            if (save == null || save.version < 1 || save.version > SaveVersion ||
                 !ShopDayCycle.TryRestore(cycle, out _)) return false;
             // Version 1 had no price refusals; a nonzero count there is corrupt rather than migrated.
             if (save.version == 1 && ((save.current != null && save.current.tooExpensive != 0) ||
                 (save.last != null && save.last.tooExpensive != 0))) return false;
+            var unresolved = new List<string>();
+            if (save.version < 3)
+            {
+                // Versions 1-2 held one visitor in the single field; the list did not exist.
+                if (save.pendingCustomerIds != null && save.pendingCustomerIds.Length != 0) return false;
+                if (!string.IsNullOrEmpty(save.pendingCustomerId)) unresolved.Add(save.pendingCustomerId);
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(save.pendingCustomerId)) return false;
+                if (save.pendingCustomerIds != null)
+                {
+                    if (save.pendingCustomerIds.Length > MaxPending) return false;
+                    unresolved.AddRange(save.pendingCustomerIds);
+                }
+            }
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in unresolved) if (!CustomerId(id) || !seen.Add(id)) return false;
             bool active = cycle.phase == ShopDayPhase.Open || cycle.phase == ShopDayPhase.Closing;
-            bool pending = !string.IsNullOrEmpty(save.pendingCustomerId);
-            if (pending && !CustomerId(save.pendingCustomerId)) return false;
-            if (active != save.hasCurrent || (!active && pending)) return false;
+            if (active != save.hasCurrent || (!active && unresolved.Count > 0)) return false;
             // Unity's inline-class serializer may replace null with a default object. Presence flags
             // distinguish that empty sentinel from a real report; nonempty hidden payloads are corrupt.
             if ((!save.hasCurrent && !EmptyDay(save.current)) || (!save.hasLast && !EmptyDay(save.last))) return false;
-            if (save.hasCurrent && (save.current == null || !ValidDay(save.current, pending ? 1 : 0) ||
+            if (save.hasCurrent && (save.current == null || !ValidDay(save.current, unresolved.Count) ||
                 save.current.dayNumber != cycle.dayNumber || save.current.stockedAtClose != 0)) return false;
             if (save.hasLast && (save.last == null || !ValidDay(save.last, 0) ||
                 (long)save.last.dayNumber + 1 != cycle.dayNumber)) return false;
@@ -146,9 +174,9 @@ namespace EvolutionShop
             ledger = new ShopTradeLedger
             {
                 current = save.hasCurrent ? Copy(save.current) : null,
-                last = save.hasLast ? Copy(save.last) : null,
-                pendingCustomerId = pending ? save.pendingCustomerId : null
+                last = save.hasLast ? Copy(save.last) : null
             };
+            ledger.pending.AddRange(unresolved);
             return true;
         }
 

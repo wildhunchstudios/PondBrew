@@ -55,7 +55,7 @@ namespace EvolutionShop.Tests
 
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original), "Read must not rewrite the slot.");
-            Assert.That(slot.formatVersion, Is.EqualTo(4));
+            Assert.That(slot.formatVersion, Is.EqualTo(5));
             Assert.That(slot.game.version, Is.EqualTo(2));
             Assert.That(slot.game.prices.Length, Is.EqualTo(2));
             Assert.That(restored.GetPrice("pondlet").Value.Price, Is.EqualTo(18));
@@ -119,10 +119,10 @@ namespace EvolutionShop.Tests
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
                 Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
                 Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1), "Read must not create temp or backup files.");
-                Assert.That(slot.formatVersion, Is.EqualTo(4));
+                Assert.That(slot.formatVersion, Is.EqualTo(5));
                 Assert.That(slot.game.version, Is.EqualTo(2));
                 Assert.That(slot.game.prices, Is.Empty);
-                Assert.That(slot.trades.version, Is.EqualTo(2));
+                Assert.That(slot.trades.version, Is.EqualTo(3));
                 Assert.That(JsonUtility.ToJson(slot.trades), Is.EqualTo(expectedReport));
                 Assert.That(restored.Currency, Is.EqualTo(6));
                 Assert.That(restored.GetPrice("bubblebelly").Value.Price, Is.EqualTo(10));
@@ -174,28 +174,34 @@ namespace EvolutionShop.Tests
         }
 
         [TestCase("tags-in-format-3")]
-        [TestCase("game-1-in-format-4")]
+        [TestCase("game-1-in-format-5")]
         [TestCase("game-2-in-format-3")]
         [TestCase("report-1-in-format-4")]
         [TestCase("report-2-in-format-3")]
+        [TestCase("report-2-in-format-5")]
+        [TestCase("report-3-in-format-4")]
         [TestCase("refusals-in-report-1")]
-        [TestCase("format-5")]
+        [TestCase("format-6")]
         public void MismatchedSaveVersionsAreRejectedWithoutChangingTheFile(string problem)
         {
             StockAndOpen();
             Ok(model.SetPrice("pondlet", 8));
-            int format = problem.EndsWith("format-3", StringComparison.Ordinal) || problem == "refusals-in-report-1" ? 3 : 4;
-            if (problem == "format-5") format = 5;
+            int format = problem.EndsWith("format-3", StringComparison.Ordinal) || problem == "refusals-in-report-1" ? 3
+                : problem.EndsWith("format-4", StringComparison.Ordinal) ? 4 : problem == "format-6" ? 6 : 5;
             var game = model.CaptureSave();
             var trades = reports.CaptureSave();
+            // Start from each format's true inner versions, then break exactly one thing.
             if (format == 3) { game.version = 1; game.prices = null; trades.version = 1; }
+            if (format == 4) trades.version = 2;
             switch (problem)
             {
                 case "tags-in-format-3": game.prices = new[] { new PriceSave { speciesId = "pondlet", price = 8 } }; break;
-                case "game-1-in-format-4": game.version = 1; game.prices = null; break;
+                case "game-1-in-format-5": game.version = 1; game.prices = null; break;
                 case "game-2-in-format-3": game = model.CaptureSave(); break;
                 case "report-1-in-format-4": trades.version = 1; break;
                 case "report-2-in-format-3": trades.version = 2; break;
+                case "report-2-in-format-5": trades.version = 2; break;
+                case "report-3-in-format-4": trades.version = 3; break;
                 case "refusals-in-report-1":
                     Assert.That(reports.BeginVisit("refuser"), Is.True);
                     Assert.That(reports.ResolveVisit("refuser", CustomerOutcome.TooExpensive), Is.True);

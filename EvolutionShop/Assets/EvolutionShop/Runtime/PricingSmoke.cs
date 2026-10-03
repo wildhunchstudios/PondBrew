@@ -169,8 +169,8 @@ namespace EvolutionShop
             Check(shop.ReloadSaved() && shop.Model.GetTank("tank-a").Value.Id == legacyPondlet && shop.Model.GetPrice("pondlet").Value.Price == 6 &&
                 File.ReadAllText(shop.SavePath) == legacyJson, "Runtime reload of an R02 format-3 save keeps stock at standard prices without writing");
             Check(shop.SaveNow() && File.ReadAllText(shop.SavePath + ".v3.bak") == legacyJson &&
-                JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).formatVersion == 4,
-                "The first new save archives the exact format-3 bytes and writes format 4");
+                JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).formatVersion == SaveStore.CurrentFormatVersion,
+                "The first new save archives the exact format-3 bytes and writes the current format");
             shop.ConfirmNewGame();
         }
 

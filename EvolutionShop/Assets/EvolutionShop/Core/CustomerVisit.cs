@@ -14,6 +14,8 @@ namespace EvolutionShop
         public float PatienceSeconds = 45f;
         public float TravelTimeoutSeconds = 18f;
         public float PaidReactionSeconds = 1.5f;
+        // Visitors in the shop at once; the counter queue has a place for each.
+        public int MaxVisitors = 2;
         // The first customer type pays up to 150% of the standard price; 75% or less reads as a bargain.
         public int BargainPercent = 75;
         public int PriceTolerancePercent = 150;
@@ -29,9 +31,19 @@ namespace EvolutionShop
         private readonly CustomerRules rules;
         private readonly string[] tankIds;
         private readonly HashSet<string> rejectedTanks = new HashSet<string>(StringComparer.Ordinal);
+        private readonly CustomerArchetype archetype;
+        private readonly Func<string, bool> contended;
         private float phaseSeconds;
 
         public string Id { get; }
+        /// <summary>A copy of this visitor's type; changing it cannot change the visit.</summary>
+        public CustomerArchetype Archetype => archetype.Copy();
+        public string ArchetypeId => archetype.Id;
+        public string ArchetypeName => archetype.DisplayName;
+        public bool Likes(string speciesId) => archetype.Likes(speciesId);
+        public int Budget => archetype.Budget;
+        /// <summary>True when the latest refused tag was above this visitor's budget, not only its tolerance.</summary>
+        public bool RefusedOverBudget { get; private set; }
         public CustomerPhase Phase { get; private set; }
         public CustomerOutcome Outcome { get; private set; }
         public string TargetTankId { get; private set; }
@@ -47,10 +59,19 @@ namespace EvolutionShop
         public int PriceRejections { get; private set; }
         public float QueueSecondsRemaining => Phase == CustomerPhase.Queued ? Math.Max(0f, phaseSeconds) : 0f;
 
-        public CustomerVisit(GameModel model, string[] tankIds, CustomerRules rules = null)
+        /// <param name="archetype">The visitor's type; null means the shared rules' standard customer.</param>
+        /// <param name="contended">Whether another visitor is already heading to or browsing a display.
+        /// Used only to spread visitors out; claims are still settled by the model.</param>
+        public CustomerVisit(GameModel model, string[] tankIds, CustomerRules rules = null,
+            CustomerArchetype archetype = null, Func<string, bool> contended = null)
         {
             this.model = model ?? throw new ArgumentNullException(nameof(model));
             this.rules = CopyRules(rules ?? new CustomerRules());
+            var type = archetype ?? CustomerArchetype.FromRules(this.rules);
+            string problem = type.Problem(id => model.GetSpecies(id) != null);
+            if (problem != null) throw new ArgumentException(problem, nameof(archetype));
+            this.archetype = type.Copy();
+            this.contended = contended;
             if (tankIds == null || tankIds.Length == 0) throw new ArgumentException("At least one display tank is required.", nameof(tankIds));
             var known = new HashSet<string>(StringComparer.Ordinal);
             foreach (var tank in model.CaptureSave().tanks) known.Add(tank.tankId);
@@ -61,15 +82,7 @@ namespace EvolutionShop
 
             this.tankIds = (string[])tankIds.Clone();
             Id = Guid.NewGuid().ToString("N");
-            TargetTankId = this.tankIds[0];
-            foreach (string tankId in this.tankIds)
-            {
-                if (model.GetTank(tankId).HasValue && !model.GetReservation(tankId).HasValue)
-                {
-                    TargetTankId = tankId;
-                    break;
-                }
-            }
+            TargetTankId = BestDisplay(null) ?? this.tankIds[0];
             Phase = CustomerPhase.Arriving;
             phaseSeconds = this.rules.TravelTimeoutSeconds;
         }
@@ -99,14 +112,14 @@ namespace EvolutionShop
             switch (Phase)
             {
                 case CustomerPhase.Arriving:
-                    if (arrivedAtDestination) SetPhase(CustomerPhase.Browsing, rules.BrowseSeconds);
+                    if (arrivedAtDestination) SetPhase(CustomerPhase.Browsing, archetype.BrowseSeconds);
                     else if (Expired(seconds)) Cancel(CustomerOutcome.PathBlocked);
                     break;
                 case CustomerPhase.Browsing:
                     if (Expired(seconds)) Decide();
                     break;
                 case CustomerPhase.ToCounter:
-                    if (arrivedAtDestination) SetPhase(CustomerPhase.Queued, rules.PatienceSeconds);
+                    if (arrivedAtDestination) SetPhase(CustomerPhase.Queued, archetype.PatienceSeconds);
                     else if (Expired(seconds)) Cancel(CustomerOutcome.PathBlocked);
                     break;
                 case CustomerPhase.Queued:
@@ -154,7 +167,7 @@ namespace EvolutionShop
         {
             var stock = model.GetTank(TargetTankId);
             var tag = stock.HasValue ? model.GetPrice(stock.Value.SpeciesId) : null;
-            int limit = tag.HasValue ? rules.AcceptableLimit(tag.Value.Standard) : int.MaxValue;
+            int limit = tag.HasValue ? archetype.AcceptableLimit(tag.Value.SpeciesId, tag.Value.Standard) : int.MaxValue;
             var reserved = model.ReserveTank(TargetTankId, Id, limit);
             if (!reserved.Success)
             {
@@ -165,6 +178,7 @@ namespace EvolutionShop
                     QuotedSpeciesId = tag.Value.SpeciesId;
                     QuotedPrice = tag.Value.Price;
                     Reaction = PriceReaction.TooExpensive;
+                    RefusedOverBudget = archetype.OverBudget(tag.Value.Price);
                 }
                 // Displays this visitor refused stay refused, so two overpriced tanks end the visit.
                 if (!RedirectToAvailableDisplay())
@@ -180,7 +194,7 @@ namespace EvolutionShop
             QuotedSpeciesId = SpeciesId;
             QuotedPrice = Price;
             var agreed = model.GetPrice(SpeciesId);
-            Reaction = agreed.HasValue ? rules.Judge(Price, agreed.Value.Standard) : PriceReaction.Fair;
+            Reaction = agreed.HasValue ? archetype.Judge(SpeciesId, Price, agreed.Value.Standard) : PriceReaction.Fair;
             SetPhase(CustomerPhase.ToCounter, rules.TravelTimeoutSeconds);
         }
 
@@ -193,16 +207,30 @@ namespace EvolutionShop
 
         private bool RedirectToAvailableDisplay()
         {
+            string next = BestDisplay(TargetTankId);
+            if (next == null) return false;
+            TargetTankId = next;
+            SetPhase(CustomerPhase.Arriving, rules.TravelTimeoutSeconds);
+            return true;
+        }
+
+        /// <summary>
+        /// Stocked, unclaimed displays this visitor has not refused. Favourite species come first, then
+        /// displays nobody else is heading to, then the shop's display order.
+        /// </summary>
+        private string BestDisplay(string exclude)
+        {
+            string best = null;
+            int bestScore = int.MinValue;
             foreach (string tankId in tankIds)
             {
-                if (tankId == TargetTankId || rejectedTanks.Contains(tankId) ||
-                    !model.GetTank(tankId).HasValue || model.GetReservation(tankId).HasValue)
-                    continue;
-                TargetTankId = tankId;
-                SetPhase(CustomerPhase.Arriving, rules.TravelTimeoutSeconds);
-                return true;
+                if (tankId == exclude || rejectedTanks.Contains(tankId)) continue;
+                var stock = model.GetTank(tankId);
+                if (!stock.HasValue || model.GetReservation(tankId).HasValue) continue;
+                int score = (archetype.Likes(stock.Value.SpeciesId) ? 2 : 0) + (contended != null && contended(tankId) ? 0 : 1);
+                if (score > bestScore) { best = tankId; bestScore = score; }
             }
-            return false;
+            return best;
         }
 
         private void ReleaseOwnReservation()
@@ -230,12 +258,15 @@ namespace EvolutionShop
             if (value.BargainPercent < 0 || value.BargainPercent > 100 ||
                 value.PriceTolerancePercent < 100 || value.PriceTolerancePercent > 1000)
                 throw new ArgumentException("Bargain must be 0-100% and tolerance 100-1000% of the standard price.", nameof(value));
+            if (value.MaxVisitors < 1 || value.MaxVisitors > ShopTradeLedger.MaxPending)
+                throw new ArgumentException("Between 1 and " + ShopTradeLedger.MaxPending + " visitors may be in the shop at once.", nameof(value));
             return new CustomerRules
             {
                 ArrivalDelaySeconds = value.ArrivalDelaySeconds, NextArrivalSeconds = value.NextArrivalSeconds,
                 BrowseSeconds = value.BrowseSeconds, PatienceSeconds = value.PatienceSeconds,
                 TravelTimeoutSeconds = value.TravelTimeoutSeconds, PaidReactionSeconds = value.PaidReactionSeconds,
-                BargainPercent = value.BargainPercent, PriceTolerancePercent = value.PriceTolerancePercent
+                BargainPercent = value.BargainPercent, PriceTolerancePercent = value.PriceTolerancePercent,
+                MaxVisitors = value.MaxVisitors
             };
         }
         private static bool PositiveFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value) && value > 0f;

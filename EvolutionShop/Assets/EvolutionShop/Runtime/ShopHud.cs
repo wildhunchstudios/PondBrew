@@ -131,7 +131,7 @@ namespace EvolutionShop
                     Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
                     Space();
                     Text("Prepare at night: mix one Bloom and one Flow in the lab, then take your creature to a front tank. Open at the counter. Customers browse, choose a creature and wait for checkout. Use E at the counter and serve their order before their patience runs out.");
-                    Text("Press E at a stocked tank to change its price tag. Customers react to your price; if it is too high they walk away.");
+                    Text("Press E at a stocked tank to change its price tag. Four kinds of customer react to your price differently; if it is too high for them they walk away. The journal (TAB) describes each.");
                     Small("Nights are untimed. Growers are free. One local save; production and the clock stop while paused or the application is closed.");
                     Space(); Button("Enter your shop", () => SetPanel(ShopPanel.None));
                     break;
@@ -202,7 +202,9 @@ namespace EvolutionShop
             Space();
             Small("PRICE TAG / every displayed " + species.DisplayName);
             Heading(tag.Price + " credits" + (tag.Price == tag.Standard ? "  (standard)" : "  (standard " + tag.Standard + ")"));
-            Text("Customers will think: " + ReactionLabel(Customers.Preview(tag)));
+            Small("HOW EACH CUSTOMER TAKES IT  /  " + Customers.BuyerTypes(tag) + " of " + Customers.ArrivingTypes + " types will buy");
+            foreach (var type in Customers.Archetypes)
+                if (type.Weight > 0) Text(type.DisplayName + ": " + TypeReactionLabel(type, tag));
             GUILayout.BeginHorizontal();
             PriceButton(species.Id, tag, -5); PriceButton(species.Id, tag, -1);
             PriceButton(species.Id, tag, 1); PriceButton(species.Id, tag, 5);
@@ -212,6 +214,13 @@ namespace EvolutionShop
             Button("Use standard price  /  " + tag.Standard + " credits", () => SetSpeciesPrice(species.Id, tag.Standard));
             GUI.enabled = enabled;
             Small("Allowed " + tag.Minimum + "-" + tag.Maximum + " credits. A customer who already reserved pays the price they agreed to; a new tag applies to the next customer.");
+        }
+        string TypeReactionLabel(CustomerArchetype type, PriceView tag)
+        {
+            var reaction = Customers.Preview(type, tag);
+            string label = reaction == PriceReaction.TooExpensive && type.OverBudget(tag.Price)
+                ? "Over budget (" + type.Budget + "), won't buy" : ReactionLabel(reaction);
+            return type.Likes(tag.SpeciesId) ? label + "  (collects these)" : label;
         }
         void PriceButton(string speciesId, PriceView tag, int delta)
         {
@@ -276,7 +285,7 @@ namespace EvolutionShop
                 var tag = Model.GetPrice(species.Id).Value;
                 Small((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + (reserved.HasValue
                     ? "RESERVED at the agreed " + reserved.Value.Price + " credits"
-                    : tag.Price + " credits (" + ReactionLabel(Customers.Preview(tag)) + ") / available"));
+                    : tag.Price + " credits (" + Customers.BuyerTypes(tag) + " of " + Customers.ArrivingTypes + " customer types buy) / available"));
             }
             Small("Change a price tag with E at its display tank.");
             Space();
@@ -370,13 +379,13 @@ namespace EvolutionShop
         }
         void DrawCustomerOrder()
         {
-            var visit = Customers.Visit;
+            var visit = Customers.NextToServe;
             if (visit == null) { Text(Customers.Status); return; }
             if (visit.Phase == CustomerPhase.Queued)
             {
                 var species = Model.GetSpecies(visit.SpeciesId);
                 Heading((species == null ? "Creature" : species.DisplayName) + " / " + visit.Price + " credits agreed");
-                Text("Customer waiting / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + " seconds patience / they said: " + ReactionLabel(visit.Reaction));
+                Text(visit.ArchetypeName + " waiting / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + " seconds patience / they said: " + ReactionLabel(visit.Reaction));
                 bool enabled = GUI.enabled;
                 GUI.enabled = enabled && IsAtCounter;
                 Button("Serve customer  /  +" + visit.Price + " credits", () => ServeCustomer());
@@ -391,6 +400,20 @@ namespace EvolutionShop
                     var species = Model.GetSpecies(visit.SpeciesId);
                     Small("Reserved: " + (species == null ? "creature" : species.DisplayName) + " / " + visit.Price + " credits agreed (" + ReactionLabel(visit.Reaction) + ")");
                 }
+            }
+            foreach (var other in Customers.Visits)
+                if (other != visit) Small("Also here: " + VisitorLine(other));
+        }
+        string VisitorLine(CustomerVisit visit)
+        {
+            var species = Model.GetSpecies(visit.SpeciesId);
+            switch (visit.Phase)
+            {
+                case CustomerPhase.Queued: return visit.ArchetypeName + " in line, " + (species == null ? "creature" : species.DisplayName) + " for " + visit.Price + " / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + "s patience";
+                case CustomerPhase.ToCounter: return visit.ArchetypeName + " bringing a " + (species == null ? "creature" : species.DisplayName) + " (" + visit.Price + " agreed) to the counter";
+                case CustomerPhase.Paid: return visit.ArchetypeName + ", just paid";
+                case CustomerPhase.Leaving: return visit.ArchetypeName + ", leaving";
+                default: return visit.ArchetypeName + ", browsing";
             }
         }
         void DrawUpgrade()
@@ -422,6 +445,20 @@ namespace EvolutionShop
                 else {Heading("Unknown specimen"); Small(species.Id == "pondlet" ? "Begin with a balanced pair." : species.Id == "bubblebelly" ? "A little more Bloom may round things out." : "A little more Flow may stretch a tail.");}
             }
             Space(); Small("Known recipes can be prepared in one click at the incubator, using cultures you have collected.");
+            Space(); Heading("Your customers");
+            Small("Up to two visit at once and wait in line at the counter, first come, first served.");
+            foreach (var type in Customers.Archetypes)
+                if (type.Weight > 0) Text(type.DisplayName + ": " + CustomerNote(type));
+        }
+        static string CustomerNote(CustomerArchetype type)
+        {
+            switch (type.Id)
+            {
+                case CustomerArchetypes.Bargain: return "spends at most " + type.Budget + " credits and loves a discount. Very patient (" + type.PatienceSeconds + "s).";
+                case CustomerArchetypes.Collector: return "pays up to " + type.FavoriteTolerancePercent / 100f + "x for Bubblebellies and Ribbonfins and looks for them first; only a fair price for anything else.";
+                case CustomerArchetypes.Premium: return "pays up to " + type.TolerancePercent / 100f + "x the standard price but waits only " + type.PatienceSeconds + "s at the counter.";
+                default: return "pays up to " + type.TolerancePercent / 100f + "x the standard price; waits " + type.PatienceSeconds + "s at the counter.";
+            }
         }
         void Heading(string text) => GUILayout.Label(text, headingStyle);
         void Text(string text) => GUILayout.Label(text, bodyStyle);
