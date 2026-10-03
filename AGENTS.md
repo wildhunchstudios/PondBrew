@@ -454,3 +454,13 @@ When resuming implementation, select the first unfinished ready task, record its
 | 2026-10-03 | R02.4 daily report delivered | r02-daily-report: 270 EditMode cases, 179 Editor / 180 Windows checks, build/package and report screens verified. Initial JSON failures repaired and retained. Next R02.5 full-cycle human playtest/validation gate; later milestones remain planned |
 
 At future checkpoints append a concise row with task IDs, commit/tag, actual evidence, remaining risk, and exact next action. Keep this section current and short; put large raw outputs in evidence files. Do not erase history to turn an unverified or failed attempt into a pass.
+
+### R02.5 current assignment — technical cycle and pending human playtest
+
+- User feedback on 2026-10-03: latest DailyReport build **not played yet**. Human clarity, pacing and desire for a second day remain unaccepted. R03 must not start from automated evidence alone.
+- [ ] R02.5a: fix late restocking of an alternate display being ignored by a browsing customer; verify physical retargeting and reservation safety.
+- [ ] R02.5b: run two continuous fresh-save cycles using actual timed collection, incubation, movement and E transfers, retaining stock and money across days; record automation workload limits.
+- [ ] R02.5c: separately probe actual native GUI clicks, build/package the exact tested player, and retain raw successful/failed evidence.
+- [ ] R02.5d: human playtest of latest loop; log waiting versus action and fix observed friction before marking R02 complete.
+
+- R02.5a rule checkpoint evidence: original core reproduced **2/22 failures**, retained in r02-cycle-before-fix-results.xml. Applied retargeting fix; full r02-cycle-editmode-results.xml **273/273 passed**, zero failed/skipped, Unity exit0. Runtime physical retarget and continuous cycle remain pending; no new playable build claimed yet.

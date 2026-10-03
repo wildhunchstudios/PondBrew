@@ -21,12 +21,13 @@ namespace EvolutionShop
     {
         private readonly GameModel model;
         private readonly CustomerRules rules;
+        private readonly string[] tankIds;
         private float phaseSeconds;
 
         public string Id { get; }
         public CustomerPhase Phase { get; private set; }
         public CustomerOutcome Outcome { get; private set; }
-        public string TargetTankId { get; }
+        public string TargetTankId { get; private set; }
         public string SpecimenId { get; private set; }
         public string SpeciesId { get; private set; }
         public int Price { get; private set; }
@@ -44,9 +45,10 @@ namespace EvolutionShop
                 if (string.IsNullOrWhiteSpace(tankId) || !known.Contains(tankId) || !seen.Add(tankId))
                     throw new ArgumentException("Display tank IDs must be known and unique.", nameof(tankIds));
 
+            this.tankIds = (string[])tankIds.Clone();
             Id = Guid.NewGuid().ToString("N");
-            TargetTankId = tankIds[0];
-            foreach (string tankId in tankIds)
+            TargetTankId = this.tankIds[0];
+            foreach (string tankId in this.tankIds)
             {
                 if (model.GetTank(tankId).HasValue && !model.GetReservation(tankId).HasValue)
                 {
@@ -89,7 +91,11 @@ namespace EvolutionShop
                 case CustomerPhase.Browsing:
                     if (!Expired(seconds)) break;
                     var reserved = model.ReserveTank(TargetTankId, Id);
-                    if (!reserved.Success) { Cancel(CustomerOutcome.NoStock); break; }
+                    if (!reserved.Success)
+                    {
+                        if (!RedirectToAvailableDisplay()) Cancel(CustomerOutcome.NoStock);
+                        break;
+                    }
                     var reservation = model.GetReservation(TargetTankId);
                     if (!reservation.HasValue || reservation.Value.CustomerId != Id)
                     { Cancel(CustomerOutcome.OrderLost); break; }
@@ -144,6 +150,19 @@ namespace EvolutionShop
             var reservation = model.GetReservation(TargetTankId);
             return reservation.HasValue && reservation.Value.CustomerId == Id &&
                 reservation.Value.SpecimenId == SpecimenId && reservation.Value.SpeciesId == SpeciesId && reservation.Value.Price == Price;
+        }
+
+        private bool RedirectToAvailableDisplay()
+        {
+            foreach (string tankId in tankIds)
+            {
+                if (tankId == TargetTankId || !model.GetTank(tankId).HasValue || model.GetReservation(tankId).HasValue)
+                    continue;
+                TargetTankId = tankId;
+                SetPhase(CustomerPhase.Arriving, rules.TravelTimeoutSeconds);
+                return true;
+            }
+            return false;
         }
 
         private void ReleaseOwnReservation()

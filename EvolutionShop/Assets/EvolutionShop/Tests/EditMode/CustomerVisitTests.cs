@@ -74,6 +74,85 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void LateRestockRedirectsUsingCopiedTankIdsAndRequiresTravelAndFreshBrowsing()
+        {
+            var tankIds = new[] {"tank-a", "tank-b"};
+            var customer = new CustomerVisit(model, tankIds);
+            tankIds[1] = "missing";
+            customer.Advance(0.1f, true, ShopDayPhase.Open);
+            Produce("bubblebelly", "tank-b");
+            string specimen = model.GetTank("tank-b").Value.Id;
+
+            customer.Advance(2f, true, ShopDayPhase.Open);
+            Assert.That(customer.TargetTankId, Is.EqualTo("tank-b"));
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Arriving));
+            Assert.That(customer.Outcome, Is.EqualTo(CustomerOutcome.None));
+            Assert.That(customer.SpecimenId, Is.Null);
+            Assert.That(model.GetReservation("tank-b"), Is.Null);
+            Assert.That(customer.Serve(ShopDayPhase.Open).Failure, Is.EqualTo(FailureCode.NoCustomerReady));
+
+            customer.Advance(17f, false, ShopDayPhase.Open);
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Arriving));
+            customer.Advance(0.1f, true, ShopDayPhase.Open);
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Browsing));
+            customer.Advance(1.5f, false, ShopDayPhase.Open);
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Browsing));
+            Assert.That(model.GetReservation("tank-b"), Is.Null);
+            Assert.That(model.Currency, Is.Zero);
+            customer.Advance(0.5f, false, ShopDayPhase.Open);
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.ToCounter));
+            Assert.That(customer.SpecimenId, Is.EqualTo(specimen));
+            Assert.That(model.GetReservation("tank-b").Value.CustomerId, Is.EqualTo(customer.Id));
+            customer.Advance(0.1f, true, ShopDayPhase.Open);
+            Ok(customer.Serve(ShopDayPhase.Open));
+            Assert.That(customer.Serve(ShopDayPhase.Open).Failure, Is.EqualTo(FailureCode.NoCustomerReady));
+            Assert.That(customer.Outcome, Is.EqualTo(CustomerOutcome.Sold));
+            Assert.That(model.GetTank("tank-b"), Is.Null);
+            Assert.That(model.GetReservation("tank-a"), Is.Null);
+            Assert.That(model.Currency, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void LateRestockReservedByAnotherVisitorIsNotAnAvailableRedirect()
+        {
+            var customer = new CustomerVisit(model, Tanks);
+            customer.Advance(0.1f, true, ShopDayPhase.Open);
+            Produce("pondlet", "tank-b");
+            string specimen = model.GetTank("tank-b").Value.Id;
+            Ok(model.ReserveTank("tank-b", "other-visitor"));
+            customer.Advance(2f, false, ShopDayPhase.Open);
+            Assert.That(customer.TargetTankId, Is.EqualTo("tank-a"));
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Leaving));
+            Assert.That(customer.Outcome, Is.EqualTo(CustomerOutcome.NoStock));
+            Assert.That(model.GetReservation("tank-b").Value.CustomerId, Is.EqualTo("other-visitor"));
+            Assert.That(model.GetTank("tank-b").Value.Id, Is.EqualTo(specimen));
+            Assert.That(customer.SpecimenId, Is.Null);
+            Assert.That(model.Currency, Is.Zero);
+        }
+
+        [Test]
+        public void ClosingDuringRestockRedirectKeepsNewStockUnreservedAndUnpaid()
+        {
+            var customer = new CustomerVisit(model, Tanks);
+            customer.Advance(0.1f, true, ShopDayPhase.Open);
+            Produce("pondlet", "tank-b");
+            string specimen = model.GetTank("tank-b").Value.Id;
+            customer.Advance(2f, false, ShopDayPhase.Open);
+            Assert.That(customer.TargetTankId, Is.EqualTo("tank-b"));
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Arriving));
+            customer.Advance(100f, true, ShopDayPhase.Closing);
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Leaving));
+            Assert.That(customer.Outcome, Is.EqualTo(CustomerOutcome.Closed));
+            Assert.That(customer.Serve(ShopDayPhase.Closing).Failure, Is.EqualTo(FailureCode.NoCustomerReady));
+            Assert.That(model.GetReservation("tank-b"), Is.Null);
+            Assert.That(model.GetTank("tank-b").Value.Id, Is.EqualTo(specimen));
+            Assert.That(model.Currency, Is.Zero);
+            customer.Advance(0.1f, true, ShopDayPhase.Night);
+            Assert.That(customer.Phase, Is.EqualTo(CustomerPhase.Finished));
+            Assert.That(customer.Outcome, Is.EqualTo(CustomerOutcome.Closed));
+        }
+
+        [Test]
         public void LastStockRaceDoesNotStealOrReleaseAnotherVisitReservation()
         {
             Produce("pondlet", "tank-a");
