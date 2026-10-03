@@ -117,7 +117,11 @@ namespace EvolutionShop
         public void SetPaused(bool value)
         {
             paused = value;
-            if (agent && agent.isOnNavMesh) agent.isStopped = paused || pathFailed;
+            if (!agent || !agent.isOnNavMesh) return;
+            agent.isStopped = paused || pathFailed;
+            // isStopped retains residual crowd velocity while braking. Pause must stop
+            // immediately, without clearing the path needed when play resumes.
+            if (paused) agent.velocity = Vector3.zero;
         }
 
         /// <summary>Local presentation only; the caller owns targeting, cooldown and visit cancellation.</summary>

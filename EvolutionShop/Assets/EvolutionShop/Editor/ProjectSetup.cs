@@ -167,6 +167,15 @@ namespace EvolutionShop.Editor
         {
             EnsurePlayableScene();
             string buildDirectory = "../Builds/Windows-" + Application.unityVersion;
+            // A bounded revision suffix keeps an in-use validation player immutable while another build is investigated.
+            string revision = ShopSession.Arg("-evolutionBuildRevision");
+            if (revision != null)
+            {
+                if (revision.Length == 0 || revision.Length > 32 ||
+                    !System.Text.RegularExpressions.Regex.IsMatch(revision, "^[a-z0-9][a-z0-9-]*$"))
+                    throw new InvalidOperationException("Invalid local build revision");
+                buildDirectory += "-" + revision;
+            }
             Directory.CreateDirectory(buildDirectory);
             var options = new BuildPlayerOptions
             {

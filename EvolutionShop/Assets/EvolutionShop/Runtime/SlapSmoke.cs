@@ -10,6 +10,33 @@ namespace EvolutionShop
 {
     public sealed partial class MilestoneSmoke
     {
+        // Measure peak drift, not only the final position: a stopped agent must not
+        // coast while braking. The retained path is exercised by the rest of this route.
+        IEnumerator CheckPausedCustomerMotion(string label, float seconds)
+        {
+            var actors = new System.Collections.Generic.List<CustomerActor>();
+            var positions = new System.Collections.Generic.List<Vector3>();
+            foreach (var visit in shop.Customers.Visits)
+            {
+                var actor = shop.Customers.ActorOf(visit);
+                if (!actor) continue;
+                actors.Add(actor); positions.Add(actor.transform.position);
+            }
+            Check(shop.Paused && actors.Count > 0, label + " has paused navigation to inspect");
+            float peakDrift = 0, until = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < until)
+            {
+                for (int i = 0; i < actors.Count; i++)
+                    peakDrift = Mathf.Max(peakDrift, Vector3.Distance(positions[i], actors[i].transform.position));
+                ObserveCustomers(); yield return null;
+            }
+            for (int i = 0; i < actors.Count; i++)
+                peakDrift = Mathf.Max(peakDrift, Vector3.Distance(positions[i], actors[i].transform.position));
+            File.AppendAllText(Path.Combine(evidence, "pause-motion-evidence.txt"),
+                label + ": actors=" + actors.Count + " seconds=" + seconds + " peakPositionDrift=" + peakDrift.ToString("F6") + Environment.NewLine);
+            Check(peakDrift < .001f, label + " freezes every customer immediately (peak drift <1mm)");
+        }
+
         IEnumerator SlapScenario()
         {
             limitations.Add("Slap probe uses isolated saves, accelerated recipe stock, scripted customer types, camera/player positioning and one temporary LOS blocker. Actual Input System key edges, active-time cooldown, navigation, state recovery and renderer execute. Sound request/gain/clip checks do not prove audible quality. No R03.5 three-shift balance claim.");
@@ -34,6 +61,11 @@ namespace EvolutionShop
             var first = Spawn(CustomerArchetypes.Casual);
             yield return Hold(1);
             var second = Spawn(CustomerArchetypes.Casual);
+            yield return WaitFor(() => customers.ActorOf(first).GetComponent<UnityEngine.AI.NavMeshAgent>().velocity.sqrMagnitude > .64f,
+                10, "a moving customer before the pause regression");
+            shop.SetPanel(ShopPanel.Pause);
+            yield return CheckPausedCustomerMotion("Two arriving customers", .4f);
+            shop.SetPanel(ShopPanel.None);
             yield return WaitFor(() => first.Phase == CustomerPhase.Queued && second.Phase == CustomerPhase.Queued, 35, "two orders before slap");
             string retainedId = first.SpecimenId, firstTank = first.TargetTankId;
             int originalCash = shop.Model.Currency;
@@ -91,7 +123,7 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.Pause);
             float cooldown = shop.SlapCooldownRemaining, reaction = actor.SlapReactionRemaining, gesture = shop.SlapGesture.Remaining;
             Vector3 pausedPosition = actor.transform.position;
-            yield return Hold(.4f);
+            yield return CheckPausedCustomerMotion("Slap departure", .4f);
             Check(Mathf.Abs(shop.SlapCooldownRemaining - cooldown) < .001f && Mathf.Abs(actor.SlapReactionRemaining - reaction) < .001f &&
                 Mathf.Abs(shop.SlapGesture.Remaining - gesture) < .001f && Vector3.Distance(pausedPosition, actor.transform.position) < .01f,
                 "Pause freezes cooldown, glove, reaction and customer navigation together");

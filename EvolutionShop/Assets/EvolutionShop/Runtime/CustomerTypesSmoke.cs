@@ -71,6 +71,9 @@ namespace EvolutionShop
             yield return Capture("50-two-customers-queue");
             yield return EnterCounter();
             yield return Capture("51-counter-queue");
+            shop.ScrollPanel(10000);
+            yield return Capture("51b-counter-queue-scrolled");
+            shop.ScrollPanel(0);
             yield return ServeNext("The bargain hunter at the front");
             Check(collector.Phase == CustomerPhase.Queued && shop.Model.GetTank("tank-b").HasValue, "Serving the front leaves the collector's order untouched");
             yield return WaitFor(() => customers.QueuePlaceOf(collector) == 0 && Flat(ActorPosition(collector), nav.QueueSpot(0)) < .5f, 12,
@@ -85,7 +88,7 @@ namespace EvolutionShop
             var thrifty = Spawn(CustomerArchetypes.Bargain);
             yield return WaitFor(() => thrifty.Phase == CustomerPhase.Leaving, 25, "the bargain hunter judging the Bubblebelly");
             Check(thrifty.Outcome == CustomerOutcome.TooExpensive && thrifty.RefusedOverBudget && thrifty.QuotedPrice == 10 &&
-                customers.CaptionOf(thrifty) == "10 credits? Over my budget!" && !shop.Model.GetReservation("tank-b").HasValue &&
+                customers.CaptionOf(thrifty) == "10 credits? Over my budget!" && customers.StatusOf(thrifty) == "The customer left: over budget" && !shop.Model.GetReservation("tank-b").HasValue &&
                 shop.Model.GetTank("tank-b").Value.Id == bubblebelly, "The bargain hunter refuses a 10-credit Bubblebelly as over its budget of 8, with no claim");
             AimAtVisit(thrifty, new Vector3(1.2f, 0.2f, -2.6f));
             yield return Capture("52-over-budget");
