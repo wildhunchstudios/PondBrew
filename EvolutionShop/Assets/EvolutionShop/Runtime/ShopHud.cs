@@ -54,6 +54,12 @@ namespace EvolutionShop
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
             Box(new Rect(1050, 116, 208, 68), ink);
             GUI.Label(new Rect(1067, 126, 175, 48), machine, bodyStyle);
+            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0)
+            {
+                Box(new Rect(1050, 200, 208, 130), ink);
+                GUI.Label(new Rect(1067, 209, 175, 23), "FRONT STORE", smallStyle);
+                GUI.Label(new Rect(1067, 235, 175, 86), Customers.Status, bodyStyle);
+            }
             if (Panel == ShopPanel.None)
             {
                 Box(new Rect(637, 357, 6, 6), new Color(1,1,1,0.85f));
@@ -86,10 +92,12 @@ namespace EvolutionShop
         }
         string Objective()
         {
+            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.Queued) return "A customer is waiting. Use the front counter to serve.";
+            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter) return "A creature is reserved. Head to the front counter.";
             if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
             if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Head to a display tank in the front store.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
-            if (Model.GetTank("tank-a") != null || Model.GetTank("tank-b") != null) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Visit the sales counter to sell a stocked creature.";
+            if (Model.GetTank("tank-a") != null || Model.GetTank("tank-b") != null) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
             if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
             if (!Model.UpgradeOwned) return "Grow and sell creatures. Save " + Config.UpgradeCost + " credits for a larger siphon.";
@@ -118,7 +126,7 @@ namespace EvolutionShop
                     Space();
                     Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
                     Space();
-                    Text("Prepare at night: mix one Bloom and one Flow in the back lab, then take your creature to a front tank. Open for the day at the counter when ready. Sell and restock during the 8-minute day, or close early at the counter.");
+                    Text("Prepare at night: mix one Bloom and one Flow in the lab, then take your creature to a front tank. Open at the counter. Customers browse, choose a creature and wait for checkout. Use E at the counter and serve their order before their patience runs out.");
                     Small("Nights are untimed. Growers are free. One local save; production and the clock stop while paused or the application is closed.");
                     Space(); Button("Enter your shop", () => SetPanel(ShopPanel.None));
                     break;
@@ -129,7 +137,7 @@ namespace EvolutionShop
                 case ShopPanel.Tank:
                     Heading(selectedTank == "tank-a" ? "Display tank A" : "Display tank B");
                     var resident = Model.GetTank(selectedTank);
-                    Text(resident == null ? "This tank is empty. When a specimen is ready, press E here to transfer it." : Model.GetSpecies(resident.Value.SpeciesId).DisplayName + " lives here. Visit the sales counter to sell this specimen.");
+                    Text(resident == null ? "This tank is empty. When a specimen is ready, press E here to transfer it." : Model.GetSpecies(resident.Value.SpeciesId).DisplayName + (Model.GetReservation(selectedTank).HasValue ? " is reserved. Serve its customer at the front counter." : " lives here. Open the shop and let a customer choose it."));
                     Small("Capacity: one specimen per tank. A full tank never consumes a waiting specimen.");
                     break;
                 case ShopPanel.Pause:
@@ -139,10 +147,10 @@ namespace EvolutionShop
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
                     Volume = GUILayout.HorizontalSlider(Volume, 0, 1); AudioListener.volume = Volume;
                     Space(); Button("Save and resume", () => { if (SaveNow()) SetPanel(ShopPanel.None); });
-                    Button("Reload local save", () => { if (ReloadSaved()) { SetPanel(ShopPanel.None); Notify("Local save restored."); } });
+                    Button("Reload local save", () => { if (ReloadSaved()) { SetPanel(ShopPanel.None); Notify("Local save restored. Unpaid visits cancelled; their creatures remain in the tanks."); } });
                     Button("New game...", () => SetPanel(ShopPanel.Reset));
                     Button("Save and quit", Quit);
-                    Small("Simulation does not advance while the application is closed.");
+                    Small("No offline progress. Reload cancels unpaid visits and releases their creatures. Completed sales stay saved.");
                     break;
                 case ShopPanel.Reset:
                     Heading("Start a new game?");
@@ -152,7 +160,7 @@ namespace EvolutionShop
                     break;
                 case ShopPanel.CloseShop:
                     Heading("Close for the night?");
-                    Text("Finish today's trading now. Unsold specimens, cultures and lab work stay with you. The next preparation night begins after a short closing period.");
+                    Text("Stop new arrivals now. You have 3 seconds to finish an accepted checkout; remaining unpaid orders cancel safely. Unsold specimens, cultures and lab work stay with you for the next preparation night.");
                     Space(); Button("Keep trading", () => SetPanel(ShopPanel.Counter));
                     Button("Close today's shop", () => { CloseForNight(); SetPanel(ShopPanel.Counter); });
                     break;
@@ -199,30 +207,57 @@ namespace EvolutionShop
         void DrawCounter()
         {
             Heading("The sales counter");
-            if (Cycle.Phase == ShopDayPhase.Closing)
-            { Text("Closing for the night..."); Text("Your unsold creatures and ongoing production are safe."); Heading(ClockText()); return; }
-            bool open = Cycle.Phase == ShopDayPhase.Open;
-            Text(open ? "Choose a stocked specimen to sell. Its discovery stays in your journal." : "Preparation night for day " + Cycle.DayNumber + ". Stock your front tanks in your own time, then open when ready.");
+            bool night = Cycle.Phase == ShopDayPhase.Night;
+            if (night) Text("Preparation night for day " + Cycle.DayNumber + ". Stock your front tanks, then open when ready.");
+            else
+            {
+                if (Cycle.Phase == ShopDayPhase.Closing) Text("Closing / " + ClockText());
+                DrawCustomerOrder();
+                Space(); Small("DISPLAY STOCK");
+            }
             foreach (var id in Config.TankIds)
             {
                 var fish = Model.GetTank(id);
                 if (fish == null) { Small(id == "tank-a" ? "Tank A / empty" : "Tank B / empty"); continue; }
                 var species = Model.GetSpecies(fish.Value.SpeciesId);
-                string tank = id;
-                Space();
-                if (open) Button("Sell " + species.DisplayName + " from " + (id == "tank-a" ? "A" : "B") + "  /  +" + species.SaleValue + " credits", () => SellAtCounter(tank));
-                else Text((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + species.SaleValue + " credits");
+                Small((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + species.SaleValue + " credits" + (Model.GetReservation(id).HasValue ? " / RESERVED" : " / available"));
             }
             Space();
-            if (open)
+            if (Cycle.Phase == ShopDayPhase.Open)
             {
-                Small("Trading ends when the clock reaches zero. You can keep using the lab and restocking during the day.");
+                Small("Keep the displays stocked. Customers leave if there is nothing available or checkout takes too long.");
                 Button("Close for the night...", () => SetPanel(ShopPanel.CloseShop));
             }
-            else
+            else if (night)
             {
                 Small("An 8-minute trading day starts when you open. You can close early; empty stock never traps you in a day.");
                 Button("Open for day " + Cycle.DayNumber, () => OpenForDay());
+            }
+            else Small("No new arrivals. Unpaid creatures stay in their tanks when the night begins.");
+        }
+        void DrawCustomerOrder()
+        {
+            var visit = Customers.Visit;
+            if (visit == null) { Text(Customers.Status); return; }
+            if (visit.Phase == CustomerPhase.Queued)
+            {
+                var species = Model.GetSpecies(visit.SpeciesId);
+                Heading((species == null ? "Creature" : species.DisplayName) + " / " + visit.Price + " credits");
+                Text("Customer waiting / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + " seconds patience");
+                bool enabled = GUI.enabled;
+                GUI.enabled = enabled && IsAtCounter;
+                Button("Serve customer  /  +" + visit.Price + " credits", () => ServeCustomer());
+                GUI.enabled = enabled;
+                if (!IsAtCounter) Small("Return to the physical front counter to complete checkout.");
+            }
+            else
+            {
+                Text(Customers.Status);
+                if (visit.Phase == CustomerPhase.ToCounter)
+                {
+                    var species = Model.GetSpecies(visit.SpeciesId);
+                    Small("Reserved: " + (species == null ? "creature" : species.DisplayName) + " / " + visit.Price + " credits");
+                }
             }
         }
         void DrawUpgrade()

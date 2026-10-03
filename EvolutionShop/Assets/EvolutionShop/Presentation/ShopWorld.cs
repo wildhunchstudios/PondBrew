@@ -415,22 +415,9 @@ namespace EvolutionShop
             Faceplate(r, "CREATURE EXCHANGE", new Vector3(0, .65f, -.534f), dark);
             Text(r, "A NEW HOME FOR EVERY DISCOVERY", new Vector3(0, .38f, -.55f), .034f, new Color(.06f, .2f, .24f), 1.85f);
             Shape(r, "Counter tablet", PrimitiveType.Cube, new Vector3(.58f, 1.28f, -.05f), new Vector3(.48f, .28f, .075f), dark).localRotation = Quaternion.Euler(12, 0, 0);
-            Text(r, "SELL", new Vector3(.58f, 1.29f, -.105f), .06f, new Color(.57f, 1, .84f));
+            Text(r, "CHECKOUT", new Vector3(.58f, 1.29f, -.105f), .044f, new Color(.57f, 1, .84f), .42f);
             Shape(r, "Service bell base", PrimitiveType.Cylinder, new Vector3(-.61f, 1.17f, -.15f), new Vector3(.3f, .035f, .3f), dark);
             Shape(r, "Service bell", PrimitiveType.Sphere, new Vector3(-.61f, 1.21f, -.15f), new Vector3(.25f, .13f, .25f), gold);
-            var buyer = Group("Stationary friendly buyer", r, new Vector3(0, 0, .88f));
-            var skin = MakeMaterial("Buyer clay", new Color(.74f, .49f, .32f), 0, .35f);
-            Shape(buyer, "Buyer coat", PrimitiveType.Capsule, new Vector3(0, 1.01f, 0), new Vector3(.58f, .45f, .43f), dark);
-            Shape(buyer, "Buyer head", PrimitiveType.Sphere, new Vector3(0, 1.79f, -.02f), new Vector3(.47f, .52f, .43f), skin);
-            Shape(buyer, "Soft cap", PrimitiveType.Sphere, new Vector3(0, 1.99f, 0), new Vector3(.51f, .20f, .45f), gold);
-            for (int x = -1; x <= 1; x += 2)
-            {
-                Shape(buyer, "Buyer eye", PrimitiveType.Sphere, new Vector3(x * .095f, 1.82f, -.219f), new Vector3(.045f, .055f, .027f), black);
-                Shape(buyer, "Coat sleeve", PrimitiveType.Capsule, new Vector3(x * .3f, 1.24f, -.12f), new Vector3(.18f, .24f, .2f), dark).localRotation = Quaternion.Euler(-22, 0, x * 12);
-                Shape(buyer, "Hand on counter", PrimitiveType.Sphere, new Vector3(x * .34f, 1.20f, -.39f), new Vector3(.17f, .11f, .22f), skin);
-            }
-            Shape(buyer, "Small smile", PrimitiveType.Sphere, new Vector3(0, 1.67f, -.22f), new Vector3(.095f, .022f, .017f), dark);
-            Text(r, "BUYER", new Vector3(0, 2.45f, .85f), .065f, new Color(.09f, .26f, .27f));
         }
 
         void Upgrade(Vector3 position)
@@ -579,7 +566,8 @@ namespace EvolutionShop
         {
             var tank = model.GetTank(id);
             SetCreature(displays[id], tank.HasValue ? tank.Value.SpeciesId : null);
-            status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() + "  /  STOCKED";
+            status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() +
+                (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  STOCKED");
         }
 
         static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : "Unknown";

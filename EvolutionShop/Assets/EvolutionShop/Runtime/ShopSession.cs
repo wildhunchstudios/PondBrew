@@ -13,6 +13,7 @@ namespace EvolutionShop
         public GameConfig Config { get; private set; }
         public ShopWorld World { get; private set; }
         public ShopPlayer Player { get; private set; }
+        public ShopCustomers Customers { get; private set; }
         public ShopPanel Panel { get; private set; }
         public Station Focused { get; private set; }
         public bool Paused => Panel == ShopPanel.Pause || Panel == ShopPanel.Reset || Panel == ShopPanel.Welcome;
@@ -74,6 +75,9 @@ namespace EvolutionShop
             World = new GameObject("Evolution Shop").AddComponent<ShopWorld>();
             World.Build(camera);
             World.SetDayPhase(Cycle.Phase);
+            Customers = gameObject.AddComponent<ShopCustomers>();
+            Customers.Initialize(this);
+            Customers.ArrivalsEnabled = !ValidationMode;
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
             sound = gameObject.AddComponent<ShopAudio>();
@@ -136,6 +140,7 @@ namespace EvolutionShop
                 Notify(Cycle.Phase == ShopDayPhase.Night ? "Night preparation. Your unsold stock is safe. Prepare for day " + Cycle.DayNumber + "." : "Closing time. The next preparation night begins shortly.");
             }
             var result = Model.Tick(seconds);
+            Customers.Tick(seconds);
             if (result.Matured)
             {
                 if (result.FirstDiscovery)
@@ -152,6 +157,7 @@ namespace EvolutionShop
         }
         public bool OpenForDay()
         {
+            if (!Customers.Ready) { Notify(Customers.Status); return false; }
             if (Paused || !Cycle.OpenShop()) return false;
             World.SetDayPhase(Cycle.Phase);
             Notify("Day " + Cycle.DayNumber + " is open. Serve the counter and keep your tanks stocked.");
@@ -162,15 +168,33 @@ namespace EvolutionShop
         {
             if (Paused || !Cycle.RequestClose()) return false;
             World.SetDayPhase(Cycle.Phase);
-            Notify("Closing. All unsold specimens and lab work carry into the next night.");
+            Notify("Closing in 3 seconds. Finish checkout now; unpaid orders release safely for the night.");
             SaveNow();
             return true;
         }
-        public bool SellAtCounter(string tankId)
+        public bool IsAtCounter
         {
-            if (Paused || Cycle.Phase != ShopDayPhase.Open)
-            { Notify("Open the shop at this counter before making a sale."); return false; }
-            return Perform(Model.SellFromTank(tankId)).Success;
+            get
+            {
+                if (Player == null || Player.transform.position.z >= 0.05f) return false;
+                foreach (var station in World.Stations)
+                    if (station.Kind == StationKind.Counter)
+                    {
+                        Vector3 delta = Player.transform.position - station.transform.position;
+                        return Mathf.Abs(delta.y) < 2.5f && new Vector2(delta.x, delta.z).sqrMagnitude <= 3.3f * 3.3f;
+                    }
+                return false;
+            }
+        }
+        public bool ServeCustomer()
+        {
+            if (Paused || Panel != ShopPanel.Counter || !IsAtCounter)
+            { Notify("Use the front counter in person to serve the waiting customer."); return false; }
+            var result = Customers.Serve();
+            if (!result.HasValue) { Notify("No customer is waiting to check out yet."); return false; }
+            bool success = Perform(result.Value).Success;
+            if (success) Notify("Sold! Your customer is taking their new creature home.");
+            return success;
         }
         void FindFocus()
         {
@@ -237,6 +261,7 @@ namespace EvolutionShop
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();
             if (Panel != panel) panelScroll = Vector2.zero;
             Panel = panel;
+            if (Customers != null) Customers.SetPaused(Paused);
             StopHarvest();
             Cursor.lockState = panel == ShopPanel.None ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = panel != ShopPanel.None;
@@ -271,6 +296,7 @@ namespace EvolutionShop
             { Notify(error ?? "No saved game yet."); return false; }
             AutosaveBlocked = false;
             SaveError = null;
+            Customers.ResetVisitors();
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             World.SetDayPhase(Cycle.Phase);
             Sensitivity = slot.sensitivity; Volume = slot.volume;
@@ -285,6 +311,7 @@ namespace EvolutionShop
             var freshCycle = new ShopDayCycle();
             if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
             { SaveError = error; SetPanel(ShopPanel.Reset); return; }
+            Customers.ResetVisitors();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; World.SetDayPhase(Cycle.Phase);
             revealUntil = 0; revealedSpecies = null;
@@ -320,6 +347,9 @@ namespace EvolutionShop
                 case "InsufficientFunds": return "Not enough credits yet. Keep growing and selling creatures.";
                 case "AlreadyUpgraded": return "Your siphon is already upgraded.";
                 case "UndiscoveredRecipe": return "Discover this species by experimenting first.";
+                case "TankReserved": return "This creature is reserved for a waiting customer. Serve their order at the counter.";
+                case "NoCustomerReady": return "Wait for the customer to reach checkout before serving.";
+                case "ReservationMismatch": return "That order is no longer available. No payment was taken.";
                 default: return "Action blocked: " + code + ". No resources were lost.";
             }
         }

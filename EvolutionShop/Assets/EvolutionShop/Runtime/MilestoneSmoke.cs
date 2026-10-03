@@ -10,7 +10,7 @@ using UnityEngine.InputSystem.LowLevel;
 namespace EvolutionShop
 {
     /// <summary>Development-only timed smoke using the same model/session actions as the UI. It never touches the user's slot.</summary>
-    public sealed class MilestoneSmoke : MonoBehaviour
+    public sealed partial class MilestoneSmoke : MonoBehaviour
     {
         [Serializable] sealed class Report
         {
@@ -94,6 +94,7 @@ namespace EvolutionShop
         IEnumerator Scenario()
         {
             yield return new WaitForSeconds(1);
+            Check(shop.Customers != null && shop.Customers.Ready, "Startup customer navigation ready / " + (shop.Customers == null || shop.Customers.Navigation == null ? "missing navigation" : shop.Customers.Navigation.LastError));
             Check(shop.Model.Currency == 0 && shop.Model.Capacity == 4 && shop.Model.DiscoveredSpeciesIds.Count == 0, "Fresh zero-currency model and base siphon");
             Check(shop.Cycle.Phase == ShopDayPhase.Night && shop.Cycle.DayNumber == 1, "Fresh shop starts in untimed preparation night 1");
             Check(shop.World.Stations.Count == 7, "Seven usable stations created");
@@ -223,7 +224,7 @@ namespace EvolutionShop
             Check(!shop.Perform(shop.Model.TransferToTank("tank-a")).Success && !shop.Model.TransferToTank("tank-b").Success && shop.Model.Incubator.SpecimenId == waiting, "Two full tanks retain waiting Ribbonfin without loss");
             yield return Capture("04-full-tanks-ribbonfin");
             Check(shop.Cycle.Phase == ShopDayPhase.Night && shop.Cycle.DayNumber == 1, "Timed production does not consume the untimed preparation night");
-            Check(!shop.SellAtCounter("tank-a") && shop.Model.Currency == 0 && shop.Model.GetTank("tank-a") != null, "Nighttime counter rejects sale without losing stock or paying");
+            Check(!shop.ServeCustomer() && shop.Model.Currency == 0 && shop.Model.GetTank("tank-a") != null, "Counter without a visitor cannot create a sale at night");
             var counterStation = StationOf(StationKind.Counter).transform;
             shop.Player.Teleport(counterStation.TransformPoint(new Vector3(0,0.2f,-2.5f)),counterStation.rotation);
             shop.Player.View.transform.LookAt(counterStation.TransformPoint(new Vector3(0,1.1f,0)));
@@ -241,15 +242,15 @@ namespace EvolutionShop
             yield return new WaitForSeconds(0.7f);
             Check(Mathf.Abs(shop.Cycle.SecondsRemaining-tradingRemaining)<0.001f, "Pause freezes trading clock");
             shop.SetPanel(ShopPanel.Counter); yield return Capture("10-day-counter");
-            Check(shop.SellAtCounter("tank-a"), "Chosen daytime Pondlet sale pays six");
-            Check(shop.Model.Currency == 6 && !shop.SellAtCounter("tank-a"), "Repeated sale pays once");
+            Ok(shop.Perform(shop.Model.SellFromTank("tank-a")), "Baseline domain Pondlet sale with arrivals suspended");
+            Check(shop.Model.Currency == 6 && !shop.Model.SellFromTank("tank-a").Success, "Repeated domain sale pays once");
             Check(shop.SaveNow() && shop.ReloadSaved() && shop.Model.Currency == 6 && shop.Model.GetTank("tank-a") == null && shop.Model.IsDiscovered("pondlet"), "Real save after sale preserves money, empty tank, discovery");
             Ok(shop.Perform(shop.Model.TransferToTank("tank-a")), "Waiting output transfers after space is freed");
             for (float t=0;t<30;t+=0.25f) {shop.World.Animate(t,0); if(!shop.World.ValidateTankBounds(out var bounds)) throw new InvalidOperationException(bounds);}
             Check(true,"Ribbonfin tail stays inside tank across 120 animation samples");
             Check(!shop.Model.BuyUpgrade().Success, "Insufficient funds block upgrade");
-            Check(shop.SellAtCounter("tank-b"), "Sell Bubblebelly during trading day");
-            Check(shop.SellAtCounter("tank-a"), "Sell Ribbonfin during trading day");
+            Ok(shop.Perform(shop.Model.SellFromTank("tank-b")), "Baseline domain Bubblebelly sale with arrivals suspended");
+            Ok(shop.Perform(shop.Model.SellFromTank("tank-a")), "Baseline domain Ribbonfin sale with arrivals suspended");
             shop.SetPanel(ShopPanel.None);
             Check(shop.Model.Currency == 26, "Three species sales total 26");
             Vector3 baseChamber = shop.World.ToolChamber.localScale;
@@ -297,7 +298,7 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.Counter);
             Check(shop.Cycle.Phase == ShopDayPhase.Open, "Cancelling closing confirmation keeps shop open");
             Check(shop.CloseForNight() && !shop.CloseForNight() && !shop.OpenForDay(), "Early closing accepts once and cannot reopen during closing");
-            Check(!shop.SellAtCounter("tank-a") && shop.Model.GetTank("tank-a").Value.Id == closingSpecimen && shop.Model.Currency == 2, "Closing rejects a stocked sale without paying or consuming its specimen");
+            Check(!shop.ServeCustomer() && shop.Model.GetTank("tank-a").Value.Id == closingSpecimen && shop.Model.Currency == 2, "No visitor means no checkout or payout during closing");
             shop.SetPanel(ShopPanel.Pause);
             float closingRemaining = shop.Cycle.SecondsRemaining;
             Check(shop.SaveNow() && shop.ReloadSaved() && shop.Cycle.Phase == ShopDayPhase.Closing && Mathf.Abs(shop.Cycle.SecondsRemaining-closingRemaining)<0.001f, "Closing survives file reload without restarting countdown");
@@ -320,6 +321,7 @@ namespace EvolutionShop
             Check(shop.Model.Currency==0 && !shop.Model.UpgradeOwned && shop.Model.DiscoveredSpeciesIds.Count==0 && shop.Model.Incubator.Phase==IncubatorPhase.Dosing && shop.Cycle.DayNumber==1 && shop.Cycle.Phase==ShopDayPhase.Night, "Confirmed reset clears progression, active batch and day cycle");
             Check(shop.OpenForDay() && shop.CloseForNight(), "Empty fresh shop can open and close without a progression dead end");
             shop.ConfirmNewGame();
+            yield return CustomerScenario();
             yield return null;
         }
         IEnumerator MoveFor(Key key, float seconds)

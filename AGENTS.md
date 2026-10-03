@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-Updated: 2026-10-03. Working title only. Current source/player checkpoint: tag `r02-1-day-night`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
+Updated: 2026-10-03. Working title only. Current source/player checkpoint: tag `r02-customer-service`. Customer rule checkpoint: `b711bc7`, tag `r02-customer-rules`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
 
 ## 1. Read this first
 
@@ -223,13 +223,13 @@ Gate: known baseline issues are explicit, the user can complete the manual loop,
 Depends on: R01. Output: a playable preparation/trading/report cycle with one real customer type.
 
 - [x] R02.1 Implement phase/day/clock UI, pause behavior, open/close commands, bounded closing and phase persistence. Owner: root. Verified: 128 EditMode cases; final Windows player 108 checks; old-save migration and exact unsold stock retained through closing/reload. Human pacing and button-click acceptance remain pending. Customer-dependent closing behavior belongs to R02.2–R02.5.
-- [~] R02.2 Add one navigable customer with browse/reserve/queue/pay/leave states and a low concurrency cap; prevent customers entering the lab. Active with R02.3 as one complete customer-service slice.
-  - [x] R02.2a Authoritative specimen reservations and atomic fixed-price checkout (scope_review); 28 new cases passed for duplicate/wrong-owner/overflow/cancellation transactions. Runtime integration remains active.
-  - [~] R02.2b Front-store-only runtime navigation and a readable original placeholder customer (world_presentation); verify reachable entry/displays/counter/exit and excluded lab.
-  - [x] R02.2c Pure visit state machine and bounded recovery (project_records); 19 new cases passed for empty stock, patience, failed travel, closing and restore policy. Real navigation/runtime validation remains active.
-- [~] R02.3 Replace normal instant remote selling with personal counter service tied to the reserved specimen; keep simple default prices initially. Owner: root; integrate HUD, physical counter proximity, pause, save/reset, actual runtime smoke and Windows package.
+- [x] R02.2 Add one navigable customer with browse/reserve/queue/pay/leave states and a low concurrency cap; prevent customers entering the lab. Delivered with R02.3; one active visitor and one queue slot, actual runtime paths and lab exclusion verified.
+  - [x] R02.2a Authoritative specimen reservations and atomic fixed-price checkout (scope_review); 28 new cases passed for duplicate/wrong-owner/overflow/cancellation transactions. Runtime checkout and recovery verified in Editor and Windows player.
+  - [x] R02.2b Front-store-only runtime navigation and a readable original placeholder customer (world_presentation); complete entry/display/counter/exit paths, raw baked lab exclusion, movement/pause and visible reactions verified.
+  - [x] R02.2c Pure visit state machine and bounded recovery (project_records); 19 new cases passed for empty stock, patience, failed travel, closing and restore policy. Real navigation and save/reload behavior verified; six additional file round-trip cases passed.
+- [x] R02.3 Replace normal instant remote selling with personal counter service tied to the reserved specimen; keep simple default prices initially. Owner: root. HUD, physical counter proximity, pause, transient-visitor recovery and paid-sale persistence verified; tested Windows package delivered.
 - [ ] R02.4 Connect night preparation, day stock depletion, restocking, and a useful daily report. Preserve the free recovery route.
-- [ ] R02.5 Test two consecutive cycles, closing with a queued customer, empty stock, full outputs, pause/reload in each phase, and rapid open/close/pay input. Build and launch the slice.
+- [ ] R02.5 Test two consecutive complete preparation/trading/report cycles, including queued closing, empty stock, full outputs, pause/reload and rapid open/close/pay input. Customer/clock regression checks already ran for R02.2/R02.3; final report-integrated slice and human pacing gate remain pending.
 
 Gate/playtest: the player understands what to do in both phases and wants a second day. Log time spent waiting versus deciding/acting. Do not expand the shop until this cycle works.
 
@@ -369,7 +369,7 @@ The game is finished when the launch-scope features, complete progression/ending
 - [x] Latest prior Windows build: `Docs/Evidence/two-rooms-final-build-result.json`, succeeded with zero errors/warnings. Exact player: `Docs/Evidence/two-rooms-final-player/smoke-result.json`, 79 checks passed, no captured runtime errors/limitations, process exit 0. These results cover that checkpoint, not future features.
 - [x] Prior Editor run: 78 checks, with hidden-batch cursor limitation; later standalone verified capture. Historical 50 EditMode cases were not rerun for the room-layout change. Reports remain in `Docs/Evidence/`.
 
-Current limitations: procedural placeholder art/audio and provisional balance. The day/night foundation is implemented; actual customers/queues, daily reports, construction, staff, full automation and the campaign ending are not. User reports no major problems in the original loop; the new rhythm, real GUI button clicks, separate audio listening and manual settings sliders still need human evaluation. Capture targeting now waits for the runtime focus query after camera repositioning. No known unresolved critical progression/save blocker in executed checks.
+Current limitations: procedural placeholder art/audio and provisional balance. Day/night, one navigable customer and personal checkout are implemented. Daily reports, adjustable pricing, construction, staff, full automation and the campaign ending are not. User reports no major problems in the original loop; the new rhythm, real GUI button clicks, separate audio listening and manual settings sliders still need human evaluation. Capture targeting now waits for the runtime focus query after camera repositioning. No known unresolved critical progression/save blocker in executed checks.
 
 ### R01 baseline evidence and constraints
 
@@ -381,7 +381,7 @@ Current limitations: procedural placeholder art/audio and provisional balance. T
 - Known-good historical full-slot fixture: `EvolutionShop/Assets/EvolutionShop/Tests/RuntimeEditMode/Fixtures/V1Progress.json`, copied from original M01 evidence. It contains the upgrade, all discoveries, 2 credits and a live Pondlet batch. File round trips cover staging, incubation, ready output with full tanks, a sale, and upgraded capacity. Invalid saves stay intact; rotating `.bak` files are preserved but are not automatically loaded.
 - At the R01 checkpoint, envelope/game schema was version 1. New envelope fields require migration; creature/specimen IDs and progress must survive. Model validation constrains grower/incubator remaining time using configuration, so later balance-duration changes need an explicit migration/clamping policy. Keep a pre-migration fixture and backup before writing upgraded saves.
 
-### R02.1 delivered behavior and evidence
+### R02.1 historical delivered behavior and evidence (superseded checkout below)
 
 - New games begin on **untimed preparation night 1**. The front counter opens an **8-minute trading day**; manual prototype sales are accepted only while Open. A confirmed early close or clock expiry enters **3 active seconds of Closing**, then the next preparation night. Empty stock cannot trap a day. The lab runs during active nights/days and remains accessible throughout. There are no customers yet.
 - HUD shows phase/day/time and pauses; night uses cooler retained room lights and day uses warmer lighting. No world is rebuilt for a transition. Open/close commands cannot reset an active clock or duplicate a day. Pause, Welcome, reset confirmation and focus loss stop simulation; ordinary station panels and journal continue it. No offline progress.
@@ -394,13 +394,28 @@ Current limitations: procedural placeholder art/audio and provisional balance. T
 - Delivered archive: `EvolutionShop-DayNight-Windows.zip`, **69,093,719 bytes**, SHA256 `F32A88BD41F0FA7EECA5FCF4D4241AC8281F3A919E7C3D76F5F9AB32498B9D27`. All **293 files** in its 295 entries match the tested build by hash; debug-only build folders excluded. Receipt: `Docs/Evidence/r02-1-package-verification.json`. Prior two-room archive retained for rollback.
 - Checkpoint: tag `r02-1-day-night`. User-facing delivery folder: `C:/Users/retai/Documents/Codex/2026-10-03/read-evolution-shop-prototype-handoff-md-3/outputs`. Includes the ZIP, `PLAYTEST-DayNight.md`, `VALIDATION-DayNight.md`, actual captures and a snapshot of this guide. The root guide remains authoritative.
 
+### R02.2/R02.3 delivered customer service and evidence
+
+- **One active visitor / one queue slot**: enter, walk to a stocked display, browse, reserve an exact specimen at its default fixed price, walk to checkout, wait, react and leave. Original procedural character with walking animation and readable status captions; stationary prototype buyer and normal instant-sale buttons retired. Player must use E at the physical front counter and choose Serve customer. Remote checkout from the lab fails.
+- Core rules own reservations and atomic payment; one specimen/owner/price per order, no repeat payout. Visitors remain transient: saving keeps the live visit; reloading cancels unpaid visitors and releases claims while retaining saved stock IDs, money and clock. Paid sales stay committed. Save envelope remains 2 / model 1 / cycle 1, with previous v1 migration/backups retained.
+- Runtime uses the already installed AI Navigation 2.0.12 package and one NavMesh bake from owned room colliders. Full paths connect entrance, both displays, counter and exit; raw navigation probes and runtime positions confirm the lab is excluded. No package, authored scene, external asset or protected project was imported/changed. Navigation failure blocks opening with restart guidance; normal reload resets visitors without rebaking.
+- Tunable first-slice defaults: first arrival after 2 seconds, next visit 6 seconds after departure, browsing 2 seconds, queued patience 45 seconds, travel timeout 18 seconds, paid reaction 1.5 seconds. Closing stops arrivals and new reservations; accepted queued orders can finish during the existing 3-second grace. Night cancels unpaid visits, retaining creatures and granting no payment. Pause/settings/focus loss stop customer movement, patience and simulation.
+- Exact workspace/editor/installed Windows module and connection were reverified before work. Unity CLI reported zero connected editors; no Unity MCP tools were exposed. Explicit project-targeted Unity processes logged the guarded identity. No connection was assumed or installed.
+- Small rule checkpoint: commit **b711bc7**, tag **r02-customer-rules**; 175/175 EditMode cases passed. Integrated r02-customer-integrated-results.xml: **181/181 passed**, 0 failed/skipped, exit 0 (128 previous + 28 reservation + 19 visit + 6 actual customer save-file cases). These tests ran before the navigation lifecycle repair; the subsequent runtime and build runs compiled/exercised that repair.
+- Initial r02-customer-playmode/ failed after 64 checks: native NavMeshPath allocation in a MonoBehaviour field initializer prevented navigation startup. Fixed both navigation and actor allocations to run in Build/Initialize; added early readiness diagnostics. Failed report/log retained. Corrected r02-customer-playmode-fixed/smoke-result.json: **153 checks passed**, 0 captured runtime errors, exit 0, 181.06 seconds; hidden Editor cursor limitation recorded.
+- r02-customer-build-result.json: **Succeeded**, 0 errors, 0 warnings, **166,625,481 bytes**, exit 0. Exact Windows development/Mono player r02-customer-player/smoke-result.json: **154 checks passed**, no captured errors or limitations, exit 0, **181.07 seconds**. Includes actual E input, walking, navigation/pause, lab checkout rejection, repeat payment, queue reload, paid/unpaid closing, impatience, no-stock departure, and three customer purchases funding the 24-credit upgrade. Observed 9,898 navigation frames within the store and one bake across reloads.
+- Actual standalone screenshots 20–23 reviewed at **1280×720**: browsing caption/HUD, checkout order/reserved display stock/service button, paid reaction and retained unpaid stock in the next night. No text overflow found. Intel i7-14700F / RTX 4070 Ti SUPER; this is not a minimum-spec or performance benchmark. Authored scene SHA256 still **2F81309DDB7CAA56E0E56B4D6B705EB274E234AE9CF0D7BCBB968373AB9AE16F**. Final log scans found no gameplay exception; Editor's licensing refresh message did not prevent successful validation/build.
+- Delivered EvolutionShop-Customers-Windows.zip: **69,116,036 bytes**, SHA256 **8DA65BD0CD624672CA157A67F508EECC2D9D3909ED2C21DEA9B8736A006C9C89**. All **293 files / 295 entries** match the tested build by hash; debug-only folders excluded. Receipt Docs/Evidence/r02-customer-package-verification.json. Previous day/night and two-room packages retained. Final source tag **r02-customer-service**.
+- Evidence lives under Docs/Evidence/; delivery folder remains C:/Users/retai/Documents/Codex/2026-10-03/read-evolution-shop-prototype-handoff-md-3/outputs, with PLAYTEST-Customers.md, VALIDATION-Customers.md, raw result copies, captures, archive and guide snapshot.
+- Limits: one procedural visitor who does not physically block the player; no held-creature/bag animation; fixed prices and provisional timings. Scenarios seed customer stock through core recipe operations; selected timeouts/day transitions use explicitly accelerated or injected deltas. Actual navigation and E input ran; GUI commands use application methods, not verified mouse clicks. No new human pacing/audio/settings acceptance. No known critical save/progression blocker. **R02.4 daily report and R02.5 report-integrated cycle gate remain unfinished; R02 is not complete.**
+
 | Active record | Value |
 |---|---|
-| Current request | Continue with R02.2 and the tightly related R02.3 checkout integration; daily reports/pricing/expansion remain planned |
-| Runtime changes in this request | Active; baseline source/player `0e8dfc0`, tag `r02-1-day-night`; new validation pending |
+| Current request | Completed R02.2 and the tightly related R02.3 customer checkout assignment |
+| Runtime changes in this request | R02.2/R02.3 delivered and verified; tag `r02-customer-service`; previous day/night build retained |
 | User feedback | User reports playing growing → sale → siphon upgrade with no major issues (2026-10-03) |
-| Next implementation assignment | Finish the first customer-service slice: one active visitor/queue slot, deterministic free-stock selection, fixed-price specimen reservation and personal counter checkout, then build/playtest |
-| Human acceptance still needed | Day/night pacing, ending and comedy tone as these defaults become playable; separate audio/settings checks |
+| Next implementation assignment | R02.4: useful daily report connecting preparation, stock depletion, restocking and next improvement; then R02.5 complete-cycle gate. Do not begin pricing/expansion yet |
+| Human acceptance still needed | Customer visibility, checkout clarity, restocking workload, 45-second patience and three-second closing grace; day/night pacing and separate audio/settings checks. Ending/comedy tone later |
 | Technical blocker | None known. No active Unity editor/MCP is left connected; reverify before the next editor operation |
 
 When resuming implementation, select the first unfinished ready task, record its owner/status and intended acceptance check here, and keep the remaining roadmap planned. Do not mistake the unimplemented feature specifications above for existing behavior.
@@ -410,7 +425,7 @@ When resuming implementation, select the first unfinished ready task, record its
 | Date | Decision | Status / basis |
 |---|---|---|
 | 2026-10-03 | Separate front store and back lab | User confirmed; implemented and verified at `5606dbf` |
-| 2026-10-03 | Night laboratory work, daytime personal shopkeeping, expansion, staff, automation, and comedy | User requirements for the complete game; not implemented |
+| 2026-10-03 | Night laboratory work, daytime personal shopkeeping, expansion, staff, automation, and comedy | User requirements; night/day and first personal customer checkout now implemented. Expansion, staff, automation and comedy remain planned |
 | 2026-10-03 | Grand Exhibition main ending; collect-all optional | Recommended design default; user can revise after seeing the rationale/playable goal |
 | 2026-10-03 | 12-species launch ceiling, four cultures, three employee roles, same-location expansions | Provisional scope control; validate before bulk production |
 | 2026-10-03 | One canonical root guide; R01–R11 replace old draft future milestone labels | This document request; preserve earlier files as historical evidence |
@@ -418,5 +433,6 @@ When resuming implementation, select the first unfinished ready task, record its
 | 2026-10-03 | R02.1 day/night foundation delivered; remaining R02 tasks stay planned | Tag `r02-1-day-night`; 128 EditMode cases, final player 108 checks, build/package verified. Next: R02.2 customer loop; human day/night playtest pending |
 | 2026-10-03 | R02.2/R02.3 active scope and acceptance | One customer at a time. Build NavMesh from current room colliders with lab excluded. Preserve creatures until atomic checkout. On reload, cancel unpaid visitors/reservations without income or stock changes; paid sales remain committed. Keep save schema 2/inner 1 because visitors are deliberately transient. Bounded travel/patience/closing recovery; no report, pricing system, staff or new assets in this slice |
 | 2026-10-03 | R02.2a/R02.2c rule checkpoint | `r02-customer-rules`: `Docs/Evidence/r02-customer-domain-results.xml` 175/175 EditMode cases passed, exit 0 (128 previous + 28 reservation + 19 visit). Actual live customer/navigation/UI integration is still in progress; no new build is claimed at this checkpoint |
+| 2026-10-03 | R02.2/R02.3 completed | Tag r02-customer-service: 181 EditMode cases, 153 Editor / 154 exact Windows checks, successful build, verified package; initial navigation lifecycle failure repaired and retained. Next R02.4 daily report; customer pacing/manual UI feedback pending |
 
 At future checkpoints append a concise row with task IDs, commit/tag, actual evidence, remaining risk, and exact next action. Keep this section current and short; put large raw outputs in evidence files. Do not erase history to turn an unverified or failed attempt into a pass.
