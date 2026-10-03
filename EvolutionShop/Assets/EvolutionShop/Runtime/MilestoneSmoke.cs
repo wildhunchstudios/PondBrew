@@ -97,6 +97,7 @@ namespace EvolutionShop
             Check(shop.Model.Currency == 0 && shop.Model.Capacity == 4 && shop.Model.DiscoveredSpeciesIds.Count == 0, "Fresh zero-currency model and base siphon");
             Check(shop.World.Stations.Count == 7, "Seven usable stations created");
             yield return Capture("00-startup");
+            shop.SetPanel(ShopPanel.Welcome); yield return Capture("00-welcome"); shop.SetPanel(ShopPanel.None);
             previousInputSettings = InputSystem.settings;
             smokeInputSettings = Instantiate(previousInputSettings);
             smokeInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
@@ -183,6 +184,8 @@ namespace EvolutionShop
             }
             Check(true,"Stocked creatures stay within tank glass across 120 animation samples");
             Check(shop.Model.DiscoveredSpeciesIds.Count == 3, "All three exact recipes discovered");
+            yield return new WaitForSeconds(3.6f);
+            yield return Capture("04-ribbonfin-ready");
             string waiting = shop.Model.Incubator.SpecimenId;
             Check(!shop.Perform(shop.Model.TransferToTank("tank-a")).Success && !shop.Model.TransferToTank("tank-b").Success && shop.Model.Incubator.SpecimenId == waiting, "Two full tanks retain waiting Ribbonfin without loss");
             yield return Capture("04-full-tanks-ribbonfin");
@@ -213,6 +216,8 @@ namespace EvolutionShop
             Check(shop.Model.Currency == 2 && shop.Model.UpgradeOwned, "Cancel reset preserves progression");
             shop.SetPanel(ShopPanel.Journal);
             yield return Capture("06-journal");
+            shop.SetPanel(ShopPanel.Pause); yield return Capture("07-pause-settings");
+            shop.SetPanel(ShopPanel.Reset); yield return Capture("08-reset-confirmation");
             Check(File.Exists(shop.SavePath), "Separate smoke save exists; user slot untouched");
             string corrupt = Path.Combine(evidence,"corrupt-save.json"); File.WriteAllText(corrupt,"{not valid json");
             Check(!SaveStore.Read(corrupt,shop.Config,out _,out _,out _) && File.ReadAllText(corrupt)=="{not valid json", "Malformed save rejected and original preserved");
@@ -271,9 +276,3 @@ namespace EvolutionShop
     }
 }
 #endif
-
-
-
-
-
-

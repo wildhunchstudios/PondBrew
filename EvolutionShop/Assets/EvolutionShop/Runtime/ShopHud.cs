@@ -4,7 +4,7 @@ namespace EvolutionShop
 {
     public sealed partial class ShopSession
     {
-        GUIStyle titleStyle, headingStyle, bodyStyle, smallStyle, buttonStyle, statStyle, centerStyle;
+        GUIStyle titleStyle, headingStyle, bodyStyle, smallStyle, buttonStyle, statStyle, centerStyle, controlsStyle;
         readonly Color ink = new Color(0.035f, 0.08f, 0.105f, 0.96f);
         readonly Color mint = new Color(0.5f, 0.95f, 0.77f);
         Vector2 panelScroll;
@@ -21,6 +21,7 @@ namespace EvolutionShop
             buttonStyle = new GUIStyle(GUI.skin.button) {fontSize = 16, fontStyle = FontStyle.Bold, wordWrap = true, padding = new RectOffset(14,14,10,10)};
             statStyle = new GUIStyle(headingStyle); statStyle.normal.textColor = mint;
             centerStyle = new GUIStyle(bodyStyle) {alignment = TextAnchor.MiddleCenter};
+            controlsStyle = new GUIStyle(smallStyle) {alignment = TextAnchor.MiddleCenter, wordWrap = false};
         }
         static void Box(Rect rect, Color color)
         {
@@ -45,7 +46,8 @@ namespace EvolutionShop
             Box(new Rect(22, 610, 396, 88), ink);
             GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "     FLOW " + Model.Available(CultureKind.Flow), headingStyle);
             GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow)), smallStyle);
-            GUI.Label(new Rect(442, 673, 410, 24), "WASD move   |   E interact   |   TAB journal   |   ESC pause", centerStyle);
+            Box(new Rect(438,662,548,36),ink);
+            GUI.Label(new Rect(448,668,528,23), "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
             Box(new Rect(1000, 640, 258, 58), ink);
             GUI.Label(new Rect(1017, 651, 225, 32), machine, bodyStyle);
@@ -65,16 +67,16 @@ namespace EvolutionShop
             if (Panel != ShopPanel.None) DrawPanel();
             if (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil)
             {
-                Box(new Rect(345, 24, 670, 67), ink);
-                GUI.Label(new Rect(365, 32, 630, 54), message, centerStyle);
+                Box(new Rect(380, 24, 650, 67), ink);
+                GUI.Label(new Rect(400, 32, 610, 54), message, centerStyle);
             }
-            if (Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
+            if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
             {
                 var species = Model.GetSpecies(revealedSpecies);
-                Box(new Rect(435, 212, 410, 137), ink);
-                GUI.Label(new Rect(450, 222, 380, 25), "DISCOVERED / JOURNAL UPDATED", centerStyle);
-                GUI.Label(new Rect(478, 252, 340, 42), species.DisplayName, titleStyle);
-                GUI.Label(new Rect(450, 298, 380, 30), species.Bloom + " Bloom + " + species.Flow + " Flow", centerStyle);
+                Box(new Rect(22, 212, 310, 137), ink);
+                GUI.Label(new Rect(38, 222, 278, 25), "DISCOVERED / JOURNAL UPDATED", centerStyle);
+                GUI.Label(new Rect(40, 252, 278, 42), species.DisplayName, titleStyle);
+                GUI.Label(new Rect(38, 298, 278, 30), species.Bloom + " Bloom + " + species.Flow + " Flow", centerStyle);
             }
             if (BaselinePreview) GUI.Label(new Rect(440, 102, 520, 27), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", smallStyle);
             GUI.matrix = Matrix4x4.identity;

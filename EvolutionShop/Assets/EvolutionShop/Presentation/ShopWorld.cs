@@ -277,7 +277,7 @@ namespace EvolutionShop
             Shape(r, "Rounded worktop", PrimitiveType.Cube, new Vector3(0, .85f, 0), new Vector3(1.99f, .10f, 1.43f), cream);
             Shape(r, "Crystal incubator dome", PrimitiveType.Sphere, new Vector3(0, 1.48f, 0), new Vector3(1.55f, 1.5f, 1.25f), glass);
             Shape(r, "Incubator fluid", PrimitiveType.Sphere, new Vector3(0, 1.42f, 0), new Vector3(1.45f, 1.3f, 1.16f), water);
-            incubationRing = Ring(r, "Incubator orbit", new Vector3(0, 1.52f, 0), .82f, .045f, gold);
+            incubationRing = Ring(r, "Incubator orbit", new Vector3(0, 1.18f, 0), .78f, .022f, gold);
             incubationRing.localRotation = Quaternion.Euler(0, 0, 15);
             Ring(r, "Base seal", new Vector3(0, .98f, 0), .56f, .05f, trim);
             Faceplate(r, "INCUBATOR", new Vector3(0, .58f, -.663f), shell);

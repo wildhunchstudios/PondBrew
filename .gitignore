@@ -11,3 +11,4 @@ EvolutionShop/Recordings/
 Builds/
 *.tmp
 .DS_Store
+EvolutionShop/.vscode/
