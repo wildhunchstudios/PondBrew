@@ -1,0 +1,13 @@
+EvolutionShop/[Ll]ibrary/
+EvolutionShop/[Tt]emp/
+EvolutionShop/[Oo]bj/
+EvolutionShop/[Ll]ogs/
+EvolutionShop/[Uu]ser[Ss]ettings/
+EvolutionShop/.vs/
+EvolutionShop/*.csproj
+EvolutionShop/*.sln*
+EvolutionShop/MemoryCaptures/
+EvolutionShop/Recordings/
+Builds/
+*.tmp
+.DS_Store
