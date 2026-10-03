@@ -49,8 +49,8 @@ namespace EvolutionShop
             Box(new Rect(438,662,548,36),ink);
             GUI.Label(new Rect(448,668,528,23), "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
-            Box(new Rect(1000, 640, 258, 58), ink);
-            GUI.Label(new Rect(1017, 651, 225, 32), machine, bodyStyle);
+            Box(new Rect(1050, 116, 208, 68), ink);
+            GUI.Label(new Rect(1067, 126, 175, 48), machine, bodyStyle);
             if (Panel == ShopPanel.None)
             {
                 Box(new Rect(637, 357, 6, 6), new Color(1,1,1,0.85f));
@@ -83,11 +83,11 @@ namespace EvolutionShop
         }
         string Objective()
         {
-            if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Take your specimen to an empty display tank.";
+            if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Head to a display tank in the front store.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
             if (Model.GetTank("tank-a") != null || Model.GetTank("tank-b") != null) return "Visit the sales counter to sell a stocked creature.";
-            if (Model.DiscoveredSpeciesIds.Count == 0) return "Try one Bloom + one Flow in the incubator.";
-            if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the upgrade bench.";
+            if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
+            if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
             if (!Model.UpgradeOwned) return "Grow and sell creatures. Save " + Config.UpgradeCost + " credits for a larger siphon.";
             if (Model.DiscoveredSpeciesIds.Count < 3) return "Discover the remaining creatures by changing one dose.";
             return "Milestone loop complete. Try making your favorite again.";
@@ -102,12 +102,12 @@ namespace EvolutionShop
             switch (Panel)
             {
                 case ShopPanel.Welcome:
-                    Heading("Welcome to your little lab");
-                    Text("Grow living cultures. Mix a new creature. Let it swim in your shop, then sell it to improve your siphon.");
+                    Heading("Welcome to your little shop");
+                    Text("Front store: display tanks and sales counter. Through the doorway: your back lab, with growers, incubator, and upgrade bench.");
                     Space();
                     Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
                     Space();
-                    Text("Start with one Bloom and one Flow in the incubator. Growers are free, and every unsupported mix can be returned safely.");
+                    Text("Start in the back lab: mix one Bloom and one Flow in the incubator. Bring the result to a front display tank, then sell it at the counter. Growers are free.");
                     Small("One local save. The lab pauses while closed. This is a first playable with provisional recipes and balance.");
                     Space(); Button("Open the shop", () => SetPanel(ShopPanel.None));
                     break;
@@ -156,7 +156,7 @@ namespace EvolutionShop
                 return;
             }
             if (inc.Phase == IncubatorPhase.Ready)
-            { Text(Model.GetSpecies(inc.SpeciesId).DisplayName + " is ready!"); Text("Close this panel, walk to an empty tank, and press E to transfer it."); return; }
+            { Text(Model.GetSpecies(inc.SpeciesId).DisplayName + " is ready!"); Text("Return through the doorway to an empty tank in the front store, then press E to transfer it."); return; }
             Text("Add exact integer doses. One recipe makes one specimen.");
             Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW");
             GUILayout.BeginHorizontal();

@@ -1,26 +1,37 @@
-# Resume — Milestone 01 ready for first user playtest
+# Resume — Milestone 01 two-room playable
 
-Verified 2026-10-03. Workspace: C:\dev\DumbVideoGameStudio. Unity project: C:\dev\DumbVideoGameStudio\EvolutionShop. This is an independent game; Dungeon Project and PersonalAssistant were not modified or imported.
+Workspace: `C:\dev\DumbVideoGameStudio`. Unity project: `C:\dev\DumbVideoGameStudio\EvolutionShop`. Verified2026-10-03. Independent game; Dungeon Project and PersonalAssistant were not modified or imported.
 
-## Last verified state
-- Unity 6000.3.15f1 (c1aa84e375f6); URP17.3.0, Input System1.19.0, Test Framework1.6.0 pinned in version/manifest/lock files.
-- Playable scene: EvolutionShop/Assets/EvolutionShop/Scenes/Shop.unity. Rebuild with Evolution Shop/Rebuild playable scene or EvolutionShop.Editor.ProjectSetup.CreateScene.
-- Windows x64 Mono development build: C:\dev\DumbVideoGameStudio\Builds\Windows\EvolutionShop.exe. Run without validation flags for normal play.
-- Complete manual loop implemented: free growers, timed siphon, integer dosing, exact three recipes, incubation, discoveries, two tanks, selected sale, currency, physical capacity/speed upgrade, one local save, settings and confirmed reset.
-- Actual evidence:50 Unity EditMode tests passed;70 timed Editor Play-mode checks passed; final built Windows player73 checks passed with no runtime errors, both build and process exit0. Final BuildReport:0 errors,0 warnings. No claim of human enjoyment or onboarding timing validation.
-- Root inspected final real window captures for welcome, HUD, incubator, Pondlet, Ribbonfin, journal, pause/settings, reset; Bubblebelly and upgrade captures also exist. Logs/results/screenshots live in Docs/Evidence. Failed intermediate attempts are retained with their fixes documented.
+## Current design and implementation
 
-## Checkpoints
-- 48ca887 — Checkpoint00 base Play mode.
-- 54ea873 — Milestone01A-C complete loop checkpoint.
-- Final local milestone checkpoint/tag: milestone-01-playtest (see git log/tag). No remote publishing.
+The user explicitly confirmed two physical rooms: **front store** with the two display tanks and sales counter; **back lab** with Bloom/Flow growers, incubator, and siphon upgrade bench. A collidable partition has an open3.2m×2.8m doorway. Player starts in the store. Signs, distinct floor accents, and HUD directions explain the trip between rooms. Depth-tested world labels prevent text showing through walls. The siphon has a visible physical numeric display; incubation status is above it in the upper-right HUD.
 
-## Continuation rules and next action
-1. Ask the user to play the delivered Windows executable and assess collecting feel, clarity, creature appeal, sound, and upgrade impact. First creature within2 minutes and upgrade within5 minutes remain hypotheses.
-2. Read TASKS.md, VALIDATION.md, UnityProjectContext.md and the original handoff before editing.
-3. Do not begin Milestone02/03 before this first playtest and user direction.
-4. At session start re-verify editor/project identity. No live MCP bridge was installed; this session used targeted Editor CLI invocations with an exact project-path guard. Old unrelated MCP status files are not connection evidence.
-5. Smoke tests use separate evidence-folder saves. User slot is %USERPROFILE%\AppData\LocalLow\DumbVideoGameStudio\EvolutionShopPrototype\evolution-shop.json. Never delete it for validation; use confirmed New game in UI for user resets. Simulation pauses while closed.
+All Milestone01 gameplay remains: free growers, timed siphon, exact integer recipes, incubation/discovery, two tanks, chosen sales, currency, physical capacity/speed upgrade, one compatible local save, settings, and confirmed reset. No later milestone work started.
 
-## Known limits / blockers
-No known critical progression blocker; nothing technical blocks the first playtest. Procedural placeholder art/audio and provisional balance. Audio was not listened to; settings sliders are visually inspected but not manually dragged. Keyboard/mouse Windows controls only. Captures at1280x720; no performance budget or FPS claim. Human playtest/creative approval is pending.
+## Verified runtime and evidence
+
+- Editor pin/installed executable: Unity6000.3.15f1(c1aa84e375f6); URP17.3.0, InputSystem1.19.0, TestFramework1.6.0.
+- No editor bridge was assumed. Initial recheck showed no running Unity process and zero Pipeline instances. Targeted batch invocation and the exact-project guard verified EvolutionShop in editor logs. No MCP bridge installed.
+- Scene: `EvolutionShop/Assets/EvolutionShop/Scenes/Shop.unity`. Regenerate via **Evolution Shop > Rebuild playable scene**, or `EvolutionShop.Editor.ProjectSetup.CreateScene`.
+- Player: `C:\dev\DumbVideoGameStudio\Builds\Windows\EvolutionShop.exe`, Windowsx64 development/Mono. Run without validation flags for normal play.
+- Two-room Editor Play mode passed78checks, no runtime errors, exit0; the batch cursor limitation was explicit. Later physical tool-readout and HUD-placement changes were checked in the final player.
+- Final Windows build succeeded with0errors/0warnings. Exact final player passed79checks, no captured runtime errors or limitations, exit0. Evidence: `Docs/Evidence/two-rooms-final-build-result.json`, `two-rooms-final-build-editor.log`, `two-rooms-final-player/smoke-result.json`, and `two-rooms-final-player.log`.
+- New actual-input checks cover doorway traversal in both directions, partition collision on both sides, and blocked E interaction through the wall. All seven station targets and the full production/save/sale/upgrade scenario passed.
+- Original50EditMode model cases are retained prior execution evidence; unchanged model code was not retested for this layout correction. Do not describe them as newly run.
+- Actual final Windows captures document both rooms, welcome/HUD, counter, creatures, tool, and panels. Earlier visual failures and their successful gameplay reports remain preserved, not relabeled.
+
+## Checkpoints and delivery
+
+- `48ca887`: Checkpoint00 baseline.
+- `54ea873`: Milestone01A-C loop.
+- `milestone-01-playtest`: original single-room delivery.
+- `milestone-01-two-rooms`: confirmed front-store/back-lab refinement. See git log/tag for commit.
+- Revised deliverable: `EvolutionShop-TwoRooms-Windows.zip` in this Codex chat's outputs, with playtest guide and evidence. Previous ZIP preserved. No remote publishing.
+
+## Next action and limits
+
+User plays this revised build and evaluates the route between rooms, station clarity, movement/collection feel, creatures, sound, and upgrade impact. Human timing hypotheses (first creature2minutes, upgrade5minutes) are unverified. Audio has not been listened to; settings sliders have not been manually dragged. Procedural placeholder art/audio and provisional balance remain. No known technical blocker to first playtest. No FPS benchmark claim.
+
+Read `AGENTS.md`, `TASKS.md`, `VALIDATION.md`, `UnityProjectContext.md` and original handoff before continuing. Reverify project/editor identity. Keep work inside this separate project; do not begin Milestone02/03 before first playtest and user direction.
+
+Default save: `%USERPROFILE%\AppData\LocalLow\DumbVideoGameStudio\EvolutionShopPrototype\evolution-shop.json`. Do not delete it for testing. Use the confirmed New game UI for user resets; smoke flags select an evidence-directory save. Save format and gameplay IDs did not change. Simulation pauses while closed.

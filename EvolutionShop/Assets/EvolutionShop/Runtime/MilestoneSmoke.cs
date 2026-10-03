@@ -123,7 +123,29 @@ namespace EvolutionShop
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;
             Check(Vector3.Distance(oldPosition, shop.Player.transform.position) > 0.8f, "WASD input moves CharacterController in running scene " + oldPosition + " -> " + shop.Player.transform.position);
+            shop.Player.Teleport(new Vector3(0,0.2f,-1.2f),Quaternion.identity);
+            yield return MoveFor(Key.W,1f);
+            Check(shop.Player.transform.position.z > 1.5f,"Walk through doorway from front store into back lab");
+            yield return MoveFor(Key.S,1f);
+            Check(shop.Player.transform.position.z < -0.8f,"Walk back through doorway from lab into store");
+            shop.Player.Teleport(new Vector3(3,0.2f,-1.2f),Quaternion.identity);
+            yield return MoveFor(Key.W,1f);
+            Check(shop.Player.transform.position.z > -0.8f && shop.Player.transform.position.z < 0.25f,"Store side partition blocks CharacterController");
+            shop.Player.Teleport(new Vector3(3,0.2f,2f),Quaternion.identity);
+            yield return MoveFor(Key.S,1f);
+            Check(shop.Player.transform.position.z < 1.6f && shop.Player.transform.position.z > 0.75f,"Lab side partition blocks CharacterController");
             shop.AllowValidationInput = false;
+            shop.Player.Teleport(new Vector3(-4.1f,0.2f,-0.4f),Quaternion.identity);
+            yield return null;
+            shop.Player.View.transform.LookAt(StationOf(StationKind.Upgrade).transform.TransformPoint(new Vector3(0,1.1f,0)));
+            yield return null; yield return null;
+            yield return MoveFor(Key.E,0.05f);
+            Check(shop.Focused == null && shop.Panel == ShopPanel.None,"Partition prevents store-side E interaction with lab upgrade bench");
+            shop.Player.Teleport(new Vector3(4.7f,0.2f,1.4f),Quaternion.identity);
+            shop.Player.View.transform.LookAt(StationOf(StationKind.TankA).transform.TransformPoint(new Vector3(0,1.1f,0)));
+            yield return null; yield return null;
+            yield return MoveFor(Key.E,0.05f);
+            Check(shop.Focused == null && shop.Panel == ShopPanel.None,"Partition prevents lab-side E interaction with store display tank");
             shop.Player.Teleport(new Vector3(0,0.2f,-3.8f), Quaternion.identity);
             shop.SetPanel(ShopPanel.Pause);
             Check(shop.Paused && Cursor.lockState == CursorLockMode.None && Cursor.visible, "Pause releases and shows cursor");
@@ -133,6 +155,9 @@ namespace EvolutionShop
             if (Application.isBatchMode && Application.isEditor) limitations.Add("Hidden batch Editor has no focused Game View; actual mouse capture on resume requires standalone check. Requested hidden cursor=" + !Cursor.visible + ", actual lock=" + Cursor.lockState);
             else Check(Cursor.lockState == CursorLockMode.Locked && !Cursor.visible, "Resume restores captured cursor");
             yield return Capture("01-room-base");
+            yield return Capture("01-front-store");
+            yield return Capture("01-sales-counter");
+            yield return Capture("01-back-lab");
             foreach (var station in shop.World.Stations)
             {
                 var approach = station.transform.TransformPoint(new Vector3(0,0.2f,-2.5f));
@@ -225,8 +250,29 @@ namespace EvolutionShop
             Check(shop.Model.Currency==0 && !shop.Model.UpgradeOwned && shop.Model.DiscoveredSpeciesIds.Count==0 && shop.Model.Incubator.Phase==IncubatorPhase.Dosing, "Confirmed reset clears progression and active batch");
             yield return null;
         }
+        IEnumerator MoveFor(Key key, float seconds)
+        {
+            float elapsed = 0;
+            while (elapsed < seconds)
+            {
+                syntheticKeyboard.MakeCurrent();
+                InputSystem.QueueStateEvent(syntheticKeyboard,new KeyboardState(key));
+                yield return null; elapsed += Time.deltaTime;
+            }
+            InputSystem.QueueStateEvent(syntheticKeyboard,new KeyboardState());
+            yield return null;
+        }
+        Station StationOf(StationKind kind)
+        {
+            foreach (var station in shop.World.Stations) if (station.Kind == kind) return station;
+            throw new InvalidOperationException("Missing station " + kind);
+        }
         IEnumerator Ensure(CultureKind kind, int units)
         {
+            var grower = StationOf(kind == CultureKind.Bloom ? StationKind.Bloom : StationKind.Flow);
+            shop.Player.Teleport(grower.transform.TransformPoint(new Vector3(0,0.2f,-2.5f)),grower.transform.rotation);
+            shop.Player.View.transform.LookAt(grower.transform.TransformPoint(new Vector3(0,1.1f,0)));
+            yield return null; yield return null;
             float timeout = Time.realtimeSinceStartup + 12;
             shop.ScriptedHarvest = kind;
             while (shop.Model.Available(kind)<units)
@@ -258,8 +304,27 @@ namespace EvolutionShop
             yield return null;
             var camera = shop.Player.View;
             Vector3 cameraPosition = camera.transform.position; Quaternion cameraRotation = camera.transform.rotation;
-            if (name.Contains("ready")) {camera.transform.position = new Vector3(2,1.6f,.7f); camera.transform.LookAt(new Vector3(2,1.5f,3.1f));}
-            if (name.Contains("full-tanks")) {camera.transform.position = new Vector3(2.5f,2.3f,-3.8f); camera.transform.LookAt(new Vector3(4,1.6f,1.7f));}
+            if (name.Contains("ready"))
+            {
+                var incubator = StationOf(StationKind.Incubator).transform;
+                camera.transform.position = incubator.TransformPoint(new Vector3(0,1.6f,-2.4f));
+                camera.transform.LookAt(incubator.TransformPoint(new Vector3(0,1.5f,0)));
+            }
+            if (name.Contains("full-tanks"))
+            {
+                var a = StationOf(StationKind.TankA).transform.position;
+                var b = StationOf(StationKind.TankB).transform.position;
+                camera.transform.position = new Vector3(1.2f,2.15f,-4f);
+                camera.transform.LookAt((a+b)*0.5f + Vector3.up*1.55f);
+            }
+            if (name == "01-front-store") {camera.transform.position = new Vector3(-2.4f,1.85f,0); camera.transform.LookAt(new Vector3(3.2f,1.5f,-2.5f));}
+            if (name == "01-sales-counter")
+            {
+                var counter = StationOf(StationKind.Counter).transform;
+                camera.transform.position = counter.TransformPoint(new Vector3(0,1.6f,-3.2f));
+                camera.transform.LookAt(counter.TransformPoint(new Vector3(0,1.4f,0)));
+            }
+            if (name == "01-back-lab") {camera.transform.position = new Vector3(2.75f,1.8f,1f); camera.transform.LookAt(new Vector3(-1.8f,1.5f,3.6f));}
             var target = new RenderTexture(1600,900,24);
             Debug.Log("CAPTURE_PIPELINE " + UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline);
             foreach (var renderer in shop.World.GetComponentsInChildren<Renderer>()) if (renderer.sharedMaterial && renderer.sharedMaterial.name == "Bloom coral") {Debug.Log("BLOOM_MATERIAL " + renderer.sharedMaterial.shader.name + " supported=" + renderer.sharedMaterial.shader.isSupported + " color=" + renderer.sharedMaterial.GetColor("_BaseColor")); break;}

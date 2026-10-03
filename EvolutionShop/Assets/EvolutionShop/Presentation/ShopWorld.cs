@@ -30,6 +30,8 @@ namespace EvolutionShop
         readonly Dictionary<StationKind, TextMesh> status = new Dictionary<StationKind, TextMesh>();
         readonly Dictionary<string, Display> displays = new Dictionary<string, Display>();
         readonly List<LabelFit> labels = new List<LabelFit>();
+        readonly Dictionary<Font, Material> fontMaterials = new Dictionary<Font, Material>();
+        Shader worldTextShader;
         Material shell, dark, trim, cream, bloomMat, flowMat, glass, water, gold, black, glow;
         Transform bloomRoot, flowRoot, incubationRing, toolNozzle, toolBody, toolUpgradeBand;
         TextMesh toolReadout;
@@ -63,6 +65,34 @@ namespace EvolutionShop
             public float Width;
         }
 
+        void OnEnable() { Font.textureRebuilt += FontAtlasRebuilt; }
+        void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
+        void OnDestroy()
+        {
+            foreach (var material in fontMaterials.Values) if (material) Destroy(material);
+        }
+
+        void FontAtlasRebuilt(Font font)
+        {
+            if (font && font.material && fontMaterials.TryGetValue(font, out var material))
+                material.mainTexture = font.material.mainTexture;
+        }
+
+        Material WorldTextMaterial(Font font)
+        {
+            if (!worldTextShader)
+                worldTextShader = Resources.Load<Shader>("EvolutionWorldText");
+            if (!worldTextShader)
+                throw new InvalidOperationException("Missing Resources/EvolutionWorldText.shader.");
+            if (!fontMaterials.TryGetValue(font, out var material))
+            {
+                material = new Material(worldTextShader) { name = "Depth-tested world labels / " + font.name };
+                fontMaterials.Add(font, material);
+            }
+            material.mainTexture = font.material.mainTexture;
+            return material;
+        }
+
         public void Build(Camera playerCamera)
         {
             shell = MakeMaterial("Seafoam enamel", new Color(0.61f, 0.8f, 0.75f), 0.15f, 0.55f);
@@ -79,13 +109,13 @@ namespace EvolutionShop
             glass = MakeGlass("Clear aquarium glass", new Color(0.61f, 0.91f, 0.95f, 0.085f));
             water = MakeGlass("Aquatic water tint", new Color(0.17f, 0.73f, 0.84f, 0.085f));
             Room();
-            bloomRoot = Grower(StationKind.Bloom, new Vector3(-4.2f, 0, 3.1f), "BLOOM", "01 / PETAL CULTURE", bloomMat, bloomCells, true);
-            flowRoot = Grower(StationKind.Flow, new Vector3(-1.4f, 0, 3.1f), "FLOW", "02 / STREAM CULTURE", flowMat, flowCells, false);
-            Incubator(new Vector3(2.0f, 0, 3.1f));
-            Aquarium(StationKind.TankA, "tank-a", new Vector3(5.5f, 0, 1.7f), "DISPLAY 01", 0.2f);
-            Aquarium(StationKind.TankB, "tank-b", new Vector3(5.5f, 0, -1.45f), "DISPLAY 02", 2.1f);
-            Counter(new Vector3(-5.5f, 0, 0.05f));
-            Upgrade(new Vector3(-5.5f, 0, -3.35f));
+            bloomRoot = Grower(StationKind.Bloom, new Vector3(-4.2f, 0, 3.85f), "BLOOM", "01 / PETAL CULTURE", bloomMat, bloomCells, true);
+            flowRoot = Grower(StationKind.Flow, new Vector3(-1.4f, 0, 3.85f), "FLOW", "02 / STREAM CULTURE", flowMat, flowCells, false);
+            Incubator(new Vector3(2.0f, 0, 3.85f));
+            Aquarium(StationKind.TankA, "tank-a", new Vector3(5.5f, 0, -1.2f), "DISPLAY 01", 0.2f);
+            Aquarium(StationKind.TankB, "tank-b", new Vector3(5.5f, 0, -3.85f), "DISPLAY 02", 2.1f);
+            Counter(new Vector3(-5.5f, 0, -2.2f));
+            Upgrade(new Vector3(-5.5f, 0, 1.9f));
             Tool(playerCamera.transform);
             playerCamera.backgroundColor = new Color(0.08f, 0.19f, 0.22f);
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
@@ -181,7 +211,14 @@ namespace EvolutionShop
                 Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(x, .004f, 0), new Vector3(.012f, .004f, 11), shell);
             for (int z = -4; z <= 4; z += 2)
                 Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(0, .005f, z), new Vector3(14, .004f, .012f), shell);
-            Shape(transform, "Work area inset", PrimitiveType.Cube, new Vector3(0, .008f, .25f), new Vector3(7.8f, .01f, 5.7f), shell);
+            // Flush floor accents make the shop and production lab legible without adding obstacles.
+            var shopFloor = MakeMaterial("Warm store stone", new Color(.78f, .74f, .62f), .03f, .28f);
+            var shopMat = MakeMaterial("Store sand runner", new Color(.65f, .58f, .40f), 0, .22f);
+            Shape(transform, "Front store floor", PrimitiveType.Cube, new Vector3(0, .001f, -2.5f), new Vector3(13.7f, .002f, 6), shopFloor);
+            Shape(transform, "Front store runner", PrimitiveType.Cube, new Vector3(0, .008f, -2.4f), new Vector3(7.8f, .01f, 4.3f), shopMat);
+            Shape(transform, "Back lab work area", PrimitiveType.Cube, new Vector3(0, .008f, 2.75f), new Vector3(10.4f, .01f, 3.4f), shell);
+            Shape(transform, "Flush lab threshold", PrimitiveType.Cube, new Vector3(0, .008f, .5f), new Vector3(3.2f, .01f, .3f), trim);
+            Partition(wall);
             for (int i = -1; i <= 1; i++)
             {
                 Shape(transform, "Ceiling cross beam", PrimitiveType.Cube, new Vector3(0, 4.02f, i * 3.2f), new Vector3(14, .12f, .20f), dark);
@@ -195,11 +232,11 @@ namespace EvolutionShop
             key.color = new Color(1, .95f, .84f);
             key.intensity = 1.65f;
             key.shadows = LightShadows.Soft;
-            LightAt(new Vector3(-3, 2.8f, .7f), new Color(.75f, 1, .94f), 3.4f, 9);
-            LightAt(new Vector3(4, 2.6f, .5f), new Color(.68f, .87f, 1), 3.2f, 9);
-            Shape(transform, "Shop identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
-            Text(transform, "EVOLUTION SHOP", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
-            Text(transform, "GROW  /  COMBINE  /  DISCOVER", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
+            LightAt(new Vector3(-3, 2.8f, -2), new Color(1, .95f, .83f), 3.4f, 8);
+            LightAt(new Vector3(1, 2.8f, 3), new Color(.75f, 1, .94f), 3.2f, 8);
+            Shape(transform, "Back lab identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
+            Text(transform, "CULTURE LAB", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
+            Text(transform, "GROW  /  COMBINE  /  IMPROVE", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
             var door = Group("Quiet entrance", transform, new Vector3(0, 0, -5.35f));
             door.localRotation = Quaternion.Euler(0, 180, 0);
             Shape(door, "Entrance", PrimitiveType.Cube, new Vector3(0, 1.25f, 0), new Vector3(2.1f, 2.5f, .05f), dark);
@@ -208,6 +245,31 @@ namespace EvolutionShop
             Text(door, "A LITTLE LIFE STARTS HERE", new Vector3(0, 2.94f, -.09f), .08f, new Color(.07f, .2f, .23f), 3.1f);
         }
 
+        void Partition(Material wall)
+        {
+            // Actual wall colliders stop movement and interaction rays. No collider spans the doorway.
+            // Clear opening: 3.2 m wide and 2.8 m high; the player capsule is 0.6 m wide / 1.75 m tall.
+            Shape(transform, "Store-lab partition left", PrimitiveType.Cube, new Vector3(-4.3f, 2.1f, .5f), new Vector3(5.4f, 4.2f, .22f), wall, true);
+            Shape(transform, "Store-lab partition right", PrimitiveType.Cube, new Vector3(4.3f, 2.1f, .5f), new Vector3(5.4f, 4.2f, .22f), wall, true);
+            Shape(transform, "Store-lab doorway header", PrimitiveType.Cube, new Vector3(0, 3.5f, .5f), new Vector3(3.2f, 1.4f, .22f), wall, true);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Shape(transform, "Doorway jamb", PrimitiveType.Cube, new Vector3(side * 1.65f, 1.4f, .5f), new Vector3(.10f, 2.8f, .31f), dark);
+                Shape(transform, "Store partition base", PrimitiveType.Cube, new Vector3(side * 4.3f, .12f, .365f), new Vector3(5.4f, .24f, .04f), dark);
+                Shape(transform, "Lab partition base", PrimitiveType.Cube, new Vector3(side * 4.3f, .12f, .635f), new Vector3(5.4f, .24f, .04f), dark);
+            }
+            Shape(transform, "Doorway lintel trim", PrimitiveType.Cube, new Vector3(0, 2.83f, .5f), new Vector3(3.4f, .06f, .31f), dark);
+            // The store identity sits above the opening, so the entrance view clearly reads as a shop.
+            Shape(transform, "Front store identity panel", PrimitiveType.Cube, new Vector3(0, 3.5f, .335f), new Vector3(7.8f, .9f, .045f), dark);
+            Text(transform, "EVOLUTION SHOP", new Vector3(0, 3.65f, .30f), .21f, new Color(.96f, .95f, .83f), 7.1f);
+            Text(transform, "FRONT STORE  /  DISPLAY & EXCHANGE", new Vector3(0, 3.29f, .30f), .055f, new Color(.81f, .84f, .65f), 5.8f);
+            Shape(transform, "Back lab direction plaque", PrimitiveType.Cube, new Vector3(0, 2.94f, .335f), new Vector3(2.8f, .21f, .045f), dark);
+            Text(transform, "BACK LAB", new Vector3(0, 2.94f, .30f), .065f, new Color(.58f, 1, .84f), 2.5f);
+            var returnSign = Group("Return to front store sign", transform, new Vector3(0, 0, .665f));
+            returnSign.localRotation = Quaternion.Euler(0, 180, 0);
+            Shape(returnSign, "Store direction plaque", PrimitiveType.Cube, new Vector3(0, 3.02f, 0), new Vector3(3, .32f, .045f), dark);
+            Text(returnSign, "FRONT STORE", new Vector3(0, 3.02f, -.035f), .075f, new Color(.96f, .95f, .83f), 2.7f);
+        }
         void LightAt(Vector3 position, Color color, float intensity, float range)
         {
             var l = new GameObject("Aquatic fill light").AddComponent<Light>();
@@ -360,7 +422,7 @@ namespace EvolutionShop
             Ring(r, "Upgrade feature ring", new Vector3(0, 1.5f, 0), .40f, .034f, glow).localRotation = Quaternion.Euler(0, 0, 22);
             Text(r, "4  >  8", new Vector3(0, 1.53f, -.34f), .11f, new Color(.09f, .24f, .25f), .49f);
             Faceplate(r, "SIPHON UPGRADE", new Vector3(0, .62f, -.566f), gold);
-            status[StationKind.Upgrade] = Text(r, "24 COINS  /  COLLECT FASTER", new Vector3(0, .32f, -.571f), .04f, Color.white);
+            status[StationKind.Upgrade] = Text(r, "24 COINS  /  COLLECT FASTER", new Vector3(0, .32f, -.583f), .04f, Color.white);
             Text(r, "MORE ROOM TO GROW", new Vector3(0, 2.30f, 0), .05f, new Color(.1f, .27f, .28f));
         }
 
@@ -382,7 +444,9 @@ namespace EvolutionShop
             Shape(toolNozzle, "Barrel", PrimitiveType.Cylinder, new Vector3(0, 0, .12f), new Vector3(.105f, .15f, .105f), dark).localRotation = Quaternion.Euler(90, 0, 0);
             Shape(toolNozzle, "Nozzle collar", PrimitiveType.Cylinder, new Vector3(0, 0, .28f), new Vector3(.13f, .035f, .13f), trim).localRotation = Quaternion.Euler(90, 0, 0);
             Shape(toolNozzle, "Nozzle light", PrimitiveType.Cylinder, new Vector3(0, 0, .319f), new Vector3(.081f, .005f, .081f), glow).localRotation = Quaternion.Euler(90, 0, 0);
-            toolReadout = Text(toolBody, "0 / 4", new Vector3(0, -.053f, -.09f), .025f, new Color(.08f, .21f, .23f), .16f);
+            // A physical display sits in front of the grip and both reservoir sizes.
+            Shape(toolBody, "Siphon readout panel", PrimitiveType.Cube, new Vector3(0, .04f, -.17f), new Vector3(.21f, .08f, .012f), dark);
+            toolReadout = Text(toolBody, "0 / 4", new Vector3(0, .04f, -.181f), .019f, new Color(.6f, 1f, .84f), .16f);
             for (int i = 0; i < 8; i++) reservoirCells.Add(Organism(ToolChamber, true, bloomMat, .026f));
         }
 
@@ -403,7 +467,11 @@ namespace EvolutionShop
             t.anchor = TextAnchor.MiddleCenter;
             t.alignment = TextAlignment.Center;
             t.color = color;
-            t.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            if (!t.font) t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            var renderer = t.GetComponent<Renderer>();
+            renderer.sharedMaterial = WorldTextMaterial(t.font);
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
             var fit = new LabelFit { Text = t, Height = size * 2f, Width = maxWidth };
             labels.Add(fit);
             FitLabel(fit);
@@ -545,6 +613,9 @@ namespace EvolutionShop
             lastTime = time;
             // Repeat fitting after TextMesh has generated its mesh and after dynamic status changes.
             foreach (var label in labels) FitLabel(label);
+            // Font rebuild callbacks handle atlas swaps even while the game is paused.
+            // This also keeps the material current across renderer/device refreshes.
+            foreach (var font in fontMaterials.Keys) FontAtlasRebuilt(font);
             AnimateCells(bloomCells, time, .37f);
             AnimateCells(flowCells, time, 2.1f);
             if (incubationRing) incubationRing.localRotation = Quaternion.Euler(0, time * 24, 15);

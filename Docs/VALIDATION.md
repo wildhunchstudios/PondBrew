@@ -118,3 +118,49 @@ Build/import rewrote URP prefilter keyword fields in `Assets/Settings/PC_RPAsset
 - No later milestones have started. Stop for the user's first playtest before expanding scope.
 ## Evidence recording rule
 Append exact command/tool, execution context, observed result, and saved evidence after execution. Label source inspection, automated execution, and human observation separately. Do not infer a pass from generated code or expected output.
+
+## 2026-10-03 — user-confirmed two-room refinement (Milestone 01)
+
+The user confirmed the front room is the actual store (two display tanks and sales counter); the back room is the lab (Bloom/Flow growers, incubator, upgrade bench). Implemented within the existing room footprint using a collidable partition and a 3.2 m wide / 2.8 m high open doorway. Updated signs, floor accents, station positions, onboarding/objectives, and validation viewpoints. The original brief remains untouched. No later milestone features were added.
+
+Reverified workspace `C:\dev\DumbVideoGameStudio`, project `EvolutionShop`, pinned/installed editor `6000.3.15f1_c1aa84e375f6`. No Unity/player process was running before validation. `unity status --json` reported zero Pipeline instances; no active bridge was assumed. Both targeted editor logs identify `C:/dev/DumbVideoGameStudio/EvolutionShop` and Unity6000.3.15f1 through the project guard.
+
+### Executed Editor checks
+
+The first run (`two-rooms-editor.log`, `two-rooms-editor/smoke-result.json`) exited0 and passed78 checks. Screenshots nevertheless revealed TextMesh labels drawing through the opaque partition. This was a visual failure despite automated gameplay checks passing; its evidence is retained. A new URP world-text shader uses ordinary depth testing and tracks font atlas rebuilds. World labels now respect the wall and plaque backing.
+
+The second run (`two-rooms-final-editor.log`, `two-rooms-final-editor/smoke-result.json`) exited0 and passed78 checks with no captured runtime errors, elapsed49.495seconds. Root inspected actual camera renders of the doorway, store display tanks, counter, and lab: through-wall text and reversed plaque overlap were resolved. Its remaining hidden-batch cursor limitation is explicit in JSON. A subsequently noticed tool-readout placement issue was corrected before the Windows build; final player captures are the evidence for that adjustment.
+
+New executed checks use queued keyboard input through the actual Input System and CharacterController: walking through the doorway both ways, stopping against solid partition on either side, and E failing to interact with an in-range station across the wall from either room. All seven station aiming checks and the full production/save/sale/upgrade scenario also passed. Scripted collection now approaches its grower before harvesting. This is not a human route/feel test.
+
+Exact Editor invocation (each run used the corresponding evidence/log name):
+
+```powershell
+$run = Start-Process -FilePath 'C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe' -ArgumentList @('-batchmode','-projectPath','C:\dev\DumbVideoGameStudio\EvolutionShop','-executeMethod','EvolutionShop.Editor.ProjectSetup.RunSmoke','-evolutionSmoke','-evolutionEvidence','C:\dev\DumbVideoGameStudio\Docs\Evidence\two-rooms-final-editor','-logFile','C:\dev\DumbVideoGameStudio\Docs\Evidence\two-rooms-final-editor.log') -WindowStyle Hidden -Wait -PassThru
+```
+
+The unchanged core/model files were not edited, and their previously executed50 EditMode cases were not rerun for this presentation/layout correction. Their historical XML is preserved; no new EditMode execution is claimed.
+
+### Windows build and exact final player
+
+The first revised build (`two-rooms-build-result.json`) succeeded with0errors/0warnings, and its player (`two-rooms-player/smoke-result.json`) passed79checks with no runtime errors/limitations, exit0,49.571seconds. Actual screen captures revealed the incubation HUD status obscuring the new physical siphon readout. The status box was moved below currency at the upper right, and the player was rebuilt.
+
+The final build (`two-rooms-final-build-result.json`, `two-rooms-final-build-editor.log`) **Succeeded,0errors,0warnings,166548369bytes**, editor process exit0. The exact final Windows player (`two-rooms-final-player/smoke-result.json`, `two-rooms-final-player.log`) **passed79checks, runtimeErrors[], limitations[], process exit0**. These include captured cursor on resume and all six new two-room movement/occlusion checks, along with the full gameplay/persistence scenario and three creature bounds checks.
+
+Exact final build and launch:
+
+```powershell
+$run = Start-Process -FilePath 'C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe' -ArgumentList @('-batchmode','-projectPath','C:\dev\DumbVideoGameStudio\EvolutionShop','-executeMethod','EvolutionShop.Editor.ProjectSetup.BuildWindows','-logFile','C:\dev\DumbVideoGameStudio\Docs\Evidence\two-rooms-final-build-editor.log') -WindowStyle Hidden -Wait -PassThru
+Copy-Item -LiteralPath 'C:\dev\DumbVideoGameStudio\Docs\Evidence\windows-build-result.json' -Destination 'C:\dev\DumbVideoGameStudio\Docs\Evidence\two-rooms-final-build-result.json'
+$run = Start-Process -FilePath 'C:\dev\DumbVideoGameStudio\Builds\Windows\EvolutionShop.exe' -ArgumentList @('-evolutionSmoke','-evolutionEvidence','C:\dev\DumbVideoGameStudio\Docs\Evidence\two-rooms-final-player','-screen-width','1280','-screen-height','720','-screen-fullscreen','0','-logFile','C:\dev\DumbVideoGameStudio\Docs\Evidence\two-rooms-final-player.log') -WindowStyle Normal -Wait -PassThru
+```
+
+The original milestone BuildReport JSON was preserved as `milestone01-original-build-result.json` before the setup route wrote the current `windows-build-result.json`. Original logs/reports/screens and the prior delivered ZIP remain intact.
+
+Root inspected actual1280×720 final-player captures, including doorway/labels/HUD, both rooms, the counter, updated welcome text, Pondlet, Ribbonfin, full tanks, and upgraded tool. The final tool readout is visible and no text appears through the solid partition. These rendered observations are separate from the79 scripted assertions. Text uses a Resources-loaded shader, so successful player rendering also verifies build inclusion.
+
+Capture-specific limit: close-up creature/tank images temporarily reposition the camera inside the capture coroutine. Their interaction prompt can still show the previous frame's grower target. Use them as rendering evidence, not evidence of the shown prompt/aim pairing; the separate seven-station targeting checks wait for updates and passed. Normal player camera movement updates focus each frame. Final scripted elapsed time was49.577seconds, not a human playtest pace.
+
+The revised ZIP includes the executable, data, Mono runtime, graphics DLLs and D3D12 folder. Its package-verification JSON records archive SHA256 and matching hashes for the tested executable, UnityPlayer, runtime/core assemblies, Resources data, and scene data. Burst debug-information output is excluded. Output playtest guide and evidence copies accompany it.
+
+No known technical blocker to the first user playtest. Placeholder art/audio, provisional balance, human route/feel/readability/creature appeal, audio listening, and manual settings-slider use remain playtest work. No performance or human completion-time claim is made. Save format/IDs and the user's normal save remain unchanged. Stop within Milestone01; do not expand to later milestones before user playtest.

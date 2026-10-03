@@ -1,15 +1,34 @@
 # Prototype tasks
 
-Updated: 2026-10-03. **Milestone 01 is ready for the first human playtest.** `[x]` means the stated implementation or execution completed, not creative approval. No known critical progression blocker was found. No later milestones started.
+Updated: 2026-10-03. **Milestone 01 two-room refinement implemented and verified; ready for first human playtest.** `[x]` means the stated work or execution completed, not creative approval. No later milestones started.
+
+## 01R — agreed front store and back lab refinement
+
+- [x] Implement user-confirmed front store (two display tanks/counter), back lab (Bloom/Flow growers, incubator, upgrade), and connecting doorway.
+- [x] Update partition/colliders, station placement, spawn, signs, HUD guidance, and smoke viewpoints/routes.
+- [x] Verify walking through the doorway in both directions, blocking by each side of the partition, and blocked E interaction through the wall.
+- [x] Verify aiming at all seven stations and full production, transfer, sale, upgrade, save/load/reset loop in the revised spaces.
+- [x] Pass two-room Editor run: 78 checks, no captured runtime errors, exit 0; hidden-editor cursor limitation retained.
+- [x] Fix labels rendering through walls with a depth-tested world-text shader; position tool readout and move machine HUD to upper right.
+- [x] Build exact final Windows player after readout/HUD fixes: Succeeded, zero errors/warnings, exit 0.
+- [x] Launch final revised player: 79 checks, no captured runtime errors/limitations, exit 0, 49.577 scripted seconds.
+- [x] Capture and review actual 1280x720 doorway, front store, back lab, counter, welcome, and tool/HUD views; creature/upgrade evidence retained.
+- [x] Record current implementation, evidence paths, controls, and remaining human assessment limits in project records.
+- [x] Save local checkpoint/tag `milestone-01-two-rooms` and deliver the verified ZIP, guide, and evidence.
+- [ ] User first playtest: evaluate two-room navigation, production flow, collection/audio feel, creature appeal, slider behavior, and fresh-player timing.
+
+Delivery: `EvolutionShop-TwoRooms-Windows.zip`, guide, evidence, and local checkpoint tag `milestone-01-two-rooms`. See `RESUME.md` for continuation. Completed checks in Checkpoint 00 and 01A-D below remain historical evidence for the prior single-room build/tag `milestone-01-playtest`. Historical 50 EditMode cases were not rerun for this refinement; final 79-check player evidence is new.
 
 ## Checkpoint 00 — workspace and runnable baseline
+
 - [x] Inspect `C:\dev\DumbVideoGameStudio`; preserve handoff; confirm separate-project boundary.
 - [x] Detect Unity installations/build modules; verify initial CLI has zero instances and no Unity MCP connection.
 - [x] Create URP project at exact `EvolutionShop` child path; pin 6000.3.15f1 (c1aa84e375f6) and resolved packages.
 - [x] Verify targeted editor identity, compile, enter minimal Play mode, capture/read floor/sphere screenshot.
 - [x] Initialize local Git and save Checkpoint 00 commit `48ca887`; no remote/global safe-directory change.
 
-## 01A — movement and culture harvesting
+## 01A — movement and culture harvesting (prior build)
+
 - [x] Implement compact room, seven stations, signs/prompts, first-person controls, pause, sensitivity, and audio settings.
 - [x] Implement distinct free growers, refill/capacity behavior, siphon reservoir cultures, harvest motion/sound, and dosing.
 - [x] Verify synthetic WASD through real Input System/CharacterController; fix high-frame-rate minimum-move threshold.
@@ -17,7 +36,8 @@ Updated: 2026-10-03. **Milestone 01 is ready for the first human playtest.** `[x
 - [x] Capture actual standalone HUD and correct footer wrapping, toast/title overlap, and discovery/menu overlap.
 - [ ] User evaluates movement/collection feel and listens to audio; manually drag settings sliders.
 
-## 01B — incubation and discovery
+## 01B — incubation and discovery (prior build)
+
 - [x] Implement stable IDs, centralized tuning, exact recipes, recoverable invalid mixes, and once-only incubation.
 - [x] Implement three smooth creature shapes/animations, discovery journal, and known-recipe shortcut.
 - [x] Pass model recipe/consumption/invalid-input/duplicate/persistence coverage in 50 EditMode cases.
@@ -25,13 +45,15 @@ Updated: 2026-10-03. **Milestone 01 is ready for the first human playtest.** `[x
 - [x] Lower incubator ring to expose creature and inspect final journal UI.
 - [ ] User evaluates creature appeal and animation/interaction feel.
 
-## 01C — display, sale, and upgrade
+## 01C — display, sale, and upgrade (prior build)
+
 - [x] Implement forgiving transfer, one resident per tank, bounded swimming, counter, selected sale, and currency.
 - [x] Implement 24-credit upgrade: four-to-eight capacity, visibly larger chamber, 0.6-to-0.3-second collection, developer comparison.
 - [x] Verify full-tank output retention, sale/upgrade once, insufficient funds, discovery persistence, and physical upgrade.
 - [x] Sample Pondlet/Bubblebelly bounds and Ribbonfin tail bounds, each across 120 animation samples in standalone.
 
-## 01D — persistence and first playtest
+## 01D — persistence and first playtest (prior build)
+
 - [x] Implement one local slot, stable IDs, active incubation, sensitivity/volume, malformed-save preservation, and confirmed reset.
 - [x] Pass model JSON and real file save/load checks during incubation and after sale; verify upgrade/repeat production survive reload.
 - [x] Pass 70 timed Editor Play-mode checks with no captured runtime errors, exit 0.
@@ -43,4 +65,5 @@ Updated: 2026-10-03. **Milestone 01 is ready for the first human playtest.** `[x
 - [ ] User first playtest: assess feel/audio/readability and measure fresh-player timing hypotheses before any later milestone.
 
 ## Deferred until user playtest
+
 Milestone 02 automation/workers/humor and Milestone 03 presentation sample. No implementation work has started; user playtest determines next changes.
