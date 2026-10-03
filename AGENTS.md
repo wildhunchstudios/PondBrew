@@ -485,3 +485,13 @@ At future checkpoints append a concise row with task IDs, commit/tag, actual evi
 - [ ] R02.5c2 Open/migrate only EvolutionShop with the patched editor, inspect import/settings/package changes and preserve save compatibility.
 - [ ] R02.5c3 Rerun EditMode, continuous player, native click/retarget and ordinary save-and-quit checks; require clean native exits. Preserve failed6000.3.15 evidence and candidate.
 - [ ] R02.5c4 Package the exact cleanly validated player and update this guide. HumanR02.5d remains pending.
+
+### R02.5c approved patch implementation checkpoint
+
+Unity6000.3.21f1 is now the verified project/editor version. The previous shutdown-blocked candidate remains historical. Current patched Windows player is `Builds/Windows-6000.3.21f1/EvolutionShop.exe`; build succeeded, zero errors/warnings,167088274bytes, editor process exit0. The first build into oldWindows failed on five locked-file copies and is preserved. BuildWindows now separates outputs by Application.unityVersion; no unrelated process was stopped.
+
+The final restored direct-manifest configuration passed273/273EditMode cases, no failed/skipped, process exit0 (`r02-patch21-final-editmode-results.xml` and `-process.json`). ResolvedBurst1.8.30/Collections2.6.8/Performance3.5.0 follow the new editor minima; only three iOS thermal defaults remain as PlayerSettings migration. Temporary Input System build preload was restored to empty; scene/input-action asset registration is unchanged.
+
+Native GUI probe40checks and continuous two-day route96checks each passed with zero captured runtime errors and clean process exit0. Ordinary Save and quit also exited0, preserving night2/cash6/sale1/revenue6/emptydisplays. Actual native Escape automation did not change the panel; human physical-keyboard acceptance remains separate. Full integrated regression is currently running; packaging and final handoff remain pending. The normal save/backups and all11 immutable baseline entries match original hashes.
+
+Installer limitation: officialCLI exit6 came from denied writing editor-rootmodules.json; verified editor/WindowsMono payload builds and runs, but Hub module registration metadata is incomplete. Exact receipts are retained in `Docs/Evidence/r02-patch21-installation.md` and `r02-patch21-installer-verification.json`. No permissions or protectedprojects changed. R02.5d human playtest stays open; do not startR03.

@@ -166,11 +166,12 @@ namespace EvolutionShop.Editor
         public static void BuildWindows()
         {
             EnsurePlayableScene();
-            Directory.CreateDirectory("../Builds/Windows");
+            string buildDirectory = "../Builds/Windows-" + Application.unityVersion;
+            Directory.CreateDirectory(buildDirectory);
             var options = new BuildPlayerOptions
             {
                 scenes = new[] {ScenePath},
-                locationPathName = "../Builds/Windows/EvolutionShop.exe",
+                locationPathName = Path.Combine(buildDirectory, "EvolutionShop.exe"),
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.Development
             };
