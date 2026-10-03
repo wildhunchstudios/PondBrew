@@ -55,7 +55,7 @@ namespace EvolutionShop.Tests
 
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original), "Read must not rewrite the slot.");
-            Assert.That(slot.formatVersion, Is.EqualTo(5));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(slot.game.version, Is.EqualTo(2));
             Assert.That(slot.game.prices.Length, Is.EqualTo(2));
             Assert.That(restored.GetPrice("pondlet").Value.Price, Is.EqualTo(18));
@@ -119,7 +119,7 @@ namespace EvolutionShop.Tests
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
                 Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
                 Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1), "Read must not create temp or backup files.");
-                Assert.That(slot.formatVersion, Is.EqualTo(5));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
                 Assert.That(slot.game.version, Is.EqualTo(2));
                 Assert.That(slot.game.prices, Is.Empty);
                 Assert.That(slot.trades.version, Is.EqualTo(3));
@@ -181,13 +181,13 @@ namespace EvolutionShop.Tests
         [TestCase("report-2-in-format-5")]
         [TestCase("report-3-in-format-4")]
         [TestCase("refusals-in-report-1")]
-        [TestCase("format-6")]
+        [TestCase("future-format")]
         public void MismatchedSaveVersionsAreRejectedWithoutChangingTheFile(string problem)
         {
             StockAndOpen();
             Ok(model.SetPrice("pondlet", 8));
             int format = problem.EndsWith("format-3", StringComparison.Ordinal) || problem == "refusals-in-report-1" ? 3
-                : problem.EndsWith("format-4", StringComparison.Ordinal) ? 4 : problem == "format-6" ? 6 : 5;
+                : problem.EndsWith("format-4", StringComparison.Ordinal) ? 4 : problem == "future-format" ? SaveStore.CurrentFormatVersion + 1 : 5;
             var game = model.CaptureSave();
             var trades = reports.CaptureSave();
             // Start from each format's true inner versions, then break exactly one thing.

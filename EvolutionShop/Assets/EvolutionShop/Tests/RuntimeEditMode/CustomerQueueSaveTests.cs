@@ -58,7 +58,7 @@ namespace EvolutionShop.Tests
 
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original), "Read must not rewrite the slot.");
-            Assert.That(slot.formatVersion, Is.EqualTo(5));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(slot.trades.version, Is.EqualTo(3));
             Assert.That(slot.trades.pendingCustomerIds, Is.EqualTo(new[] { first.Id, second.Id }));
             Assert.That(restored.GetReservation("tank-a"), Is.Null);
@@ -89,7 +89,7 @@ namespace EvolutionShop.Tests
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
                 Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
                 Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1), "Read must not create temp or backup files.");
-                Assert.That(slot.formatVersion, Is.EqualTo(5));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
                 Assert.That(slot.trades.version, Is.EqualTo(3));
                 Assert.That(slot.trades.pendingCustomerIds, Is.EqualTo(new[] { "r03-1-visitor" }));
                 Assert.That(restored.GetPrice("pondlet").Value.Price, Is.EqualTo(8));
@@ -130,9 +130,9 @@ namespace EvolutionShop.Tests
         [Test]
         public void FormatFiveVersionsArePaired()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(5));
-            Assert.That(SaveStore.GameVersionFor(5), Is.EqualTo(GameModel.SaveVersion));
-            Assert.That(SaveStore.ReportVersionFor(5), Is.EqualTo(ShopTradeLedger.SaveVersion));
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(6));
+            Assert.That(SaveStore.GameVersionFor(5), Is.EqualTo(2));
+            Assert.That(SaveStore.ReportVersionFor(5), Is.EqualTo(3));
             Assert.That(SaveStore.ReportVersionFor(4), Is.EqualTo(2));
             Assert.That(SaveStore.ReportVersionFor(3), Is.EqualTo(1));
             Assert.That(SaveStore.GameVersionFor(3), Is.EqualTo(1));

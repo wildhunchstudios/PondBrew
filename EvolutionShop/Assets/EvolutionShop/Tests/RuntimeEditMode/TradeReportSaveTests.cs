@@ -65,7 +65,7 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(File.Exists(PathFor() + ".bak"), Is.False);
-            Assert.That(slot.formatVersion, Is.EqualTo(5));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(slot.trades.version, Is.EqualTo(3));
             Assert.That(JsonUtility.ToJson(slot.trades), Is.EqualTo(JsonUtility.ToJson(source.trades)));
             Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(JsonUtility.ToJson(source.cycle)));
@@ -142,7 +142,7 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
-                Assert.That(slot.formatVersion, Is.EqualTo(5)); Assert.That(slot.game.version, Is.EqualTo(2));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.game.version, Is.EqualTo(2));
                 Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(3));
                 Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
                 Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedCycle));

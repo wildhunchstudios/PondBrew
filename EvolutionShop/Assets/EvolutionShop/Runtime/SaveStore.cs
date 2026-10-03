@@ -11,6 +11,7 @@ namespace EvolutionShop
         public SaveData game;
         public ShopDaySave cycle;
         public TradeLedgerSave trades = new TradeLedgerSave();
+        public ReputationSave reputation = new ShopReputation().CaptureSave();
         public float sensitivity = 1f;
         public float volume = 0.65f;
     }
@@ -18,14 +19,16 @@ namespace EvolutionShop
     public static class SaveStore
     {
         // 4: price tags (game 2) and price refusals (report 2). 5: several unresolved visitors (report 3).
-        // Formats 1-4 migrate in memory.
-        public const int CurrentFormatVersion = 5;
+        // 6: reputation. Formats 1-5 migrate in memory without historical reputation rewards.
+        public const int CurrentFormatVersion = 6;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
-        public static int GameVersionFor(int format) => format >= 4 ? GameModel.SaveVersion : 1;
+        public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
+            format >= 4 && format <= 6 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 5 ? ShopTradeLedger.SaveVersion : format == 4 ? 2 : format == 3 ? 1 : 0;
+        public static int ReportVersionFor(int format) => format == 5 || format == 6 ? 3 :
+            format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
         // Zero distinguishes an omitted envelope version from a current save.
@@ -34,6 +37,7 @@ namespace EvolutionShop
         {
             public int formatVersion = 0;
             public ReportHeader trades = null;
+            public ReputationHeader reputation = null;
         }
 
         [Serializable]
@@ -44,6 +48,13 @@ namespace EvolutionShop
             public int version = 0;
         }
 
+        [Serializable]
+        private sealed class ReputationHeader
+        {
+            // SlotData's convenient fresh-state initializer must not validate missing JSON data.
+            public int version = 0;
+        }
+
         public static bool Write(string path, SlotData data, out string error)
         {
             error = null;
@@ -51,9 +62,10 @@ namespace EvolutionShop
                 data.game.version != GameModel.SaveVersion || data.trades == null ||
                 data.trades.version != ShopTradeLedger.SaveVersion || !Finite(data.sensitivity) || !Finite(data.volume) ||
                 !ShopDayCycle.TryRestore(data.cycle, out _) ||
-                !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _))
+                !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _) ||
+                !ShopReputation.TryRestore(data.reputation, out _))
             {
-                error = "Could not save: the current slot, day clock, or trading report is invalid. Original file preserved.";
+                error = "Could not save: the current slot, day clock, trading report, or reputation is invalid. Original file preserved.";
                 return false;
             }
 
@@ -133,6 +145,22 @@ namespace EvolutionShop
                     // Normalize empty inline day objects back to absent snapshots and upgrade a
                     // version 1 report. Keep the pending visitor until Session reconciles a reload.
                     candidate.trades = restoredTrades.CaptureSave();
+                }
+
+                if (header.formatVersion < 6)
+                {
+                    // Earlier versions never earned reputation. Do not backfill old sales or refusals.
+                    candidate.reputation = new ShopReputation().CaptureSave();
+                }
+                else
+                {
+                    if (header.reputation == null || header.reputation.version != ShopReputation.SaveVersion ||
+                        !ShopReputation.TryRestore(candidate.reputation, out var restoredReputation))
+                    {
+                        error = "Saved reputation could not be validated. Your original file is preserved.";
+                        return false;
+                    }
+                    candidate.reputation = restoredReputation.CaptureSave();
                 }
 
                 // A version 1 game restores with standard prices; capture it in the current form.

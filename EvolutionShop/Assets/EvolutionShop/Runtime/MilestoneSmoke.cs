@@ -46,7 +46,13 @@ namespace EvolutionShop
             bool nativeUi = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionUiSmoke") >= 0;
             bool pricing = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPricingSmoke") >= 0;
             bool customerTypes = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionCustomerTypesSmoke") >= 0;
-            if (!customerTypes)
+            bool reputation = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionReputationSmoke") >= 0;
+            if (!reputation)
+            {
+                shop.Customers.UseBaseReputationEffectsForValidation = true;
+                limitations.Add("Earlier scenarios retain base customer demand/budgets/tolerances through an explicit validation-only hook; reputation still scores, and real tier effects are covered by the reputation scenario.");
+            }
+            if (!customerTypes && !reputation)
             {
                 // Earlier scenarios were written for one visitor of the R02/R03.1 customer type at a time.
                 shop.Customers.MaxVisitors = 1;
@@ -54,7 +60,7 @@ namespace EvolutionShop
                 limitations.Add("Pinned to one casual visitor at a time (R03.2 validation hook) to keep this earlier scenario's assumptions; customer types and two concurrent visitors are covered by the customer-types scenario.");
             }
             stack.Push(nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
-                customerTypes ? CustomerTypesScenario() : Scenario());
+                customerTypes ? CustomerTypesScenario() : reputation ? ReputationScenario() : Scenario());
             bool failed = false;
             while (stack.Count > 0)
             {
@@ -75,7 +81,7 @@ namespace EvolutionShop
             {
                 passed = passed,
                 scenario = nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" :
-                    customerTypes ? "R03.2 customer types and two-visitor queue" : "Integrated regression",
+                    customerTypes ? "R03.2 customer types and two-visitor queue" : reputation ? "R03.3 reputation and capped demand" : "Integrated regression",
                 context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
                 unityVersion = Application.unityVersion,
                 graphics = SystemInfo.graphicsDeviceName,

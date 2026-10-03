@@ -39,7 +39,7 @@ namespace EvolutionShop
             Box(new Rect(22, 22, 338, 78), ink);
             Box(new Rect(22, 22, 4, 78), mint);
             GUI.Label(new Rect(40, 29, 310, 32), "EVOLUTION SHOP", titleStyle);
-            GUI.Label(new Rect(40, 65, 310, 25), "THE LITTLE LAB OF NEW LIFE", smallStyle);
+            GUI.Label(new Rect(40, 65, 310, 25), ReputationLine(), smallStyle);
             Box(new Rect(1050, 22, 208, 78), ink);
             GUI.Label(new Rect(1069, 31, 175, 30), Model.Currency + "  CREDITS", statStyle);
             GUI.Label(new Rect(1069, 63, 175, 23), Model.DiscoveredSpeciesIds.Count + " / 3 discovered", smallStyle);
@@ -214,6 +214,7 @@ namespace EvolutionShop
             Button("Use standard price  /  " + tag.Standard + " credits", () => SetSpeciesPrice(species.Id, tag.Standard));
             GUI.enabled = enabled;
             Small("Allowed " + tag.Minimum + "-" + tag.Maximum + " credits. A customer who already reserved pays the price they agreed to; a new tag applies to the next customer.");
+            Small(ReputationPriceNote() + " Previews include these bonuses; budget limits still apply.");
         }
         string TypeReactionLabel(CustomerArchetype type, PriceView tag)
         {
@@ -302,6 +303,9 @@ namespace EvolutionShop
                 if (lastReport != null) Button("Review day " + lastReport.dayNumber + " results", () => ShowDayReport());
             }
             else Small("No new arrivals. Unpaid creatures stay in their tanks when the night begins.");
+            GUILayout.Space(8);
+            Small(ReputationLine() + " / arrival gap " + Reputation.ArrivalSeconds.ToString("0.#") + "s while space is free (max 2 visitors).");
+            Small(ReputationPriceNote());
         }
         TradeDaySave LastReportForDisplay()
         {
@@ -331,6 +335,7 @@ namespace EvolutionShop
             GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
             Text("Specimens sold: " + report.sales + "    /    Visitors: " + report.visitors);
             Small("Cash now: " + Model.Currency + " credits    /    Wages: 0 (no employees)");
+            Small("Shop reputation now: " + Reputation.Points + " / 100 / " + Reputation.TierName);
             GUILayout.Space(8);
             Heading("Display stock");
             Text((report.partial ? "At recording start: " : "At opening: ") + report.stockedAtOpen +
@@ -445,8 +450,17 @@ namespace EvolutionShop
                 else {Heading("Unknown specimen"); Small(species.Id == "pondlet" ? "Begin with a balanced pair." : species.Id == "bubblebelly" ? "A little more Bloom may round things out." : "A little more Flow may stretch a tail.");}
             }
             Space(); Small("Known recipes can be prepared in one click at the incubator, using cultures you have collected.");
+            Space(); Heading("Your shop's reputation");
+            Text(ReputationLine());
+            Small(Reputation.Tier < 2 ? "Next tier at " + Reputation.NextThreshold + " points." : "Highest tier reached. Reputation is capped at 100.");
+            Text("Each completed sale earns 2 points. A visitor who leaves because prices are too high or patience runs out costs 1 point. A refusal followed by a purchase counts as a sale.");
+            Small("No reputation loss for empty displays, closing, reloads, or route problems. Reputation stays between 0 and 100; it changes per visit, not at day end.");
+            Text("Better reputation brings arrivals closer together when there is room: currently " + Reputation.ArrivalSeconds.ToString("0.#") + " seconds between arrivals, with at most two visitors in the store.");
+            Text(ReputationPriceNote());
+            Small("The bonus is added to each customer's usual limit; for example, 150% plus 10% of standard becomes 160%. Their budget still caps the purchase. Existing visitors keep the limits they arrived with; agreed prices stay fixed.");
+            Small("At 10 points: 5s arrival gap, +10% of standard to price limits, +2 credits to budgets. At 30 points: 4s, +20%, +4 credits. Bonuses stop growing at the highest tier. These values are provisional.");
             Space(); Heading("Your customers");
-            Small("Up to two visit at once and wait in line at the counter, first come, first served.");
+            Small("Current limits for new arrivals, including reputation. Up to two visit at once and wait in line at the counter, first come, first served.");
             foreach (var type in Customers.Archetypes)
                 if (type.Weight > 0) Text(type.DisplayName + ": " + CustomerNote(type));
         }
@@ -455,11 +469,13 @@ namespace EvolutionShop
             switch (type.Id)
             {
                 case CustomerArchetypes.Bargain: return "spends at most " + type.Budget + " credits and loves a discount. Very patient (" + type.PatienceSeconds + "s).";
-                case CustomerArchetypes.Collector: return "pays up to " + type.FavoriteTolerancePercent / 100f + "x for Bubblebellies and Ribbonfins and looks for them first; only a fair price for anything else.";
-                case CustomerArchetypes.Premium: return "pays up to " + type.TolerancePercent / 100f + "x the standard price but waits only " + type.PatienceSeconds + "s at the counter.";
-                default: return "pays up to " + type.TolerancePercent / 100f + "x the standard price; waits " + type.PatienceSeconds + "s at the counter.";
+                case CustomerArchetypes.Collector: return "looks for Bubblebellies and Ribbonfins first; pays up to " + type.FavoriteTolerancePercent / 100f + "x their standard price, or " + type.TolerancePercent / 100f + "x for other species. Budget: " + type.Budget + " credits.";
+                case CustomerArchetypes.Premium: return "pays up to " + type.TolerancePercent / 100f + "x standard, within a " + type.Budget + "-credit budget; waits only " + type.PatienceSeconds + "s at the counter.";
+                default: return "pays up to " + type.TolerancePercent / 100f + "x standard, within a " + type.Budget + "-credit budget; waits " + type.PatienceSeconds + "s at the counter.";
             }
         }
+        string ReputationLine() => "Reputation " + Reputation.Points + " / 100 / " + Reputation.TierName;
+        string ReputationPriceNote() => "New visitors: +" + Reputation.PremiumPercent + "% of standard added to price limits; +" + Reputation.BudgetBonus + " credits to budgets.";
         void Heading(string text) => GUILayout.Label(text, headingStyle);
         void Text(string text) => GUILayout.Label(text, bodyStyle);
         void Small(string text) => GUILayout.Label(text, smallStyle);

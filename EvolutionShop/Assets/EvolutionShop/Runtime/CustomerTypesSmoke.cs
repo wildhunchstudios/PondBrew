@@ -272,8 +272,8 @@ namespace EvolutionShop
             Check(shop.ReloadSaved() && shop.Model.GetPrice("pondlet").Value.Price == 8 && File.ReadAllText(shop.SavePath) == formatFour,
                 "Runtime reload of an R03.1 format-4 save keeps its price tags without writing");
             Check(shop.SaveNow() && File.ReadAllText(shop.SavePath + ".v4.bak") == formatFour &&
-                JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).formatVersion == 5,
-                "The first new save archives the exact format-4 bytes and writes format 5");
+                JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).formatVersion == SaveStore.CurrentFormatVersion,
+                "The first new save archives the exact format-4 bytes and writes the current format");
             shop.ConfirmNewGame();
         }
 

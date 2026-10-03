@@ -25,7 +25,10 @@ namespace EvolutionShop
         readonly CustomerRules rules = new CustomerRules();
         readonly List<Visitor> visitors = new List<Visitor>(); // arrival order
         readonly List<Visitor> line = new List<Visitor>();     // agreed orders, in the order they were agreed
-        CustomerArchetype[] catalog;
+        CustomerArchetype[] catalog, effectiveCatalog;
+        ShopReputation cachedReputation;
+        int cachedTier = -1;
+        bool baseEffects, cachedBaseEffects;
         int maxVisitors = 1;
         float untilArrival;
 
@@ -45,7 +48,23 @@ namespace EvolutionShop
         /// <summary>Validation only: types for the next arrivals, used before ForcedArchetypeId.</summary>
         public readonly Queue<string> ScriptedArchetypes = new Queue<string>();
         /// <summary>Copies of the customer types, for presentation; changing them changes nothing.</summary>
-        public IReadOnlyList<CustomerArchetype> Archetypes { get; private set; }
+        public IReadOnlyList<CustomerArchetype> Archetypes
+        {
+            get { RefreshReputation(); return Array.AsReadOnly(Array.ConvertAll(effectiveCatalog, a => a.Copy())); }
+        }
+        /// <summary>Validation only; normal play always applies the current shop reputation.</summary>
+        public bool UseBaseReputationEffectsForValidation
+        {
+            get => baseEffects;
+            set => baseEffects = shop != null && shop.ValidationMode && value;
+        }
+        public float NextArrivalSeconds => baseEffects ? rules.NextArrivalSeconds : shop.Reputation.ArrivalSeconds;
+        void RefreshReputation()
+        {
+            if (effectiveCatalog != null && cachedReputation == shop.Reputation && cachedTier == shop.Reputation.Tier && cachedBaseEffects == baseEffects) return;
+            cachedReputation = shop.Reputation; cachedTier = shop.Reputation.Tier; cachedBaseEffects = baseEffects;
+            effectiveCatalog = baseEffects ? Array.ConvertAll(catalog, a => a.Copy()) : shop.Reputation.ApplyTo(catalog);
+        }
         public IReadOnlyList<CustomerVisit> Visits => visitors.ConvertAll(v => v.Visit);
         /// <summary>The order the counter serves next: the first one waiting, else the next one on its way.</summary>
         public CustomerVisit NextToServe => (FirstQueued() ?? Front())?.Visit;
@@ -63,7 +82,7 @@ namespace EvolutionShop
             MaxVisitors = rules.MaxVisitors;
             catalog = CustomerArchetypes.Validate(CustomerArchetypes.CreateDefault(), id => session.Config != null &&
                 Array.Exists(session.Config.Species, s => s.Id == id));
-            Archetypes = Array.AsReadOnly(Array.ConvertAll(catalog, a => a.Copy()));
+            RefreshReputation();
             Navigation = gameObject.AddComponent<ShopCustomerNavigation>();
             untilArrival = rules.ArrivalDelaySeconds;
             StartCoroutine(BuildAfterWorldSettles());
@@ -82,17 +101,18 @@ namespace EvolutionShop
         }
 
         /// <summary>How the casual visitor (the R03.1 customer) takes a tag.</summary>
-        public PriceReaction Preview(PriceView tag) => Preview(CustomerArchetypes.Find(catalog, CustomerArchetypes.Casual), tag);
+        public PriceReaction Preview(PriceView tag) { RefreshReputation(); return Preview(CustomerArchetypes.Find(effectiveCatalog, CustomerArchetypes.Casual), tag); }
         public PriceReaction Preview(CustomerArchetype type, PriceView tag) =>
             type == null ? rules.Judge(tag.Price, tag.Standard) : type.Judge(tag.SpeciesId, tag.Price, tag.Standard);
         /// <summary>How many arriving customer types would buy at this tag.</summary>
         public int BuyerTypes(PriceView tag)
         {
+            RefreshReputation();
             int buyers = 0;
-            foreach (var type in catalog) if (type.Weight > 0 && type.Judge(tag.SpeciesId, tag.Price, tag.Standard) != PriceReaction.TooExpensive) buyers++;
+            foreach (var type in effectiveCatalog) if (type.Weight > 0 && type.Judge(tag.SpeciesId, tag.Price, tag.Standard) != PriceReaction.TooExpensive) buyers++;
             return buyers;
         }
-        public int ArrivingTypes { get { int count = 0; foreach (var type in catalog) if (type.Weight > 0) count++; return count; } }
+        public int ArrivingTypes { get { RefreshReputation(); int count = 0; foreach (var type in effectiveCatalog) if (type.Weight > 0) count++; return count; } }
 
         public void Tick(float seconds)
         {
@@ -106,7 +126,7 @@ namespace EvolutionShop
             untilArrival -= seconds;
             if (untilArrival > 0) return;
             BeginVisit();
-            untilArrival = rules.NextArrivalSeconds;
+            untilArrival = NextArrivalSeconds;
         }
 
         /// <summary>Validation only: starts an arrival now if the shop is open and has room.</summary>
@@ -115,7 +135,7 @@ namespace EvolutionShop
             if (!Ready || shop.Paused || shop.Cycle.Phase != ShopDayPhase.Open || visitors.Count >= maxVisitors) return false;
             int before = visitors.Count;
             BeginVisit();
-            untilArrival = rules.NextArrivalSeconds;
+            untilArrival = NextArrivalSeconds;
             return visitors.Count == before + 1;
         }
 
@@ -174,10 +194,11 @@ namespace EvolutionShop
 
         CustomerArchetype ChooseArchetype(int visitorIndex)
         {
+            RefreshReputation();
             string id = ScriptedArchetypes.Count > 0 ? ScriptedArchetypes.Dequeue() : ForcedArchetypeId;
             if (id != null)
-                return CustomerArchetypes.Find(catalog, id) ?? throw new InvalidOperationException("Unknown scripted customer type " + id);
-            return CustomerArchetypes.Pick(catalog, shop.Cycle.DayNumber, visitorIndex);
+                return CustomerArchetypes.Find(effectiveCatalog, id) ?? throw new InvalidOperationException("Unknown scripted customer type " + id);
+            return CustomerArchetypes.Pick(effectiveCatalog, shop.Cycle.DayNumber, visitorIndex);
         }
 
         bool Contended(string tankId, Visitor self)
@@ -349,7 +370,7 @@ namespace EvolutionShop
             var visit = visitor.Visit;
             if (visit == null || visit.Outcome == CustomerOutcome.None) return;
             int price = visit.Outcome == CustomerOutcome.Sold ? visit.Price : 0;
-            if (shop.Reports.ResolveVisit(visit.Id, visit.Outcome, price) && save && shop.Cycle.Phase != ShopDayPhase.Night)
+            if (shop.Reputation.ResolveVisit(shop.Reports, visit.Id, visit.Outcome, price) && save && shop.Cycle.Phase != ShopDayPhase.Night)
                 shop.SaveNow(); // Night saves once after the report is finalized with the new day clock.
         }
 

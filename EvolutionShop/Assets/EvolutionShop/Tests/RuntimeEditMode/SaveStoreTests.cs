@@ -15,7 +15,15 @@ namespace EvolutionShop.Tests
             Directory.CreateDirectory(directory);
             config = GameConfig.CreateDefault();
         }
-        [TearDown] public void Cleanup() { if(Directory.Exists(directory)) Directory.Delete(directory,true); }
+        [TearDown] public void Cleanup()
+        {
+            if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory)) return;
+            string target = Path.GetFullPath(directory);
+            Assert.That(Path.GetDirectoryName(target).TrimEnd(Path.DirectorySeparatorChar),
+                Is.EqualTo(Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar)).IgnoreCase);
+            Assert.That(Path.GetFileName(target).StartsWith("EvolutionShop-SaveTests-", StringComparison.Ordinal), Is.True);
+            Directory.Delete(target, true);
+        }
         string PathFor(string name="slot.json") => Path.Combine(directory,name);
         static void Ok(ActionResult result) => Assert.That(result.Success,Is.True,result.Failure.ToString());
         SlotData FreshSlot() => new SlotData {game=new GameModel(config).CaptureSave(),cycle=new ShopDayCycle().CaptureSave()};
@@ -47,7 +55,7 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Write(PathFor(),slot,out var error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out var restored,out var loaded,out error),Is.True,error);
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()),Is.EqualTo(JsonUtility.ToJson(model.CaptureSave())));
-            Assert.That(loaded.formatVersion,Is.EqualTo(5)); Assert.That(loaded.game.version,Is.EqualTo(2));
+            Assert.That(loaded.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.game.version,Is.EqualTo(2));
             Assert.That(loaded.sensitivity,Is.EqualTo(1.7f)); Assert.That(loaded.volume,Is.EqualTo(0.31f));
             Assert.That(SaveStore.Write(PathFor(),loaded,out error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out restored,out _,out error),Is.True,error);
@@ -79,7 +87,7 @@ namespace EvolutionShop.Tests
             slot.trades=ShopTradeLedger.LegacyForCycle(slot.cycle,0).CaptureSave();
             Assert.That(SaveStore.Write(PathFor(),slot,out var error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out _,out var loaded,out error),Is.True,error);
-            Assert.That(loaded.formatVersion,Is.EqualTo(5));
+            Assert.That(loaded.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(loaded.game.version,Is.EqualTo(2));
             Assert.That(ShopDayCycle.TryRestore(loaded.cycle,out var restored),Is.True);
             Assert.That(restored.DayNumber,Is.EqualTo(2)); Assert.That(restored.Phase,Is.EqualTo(phase));
@@ -99,7 +107,7 @@ namespace EvolutionShop.Tests
             Assert.That(model.DiscoveredSpeciesIds.Count,Is.EqualTo(3)); Assert.That(model.Incubator.Phase,Is.EqualTo(IncubatorPhase.Incubating));
             Assert.That(model.Incubator.SpecimenId,Is.EqualTo("657d8c9c16744f6ab0436867af9d82d2"));
             Assert.That(model.Incubator.SecondsRemaining,Is.EqualTo(10)); Assert.That(slot.sensitivity,Is.EqualTo(1));
-            Assert.That(slot.volume,Is.EqualTo(0.65f)); Assert.That(slot.formatVersion,Is.EqualTo(5));
+            Assert.That(slot.volume,Is.EqualTo(0.65f)); Assert.That(slot.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(slot.game.version,Is.EqualTo(2)); Assert.That(slot.cycle.version,Is.EqualTo(1));
             Assert.That(slot.cycle.phase,Is.EqualTo(ShopDayPhase.Night)); Assert.That(slot.cycle.dayNumber,Is.EqualTo(1));
             Assert.That(slot.cycle.secondsRemaining,Is.Zero);
@@ -128,7 +136,7 @@ namespace EvolutionShop.Tests
             Assert.That(File.ReadAllBytes(PathFor()+".v1.bak"),Is.EqualTo(original));
             Assert.That(SaveStore.Read(PathFor(),config,out var restored,out var loaded,out error),Is.True,error);
             Assert.That(restored.Currency,Is.EqualTo(2)); Assert.That(restored.UpgradeOwned,Is.True);
-            Assert.That(loaded.formatVersion,Is.EqualTo(5)); Assert.That(loaded.volume,Is.EqualTo(0.2f));
+            Assert.That(loaded.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.volume,Is.EqualTo(0.2f));
         }
 
         [Test] public void MigrationDoesNotReplaceAnExistingLegacyArchive()
@@ -249,6 +257,240 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Read(PathFor(),config,out var model,out var loaded,out _),Is.False);
             Assert.That(model,Is.Null); Assert.That(loaded,Is.Null);
             Assert.That(File.ReadAllText(PathFor()),Is.EqualTo("{bad primary"));
+        }
+
+        [TestCase(0, ShopDayPhase.Night)]
+        [TestCase(47, ShopDayPhase.Open)]
+        [TestCase(100, ShopDayPhase.Closing)]
+        public void ReputationFileRoundTripPreservesBoundedScoreAndCompleteSlot(int points, ShopDayPhase phase)
+        {
+            var model = new GameModel(config);
+            Produce(model, "pondlet"); Ok(model.TransferToTank("tank-a"));
+            Ok(model.SetPrice("pondlet", 8));
+            var day = new ShopDayCycle();
+            if (phase != ShopDayPhase.Night) day.OpenShop();
+            if (phase == ShopDayPhase.Closing) day.RequestClose();
+            var slot = new SlotData
+            {
+                game = model.CaptureSave(), cycle = day.CaptureSave(),
+                trades = ShopTradeLedger.LegacyForCycle(day.CaptureSave(), 1).CaptureSave(),
+                reputation = new ReputationSave { version = ShopReputation.SaveVersion, points = points },
+                sensitivity = 1.65f, volume = .27f
+            };
+            Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
+            byte[] bytes = File.ReadAllBytes(PathFor());
+            Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out error), Is.True, error);
+            Assert.That(loaded.formatVersion, Is.EqualTo(6));
+            Assert.That(loaded.reputation.version, Is.EqualTo(1));
+            Assert.That(loaded.reputation.points, Is.EqualTo(points));
+            Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(JsonUtility.ToJson(slot.game)));
+            Assert.That(JsonUtility.ToJson(loaded.cycle), Is.EqualTo(JsonUtility.ToJson(slot.cycle)));
+            Assert.That(JsonUtility.ToJson(loaded.trades), Is.EqualTo(JsonUtility.ToJson(slot.trades)));
+            Assert.That(loaded.sensitivity, Is.EqualTo(slot.sensitivity));
+            Assert.That(loaded.volume, Is.EqualTo(slot.volume));
+            Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(bytes));
+            Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
+        }
+
+        [TestCase(ShopDayPhase.Open)]
+        [TestCase(ShopDayPhase.Closing)]
+        public void PendingOrdersReloadAndCancellationKeepReputationStockAndMoney(ShopDayPhase phase)
+        {
+            var model = new GameModel(config);
+            Produce(model, "pondlet"); Ok(model.TransferToTank("tank-a"));
+            Produce(model, "bubblebelly"); Ok(model.TransferToTank("tank-b"));
+            var day = new ShopDayCycle(); day.OpenShop();
+            if (phase == ShopDayPhase.Closing) day.RequestClose();
+            var reports = new ShopTradeLedger(); Assert.That(reports.BeginDay(1, 2), Is.True);
+            Assert.That(reports.BeginVisit("queued-a"), Is.True); Assert.That(reports.BeginVisit("queued-b"), Is.True);
+            Ok(model.ReserveTank("tank-a", "queued-a")); Ok(model.ReserveTank("tank-b", "queued-b"));
+            string a = model.GetTank("tank-a").Value.Id, b = model.GetTank("tank-b").Value.Id;
+            var slot = new SlotData { game = model.CaptureSave(), cycle = day.CaptureSave(), trades = reports.CaptureSave(),
+                reputation = new ReputationSave { version = 1, points = 36 } };
+            Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
+            byte[] original = File.ReadAllBytes(PathFor());
+            Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out error), Is.True, error);
+            Assert.That(loaded.trades.pendingCustomerIds, Is.EqualTo(new[] { "queued-a", "queued-b" }));
+            Assert.That(restored.GetReservation("tank-a"), Is.Null); Assert.That(restored.GetReservation("tank-b"), Is.Null);
+            Assert.That(restored.GetTank("tank-a").Value.Id, Is.EqualTo(a)); Assert.That(restored.GetTank("tank-b").Value.Id, Is.EqualTo(b));
+            Assert.That(restored.Currency, Is.EqualTo(model.Currency));
+            Assert.That(ShopReputation.TryRestore(loaded.reputation, out var reputation), Is.True);
+            Assert.That(ShopTradeLedger.TryRestore(loaded.trades, loaded.cycle, out var ledger), Is.True);
+            Assert.That(ledger.CancelPendingForReload(), Is.True);
+            Assert.That(ledger.CancelPendingForReload(), Is.False);
+            Assert.That(reputation.ResolveVisit(ledger, "queued-a", CustomerOutcome.Sold, 6), Is.False);
+            Assert.That(reputation.Points, Is.EqualTo(36)); Assert.That(ledger.Current.interrupted, Is.EqualTo(2));
+            Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
+            loaded.trades = ledger.CaptureSave(); loaded.reputation = reputation.CaptureSave();
+            Assert.That(SaveStore.Write(PathFor(), loaded, out error), Is.True, error);
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out var again, out error), Is.True, error);
+            Assert.That(again.reputation.points, Is.EqualTo(36)); Assert.That(again.trades.current.interrupted, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void PaidSaleReloadCannotReplayMoneyOrReputation()
+        {
+            var slot = PaidReputationSlot(out var model, out var reports, out var reputation);
+            Assert.That(reputation.Points, Is.EqualTo(2)); Assert.That(model.Currency, Is.EqualTo(6));
+            Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
+            for (int i = 0; i < 3; i++)
+            {
+                Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out error), Is.True, error);
+                Assert.That(ShopTradeLedger.TryRestore(loaded.trades, loaded.cycle, out reports), Is.True);
+                Assert.That(ShopReputation.TryRestore(loaded.reputation, out reputation), Is.True);
+                Assert.That(reputation.ResolveVisit(reports, "paid-visitor", CustomerOutcome.Sold, 6), Is.False);
+                Assert.That(restored.SellFromTank("tank-a").Success, Is.False);
+                Assert.That(restored.GetTank("tank-a"), Is.Null);
+                Assert.That(restored.Currency, Is.EqualTo(6)); Assert.That(reputation.Points, Is.EqualTo(2));
+                Assert.That(reports.Current.sales, Is.EqualTo(1)); Assert.That(reports.Current.revenue, Is.EqualTo(6));
+                loaded.reputation = reputation.CaptureSave(); loaded.trades = reports.CaptureSave();
+                Assert.That(SaveStore.Write(PathFor(), loaded, out error), Is.True, error);
+            }
+        }
+
+        [TestCase(1)] [TestCase(2)] [TestCase(3)] [TestCase(4)] [TestCase(5)]
+        public void LegacyFormatsStartReputationAtZeroWithoutBackfillOrReadWrites(int format)
+        {
+            byte[] original = WriteLegacyReputationSlot(format);
+            for (int i = 0; i < 2; i++)
+            {
+                Assert.That(SaveStore.Read(PathFor(), config, out var model, out var slot, out var error), Is.True, error);
+                Assert.That(slot.formatVersion, Is.EqualTo(6)); Assert.That(slot.reputation.version, Is.EqualTo(1));
+                Assert.That(slot.reputation.points, Is.Zero); Assert.That(model.Currency, Is.EqualTo(6));
+                Assert.That(model.GetTank("tank-a"), Is.Null);
+                if (format >= 3) { Assert.That(slot.trades.current.sales, Is.EqualTo(1)); Assert.That(slot.trades.current.revenue, Is.EqualTo(6)); }
+                Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
+                Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
+            }
+        }
+
+        [Test]
+        public void FormatFiveMigrationArchivesExactBytesAndKeepsThemAcrossLaterWrites()
+        {
+            byte[] legacy = WriteLegacyReputationSlot(5);
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out var slot, out var error), Is.True, error);
+            Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.True, error);
+            Assert.That(File.ReadAllBytes(PathFor() + ".v5.bak"), Is.EqualTo(legacy));
+            Assert.That(File.ReadAllBytes(PathFor() + ".bak"), Is.EqualTo(legacy));
+            byte[] firstCurrent = File.ReadAllBytes(PathFor());
+            slot.reputation.points = 14;
+            Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.True, error);
+            Assert.That(File.ReadAllBytes(PathFor() + ".v5.bak"), Is.EqualTo(legacy));
+            Assert.That(File.ReadAllBytes(PathFor() + ".bak"), Is.EqualTo(firstCurrent));
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out var loaded, out error), Is.True, error);
+            Assert.That(loaded.reputation.points, Is.EqualTo(14));
+        }
+
+        [Test]
+        public void FormatFiveMigrationNeverOverwritesAnExistingArchive()
+        {
+            WriteLegacyReputationSlot(5);
+            byte[] archive = { 5, 1, 9, 2 }; File.WriteAllBytes(PathFor() + ".v5.bak", archive);
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out var slot, out var error), Is.True, error);
+            Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.True, error);
+            Assert.That(File.ReadAllBytes(PathFor() + ".v5.bak"), Is.EqualTo(archive));
+        }
+
+        [Test]
+        public void FailedFormatFiveArchivePreservesPrimaryAndDoesNotCreateRotatingBackup()
+        {
+            byte[] original = WriteLegacyReputationSlot(5);
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out var slot, out var error), Is.True, error);
+            Directory.CreateDirectory(PathFor() + ".v5.bak");
+            Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.False); Assert.That(error, Is.Not.Empty);
+            Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
+            Assert.That(File.Exists(PathFor() + ".bak"), Is.False);
+        }
+
+        [TestCase("missing")] [TestCase("null")] [TestCase("empty")] [TestCase("missing-version")]
+        [TestCase("version-zero")] [TestCase("version-future")] [TestCase("version-negative")]
+        [TestCase("points-negative")] [TestCase("points-overmax")]
+        public void MalformedCurrentReputationIsRejectedWithoutChangingTheFile(string problem)
+        {
+            string payload = "{\"version\":1,\"points\":31}";
+            switch (problem)
+            {
+                case "null": payload = "null"; break;
+                case "empty": payload = "{}"; break;
+                case "missing-version": payload = "{\"points\":31}"; break;
+                case "version-zero": payload = "{\"version\":0,\"points\":31}"; break;
+                case "version-future": payload = "{\"version\":" + (ShopReputation.SaveVersion + 1) + ",\"points\":31}"; break;
+                case "version-negative": payload = "{\"version\":-1,\"points\":31}"; break;
+                case "points-negative": payload = "{\"version\":1,\"points\":-1}"; break;
+                case "points-overmax": payload = "{\"version\":1,\"points\":" + (ShopReputation.MaxPoints + 1) + "}"; break;
+            }
+            var slot = FreshSlot();
+            string json = "{\"formatVersion\":6,\"game\":" + JsonUtility.ToJson(slot.game) +
+                ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
+                (problem == "missing" ? "" : ",\"reputation\":" + payload) + ",\"sensitivity\":1,\"volume\":0.5}";
+            File.WriteAllText(PathFor(), json);
+            Assert.That(SaveStore.Read(PathFor(), config, out var model, out var loaded, out var error), Is.False);
+            Assert.That(model, Is.Null); Assert.That(loaded, Is.Null); Assert.That(error, Is.Not.Empty);
+            Assert.That(File.ReadAllText(PathFor()), Is.EqualTo(json));
+            Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
+        }
+
+        [TestCase("null")] [TestCase("version-zero")] [TestCase("version-future")]
+        [TestCase("points-negative")] [TestCase("points-overmax")]
+        public void InvalidReputationWritePreservesKnownGoodPrimaryBeforeAnyFileWork(string problem)
+        {
+            var slot = FreshSlot(); slot.reputation.points = 22;
+            Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
+            byte[] original = File.ReadAllBytes(PathFor());
+            switch (problem)
+            {
+                case "null": slot.reputation = null; break;
+                case "version-zero": slot.reputation.version = 0; break;
+                case "version-future": slot.reputation.version = ShopReputation.SaveVersion + 1; break;
+                case "points-negative": slot.reputation.points = -1; break;
+                case "points-overmax": slot.reputation.points = ShopReputation.MaxPoints + 1; break;
+            }
+            Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.False); Assert.That(error, Is.Not.Empty);
+            Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
+            Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void FormatSixRetainsExplicitHistoricalGameAndReportPairings()
+        {
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(6));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2 }, reports = { 0, 0, 0, 1, 2, 3, 3 };
+            for (int format = 1; format <= 6; format++)
+            {
+                Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
+                Assert.That(SaveStore.ReportVersionFor(format), Is.EqualTo(reports[format]));
+            }
+            Assert.That(new SlotData().reputation.version, Is.EqualTo(1));
+            Assert.That(new SlotData().reputation.points, Is.Zero);
+        }
+
+        SlotData PaidReputationSlot(out GameModel model, out ShopTradeLedger reports, out ShopReputation reputation)
+        {
+            model = new GameModel(config); Produce(model, "pondlet"); Ok(model.TransferToTank("tank-a"));
+            var day = new ShopDayCycle(); Assert.That(day.OpenShop(), Is.True);
+            reports = new ShopTradeLedger(); Assert.That(reports.BeginDay(1, 1), Is.True);
+            Assert.That(reports.BeginVisit("paid-visitor"), Is.True);
+            Ok(model.ReserveTank("tank-a", "paid-visitor"));
+            string specimen = model.GetTank("tank-a").Value.Id;
+            Ok(model.SellReservedTank("tank-a", "paid-visitor", specimen));
+            reputation = new ShopReputation();
+            Assert.That(reputation.ResolveVisit(reports, "paid-visitor", CustomerOutcome.Sold, 6), Is.True);
+            return new SlotData { game = model.CaptureSave(), cycle = day.CaptureSave(), trades = reports.CaptureSave(), reputation = reputation.CaptureSave() };
+        }
+
+        byte[] WriteLegacyReputationSlot(int format)
+        {
+            var slot = PaidReputationSlot(out _, out _, out _);
+            slot.game.version = format < 4 ? 1 : 2;
+            if (format < 4) slot.game.prices = null;
+            slot.trades.version = format == 3 ? 1 : format == 4 ? 2 : 3;
+            if (format < 5) slot.trades.pendingCustomerIds = null;
+            string json = "{\n  \"formatVersion\": " + format + ",\n  \"game\": " + JsonUtility.ToJson(slot.game, true) +
+                (format >= 2 ? ",\n  \"cycle\": " + JsonUtility.ToJson(slot.cycle, true) : "") +
+                (format >= 3 ? ",\n  \"trades\": " + JsonUtility.ToJson(slot.trades, true) : "") +
+                ",\n  \"sensitivity\": 1.2,\n  \"volume\": 0.4\n}";
+            File.WriteAllText(PathFor(), json);
+            return File.ReadAllBytes(PathFor());
         }
 
         void Collect(GameModel model,int bloom,int flow)

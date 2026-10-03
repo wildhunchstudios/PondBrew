@@ -11,6 +11,7 @@ namespace EvolutionShop
         public GameModel Model { get; private set; }
         public ShopDayCycle Cycle { get; private set; }
         public ShopTradeLedger Reports { get; private set; }
+        public ShopReputation Reputation { get; private set; }
         public GameConfig Config { get; private set; }
         public ShopWorld World { get; private set; }
         public ShopPlayer Player { get; private set; }
@@ -51,7 +52,7 @@ namespace EvolutionShop
             {
                 Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
-                Reports.CancelPendingForReload();
+                ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
                 Sensitivity = slot.sensitivity; Volume = slot.volume;
             }
             else
@@ -59,6 +60,7 @@ namespace EvolutionShop
                 Model = new GameModel(Config);
                 Cycle = new ShopDayCycle();
                 Reports = new ShopTradeLedger();
+                Reputation = new ShopReputation();
                 if (!ValidationMode && File.Exists(SavePath))
                 {
                     AutosaveBlocked = true;
@@ -358,7 +360,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
-            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
+            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), reputation = Reputation.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
             return success;
@@ -372,7 +374,7 @@ namespace EvolutionShop
             Customers.ResetVisitors();
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
-            Reports.CancelPendingForReload();
+            ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
             World.SetDayPhase(Cycle.Phase);
             Sensitivity = slot.sensitivity; Volume = slot.volume;
             AudioListener.volume = Volume;
@@ -385,11 +387,12 @@ namespace EvolutionShop
             var fresh = new GameModel(Config);
             var freshCycle = new ShopDayCycle();
             var freshReports = new ShopTradeLedger();
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
+            var freshReputation = new ShopReputation();
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
             { SaveError = error; SetPanel(ShopPanel.Reset); return; }
             Customers.ResetVisitors();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
-            Cycle = freshCycle; Reports = freshReports; World.SetDayPhase(Cycle.Phase);
+            Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; World.SetDayPhase(Cycle.Phase);
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
