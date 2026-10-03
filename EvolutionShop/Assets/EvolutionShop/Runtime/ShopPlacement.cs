@@ -41,6 +41,7 @@ namespace EvolutionShop
             PlacementRotation = owned.HasValue ? owned.Value.QuarterTurns : 0;
             SetPanel(ShopPanel.None);
             PlacementActive = true; placementArmed = false; previewX = int.MinValue;
+            message = null; messageUntil = 0; // A new preview replaces stale action/recovery notices; SaveError remains visible.
             SlapTarget = null; Focused = null; StopHarvest();
             World.SetHarvesting(false, null);
             UpdatePlacementAim();
