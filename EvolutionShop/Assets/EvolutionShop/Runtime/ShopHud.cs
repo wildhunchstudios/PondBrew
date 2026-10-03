@@ -125,10 +125,12 @@ namespace EvolutionShop
         void DrawPanel()
         {
             bool dayReportPanel = Panel == ShopPanel.DayReport;
+            bool closePanel = !dayReportPanel && Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset;
+            bool fixedFooter = dayReportPanel || closePanel;
             Box(new Rect(0,0,1280,720), new Color(0.015f,0.045f,0.06f,0.38f));
             Box(new Rect(350,112,580,518), ink);
             Box(new Rect(350,112,580,3), mint);
-            GUILayout.BeginArea(new Rect(377,130,526,dayReportPanel ? 423 : 477));
+            GUILayout.BeginArea(new Rect(377,130,526,fixedFooter ? 423 : 477));
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
             switch (Panel)
             {
@@ -180,14 +182,12 @@ namespace EvolutionShop
                     Button("Close today's shop", () => { CloseForNight(); SetPanel(ShopPanel.Counter); });
                     break;
             }
-            if (!dayReportPanel && Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset)
-            { Space(); Button("Close  /  ESC", () => SetPanel(ShopPanel.None)); }
             GUILayout.EndScrollView(); GUILayout.EndArea();
-            if (dayReportPanel)
+            if (fixedFooter)
             {
-                // Keep the exit visible even for partial reports or unusually large saved totals.
+                // Keep the exit visible even when panel content needs scrolling.
                 GUILayout.BeginArea(new Rect(377,570,526,47));
-                Button("Continue preparation  /  ESC", () => SetPanel(ShopPanel.None));
+                Button(dayReportPanel ? "Continue preparation  /  ESC" : "Close  /  ESC", () => SetPanel(ShopPanel.None));
                 GUILayout.EndArea();
             }
         }
@@ -349,7 +349,6 @@ namespace EvolutionShop
             GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
             Text("Specimens sold: " + report.sales + "    /    Visitors: " + report.visitors);
             Small("Cash now: " + Model.Currency + " credits    /    Wages: 0 (no employees)");
-            Small("Slapped departures: " + report.slapped);
             Small("Shop reputation now: " + Reputation.Points + " / 100 / " + Reputation.TierName);
             GUILayout.Space(8);
             Heading("Display stock");
@@ -361,6 +360,7 @@ namespace EvolutionShop
             Heading("Left without a purchase: " + missed);
             Small("Too expensive: " + report.tooExpensive + "    /    No stock: " + report.noStock + "    /    Patience ran out: " + report.impatient);
             Small("Closing: " + report.closed + "    /    Interrupted visits: " + report.interrupted + "    /    Route problems: " + report.pathProblems);
+            Small("Slapped departures: " + report.slapped);
             GUILayout.Space(8);
             Heading("Prepare for the next day");
             Text(ReportPreparationTip(report));

@@ -496,7 +496,7 @@ namespace EvolutionShop
                 case CustomerPhase.ToCounter: return type + ": order at " + visit.Price + " credits (" + ShopSession.ReactionLabel(visit.Reaction) + ")";
                 case CustomerPhase.Queued: return "Serve the counter / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + "s patience";
                 case CustomerPhase.Paid: return "Purchase complete";
-                default: return visit.Outcome == CustomerOutcome.Slapped ? "Slapped customer leaving / reputation -1" : visit.Outcome == CustomerOutcome.TooExpensive ? "The customer left: too expensive" : "The customer is leaving";
+                default: return visit.Outcome == CustomerOutcome.Slapped ? "Slapped customer leaving / reputation -1" : visit.Outcome == CustomerOutcome.TooExpensive ? (visit.RefusedOverBudget ? "The customer left: over budget" : "The customer left: too expensive") : "The customer is leaving";
             }
         }
 
