@@ -312,6 +312,13 @@ namespace EvolutionShop
         /// <summary>Visit teardown releases unpaid claims without moving stock or granting payment.</summary>
         public void ClearReservations() { reservations.Clear(); }
 
+        // Layout validates ownership, phase and geometry before asking this single money authority.
+        internal bool TrySpendCredits(int amount)
+        {
+            if (amount <= 0 || Currency < amount) return false;
+            Currency -= amount;
+            return true;
+        }
         public ActionResult BuyUpgrade()
         {
             if (UpgradeOwned) return ActionResult.Fail(FailureCode.AlreadyUpgraded);

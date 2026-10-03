@@ -257,6 +257,7 @@ namespace EvolutionShop.Tests
             string json = problem == "missing"
                 ? "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
                     ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) +
+                    ",\"layout\":" + JsonUtility.ToJson(slot.layout) +
                     ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false}"
                 : JsonUtility.ToJson(slot);
             File.WriteAllText(PathFor(), json);

@@ -422,6 +422,7 @@ namespace EvolutionShop.Tests
             var slot = FreshSlot();
             string json = "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
                 ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
+                ",\"layout\":" + JsonUtility.ToJson(slot.layout) +
                 (problem == "missing" ? "" : ",\"reputation\":" + payload) + ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.5}";
             File.WriteAllText(PathFor(), json);
             Assert.That(SaveStore.Read(PathFor(), config, out var model, out var loaded, out var error), Is.False);
@@ -451,11 +452,11 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void FormatSevenRetainsExplicitHistoricalGameAndReportPairings()
+        public void FormatEightRetainsExplicitHistoricalGameAndReportPairings()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(7));
-            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4 };
-            for (int format = 1; format <= 7; format++)
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(8));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4 };
+            for (int format = 1; format <= 8; format++)
             {
                 Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
                 Assert.That(SaveStore.ReportVersionFor(format), Is.EqualTo(reports[format]));

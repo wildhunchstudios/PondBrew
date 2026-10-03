@@ -42,7 +42,7 @@ namespace EvolutionShop.Tests
             Assert.That(loaded.slapKey, Is.EqualTo(key)); Assert.That(loaded.humorVolume, Is.EqualTo(humor));
             Assert.That(loaded.reducedGags, Is.EqualTo(reduced)); Assert.That(loaded.sensitivity, Is.EqualTo(1.7f));
             Assert.That(loaded.volume, Is.EqualTo(.28f)); Assert.That(loaded.reputation.points, Is.EqualTo(38));
-            Assert.That(loaded.formatVersion, Is.EqualTo(7)); Assert.That(loaded.trades.version, Is.EqualTo(4));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.trades.version, Is.EqualTo(4));
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
         }
@@ -54,7 +54,7 @@ namespace EvolutionShop.Tests
             for (int i = 0; i < 2; i++)
             {
                 var slot = Read(out _);
-                Assert.That(slot.formatVersion, Is.EqualTo(7)); Assert.That(slot.trades.version, Is.EqualTo(4));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.trades.version, Is.EqualTo(4));
                 Assert.That(slot.slapKey, Is.EqualTo("F")); Assert.That(slot.humorVolume, Is.EqualTo(1f));
                 Assert.That(slot.reducedGags, Is.False); Assert.That(slot.sensitivity, Is.EqualTo(1.35f));
                 Assert.That(slot.volume, Is.EqualTo(.37f));

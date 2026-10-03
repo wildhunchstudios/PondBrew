@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEngine;
 
 namespace EvolutionShop
@@ -12,6 +14,7 @@ namespace EvolutionShop
         public ShopDaySave cycle;
         public TradeLedgerSave trades = new TradeLedgerSave();
         public ReputationSave reputation = new ShopReputation().CaptureSave();
+        public LayoutSave layout = new ShopLayout().CaptureSave();
         public float sensitivity = 1f;
         public float volume = 0.65f;
         public string slapKey = "F";
@@ -23,15 +26,16 @@ namespace EvolutionShop
     {
         // 4: price tags (game 2) and price refusals (report 2). 5: several unresolved visitors (report 3).
         // 6: reputation. 7: slap outcomes and intentional slap/audio/motion settings.
-        // Formats 1-6 migrate in memory; historical reports never invent new outcomes or rewards.
-        public const int CurrentFormatVersion = 7;
+        // 8: owned work-table layout. Formats 1-7 migrate in memory; historical saves never
+        // invent furniture, outcomes, rewards, or purchases.
+        public const int CurrentFormatVersion = 8;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 7 ? 2 : 0;
+            format >= 4 && format <= 8 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format == 7 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format == 7 || format == 8 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -42,6 +46,7 @@ namespace EvolutionShop
             public int formatVersion = 0;
             public ReportHeader trades = null;
             public ReputationHeader reputation = null;
+            public LayoutHeader layout = null;
             // A missing current-format binding must not silently become SlotData's default F.
             public string slapKey = null;
         }
@@ -61,6 +66,13 @@ namespace EvolutionShop
             public int version = 0;
         }
 
+        [Serializable]
+        private sealed class LayoutHeader
+        {
+            // A missing/null/empty inline layout must not inherit the fresh-slot initializer.
+            public int version = 0;
+        }
+
         public static bool Write(string path, SlotData data, out string error)
         {
             error = null;
@@ -70,9 +82,10 @@ namespace EvolutionShop
                 !ShopDayCycle.TryRestore(data.cycle, out _) ||
                 !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _) ||
                 !ShopReputation.TryRestore(data.reputation, out _) ||
+                !ShopLayout.TryRestore(data.layout, out _) ||
                 !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume))
             {
-                error = "Could not save: the current slot, day clock, trading report, reputation, or gag settings are invalid. Original file preserved.";
+                error = "Could not save: the current slot, day clock, trading report, reputation, layout, or gag settings are invalid. Original file preserved.";
                 return false;
             }
 
@@ -183,6 +196,24 @@ namespace EvolutionShop
                     return false;
                 }
 
+                if (header.formatVersion < 8)
+                {
+                    // Layout did not exist in historical formats. Ignore stray future fields;
+                    // migration neither buys furniture nor changes the original file.
+                    candidate.layout = new ShopLayout().CaptureSave();
+                }
+                else
+                {
+                    if (header.layout == null || header.layout.version != 1 ||
+                        !new LayoutJsonShape(json).HasExplicitItemsArray() ||
+                        !ShopLayout.TryRestore(candidate.layout, out var restoredLayout))
+                    {
+                        error = "Saved layout could not be validated. Your original file is preserved.";
+                        return false;
+                    }
+                    candidate.layout = restoredLayout.CaptureSave();
+                }
+
                 // A version 1 game restores with standard prices; capture it in the current form.
                 candidate.game = restoredGame.CaptureSave();
                 candidate.formatVersion = CurrentFormatVersion;
@@ -216,5 +247,134 @@ namespace EvolutionShop
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         private static bool ValidHumorVolume(float value) => Finite(value) && value >= 0f && value <= 1f;
+
+        // JsonUtility normalizes a missing/null array to [], which is otherwise a valid empty
+        // layout. Check only the raw root/layout shape; JsonUtility and domain restore still
+        // own JSON deserialization and semantic validation. Never search for a token inside
+        // an unrelated nested value or quoted string.
+        private sealed class LayoutJsonShape
+        {
+            readonly string json;
+            int position;
+            public LayoutJsonShape(string json) { this.json = json; }
+
+            public bool HasExplicitItemsArray()
+            {
+                if (json == null || !ReadObject(false)) return false;
+                SkipSpace(); return position == json.Length;
+            }
+
+            bool ReadObject(bool layout)
+            {
+                if (!Take('{')) return false;
+                bool required = false;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                SkipSpace();
+                if (Take('}')) return false;
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    if (!layout && key == "layout")
+                    {
+                        if (!ReadObject(true)) return false;
+                        required = true;
+                    }
+                    else if (layout && key == "items")
+                    {
+                        SkipSpace();
+                        if (position >= json.Length || json[position] != '[' || !SkipValue(0)) return false;
+                        required = true;
+                    }
+                    else if (!SkipValue(0)) return false;
+                    if (Take('}')) return required;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool SkipValue(int depth)
+            {
+                if (depth > 32) return false;
+                SkipSpace();
+                if (position >= json.Length) return false;
+                char first = json[position];
+                if (first == '"') return ReadString(false, out _);
+                if (first == '{' || first == '[')
+                {
+                    char closing = first == '{' ? '}' : ']'; position++;
+                    while (position < json.Length)
+                    {
+                        SkipSpace();
+                        if (position >= json.Length) return false;
+                        char next = json[position];
+                        if (next == closing) { position++; return true; }
+                        if (next == '}' || next == ']') return false;
+                        if (next == '"') { if (!ReadString(false, out _)) return false; }
+                        else if (next == '{' || next == '[') { if (!SkipValue(depth + 1)) return false; }
+                        else position++;
+                    }
+                    return false;
+                }
+                int began = position;
+                while (position < json.Length && json[position] != ',' && json[position] != '}' &&
+                    json[position] != ']' && !char.IsWhiteSpace(json[position])) position++;
+                return position > began;
+            }
+
+            bool ReadString(bool capture, out string value)
+            {
+                value = null;
+                if (!Take('"')) return false;
+                StringBuilder builder = capture ? new StringBuilder() : null;
+                while (position < json.Length)
+                {
+                    char next = json[position++];
+                    if (next == '"') { value = capture ? builder.ToString() : null; return true; }
+                    if (next < ' ') return false;
+                    if (next == '\\')
+                    {
+                        if (position >= json.Length) return false;
+                        next = json[position++];
+                        switch (next)
+                        {
+                            case '"': case '\\': case '/': break;
+                            case 'b': next = '\b'; break;
+                            case 'f': next = '\f'; break;
+                            case 'n': next = '\n'; break;
+                            case 'r': next = '\r'; break;
+                            case 't': next = '\t'; break;
+                            case 'u':
+                                int code = 0;
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    if (position >= json.Length) return false;
+                                    char digit = json[position++];
+                                    int hex = digit >= '0' && digit <= '9' ? digit - '0' :
+                                        digit >= 'a' && digit <= 'f' ? digit - 'a' + 10 :
+                                        digit >= 'A' && digit <= 'F' ? digit - 'A' + 10 : -1;
+                                    if (hex < 0) return false;
+                                    code = code * 16 + hex;
+                                }
+                                next = (char)code; break;
+                            default: return false;
+                        }
+                    }
+                    if (capture)
+                    {
+                        if (builder.Length >= 128) return false;
+                        builder.Append(next);
+                    }
+                }
+                return false;
+            }
+
+            bool Take(char expected)
+            {
+                SkipSpace();
+                if (position >= json.Length || json[position] != expected) return false;
+                position++; return true;
+            }
+            void SkipSpace() { while (position < json.Length && char.IsWhiteSpace(json[position])) position++; }
+        }
     }
 }
