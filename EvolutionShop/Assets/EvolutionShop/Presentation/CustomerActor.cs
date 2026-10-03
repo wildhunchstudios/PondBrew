@@ -18,6 +18,8 @@ namespace EvolutionShop
         public float CaptionBaseHeight => captionBase;
         /// <summary>World height of the caption sign, including the current lift.</summary>
         public float CaptionHeight => captionRoot ? captionRoot.position.y : 0f;
+        public bool IsSlapReacting => slapRemaining > 0f;
+        public float SlapReactionRemaining => slapRemaining;
 
         /// <summary>Raises the sign so it does not cover a nearby visitor's sign. Eases toward the target.</summary>
         public void SetCaptionLift(float lift) { captionLiftTarget = Mathf.Max(0f, lift); }
@@ -29,14 +31,20 @@ namespace EvolutionShop
         NavMeshPath path;
         readonly List<Material> ownedMaterials = new List<Material>();
         Transform body, leftLeg, rightLeg, leftArm, rightArm, captionRoot;
+        Transform slapStars;
+        readonly Transform[] slapStarNodes = new Transform[3];
+        Mesh slapStarMesh;
         TextMesh caption;
         Renderer captionRenderer;
         Font font;
         Material fontMaterial;
         Camera playerCamera;
         Vector3 destination, lastSafePosition;
+        Vector3 bodyBaseScale = Vector3.one;
         bool initialized, hasDestination, pathFailed, paused, hasPresentation;
+        bool reducedSlap;
         float animationTime, paidTime, captionBase = 2.03f, captionLift, captionLiftTarget;
+        float slapRemaining, slapDuration;
 
         void OnEnable()
         {
@@ -47,6 +55,7 @@ namespace EvolutionShop
         {
             Font.textureRebuilt -= FontAtlasRebuilt;
             if (agent && agent.isOnNavMesh) agent.isStopped = true;
+            ClearSlapReaction();
         }
 
         public void Initialize(ShopCustomerNavigation nav, string presentationId = "casual")
@@ -111,6 +120,60 @@ namespace EvolutionShop
             if (agent && agent.isOnNavMesh) agent.isStopped = paused || pathFailed;
         }
 
+        /// <summary>Local presentation only; the caller owns targeting, cooldown and visit cancellation.</summary>
+        public bool PlaySlapReaction(bool reduced = false)
+        {
+            if (!initialized || !isActiveAndEnabled || paused || !body || Phase == CustomerPhase.Finished || IsSlapReacting)
+                return false;
+            reducedSlap = reduced;
+            slapDuration = reduced ? .32f : .75f;
+            slapRemaining = slapDuration;
+            if (slapStars) slapStars.gameObject.SetActive(!reduced);
+            ApplyBodyPose(body.localPosition.y, 0f);
+            return true;
+        }
+
+        void ClearSlapReaction()
+        {
+            slapRemaining = 0f;
+            if (slapStars) slapStars.gameObject.SetActive(false);
+            if (!body) return;
+            body.localScale = bodyBaseScale;
+            body.localPosition = Vector3.zero;
+            body.localRotation = Quaternion.identity;
+        }
+
+        void ApplyBodyPose(float lift, float happyTilt)
+        {
+            float tilt = 0f;
+            body.localScale = bodyBaseScale;
+            if (IsSlapReacting)
+            {
+                float elapsed = slapDuration - slapRemaining;
+                float progress = elapsed / slapDuration;
+                float envelope = 1f - progress;
+                if (reducedSlap)
+                    tilt = Mathf.Sin(progress * Mathf.PI) * 3.5f;
+                else
+                {
+                    tilt = Mathf.Sin(elapsed * 24f + .8f) * 16f * envelope * envelope;
+                    float squash = .09f * Mathf.Exp(-elapsed * 18f) * envelope;
+                    body.localScale = Vector3.Scale(bodyBaseScale, new Vector3(1f + squash * .6f, 1f - squash, 1f + squash * .3f));
+                    for (int i = 0; i < slapStarNodes.Length; i++)
+                    {
+                        float angle = elapsed * 7f + i * Mathf.PI * 2f / slapStarNodes.Length;
+                        var star = slapStarNodes[i];
+                        star.localPosition = new Vector3(Mathf.Cos(angle) * .30f, Mathf.Sin(angle * 2f) * .035f, Mathf.Sin(angle) * .22f);
+                        star.localRotation = Quaternion.Euler(0, elapsed * 80f + i * 25f, elapsed * 160f + i * 65f);
+                        star.localScale = Vector3.one * Mathf.Min(1f, envelope * 5f);
+                    }
+                }
+            }
+            // Never alter the NavMeshAgent root, path, or destination for a visual gag.
+            body.localPosition = Vector3.up * lift;
+            body.localRotation = Quaternion.Euler(0, 0, happyTilt + tilt);
+        }
+
         public void Present(CustomerPhase phase, string label, bool upset = false)
         {
             if ((!hasPresentation || Phase != phase) && phase == CustomerPhase.Paid) paidTime = 0;
@@ -125,6 +188,7 @@ namespace EvolutionShop
 
         void Fail(string reason)
         {
+            ClearSlapReaction();
             pathFailed = true;
             hasDestination = false;
             LastError = reason;
@@ -166,8 +230,12 @@ namespace EvolutionShop
                 lift += Mathf.Max(0, Mathf.Sin(paidTime * 7)) * .055f * Mathf.Clamp01(1 - paidTime / 1.5f);
                 happyTilt = Mathf.Sin(paidTime * 6) * 5 * Mathf.Clamp01(1 - paidTime / 1.5f);
             }
-            body.localPosition = Vector3.up * lift;
-            body.localRotation = Quaternion.Euler(0, 0, happyTilt);
+            if (IsSlapReacting)
+            {
+                slapRemaining = Mathf.Max(0f, slapRemaining - dt);
+                if (!IsSlapReacting && slapStars) slapStars.gameObject.SetActive(false);
+            }
+            ApplyBodyPose(lift, happyTilt);
         }
 
         void LateUpdate()
@@ -223,6 +291,7 @@ namespace EvolutionShop
             var eyes = Material("Visitor / dark eyes", new Color(.025f, .048f, .049f), .65f);
             body = Group("Visitor appearance", transform, Vector3.zero);
             if (look == "premium") body.localScale = Vector3.one * 1.07f;
+            bodyBaseScale = body.localScale;
             leftLeg = Group("Left walking leg", body, new Vector3(-.115f, .7f, 0));
             rightLeg = Group("Right walking leg", body, new Vector3(.115f, .7f, 0));
             foreach (var leg in new[] { leftLeg, rightLeg })
@@ -270,6 +339,8 @@ namespace EvolutionShop
             for (int i = 0; i < 3; i++)
                 ShopWorld.Shape(body, "Cardigan button", PrimitiveType.Sphere, new Vector3(0, 1.20f - i * .13f, .173f), Vector3.one * .034f, look == "premium" ? gold : cream);
 
+            BuildSlapStars(gold, look == "premium" ? 2.03f : 1.82f);
+
             captionBase = look == "premium" ? 2.36f : 2.03f;
             captionRoot = Group("Visitor status sign", transform, new Vector3(0, captionBase, 0));
             ShopWorld.Shape(captionRoot, "Status backing", PrimitiveType.Cube, new Vector3(0, 0, .014f), new Vector3(1.58f, .245f, .025f), dark);
@@ -291,6 +362,42 @@ namespace EvolutionShop
             captionRenderer.receiveShadows = false;
         }
 
+        void BuildSlapStars(Material material, float height)
+        {
+            slapStars = Group("Cartoon slap stars", body, new Vector3(0, height, 0));
+            // One tiny original extruded star mesh is shared by this visitor's three stars.
+            var vertices = new Vector3[22];
+            var triangles = new int[120];
+            vertices[0] = new Vector3(0, 0, -.009f);
+            vertices[11] = new Vector3(0, 0, .009f);
+            for (int i = 0; i < 10; i++)
+            {
+                float angle = Mathf.PI * .5f + i * Mathf.PI / 5f;
+                float radius = i % 2 == 0 ? .065f : .029f;
+                vertices[i + 1] = new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, -.009f);
+                vertices[i + 12] = new Vector3(vertices[i + 1].x, vertices[i + 1].y, .009f);
+                int next = (i + 1) % 10;
+                int index = i * 12;
+                triangles[index] = 0; triangles[index + 1] = next + 1; triangles[index + 2] = i + 1;
+                triangles[index + 3] = 11; triangles[index + 4] = i + 12; triangles[index + 5] = next + 12;
+                triangles[index + 6] = i + 1; triangles[index + 7] = next + 1; triangles[index + 8] = next + 12;
+                triangles[index + 9] = i + 1; triangles[index + 10] = next + 12; triangles[index + 11] = i + 12;
+            }
+            slapStarMesh = new Mesh { name = "Original cartoon slap star", vertices = vertices, triangles = triangles };
+            slapStarMesh.RecalculateNormals();
+            slapStarMesh.RecalculateBounds();
+            for (int i = 0; i < slapStarNodes.Length; i++)
+            {
+                var star = slapStarNodes[i] = Group("Slap star " + (i + 1), slapStars, Vector3.zero);
+                star.gameObject.AddComponent<MeshFilter>().sharedMesh = slapStarMesh;
+                var renderer = star.gameObject.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = material;
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+            }
+            slapStars.gameObject.SetActive(false);
+        }
+
         void FontAtlasRebuilt(Font rebuilt)
         {
             if (font && rebuilt == font && font.material && fontMaterial)
@@ -308,6 +415,7 @@ namespace EvolutionShop
         void OnDestroy()
         {
             Font.textureRebuilt -= FontAtlasRebuilt;
+            if (slapStarMesh) Destroy(slapStarMesh);
             foreach (var material in ownedMaterials) if (material) Destroy(material);
         }
     }

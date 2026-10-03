@@ -53,7 +53,7 @@ namespace EvolutionShop
                 Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
-                Sensitivity = slot.sensitivity; Volume = slot.volume;
+                Sensitivity = slot.sensitivity; Volume = slot.volume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
             }
             else
             {
@@ -87,6 +87,7 @@ namespace EvolutionShop
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
             sound = gameObject.AddComponent<ShopAudio>();
+            InitializeSlap();
             AudioListener.volume = Volume;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
             initialized = true;
@@ -100,6 +101,8 @@ namespace EvolutionShop
         {
             if (!initialized) return;
             var keyboard = Keyboard.current;
+            bool gameplayAtFrameStart = Panel == ShopPanel.None;
+            if (HandleSlapRebind(keyboard)) return;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
                 SetPanel(Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
             if (keyboard != null && keyboard.tabKey.wasPressedThisFrame && !Paused)
@@ -132,10 +135,12 @@ namespace EvolutionShop
             World.SetHarvesting(held && grower && HarvestProgress > 0, Focused);
             if (Panel == ShopPanel.None && keyboard != null && keyboard.eKey.wasPressedThisFrame && Focused != null)
                 Interact(Focused);
+            UpdateSlapInput(keyboard, gameplayAtFrameStart);
         }
         public void Advance(float seconds)
         {
             if (Paused) return;
+            slapCooldown.Tick(seconds);
             var previousPhase = Cycle.Phase;
             int previousDay = Cycle.DayNumber;
             Cycle.Tick(seconds);
@@ -336,6 +341,8 @@ namespace EvolutionShop
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();
             if (Panel != panel) panelScroll = Vector2.zero;
             Panel = panel;
+            if (panel != ShopPanel.Pause) WaitingForSlapKey = false;
+            if (SlapGesture != null) SlapGesture.SetPaused(Paused);
             if (Customers != null) Customers.SetPaused(Paused);
             StopHarvest();
             Cursor.lockState = panel == ShopPanel.None ? CursorLockMode.Locked : CursorLockMode.None;
@@ -360,7 +367,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
-            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), reputation = Reputation.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
+            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), reputation = Reputation.CaptureSave(), sensitivity = Sensitivity, volume = Volume, slapKey = SlapKey, humorVolume = HumorVolume, reducedGags = ReducedGags};
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
             return success;
@@ -371,12 +378,12 @@ namespace EvolutionShop
             { Notify(error ?? "No saved game yet."); return false; }
             AutosaveBlocked = false;
             SaveError = null;
-            Customers.ResetVisitors();
+            Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
             World.SetDayPhase(Cycle.Phase);
-            Sensitivity = slot.sensitivity; Volume = slot.volume;
+            Sensitivity = slot.sensitivity; Volume = slot.volume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
             AudioListener.volume = Volume;
             BaselinePreview = false;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned);
@@ -388,9 +395,9 @@ namespace EvolutionShop
             var freshCycle = new ShopDayCycle();
             var freshReports = new ShopTradeLedger();
             var freshReputation = new ShopReputation();
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
             { SaveError = error; SetPanel(ShopPanel.Reset); return; }
-            Customers.ResetVisitors();
+            Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; World.SetDayPhase(Cycle.Phase);
             revealUntil = 0; revealedSpecies = null;

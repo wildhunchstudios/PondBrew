@@ -31,6 +31,7 @@ namespace EvolutionShop
         bool baseEffects, cachedBaseEffects;
         int maxVisitors = 1;
         float untilArrival;
+        readonly RaycastHit[] slapObstructions = new RaycastHit[24];
 
         public ShopCustomerNavigation Navigation { get; private set; }
         public bool ArrivalsEnabled { get; set; } = true;
@@ -157,7 +158,9 @@ namespace EvolutionShop
                 if (previous == CustomerPhase.Leaving) { EndVisit(visitor); return; }
                 visit.Cancel(CustomerOutcome.PathBlocked);
             }
-            else visit.Advance(seconds, visitor.Actor.Arrived, shop.Cycle.Phase);
+            // A visitor slapped at the entrance may already be at the exit. Let the brief
+            // reaction finish before normal departure; night and path-failure cleanup still win.
+            else visit.Advance(seconds, visitor.Actor.Arrived && !visitor.Actor.IsSlapReacting, shop.Cycle.Phase);
             if (visit.PriceRejections > visitor.HeardRejections)
             {
                 visitor.HeardRejections = visit.PriceRejections;
@@ -327,6 +330,50 @@ namespace EvolutionShop
             return result;
         }
 
+        /// <summary>Aim at the nearest customer's upper body; geometry and the player are separate from stock authority.</summary>
+        public CustomerVisit FindSlapTarget(Camera camera)
+        {
+            if (!camera || !Ready || shop.Paused ||
+                (shop.Cycle.Phase != ShopDayPhase.Open && shop.Cycle.Phase != ShopDayPhase.Closing)) return null;
+            Visitor closest = null;
+            float nearest = float.MaxValue;
+            Vector3 origin = camera.transform.position, forward = camera.transform.forward;
+            foreach (var entry in visitors)
+            {
+                if (!entry.Actor || !entry.Actor.isActiveAndEnabled) continue;
+                Vector3 delta = entry.Actor.transform.position + Vector3.up * 1.45f - origin;
+                float depth = Vector3.Dot(delta, forward);
+                if (depth <= 0 || delta.sqrMagnitude > SlapRules.Range * SlapRules.Range ||
+                    (delta - forward * depth).sqrMagnitude > .42f * .42f || depth >= nearest) continue;
+                closest = entry; nearest = depth;
+            }
+            // Ineligible foreground customers must not let a slap pass through to somebody behind them.
+            if (closest == null || !closest.Visit.CanBeSlapped || !shop.Reports.IsPending(closest.Visit.Id)) return null;
+            Vector3 offset = closest.Actor.transform.position + Vector3.up * 1.45f - origin;
+            int hits = Physics.RaycastNonAlloc(origin, offset.normalized, slapObstructions, offset.magnitude, ~0, QueryTriggerInteraction.Ignore);
+            if (hits == slapObstructions.Length) return null; // Fail closed if a dense scene exhausts the probe.
+            for (int i = 0; i < hits; i++)
+            {
+                var hit = slapObstructions[i];
+                if (!hit.collider || hit.transform.IsChildOf(shop.Player.transform) || hit.transform.IsChildOf(closest.Actor.transform)) continue;
+                if (hit.distance < offset.magnitude - .05f) return null;
+            }
+            return closest.Visit;
+        }
+
+        public bool Slap(CustomerVisit visit)
+        {
+            var visitor = Find(visit);
+            if (shop.Panel != ShopPanel.None || shop.Paused || visitor == null || !visitor.Actor ||
+                !shop.Reports.IsPending(visit.Id) || !visit.Slap(shop.Cycle.Phase)) return false;
+            RecordOutcome(visitor);
+            RefreshLine();
+            ApplyDestination(visitor);
+            if (visitor.Actor) visitor.Actor.PlaySlapReaction(shop.ReducedGags);
+            RefreshCaption(visitor);
+            return true;
+        }
+
         public void SetPaused(bool paused) { foreach (var visitor in visitors) if (visitor.Actor) visitor.Actor.SetPaused(paused); }
 
         public void ResetVisitors()
@@ -357,6 +404,7 @@ namespace EvolutionShop
             Remove(visitor);
             switch (visit.Outcome)
             {
+                case CustomerOutcome.Slapped: shop.Notify("The customer left after the slap. Their unpaid creature stayed in the tank."); break;
                 case CustomerOutcome.NoStock: shop.Notify("The visitor found no available creature. Stock a front display for the next customer."); break;
                 case CustomerOutcome.Impatient: shop.Notify("The customer ran out of patience. Their creature is available again."); break;
                 case CustomerOutcome.PathBlocked: shop.Notify("A customer could not reach their destination. Unpaid stock was released."); break;
@@ -411,6 +459,7 @@ namespace EvolutionShop
                 case CustomerPhase.Leaving:
                     switch (visit.Outcome)
                     {
+                        case CustomerOutcome.Slapped: return "HEY! MY DIGNITY!";
                         case CustomerOutcome.Sold: return "See you next time!";
                         case CustomerOutcome.TooExpensive:
                             return visit.QuotedPrice + (visit.RefusedOverBudget ? " credits? Over my budget!" : " credits?! Too expensive!");
@@ -447,7 +496,7 @@ namespace EvolutionShop
                 case CustomerPhase.ToCounter: return type + ": order at " + visit.Price + " credits (" + ShopSession.ReactionLabel(visit.Reaction) + ")";
                 case CustomerPhase.Queued: return "Serve the counter / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + "s patience";
                 case CustomerPhase.Paid: return "Purchase complete";
-                default: return visit.Outcome == CustomerOutcome.TooExpensive ? "The customer left: too expensive" : "The customer is leaving";
+                default: return visit.Outcome == CustomerOutcome.Slapped ? "Slapped customer leaving / reputation -1" : visit.Outcome == CustomerOutcome.TooExpensive ? "The customer left: too expensive" : "The customer is leaving";
             }
         }
 

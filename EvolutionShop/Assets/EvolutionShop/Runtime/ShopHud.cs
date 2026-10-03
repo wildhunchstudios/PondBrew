@@ -66,6 +66,14 @@ namespace EvolutionShop
             if (Panel == ShopPanel.None)
             {
                 Box(new Rect(637, 357, 6, 6), new Color(1,1,1,0.85f));
+                if (SlapTarget != null)
+                {
+                    Box(new Rect(420, 446, 440, 67), ink);
+                    GUI.Label(new Rect(435, 450, 410, 26), SlapTarget.ArchetypeName, centerStyle);
+                    string slapHint = SlapCooldownRemaining > 0 ? "Slap ready in " + SlapCooldownRemaining.ToString("0.0") + "s" :
+                        "Press " + SlapKey + " to slap / -1 reputation";
+                    GUI.Label(new Rect(435, 477, 410, 26), slapHint, centerStyle);
+                }
                 if (Focused != null)
                 {
                     Box(new Rect(420, 525, 440, 67), ink);
@@ -147,6 +155,12 @@ namespace EvolutionShop
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
                     Volume = GUILayout.HorizontalSlider(Volume, 0, 1); AudioListener.volume = Volume;
+                    Space(); Heading("Cartoon slap");
+                    Small("Close panels, aim at a nearby unpaid customer and tap " + SlapKey + ". They leave; -1 reputation. Three-second cooldown.");
+                    Button(WaitingForSlapKey ? "Press a letter / Escape cancels" : "Change slap key / " + SlapKey, BeginSlapRebind);
+                    Text("Humor volume: " + Mathf.RoundToInt(HumorVolume * 100) + "%");
+                    HumorVolume = GUILayout.HorizontalSlider(HumorVolume, 0, 1);
+                    ReducedGags = GUILayout.Toggle(ReducedGags, "Reduced gag effects (no stars, smaller motion)");
                     Space(); Button("Save and resume", () => { if (SaveNow()) SetPanel(ShopPanel.None); });
                     Button("Reload local save", () => { if (ReloadSaved()) { SetPanel(ShopPanel.None); Notify("Local save restored. Unpaid visits cancelled; their creatures remain in the tanks."); } });
                     Button("New game...", () => SetPanel(ShopPanel.Reset));
@@ -335,6 +349,7 @@ namespace EvolutionShop
             GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
             Text("Specimens sold: " + report.sales + "    /    Visitors: " + report.visitors);
             Small("Cash now: " + Model.Currency + " credits    /    Wages: 0 (no employees)");
+            Small("Slapped departures: " + report.slapped);
             Small("Shop reputation now: " + Reputation.Points + " / 100 / " + Reputation.TierName);
             GUILayout.Space(8);
             Heading("Display stock");
@@ -342,7 +357,7 @@ namespace EvolutionShop
                 "    /    Restocked: " + report.restocked + "    /    At close: " + report.stockedAtClose);
             GUILayout.Space(8);
             long missed = (long)report.noStock + report.impatient + report.closed + report.interrupted +
-                report.pathProblems + report.tooExpensive;
+                report.pathProblems + report.tooExpensive + report.slapped;
             Heading("Left without a purchase: " + missed);
             Small("Too expensive: " + report.tooExpensive + "    /    No stock: " + report.noStock + "    /    Patience ran out: " + report.impatient);
             Small("Closing: " + report.closed + "    /    Interrupted visits: " + report.interrupted + "    /    Route problems: " + report.pathProblems);
@@ -372,6 +387,7 @@ namespace EvolutionShop
             if (report.tooExpensive > 0 && report.tooExpensive >= report.impatient && report.tooExpensive >= report.noStock)
                 return (report.tooExpensive == 1 ? "A customer" : report.tooExpensive + " customers") +
                     " refused your prices. Press E at a display to lower its tag: \"Pricey\" still sells, \"Too expensive\" does not.";
+            if (report.slapped > 0) return "Slapped customers leave without paying. Serve at the counter with E; the slap key is a separate optional gag.";
             if (report.impatient > 0 && report.impatient >= report.noStock)
                 return "Displays are ready. To avoid impatient departures, return to the counter promptly when a creature is reserved.";
             if (report.noStock > 0)
@@ -450,10 +466,13 @@ namespace EvolutionShop
                 else {Heading("Unknown specimen"); Small(species.Id == "pondlet" ? "Begin with a balanced pair." : species.Id == "bubblebelly" ? "A little more Bloom may round things out." : "A little more Flow may stretch a tail.");}
             }
             Space(); Small("Known recipes can be prepared in one click at the incubator, using cultures you have collected.");
+            Space(); Heading("Cartoon slap");
+            Text("Tap " + SlapKey + " while aiming at a nearby unpaid customer, with every panel closed. This is separate from E service. They protest and leave; their unpaid creature stays in its tank and reputation drops by 1.");
+            Small("Three-second active-time cooldown; one reaction per visitor. Paid customers and departing visitors cannot be slapped. No money reward. Remap the key and adjust humor volume or reduced effects in Pause.");
             Space(); Heading("Your shop's reputation");
             Text(ReputationLine());
             Small(Reputation.Tier < 2 ? "Next tier at " + Reputation.NextThreshold + " points." : "Highest tier reached. Reputation is capped at 100.");
-            Text("Each completed sale earns 2 points. A visitor who leaves because prices are too high or patience runs out costs 1 point. A refusal followed by a purchase counts as a sale.");
+            Text("Each completed sale earns 2 points. A visitor who leaves because prices are too high, patience runs out, or you slap them costs 1 point. A refusal followed by a purchase counts as a sale.");
             Small("No reputation loss for empty displays, closing, reloads, or route problems. Reputation stays between 0 and 100; it changes per visit, not at day end.");
             Text("Better reputation brings arrivals closer together when there is room: currently " + Reputation.ArrivalSeconds.ToString("0.#") + " seconds between arrivals, with at most two visitors in the store.");
             Text(ReputationPriceNote());

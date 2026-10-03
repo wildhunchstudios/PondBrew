@@ -136,8 +136,9 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.None);
 
             // Existing saves receive no retroactive reward, even when a report records sales.
+            var oldReport = shop.Reports.CaptureSave(); oldReport.version = 3;
             string legacy = "{\"formatVersion\":5,\"game\":" + JsonUtility.ToJson(shop.Model.CaptureSave()) +
-                ",\"cycle\":" + JsonUtility.ToJson(shop.Cycle.CaptureSave()) + ",\"trades\":" + JsonUtility.ToJson(shop.Reports.CaptureSave()) +
+                ",\"cycle\":" + JsonUtility.ToJson(shop.Cycle.CaptureSave()) + ",\"trades\":" + JsonUtility.ToJson(oldReport) +
                 ",\"sensitivity\":1,\"volume\":0.65}";
             File.WriteAllText(shop.SavePath, legacy);
             int cash = shop.Model.Currency;
@@ -145,7 +146,7 @@ namespace EvolutionShop
                 "Format-five migration keeps past sales and money but starts reputation at zero without a read writeback");
             Check(shop.SaveNow() && File.ReadAllText(shop.SavePath + ".v5.bak") == legacy &&
                 JsonUtility.FromJson<SlotData>(File.ReadAllText(shop.SavePath)).reputation.version == 1,
-                "First format-six write archives exact legacy bytes and stores versioned reputation");
+                "First current-format write archives exact legacy bytes and stores versioned reputation");
             SetReputationFixture(100);
             string parked = shop.SavePath + ".reset-test";
             File.Move(shop.SavePath, parked);
