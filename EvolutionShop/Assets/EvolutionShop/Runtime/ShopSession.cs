@@ -24,6 +24,7 @@ namespace EvolutionShop
         public CultureKind? ScriptedHarvest;
         public bool AllowValidationInput;
         public bool AutosaveBlocked { get; private set; }
+        public string SaveError { get; private set; }
         ShopAudio sound;
         string message;
         float messageUntil, revealUntil, saveClock, visualClock;
@@ -54,7 +55,7 @@ namespace EvolutionShop
                 {
                     AutosaveBlocked = true;
                     SaveStore.Read(SavePath, Config, out _, out _, out var reason);
-                    message = reason; messageUntil = float.PositiveInfinity;
+                    SaveError = reason;
                 }
             }
             var camera = new GameObject("Player camera").AddComponent<Camera>();
@@ -151,7 +152,7 @@ namespace EvolutionShop
             if (Model.Available(CultureKind.Bloom) + Model.Available(CultureKind.Flow) + Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) >= (BaselinePreview ? Config.BaseCapacity : Model.Capacity))
             {
                 HarvestProgress = 0;
-                Notify("Reservoir is full. Dispense cultures at the incubator.", 1);
+                Notify("Reservoir full. Dose or release spare culture at the incubator.", 1);
                 return;
             }
             if (Model.GetGrower(kind).Units == 0) { HarvestProgress = 0; return; }
@@ -219,10 +220,14 @@ namespace EvolutionShop
         public bool SaveNow()
         {
             saveClock = 0;
-            if (AutosaveBlocked) return false;
+            if (AutosaveBlocked)
+            {
+                SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
+                return false;
+            }
             var slot = new SlotData {game = Model.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
             bool success = SaveStore.Write(SavePath, slot, out var error);
-            if (!success) Notify(error, 8);
+            SaveError = success ? null : error;
             return success;
         }
         public bool ReloadSaved()
@@ -230,6 +235,7 @@ namespace EvolutionShop
             if (!SaveStore.Read(SavePath, Config, out var model, out var slot, out var error))
             { Notify(error ?? "No saved game yet."); return false; }
             AutosaveBlocked = false;
+            SaveError = null;
             Model = model; Sensitivity = slot.sensitivity; Volume = slot.volume;
             AudioListener.volume = Volume;
             BaselinePreview = false;
@@ -238,19 +244,23 @@ namespace EvolutionShop
         }
         public void ConfirmNewGame()
         {
-            Model = new GameModel(Config); AutosaveBlocked = false; BaselinePreview = false;
+            var fresh = new GameModel(Config);
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
+            { SaveError = error; SetPanel(ShopPanel.Reset); return; }
+            Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
-            SaveNow(); SetPanel(ShopPanel.None); Notify("Fresh start. Growers are free and always replenish.");
+            SetPanel(ShopPanel.None); Notify("Fresh start. Growers are free and always replenish.");
         }
-        void OnApplicationFocus(bool focus) { if (!focus && initialized && !ValidationMode && Panel == ShopPanel.None) SetPanel(ShopPanel.Pause); }
+        void OnApplicationFocus(bool focus) { if (!focus && initialized && !ValidationMode && !Paused) SetPanel(ShopPanel.Pause); }
         void OnApplicationQuit() { if (initialized && !quitRequested) SaveNow(); }
         void OnDestroy() { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         void Quit()
         {
-            SaveNow(); quitRequested = true;
+            if (!SaveNow()) { SetPanel(ShopPanel.Pause); return; }
+            quitRequested = true;
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else

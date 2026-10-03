@@ -65,10 +65,10 @@ namespace EvolutionShop
                 }
             }
             if (Panel != ShopPanel.None) DrawPanel();
-            if (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil)
+            if (!string.IsNullOrEmpty(SaveError) || (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil))
             {
                 Box(new Rect(380, 24, 650, 67), ink);
-                GUI.Label(new Rect(400, 32, 610, 54), message, centerStyle);
+                GUI.Label(new Rect(400, 32, 610, 54), string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED — " + SaveError, centerStyle);
             }
             if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
             {
@@ -127,7 +127,7 @@ namespace EvolutionShop
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
                     Volume = GUILayout.HorizontalSlider(Volume, 0, 1); AudioListener.volume = Volume;
-                    Space(); Button("Save and resume", () => { SaveNow(); SetPanel(ShopPanel.None); });
+                    Space(); Button("Save and resume", () => { if (SaveNow()) SetPanel(ShopPanel.None); });
                     Button("Reload local save", () => { if (ReloadSaved()) { SetPanel(ShopPanel.None); Notify("Local save restored."); } });
                     Button("New game...", () => SetPanel(ShopPanel.Reset));
                     Button("Save and quit", Quit);
@@ -170,6 +170,11 @@ namespace EvolutionShop
             Button("Begin incubation  /  " + Config.IncubationSeconds + " sec", () => { if (Perform(Model.BeginIncubation()).Success) SetPanel(ShopPanel.None); });
             Button("Return all doses safely", () => Perform(Model.ClearDoses()));
             Small("Doses reserve room in your siphon until incubation begins. Unsupported mixtures never consume resources.");
+            Space(); Small("Siphon full of one culture? Return staged doses above, then release a spare carried unit. Growers replenish for free.");
+            GUILayout.BeginHorizontal();
+            Button("Release 1 Bloom", () => Perform(Model.ReleaseCulture(CultureKind.Bloom)));
+            Button("Release 1 Flow", () => Perform(Model.ReleaseCulture(CultureKind.Flow)));
+            GUILayout.EndHorizontal();
             Space(); Small("LAB NOTES: A balanced pair brings a Pondlet. More Bloom makes a rounder body; more Flow makes a longer tail.");
             foreach (var species in Config.Species)
                 if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + species.Bloom + "B + " + species.Flow + "F)", () => Perform(Model.UseKnownRecipe(species.Id)));

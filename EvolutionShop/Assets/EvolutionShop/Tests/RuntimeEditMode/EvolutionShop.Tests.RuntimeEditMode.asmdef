@@ -1,0 +1,1 @@
+{"name":"EvolutionShop.Tests.RuntimeEditMode","rootNamespace":"EvolutionShop.Tests","references":["EvolutionShop.Core","EvolutionShop.Runtime"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"],"autoReferenced":false}

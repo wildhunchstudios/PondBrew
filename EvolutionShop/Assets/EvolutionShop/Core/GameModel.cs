@@ -91,6 +91,18 @@ namespace EvolutionShop
             return ActionResult.Ok();
         }
 
+        /// <summary>
+        /// Deliberately releases one carried culture to free reservoir space.
+        /// This never touches staged ingredients, active production, or grower stock.
+        /// </summary>
+        public ActionResult ReleaseCulture(CultureKind culture)
+        {
+            int i = (int)culture;
+            if (!ValidCulture(i)) return ActionResult.Fail(FailureCode.InvalidCulture);
+            if (available[i] <= 0) return ActionResult.Fail(FailureCode.InsufficientCulture);
+            available[i]--;
+            return ActionResult.Ok();
+        }
         public ActionResult Dose(CultureKind culture)
         {
             int i = (int)culture;

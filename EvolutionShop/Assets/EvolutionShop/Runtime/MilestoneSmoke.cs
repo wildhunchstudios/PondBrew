@@ -175,6 +175,13 @@ namespace EvolutionShop
                 }
             }
             shop.Player.Teleport(new Vector3(0,0.2f,-3.8f),Quaternion.identity);
+            yield return Ensure(CultureKind.Bloom,4);
+            Check(!shop.Model.Collect(CultureKind.Flow).Success,"Reproduce single-culture full reservoir");
+            Ok(shop.Perform(shop.Model.ReleaseCulture(CultureKind.Bloom)),"Release carried Bloom deliberately frees a slot");
+            yield return Ensure(CultureKind.Flow,1);
+            Check(shop.Model.Available(CultureKind.Flow)==1,"Other culture can be collected after recovery");
+            while(shop.Model.Available(CultureKind.Bloom)>0) shop.Model.ReleaseCulture(CultureKind.Bloom);
+            shop.Model.ReleaseCulture(CultureKind.Flow);
             yield return Ensure(CultureKind.Bloom, 2);
             yield return Ensure(CultureKind.Flow, 2);
             Check(!shop.Model.Collect(CultureKind.Bloom).Success, "Shared four-unit reservoir blocks excess collection");
@@ -244,6 +251,18 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.Pause); yield return Capture("07-pause-settings");
             shop.SetPanel(ShopPanel.Reset); yield return Capture("08-reset-confirmation");
             Check(File.Exists(shop.SavePath), "Separate smoke save exists; user slot untouched");
+            string blockedTemp = shop.SavePath + ".tmp";
+            Directory.CreateDirectory(blockedTemp);
+            var beforeFailedReset = shop.Model;
+            try
+            {
+                Check(!shop.SaveNow() && !string.IsNullOrEmpty(shop.SaveError),"Save failure is reported persistently");
+                shop.Notify("An unrelated notification");
+                shop.ConfirmNewGame();
+                Check(ReferenceEquals(shop.Model,beforeFailedReset) && shop.Model.UpgradeOwned && !string.IsNullOrEmpty(shop.SaveError),"Failed reset preserves current progression and error");
+            }
+            finally { Directory.Delete(blockedTemp); }
+            Check(shop.SaveNow() && string.IsNullOrEmpty(shop.SaveError),"Saving recovers after file obstruction is removed");
             string corrupt = Path.Combine(evidence,"corrupt-save.json"); File.WriteAllText(corrupt,"{not valid json");
             Check(!SaveStore.Read(corrupt,shop.Config,out _,out _,out _) && File.ReadAllText(corrupt)=="{not valid json", "Malformed save rejected and original preserved");
             shop.ConfirmNewGame();
@@ -325,6 +344,8 @@ namespace EvolutionShop
                 camera.transform.LookAt(counter.TransformPoint(new Vector3(0,1.4f,0)));
             }
             if (name == "01-back-lab") {camera.transform.position = new Vector3(2.75f,1.8f,1f); camera.transform.LookAt(new Vector3(-1.8f,1.5f,3.6f));}
+            // Let the normal focus query catch up to this diagnostic camera viewpoint.
+            yield return null; yield return null;
             var target = new RenderTexture(1600,900,24);
             Debug.Log("CAPTURE_PIPELINE " + UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline);
             foreach (var renderer in shop.World.GetComponentsInChildren<Renderer>()) if (renderer.sharedMaterial && renderer.sharedMaterial.name == "Bloom coral") {Debug.Log("BLOOM_MATERIAL " + renderer.sharedMaterial.shader.name + " supported=" + renderer.sharedMaterial.shader.isSupported + " color=" + renderer.sharedMaterial.GetColor("_BaseColor")); break;}

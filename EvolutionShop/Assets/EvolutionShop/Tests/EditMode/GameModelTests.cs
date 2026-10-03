@@ -474,6 +474,85 @@ namespace EvolutionShop.Tests
             Assert.Throws<ArgumentException>(() => new GameModel(config));
         }
 
+        [TestCase(CultureKind.Bloom, false)]
+        [TestCase(CultureKind.Flow, false)]
+        [TestCase(CultureKind.Bloom, true)]
+        [TestCase(CultureKind.Flow, true)]
+        public void ReleaseRecoversSingleCultureSaturationIntoProductionAndSale(CultureKind saturated, bool upgraded)
+        {
+            if (upgraded)
+            {
+                var save = model.CaptureSave();
+                save.upgradeOwned = true;
+                Assert.That(GameModel.TryRestore(config, save, out model, out var error), Is.True, error.ToString());
+            }
+            CultureKind missing = saturated == CultureKind.Bloom ? CultureKind.Flow : CultureKind.Bloom;
+            int capacity = model.Capacity;
+            for (int i = 0; i < capacity; i++)
+            {
+                if (model.GetGrower(saturated).Units == 0) model.Tick(config.GrowerRefillSeconds);
+                AssertOk(model.Collect(saturated));
+            }
+            Assert.That(model.ReservedCultureCount, Is.EqualTo(capacity));
+            Assert.That(model.Collect(missing).Failure, Is.EqualTo(FailureCode.ReservoirFull));
+
+            AssertOk(model.ReleaseCulture(saturated));
+            Assert.That(model.Available(saturated), Is.EqualTo(capacity - 1));
+            AssertOk(model.Collect(missing));
+            AssertOk(model.Dose(CultureKind.Bloom));
+            AssertOk(model.Dose(CultureKind.Flow));
+            AssertOk(model.BeginIncubation());
+            Assert.That(model.ReservedCultureCount, Is.EqualTo(capacity - 2));
+            Assert.That(model.Tick(config.IncubationSeconds).Matured, Is.True);
+            AssertOk(model.TransferToTank("tank-a"));
+            AssertOk(model.SellFromTank("tank-a"));
+            Assert.That(model.Currency, Is.EqualTo(6));
+            Assert.That(model.IsDiscovered("pondlet"), Is.True);
+        }
+
+        [TestCase(-1)]
+        [TestCase(2)]
+        [TestCase(int.MaxValue)]
+        public void ReleaseInvalidCultureIsAtomic(int invalidKind)
+        {
+            Stage(1, 1);
+            AssertOk(model.Collect(CultureKind.Bloom));
+            string before = JsonUtility.ToJson(model.CaptureSave());
+            Assert.That(model.ReleaseCulture((CultureKind)invalidKind).Failure, Is.EqualTo(FailureCode.InvalidCulture));
+            Assert.That(JsonUtility.ToJson(model.CaptureSave()), Is.EqualTo(before));
+        }
+
+        [Test]
+        public void ReleaseWithoutAvailableCultureCannotConsumeStagedIngredients()
+        {
+            Stage(2, 2);
+            string before = JsonUtility.ToJson(model.CaptureSave());
+            Assert.That(model.ReleaseCulture(CultureKind.Bloom).Failure, Is.EqualTo(FailureCode.InsufficientCulture));
+            Assert.That(model.ReleaseCulture(CultureKind.Flow).Failure, Is.EqualTo(FailureCode.InsufficientCulture));
+            Assert.That(JsonUtility.ToJson(model.CaptureSave()), Is.EqualTo(before));
+            AssertOk(model.ClearDoses());
+            Assert.That(model.Available(CultureKind.Bloom), Is.EqualTo(2));
+            Assert.That(model.Available(CultureKind.Flow), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void ReleaseDuringIncubationChangesOnlyOneAvailableUnit()
+        {
+            Stage(1, 1);
+            AssertOk(model.BeginIncubation());
+            model.Tick(2f);
+            AssertOk(model.Collect(CultureKind.Bloom));
+            var expected = model.CaptureSave();
+            expected.availableBloom--;
+            AssertOk(model.ReleaseCulture(CultureKind.Bloom));
+            Assert.That(JsonUtility.ToJson(model.CaptureSave()), Is.EqualTo(JsonUtility.ToJson(expected)));
+            string beforeEmptyRelease = JsonUtility.ToJson(model.CaptureSave());
+            Assert.That(model.ReleaseCulture(CultureKind.Bloom).Failure, Is.EqualTo(FailureCode.InsufficientCulture));
+            Assert.That(JsonUtility.ToJson(model.CaptureSave()), Is.EqualTo(beforeEmptyRelease));
+            Assert.That(model.Tick(8f).Matured, Is.True);
+            AssertOk(model.TransferToTank("tank-a"));
+            Assert.That(model.GetTank("tank-a").Value.SpeciesId, Is.EqualTo("pondlet"));
+        }
         private void Stage(int bloom, int flow)
         {
             for (int i = 0; i < bloom; i++) { AssertOk(model.Collect(CultureKind.Bloom)); AssertOk(model.Dose(CultureKind.Bloom)); }

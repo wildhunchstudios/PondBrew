@@ -1,12 +1,12 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-Updated: 2026-10-03. Working title only. Current game checkpoint: `5606dbf`, tag `milestone-01-two-rooms`.
+Updated: 2026-10-03. Working title only. Current source checkpoint: tag `r01-baseline-safety`. Latest delivered player remains `milestone-01-two-rooms` until the next build is validated.
 
 ## 1. Read this first
 
 This is the single current guide for project rules, product direction, milestones, task status, validation summaries, and continuation. On this Windows workspace, `Agents.md` resolves to this existing `AGENTS.md`; do not create a competing file with different capitalization. Keep the canonical uppercase filename for agent discovery.
 
-The user approved the front-store/back-lab direction and requested this full-game plan. **This request is documentation work, not an instruction to implement the entire roadmap now.** Future implementation requests select a bounded milestone. A request to continue can start the next ready milestone without repeated permission questions about routine decisions.
+The user approved the front-store/back-lab direction and requested this full-game plan. The user has now requested implementation of the next ready assignment. Work through the bounded assignments below; this is not authorization to implement the entire roadmap in one turn. Future implementation requests select a bounded milestone. A request to continue can start the next ready milestone without repeated permission questions about routine decisions.
 
 This guide supersedes the original brief's single-room layout, its old M02/M03 roadmap, and the old requirement to maintain several parallel planning files. Preserve `Evolution_Shop_Prototype_Handoff.md` and existing `Docs/TASKS.md`, `Docs/RESUME.md`, `Docs/UnityProjectContext.md`, and `Docs/VALIDATION.md` as historical records and evidence. Read them when investigating prior implementation or results; their old scope/status statements do not override this newer plan. Store raw logs, reports, and captures under `Docs/Evidence/`, and summarize new work here. Do not create another live roadmap or task dashboard.
 
@@ -196,7 +196,7 @@ Keep atomic writes and recovery backups; validate before replacing a known-good 
 4. Build the smallest complete playable slice. Use placeholders until behavior is tested; keep the existing loop functional. Fix regressions before expanding.
 5. Run the strongest relevant checks that are actually available. Repeat or broaden tests when new changes, failures, or unresolved risks justify them; do not rerun everything solely to generate a larger count.
 6. Review actual renders/audio/input for changed presentation. Separate automated execution, source review, screenshot review, and human playtest conclusions. Record failed attempts and fixes honestly.
-7. Save a small local Git checkpoint after a coherent verified slice. Do not rewrite history or publish. Update this file's active task, evidence, known issues, decisions, and exact next action in the same checkpoint.
+7. After every completed assignment, update this AGENTS.md with status, actual evidence, limitations, and the next action before starting another assignment. Save a small local Git checkpoint after a coherent verified slice. Do not rewrite history or publish. Update this file's active task, evidence, known issues, decisions, and exact next action in the same checkpoint.
 8. At a milestone gate, deliver the runnable build/scene, controls, change summary, executed test evidence, known issues, and the next playtest question. Obtain missing creative feedback before bulk content or irreversible production commitments; do not ask again for choices the user already made.
 
 Task marks: `[ ]` planned, `[~]` active, `[!]` blocked with reason/next action, `[x]` acceptance checks executed successfully. Mark human acceptance separately. A checked implementation task is not a claim of enjoyment or creative approval. Use stable task IDs; record material scope changes rather than silently replacing requirements.
@@ -211,10 +211,10 @@ Delivered history remains **Checkpoint 00**, **M01**, and **01R**. The full-game
 
 Depends on: delivered two-room prototype. Output: a short verified foundation for expansion.
 
-- [ ] R01.1 Run/observe the existing normal player: movement, room route, harvesting, discovery, transfer, sale, upgrade, audio, and settings. Capture actual human feedback; “looks good” is visual feedback, not proof of a full playthrough.
-- [ ] R01.2 Triage friction into must-fix defects versus preference/tuning; repair blockers and verify the smallest affected loop.
-- [ ] R01.3 Present the proposed exhibition, day length/night pacing, comedy tone, and launch ceiling during the playtest; record decisions/defaults here without re-asking already approved room/features.
-- [ ] R01.4 Identify save migration and scene-generation ownership constraints; save a clean baseline checkpoint and a known-good test save.
+- [x] R01.1 Baseline playthrough: user reports growing → sale → siphon upgrade with no major issues. Prior standalone movement/room/input evidence is retained. Audio was not separately listened to and manual settings-slider interaction was not reported; do not infer those passes.
+- [x] R01.2 Repair and verify the single-culture full-reservoir dead end, failed-save reset/quit behavior, persistent save errors, and focus-loss pause from station panels. Executed evidence is below.
+- [x] R01.3 Keep the accepted plan as working defaults: Grand Exhibition, 8-minute day/untimed night, bounded comedy and launch ceiling. User approved the plan and continuation; final tone, pacing and ending quality require later playable evaluation.
+- [x] R01.4 Preserve a historical full save fixture, document migration/scene ownership, and checkpoint the verified baseline as `r01-baseline-safety`.
 
 Gate: known baseline issues are explicit, the user can complete the manual loop, and the next vertical slice has a clear scope. Do not start bulk creature/decoration production.
 
@@ -366,16 +366,26 @@ The game is finished when the launch-scope features, complete progression/ending
 - [x] Latest prior Windows build: `Docs/Evidence/two-rooms-final-build-result.json`, succeeded with zero errors/warnings. Exact player: `Docs/Evidence/two-rooms-final-player/smoke-result.json`, 79 checks passed, no captured runtime errors/limitations, process exit 0. These results cover that checkpoint, not future features.
 - [x] Prior Editor run: 78 checks, with hidden-batch cursor limitation; later standalone verified capture. Historical 50 EditMode cases were not rerun for the room-layout change. Reports remain in `Docs/Evidence/`.
 
-Current limitations: procedural placeholder art/audio and provisional balance; no actual customer day/night system, construction, staff, full automation, or campaign ending yet. Human feel/timing evaluation, audio listening and manual settings-slider checks remain unrecorded. Some scripted close-up screenshots retain a previous-frame focus prompt after camera repositioning; use separate targeting tests for interaction evidence. No known critical progression blocker in the delivered prototype checks.
+Current limitations: procedural placeholder art/audio and provisional balance; no actual customer day/night system, construction, staff, full automation, or campaign ending yet. User reports no major problems in the baseline loop; separate audio listening and manual settings-slider checks remain unrecorded. Capture targeting now waits for the runtime focus query after camera repositioning. No known unresolved critical progression blocker in executed baseline checks.
+
+### R01 baseline evidence and constraints
+
+- Exact workspace/editor reverified: `C:/dev/DumbVideoGameStudio/EvolutionShop`, Unity `6000.3.15f1_c1aa84e375f6`. Unity CLI reported zero connected editors before launch; validation used explicit `-projectPath` batch processes and logged runtime identity. No MCP connection was assumed or installed.
+- `r01-editmode-results.xml`: first run 97/106 passed; all nine failures were scene test setup (an unsaved runner scene prevented additive scene creation). The repaired fixture uses isolated preview scenes. `r01-editmode-fixed-results.xml`: **106/106 passed**, exit 0. Of these, 79 cover R01/model/full-slot/scene safety and 27 are the independently staged R02.1 clock tests; the latter are excluded from the R01 source checkpoint.
+- `r01-playmode/smoke-result.json`: **86 checks passed**, zero captured runtime errors, exit 0, 53.05 seconds. Recovery, malformed saves, blocked writes, failed reset preservation and later save recovery executed. Hidden batch Editor cannot verify focused cursor capture; the final player must cover it. No new Windows build is claimed at this checkpoint.
+- Build/smoke now validate existing authored scene content and never regenerate a present scene. Explicit regeneration warns interactively and batch mode rejects extra authored structure; dirty scenes and Play mode block it. Nine tests cover session ownership and preserving extra objects. `r01-scene-before.sha256` and `r01-scene-after.sha256` match after actual smoke: `2F81309DDB7CAA56E0E56B4D6B705EB274E234AE9CF0D7BCBB968373AB9AE16F`.
+- `Shop.unity` remains a single-session bootstrap. `ShopSession` creates the world/player/camera; authored room content requires a deliberate ownership migration to avoid duplicates. Scene preservation alone does not perform that migration.
+- Known-good historical full-slot fixture: `EvolutionShop/Assets/EvolutionShop/Tests/RuntimeEditMode/Fixtures/V1Progress.json`, copied from original M01 evidence. It contains the upgrade, all discoveries, 2 credits and a live Pondlet batch. File round trips cover staging, incubation, ready output with full tanks, a sale, and upgraded capacity. Invalid saves stay intact; rotating `.bak` files are preserved but are not automatically loaded.
+- Existing envelope/game schema is version 1. New envelope fields require migration; creature/specimen IDs and progress must survive. Model validation constrains grower/incubator remaining time using configuration, so later balance-duration changes need an explicit migration/clamping policy. Keep a pre-migration fixture and backup before writing upgraded saves.
 
 | Active record | Value |
 |---|---|
-| Current request | Documentation complete: consolidate complete-game design, instructions, 11 milestones and 55 planned tasks into this one root file |
-| Runtime changes in this request | None; no new test/build/Unity connection claim |
-| User feedback | Existing room split “looks good”; requested expanded vision above |
-| Next implementation milestone | R01 baseline playtest/triage, then R02 day/night vertical slice when work is requested |
-| Human acceptance still needed | Full-loop playtest; ending/tone and pacing evaluation as proposed defaults become playable |
-| Technical blocker | None known for planning; reverify tools/editor at implementation start |
+| Current request | R01 baseline safeguards, then R02.1 day/night foundation; update this guide after each assignment |
+| Runtime changes in this request | R01 safeguards verified and checkpointed; R02.1 clock integration next |
+| User feedback | User reports playing growing → sale → siphon upgrade with no major issues (2026-10-03) |
+| Next implementation milestone | R02.1 only: phase/day/clock UI and persistence; customers remain R02.2 |
+| Human acceptance still needed | Day/night pacing, ending and comedy tone as these defaults become playable; separate audio/settings checks |
+| Technical blocker | None. Use verified exact-project CLI; no active MCP connection |
 
 When resuming implementation, select the first unfinished ready task, record its owner/status and intended acceptance check here, and keep the remaining roadmap planned. Do not mistake the unimplemented feature specifications above for existing behavior.
 
@@ -388,5 +398,6 @@ When resuming implementation, select the first unfinished ready task, record its
 | 2026-10-03 | Grand Exhibition main ending; collect-all optional | Recommended design default; user can revise after seeing the rationale/playable goal |
 | 2026-10-03 | 12-species launch ceiling, four cultures, three employee roles, same-location expansions | Provisional scope control; validate before bulk production |
 | 2026-10-03 | One canonical root guide; R01–R11 replace old draft future milestone labels | This document request; preserve earlier files as historical evidence |
+| 2026-10-03 | R01.1–R01.4 baseline gate completed; update this guide after every assignment | User's no-major-issues playthrough plus executed safety checks; tag `r01-baseline-safety`. Next: R02.1 clock integration only |
 
 At future checkpoints append a concise row with task IDs, commit/tag, actual evidence, remaining risk, and exact next action. Keep this section current and short; put large raw outputs in evidence files. Do not erase history to turn an unverified or failed attempt into a pass.
