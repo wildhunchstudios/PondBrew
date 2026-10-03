@@ -10,11 +10,16 @@ namespace EvolutionShop
     /// </summary>
     public sealed class GameModel
     {
+        /// <summary>Version 2 adds price tags. Version 1 saves restore with standard prices.</summary>
+        public const int SaveVersion = 2;
+
         private readonly GameConfig config;
         private readonly Dictionary<string, SpeciesDefinition> species;
         private readonly Dictionary<string, SpecimenView?> tanks;
         private readonly Dictionary<string, ReservationView> reservations = new Dictionary<string, ReservationView>(StringComparer.Ordinal);
         private readonly HashSet<string> discoveries = new HashSet<string>(StringComparer.Ordinal);
+        // Only tags that differ from the standard price are kept, so a save stays canonical.
+        private readonly Dictionary<string, int> prices = new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly int[] available = new int[2];
         private readonly int[] staged = new int[2];
         private readonly int[] growerUnits = new int[2];
@@ -84,6 +89,30 @@ namespace EvolutionShop
             return speciesId != null && species.TryGetValue(speciesId, out var value) ? value.Copy() : null;
         }
         public bool IsDiscovered(string speciesId) { return speciesId != null && discoveries.Contains(speciesId); }
+
+        /// <summary>The species' current price tag, its standard price and the allowed range.</summary>
+        public PriceView? GetPrice(string speciesId)
+        {
+            if (speciesId == null || !species.TryGetValue(speciesId, out var definition)) return null;
+            int standard = definition.SaleValue;
+            return new PriceView(speciesId, CurrentPrice(speciesId), standard, config.MinimumPrice,
+                ShopPricing.MaximumPrice(standard, config.MinimumPrice, config.MaximumPricePercent));
+        }
+
+        /// <summary>
+        /// Tags every displayed specimen of a discovered species. Reservations keep the price agreed
+        /// when they were made; the new tag applies to the next customer.
+        /// </summary>
+        public ActionResult SetPrice(string speciesId, int price)
+        {
+            var view = GetPrice(speciesId);
+            if (!view.HasValue) return ActionResult.Fail(FailureCode.UnknownSpecies);
+            if (!discoveries.Contains(speciesId)) return ActionResult.Fail(FailureCode.UndiscoveredRecipe);
+            if (price < view.Value.Minimum || price > view.Value.Maximum) return ActionResult.Fail(FailureCode.InvalidPrice);
+            if (price == view.Value.Standard) prices.Remove(speciesId);
+            else prices[speciesId] = price;
+            return ActionResult.Ok(speciesId);
+        }
 
         public ActionResult Collect(CultureKind culture)
         {
@@ -220,7 +249,7 @@ namespace EvolutionShop
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
             if (!value.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             var specimen = value.Value;
-            int price = species[specimen.SpeciesId].SaleValue;
+            int price = CurrentPrice(specimen.SpeciesId);
             if ((long)Currency + price > int.MaxValue) return ActionResult.Fail(FailureCode.CurrencyOverflow);
             tanks[tankId] = null;
             Currency += price;
@@ -229,16 +258,27 @@ namespace EvolutionShop
 
         public ActionResult ReserveTank(string tankId, string customerId)
         {
+            return ReserveTank(tankId, customerId, int.MaxValue);
+        }
+
+        /// <summary>
+        /// Claims the exact resident at its current tag, but only if the tag is at most maximumPrice.
+        /// The agreed price is copied into the reservation; later repricing never changes it.
+        /// </summary>
+        public ActionResult ReserveTank(string tankId, string customerId, int maximumPrice)
+        {
             if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (!ValidCustomer(customerId)) return ActionResult.Fail(FailureCode.InvalidCustomer);
+            if (maximumPrice < 0) return ActionResult.Fail(FailureCode.InvalidPrice);
             if (!value.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
             foreach (var reservation in reservations.Values)
                 if (reservation.CustomerId == customerId) return ActionResult.Fail(FailureCode.ReservationMismatch);
 
             var specimen = value.Value;
-            reservations.Add(tankId, new ReservationView(tankId, customerId, specimen.Id,
-                specimen.SpeciesId, species[specimen.SpeciesId].SaleValue));
+            int price = CurrentPrice(specimen.SpeciesId);
+            if (price > maximumPrice) return ActionResult.Fail(FailureCode.PriceTooHigh);
+            reservations.Add(tankId, new ReservationView(tankId, customerId, specimen.Id, specimen.SpeciesId, price));
             return ActionResult.Ok(specimen.SpeciesId, specimen.Id);
         }
 
@@ -286,7 +326,7 @@ namespace EvolutionShop
             // Visits are transient. Save the unpaid stock, so loading cancels visitors safely.
             var save = new SaveData
             {
-                version = 1, currency = Currency, upgradeOwned = UpgradeOwned,
+                version = SaveVersion, currency = Currency, upgradeOwned = UpgradeOwned,
                 availableBloom = available[0], availableFlow = available[1],
                 growers = new GrowerSave[2],
                 incubator = new IncubatorSave
@@ -315,6 +355,11 @@ namespace EvolutionShop
             }
             discoveries.CopyTo(save.discoveries);
             Array.Sort(save.discoveries, StringComparer.Ordinal);
+            var tagged = new List<string>(prices.Keys);
+            tagged.Sort(StringComparer.Ordinal);
+            save.prices = new PriceSave[tagged.Count];
+            for (int i = 0; i < tagged.Count; i++)
+                save.prices[i] = new PriceSave { speciesId = tagged[i], price = prices[tagged[i]] };
             return save;
         }
 
@@ -347,6 +392,10 @@ namespace EvolutionShop
             foreach (var tank in save.tanks)
                 candidate.tanks[tank.tankId] = string.IsNullOrEmpty(tank.specimenId)
                     ? (SpecimenView?)null : new SpecimenView(tank.specimenId, tank.speciesId);
+            // Version 1 had no tags: every species restores at its standard price.
+            if (save.version >= 2 && save.prices != null)
+                foreach (var tag in save.prices)
+                    if (tag.price != candidate.species[tag.speciesId].SaleValue) candidate.prices[tag.speciesId] = tag.price;
             model = candidate;
             error = FailureCode.None;
             return true;
@@ -354,7 +403,7 @@ namespace EvolutionShop
 
         private bool ValidSave(SaveData save)
         {
-            if (save == null || save.version != 1 || save.currency < 0 || save.availableBloom < 0 ||
+            if (save == null || (save.version != 1 && save.version != SaveVersion) || save.currency < 0 || save.availableBloom < 0 ||
                 save.availableFlow < 0 || save.growers == null || save.growers.Length != 2 ||
                 save.incubator == null || save.tanks == null || save.tanks.Length != config.TankIds.Length ||
                 save.discoveries == null) return false;
@@ -401,6 +450,18 @@ namespace EvolutionShop
                     !species.ContainsKey(tank.speciesId) || !known.Contains(tank.speciesId) ||
                     !specimens.Add(tank.specimenId)) return false;
             }
+
+            // Unity's JSON reader may give an absent array as null or empty. Version 1 never had tags.
+            if (save.prices == null || save.prices.Length == 0) return true;
+            if (save.version == 1) return false;
+            var tagged = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var tag in save.prices)
+            {
+                if (tag == null || tag.speciesId == null || !known.Contains(tag.speciesId) || !tagged.Add(tag.speciesId))
+                    return false;
+                var view = GetPrice(tag.speciesId).Value;
+                if (tag.price < view.Minimum || tag.price > view.Maximum) return false;
+            }
             return true;
         }
 
@@ -410,7 +471,9 @@ namespace EvolutionShop
             if (input.GrowerCapacity <= 0 || input.InitialGrowerUnits < 0 ||
                 input.InitialGrowerUnits > input.GrowerCapacity ||
                 input.BaseCapacity <= 0 || input.UpgradedCapacity < input.BaseCapacity ||
-                input.UpgradeCost < 0 || !PositiveFinite(input.GrowerRefillSeconds) ||
+                input.UpgradeCost < 0 || input.MinimumPrice < 1 ||
+                input.MaximumPricePercent < 100 || input.MaximumPricePercent > 1000 ||
+                !PositiveFinite(input.GrowerRefillSeconds) ||
                 !PositiveFinite(input.IncubationSeconds) || !PositiveFinite(input.BaseCollectionSeconds) ||
                 !PositiveFinite(input.UpgradedCollectionSeconds) || input.Species == null ||
                 input.Species.Length == 0 || input.TankIds == null || input.TankIds.Length != 2)
@@ -421,7 +484,8 @@ namespace EvolutionShop
                 GrowerRefillSeconds = input.GrowerRefillSeconds, IncubationSeconds = input.IncubationSeconds,
                 BaseCapacity = input.BaseCapacity, UpgradedCapacity = input.UpgradedCapacity,
                 BaseCollectionSeconds = input.BaseCollectionSeconds, UpgradedCollectionSeconds = input.UpgradedCollectionSeconds,
-                UpgradeCost = input.UpgradeCost, TankIds = (string[])input.TankIds.Clone(),
+                UpgradeCost = input.UpgradeCost, MinimumPrice = input.MinimumPrice,
+                MaximumPricePercent = input.MaximumPricePercent, TankIds = (string[])input.TankIds.Clone(),
                 Species = new SpeciesDefinition[input.Species.Length]
             };
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -432,7 +496,7 @@ namespace EvolutionShop
                 if (value == null || string.IsNullOrWhiteSpace(value.Id) || !ids.Add(value.Id) ||
                     string.IsNullOrWhiteSpace(value.DisplayName) || string.IsNullOrWhiteSpace(value.PresentationId) ||
                     value.Bloom < 0 || value.Flow < 0 || (long)value.Bloom + value.Flow <= 0 ||
-                    (long)value.Bloom + value.Flow > input.UpgradedCapacity || value.SaleValue < 0 ||
+                    (long)value.Bloom + value.Flow > input.UpgradedCapacity || value.SaleValue < input.MinimumPrice ||
                     !recipes.Add(value.Bloom + ":" + value.Flow))
                     throw new ArgumentException("Invalid or ambiguous species definition.", nameof(input));
                 copy.Species[i] = value.Copy();
@@ -444,6 +508,10 @@ namespace EvolutionShop
             return copy;
         }
 
+        private int CurrentPrice(string speciesId)
+        {
+            return prices.TryGetValue(speciesId, out int tag) ? tag : species[speciesId].SaleValue;
+        }
         private static bool ValidCulture(int index) { return index >= 0 && index < 2; }
         private static bool ValidCustomer(string customerId) { return !string.IsNullOrWhiteSpace(customerId) && customerId.Length <= 128; }
         private static int CultureIndexOrThrow(CultureKind culture)

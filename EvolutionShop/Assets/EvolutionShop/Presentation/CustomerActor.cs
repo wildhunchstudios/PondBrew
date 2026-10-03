@@ -101,14 +101,15 @@ namespace EvolutionShop
             if (agent && agent.isOnNavMesh) agent.isStopped = paused || pathFailed;
         }
 
-        public void Present(CustomerPhase phase, string label)
+        public void Present(CustomerPhase phase, string label, bool upset = false)
         {
             if ((!hasPresentation || Phase != phase) && phase == CustomerPhase.Paid) paidTime = 0;
             Phase = phase;
             hasPresentation = true;
             if (!caption) return;
             caption.text = string.IsNullOrWhiteSpace(label) ? string.Empty : label;
-            caption.color = phase == CustomerPhase.Paid ? new Color(1f, .84f, .44f) : new Color(.73f, 1f, .88f);
+            // Refusals read in coral; the word in the caption carries the meaning, not the color alone.
+            caption.color = upset ? new Color(1f, .55f, .47f) : phase == CustomerPhase.Paid ? new Color(1f, .84f, .44f) : new Color(.73f, 1f, .88f);
             FitCaption();
         }
 

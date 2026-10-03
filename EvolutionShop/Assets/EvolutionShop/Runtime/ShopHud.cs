@@ -131,6 +131,7 @@ namespace EvolutionShop
                     Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
                     Space();
                     Text("Prepare at night: mix one Bloom and one Flow in the lab, then take your creature to a front tank. Open at the counter. Customers browse, choose a creature and wait for checkout. Use E at the counter and serve their order before their patience runs out.");
+                    Text("Press E at a stocked tank to change its price tag. Customers react to your price; if it is too high they walk away.");
                     Small("Nights are untimed. Growers are free. One local save; production and the clock stop while paused or the application is closed.");
                     Space(); Button("Enter your shop", () => SetPanel(ShopPanel.None));
                     break;
@@ -139,12 +140,7 @@ namespace EvolutionShop
                 case ShopPanel.DayReport: DrawDayReport(); break;
                 case ShopPanel.Upgrade: DrawUpgrade(); break;
                 case ShopPanel.Journal: DrawJournal(); break;
-                case ShopPanel.Tank:
-                    Heading(selectedTank == "tank-a" ? "Display tank A" : "Display tank B");
-                    var resident = Model.GetTank(selectedTank);
-                    Text(resident == null ? "This tank is empty. When a specimen is ready, press E here to transfer it." : Model.GetSpecies(resident.Value.SpeciesId).DisplayName + (Model.GetReservation(selectedTank).HasValue ? " is reserved. Serve its customer at the front counter." : " lives here. Open the shop and let a customer choose it."));
-                    Small("Capacity: one specimen per tank. A full tank never consumes a waiting specimen.");
-                    break;
+                case ShopPanel.Tank: DrawTank(); break;
                 case ShopPanel.Pause:
                     Heading("Shop paused"); Text("The day clock, growers and incubation are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
@@ -180,6 +176,50 @@ namespace EvolutionShop
                 Button("Continue preparation  /  ESC", () => SetPanel(ShopPanel.None));
                 GUILayout.EndArea();
             }
+        }
+        void DrawTank()
+        {
+            Heading(selectedTank == "tank-a" ? "Display tank A" : "Display tank B");
+            var resident = Model.GetTank(selectedTank);
+            if (resident == null)
+            {
+                Text("This tank is empty. When a specimen is ready, press E here to transfer it.");
+                Small("Capacity: one specimen per tank. A full tank never consumes a waiting specimen.");
+                return;
+            }
+            var species = Model.GetSpecies(resident.Value.SpeciesId);
+            var reservation = Model.GetReservation(selectedTank);
+            Text(reservation.HasValue
+                ? species.DisplayName + " is reserved at the agreed " + reservation.Value.Price + " credits. Serve its customer at the front counter."
+                : species.DisplayName + " lives here. Open the shop and let a customer choose it.");
+            if (Model.Incubator.Phase == IncubatorPhase.Ready)
+                Small("Your ready " + Model.GetSpecies(Model.Incubator.SpeciesId).DisplayName + " waits safely in the incubator until a tank is free.");
+            DrawPriceTag(species);
+        }
+        void DrawPriceTag(SpeciesDefinition species)
+        {
+            var tag = Model.GetPrice(species.Id).Value;
+            Space();
+            Small("PRICE TAG / every displayed " + species.DisplayName);
+            Heading(tag.Price + " credits" + (tag.Price == tag.Standard ? "  (standard)" : "  (standard " + tag.Standard + ")"));
+            Text("Customers will think: " + ReactionLabel(Customers.Preview(tag)));
+            GUILayout.BeginHorizontal();
+            PriceButton(species.Id, tag, -5); PriceButton(species.Id, tag, -1);
+            PriceButton(species.Id, tag, 1); PriceButton(species.Id, tag, 5);
+            GUILayout.EndHorizontal();
+            bool enabled = GUI.enabled;
+            GUI.enabled = enabled && tag.Price != tag.Standard;
+            Button("Use standard price  /  " + tag.Standard + " credits", () => SetSpeciesPrice(species.Id, tag.Standard));
+            GUI.enabled = enabled;
+            Small("Allowed " + tag.Minimum + "-" + tag.Maximum + " credits. A customer who already reserved pays the price they agreed to; a new tag applies to the next customer.");
+        }
+        void PriceButton(string speciesId, PriceView tag, int delta)
+        {
+            int target = Mathf.Clamp(tag.Price + delta, tag.Minimum, tag.Maximum);
+            bool enabled = GUI.enabled;
+            GUI.enabled = enabled && target != tag.Price;
+            Button((delta > 0 ? "+" : "-") + Mathf.Abs(delta), () => SetSpeciesPrice(speciesId, target));
+            GUI.enabled = enabled;
         }
         void DrawIncubator()
         {
@@ -232,12 +272,17 @@ namespace EvolutionShop
                 var fish = Model.GetTank(id);
                 if (fish == null) { Small(id == "tank-a" ? "Tank A / empty" : "Tank B / empty"); continue; }
                 var species = Model.GetSpecies(fish.Value.SpeciesId);
-                Small((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + species.SaleValue + " credits" + (Model.GetReservation(id).HasValue ? " / RESERVED" : " / available"));
+                var reserved = Model.GetReservation(id);
+                var tag = Model.GetPrice(species.Id).Value;
+                Small((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + (reserved.HasValue
+                    ? "RESERVED at the agreed " + reserved.Value.Price + " credits"
+                    : tag.Price + " credits (" + ReactionLabel(Customers.Preview(tag)) + ") / available"));
             }
+            Small("Change a price tag with E at its display tank.");
             Space();
             if (Cycle.Phase == ShopDayPhase.Open)
             {
-                Small("Keep the displays stocked. Customers leave if there is nothing available or checkout takes too long.");
+                Small("Keep the displays stocked. Customers leave if there is nothing available, the price is too high, or checkout takes too long.");
                 Button("Close for the night...", () => SetPanel(ShopPanel.CloseShop));
             }
             else if (night)
@@ -282,10 +327,11 @@ namespace EvolutionShop
             Text((report.partial ? "At recording start: " : "At opening: ") + report.stockedAtOpen +
                 "    /    Restocked: " + report.restocked + "    /    At close: " + report.stockedAtClose);
             GUILayout.Space(8);
-            long missed = (long)report.noStock + report.impatient + report.closed + report.interrupted + report.pathProblems;
+            long missed = (long)report.noStock + report.impatient + report.closed + report.interrupted +
+                report.pathProblems + report.tooExpensive;
             Heading("Left without a purchase: " + missed);
-            Small("No stock: " + report.noStock + "    /    Patience ran out: " + report.impatient + "    /    Closing: " + report.closed);
-            Small("Interrupted visits: " + report.interrupted + "    /    Route problems: " + report.pathProblems);
+            Small("Too expensive: " + report.tooExpensive + "    /    No stock: " + report.noStock + "    /    Patience ran out: " + report.impatient);
+            Small("Closing: " + report.closed + "    /    Interrupted visits: " + report.interrupted + "    /    Route problems: " + report.pathProblems);
             GUILayout.Space(8);
             Heading("Prepare for the next day");
             Text(ReportPreparationTip(report));
@@ -309,6 +355,9 @@ namespace EvolutionShop
                     return tankText + " before opening. While your specimen grows, collect free cultures for the next one.";
                 return tankText + " before opening. One Bloom + one Flow makes a Pondlet; grow and transfer one specimen at a time.";
             }
+            if (report.tooExpensive > 0 && report.tooExpensive >= report.impatient && report.tooExpensive >= report.noStock)
+                return (report.tooExpensive == 1 ? "A customer" : report.tooExpensive + " customers") +
+                    " refused your prices. Press E at a display to lower its tag: \"Pricey\" still sells, \"Too expensive\" does not.";
             if (report.impatient > 0 && report.impatient >= report.noStock)
                 return "Displays are ready. To avoid impatient departures, return to the counter promptly when a creature is reserved.";
             if (report.noStock > 0)
@@ -326,8 +375,8 @@ namespace EvolutionShop
             if (visit.Phase == CustomerPhase.Queued)
             {
                 var species = Model.GetSpecies(visit.SpeciesId);
-                Heading((species == null ? "Creature" : species.DisplayName) + " / " + visit.Price + " credits");
-                Text("Customer waiting / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + " seconds patience");
+                Heading((species == null ? "Creature" : species.DisplayName) + " / " + visit.Price + " credits agreed");
+                Text("Customer waiting / " + Mathf.CeilToInt(visit.QueueSecondsRemaining) + " seconds patience / they said: " + ReactionLabel(visit.Reaction));
                 bool enabled = GUI.enabled;
                 GUI.enabled = enabled && IsAtCounter;
                 Button("Serve customer  /  +" + visit.Price + " credits", () => ServeCustomer());
@@ -340,7 +389,7 @@ namespace EvolutionShop
                 if (visit.Phase == CustomerPhase.ToCounter)
                 {
                     var species = Model.GetSpecies(visit.SpeciesId);
-                    Small("Reserved: " + (species == null ? "creature" : species.DisplayName) + " / " + visit.Price + " credits");
+                    Small("Reserved: " + (species == null ? "creature" : species.DisplayName) + " / " + visit.Price + " credits agreed (" + ReactionLabel(visit.Reaction) + ")");
                 }
             }
         }
@@ -364,7 +413,12 @@ namespace EvolutionShop
             {
                 Space();
                 if (Model.IsDiscovered(species.Id))
-                { Heading(species.DisplayName); Text(species.Bloom + " Bloom + " + species.Flow + " Flow  /  " + species.SaleValue + " credits"); }
+                {
+                    var tag = Model.GetPrice(species.Id).Value;
+                    Heading(species.DisplayName);
+                    Text(species.Bloom + " Bloom + " + species.Flow + " Flow  /  standard " + tag.Standard + " credits" +
+                        (tag.Price == tag.Standard ? "" : "  /  your tag " + tag.Price));
+                }
                 else {Heading("Unknown specimen"); Small(species.Id == "pondlet" ? "Begin with a balanced pair." : species.Id == "bubblebelly" ? "A little more Bloom may round things out." : "A little more Flow may stretch a tail.");}
             }
             Space(); Small("Known recipes can be prepared in one click at the incubator, using cultures you have collected.");

@@ -196,6 +196,7 @@ namespace EvolutionShop
             SetPanel(ShopPanel.DayReport);
             return true;
         }
+        public string SelectedTank => selectedTank;
         public ActionResult TransferToDisplay(string tankId)
         {
             var result = Model.TransferToTank(tankId);
@@ -220,11 +221,45 @@ namespace EvolutionShop
         {
             if (Paused || Panel != ShopPanel.Counter || !IsAtCounter)
             { Notify("Use the front counter in person to serve the waiting customer."); return false; }
+            int agreed = Customers.Visit == null ? 0 : Customers.Visit.Price;
             var result = Customers.Serve();
             if (!result.HasValue) { Notify("No customer is waiting to check out yet."); return false; }
             bool success = Perform(result.Value).Success;
-            if (success) Notify("Sold! Your customer is taking their new creature home.");
+            if (success) Notify("Sold for the agreed " + agreed + " credits! Your customer is taking their new creature home.");
             return success;
+        }
+        /// <summary>Tags every displayed specimen of a species. Queued orders keep their agreed price.</summary>
+        public ActionResult SetSpeciesPrice(string speciesId, int price)
+        {
+            var result = Perform(Model.SetPrice(speciesId, price));
+            if (result.Success)
+            {
+                var species = Model.GetSpecies(speciesId);
+                var tag = Model.GetPrice(speciesId).Value;
+                Notify(species.DisplayName + " now costs " + tag.Price + " credits. Customers will think: " +
+                    ReactionLabel(Customers.Preview(tag)) + ".");
+            }
+            return result;
+        }
+        /// <summary>Called by the customer director when a visitor refuses a tag.</summary>
+        public void PriceRefused(CustomerVisit visit)
+        {
+            sound.Feedback(false);
+            var species = Model.GetSpecies(visit.QuotedSpeciesId);
+            var tag = Model.GetPrice(visit.QuotedSpeciesId);
+            Notify("A customer refused the " + (species == null ? "creature" : species.DisplayName) + " at " + visit.QuotedPrice +
+                " credits: too expensive" + (tag.HasValue ? " (standard " + tag.Value.Standard + ")" : "") + ". Nothing was reserved.", 6);
+        }
+        public static string ReactionLabel(PriceReaction reaction)
+        {
+            switch (reaction)
+            {
+                case PriceReaction.Bargain: return "Bargain";
+                case PriceReaction.Fair: return "Fair price";
+                case PriceReaction.Pricey: return "Pricey, still buys";
+                case PriceReaction.TooExpensive: return "Too expensive, won't buy";
+                default: return "Not judged yet";
+            }
         }
         void FindFocus()
         {
@@ -267,7 +302,9 @@ namespace EvolutionShop
                 case StationKind.Incubator: SetPanel(ShopPanel.Incubator); break;
                 case StationKind.TankA: case StationKind.TankB:
                     selectedTank = station.Kind == StationKind.TankA ? "tank-a" : "tank-b";
-                    if (Model.Incubator.Phase == IncubatorPhase.Ready) TransferToDisplay(selectedTank);
+                    // An occupied tank opens its price tag; ready output waits safely in the incubator.
+                    if (Model.Incubator.Phase == IncubatorPhase.Ready && !Model.GetTank(selectedTank).HasValue)
+                        TransferToDisplay(selectedTank);
                     else SetPanel(ShopPanel.Tank);
                     break;
                 case StationKind.Counter: SetPanel(ShopPanel.Counter); break;
@@ -383,6 +420,8 @@ namespace EvolutionShop
                 case "TankReserved": return "This creature is reserved for a waiting customer. Serve their order at the counter.";
                 case "NoCustomerReady": return "Wait for the customer to reach checkout before serving.";
                 case "ReservationMismatch": return "That order is no longer available. No payment was taken.";
+                case "InvalidPrice": return "That price is outside this creature's allowed range. The tag is unchanged.";
+                case "PriceTooHigh": return "The customer refused that price. Nothing was reserved or paid.";
                 default: return "Action blocked: " + code + ". No resources were lost.";
             }
         }

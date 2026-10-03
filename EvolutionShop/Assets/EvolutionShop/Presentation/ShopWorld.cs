@@ -566,8 +566,9 @@ namespace EvolutionShop
         {
             var tank = model.GetTank(id);
             SetCreature(displays[id], tank.HasValue ? tank.Value.SpeciesId : null);
+            // The world label is the visible price tag; a reserved order keeps its agreed price instead.
             status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() +
-                (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  STOCKED");
+                (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  " + model.GetPrice(tank.Value.SpeciesId).Value.Price + " CREDITS");
         }
 
         static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : "Unknown";

@@ -44,7 +44,8 @@ namespace EvolutionShop
             var stack = new Stack<IEnumerator>();
             bool continuous = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionCycleSmoke") >= 0;
             bool nativeUi = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionUiSmoke") >= 0;
-            stack.Push(nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : Scenario());
+            bool pricing = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPricingSmoke") >= 0;
+            stack.Push(nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() : Scenario());
             bool failed = false;
             while (stack.Count > 0)
             {
@@ -64,7 +65,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : "Integrated regression",
+                scenario = nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" : "Integrated regression",
                 context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
                 unityVersion = Application.unityVersion,
                 graphics = SystemInfo.graphicsDeviceName,

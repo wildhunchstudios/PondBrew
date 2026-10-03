@@ -65,8 +65,8 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(File.Exists(PathFor() + ".bak"), Is.False);
-            Assert.That(slot.formatVersion, Is.EqualTo(3));
-            Assert.That(slot.trades.version, Is.EqualTo(1));
+            Assert.That(slot.formatVersion, Is.EqualTo(4));
+            Assert.That(slot.trades.version, Is.EqualTo(2));
             Assert.That(JsonUtility.ToJson(slot.trades), Is.EqualTo(JsonUtility.ToJson(source.trades)));
             Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(JsonUtility.ToJson(source.cycle)));
             Assert.That(slot.sensitivity, Is.EqualTo(1.6f)); Assert.That(slot.volume, Is.EqualTo(0.38f));
@@ -142,8 +142,8 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
-                Assert.That(slot.formatVersion, Is.EqualTo(3)); Assert.That(slot.game.version, Is.EqualTo(1));
-                Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(1));
+                Assert.That(slot.formatVersion, Is.EqualTo(4)); Assert.That(slot.game.version, Is.EqualTo(2));
+                Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(2));
                 Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
                 Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedCycle));
                 Assert.That(slot.sensitivity, Is.EqualTo(1.3f)); Assert.That(slot.volume, Is.EqualTo(0.27f));
@@ -204,16 +204,21 @@ namespace EvolutionShop.Tests
             Assert.That(File.Exists(PathFor() + ".bak"), Is.False);
         }
 
-        [TestCase("missing")]
-        [TestCase("null")]
-        [TestCase("empty")]
-        [TestCase("missing-version")]
-        public void VersionThreeCannotOmitReportEvenOnPreparationNight(string problem)
+        [TestCase("missing", 3)]
+        [TestCase("null", 3)]
+        [TestCase("empty", 3)]
+        [TestCase("missing-version", 3)]
+        [TestCase("missing", 4)]
+        [TestCase("null", 4)]
+        [TestCase("empty", 4)]
+        [TestCase("missing-version", 4)]
+        public void ReportFormatsCannotOmitReportEvenOnPreparationNight(string problem, int format)
         {
             string payload = problem == "null" ? ",\"trades\":null"
                 : problem == "empty" ? ",\"trades\":{}"
                 : problem == "missing-version" ? ",\"trades\":{\"hasCurrent\":false,\"hasLast\":false}" : "";
-            string json = "{\"formatVersion\":3,\"game\":" + JsonUtility.ToJson(model.CaptureSave()) +
+            var game = format == 3 ? LegacyGame() : model.CaptureSave();
+            string json = "{\"formatVersion\":" + format + ",\"game\":" + JsonUtility.ToJson(game) +
                 ",\"cycle\":" + JsonUtility.ToJson(cycle.CaptureSave()) + payload + "}";
             File.WriteAllText(PathFor(), json);
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.False);
@@ -232,7 +237,7 @@ namespace EvolutionShop.Tests
         [TestCase("wrong-last")]
         [TestCase("pending-owner")]
         [TestCase("unearned-revenue")]
-        public void InvalidVersionThreeReportIsRejectedWithoutExposingGameOrChangingFiles(string problem)
+        public void InvalidCurrentReportIsRejectedWithoutExposingGameOrChangingFiles(string problem)
         {
             StockAndOpen();
             var slot = Slot();
@@ -250,7 +255,7 @@ namespace EvolutionShop.Tests
                 case "unearned-revenue": slot.trades.current.revenue = 1; break;
             }
             string json = problem == "missing"
-                ? "{\"formatVersion\":3,\"game\":" + JsonUtility.ToJson(slot.game) + ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + "}"
+                ? "{\"formatVersion\":4,\"game\":" + JsonUtility.ToJson(slot.game) + ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + "}"
                 : JsonUtility.ToJson(slot);
             File.WriteAllText(PathFor(), json);
             byte[] original = File.ReadAllBytes(PathFor());
@@ -292,6 +297,8 @@ namespace EvolutionShop.Tests
         }
 
         string PathFor() => Path.Combine(directory, "slot.json");
+        // Formats 1-3 carried game version 1, which had no price tags.
+        SaveData LegacyGame() { var game = model.CaptureSave(); game.version = 1; game.prices = null; return game; }
         int StockedCount() => (model.GetTank("tank-a").HasValue ? 1 : 0) + (model.GetTank("tank-b").HasValue ? 1 : 0);
         SlotData Slot() => new SlotData
         {
@@ -330,7 +337,7 @@ namespace EvolutionShop.Tests
             if (phase != ShopDayPhase.Open) Assert.That(cycle.RequestClose(), Is.True);
             if (phase == ShopDayPhase.Night) cycle.Tick(ShopDayCycle.DefaultClosingSeconds);
             else if (phase == ShopDayPhase.Closing) cycle.Tick(0.5f);
-            string json = JsonUtility.ToJson(new VersionTwoSlot { game = model.CaptureSave(), cycle = cycle.CaptureSave() }, true) + "\n";
+            string json = JsonUtility.ToJson(new VersionTwoSlot { game = LegacyGame(), cycle = cycle.CaptureSave() }, true) + "\n";
             File.WriteAllText(PathFor(), json);
             return File.ReadAllBytes(PathFor());
         }

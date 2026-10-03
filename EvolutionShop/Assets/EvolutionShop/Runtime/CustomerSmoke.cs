@@ -153,7 +153,8 @@ namespace EvolutionShop
             Check(shop.Model.Incubator.SecondsRemaining<reportProduction && shop.Cycle.Phase==ShopDayPhase.Night && shop.Reports.Last.sales==0, "Night incubation advances during report reading without changing completed results");
             yield return Capture("32-empty-day-report");
             var legacyCycle=new ShopDayCycle(); legacyCycle.OpenShop(); legacyCycle.Tick(11);
-            string legacyJson=JsonUtility.ToJson(new SlotData {formatVersion=2,game=shop.Model.CaptureSave(),cycle=legacyCycle.CaptureSave(),trades=null,sensitivity=shop.Sensitivity,volume=shop.Volume},true);
+            var legacyGame=shop.Model.CaptureSave(); legacyGame.version=1; legacyGame.prices=null; // Format 2 carried game version 1, without price tags.
+            string legacyJson=JsonUtility.ToJson(new SlotData {formatVersion=2,game=legacyGame,cycle=legacyCycle.CaptureSave(),trades=null,sensitivity=shop.Sensitivity,volume=shop.Volume},true);
             File.WriteAllText(shop.SavePath,legacyJson); // Isolated smoke slot only; simulate the delivered v2 player format.
             Check(shop.ReloadSaved() && shop.Reports.Current.partial && shop.Reports.Current.sales==0 && shop.Model.Currency==2 && shop.Model.UpgradeOwned && File.ReadAllText(shop.SavePath)==legacyJson, "Runtime v2 reload preserves progress and starts explicitly partial day statistics without writing");
             Check(shop.CloseForNight(), "Migrated partial day can close normally");

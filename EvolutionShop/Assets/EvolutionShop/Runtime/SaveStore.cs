@@ -17,7 +17,8 @@ namespace EvolutionShop
 
     public static class SaveStore
     {
-        public const int CurrentFormatVersion = 3;
+        // 4: price tags (game 2) and price refusals (report 2). Formats 1-3 migrate in memory.
+        public const int CurrentFormatVersion = 4;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
         // Zero distinguishes an omitted envelope version from a current save.
@@ -40,7 +41,8 @@ namespace EvolutionShop
         {
             error = null;
             if (data == null || data.formatVersion != CurrentFormatVersion || data.game == null ||
-                data.game.version != 1 || !Finite(data.sensitivity) || !Finite(data.volume) ||
+                data.game.version != GameModel.SaveVersion || data.trades == null ||
+                data.trades.version != ShopTradeLedger.SaveVersion || !Finite(data.sensitivity) || !Finite(data.volume) ||
                 !ShopDayCycle.TryRestore(data.cycle, out _) ||
                 !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _))
             {
@@ -83,9 +85,10 @@ namespace EvolutionShop
                 string json = File.ReadAllText(path);
                 var header = JsonUtility.FromJson<SlotHeader>(json);
                 var candidate = JsonUtility.FromJson<SlotData>(json);
-                if (header == null || (header.formatVersion != 1 && header.formatVersion != 2 &&
-                    header.formatVersion != CurrentFormatVersion) ||
+                // Each envelope carries exactly one game version: price tags arrived with format 4.
+                if (header == null || header.formatVersion < 1 || header.formatVersion > CurrentFormatVersion ||
                     candidate == null || candidate.game == null ||
+                    candidate.game.version != (header.formatVersion == CurrentFormatVersion ? GameModel.SaveVersion : 1) ||
                     !Finite(candidate.sensitivity) || !Finite(candidate.volume) ||
                     !GameModel.TryRestore(config, candidate.game, out var restoredGame, out _))
                 {
@@ -104,7 +107,7 @@ namespace EvolutionShop
                     return false;
                 }
 
-                if (header.formatVersion < CurrentFormatVersion)
+                if (header.formatVersion < 3)
                 {
                     int stockedCount = 0;
                     foreach (var tank in restoredGame.CaptureSave().tanks)
@@ -113,17 +116,20 @@ namespace EvolutionShop
                 }
                 else
                 {
-                    if (header.trades == null || header.trades.version != 1 ||
+                    int reportVersion = header.formatVersion == CurrentFormatVersion ? ShopTradeLedger.SaveVersion : 1;
+                    if (header.trades == null || header.trades.version != reportVersion ||
                         !ShopTradeLedger.TryRestore(candidate.trades, candidate.cycle, out var restoredTrades))
                     {
                         error = "Saved trading report could not be validated. Your original file is preserved.";
                         return false;
                     }
-                    // Normalize empty inline day objects back to absent snapshots. Keep the
-                    // pending visitor identity until Session explicitly reconciles a reload.
+                    // Normalize empty inline day objects back to absent snapshots and upgrade a
+                    // version 1 report. Keep the pending visitor until Session reconciles a reload.
                     candidate.trades = restoredTrades.CaptureSave();
                 }
 
+                // A version 1 game restores with standard prices; capture it in the current form.
+                candidate.game = restoredGame.CaptureSave();
                 candidate.formatVersion = CurrentFormatVersion;
                 candidate.sensitivity = Mathf.Clamp(candidate.sensitivity, 0.25f, 2.5f);
                 candidate.volume = Mathf.Clamp01(candidate.volume);
@@ -143,7 +149,7 @@ namespace EvolutionShop
             try
             {
                 var header = JsonUtility.FromJson<SlotHeader>(json);
-                return header != null && (header.formatVersion == 1 || header.formatVersion == 2)
+                return header != null && header.formatVersion >= 1 && header.formatVersion < CurrentFormatVersion
                     ? header.formatVersion : 0;
             }
             catch (ArgumentException)

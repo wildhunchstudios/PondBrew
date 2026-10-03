@@ -303,6 +303,7 @@ namespace EvolutionShop.Tests
         [TestCase("negative-closed")]
         [TestCase("negative-interrupted")]
         [TestCase("negative-path")]
+        [TestCase("negative-too-expensive")]
         [TestCase("negative-open-stock")]
         [TestCase("negative-close-stock")]
         [TestCase("negative-restocked")]
@@ -323,7 +324,7 @@ namespace EvolutionShop.Tests
             switch (problem)
             {
                 case "null": save = null; break;
-                case "version": save.version = 2; break;
+                case "version": save.version = 3; break;
                 case "missing-current": save.current = null; break;
                 case "wrong-current-day": save.current.dayNumber = 3; break;
                 case "wrong-last-day": save.last.dayNumber = 2; break;
@@ -343,6 +344,7 @@ namespace EvolutionShop.Tests
                 case "negative-closed": save.current.closed = -1; break;
                 case "negative-interrupted": save.current.interrupted = -1; break;
                 case "negative-path": save.current.pathProblems = -1; break;
+                case "negative-too-expensive": save.current.tooExpensive = -1; break;
                 case "negative-open-stock": save.current.stockedAtOpen = -1; break;
                 case "negative-close-stock": save.last.stockedAtClose = -1; break;
                 case "negative-restocked": save.current.restocked = -1; break;

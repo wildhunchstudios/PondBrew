@@ -10,7 +10,8 @@ namespace EvolutionShop
         IncubatorBusy, InvalidRecipe, AlreadyEmpty, UnknownSpecies,
         UndiscoveredRecipe, UnknownTank, TankFull, TankEmpty, OutputNotReady,
         InsufficientFunds, AlreadyUpgraded, CurrencyOverflow, InvalidSave,
-        TankReserved, InvalidCustomer, ReservationMismatch, NoCustomerReady
+        TankReserved, InvalidCustomer, ReservationMismatch, NoCustomerReady,
+        InvalidPrice, PriceTooHigh
     }
 
     [Serializable]
@@ -48,6 +49,9 @@ namespace EvolutionShop
         public float BaseCollectionSeconds = 0.6f;
         public float UpgradedCollectionSeconds = 0.3f;
         public int UpgradeCost = 24;
+        // A species' value is its standard price. Players may tag it from MinimumPrice up to this percentage.
+        public int MinimumPrice = 1;
+        public int MaximumPricePercent = 300;
         public string[] TankIds = { "tank-a", "tank-b" };
         public SpeciesDefinition[] Species =
         {
@@ -137,6 +141,19 @@ namespace EvolutionShop
         }
     }
 
+    public readonly struct PriceView
+    {
+        public readonly string SpeciesId;
+        public readonly int Price;
+        public readonly int Standard;
+        public readonly int Minimum;
+        public readonly int Maximum;
+        internal PriceView(string speciesId, int price, int standard, int minimum, int maximum)
+        {
+            SpeciesId = speciesId; Price = price; Standard = standard; Minimum = minimum; Maximum = maximum;
+        }
+    }
+
     [Serializable]
     public sealed class SaveData
     {
@@ -149,6 +166,15 @@ namespace EvolutionShop
         public IncubatorSave incubator;
         public TankSave[] tanks;
         public string[] discoveries;
+        // Version 2: price tags that differ from the standard price. Version 1 has none.
+        public PriceSave[] prices;
+    }
+
+    [Serializable]
+    public sealed class PriceSave
+    {
+        public string speciesId;
+        public int price;
     }
 
     [Serializable]
