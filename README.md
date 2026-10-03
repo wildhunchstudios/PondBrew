@@ -1,40 +1,40 @@
-# Evolution Shop prototype
+# Evolution Shop
 
-A separate first-person Unity 6 URP game. **The Milestone 01 two-room layout is ready for the first human playtest.** The front store contains two display tanks and the sales counter. A doorway connects it to the back lab containing the Bloom/Flow growers, incubator, and upgrade bench. No later milestone has started.
+A separate first-person Unity game about growing aquatic creatures in a back lab and personally serving customers in the front store. The current R02 loop is **prepare at night → stock displays → trade during the day → review results → prepare again**. The store has two display tanks and a checkout counter; the lab has free Bloom/Flow growers, an incubator, and a siphon upgrade bench.
 
-The exact final revised Windows build succeeded with zero errors/warnings and passed **79 standalone checks**, with no captured runtime errors or limitations, exit 0. The two-room Editor run passed 78 checks before minor readout/HUD positioning changes; the final player covers those changes. The earlier 50 passing EditMode cases are historical and were not rerun for this layout-only refinement. See `Docs/VALIDATION.md` for evidence and limits.
+**Current validation status:** Unity **6000.3.21f1** built successfully with zero errors or warnings (167,088,274 bytes). Its native UI probe passed 40 checks, and the continuous two-day route passed 96 checks in 104.3 seconds; both had zero runtime errors and clean process exits. The integrated regression passed 180 checks with zero captured runtime errors and exit 0. Ordinary Save and quit also exited 0, and the final EditMode suite passed 273/273. The preceding 6000.3.15f1 candidate's native Windows shutdown failure remains historical evidence. The installer could not write Hub module metadata, but the verified editor/Windows Mono payload built and ran successfully; see `AGENTS.md` for exact evidence and limits. The user has **not played the latest loop**. Human R02.5 acceptance remains open, and R03 has not started.
 
-## Play the Windows build
+## Run and play
 
-Run `C:\dev\DumbVideoGameStudio\Builds\Windows\EvolutionShop.exe` and click **Open the shop**. For the `EvolutionShop-TwoRooms-Windows.zip` delivery, extract the complete archive first. Keep the executable beside its data/runtime folders; do not copy the executable alone. This is a Windows x64 development build with F8 comparison enabled.
+Run `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1\EvolutionShop.exe`, then click **Enter your shop**. If using an archive, extract it completely and keep the executable beside its data/runtime folders. Consult the validation status above before treating a candidate as the tested delivery.
 
-## Open the Unity source
+1. During untimed preparation night, collect one Bloom and one Flow in the back lab. At the incubator, click **+ Bloom**, **+ Flow**, then **Begin incubation**. A Pondlet grows in ten seconds.
+2. Press **E** at an empty front-store tank to transfer the ready specimen. Each tank holds one creature; a full tank leaves the finished output safe in the incubator.
+3. At the counter, choose **Open for day 1**. Trading lasts up to eight minutes. One visitor at a time walks among the front displays, chooses available stock, and queues with a visible patience timer.
+4. Return to the physical counter, press **E**, and click **Serve customer** to complete the reserved purchase. Refill empty displays as you work. Customers can discover stock added during browsing and walk to that display before reserving it. The lab remains accessible and continues producing during the day.
+5. Choose **Close for the night...**, then **Close today's shop**, or let the day expire. Closing provides three seconds for accepted checkout; unpaid orders release safely. Unsold stock remains yours.
+6. Review income, visitors, missed sales, and stock movement. Click **Continue preparation**, or press Escape. The report stays available through **Review day N results** at the night counter. Report income is separate from current cash; there are no employees or wages yet.
 
-1. Open `C:\dev\DumbVideoGameStudio\EvolutionShop` in Unity **6000.3.15f1**.
-2. Open `Assets/EvolutionShop/Scenes/Shop.unity`, enter Play mode, and click **Open the shop**.
-3. If scene regeneration is needed, use **Evolution Shop > Rebuild playable scene**. This replaces the prototype scene with its repeatable runtime bootstrap.
+Both cultures replenish for free. Unsupported doses can be returned safely; surplus carried culture can be released at the incubator. Discover three creature types and save 24 credits for the larger, faster **siphon MK II**.
 
 | Control | Action |
 |---|---|
-| WASD | Move |
-| Mouse | Look |
-| Hold left mouse, aiming at grower | Collect culture into siphon |
-| E, aiming at station | Open station; transfer ready creature at a tank |
-| Tab | Open/close discovery journal |
-| Escape | Close station/journal; open or leave pause |
-| Mouse in panels | Dose, incubate, sell, upgrade, and change settings |
-| F8, Editor/development build | Compare base/upgraded siphon after purchase; at most four cultures must be held/staged |
+| WASD / mouse | Move / look |
+| Hold left mouse while aiming at a grower | Collect culture into the siphon |
+| E while aiming at a station | Open its panel; transfer ready output at an empty tank |
+| Tab | Open or close the discovery journal |
+| Escape | Close a panel; open or leave pause |
+| Mouse in panels | Dose, incubate, open/close trading, serve, upgrade, and change settings |
+| F8 in Editor/development builds | Compare the purchased siphon with its original form; requires at most four held/staged cultures |
 
-For the agreed layout, production happens in the back lab and display/sales happen in the front store, with the doorway connecting the loop. Start by collecting one Bloom and one Flow in the lab. At the incubator, add one dose of each and begin incubation. After ten seconds, press E at an empty display tank to transfer the specimen. Sell it at the counter. Discover the other two creatures and save 24 credits for the visibly larger, faster siphon. Unsupported mixtures can be returned safely. Both growers replenish for free.
+## Saves and source
 
-The pause menu includes sensitivity, volume, save/resume, reload, confirmed new game, and save/quit. One local save preserves progression, active incubation, and settings; simulation pauses while closed. Default slot: `%USERPROFILE%\AppData\LocalLow\DumbVideoGameStudio\EvolutionShopPrototype\evolution-shop.json`. A malformed slot is preserved and automatic overwriting is blocked until a confirmed new game. Validation sessions use their own evidence-directory slot.
+The pause menu contains sensitivity, volume, **Save and resume**, **Reload local save**, confirmed **New game...**, and **Save and quit**. Progress saves automatically to `%USERPROFILE%\AppData\LocalLow\DumbVideoGameStudio\EvolutionShopPrototype\evolution-shop.json`. Reload cancels unpaid visits, preserves their creatures, and retains completed sales. Invalid saves are preserved with an on-screen saving error. Automated validation uses separate evidence-directory slots and must not replace the normal player save.
 
-## Continue development
+Pause stops production and the day clock. Ordinary station panels and the daily report keep simulation running. There is no offline progress.
 
-Read `AGENTS.md`, then `Docs/RESUME.md`, `Docs/TASKS.md`, `Docs/VALIDATION.md`, and `Docs/UnityProjectContext.md`. Preserve the original `Evolution_Shop_Prototype_Handoff.md`; the user-confirmed front-store/back-lab correction documented here updates its compact-room layout within Milestone 01. Source layout, tuning, setup routes, and validation commands are documented in those records.
+Open `C:\dev\DumbVideoGameStudio\EvolutionShop` with Unity **6000.3.21f1**, then open `Assets/EvolutionShop/Scenes/Shop.unity` and enter Play mode. The existing scene is validated and preserved by normal build/smoke commands; **Rebuild playable scene** is an explicit replacement operation.
 
-No code or assets from Dungeon Project or PersonalAssistant are used. Visuals and short sounds are original procedural placeholders using Unity built-ins/URP. Names, recipes, and balance are provisional. Do not begin later milestones before the user's first playtest.
+Read **`AGENTS.md`** before continuing development: it is the current roadmap and evidence summary. Raw validation records are under `Docs/Evidence/`; older handoff/task/resume documents are historical. No code or assets are imported from Dungeon Project or PersonalAssistant. Procedural art/audio and balance remain provisional.
 
-## First playtest feedback
-
-Please judge movement/collection feel, readable interactions, creature differences, the upgrade's usefulness, and whether you want another production cycle. The two-minute first-creature and five-minute first-upgrade goals are unvalidated human timing hypotheses. Automated validation does not establish enjoyment. Audio is implemented but was not listened to; settings sliders were not manually dragged. Art and balance remain placeholders/provisional. No later milestones have started.
+The next human playtest should cover two preparation/trading/report cycles and note confusing steps, time spent waiting versus acting, checkout pressure, and whether a second day feels worthwhile. Automated tests do not establish those answers. Keep R03 closed until this R02 gate is accepted.
