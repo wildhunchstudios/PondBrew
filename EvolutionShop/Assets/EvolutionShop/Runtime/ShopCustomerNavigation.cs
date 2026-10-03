@@ -1,10 +1,11 @@
+using System;
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
 namespace EvolutionShop
 {
-    /// <summary>Owns one runtime bake. Customer decisions and transaction state live elsewhere.</summary>
+    /// <summary>Owns the runtime store bake. Customer decisions and placement transactions live elsewhere.</summary>
     public sealed class ShopCustomerNavigation : MonoBehaviour
     {
         public bool Ready { get; private set; }
@@ -43,7 +44,7 @@ namespace EvolutionShop
         /// <summary>Spot 0 is at the counter; later spots wait behind it.</summary>
         public Vector3 QueueSpot(int spot) => WorldPoint(queueSpots[Mathf.Clamp(spot, 0, queueSpots.Length - 1)]);
 
-        /// <summary>Call once, after ShopWorld.Build and two rendered frames of collider cleanup.</summary>
+        /// <summary>Initial bake, after ShopWorld.Build and two rendered frames of collider cleanup.</summary>
         public bool Build(ShopWorld shopWorld)
         {
             if (BuildCount != 0) return Ready && world == shopWorld;
@@ -67,32 +68,98 @@ namespace EvolutionShop
             blocked.center = new Vector3(0, 2, 3.55f);
             blocked.size = new Vector3(18, 8, 7); // Starts at z = .05, including the entire doorway/lab.
             blocked.area = NavMesh.GetAreaFromName("Not Walkable");
-            if (blocked.area < 0) return FailBuild("The Not Walkable navigation area is unavailable.");
+            if (blocked.area < 0)
+            {
+                LastError = "The Not Walkable navigation area is unavailable.";
+                ReleaseOwnedData();
+                return false;
+            }
+            return BakeAndValidate();
+        }
 
-            Physics.SyncTransforms();
-            surface.BuildNavMesh();
-            ownedData = surface.navMeshData;
-            if (!ownedData) return FailBuild("The store navigation bake produced no data.");
-            Ready = true;
+        /// <summary>
+        /// Re-bakes an applied candidate with no customers present. On rejection the last valid nav data is
+        /// restored; the caller must also restore the previous world layout before resuming the shop.
+        /// </summary>
+        public bool Rebuild(ShopWorld shopWorld)
+        {
+            if (BuildCount == 0) return Build(shopWorld);
+            if (!shopWorld || world != shopWorld || !surface || !labExclusion)
+            {
+                LastError = "Navigation can only rebuild its existing shop world.";
+                return false;
+            }
+            BuildCount++;
+            return BakeAndValidate();
+        }
+
+        bool BakeAndValidate()
+        {
+            NavMeshData previous = ownedData;
+            bool previousReady = Ready;
+            Ready = false;
+            try
+            {
+                Physics.SyncTransforms();
+                surface.RemoveData();
+                // BuildNavMesh leaves navMeshData unchanged if no replacement is produced. Clearing it prevents
+                // a failed bake from being mistaken for a successful validation of the old furniture layout.
+                surface.navMeshData = null;
+                surface.BuildNavMesh();
+                ownedData = surface.navMeshData;
+                if (!ownedData) return RejectCandidate(previous, previousReady, "The store navigation bake produced no data.");
+                Ready = true;
+                if (!ValidateRequiredRoutes(out string error)) return RejectCandidate(previous, previousReady, error);
+                if (previous && previous != ownedData) Destroy(previous);
+                LastError = string.Empty;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                return RejectCandidate(previous, previousReady, "The store navigation bake failed: " + exception.Message);
+            }
+        }
+
+        bool ValidateRequiredRoutes(out string error)
+        {
             foreach (string tank in new[] { "tank-a", "tank-b" })
                 for (int spot = 0; spot < BrowseSpotsPerDisplay; spot++)
                     for (int place = 0; place < QueueCapacity; place++)
                         if (!CanReach(EntryPoint, BrowseSpot(tank, spot)) || !CanReach(BrowseSpot(tank, spot), QueueSpot(place)))
-                            return FailBuild("A required customer route is not completely walkable: " + tank + " spot " + spot + " to queue place " + place + ".");
+                        {
+                            error = "A required customer route is not completely walkable: " + tank + " spot " + spot + " to queue place " + place + ".";
+                            return false;
+                        }
             for (int place = 0; place < QueueCapacity; place++)
-                if (!CanReach(QueueSpot(place), ExitPoint)) return FailBuild("Queue place " + place + " has no walkable exit.");
+                if (!CanReach(QueueSpot(place), ExitPoint))
+                {
+                    error = "Queue place " + place + " has no walkable exit.";
+                    return false;
+                }
             // Probe the bake itself, independently of destination validation, to catch a missing modifier.
             if (HasNavigationAt(WorldPoint(new Vector3(0, 0, 1)), .1f) ||
                 HasNavigationAt(WorldPoint(new Vector3(0, 0, 3)), .1f))
-                return FailBuild("Customer navigation unexpectedly extends into the lab.");
-            LastError = string.Empty;
+            {
+                error = "Customer navigation unexpectedly extends into the lab.";
+                return false;
+            }
+            error = string.Empty;
             return true;
         }
 
-        bool FailBuild(string message)
+        bool RejectCandidate(NavMeshData previous, bool previousReady, string message)
         {
+            NavMeshData rejected = surface ? surface.navMeshData : ownedData;
+            if (surface)
+            {
+                surface.RemoveData();
+                surface.navMeshData = previous;
+                if (previous) surface.AddData();
+            }
+            if (rejected && rejected != previous) Destroy(rejected);
+            ownedData = previous;
+            Ready = previous && previousReady;
             LastError = message;
-            ReleaseOwnedData();
             return false;
         }
 
@@ -141,9 +208,16 @@ namespace EvolutionShop
         void ReleaseOwnedData()
         {
             Ready = false;
-            if (surface) { surface.RemoveData(); Destroy(surface); surface = null; }
+            if (surface)
+            {
+                surface.RemoveData();
+                surface.navMeshData = null;
+                surface.enabled = false;
+                Destroy(surface);
+                surface = null;
+            }
             if (ownedData) { Destroy(ownedData); ownedData = null; }
-            if (labExclusion) { Destroy(labExclusion); labExclusion = null; }
+            if (labExclusion) { labExclusion.SetActive(false); Destroy(labExclusion); labExclusion = null; }
         }
 
         void OnDestroy() { ReleaseOwnedData(); }

@@ -53,7 +53,7 @@ namespace EvolutionShop
             GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "     FLOW " + Model.Available(CultureKind.Flow), headingStyle);
             GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow)), smallStyle);
             Box(new Rect(438,662,548,36),ink);
-            GUI.Label(new Rect(448,668,528,23), "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
+            GUI.Label(new Rect(448,668,528,23), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
             Box(new Rect(1050, 116, 208, 68), ink);
             GUI.Label(new Rect(1067, 126, 175, 48), machine, bodyStyle);
@@ -63,7 +63,7 @@ namespace EvolutionShop
                 GUI.Label(new Rect(1067, 209, 175, 23), "FRONT STORE", smallStyle);
                 GUI.Label(new Rect(1067, 235, 175, 86), Customers.Status, bodyStyle);
             }
-            if (Panel == ShopPanel.None)
+            if (Panel == ShopPanel.None && !PlacementActive)
             {
                 Box(new Rect(637, 357, 6, 6), new Color(1,1,1,0.85f));
                 if (SlapTarget != null)
@@ -85,6 +85,7 @@ namespace EvolutionShop
                 }
             }
             if (Panel != ShopPanel.None) DrawPanel();
+            if (PlacementActive) DrawPlacementOverlay();
             if (!string.IsNullOrEmpty(SaveError) || (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil))
             {
                 Box(new Rect(380, 24, 650, 67), ink);
@@ -151,6 +152,7 @@ namespace EvolutionShop
                 case ShopPanel.Upgrade: DrawUpgrade(); break;
                 case ShopPanel.Journal: DrawJournal(); break;
                 case ShopPanel.Tank: DrawTank(); break;
+                case ShopPanel.Arrange: DrawArrangement(); break;
                 case ShopPanel.Pause:
                     Heading("Shop paused"); Text("The day clock, growers and incubation are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
@@ -171,7 +173,7 @@ namespace EvolutionShop
                     break;
                 case ShopPanel.Reset:
                     Heading("Start a new game?");
-                    Text("This replaces your one local save: currency, cultures, discoveries, creatures, upgrade, and incubation progress will reset to preparation night 1.");
+                    Text("This replaces your one local save: currency, cultures, discoveries, creatures, furniture, upgrade, and incubation progress will reset to preparation night 1.");
                     Space(); Button("Cancel / keep my shop", () => SetPanel(ShopPanel.Pause));
                     Space(); Button("Confirm new game", ConfirmNewGame);
                     break;
@@ -283,6 +285,7 @@ namespace EvolutionShop
         void DrawCounter()
         {
             Heading("The sales counter");
+            if (Cycle.Phase == ShopDayPhase.Night) Button("Arrange rooms / work tables", () => OpenPlacementMenu());
             bool night = Cycle.Phase == ShopDayPhase.Night;
             if (night) Text("Preparation night for day " + Cycle.DayNumber + ". Stock your front tanks, then open when ready.");
             else
@@ -453,6 +456,7 @@ namespace EvolutionShop
         void DrawJournal()
         {
             Heading("Field journal"); Text("Every new discovery is recorded here, even after its specimen is sold.");
+            if (Cycle.Phase == ShopDayPhase.Night) Button("Arrange rooms / work tables", () => OpenPlacementMenu());
             foreach (var species in Config.Species)
             {
                 Space();

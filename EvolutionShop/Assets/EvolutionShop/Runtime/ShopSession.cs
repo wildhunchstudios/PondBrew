@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -51,13 +51,14 @@ namespace EvolutionShop
             if (!ValidationMode && SaveStore.Read(SavePath, Config, out var restored, out var slot, out var problem))
             {
                 Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
+                ShopLayout.TryRestore(slot.layout, out var layout); Layout = layout;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
                 Sensitivity = slot.sensitivity; Volume = slot.volume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
             }
             else
             {
-                Model = new GameModel(Config);
+                Model = new GameModel(Config); Layout = new ShopLayout();
                 Cycle = new ShopDayCycle();
                 Reports = new ShopTradeLedger();
                 Reputation = new ShopReputation();
@@ -79,7 +80,7 @@ namespace EvolutionShop
             Player = new GameObject("Player").AddComponent<ShopPlayer>();
             Player.Initialize(camera);
             World = new GameObject("Evolution Shop").AddComponent<ShopWorld>();
-            World.Build(camera);
+            World.Build(camera); World.ApplyLayout(Layout);
             World.SetDayPhase(Cycle.Phase);
             Customers = gameObject.AddComponent<ShopCustomers>();
             Customers.Initialize(this);
@@ -101,11 +102,13 @@ namespace EvolutionShop
         {
             if (!initialized) return;
             var keyboard = Keyboard.current;
-            bool gameplayAtFrameStart = Panel == ShopPanel.None;
+            bool placementAtFrameStart = PlacementActive;
+            bool gameplayAtFrameStart = Panel == ShopPanel.None && !placementAtFrameStart;
+            if (placementAtFrameStart) HandlePlacementInput(keyboard);
             if (HandleSlapRebind(keyboard)) return;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            if (!placementAtFrameStart && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
                 SetPanel(Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
-            if (keyboard != null && keyboard.tabKey.wasPressedThisFrame && !Paused)
+            if (!placementAtFrameStart && keyboard != null && keyboard.tabKey.wasPressedThisFrame && !Paused)
                 SetPanel(Panel == ShopPanel.Journal ? ShopPanel.None : ShopPanel.Journal);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (keyboard != null && keyboard.f8Key.wasPressedThisFrame && Model.UpgradeOwned)
@@ -120,6 +123,11 @@ namespace EvolutionShop
                 World.Animate(visualClock, Time.deltaTime);
                 saveClock += Time.deltaTime;
                 if (saveClock >= 5) SaveNow();
+            }
+            if (placementAtFrameStart)
+            {
+                Focused = null; SlapTarget = null; StopHarvest(); World.SetHarvesting(false, null);
+                return;
             }
             if (ValidationMode && ScriptedHarvest.HasValue)
             {
@@ -173,6 +181,8 @@ namespace EvolutionShop
         }
         public bool OpenForDay()
         {
+            if (!layoutRoutesReady) { Notify("Customer routes could not recover. Save and reopen your shop before trading."); return false; }
+            if (PlacementActive || Panel == ShopPanel.Arrange) return false;
             if (!Customers.Ready) { Notify(Customers.Status); return false; }
             if (Paused || Cycle.Phase != ShopDayPhase.Night || Cycle.DayNumber == int.MaxValue) return false;
             if (!Reports.BeginDay(Cycle.DayNumber, DisplayedStockCount()))
@@ -338,6 +348,7 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            if (panel != ShopPanel.None && PlacementActive) EndPlacementPreview();
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();
             if (Panel != panel) panelScroll = Vector2.zero;
             Panel = panel;
@@ -367,7 +378,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
-            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), reputation = Reputation.CaptureSave(), sensitivity = Sensitivity, volume = Volume, slapKey = SlapKey, humorVolume = HumorVolume, reducedGags = ReducedGags};
+            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), reputation = Reputation.CaptureSave(), layout = Layout.CaptureSave(), sensitivity = Sensitivity, volume = Volume, slapKey = SlapKey, humorVolume = HumorVolume, reducedGags = ReducedGags};
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
             return success;
@@ -376,9 +387,13 @@ namespace EvolutionShop
         {
             if (!SaveStore.Read(SavePath, Config, out var model, out var slot, out var error))
             { Notify(error ?? "No saved game yet."); return false; }
+            ShopLayout.TryRestore(slot.layout, out var restoredLayout);
+            // Do not alter live authority, visitors, or a protected-save error until geometry succeeds.
+            if (!TryApplyLayoutGeometry(restoredLayout)) return false;
             AutosaveBlocked = false;
             SaveError = null;
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
+            AdoptLayout(restoredLayout);
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
@@ -395,11 +410,14 @@ namespace EvolutionShop
             var freshCycle = new ShopDayCycle();
             var freshReports = new ShopTradeLedger();
             var freshReputation = new ShopReputation();
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
-            { SaveError = error; SetPanel(ShopPanel.Reset); return; }
+            var freshLayout = new ShopLayout();
+            if (!TryApplyLayoutGeometry(freshLayout)) return;
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
+            { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; World.SetDayPhase(Cycle.Phase);
+            AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;

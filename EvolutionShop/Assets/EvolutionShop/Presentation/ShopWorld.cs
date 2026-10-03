@@ -14,7 +14,7 @@ namespace EvolutionShop
     }
 
     /// <summary>Presentation only. All quantities and transaction decisions belong to GameModel.</summary>
-    public sealed class ShopWorld : MonoBehaviour
+    public sealed partial class ShopWorld : MonoBehaviour
     {
         public Vector3 SpawnPosition => new Vector3(0, 1, -3.8f);
         public IReadOnlyList<Station> Stations => stations;
@@ -70,6 +70,7 @@ namespace EvolutionShop
         void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
         void OnDestroy()
         {
+            DisposePlacementPresentation();
             foreach (var material in fontMaterials.Values) if (material) Destroy(material);
         }
 

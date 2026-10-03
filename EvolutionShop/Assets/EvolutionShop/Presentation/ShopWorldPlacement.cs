@@ -1,0 +1,203 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace EvolutionShop
+{
+    /// <summary>Stable identity on an owned table's collider; no stock or economy authority.</summary>
+    public sealed class PlacedWorkTable : MonoBehaviour
+    {
+        public string Id { get; internal set; }
+    }
+
+    public sealed partial class ShopWorld
+    {
+        readonly Dictionary<string, PlacedWorkTable> placedTables = new Dictionary<string, PlacedWorkTable>();
+        readonly HashSet<string> layoutIds = new HashSet<string>();
+        readonly List<string> retiredTableIds = new List<string>();
+        readonly List<Renderer> previewSurfaces = new List<Renderer>();
+        readonly List<Renderer> previewFootprint = new List<Renderer>();
+        Transform placementPreview;
+        Mesh placementCube;
+        Material previewValid, previewInvalid, footprintValid, footprintInvalid;
+        bool? previewWasValid;
+
+        /// <summary>Reflects a validated candidate or committed layout. Existing table roots retain identity.</summary>
+        public void ApplyLayout(ShopLayout layout)
+        {
+            if (layout == null) throw new ArgumentNullException(nameof(layout));
+            if (!cream) throw new InvalidOperationException("Build the shop world before applying furniture.");
+            layoutIds.Clear();
+            foreach (var item in layout.Items)
+            {
+                layoutIds.Add(item.Id);
+                if (!placedTables.TryGetValue(item.Id, out var table) || !table)
+                {
+                    var root = Group("Worktable / " + item.Id, transform, Vector3.zero);
+                    table = root.gameObject.AddComponent<PlacedWorkTable>();
+                    table.Id = item.Id;
+                    // One solid footprint keeps both the player and the navigation bake out from under the table.
+                    var collider = root.gameObject.AddComponent<BoxCollider>();
+                    collider.center = new Vector3(0, .48f, 0);
+                    collider.size = new Vector3(ShopLayout.TableWidth, .96f, ShopLayout.TableDepth);
+                    BuildWorktable(root, false);
+                    placedTables[item.Id] = table;
+                }
+                table.transform.localPosition = new Vector3(item.X * ShopLayout.GridSize, 0, item.Z * ShopLayout.GridSize);
+                table.transform.localRotation = Quaternion.Euler(0, QuarterTurn(item.QuarterTurns) * 90, 0);
+            }
+
+            retiredTableIds.Clear();
+            foreach (var pair in placedTables)
+                if (!layoutIds.Contains(pair.Key)) retiredTableIds.Add(pair.Key);
+            foreach (string id in retiredTableIds)
+            {
+                var table = placedTables[id];
+                if (table)
+                {
+                    // Destroy is deferred. A same-frame rollback/bake must not see retired obstacles.
+                    foreach (var collider in table.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+                    table.gameObject.SetActive(false);
+                    Destroy(table.gameObject);
+                }
+                placedTables.Remove(id);
+            }
+            Physics.SyncTransforms();
+        }
+
+        public bool TryGetPlacedTable(string id, out Transform root)
+        {
+            root = null;
+            if (string.IsNullOrEmpty(id) || !placedTables.TryGetValue(id, out var table) || !table) return false;
+            root = table.transform;
+            return true;
+        }
+
+        /// <summary>Coordinates are world-local metres, and rotation is a quarter-turn index, not degrees.</summary>
+        public void ShowPlacementPreview(float x, float z, int rotation, bool valid)
+        {
+            if (float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(z) || float.IsInfinity(z))
+            {
+                HidePreview();
+                return;
+            }
+            EnsurePlacementPreview();
+            placementPreview.localPosition = new Vector3(x, 0, z);
+            placementPreview.localRotation = Quaternion.Euler(0, QuarterTurn(rotation) * 90, 0);
+            if (previewWasValid != valid)
+            {
+                foreach (var renderer in previewSurfaces) renderer.sharedMaterial = valid ? previewValid : previewInvalid;
+                foreach (var renderer in previewFootprint) renderer.sharedMaterial = valid ? footprintValid : footprintInvalid;
+                previewWasValid = valid;
+            }
+            placementPreview.gameObject.SetActive(true);
+        }
+
+        public void HidePreview()
+        {
+            if (placementPreview) placementPreview.gameObject.SetActive(false);
+        }
+
+        static int QuarterTurn(int turns) => ((turns % 4) + 4) % 4;
+
+        void BuildWorktable(Transform root, bool preview)
+        {
+            TablePart(root, "Porcelain worktop", new Vector3(0, .90f, 0), new Vector3(1.5f, .12f, 1f), cream, preview);
+            TablePart(root, "Seafoam apron", new Vector3(0, .77f, 0), new Vector3(1.32f, .16f, .82f), shell, preview);
+            TablePart(root, "Lower utility shelf", new Vector3(0, .27f, 0), new Vector3(1.28f, .075f, .78f), trim, preview);
+            for (int x = -1; x <= 1; x += 2)
+                for (int z = -1; z <= 1; z += 2)
+                {
+                    TablePart(root, "Metal leg", new Vector3(x * .62f, .43f, z * .36f), new Vector3(.10f, .82f, .10f), shell, preview);
+                    TablePart(root, "Quiet foot", new Vector3(x * .62f, .035f, z * .36f), new Vector3(.13f, .07f, .13f), dark, preview);
+                }
+            TablePart(root, "Warm edge detail", new Vector3(0, .90f, -.493f), new Vector3(1.20f, .025f, .012f), gold, preview);
+        }
+
+        void TablePart(Transform root, string name, Vector3 position, Vector3 scale, Material material, bool preview)
+        {
+            // Mesh-only objects ensure that even a newly created preview has no transient primitive colliders.
+            var part = Group(name, root, position);
+            part.localScale = scale;
+            part.gameObject.AddComponent<MeshFilter>().sharedMesh = PlacementCube();
+            var renderer = part.gameObject.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = preview ? previewValid : material;
+            if (preview)
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                previewSurfaces.Add(renderer);
+            }
+        }
+
+        void EnsurePlacementPreview()
+        {
+            if (placementPreview) return;
+            previewValid = MakeGlass("Valid placement ghost", new Color(.18f, .95f, .62f, .24f));
+            previewInvalid = MakeGlass("Blocked placement ghost", new Color(1f, .18f, .18f, .24f));
+            footprintValid = MakeGlass("Valid placement footprint", new Color(.17f, 1f, .60f, .88f));
+            footprintInvalid = MakeGlass("Blocked placement footprint", new Color(1f, .12f, .12f, .88f));
+            foreach (var material in new[] { previewValid, previewInvalid, footprintValid, footprintInvalid })
+                material.SetFloat("_Smoothness", .15f);
+            placementPreview = Group("Worktable placement preview (no colliders)", transform, Vector3.zero);
+            BuildWorktable(placementPreview, true);
+            // Outer edges match the exact 1.5 x 1 metre reservation envelope.
+            PreviewMark("Footprint left", new Vector3(-.735f, .028f, 0), new Vector3(.03f, .014f, 1f));
+            PreviewMark("Footprint right", new Vector3(.735f, .028f, 0), new Vector3(.03f, .014f, 1f));
+            PreviewMark("Footprint front", new Vector3(0, .028f, -.485f), new Vector3(1.5f, .014f, .03f));
+            PreviewMark("Footprint back", new Vector3(0, .028f, .485f), new Vector3(1.5f, .014f, .03f));
+            // An asymmetric stripe exposes quarter turns even when the transparent top is viewed obliquely.
+            PreviewMark("Front orientation stripe", new Vector3(0, .973f, -.33f), new Vector3(.55f, .012f, .045f));
+        }
+
+        void PreviewMark(string name, Vector3 position, Vector3 scale)
+        {
+            var mark = Group(name, placementPreview, position);
+            mark.localScale = scale;
+            mark.gameObject.AddComponent<MeshFilter>().sharedMesh = PlacementCube();
+            var renderer = mark.gameObject.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = footprintValid;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            previewFootprint.Add(renderer);
+        }
+
+        Mesh PlacementCube()
+        {
+            if (placementCube) return placementCube;
+            var vertices = new List<Vector3>(24);
+            var normals = new List<Vector3>(24);
+            var triangles = new List<int>(36);
+            Vector3[] faces = { Vector3.forward, Vector3.back, Vector3.right, Vector3.left, Vector3.up, Vector3.down };
+            foreach (Vector3 normal in faces)
+            {
+                Vector3 u = Mathf.Abs(normal.y) > .5f ? Vector3.right : Vector3.up;
+                Vector3 v = Vector3.Cross(normal, u);
+                int start = vertices.Count;
+                vertices.Add((normal - u - v) * .5f);
+                vertices.Add((normal + u - v) * .5f);
+                vertices.Add((normal + u + v) * .5f);
+                vertices.Add((normal - u + v) * .5f);
+                for (int i = 0; i < 4; i++) normals.Add(normal);
+                triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
+                triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 3);
+            }
+            placementCube = new Mesh { name = "Owned worktable cube" };
+            placementCube.SetVertices(vertices);
+            placementCube.SetNormals(normals);
+            placementCube.SetTriangles(triangles, 0);
+            placementCube.RecalculateBounds();
+            return placementCube;
+        }
+
+        void DisposePlacementPresentation()
+        {
+            if (previewValid) Destroy(previewValid);
+            if (previewInvalid) Destroy(previewInvalid);
+            if (footprintValid) Destroy(footprintValid);
+            if (footprintInvalid) Destroy(footprintInvalid);
+            if (placementCube) Destroy(placementCube);
+        }
+    }
+}
