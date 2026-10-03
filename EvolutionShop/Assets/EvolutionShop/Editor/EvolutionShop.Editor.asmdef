@@ -1,0 +1,1 @@
+{"name":"EvolutionShop.Editor","rootNamespace":"EvolutionShop.Editor","references":["EvolutionShop.Runtime","EvolutionShop.Core"],"includePlatforms":["Editor"],"autoReferenced":true}

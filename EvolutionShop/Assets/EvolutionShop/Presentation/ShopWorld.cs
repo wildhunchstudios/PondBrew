@@ -1,0 +1,643 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace EvolutionShop
+{
+    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade }
+
+    public sealed class Station : MonoBehaviour
+    {
+        public StationKind Kind;
+        public string Label;
+    }
+
+    /// <summary>Presentation only. All quantities and transaction decisions belong to GameModel.</summary>
+    public sealed class ShopWorld : MonoBehaviour
+    {
+        public Vector3 SpawnPosition => new Vector3(0, 1, -3.8f);
+        public IReadOnlyList<Station> Stations => stations;
+        public Transform ToolChamber { get; private set; }
+        public Transform ToolRoot { get; private set; }
+
+        readonly List<Station> stations = new List<Station>();
+        readonly List<Transform> bloomCells = new List<Transform>();
+        readonly List<Transform> flowCells = new List<Transform>();
+        readonly List<Transform> reservoirCells = new List<Transform>();
+        readonly List<Particle> particles = new List<Particle>();
+        readonly List<Transform> bubbles = new List<Transform>();
+        readonly Dictionary<StationKind, TextMesh> status = new Dictionary<StationKind, TextMesh>();
+        readonly Dictionary<string, Display> displays = new Dictionary<string, Display>();
+        readonly List<LabelFit> labels = new List<LabelFit>();
+        Material shell, dark, trim, cream, bloomMat, flowMat, glass, water, gold, black, glow;
+        Transform bloomRoot, flowRoot, incubationRing, toolNozzle, toolBody, toolUpgradeBand;
+        TextMesh toolReadout;
+        bool upgraded, harvesting;
+        Station harvestingStation;
+        float emissionClock, lastTime, harvestKick;
+        int bloomCount, flowCount;
+        GameModel lastModel;
+
+        sealed class Display
+        {
+            public Transform Root;
+            public CreatureVisual Creature;
+            public string SpeciesId;
+            public float Seed;
+            public bool Incubator;
+        }
+
+        sealed class Particle
+        {
+            public Transform Root;
+            public Vector3 Start;
+            public float Age;
+            public float Seed;
+        }
+
+        sealed class LabelFit
+        {
+            public TextMesh Text;
+            public float Height;
+            public float Width;
+        }
+
+        public void Build(Camera playerCamera)
+        {
+            shell = MakeMaterial("Seafoam enamel", new Color(0.61f, 0.8f, 0.75f), 0.15f, 0.55f);
+            dark = MakeMaterial("Midnight teal", new Color(0.045f, 0.14f, 0.19f), 0.25f, 0.5f);
+            trim = MakeMaterial("Brushed warm metal", new Color(0.67f, 0.73f, 0.70f), 0.7f, 0.63f);
+            cream = MakeMaterial("Warm porcelain", new Color(0.91f, 0.92f, 0.82f), 0.04f, 0.5f);
+            bloomMat = MakeMaterial("Bloom coral", new Color(1f, 0.36f, 0.3f), 0.05f, 0.7f);
+            flowMat = MakeMaterial("Flow turquoise", new Color(0.12f, 0.81f, 0.87f), 0.05f, 0.7f);
+            gold = MakeMaterial("Upgrade sunshine", new Color(1f, 0.69f, 0.21f), 0.28f, 0.48f);
+            black = MakeMaterial("Ink", new Color(0.008f, 0.027f, 0.04f), 0, 0.35f);
+            glow = MakeMaterial("Soft luminous mint", new Color(0.6f, 1f, 0.82f), 0, 0.4f);
+            glow.EnableKeyword("_EMISSION");
+            glow.SetColor("_EmissionColor", new Color(0.15f, 0.55f, 0.3f));
+            glass = MakeGlass("Clear aquarium glass", new Color(0.61f, 0.91f, 0.95f, 0.085f));
+            water = MakeGlass("Aquatic water tint", new Color(0.17f, 0.73f, 0.84f, 0.085f));
+            Room();
+            bloomRoot = Grower(StationKind.Bloom, new Vector3(-4.2f, 0, 3.1f), "BLOOM", "01 / PETAL CULTURE", bloomMat, bloomCells, true);
+            flowRoot = Grower(StationKind.Flow, new Vector3(-1.4f, 0, 3.1f), "FLOW", "02 / STREAM CULTURE", flowMat, flowCells, false);
+            Incubator(new Vector3(2.0f, 0, 3.1f));
+            Aquarium(StationKind.TankA, "tank-a", new Vector3(5.5f, 0, 1.7f), "DISPLAY 01", 0.2f);
+            Aquarium(StationKind.TankB, "tank-b", new Vector3(5.5f, 0, -1.45f), "DISPLAY 02", 2.1f);
+            Counter(new Vector3(-5.5f, 0, 0.05f));
+            Upgrade(new Vector3(-5.5f, 0, -3.35f));
+            Tool(playerCamera.transform);
+            playerCamera.backgroundColor = new Color(0.08f, 0.19f, 0.22f);
+            playerCamera.clearFlags = CameraClearFlags.SolidColor;
+            playerCamera.nearClipPlane = 0.04f;
+        }
+
+        public static Material MakeMaterial(string name, Color color, float metallic = 0, float smoothness = 0.45f)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (!shader) shader = Shader.Find("Standard");
+            var m = new Material(shader) { name = name };
+            m.SetColor("_BaseColor", color);
+            m.color = color;
+            m.SetFloat("_Metallic", metallic);
+            m.SetFloat("_Smoothness", smoothness);
+            return m;
+        }
+
+        static Material MakeGlass(string name, Color color)
+        {
+            var m = MakeMaterial(name, color, 0, 0.8f);
+            m.SetFloat("_Surface", 1);
+            m.SetFloat("_Blend", 0);
+            m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            m.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            m.SetFloat("_ZWrite", 0);
+            m.SetFloat("_Cull", (float)CullMode.Off);
+            m.SetFloat("_AlphaClip", 0);
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.DisableKeyword("_ALPHATEST_ON");
+            m.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            m.renderQueue = 3000;
+            m.SetShaderPassEnabled("ShadowCaster", false);
+            return m;
+        }
+
+        public static Transform Shape(Transform parent, string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material, bool collision = false)
+        {
+            var g = GameObject.CreatePrimitive(type);
+            g.name = name;
+            g.transform.SetParent(parent, false);
+            g.transform.localPosition = position;
+            g.transform.localScale = scale;
+            g.GetComponent<Renderer>().sharedMaterial = material;
+            var c = g.GetComponent<Collider>();
+            if (!collision && c) { c.enabled = false; Destroy(c); }
+            if (material.renderQueue >= 3000)
+            {
+                g.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+                g.GetComponent<Renderer>().receiveShadows = false;
+            }
+            return g.transform;
+        }
+
+        Transform Group(string name, Transform parent, Vector3 position)
+        {
+            var g = new GameObject(name).transform;
+            g.SetParent(parent, false);
+            g.localPosition = position;
+            return g;
+        }
+
+        Station MakeStation(StationKind kind, string label, Vector3 position, float rotation = 0)
+        {
+            var r = Group(label, transform, position);
+            r.localRotation = Quaternion.Euler(0, rotation, 0);
+            var s = r.gameObject.AddComponent<Station>();
+            s.Kind = kind;
+            s.Label = label;
+            var c = r.gameObject.AddComponent<BoxCollider>();
+            c.center = new Vector3(0, 1.0f, 0);
+            c.size = new Vector3(1.7f, 2, 1.15f);
+            stations.Add(s);
+            return s;
+        }
+
+        void Room()
+        {
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.53f, 0.66f, 0.69f);
+            RenderSettings.fog = false;
+            var floor = MakeMaterial("Pale stone floor", new Color(0.56f, 0.68f, 0.66f), 0.04f, 0.28f);
+            var wall = MakeMaterial("Ivory plaster", new Color(0.76f, 0.82f, 0.76f), 0, 0.22f);
+            Shape(transform, "Floor", PrimitiveType.Cube, new Vector3(0, -.14f, 0), new Vector3(14, .28f, 11), floor, true);
+            Shape(transform, "Back wall", PrimitiveType.Cube, new Vector3(0, 2.1f, 5.6f), new Vector3(14, 4.2f, .3f), wall, true);
+            Shape(transform, "Left wall", PrimitiveType.Cube, new Vector3(-7, 2.1f, 0), new Vector3(.3f, 4.2f, 11), wall, true);
+            Shape(transform, "Right wall", PrimitiveType.Cube, new Vector3(7, 2.1f, 0), new Vector3(.3f, 4.2f, 11), wall, true);
+            Shape(transform, "Front wall", PrimitiveType.Cube, new Vector3(0, 2.1f, -5.6f), new Vector3(14, 4.2f, .3f), wall, true);
+            Shape(transform, "Back wainscot", PrimitiveType.Cube, new Vector3(0, .65f, 5.42f), new Vector3(14, 1.3f, .07f), dark);
+            Shape(transform, "Back brass rail", PrimitiveType.Cube, new Vector3(0, 1.32f, 5.36f), new Vector3(14, .035f, .07f), trim);
+            for (int x = -6; x <= 6; x += 2)
+                Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(x, .004f, 0), new Vector3(.012f, .004f, 11), shell);
+            for (int z = -4; z <= 4; z += 2)
+                Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(0, .005f, z), new Vector3(14, .004f, .012f), shell);
+            Shape(transform, "Work area inset", PrimitiveType.Cube, new Vector3(0, .008f, .25f), new Vector3(7.8f, .01f, 5.7f), shell);
+            for (int i = -1; i <= 1; i++)
+            {
+                Shape(transform, "Ceiling cross beam", PrimitiveType.Cube, new Vector3(0, 4.02f, i * 3.2f), new Vector3(14, .12f, .20f), dark);
+                Shape(transform, "Linear ceiling light", PrimitiveType.Cube, new Vector3(0, 3.94f, i * 3.2f), new Vector3(5.8f, .06f, .16f), glow);
+            }
+            Shape(transform, "Ceiling", PrimitiveType.Cube, new Vector3(0, 4.25f, 0), new Vector3(14, .18f, 11), wall);
+            var key = new GameObject("Soft shop light").AddComponent<Light>();
+            key.transform.SetParent(transform, false);
+            key.type = LightType.Directional;
+            key.transform.rotation = Quaternion.Euler(55, -32, 0);
+            key.color = new Color(1, .95f, .84f);
+            key.intensity = 1.65f;
+            key.shadows = LightShadows.Soft;
+            LightAt(new Vector3(-3, 2.8f, .7f), new Color(.75f, 1, .94f), 3.4f, 9);
+            LightAt(new Vector3(4, 2.6f, .5f), new Color(.68f, .87f, 1), 3.2f, 9);
+            Shape(transform, "Shop identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
+            Text(transform, "EVOLUTION SHOP", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
+            Text(transform, "GROW  /  COMBINE  /  DISCOVER", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
+            var door = Group("Quiet entrance", transform, new Vector3(0, 0, -5.35f));
+            door.localRotation = Quaternion.Euler(0, 180, 0);
+            Shape(door, "Entrance", PrimitiveType.Cube, new Vector3(0, 1.25f, 0), new Vector3(2.1f, 2.5f, .05f), dark);
+            Shape(door, "Door porthole", PrimitiveType.Cylinder, new Vector3(0, 1.6f, -.06f), new Vector3(.73f, .035f, .73f), trim).localRotation = Quaternion.Euler(90, 0, 0);
+            Shape(door, "Porthole glass", PrimitiveType.Cylinder, new Vector3(0, 1.6f, -.10f), new Vector3(.62f, .025f, .62f), shell).localRotation = Quaternion.Euler(90, 0, 0);
+            Text(door, "A LITTLE LIFE STARTS HERE", new Vector3(0, 2.94f, -.09f), .08f, new Color(.07f, .2f, .23f), 3.1f);
+        }
+
+        void LightAt(Vector3 position, Color color, float intensity, float range)
+        {
+            var l = new GameObject("Aquatic fill light").AddComponent<Light>();
+            l.transform.SetParent(transform, false);
+            l.transform.localPosition = position;
+            l.type = LightType.Point;
+            l.color = color;
+            l.intensity = intensity;
+            l.range = range;
+            l.shadows = LightShadows.None;
+        }
+
+        Transform Grower(StationKind kind, Vector3 position, string name, string subhead, Material accent, List<Transform> cells, bool bloom)
+        {
+            var r = MakeStation(kind, name + " grower", position).transform;
+            Shape(r, "Rounded machine foot", PrimitiveType.Cylinder, new Vector3(0, .12f, 0), new Vector3(1.6f, .12f, 1.35f), dark);
+            Shape(r, "Porcelain grower base", PrimitiveType.Cylinder, new Vector3(0, .48f, 0), new Vector3(1.38f, .29f, 1.13f), cream);
+            Shape(r, "Culture stripe", PrimitiveType.Cylinder, new Vector3(0, .79f, 0), new Vector3(1.42f, .06f, 1.17f), accent);
+            Shape(r, "Chamber lower collar", PrimitiveType.Cylinder, new Vector3(0, .9f, 0), new Vector3(1.1f, .065f, 1.1f), trim);
+            Shape(r, "Clear growing chamber", PrimitiveType.Cylinder, new Vector3(0, 1.47f, 0), new Vector3(.96f, .54f, .96f), glass);
+            Shape(r, "Growing medium", PrimitiveType.Cylinder, new Vector3(0, 1.37f, 0), new Vector3(.92f, .44f, .92f), water);
+            Shape(r, "Upper collar", PrimitiveType.Cylinder, new Vector3(0, 2.02f, 0), new Vector3(1.1f, .06f, 1.1f), trim);
+            Shape(r, "Rounded lid", PrimitiveType.Sphere, new Vector3(0, 2.08f, 0), new Vector3(1.07f, .16f, 1.07f), cream);
+            for (int i = -1; i <= 1; i += 2)
+                Shape(r, "Chamber support", PrimitiveType.Cylinder, new Vector3(i * .54f, 1.44f, .19f), new Vector3(.06f, .58f, .06f), dark);
+            Shape(r, "Siphon outlet", PrimitiveType.Cylinder, new Vector3(.36f, .93f, -.6f), new Vector3(.22f, .13f, .22f), accent).localRotation = Quaternion.Euler(90, 0, 0);
+            Shape(r, "Outlet opening", PrimitiveType.Cylinder, new Vector3(.36f, .93f, -.745f), new Vector3(.13f, .015f, .13f), dark).localRotation = Quaternion.Euler(90, 0, 0);
+            Faceplate(r, name, new Vector3(0, .52f, -.584f), accent);
+            status[kind] = Text(r, "4 / 6  |  GROWING", new Vector3(0, .30f, -.607f), .048f, Color.white);
+            Text(r, subhead, new Vector3(0, 2.40f, 0), .047f, new Color(.1f, .27f, .28f), 1.9f);
+            for (int i = 0; i < 6; i++)
+            {
+                var cell = Organism(r, bloom, accent, .17f);
+                cell.name = name + " unit " + (i + 1);
+                cells.Add(cell);
+            }
+            return r;
+        }
+
+        public Transform Organism(Transform parent, bool bloom, Material material, float scale)
+        {
+            var root = Group(bloom ? "Petal cell" : "Stream cell", parent, Vector3.zero);
+            root.localScale = Vector3.one * scale;
+            if (bloom)
+            {
+                Shape(root, "Cell core", PrimitiveType.Sphere, Vector3.zero, Vector3.one * .75f, material);
+                for (int p = 0; p < 4; p++)
+                {
+                    float a = p * Mathf.PI * .5f;
+                    Shape(root, "Soft petal", PrimitiveType.Sphere, new Vector3(Mathf.Cos(a) * .35f, Mathf.Sin(a) * .35f, 0), new Vector3(.53f, .53f, .4f), material);
+                }
+                Shape(root, "Cell seed", PrimitiveType.Sphere, new Vector3(0, 0, -.33f), Vector3.one * .22f, cream);
+            }
+            else
+            {
+                Shape(root, "Stream head", PrimitiveType.Sphere, new Vector3(0, .09f, 0), new Vector3(.57f, .82f, .5f), material);
+                Shape(root, "Stream tail", PrimitiveType.Capsule, new Vector3(.15f, -.49f, 0), new Vector3(.18f, .39f, .18f), material).localRotation = Quaternion.Euler(0, 0, 24);
+                Shape(root, "Cell seed", PrimitiveType.Sphere, new Vector3(0, .13f, -.22f), Vector3.one * .21f, cream);
+            }
+            return root;
+        }
+
+        void Incubator(Vector3 position)
+        {
+            var r = MakeStation(StationKind.Incubator, "Incubator", position).transform;
+            Shape(r, "Incubator pedestal", PrimitiveType.Cube, new Vector3(0, .42f, 0), new Vector3(1.85f, .84f, 1.3f), dark);
+            Shape(r, "Rounded worktop", PrimitiveType.Cube, new Vector3(0, .85f, 0), new Vector3(1.99f, .10f, 1.43f), cream);
+            Shape(r, "Crystal incubator dome", PrimitiveType.Sphere, new Vector3(0, 1.48f, 0), new Vector3(1.55f, 1.5f, 1.25f), glass);
+            Shape(r, "Incubator fluid", PrimitiveType.Sphere, new Vector3(0, 1.42f, 0), new Vector3(1.45f, 1.3f, 1.16f), water);
+            incubationRing = Ring(r, "Incubator orbit", new Vector3(0, 1.52f, 0), .82f, .045f, gold);
+            incubationRing.localRotation = Quaternion.Euler(0, 0, 15);
+            Ring(r, "Base seal", new Vector3(0, .98f, 0), .56f, .05f, trim);
+            Faceplate(r, "INCUBATOR", new Vector3(0, .58f, -.663f), shell);
+            status[StationKind.Incubator] = Text(r, "ADD MEASURED DOSES", new Vector3(0, .31f, -.674f), .045f, Color.white);
+            Text(r, "03 / MAKE A LITTLE LIFE", new Vector3(0, 2.40f, 0), .047f, new Color(.1f, .27f, .28f), 1.9f);
+            var display = Group("Incubator creature", r, new Vector3(0, 1.48f, 0));
+            displays["incubator"] = new Display { Root = display, Incubator = true, Seed = 3.5f };
+            for (int i = 0; i < 2; i++)
+            {
+                var color = i == 0 ? bloomMat : flowMat;
+                Shape(r, "Measured dose port", PrimitiveType.Cylinder, new Vector3((i == 0 ? -.65f : .65f), 1.02f, -.55f), new Vector3(.24f, .045f, .24f), color);
+            }
+        }
+
+        void Aquarium(StationKind kind, string id, Vector3 position, string title, float seed)
+        {
+            var r = MakeStation(kind, title, position, 90).transform;
+            r.GetComponent<BoxCollider>().size = new Vector3(2.1f, 2.1f, 1.3f);
+            Shape(r, "Display cabinet", PrimitiveType.Cube, new Vector3(0, .43f, 0), new Vector3(2.03f, .86f, 1.33f), dark);
+            Shape(r, "Tank lower rim", PrimitiveType.Cube, new Vector3(0, .91f, 0), new Vector3(2.14f, .14f, 1.42f), cream);
+            Shape(r, "Glass aquarium", PrimitiveType.Cube, new Vector3(0, 1.54f, 0), new Vector3(2f, 1.17f, 1.3f), glass);
+            Shape(r, "Water volume", PrimitiveType.Cube, new Vector3(0, 1.48f, 0), new Vector3(1.9f, 1.03f, 1.2f), water);
+            Shape(r, "Upper frame", PrimitiveType.Cube, new Vector3(0, 2.14f, 0), new Vector3(2.13f, .09f, 1.41f), trim);
+            Shape(r, "Tank sand", PrimitiveType.Cube, new Vector3(0, 1.015f, 0), new Vector3(1.9f, .07f, 1.2f), cream);
+            for (int x = -1; x <= 1; x += 2)
+            {
+                for (int z = -1; z <= 1; z += 2)
+                    Shape(r, "Tank seam", PrimitiveType.Cube, new Vector3(x * 1.01f, 1.55f, z * .65f), new Vector3(.022f, 1.1f, .022f), trim);
+                var plant = Shape(r, "Aquatic frond", PrimitiveType.Capsule, new Vector3(x * .74f, 1.2f, .37f), new Vector3(.07f, .19f, .035f), shell);
+                plant.localRotation = Quaternion.Euler(0, 0, x * 15);
+                Shape(r, "Rounded river pebble", PrimitiveType.Sphere, new Vector3(x * .58f, 1.06f, .29f), new Vector3(.3f, .15f, .23f), trim);
+            }
+            Faceplate(r, title, new Vector3(0, .58f, -.68f), shell);
+            status[kind] = Text(r, "EMPTY  /  1 SPACE", new Vector3(0, .31f, -.69f), .047f, Color.white);
+            displays[id] = new Display { Root = Group("Resident", r, new Vector3(0, 1.56f, 0)), Seed = seed };
+            for (int i = 0; i < 4; i++)
+            {
+                var bubble = Shape(r, "Air bubble", PrimitiveType.Sphere, new Vector3(.72f, 1.16f + i * .21f, .29f), Vector3.one * (.025f + i * .008f), glass);
+                bubbles.Add(bubble);
+            }
+        }
+
+        void Counter(Vector3 position)
+        {
+            var r = MakeStation(StationKind.Counter, "Sales counter", position, -90).transform;
+            r.GetComponent<BoxCollider>().size = new Vector3(2.25f, 2.2f, 1.15f);
+            r.GetComponent<BoxCollider>().center = new Vector3(0, 1.1f, 0);
+            Shape(r, "Sales counter cabinet", PrimitiveType.Cube, new Vector3(0, .51f, 0), new Vector3(2.15f, 1.02f, 1.04f), shell);
+            Shape(r, "Sales counter top", PrimitiveType.Cube, new Vector3(0, 1.08f, 0), new Vector3(2.36f, .12f, 1.24f), cream);
+            Shape(r, "Counter toe", PrimitiveType.Cube, new Vector3(0, .08f, 0), new Vector3(2.1f, .16f, 1f), dark);
+            Faceplate(r, "CREATURE EXCHANGE", new Vector3(0, .65f, -.534f), dark);
+            Text(r, "A NEW HOME FOR EVERY DISCOVERY", new Vector3(0, .38f, -.55f), .034f, new Color(.06f, .2f, .24f), 1.85f);
+            Shape(r, "Counter tablet", PrimitiveType.Cube, new Vector3(.58f, 1.28f, -.05f), new Vector3(.48f, .28f, .075f), dark).localRotation = Quaternion.Euler(12, 0, 0);
+            Text(r, "SELL", new Vector3(.58f, 1.29f, -.105f), .06f, new Color(.57f, 1, .84f));
+            Shape(r, "Service bell base", PrimitiveType.Cylinder, new Vector3(-.61f, 1.17f, -.15f), new Vector3(.3f, .035f, .3f), dark);
+            Shape(r, "Service bell", PrimitiveType.Sphere, new Vector3(-.61f, 1.21f, -.15f), new Vector3(.25f, .13f, .25f), gold);
+            var buyer = Group("Stationary friendly buyer", r, new Vector3(0, 0, .88f));
+            var skin = MakeMaterial("Buyer clay", new Color(.74f, .49f, .32f), 0, .35f);
+            Shape(buyer, "Buyer coat", PrimitiveType.Capsule, new Vector3(0, 1.01f, 0), new Vector3(.58f, .45f, .43f), dark);
+            Shape(buyer, "Buyer head", PrimitiveType.Sphere, new Vector3(0, 1.79f, -.02f), new Vector3(.47f, .52f, .43f), skin);
+            Shape(buyer, "Soft cap", PrimitiveType.Sphere, new Vector3(0, 1.99f, 0), new Vector3(.51f, .20f, .45f), gold);
+            for (int x = -1; x <= 1; x += 2)
+            {
+                Shape(buyer, "Buyer eye", PrimitiveType.Sphere, new Vector3(x * .095f, 1.82f, -.219f), new Vector3(.045f, .055f, .027f), black);
+                Shape(buyer, "Coat sleeve", PrimitiveType.Capsule, new Vector3(x * .3f, 1.24f, -.12f), new Vector3(.18f, .24f, .2f), dark).localRotation = Quaternion.Euler(-22, 0, x * 12);
+                Shape(buyer, "Hand on counter", PrimitiveType.Sphere, new Vector3(x * .34f, 1.20f, -.39f), new Vector3(.17f, .11f, .22f), skin);
+            }
+            Shape(buyer, "Small smile", PrimitiveType.Sphere, new Vector3(0, 1.67f, -.22f), new Vector3(.095f, .022f, .017f), dark);
+            Text(r, "BUYER", new Vector3(0, 2.45f, .85f), .065f, new Color(.09f, .26f, .27f));
+        }
+
+        void Upgrade(Vector3 position)
+        {
+            var r = MakeStation(StationKind.Upgrade, "Siphon upgrade", position, -90).transform;
+            Shape(r, "Upgrade plinth", PrimitiveType.Cube, new Vector3(0, .47f, 0), new Vector3(1.5f, .94f, 1.1f), dark);
+            Shape(r, "Upgrade top", PrimitiveType.Cube, new Vector3(0, .98f, 0), new Vector3(1.63f, .1f, 1.2f), gold);
+            Shape(r, "Upgrade reservoir sample", PrimitiveType.Cylinder, new Vector3(0, 1.5f, 0), new Vector3(.55f, .41f, .55f), glass);
+            Shape(r, "Upgrade lid", PrimitiveType.Cylinder, new Vector3(0, 1.93f, 0), new Vector3(.64f, .06f, .64f), gold);
+            Shape(r, "Upgrade base", PrimitiveType.Cylinder, new Vector3(0, 1.09f, 0), new Vector3(.64f, .06f, .64f), gold);
+            Ring(r, "Upgrade feature ring", new Vector3(0, 1.5f, 0), .40f, .034f, glow).localRotation = Quaternion.Euler(0, 0, 22);
+            Text(r, "4  >  8", new Vector3(0, 1.53f, -.34f), .11f, new Color(.09f, .24f, .25f), .49f);
+            Faceplate(r, "SIPHON UPGRADE", new Vector3(0, .62f, -.566f), gold);
+            status[StationKind.Upgrade] = Text(r, "24 COINS  /  COLLECT FASTER", new Vector3(0, .32f, -.571f), .04f, Color.white);
+            Text(r, "MORE ROOM TO GROW", new Vector3(0, 2.30f, 0), .05f, new Color(.1f, .27f, .28f));
+        }
+
+        void Tool(Transform camera)
+        {
+            ToolRoot = Group("Culture siphon", camera, new Vector3(.34f, -.26f, .54f));
+            ToolRoot.localScale = Vector3.one * .62f;
+            ToolRoot.localRotation = Quaternion.Euler(-5, -7, -5);
+            toolBody = Group("Siphon chassis", ToolRoot, Vector3.zero);
+            Shape(toolBody, "Soft grip", PrimitiveType.Capsule, new Vector3(0, -.14f, -.07f), new Vector3(.10f, .15f, .10f), dark).localRotation = Quaternion.Euler(-22, 0, 0);
+            Shape(toolBody, "Base coupling", PrimitiveType.Cylinder, new Vector3(0, -.10f, .025f), new Vector3(.23f, .037f, .23f), cream);
+            ToolChamber = Group("Transparent reservoir", toolBody, new Vector3(0, .02f, .025f));
+            Shape(ToolChamber, "Reservoir glass", PrimitiveType.Cylinder, Vector3.zero, new Vector3(.2f, .11f, .2f), glass);
+            Shape(ToolChamber, "Reservoir top", PrimitiveType.Cylinder, new Vector3(0, .115f, 0), new Vector3(.23f, .025f, .23f), cream);
+            Shape(ToolChamber, "Reservoir bottom", PrimitiveType.Cylinder, new Vector3(0, -.115f, 0), new Vector3(.23f, .019f, .23f), trim);
+            toolUpgradeBand = Ring(ToolChamber, "Larger capacity upgrade band", Vector3.zero, .106f, .009f, gold);
+            toolUpgradeBand.gameObject.SetActive(false);
+            toolNozzle = Group("Collection nozzle", toolBody, new Vector3(0, .05f, .17f));
+            Shape(toolNozzle, "Barrel", PrimitiveType.Cylinder, new Vector3(0, 0, .12f), new Vector3(.105f, .15f, .105f), dark).localRotation = Quaternion.Euler(90, 0, 0);
+            Shape(toolNozzle, "Nozzle collar", PrimitiveType.Cylinder, new Vector3(0, 0, .28f), new Vector3(.13f, .035f, .13f), trim).localRotation = Quaternion.Euler(90, 0, 0);
+            Shape(toolNozzle, "Nozzle light", PrimitiveType.Cylinder, new Vector3(0, 0, .319f), new Vector3(.081f, .005f, .081f), glow).localRotation = Quaternion.Euler(90, 0, 0);
+            toolReadout = Text(toolBody, "0 / 4", new Vector3(0, -.053f, -.09f), .025f, new Color(.08f, .21f, .23f), .16f);
+            for (int i = 0; i < 8; i++) reservoirCells.Add(Organism(ToolChamber, true, bloomMat, .026f));
+        }
+
+        void Faceplate(Transform parent, string title, Vector3 position, Material accent)
+        {
+            Shape(parent, "Machine faceplate", PrimitiveType.Cube, position + new Vector3(0, -.08f, .012f), new Vector3(1.34f, .44f, .035f), dark);
+            Shape(parent, "Identification stripe", PrimitiveType.Cube, position + new Vector3(-.625f, -.08f, -.013f), new Vector3(.035f, .34f, .008f), accent);
+            Text(parent, title, position + new Vector3(.015f, .015f, -.015f), title.Length > 15 ? .047f : .069f, Color.white);
+        }
+
+        TextMesh Text(Transform parent, string value, Vector3 position, float size, Color color, float maxWidth = 1.24f)
+        {
+            var t = Group(value, parent, position).gameObject.AddComponent<TextMesh>();
+            t.text = value;
+            t.fontSize = 80;
+            // Font size controls raster quality. Physical dimensions are fitted separately.
+            t.characterSize = .01f;
+            t.anchor = TextAnchor.MiddleCenter;
+            t.alignment = TextAlignment.Center;
+            t.color = color;
+            t.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+            var fit = new LabelFit { Text = t, Height = size * 2f, Width = maxWidth };
+            labels.Add(fit);
+            FitLabel(fit);
+            return t;
+        }
+
+        static void FitLabel(LabelFit fit)
+        {
+            var bounds = fit.Text.GetComponent<Renderer>().localBounds.size;
+            if (bounds.x <= .00001f || bounds.y <= .00001f) return;
+            float scale = Mathf.Min(fit.Height / bounds.y, fit.Width / bounds.x);
+            fit.Text.transform.localScale = Vector3.one * scale;
+        }
+
+        Transform Ring(Transform parent, string name, Vector3 position, float radius, float thickness, Material material)
+        {
+            const int segments = 48, sides = 8;
+            var vertices = new Vector3[segments * sides];
+            var normals = new Vector3[vertices.Length];
+            var triangles = new int[segments * sides * 6];
+            for (int s = 0; s < segments; s++)
+            {
+                float a = s * Mathf.PI * 2 / segments;
+                Vector3 outward = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+                for (int j = 0; j < sides; j++)
+                {
+                    float b = j * Mathf.PI * 2 / sides;
+                    int n = s * sides + j;
+                    normals[n] = outward * Mathf.Cos(b) + Vector3.up * Mathf.Sin(b);
+                    vertices[n] = outward * radius + normals[n] * thickness;
+                    int next = ((s + 1) % segments) * sides;
+                    int k = n * 6;
+                    triangles[k] = n; triangles[k + 1] = s * sides + (j + 1) % sides; triangles[k + 2] = next + j;
+                    triangles[k + 3] = next + j; triangles[k + 4] = s * sides + (j + 1) % sides; triangles[k + 5] = next + (j + 1) % sides;
+                }
+            }
+            var mesh = new Mesh { name = name + " procedural torus", vertices = vertices, normals = normals, triangles = triangles };
+            mesh.RecalculateBounds();
+            var r = Group(name, parent, position);
+            r.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+            r.gameObject.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return r;
+        }
+
+        public void Refresh(GameModel model)
+        {
+            lastModel = model;
+            bloomCount = model.Available(CultureKind.Bloom);
+            flowCount = model.Available(CultureKind.Flow);
+            SetToolUpgrade(model.UpgradeOwned);
+            RefreshGrower(model, CultureKind.Bloom, StationKind.Bloom, bloomCells);
+            RefreshGrower(model, CultureKind.Flow, StationKind.Flow, flowCells);
+            var incubation = model.Incubator;
+            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  TRANSFER TO TANK" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW";
+            SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
+            RefreshTank(model, "tank-a", StationKind.TankA);
+            RefreshTank(model, "tank-b", StationKind.TankB);
+            status[StationKind.Upgrade].text = upgraded ? "INSTALLED  /  8 UNIT RESERVOIR" : "24 COINS  /  COLLECT FASTER";
+            toolReadout.text = (bloomCount + flowCount) + " / " + model.Capacity;
+            for (int i = 0; i < reservoirCells.Count; i++)
+            {
+                bool active = i < bloomCount + flowCount;
+                bool bloom = i < bloomCount;
+                var cell = reservoirCells[i];
+                if (active && cell.name != (bloom ? "Bloom" : "Flow"))
+                {
+                    Destroy(cell.gameObject);
+                    reservoirCells[i] = cell = Organism(ToolChamber, bloom, bloom ? bloomMat : flowMat, .026f);
+                    cell.name = bloom ? "Bloom" : "Flow";
+                }
+                cell.gameObject.SetActive(active);
+            }
+        }
+
+        void RefreshGrower(GameModel model, CultureKind culture, StationKind station, List<Transform> cells)
+        {
+            var grower = model.GetGrower(culture);
+            status[station].text = grower.Units + " / " + grower.Capacity + (grower.Units >= grower.Capacity ? "  |  FULL" : "  |  GROWING");
+            for (int i = 0; i < cells.Count; i++) cells[i].gameObject.SetActive(i < grower.Units);
+        }
+
+        void RefreshTank(GameModel model, string id, StationKind kind)
+        {
+            var tank = model.GetTank(id);
+            SetCreature(displays[id], tank.HasValue ? tank.Value.SpeciesId : null);
+            status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() + "  /  STOCKED";
+        }
+
+        static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : "Unknown";
+
+        void SetCreature(Display display, string species)
+        {
+            if (display.SpeciesId == species) return;
+            if (display.Creature) Destroy(display.Creature.gameObject);
+            display.SpeciesId = species;
+            display.Creature = null;
+            if (string.IsNullOrEmpty(species)) return;
+            var r = Group(species, display.Root, Vector3.zero);
+            r.localScale = Vector3.one * (display.Incubator ? (species == "ribbonfin" ? .54f : .62f) : .69f);
+            display.Creature = r.gameObject.AddComponent<CreatureVisual>();
+            display.Creature.Build(species);
+        }
+
+        public void SetToolUpgrade(bool value)
+        {
+            upgraded = value;
+            if (!ToolChamber) return;
+            ToolChamber.localScale = value ? new Vector3(1.35f, 1.48f, 1.35f) : Vector3.one;
+            ToolChamber.localPosition = new Vector3(0, value ? .067f : .02f, .025f);
+            toolUpgradeBand.gameObject.SetActive(value);
+        }
+
+        public void SetHarvesting(bool active, Station station)
+        {
+            harvesting = active && station && (station.Kind == StationKind.Bloom || station.Kind == StationKind.Flow);
+            harvestingStation = station;
+        }
+
+        public void PulseHarvest(CultureKind kind)
+        {
+            harvestKick = 1;
+            SpawnParticle(kind);
+            SpawnParticle(kind);
+        }
+
+        void SpawnParticle(CultureKind kind)
+        {
+            if (!ToolChamber) return;
+            var source = kind == CultureKind.Bloom ? bloomRoot : flowRoot;
+            if (!source) return;
+            var p = Organism(transform, kind == CultureKind.Bloom, kind == CultureKind.Bloom ? bloomMat : flowMat, .095f);
+            Vector3 from = source.TransformPoint(new Vector3(.36f, 1.0f, -.76f));
+            p.position = from;
+            particles.Add(new Particle { Root = p, Start = from, Seed = particles.Count * 1.73f });
+        }
+
+        public void Animate(float time, float dt)
+        {
+            lastTime = time;
+            // Repeat fitting after TextMesh has generated its mesh and after dynamic status changes.
+            foreach (var label in labels) FitLabel(label);
+            AnimateCells(bloomCells, time, .37f);
+            AnimateCells(flowCells, time, 2.1f);
+            if (incubationRing) incubationRing.localRotation = Quaternion.Euler(0, time * 24, 15);
+            for (int i = 0; i < reservoirCells.Count; i++)
+            {
+                float angle = i * 2.399f + time * .6f;
+                reservoirCells[i].localPosition = new Vector3(Mathf.Cos(angle) * .052f, -.062f + (i % 4) * .037f + Mathf.Sin(time * 2 + i) * .008f, Mathf.Sin(angle) * .052f);
+                reservoirCells[i].localRotation = Quaternion.Euler(Mathf.Sin(time + i) * 15, time * 31 + i * 52, Mathf.Cos(time * 1.3f + i) * 17);
+            }
+            foreach (var display in displays.Values)
+            {
+                if (!display.Creature) continue;
+                float t = time * (display.SpeciesId == "bubblebelly" ? .6f : .78f) + display.Seed;
+                // The longest tail stays mostly broadside; its small orbit reserves tail clearance.
+                float x = display.Incubator ? Mathf.Sin(t) * .04f : Mathf.Sin(t) * (display.SpeciesId == "ribbonfin" ? .10f : .42f);
+                float z = display.Incubator ? 0 : Mathf.Sin(t * .63f) * .07f;
+                display.Creature.transform.localPosition = new Vector3(x, Mathf.Sin(t * 1.8f) * .085f, z);
+                float turn = display.Incubator ? 20 : display.SpeciesId == "ribbonfin" ? 18 : 28;
+                display.Creature.transform.localRotation = Quaternion.Euler(0, -90 + Mathf.Cos(t) * turn, Mathf.Sin(t * 1.6f) * 5);
+                display.Creature.Animate(time + display.Seed);
+            }
+            for (int i = 0; i < bubbles.Count; i++)
+            {
+                var p = bubbles[i].localPosition;
+                p.y = 1.1f + Mathf.Repeat(time * .17f + i * .21f, .91f);
+                p.x = .72f + Mathf.Sin(time * 1.1f + i) * .025f;
+                bubbles[i].localPosition = p;
+            }
+            if (harvesting)
+            {
+                emissionClock -= dt;
+                if (emissionClock <= 0)
+                {
+                    emissionClock = .12f;
+                    SpawnParticle(harvestingStation.Kind == StationKind.Bloom ? CultureKind.Bloom : CultureKind.Flow);
+                }
+            }
+            for (int i = particles.Count - 1; i >= 0; i--)
+            {
+                var p = particles[i];
+                p.Age += dt;
+                float f = Mathf.Clamp01(p.Age / .52f);
+                Vector3 target = ToolChamber.position;
+                p.Root.position = Vector3.Lerp(p.Start, target, f * f) + Vector3.up * Mathf.Sin(f * Mathf.PI) * .24f;
+                p.Root.Rotate(0, dt * 180, dt * 70, Space.Self);
+                p.Root.localScale = Vector3.one * Mathf.Lerp(.095f, .025f, f);
+                if (f >= 1) { Destroy(p.Root.gameObject); particles.RemoveAt(i); }
+            }
+            harvestKick = Mathf.MoveTowards(harvestKick, 0, dt * 5);
+            if (ToolRoot)
+            {
+                ToolRoot.localPosition = new Vector3(.34f, -.26f + Mathf.Sin(time * 1.6f) * .003f, .54f - harvestKick * .017f);
+                toolNozzle.localRotation = Quaternion.Euler(0, 0, harvesting ? Mathf.Sin(time * 39) * 3 : 0);
+            }
+        }
+
+        static void AnimateCells(List<Transform> cells, float time, float seed)
+        {
+            for (int i = 0; i < cells.Count; i++)
+            {
+                float a = i * 2.399f + time * .29f + seed;
+                cells[i].localPosition = new Vector3(Mathf.Cos(a) * .27f, 1.15f + (i % 3) * .22f + Mathf.Sin(time * 1.7f + i) * .065f, Mathf.Sin(a) * .27f);
+                cells[i].localRotation = Quaternion.Euler(Mathf.Sin(time + i) * 20, -a * Mathf.Rad2Deg, Mathf.Sin(time * 2 + i) * 22);
+            }
+        }
+
+        /// <summary>Validation hook: conservative bounds of every visible fish mesh against tank interior.</summary>
+        public bool ValidateTankBounds(out string details)
+        {
+            int residents = 0;
+            foreach (var pair in displays)
+            {
+                var display = pair.Value;
+                if (display.Incubator || !display.Creature) continue;
+                residents++;
+                var tank = display.Root.parent;
+                foreach (var renderer in display.Creature.GetComponentsInChildren<Renderer>())
+                {
+                    Bounds bounds = renderer.bounds;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        Vector3 corner = bounds.center + Vector3.Scale(bounds.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                        Vector3 local = tank.InverseTransformPoint(corner);
+                        if (Mathf.Abs(local.x) > .97f || local.y < 1.04f || local.y > 2.10f || Mathf.Abs(local.z) > .62f)
+                        {
+                            details = pair.Key + " / " + display.SpeciesId + " / " + renderer.name + " outside tank at " + local;
+                            return false;
+                        }
+                    }
+                }
+            }
+            details = residents == 0 ? "No stocked tank residents to inspect." : residents + " stocked tank resident(s), all mesh bounds inside glass.";
+            return true;
+        }
+    }
+}

@@ -1,0 +1,279 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+
+namespace EvolutionShop
+{
+    /// <summary>Development-only timed smoke using the same model/session actions as the UI. It never touches the user's slot.</summary>
+    public sealed class MilestoneSmoke : MonoBehaviour
+    {
+        [Serializable] sealed class Report
+        {
+            public bool passed;
+            public string context;
+            public string unityVersion;
+            public string graphics;
+            public string processor;
+            public string savePath;
+            public string[] checks;
+            public string[] runtimeErrors;
+            public string[] limitations;
+            public float elapsedSeconds;
+        }
+        ShopSession shop;
+        string evidence;
+        readonly List<string> checks = new List<string>();
+        readonly List<string> errors = new List<string>();
+        readonly List<string> limitations = new List<string>();
+        float start;
+        InputSettings previousInputSettings, smokeInputSettings;
+        Keyboard syntheticKeyboard;
+        IEnumerator Start()
+        {
+            shop = GetComponent<ShopSession>();
+            evidence = ShopSession.Arg("-evolutionEvidence") ?? Application.temporaryCachePath;
+            Directory.CreateDirectory(evidence);
+            start = Time.realtimeSinceStartup;
+            Application.logMessageReceived += Log;
+            var stack = new Stack<IEnumerator>(); stack.Push(Scenario());
+            bool failed = false;
+            while (stack.Count > 0)
+            {
+                object yielded = null;
+                try
+                {
+                    if (!stack.Peek().MoveNext()) { stack.Pop(); continue; }
+                    yielded = stack.Peek().Current;
+                    if (yielded is IEnumerator nested) { stack.Push(nested); continue; }
+                }
+                catch (Exception e) { errors.Add(e.ToString()); failed = true; break; }
+                yield return yielded;
+            }
+            RestoreInput();
+            Application.logMessageReceived -= Log;
+            bool passed = !failed && errors.Count == 0;
+            var report = new Report
+            {
+                passed = passed,
+                context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
+                unityVersion = Application.unityVersion,
+                graphics = SystemInfo.graphicsDeviceName,
+                processor = SystemInfo.processorType,
+                savePath = shop.SavePath,
+                checks = checks.ToArray(), runtimeErrors = errors.ToArray(), limitations = limitations.ToArray(),
+                elapsedSeconds = Time.realtimeSinceStartup - start
+            };
+            File.WriteAllText(Path.Combine(evidence, "smoke-result.json"), JsonUtility.ToJson(report, true));
+            Debug.Log("EVOLUTION_SMOKE_" + (passed ? "PASSED" : "FAILED") + " checks=" + checks.Count + " errors=" + errors.Count);
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.Exit(passed ? 0 : 1);
+#else
+            Application.Quit(passed ? 0 : 1);
+#endif
+        }
+        void RestoreInput()
+        {
+            if (syntheticKeyboard != null && syntheticKeyboard.added) InputSystem.RemoveDevice(syntheticKeyboard);
+            syntheticKeyboard = null;
+            if (previousInputSettings != null) InputSystem.settings = previousInputSettings;
+            previousInputSettings = null;
+            if (smokeInputSettings) Destroy(smokeInputSettings);
+            smokeInputSettings = null;
+        }
+        void OnDestroy() { RestoreInput(); Application.logMessageReceived -= Log; }
+        void Log(string text, string stack, LogType type)
+        { if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) errors.Add(text + "\n" + stack); }
+        void Check(bool condition, string label)
+        { if (!condition) throw new InvalidOperationException(label); checks.Add(label); Debug.Log("SMOKE_CHECK " + label); }
+        void Ok(ActionResult result, string label) => Check(result.Success, label + (result.Success ? "" : " / " + result.Failure));
+        IEnumerator Scenario()
+        {
+            yield return new WaitForSeconds(1);
+            Check(shop.Model.Currency == 0 && shop.Model.Capacity == 4 && shop.Model.DiscoveredSpeciesIds.Count == 0, "Fresh zero-currency model and base siphon");
+            Check(shop.World.Stations.Count == 7, "Seven usable stations created");
+            yield return Capture("00-startup");
+            previousInputSettings = InputSystem.settings;
+            smokeInputSettings = Instantiate(previousInputSettings);
+            smokeInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+#if UNITY_EDITOR
+            smokeInputSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+#endif
+            InputSystem.settings = smokeInputSettings;
+            syntheticKeyboard = InputSystem.AddDevice<Keyboard>("EvolutionSmokeKeyboard");
+            syntheticKeyboard.MakeCurrent();
+            var keyboard = syntheticKeyboard;
+            shop.AllowValidationInput = true;
+            Vector3 oldPosition = shop.Player.transform.position;
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.W));
+            yield return null;
+            Check(keyboard.wKey.isPressed, "Synthetic keyboard routed through real Input System");
+            float movementTime = 0; int movementFrames = 0;
+            while (movementTime < 0.7f)
+            {
+                keyboard.MakeCurrent(); InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.W));
+                yield return null; movementTime += Time.deltaTime; movementFrames++;
+            }
+            Debug.Log("MOVEMENT_DIAGNOSTIC frames="+movementFrames+" dt="+movementTime+" enabled="+shop.Player.InputEnabled+" current="+Keyboard.current.name+" minMove="+shop.Player.GetComponent<CharacterController>().minMoveDistance);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            yield return null;
+            Check(Vector3.Distance(oldPosition, shop.Player.transform.position) > 0.8f, "WASD input moves CharacterController in running scene " + oldPosition + " -> " + shop.Player.transform.position);
+            shop.AllowValidationInput = false;
+            shop.Player.Teleport(new Vector3(0,0.2f,-3.8f), Quaternion.identity);
+            shop.SetPanel(ShopPanel.Pause);
+            Check(shop.Paused && Cursor.lockState == CursorLockMode.None && Cursor.visible, "Pause releases and shows cursor");
+            shop.SetPanel(ShopPanel.None);
+            yield return null;
+            Check(!shop.Paused,"Resume unpauses simulation");
+            if (Application.isBatchMode && Application.isEditor) limitations.Add("Hidden batch Editor has no focused Game View; actual mouse capture on resume requires standalone check. Requested hidden cursor=" + !Cursor.visible + ", actual lock=" + Cursor.lockState);
+            else Check(Cursor.lockState == CursorLockMode.Locked && !Cursor.visible, "Resume restores captured cursor");
+            yield return Capture("01-room-base");
+            foreach (var station in shop.World.Stations)
+            {
+                var approach = station.transform.TransformPoint(new Vector3(0,0.2f,-2.5f));
+                shop.Player.Teleport(approach,station.transform.rotation);
+                shop.Player.View.transform.LookAt(station.transform.TransformPoint(new Vector3(0,1.1f,0)));
+                yield return null; yield return null;
+                Check(shop.Focused == station,"Aim finds station " + station.Kind);
+                if (station.Kind == StationKind.Incubator)
+                {
+                    keyboard.MakeCurrent(); InputSystem.QueueStateEvent(keyboard,new KeyboardState(Key.E));
+                    yield return null; yield return null;
+                    Check(shop.Panel == ShopPanel.Incubator,"E input opens the aimed incubator panel");
+                    InputSystem.QueueStateEvent(keyboard,new KeyboardState());
+                    yield return Capture("01-incubator-panel"); shop.SetPanel(ShopPanel.None);
+                }
+            }
+            shop.Player.Teleport(new Vector3(0,0.2f,-3.8f),Quaternion.identity);
+            yield return Ensure(CultureKind.Bloom, 2);
+            yield return Ensure(CultureKind.Flow, 2);
+            Check(!shop.Model.Collect(CultureKind.Bloom).Success, "Shared four-unit reservoir blocks excess collection");
+            for (int i=0;i<2;i++) { Ok(shop.Perform(shop.Model.Dose(CultureKind.Bloom)), "Stage Bloom for invalid mix"); Ok(shop.Perform(shop.Model.Dose(CultureKind.Flow)), "Stage Flow for invalid mix"); }
+            Check(!shop.Perform(shop.Model.BeginIncubation()).Success && shop.Model.ReservedCultureCount == 4, "2+2 unsupported recipe consumes nothing");
+            Ok(shop.Perform(shop.Model.ClearDoses()), "Unsupported mixture fully returned");
+            Ok(shop.Perform(shop.Model.Dose(CultureKind.Bloom)), "Pondlet Bloom dose");
+            Ok(shop.Perform(shop.Model.Dose(CultureKind.Flow)), "Pondlet Flow dose");
+            Ok(shop.Perform(shop.Model.BeginIncubation()), "Pondlet incubation begins");
+            Check(!shop.Model.BeginIncubation().Success && shop.Model.ReservedCultureCount == 2, "Repeated start cannot consume ingredients twice");
+            yield return new WaitForSeconds(1.5f);
+            shop.SetPanel(ShopPanel.Pause);
+            float remaining = shop.Model.Incubator.SecondsRemaining;
+            Check(shop.SaveNow() && shop.ReloadSaved(), "Real JSON save and load during incubation");
+            Check(Mathf.Abs(shop.Model.Incubator.SecondsRemaining-remaining)<0.001f, "Mid-incubation remaining time preserved");
+            yield return new WaitForSeconds(0.7f);
+            Check(Mathf.Abs(shop.Model.Incubator.SecondsRemaining-remaining)<0.001f, "Paused incubation does not advance");
+            shop.SetPanel(ShopPanel.None);
+            yield return Ready();
+            Check(shop.Model.IsDiscovered("pondlet"), "Pondlet discovered");
+            yield return Capture("02-pondlet-ready");
+            Ok(shop.Perform(shop.Model.TransferToTank("tank-a")), "Pondlet transferred to visible tank A");
+            Check(!shop.Model.TransferToTank("tank-b").Success, "Repeated transfer cannot duplicate a specimen");
+            yield return Produce("bubblebelly");
+            yield return Capture("03-bubblebelly-ready");
+            Ok(shop.Perform(shop.Model.TransferToTank("tank-b")), "Bubblebelly transferred to tank B");
+            yield return Produce("ribbonfin");
+            for (float t = 0; t < 30; t += 0.25f)
+            {
+                shop.World.Animate(t,0);
+                if (!shop.World.ValidateTankBounds(out var bounds)) throw new InvalidOperationException(bounds);
+            }
+            Check(true,"Stocked creatures stay within tank glass across 120 animation samples");
+            Check(shop.Model.DiscoveredSpeciesIds.Count == 3, "All three exact recipes discovered");
+            string waiting = shop.Model.Incubator.SpecimenId;
+            Check(!shop.Perform(shop.Model.TransferToTank("tank-a")).Success && !shop.Model.TransferToTank("tank-b").Success && shop.Model.Incubator.SpecimenId == waiting, "Two full tanks retain waiting Ribbonfin without loss");
+            yield return Capture("04-full-tanks-ribbonfin");
+            Ok(shop.Perform(shop.Model.SellFromTank("tank-a")), "Chosen Pondlet sale pays six");
+            Check(shop.Model.Currency == 6 && !shop.Model.SellFromTank("tank-a").Success, "Repeated sale pays once");
+            Check(shop.SaveNow() && shop.ReloadSaved() && shop.Model.Currency == 6 && shop.Model.GetTank("tank-a") == null && shop.Model.IsDiscovered("pondlet"), "Real save after sale preserves money, empty tank, discovery");
+            Ok(shop.Perform(shop.Model.TransferToTank("tank-a")), "Waiting output transfers after space is freed");
+            for (float t=0;t<30;t+=0.25f) {shop.World.Animate(t,0); if(!shop.World.ValidateTankBounds(out var bounds)) throw new InvalidOperationException(bounds);}
+            Check(true,"Ribbonfin tail stays inside tank across 120 animation samples");
+            Check(!shop.Model.BuyUpgrade().Success, "Insufficient funds block upgrade");
+            Ok(shop.Perform(shop.Model.SellFromTank("tank-b")), "Sell Bubblebelly");
+            Ok(shop.Perform(shop.Model.SellFromTank("tank-a")), "Sell Ribbonfin");
+            Check(shop.Model.Currency == 26, "Three species sales total 26");
+            Vector3 baseChamber = shop.World.ToolChamber.localScale;
+            Ok(shop.Perform(shop.Model.BuyUpgrade()), "Purchase siphon upgrade");
+            Check(shop.Model.Currency == 2 && shop.Model.Capacity == 8 && !shop.Model.BuyUpgrade().Success, "Upgrade changes capacity and charges once");
+            Check(shop.World.ToolChamber.localScale != baseChamber && shop.Model.CollectionSecondsPerUnit < shop.Config.BaseCollectionSeconds, "Upgrade physically enlarges chamber and speeds collection");
+            yield return Capture("05-upgraded-siphon");
+            Check(shop.SetBaselinePreview(true), "Development baseline comparison enabled");
+            Check(shop.World.ToolChamber.localScale == baseChamber, "Comparison restores original chamber geometry");
+            shop.SetBaselinePreview(false);
+            yield return Ensure(CultureKind.Bloom, 1);
+            yield return Ensure(CultureKind.Flow, 1);
+            Ok(shop.Perform(shop.Model.UseKnownRecipe("pondlet")), "Known recipe prepares exact doses in one action");
+            Ok(shop.Perform(shop.Model.BeginIncubation()), "Repeat production begins after upgrade");
+            Check(shop.SaveNow() && shop.ReloadSaved() && shop.Model.UpgradeOwned && shop.Model.Incubator.Phase == IncubatorPhase.Incubating, "Upgrade and repeat production survive reload");
+            shop.SetPanel(ShopPanel.Reset); shop.SetPanel(ShopPanel.Pause);
+            Check(shop.Model.Currency == 2 && shop.Model.UpgradeOwned, "Cancel reset preserves progression");
+            shop.SetPanel(ShopPanel.Journal);
+            yield return Capture("06-journal");
+            Check(File.Exists(shop.SavePath), "Separate smoke save exists; user slot untouched");
+            string corrupt = Path.Combine(evidence,"corrupt-save.json"); File.WriteAllText(corrupt,"{not valid json");
+            Check(!SaveStore.Read(corrupt,shop.Config,out _,out _,out _) && File.ReadAllText(corrupt)=="{not valid json", "Malformed save rejected and original preserved");
+            shop.ConfirmNewGame();
+            Check(shop.Model.Currency==0 && !shop.Model.UpgradeOwned && shop.Model.DiscoveredSpeciesIds.Count==0 && shop.Model.Incubator.Phase==IncubatorPhase.Dosing, "Confirmed reset clears progression and active batch");
+            yield return null;
+        }
+        IEnumerator Ensure(CultureKind kind, int units)
+        {
+            float timeout = Time.realtimeSinceStartup + 12;
+            shop.ScriptedHarvest = kind;
+            while (shop.Model.Available(kind)<units)
+            {
+                if (Time.realtimeSinceStartup > timeout) throw new TimeoutException("Timed harvesting " + kind);
+                yield return null;
+            }
+            shop.ScriptedHarvest = null; shop.StopHarvest();
+            checks.Add("Timed siphon harvest " + kind + " to " + units);
+        }
+        IEnumerator Produce(string id)
+        {
+            var recipe = shop.Model.GetSpecies(id);
+            yield return Ensure(CultureKind.Bloom,recipe.Bloom);
+            yield return Ensure(CultureKind.Flow,recipe.Flow);
+            for(int i=0;i<recipe.Bloom;i++) Ok(shop.Perform(shop.Model.Dose(CultureKind.Bloom)),id+" Bloom dose");
+            for(int i=0;i<recipe.Flow;i++) Ok(shop.Perform(shop.Model.Dose(CultureKind.Flow)),id+" Flow dose");
+            Ok(shop.Perform(shop.Model.BeginIncubation()),id+" incubation begins");
+            yield return Ready();
+        }
+        IEnumerator Ready()
+        {
+            float timeout = Time.realtimeSinceStartup + 14;
+            while(shop.Model.Incubator.Phase != IncubatorPhase.Ready)
+            {if(Time.realtimeSinceStartup>timeout) throw new TimeoutException("Incubation did not mature"); yield return null;}
+        }
+        IEnumerator Capture(string name)
+        {
+            yield return null;
+            var camera = shop.Player.View;
+            Vector3 cameraPosition = camera.transform.position; Quaternion cameraRotation = camera.transform.rotation;
+            if (name.Contains("ready")) {camera.transform.position = new Vector3(2,1.6f,.7f); camera.transform.LookAt(new Vector3(2,1.5f,3.1f));}
+            if (name.Contains("full-tanks")) {camera.transform.position = new Vector3(2.5f,2.3f,-3.8f); camera.transform.LookAt(new Vector3(4,1.6f,1.7f));}
+            var target = new RenderTexture(1600,900,24);
+            Debug.Log("CAPTURE_PIPELINE " + UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline);
+            foreach (var renderer in shop.World.GetComponentsInChildren<Renderer>()) if (renderer.sharedMaterial && renderer.sharedMaterial.name == "Bloom coral") {Debug.Log("BLOOM_MATERIAL " + renderer.sharedMaterial.shader.name + " supported=" + renderer.sharedMaterial.shader.isSupported + " color=" + renderer.sharedMaterial.GetColor("_BaseColor")); break;}
+            UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera,new UnityEngine.Rendering.RenderPipeline.StandardRequest {destination=target});
+            RenderTexture.active = target;
+            var image = new Texture2D(1600,900,TextureFormat.RGB24,false);
+            image.ReadPixels(new Rect(0,0,1600,900),0,0); image.Apply();
+            File.WriteAllBytes(Path.Combine(evidence,name+"-camera.png"),image.EncodeToPNG());
+            camera.targetTexture=null; RenderTexture.active=null; Destroy(image); Destroy(target);
+            ScreenCapture.CaptureScreenshot(Path.Combine(evidence,name+"-screen.png"));
+            yield return new WaitForSeconds(0.2f);
+            camera.transform.SetPositionAndRotation(cameraPosition,cameraRotation);
+        }
+    }
+}
+#endif
+
+
+
+
+
+

@@ -1,9 +1,9 @@
-# Resume — Checkpoint 00 reached
+# Resume — first complete automated loop verified
 
-2026-10-03: New project created at C:\dev\DumbVideoGameStudio\EvolutionShop using installed Unity CLI and bundled URP template. Pinned editor 6000.3.15f1 (c1aa84e375f6); URP17.3.0, Input1.19.0, Test Framework1.6.0.
+Workspace: C:\dev\DumbVideoGameStudio. Unity project: EvolutionShop. Editor 6000.3.15f1 (c1aa84e375f6), URP17.3.0/Input1.19.0/Tests1.6.0.
 
-Actual Checkpoint00 Editor invocation compiled and entered Play mode. Application.dataPath guard verified exact new project. Docs/Evidence/checkpoint00-result.json and checkpoint00-playmode.png exist; image visually inspected. One Unity SearchDatabase indexing exception and transient license token refresh error are recorded in baseline; entitlement succeeded. No C# compile errors. This is a minimal floor/sphere scene, not milestone gameplay.
+Checkpoint00 commit48ca887. Runtime, visual room, 3 recipes, free growers, responsive siphon, tanks/sale/upgrade, journal, pause/settings, atomic single-slot save and confirmed reset implemented.
 
-No live Unity MCP connection is available. Use explicit projectPath on every Editor invocation; reject stale status files for unrelated projects. No other game/project files were imported or modified.
+Executed validation: Unity EditMode50 passed0failed0skipped (Docs/Evidence/editmode-results.xml). Timed Editor Playmode70 checks passed, runtimeErrors empty, exact project verified. Evidence in Docs/Evidence/playmode and playmode-editor.log. Room/Pondlet/Bubblebelly camera captures inspected. Hidden batch Editor cannot prove mouse recapture or HUD rendering; explicit standalone check remains. Failed intermediate attempts preserved in Docs/Evidence/attempts; fixes include high-FPS minimum movement, correct URP render capture and fitted labels.
 
-Local Git initialized. Milestone01 implementation in progress: Core + tests, Presentation, Runtime/UI/persistence. Next: integrate source, run EditMode tests and gameplay smoke, inspect visual captures, build and launch Windows, update records. Do not start later milestones.
+Next action: build Windows with EvolutionShop.Editor.ProjectSetup.BuildWindows; launch the result separately with development -evolutionSmoke and a separate evidence folder. Inspect actual UI screenshots and verify remaining Ribbonfin bounds and E interaction. Update validation, tasks and final checkpoint after build/launch. Human collection feel and 2/5-minute onboarding hypotheses still require user playtest. Stop after Milestone01; no later milestone work.

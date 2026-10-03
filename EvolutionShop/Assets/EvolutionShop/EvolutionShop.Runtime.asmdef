@@ -1,0 +1,1 @@
+{"name":"EvolutionShop.Runtime","rootNamespace":"EvolutionShop","references":["EvolutionShop.Core","Unity.InputSystem"],"autoReferenced":true}

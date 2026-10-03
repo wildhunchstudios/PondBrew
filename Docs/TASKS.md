@@ -7,10 +7,11 @@ Updated: 2026-10-03. Status legend: `[x]` executed/verified as described; `[ ]` 
 - [x] Confirm this is separate from Dungeon Project and PersonalAssistant.
 - [x] Detect installed editors and Windows build support; see `UnityProjectContext.md`.
 - [x] Inspect integration availability: initial Unity CLI status reported zero instances; no Unity MCP tools exposed.
-- [ ] Finish creation of `EvolutionShop` using the installed Unity CLI and URP blank template (in progress).
-- [ ] Verify generated editor pin, package resolution, and exact connected editor project path.
-- [ ] Establish local version-control checkpoint without remote publication.
-- [ ] Create minimal scene, verify compilation, enter Play mode, capture evidence.
+- [x] Create `EvolutionShop` using the installed Unity CLI and URP blank template.
+- [x] Verify editor 6000.3.15f1 (c1aa84e375f6), resolved packages, and exact project targeted by batch editor process and Play-mode result.
+- [x] Initialize project-local Git; no remote publication or global safe-directory change.
+- [ ] Save Checkpoint 00 commit after evidence/records are updated.
+- [x] Create minimal `Shop.unity`, verify compilation (no C# errors), enter Play mode, and capture/read screenshot. Baseline editor warnings/errors are documented in `VALIDATION.md`.
 
 ## 01A — movement and culture harvesting
 - [ ] Build compact room and fixed stations with readable prompts/signs.
@@ -45,3 +46,4 @@ Updated: 2026-10-03. Status legend: `[x]` executed/verified as described; `[ ]` 
 
 ## Deferred until user playtest
 Milestone 02 automation/workers/humor and Milestone 03 presentation sample. No implementation work authorized yet.
+
