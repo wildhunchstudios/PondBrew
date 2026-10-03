@@ -5,10 +5,11 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
+        public ShopDayCycle Cycle { get; private set; }
         public GameConfig Config { get; private set; }
         public ShopWorld World { get; private set; }
         public ShopPlayer Player { get; private set; }
@@ -46,11 +47,13 @@ namespace EvolutionShop
             SavePath = ValidationMode ? Path.Combine(Arg("-evolutionEvidence") ?? Application.temporaryCachePath, "smoke-save.json") : SaveStore.DefaultPath;
             if (!ValidationMode && SaveStore.Read(SavePath, Config, out var restored, out var slot, out var problem))
             {
-                Model = restored; Sensitivity = slot.sensitivity; Volume = slot.volume;
+                Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
+                Sensitivity = slot.sensitivity; Volume = slot.volume;
             }
             else
             {
                 Model = new GameModel(Config);
+                Cycle = new ShopDayCycle();
                 if (!ValidationMode && File.Exists(SavePath))
                 {
                     AutosaveBlocked = true;
@@ -70,6 +73,7 @@ namespace EvolutionShop
             Player.Initialize(camera);
             World = new GameObject("Evolution Shop").AddComponent<ShopWorld>();
             World.Build(camera);
+            World.SetDayPhase(Cycle.Phase);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
             sound = gameObject.AddComponent<ShopAudio>();
@@ -122,6 +126,15 @@ namespace EvolutionShop
         public void Advance(float seconds)
         {
             if (Paused) return;
+            var previousPhase = Cycle.Phase;
+            int previousDay = Cycle.DayNumber;
+            Cycle.Tick(seconds);
+            bool phaseChanged = previousPhase != Cycle.Phase || previousDay != Cycle.DayNumber;
+            if (phaseChanged)
+            {
+                World.SetDayPhase(Cycle.Phase);
+                Notify(Cycle.Phase == ShopDayPhase.Night ? "Night preparation. Your unsold stock is safe. Prepare for day " + Cycle.DayNumber + "." : "Closing time. The next preparation night begins shortly.");
+            }
             var result = Model.Tick(seconds);
             if (result.Matured)
             {
@@ -133,9 +146,31 @@ namespace EvolutionShop
                 }
                 else sound.Feedback(true);
                 Notify("A new specimen is ready. Take it to an empty display tank.");
-                SaveNow();
             }
+            if (phaseChanged || result.Matured) SaveNow();
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+        }
+        public bool OpenForDay()
+        {
+            if (Paused || !Cycle.OpenShop()) return false;
+            World.SetDayPhase(Cycle.Phase);
+            Notify("Day " + Cycle.DayNumber + " is open. Serve the counter and keep your tanks stocked.");
+            SaveNow();
+            return true;
+        }
+        public bool CloseForNight()
+        {
+            if (Paused || !Cycle.RequestClose()) return false;
+            World.SetDayPhase(Cycle.Phase);
+            Notify("Closing. All unsold specimens and lab work carry into the next night.");
+            SaveNow();
+            return true;
+        }
+        public bool SellAtCounter(string tankId)
+        {
+            if (Paused || Cycle.Phase != ShopDayPhase.Open)
+            { Notify("Open the shop at this counter before making a sale."); return false; }
+            return Perform(Model.SellFromTank(tankId)).Success;
         }
         void FindFocus()
         {
@@ -225,7 +260,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
-            var slot = new SlotData {game = Model.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
+            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
             return success;
@@ -236,7 +271,9 @@ namespace EvolutionShop
             { Notify(error ?? "No saved game yet."); return false; }
             AutosaveBlocked = false;
             SaveError = null;
-            Model = model; Sensitivity = slot.sensitivity; Volume = slot.volume;
+            Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
+            World.SetDayPhase(Cycle.Phase);
+            Sensitivity = slot.sensitivity; Volume = slot.volume;
             AudioListener.volume = Volume;
             BaselinePreview = false;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned);
@@ -245,14 +282,16 @@ namespace EvolutionShop
         public void ConfirmNewGame()
         {
             var fresh = new GameModel(Config);
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
+            var freshCycle = new ShopDayCycle();
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
             { SaveError = error; SetPanel(ShopPanel.Reset); return; }
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
+            Cycle = freshCycle; World.SetDayPhase(Cycle.Phase);
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
-            SetPanel(ShopPanel.None); Notify("Fresh start. Growers are free and always replenish.");
+            SetPanel(ShopPanel.None); Notify("Preparation night 1. Grow your first stock, then open at the front counter.");
         }
         void OnApplicationFocus(bool focus) { if (!focus && initialized && !ValidationMode && !Paused) SetPanel(ShopPanel.Pause); }
         void OnApplicationQuit() { if (initialized && !quitRequested) SaveNow(); }

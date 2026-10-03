@@ -32,6 +32,7 @@ namespace EvolutionShop
         readonly List<LabelFit> labels = new List<LabelFit>();
         readonly Dictionary<Font, Material> fontMaterials = new Dictionary<Font, Material>();
         Shader worldTextShader;
+        Light keyLight, storeFillLight, labFillLight;
         Material shell, dark, trim, cream, bloomMat, flowMat, glass, water, gold, black, glow;
         Transform bloomRoot, flowRoot, incubationRing, toolNozzle, toolBody, toolUpgradeBand;
         TextMesh toolReadout;
@@ -225,15 +226,15 @@ namespace EvolutionShop
                 Shape(transform, "Linear ceiling light", PrimitiveType.Cube, new Vector3(0, 3.94f, i * 3.2f), new Vector3(5.8f, .06f, .16f), glow);
             }
             Shape(transform, "Ceiling", PrimitiveType.Cube, new Vector3(0, 4.25f, 0), new Vector3(14, .18f, 11), wall);
-            var key = new GameObject("Soft shop light").AddComponent<Light>();
-            key.transform.SetParent(transform, false);
-            key.type = LightType.Directional;
-            key.transform.rotation = Quaternion.Euler(55, -32, 0);
-            key.color = new Color(1, .95f, .84f);
-            key.intensity = 1.65f;
-            key.shadows = LightShadows.Soft;
-            LightAt(new Vector3(-3, 2.8f, -2), new Color(1, .95f, .83f), 3.4f, 8);
-            LightAt(new Vector3(1, 2.8f, 3), new Color(.75f, 1, .94f), 3.2f, 8);
+            keyLight = new GameObject("Soft shop light").AddComponent<Light>();
+            keyLight.transform.SetParent(transform, false);
+            keyLight.type = LightType.Directional;
+            keyLight.transform.rotation = Quaternion.Euler(55, -32, 0);
+            keyLight.color = new Color(1, .95f, .84f);
+            keyLight.intensity = 1.65f;
+            keyLight.shadows = LightShadows.Soft;
+            storeFillLight = LightAt(new Vector3(-3, 2.8f, -2), new Color(1, .95f, .83f), 3.4f, 8);
+            labFillLight = LightAt(new Vector3(1, 2.8f, 3), new Color(.75f, 1, .94f), 3.2f, 8);
             Shape(transform, "Back lab identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
             Text(transform, "CULTURE LAB", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
             Text(transform, "GROW  /  COMBINE  /  IMPROVE", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
@@ -270,7 +271,27 @@ namespace EvolutionShop
             Shape(returnSign, "Store direction plaque", PrimitiveType.Cube, new Vector3(0, 3.02f, 0), new Vector3(3, .32f, .045f), dark);
             Text(returnSign, "FRONT STORE", new Vector3(0, 3.02f, -.035f), .075f, new Color(.96f, .95f, .83f), 2.7f);
         }
-        void LightAt(Vector3 position, Color color, float intensity, float range)
+        /// <summary>Presentation only: update existing room lights after Build or a restored phase.</summary>
+        public void SetDayPhase(ShopDayPhase phase)
+        {
+            if (phase != ShopDayPhase.Night && phase != ShopDayPhase.Open && phase != ShopDayPhase.Closing)
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            if (!keyLight || !storeFillLight || !labFillLight)
+                throw new InvalidOperationException("Build the shop before applying its day phase.");
+
+            // Ambient light, luminous strips, tank materials, and station lighting remain readable.
+            // Closing stays warm while customers finish; the preparation night is cooler, not dark.
+            bool night = phase == ShopDayPhase.Night;
+            bool closing = phase == ShopDayPhase.Closing;
+            keyLight.color = night ? new Color(.70f, .82f, 1f) : closing ? new Color(1f, .89f, .76f) : new Color(1f, .95f, .84f);
+            keyLight.intensity = night ? 1.12f : closing ? 1.45f : 1.65f;
+            storeFillLight.color = night ? new Color(.62f, .78f, 1f) : closing ? new Color(1f, .87f, .69f) : new Color(1f, .95f, .83f);
+            storeFillLight.intensity = night ? 2.25f : closing ? 3f : 3.4f;
+            labFillLight.color = night ? new Color(.74f, .94f, 1f) : closing ? new Color(.74f, .98f, .97f) : new Color(.75f, 1f, .94f);
+            labFillLight.intensity = 3.2f;
+        }
+
+        Light LightAt(Vector3 position, Color color, float intensity, float range)
         {
             var l = new GameObject("Aquatic fill light").AddComponent<Light>();
             l.transform.SetParent(transform, false);
@@ -280,6 +301,7 @@ namespace EvolutionShop
             l.intensity = intensity;
             l.range = range;
             l.shadows = LightShadows.None;
+            return l;
         }
 
         Transform Grower(StationKind kind, Vector3 position, string name, string subhead, Material accent, List<Transform> cells, bool bloom)

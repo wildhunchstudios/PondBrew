@@ -43,6 +43,9 @@ namespace EvolutionShop
             Box(new Rect(22, 116, 310, 82), ink);
             GUI.Label(new Rect(38, 125, 275, 21), "YOUR NEXT STEP", smallStyle);
             GUI.Label(new Rect(38, 149, 278, 44), Objective(), bodyStyle);
+            Box(new Rect(22, 212, 310, 84), ink);
+            GUI.Label(new Rect(38, 222, 280, 28), PhaseTitle(), headingStyle);
+            GUI.Label(new Rect(38, 255, 280, 33), Paused ? "PAUSED / " + ClockText() : ClockText(), smallStyle);
             Box(new Rect(22, 610, 396, 88), ink);
             GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "     FLOW " + Model.Available(CultureKind.Flow), headingStyle);
             GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow)), smallStyle);
@@ -73,24 +76,32 @@ namespace EvolutionShop
             if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
             {
                 var species = Model.GetSpecies(revealedSpecies);
-                Box(new Rect(22, 212, 310, 137), ink);
-                GUI.Label(new Rect(38, 222, 278, 25), "DISCOVERED / JOURNAL UPDATED", centerStyle);
-                GUI.Label(new Rect(40, 252, 278, 42), species.DisplayName, titleStyle);
-                GUI.Label(new Rect(38, 298, 278, 30), species.Bloom + " Bloom + " + species.Flow + " Flow", centerStyle);
+                Box(new Rect(22, 310, 310, 137), ink);
+                GUI.Label(new Rect(38, 320, 278, 25), "DISCOVERED / JOURNAL UPDATED", centerStyle);
+                GUI.Label(new Rect(40, 350, 278, 42), species.DisplayName, titleStyle);
+                GUI.Label(new Rect(38, 396, 278, 30), species.Bloom + " Bloom + " + species.Flow + " Flow", centerStyle);
             }
             if (BaselinePreview) GUI.Label(new Rect(440, 102, 520, 27), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", smallStyle);
             GUI.matrix = Matrix4x4.identity;
         }
         string Objective()
         {
+            if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
             if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Head to a display tank in the front store.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
-            if (Model.GetTank("tank-a") != null || Model.GetTank("tank-b") != null) return "Visit the sales counter to sell a stocked creature.";
+            if (Model.GetTank("tank-a") != null || Model.GetTank("tank-b") != null) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Visit the sales counter to sell a stocked creature.";
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
             if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
             if (!Model.UpgradeOwned) return "Grow and sell creatures. Save " + Config.UpgradeCost + " credits for a larger siphon.";
             if (Model.DiscoveredSpeciesIds.Count < 3) return "Discover the remaining creatures by changing one dose.";
-            return "Milestone loop complete. Try making your favorite again.";
+            return Cycle.Phase == ShopDayPhase.Night ? "Prepare your favorite creatures, then open at the counter." : "Keep stock flowing, or close for the night at the counter.";
+        }
+        string PhaseTitle() => Cycle.Phase == ShopDayPhase.Night ? "NIGHT / DAY " + Cycle.DayNumber : Cycle.Phase == ShopDayPhase.Open ? "DAY " + Cycle.DayNumber + " / OPEN" : "DAY " + Cycle.DayNumber + " / CLOSING";
+        string ClockText()
+        {
+            if (Cycle.Phase == ShopDayPhase.Night) return "Untimed preparation / open at counter";
+            int seconds = Mathf.CeilToInt(Cycle.SecondsRemaining);
+            return (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00") + (Cycle.Phase == ShopDayPhase.Open ? " left to trade" : " until preparation night");
         }
         void DrawPanel()
         {
@@ -107,9 +118,9 @@ namespace EvolutionShop
                     Space();
                     Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
                     Space();
-                    Text("Start in the back lab: mix one Bloom and one Flow in the incubator. Bring the result to a front display tank, then sell it at the counter. Growers are free.");
-                    Small("One local save. The lab pauses while closed. This is a first playable with provisional recipes and balance.");
-                    Space(); Button("Open the shop", () => SetPanel(ShopPanel.None));
+                    Text("Prepare at night: mix one Bloom and one Flow in the back lab, then take your creature to a front tank. Open for the day at the counter when ready. Sell and restock during the 8-minute day, or close early at the counter.");
+                    Small("Nights are untimed. Growers are free. One local save; production and the clock stop while paused or the application is closed.");
+                    Space(); Button("Enter your shop", () => SetPanel(ShopPanel.None));
                     break;
                 case ShopPanel.Incubator: DrawIncubator(); break;
                 case ShopPanel.Counter: DrawCounter(); break;
@@ -122,7 +133,7 @@ namespace EvolutionShop
                     Small("Capacity: one specimen per tank. A full tank never consumes a waiting specimen.");
                     break;
                 case ShopPanel.Pause:
-                    Heading("Shop paused"); Text("Growers and incubation are paused. Your progress saves automatically.");
+                    Heading("Shop paused"); Text("The day clock, growers and incubation are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
@@ -135,9 +146,15 @@ namespace EvolutionShop
                     break;
                 case ShopPanel.Reset:
                     Heading("Start a new game?");
-                    Text("This replaces your one local save: currency, cultures, discoveries, creatures, upgrade, and incubation progress will reset.");
+                    Text("This replaces your one local save: currency, cultures, discoveries, creatures, upgrade, and incubation progress will reset to preparation night 1.");
                     Space(); Button("Cancel / keep my shop", () => SetPanel(ShopPanel.Pause));
                     Space(); Button("Confirm new game", ConfirmNewGame);
+                    break;
+                case ShopPanel.CloseShop:
+                    Heading("Close for the night?");
+                    Text("Finish today's trading now. Unsold specimens, cultures and lab work stay with you. The next preparation night begins after a short closing period.");
+                    Space(); Button("Keep trading", () => SetPanel(ShopPanel.Counter));
+                    Button("Close today's shop", () => { CloseForNight(); SetPanel(ShopPanel.Counter); });
                     break;
             }
             if (Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset)
@@ -181,16 +198,32 @@ namespace EvolutionShop
         }
         void DrawCounter()
         {
-            Heading("The sales counter"); Text("Choose a stocked specimen to sell. Its discovery stays in your journal.");
+            Heading("The sales counter");
+            if (Cycle.Phase == ShopDayPhase.Closing)
+            { Text("Closing for the night..."); Text("Your unsold creatures and ongoing production are safe."); Heading(ClockText()); return; }
+            bool open = Cycle.Phase == ShopDayPhase.Open;
+            Text(open ? "Choose a stocked specimen to sell. Its discovery stays in your journal." : "Preparation night for day " + Cycle.DayNumber + ". Stock your front tanks in your own time, then open when ready.");
             foreach (var id in Config.TankIds)
             {
                 var fish = Model.GetTank(id);
                 if (fish == null) { Small(id == "tank-a" ? "Tank A / empty" : "Tank B / empty"); continue; }
                 var species = Model.GetSpecies(fish.Value.SpeciesId);
                 string tank = id;
-                Space(); Button("Sell " + species.DisplayName + " from " + (id == "tank-a" ? "A" : "B") + "  /  +" + species.SaleValue + " credits", () => Perform(Model.SellFromTank(tank)));
+                Space();
+                if (open) Button("Sell " + species.DisplayName + " from " + (id == "tank-a" ? "A" : "B") + "  /  +" + species.SaleValue + " credits", () => SellAtCounter(tank));
+                else Text((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + species.SaleValue + " credits");
             }
-            Space(); Small("Only creatures in display tanks can be sold. Each sale removes that exact specimen and pays once.");
+            Space();
+            if (open)
+            {
+                Small("Trading ends when the clock reaches zero. You can keep using the lab and restocking during the day.");
+                Button("Close for the night...", () => SetPanel(ShopPanel.CloseShop));
+            }
+            else
+            {
+                Small("An 8-minute trading day starts when you open. You can close early; empty stock never traps you in a day.");
+                Button("Open for day " + Cycle.DayNumber, () => OpenForDay());
+            }
         }
         void DrawUpgrade()
         {

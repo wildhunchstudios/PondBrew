@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-Updated: 2026-10-03. Working title only. Current source checkpoint: tag `r01-baseline-safety`. Latest delivered player remains `milestone-01-two-rooms` until the next build is validated.
+Updated: 2026-10-03. Working title only. Current source/player checkpoint: tag `r02-1-day-night`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
 
 ## 1. Read this first
 
@@ -222,7 +222,7 @@ Gate: known baseline issues are explicit, the user can complete the manual loop,
 
 Depends on: R01. Output: a playable preparation/trading/report cycle with one real customer type.
 
-- [ ] R02.1 Implement phase/day/clock state and UI, pause behavior, open/close commands, closing recovery, and phase persistence.
+- [x] R02.1 Implement phase/day/clock UI, pause behavior, open/close commands, bounded closing and phase persistence. Owner: root. Verified: 128 EditMode cases; final Windows player 108 checks; old-save migration and exact unsold stock retained through closing/reload. Human pacing and button-click acceptance remain pending. Customer-dependent closing behavior belongs to R02.2–R02.5.
 - [ ] R02.2 Add one navigable customer with browse/reserve/queue/pay/leave states and a low concurrency cap; prevent customers entering the lab.
 - [ ] R02.3 Replace normal instant remote selling with personal counter service tied to the reserved specimen; keep simple default prices initially.
 - [ ] R02.4 Connect night preparation, day stock depletion, restocking, and a useful daily report. Preserve the free recovery route.
@@ -366,7 +366,7 @@ The game is finished when the launch-scope features, complete progression/ending
 - [x] Latest prior Windows build: `Docs/Evidence/two-rooms-final-build-result.json`, succeeded with zero errors/warnings. Exact player: `Docs/Evidence/two-rooms-final-player/smoke-result.json`, 79 checks passed, no captured runtime errors/limitations, process exit 0. These results cover that checkpoint, not future features.
 - [x] Prior Editor run: 78 checks, with hidden-batch cursor limitation; later standalone verified capture. Historical 50 EditMode cases were not rerun for the room-layout change. Reports remain in `Docs/Evidence/`.
 
-Current limitations: procedural placeholder art/audio and provisional balance; no actual customer day/night system, construction, staff, full automation, or campaign ending yet. User reports no major problems in the baseline loop; separate audio listening and manual settings-slider checks remain unrecorded. Capture targeting now waits for the runtime focus query after camera repositioning. No known unresolved critical progression blocker in executed baseline checks.
+Current limitations: procedural placeholder art/audio and provisional balance. The day/night foundation is implemented; actual customers/queues, daily reports, construction, staff, full automation and the campaign ending are not. User reports no major problems in the original loop; the new rhythm, real GUI button clicks, separate audio listening and manual settings sliders still need human evaluation. Capture targeting now waits for the runtime focus query after camera repositioning. No known unresolved critical progression/save blocker in executed checks.
 
 ### R01 baseline evidence and constraints
 
@@ -376,16 +376,29 @@ Current limitations: procedural placeholder art/audio and provisional balance; n
 - Build/smoke now validate existing authored scene content and never regenerate a present scene. Explicit regeneration warns interactively and batch mode rejects extra authored structure; dirty scenes and Play mode block it. Nine tests cover session ownership and preserving extra objects. `r01-scene-before.sha256` and `r01-scene-after.sha256` match after actual smoke: `2F81309DDB7CAA56E0E56B4D6B705EB274E234AE9CF0D7BCBB968373AB9AE16F`.
 - `Shop.unity` remains a single-session bootstrap. `ShopSession` creates the world/player/camera; authored room content requires a deliberate ownership migration to avoid duplicates. Scene preservation alone does not perform that migration.
 - Known-good historical full-slot fixture: `EvolutionShop/Assets/EvolutionShop/Tests/RuntimeEditMode/Fixtures/V1Progress.json`, copied from original M01 evidence. It contains the upgrade, all discoveries, 2 credits and a live Pondlet batch. File round trips cover staging, incubation, ready output with full tanks, a sale, and upgraded capacity. Invalid saves stay intact; rotating `.bak` files are preserved but are not automatically loaded.
-- Existing envelope/game schema is version 1. New envelope fields require migration; creature/specimen IDs and progress must survive. Model validation constrains grower/incubator remaining time using configuration, so later balance-duration changes need an explicit migration/clamping policy. Keep a pre-migration fixture and backup before writing upgraded saves.
+- At the R01 checkpoint, envelope/game schema was version 1. New envelope fields require migration; creature/specimen IDs and progress must survive. Model validation constrains grower/incubator remaining time using configuration, so later balance-duration changes need an explicit migration/clamping policy. Keep a pre-migration fixture and backup before writing upgraded saves.
+
+### R02.1 delivered behavior and evidence
+
+- New games begin on **untimed preparation night 1**. The front counter opens an **8-minute trading day**; manual prototype sales are accepted only while Open. A confirmed early close or clock expiry enters **3 active seconds of Closing**, then the next preparation night. Empty stock cannot trap a day. The lab runs during active nights/days and remains accessible throughout. There are no customers yet.
+- HUD shows phase/day/time and pauses; night uses cooler retained room lights and day uses warmer lighting. No world is rebuilt for a transition. Open/close commands cannot reset an active clock or duplicate a day. Pause, Welcome, reset confirmation and focus loss stop simulation; ordinary station panels and journal continue it. No offline progress.
+- Envelope version **2** stores game state, day/phase/countdown and settings. Inner model schema remains **1**. Valid v1 saves migrate in memory to preparation night 1 with progression/settings unchanged; reading never modifies the file. The first write archives original bytes as `.v1.bak`, independently of rotating `.bak`. Existing archives are not overwritten; a failed archive write preserves the primary. Backups do not auto-load. Failed reset keeps both current model and clock; failed in-game quit stays open.
+- `r02-1-editmode-results.xml`: **128/128 passed**, zero skipped, exit 0 (59 model, 27 clock, 33 full-slot, 9 scene-safety cases). Rules, file migration, malformed data, failed IO, exact boundaries, overshoot, repeat commands and phase restores executed.
+- `r02-1-playmode/smoke-result.json`: **104 checks passed**, no captured errors, exit 0; hidden Editor cursor limitation. Initial standalone `r02-1-player/smoke-result.json`: **105 checks passed**, no errors/limitations, exit 0. Review then strengthened the closing scenario to retain a real stocked specimen; only smoke validation code changed afterward.
+- Final `r02-1-final-build-result.json`: **Succeeded**, 0 errors, 0 warnings, 166,569,008 bytes. Final exact Windows player `r02-1-final-player/smoke-result.json`: **108 checks passed**, no captured runtime errors/limitations, exit 0, 68.46 seconds. E input opens the actual front counter; pause/reload covers day and Closing; early closing retains the exact specimen ID and currency into the next saved night. Empty fresh open/close recovery also executed.
+- Day 1 preparation/production and early closing ran with real frames. Second-cycle timeout/completion use explicitly accelerated deltas; this proves transition behavior, not eight-minute pacing. GUI commands execute through the same session methods used by buttons; screenshot review does not establish actual mouse-click usability or enjoyment.
+- Actual standalone captures reviewed at 1280×720: Welcome, back lab/night readability, night/open counter, Closing and stocked night 2. Test hardware: Intel i7-14700F / NVIDIA RTX 4070 Ti SUPER. No minimum-hardware or performance target claim. Scene hash still matches the R01 preserved value after builds.
+- Delivered archive: `EvolutionShop-DayNight-Windows.zip`, **69,093,719 bytes**, SHA256 `F32A88BD41F0FA7EECA5FCF4D4241AC8281F3A919E7C3D76F5F9AB32498B9D27`. All **293 files** in its 295 entries match the tested build by hash; debug-only build folders excluded. Receipt: `Docs/Evidence/r02-1-package-verification.json`. Prior two-room archive retained for rollback.
+- Checkpoint: tag `r02-1-day-night`. User-facing delivery folder: `C:/Users/retai/Documents/Codex/2026-10-03/read-evolution-shop-prototype-handoff-md-3/outputs`. Includes the ZIP, `PLAYTEST-DayNight.md`, `VALIDATION-DayNight.md`, actual captures and a snapshot of this guide. The root guide remains authoritative.
 
 | Active record | Value |
 |---|---|
-| Current request | R01 baseline safeguards, then R02.1 day/night foundation; update this guide after each assignment |
-| Runtime changes in this request | R01 safeguards verified and checkpointed; R02.1 clock integration next |
+| Current request | Completed R01 baseline safeguards and R02.1 day/night foundation; guide updated after each bounded assignment |
+| Runtime changes in this request | Implemented, tested, built and packaged; source/player checkpoint `r02-1-day-night` |
 | User feedback | User reports playing growing → sale → siphon upgrade with no major issues (2026-10-03) |
-| Next implementation milestone | R02.1 only: phase/day/clock UI and persistence; customers remain R02.2 |
+| Next implementation assignment | R02.2: one customer type with bounded navigation, browse/reserve/queue/pay/leave states; restrict customers to the front store. Preserve exact specimen/price ownership and saves before R02.3 replaces prototype selling |
 | Human acceptance still needed | Day/night pacing, ending and comedy tone as these defaults become playable; separate audio/settings checks |
-| Technical blocker | None. Use verified exact-project CLI; no active MCP connection |
+| Technical blocker | None known. No active Unity editor/MCP is left connected; reverify before the next editor operation |
 
 When resuming implementation, select the first unfinished ready task, record its owner/status and intended acceptance check here, and keep the remaining roadmap planned. Do not mistake the unimplemented feature specifications above for existing behavior.
 
@@ -399,5 +412,6 @@ When resuming implementation, select the first unfinished ready task, record its
 | 2026-10-03 | 12-species launch ceiling, four cultures, three employee roles, same-location expansions | Provisional scope control; validate before bulk production |
 | 2026-10-03 | One canonical root guide; R01–R11 replace old draft future milestone labels | This document request; preserve earlier files as historical evidence |
 | 2026-10-03 | R01.1–R01.4 baseline gate completed; update this guide after every assignment | User's no-major-issues playthrough plus executed safety checks; tag `r01-baseline-safety`. Next: R02.1 clock integration only |
+| 2026-10-03 | R02.1 day/night foundation delivered; remaining R02 tasks stay planned | Tag `r02-1-day-night`; 128 EditMode cases, final player 108 checks, build/package verified. Next: R02.2 customer loop; human day/night playtest pending |
 
 At future checkpoints append a concise row with task IDs, commit/tag, actual evidence, remaining risk, and exact next action. Keep this section current and short; put large raw outputs in evidence files. Do not erase history to turn an unverified or failed attempt into a pass.
