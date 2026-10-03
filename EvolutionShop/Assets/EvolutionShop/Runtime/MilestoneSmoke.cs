@@ -16,6 +16,7 @@ namespace EvolutionShop
         {
             public bool passed;
             public string context;
+            public string scenario;
             public string unityVersion;
             public string graphics;
             public string processor;
@@ -40,7 +41,10 @@ namespace EvolutionShop
             Directory.CreateDirectory(evidence);
             start = Time.realtimeSinceStartup;
             Application.logMessageReceived += Log;
-            var stack = new Stack<IEnumerator>(); stack.Push(Scenario());
+            var stack = new Stack<IEnumerator>();
+            bool continuous = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionCycleSmoke") >= 0;
+            bool nativeUi = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionUiSmoke") >= 0;
+            stack.Push(nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : Scenario());
             bool failed = false;
             while (stack.Count > 0)
             {
@@ -60,6 +64,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
+                scenario = nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : "Integrated regression",
                 context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
                 unityVersion = Application.unityVersion,
                 graphics = SystemInfo.graphicsDeviceName,
@@ -78,6 +83,7 @@ namespace EvolutionShop
         }
         void RestoreInput()
         {
+            RestoreCycleMouse();
             if (syntheticKeyboard != null && syntheticKeyboard.added) InputSystem.RemoveDevice(syntheticKeyboard);
             syntheticKeyboard = null;
             if (previousInputSettings != null) InputSystem.settings = previousInputSettings;
