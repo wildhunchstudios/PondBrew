@@ -52,16 +52,19 @@ namespace EvolutionShop
             var previous = Visit.Phase;
             if (!Actor)
             {
+                Visit.Cancel(CustomerOutcome.PathBlocked);
+                RecordOutcome();
                 ResetVisitors();
                 shop.Notify("A visitor could not reach the shop. Their unpaid stock is available again.");
                 return;
             }
             if (Actor.PathFailed && (previous == CustomerPhase.Arriving || previous == CustomerPhase.ToCounter || previous == CustomerPhase.Leaving))
             {
-                if (previous == CustomerPhase.Leaving) { ResetVisitors(); return; }
+                if (previous == CustomerPhase.Leaving) { EndVisit(); return; }
                 Visit.Cancel(CustomerOutcome.PathBlocked);
             }
             else Visit.Advance(seconds, Actor.Arrived, shop.Cycle.Phase);
+            RecordOutcome();
 
             if (Visit.Phase == CustomerPhase.Finished) { EndVisit(); return; }
             if (Visit.Phase != previous) ApplyDestination();
@@ -70,12 +73,14 @@ namespace EvolutionShop
         void BeginVisit()
         {
             Visit = new CustomerVisit(shop.Model, shop.Config.TankIds, rules);
+            shop.Reports.BeginVisit(Visit.Id);
             Actor = new GameObject("Store customer").AddComponent<CustomerActor>();
             Actor.Initialize(Navigation);
             Actor.SetPaused(shop.Paused);
             shop.Notify("A customer arrived. They will browse your front displays.");
             ApplyDestination();
             RefreshCaption();
+            shop.SaveNow();
         }
         void ApplyDestination()
         {
@@ -91,12 +96,14 @@ namespace EvolutionShop
             if (Actor.MoveTo(destination)) return;
             if (Visit.Phase == CustomerPhase.Leaving) { EndVisit(); return; }
             Visit.Cancel(CustomerOutcome.PathBlocked);
+            RecordOutcome();
             if (!Actor.MoveTo(Navigation.ExitPoint)) EndVisit();
         }
         public ActionResult? Serve()
         {
             if (Visit == null) return null;
             var result = Visit.Serve(shop.Cycle.Phase);
+            RecordOutcome(!result.Success);
             if (Visit.Phase == CustomerPhase.Leaving) ApplyDestination();
             RefreshCaption();
             return result;
@@ -112,6 +119,7 @@ namespace EvolutionShop
         void EndVisit()
         {
             var outcome = Visit == null ? CustomerOutcome.None : Visit.Outcome;
+            RecordOutcome();
             ResetVisitors();
             untilArrival = rules.NextArrivalSeconds;
             switch (outcome)
@@ -121,6 +129,13 @@ namespace EvolutionShop
                 case CustomerOutcome.PathBlocked: shop.Notify("A customer could not reach their destination. Unpaid stock was released."); break;
                 case CustomerOutcome.OrderLost: shop.Notify("The customer's order was cancelled. No payment was taken."); break;
             }
+        }
+        void RecordOutcome(bool save = true)
+        {
+            if (Visit == null || Visit.Outcome == CustomerOutcome.None) return;
+            int price = Visit.Outcome == CustomerOutcome.Sold ? Visit.Price : 0;
+            if (shop.Reports.ResolveVisit(Visit.Id, Visit.Outcome, price) && save && shop.Cycle.Phase != ShopDayPhase.Night)
+                shop.SaveNow(); // Night saves once after the report is finalized with the new day clock.
         }
         void RefreshCaption()
         {

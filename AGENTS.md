@@ -228,7 +228,11 @@ Depends on: R01. Output: a playable preparation/trading/report cycle with one re
   - [x] R02.2b Front-store-only runtime navigation and a readable original placeholder customer (world_presentation); complete entry/display/counter/exit paths, raw baked lab exclusion, movement/pause and visible reactions verified.
   - [x] R02.2c Pure visit state machine and bounded recovery (project_records); 19 new cases passed for empty stock, patience, failed travel, closing and restore policy. Real navigation and save/reload behavior verified; six additional file round-trip cases passed.
 - [x] R02.3 Replace normal instant remote selling with personal counter service tied to the reserved specimen; keep simple default prices initially. Owner: root. HUD, physical counter proximity, pause, transient-visitor recovery and paid-sale persistence verified; tested Windows package delivered.
-- [ ] R02.4 Connect night preparation, day stock depletion, restocking, and a useful daily report. Preserve the free recovery route.
+- [~] R02.4 Connect night preparation, day stock depletion, restocking, and a useful daily report. Preserve the free recovery route.
+  - [x] R02.4a Core daily ledger and exactly-once outcomes (scope_review); 61 tests passed for duplicate outcome, cancellation, two days, corruption and actual Unity JSON absence handling.
+  - [x] R02.4b Save format 3 and v1/v2 migration (project_records); 28 new actual-file cases plus existing save regressions passed; original bytes, pending-visit recovery and completed results preserved.
+  - [~] R02.4c Runtime event wiring and readable night report/review button (root/world_presentation); no new reward, stock authority, wages system or pricing.
+  - [~] R02.4d Validate exact report totals through customer service, closing, reload, restocking and zero-sales days; build/run/package Windows, inspect actual UI, update this guide and checkpoint (root).
 - [ ] R02.5 Test two consecutive complete preparation/trading/report cycles, including queued closing, empty stock, full outputs, pause/reload and rapid open/close/pay input. Customer/clock regression checks already ran for R02.2/R02.3; final report-integrated slice and human pacing gate remain pending.
 
 Gate/playtest: the player understands what to do in both phases and wants a second day. Log time spent waiting versus deciding/acting. Do not expand the shop until this cycle works.
@@ -411,8 +415,8 @@ Current limitations: procedural placeholder art/audio and provisional balance. D
 
 | Active record | Value |
 |---|---|
-| Current request | Completed R02.2 and the tightly related R02.3 customer checkout assignment |
-| Runtime changes in this request | R02.2/R02.3 delivered and verified; tag `r02-customer-service`; previous day/night build retained |
+| Current request | Continue with R02.4 daily results report; no pricing/expansion or later features |
+| Runtime changes in this request | R02.4 active; verified baseline c97ea21 / r02-customer-service, new results pending |
 | User feedback | User reports playing growing → sale → siphon upgrade with no major issues (2026-10-03) |
 | Next implementation assignment | R02.4: useful daily report connecting preparation, stock depletion, restocking and next improvement; then R02.5 complete-cycle gate. Do not begin pricing/expansion yet |
 | Human acceptance still needed | Customer visibility, checkout clarity, restocking workload, 45-second patience and three-second closing grace; day/night pacing and separate audio/settings checks. Ending/comedy tone later |
@@ -434,5 +438,6 @@ When resuming implementation, select the first unfinished ready task, record its
 | 2026-10-03 | R02.2/R02.3 active scope and acceptance | One customer at a time. Build NavMesh from current room colliders with lab excluded. Preserve creatures until atomic checkout. On reload, cancel unpaid visitors/reservations without income or stock changes; paid sales remain committed. Keep save schema 2/inner 1 because visitors are deliberately transient. Bounded travel/patience/closing recovery; no report, pricing system, staff or new assets in this slice |
 | 2026-10-03 | R02.2a/R02.2c rule checkpoint | `r02-customer-rules`: `Docs/Evidence/r02-customer-domain-results.xml` 175/175 EditMode cases passed, exit 0 (128 previous + 28 reservation + 19 visit). Actual live customer/navigation/UI integration is still in progress; no new build is claimed at this checkpoint |
 | 2026-10-03 | R02.2/R02.3 completed | Tag r02-customer-service: 181 EditMode cases, 153 Editor / 154 exact Windows checks, successful build, verified package; initial navigation lifecycle failure repaired and retained. Next R02.4 daily report; customer pacing/manual UI feedback pending |
+| 2026-10-03 | R02.4 implementation checkpoint; runtime pending | 270/270 EditMode cases passed, exit 0; r02-report-editmode-fixed-results.xml. Initial 233/257 run retained: Unity inline JSON null reports required explicit presence flags and a zero-default header. Report runtime/build/human validation still pending; do not label full R02.4 delivered yet |
 
 At future checkpoints append a concise row with task IDs, commit/tag, actual evidence, remaining risk, and exact next action. Keep this section current and short; put large raw outputs in evidence files. Do not erase history to turn an unverified or failed attempt into a pass.

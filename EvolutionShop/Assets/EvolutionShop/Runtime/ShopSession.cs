@@ -5,11 +5,12 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
         public ShopDayCycle Cycle { get; private set; }
+        public ShopTradeLedger Reports { get; private set; }
         public GameConfig Config { get; private set; }
         public ShopWorld World { get; private set; }
         public ShopPlayer Player { get; private set; }
@@ -49,12 +50,15 @@ namespace EvolutionShop
             if (!ValidationMode && SaveStore.Read(SavePath, Config, out var restored, out var slot, out var problem))
             {
                 Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
+                ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
+                Reports.CancelPendingForReload();
                 Sensitivity = slot.sensitivity; Volume = slot.volume;
             }
             else
             {
                 Model = new GameModel(Config);
                 Cycle = new ShopDayCycle();
+                Reports = new ShopTradeLedger();
                 if (!ValidationMode && File.Exists(SavePath))
                 {
                     AutosaveBlocked = true;
@@ -141,6 +145,11 @@ namespace EvolutionShop
             }
             var result = Model.Tick(seconds);
             Customers.Tick(seconds);
+            if (phaseChanged && Cycle.Phase == ShopDayPhase.Night)
+            {
+                Reports.FinishDay(DisplayedStockCount());
+                ShowDayReport();
+            }
             if (result.Matured)
             {
                 if (result.FirstDiscovery)
@@ -158,7 +167,10 @@ namespace EvolutionShop
         public bool OpenForDay()
         {
             if (!Customers.Ready) { Notify(Customers.Status); return false; }
-            if (Paused || !Cycle.OpenShop()) return false;
+            if (Paused || Cycle.Phase != ShopDayPhase.Night || Cycle.DayNumber == int.MaxValue) return false;
+            if (!Reports.BeginDay(Cycle.DayNumber, DisplayedStockCount()))
+            { Notify("The day report could not begin. Save and reload before opening."); return false; }
+            Cycle.OpenShop();
             World.SetDayPhase(Cycle.Phase);
             Notify("Day " + Cycle.DayNumber + " is open. Serve the counter and keep your tanks stocked.");
             SaveNow();
@@ -171,6 +183,24 @@ namespace EvolutionShop
             Notify("Closing in 3 seconds. Finish checkout now; unpaid orders release safely for the night.");
             SaveNow();
             return true;
+        }
+        public int DisplayedStockCount()
+        {
+            int count = 0;
+            foreach (string tankId in Config.TankIds) if (Model.GetTank(tankId).HasValue) count++;
+            return count;
+        }
+        public bool ShowDayReport()
+        {
+            if (Reports.LastDayNumber == 0) return false;
+            SetPanel(ShopPanel.DayReport);
+            return true;
+        }
+        public ActionResult TransferToDisplay(string tankId)
+        {
+            var result = Model.TransferToTank(tankId);
+            if (result.Success) Reports.RecordRestock();
+            return Perform(result);
         }
         public bool IsAtCounter
         {
@@ -237,7 +267,7 @@ namespace EvolutionShop
                 case StationKind.Incubator: SetPanel(ShopPanel.Incubator); break;
                 case StationKind.TankA: case StationKind.TankB:
                     selectedTank = station.Kind == StationKind.TankA ? "tank-a" : "tank-b";
-                    if (Model.Incubator.Phase == IncubatorPhase.Ready) Perform(Model.TransferToTank(selectedTank));
+                    if (Model.Incubator.Phase == IncubatorPhase.Ready) TransferToDisplay(selectedTank);
                     else SetPanel(ShopPanel.Tank);
                     break;
                 case StationKind.Counter: SetPanel(ShopPanel.Counter); break;
@@ -285,7 +315,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
-            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
+            var slot = new SlotData {game = Model.CaptureSave(), cycle = Cycle.CaptureSave(), trades = Reports.CaptureSave(), sensitivity = Sensitivity, volume = Volume};
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
             return success;
@@ -298,6 +328,8 @@ namespace EvolutionShop
             SaveError = null;
             Customers.ResetVisitors();
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
+            ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
+            Reports.CancelPendingForReload();
             World.SetDayPhase(Cycle.Phase);
             Sensitivity = slot.sensitivity; Volume = slot.volume;
             AudioListener.volume = Volume;
@@ -309,11 +341,12 @@ namespace EvolutionShop
         {
             var fresh = new GameModel(Config);
             var freshCycle = new ShopDayCycle();
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
+            var freshReports = new ShopTradeLedger();
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),sensitivity=Sensitivity,volume=Volume},out var error))
             { SaveError = error; SetPanel(ShopPanel.Reset); return; }
             Customers.ResetVisitors();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
-            Cycle = freshCycle; World.SetDayPhase(Cycle.Phase);
+            Cycle = freshCycle; Reports = freshReports; World.SetDayPhase(Cycle.Phase);
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;

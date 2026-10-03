@@ -8,6 +8,9 @@ namespace EvolutionShop
         readonly Color ink = new Color(0.035f, 0.08f, 0.105f, 0.96f);
         readonly Color mint = new Color(0.5f, 0.95f, 0.77f);
         Vector2 panelScroll;
+        ShopTradeLedger reportDisplayLedger;
+        TradeDaySave reportDisplaySnapshot;
+        int reportDisplayDay = -1;
         void Styles()
         {
             if (titleStyle != null) return;
@@ -113,10 +116,11 @@ namespace EvolutionShop
         }
         void DrawPanel()
         {
+            bool dayReportPanel = Panel == ShopPanel.DayReport;
             Box(new Rect(0,0,1280,720), new Color(0.015f,0.045f,0.06f,0.38f));
             Box(new Rect(350,112,580,518), ink);
             Box(new Rect(350,112,580,3), mint);
-            GUILayout.BeginArea(new Rect(377,130,526,477));
+            GUILayout.BeginArea(new Rect(377,130,526,dayReportPanel ? 423 : 477));
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
             switch (Panel)
             {
@@ -132,6 +136,7 @@ namespace EvolutionShop
                     break;
                 case ShopPanel.Incubator: DrawIncubator(); break;
                 case ShopPanel.Counter: DrawCounter(); break;
+                case ShopPanel.DayReport: DrawDayReport(); break;
                 case ShopPanel.Upgrade: DrawUpgrade(); break;
                 case ShopPanel.Journal: DrawJournal(); break;
                 case ShopPanel.Tank:
@@ -165,9 +170,16 @@ namespace EvolutionShop
                     Button("Close today's shop", () => { CloseForNight(); SetPanel(ShopPanel.Counter); });
                     break;
             }
-            if (Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset)
+            if (!dayReportPanel && Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset)
             { Space(); Button("Close  /  ESC", () => SetPanel(ShopPanel.None)); }
             GUILayout.EndScrollView(); GUILayout.EndArea();
+            if (dayReportPanel)
+            {
+                // Keep the exit visible even for partial reports or unusually large saved totals.
+                GUILayout.BeginArea(new Rect(377,570,526,47));
+                Button("Continue preparation  /  ESC", () => SetPanel(ShopPanel.None));
+                GUILayout.EndArea();
+            }
         }
         void DrawIncubator()
         {
@@ -232,8 +244,80 @@ namespace EvolutionShop
             {
                 Small("An 8-minute trading day starts when you open. You can close early; empty stock never traps you in a day.");
                 Button("Open for day " + Cycle.DayNumber, () => OpenForDay());
+                var lastReport = LastReportForDisplay();
+                if (lastReport != null) Button("Review day " + lastReport.dayNumber + " results", () => ShowDayReport());
             }
             else Small("No new arrivals. Unpaid creatures stay in their tanks when the night begins.");
+        }
+        TradeDaySave LastReportForDisplay()
+        {
+            int day = Reports == null ? 0 : Reports.LastDayNumber;
+            // Last is a defensive snapshot. Copy only when its owner or finalized day changes,
+            // instead of allocating a fresh report for every IMGUI layout/repaint event.
+            if (!ReferenceEquals(reportDisplayLedger, Reports) || reportDisplayDay != day)
+            {
+                reportDisplayLedger = Reports;
+                reportDisplayDay = day;
+                reportDisplaySnapshot = day == 0 ? null : Reports.Last;
+            }
+            return reportDisplaySnapshot;
+        }
+        void DrawDayReport()
+        {
+            var report = LastReportForDisplay();
+            if (report == null)
+            {
+                Heading("Day results");
+                Text("There is no completed trading day to report yet. Prepare your displays, then open at the counter.");
+                return;
+            }
+            Heading("Day " + report.dayNumber + " results");
+            if (report.partial) Small("PARTIAL DAY / recorded since save upgrade; earlier trade excluded.");
+            GUILayout.Space(8);
+            GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
+            Text("Specimens sold: " + report.sales + "    /    Visitors: " + report.visitors);
+            Small("Cash now: " + Model.Currency + " credits    /    Wages: 0 (no employees)");
+            GUILayout.Space(8);
+            Heading("Display stock");
+            Text((report.partial ? "At recording start: " : "At opening: ") + report.stockedAtOpen +
+                "    /    Restocked: " + report.restocked + "    /    At close: " + report.stockedAtClose);
+            GUILayout.Space(8);
+            long missed = (long)report.noStock + report.impatient + report.closed + report.interrupted + report.pathProblems;
+            Heading("Left without a purchase: " + missed);
+            Small("No stock: " + report.noStock + "    /    Patience ran out: " + report.impatient + "    /    Closing: " + report.closed);
+            Small("Interrupted visits: " + report.interrupted + "    /    Route problems: " + report.pathProblems);
+            GUILayout.Space(8);
+            Heading("Prepare for the next day");
+            Text(ReportPreparationTip(report));
+            Small("Free Bloom + Flow. Untimed preparation; your lab keeps growing.");
+        }
+        string ReportPreparationTip(TradeDaySave report)
+        {
+            int empty = 0;
+            foreach (string tank in Config.TankIds) if (!Model.GetTank(tank).HasValue) empty++;
+            var incubator = Model.Incubator;
+            if (incubator.Phase == IncubatorPhase.Ready)
+            {
+                if (empty > 0)
+                    return "Your " + Model.GetSpecies(incubator.SpeciesId).DisplayName + " is ready. Press E at an empty front tank to stock it before opening.";
+                return "Both displays are stocked. Keep the finished specimen in its incubator until a sale frees a tank.";
+            }
+            if (empty > 0)
+            {
+                string tankText = empty == 1 ? "Fill the empty display" : "Fill your empty displays";
+                if (incubator.Phase == IncubatorPhase.Incubating)
+                    return tankText + " before opening. While your specimen grows, collect free cultures for the next one.";
+                return tankText + " before opening. One Bloom + one Flow makes a Pondlet; grow and transfer one specimen at a time.";
+            }
+            if (report.impatient > 0 && report.impatient >= report.noStock)
+                return "Displays are ready. To avoid impatient departures, return to the counter promptly when a creature is reserved.";
+            if (report.noStock > 0)
+                return "Displays are ready. To avoid stockouts, start another specimen before opening and refill a tank after each sale.";
+            if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost)
+                return "Buy the " + Config.UpgradeCost + "-credit siphon upgrade in the back lab for a larger chamber and faster collection.";
+            if (incubator.Phase == IncubatorPhase.Incubating)
+                return "Your displays are ready and the next specimen is growing. Open at the front counter when you are ready to serve.";
+            return "Your displays are ready. Start the next specimen in the back lab, then open at the front counter when you are ready.";
         }
         void DrawCustomerOrder()
         {

@@ -205,11 +205,11 @@ namespace EvolutionShop
             yield return Ready();
             Check(shop.Model.IsDiscovered("pondlet"), "Pondlet discovered");
             yield return Capture("02-pondlet-ready");
-            Ok(shop.Perform(shop.Model.TransferToTank("tank-a")), "Pondlet transferred to visible tank A");
+            Ok(shop.TransferToDisplay("tank-a"), "Pondlet transferred to visible tank A");
             Check(!shop.Model.TransferToTank("tank-b").Success, "Repeated transfer cannot duplicate a specimen");
             yield return Produce("bubblebelly");
             yield return Capture("03-bubblebelly-ready");
-            Ok(shop.Perform(shop.Model.TransferToTank("tank-b")), "Bubblebelly transferred to tank B");
+            Ok(shop.TransferToDisplay("tank-b"), "Bubblebelly transferred to tank B");
             yield return Produce("ribbonfin");
             for (float t = 0; t < 30; t += 0.25f)
             {
@@ -221,7 +221,7 @@ namespace EvolutionShop
             yield return new WaitForSeconds(3.6f);
             yield return Capture("04-ribbonfin-ready");
             string waiting = shop.Model.Incubator.SpecimenId;
-            Check(!shop.Perform(shop.Model.TransferToTank("tank-a")).Success && !shop.Model.TransferToTank("tank-b").Success && shop.Model.Incubator.SpecimenId == waiting, "Two full tanks retain waiting Ribbonfin without loss");
+            Check(!shop.TransferToDisplay("tank-a").Success && !shop.Model.TransferToTank("tank-b").Success && shop.Model.Incubator.SpecimenId == waiting, "Two full tanks retain waiting Ribbonfin without loss");
             yield return Capture("04-full-tanks-ribbonfin");
             Check(shop.Cycle.Phase == ShopDayPhase.Night && shop.Cycle.DayNumber == 1, "Timed production does not consume the untimed preparation night");
             Check(!shop.ServeCustomer() && shop.Model.Currency == 0 && shop.Model.GetTank("tank-a") != null, "Counter without a visitor cannot create a sale at night");
@@ -245,7 +245,7 @@ namespace EvolutionShop
             Ok(shop.Perform(shop.Model.SellFromTank("tank-a")), "Baseline domain Pondlet sale with arrivals suspended");
             Check(shop.Model.Currency == 6 && !shop.Model.SellFromTank("tank-a").Success, "Repeated domain sale pays once");
             Check(shop.SaveNow() && shop.ReloadSaved() && shop.Model.Currency == 6 && shop.Model.GetTank("tank-a") == null && shop.Model.IsDiscovered("pondlet"), "Real save after sale preserves money, empty tank, discovery");
-            Ok(shop.Perform(shop.Model.TransferToTank("tank-a")), "Waiting output transfers after space is freed");
+            Ok(shop.TransferToDisplay("tank-a"), "Waiting output transfers after space is freed");
             for (float t=0;t<30;t+=0.25f) {shop.World.Animate(t,0); if(!shop.World.ValidateTankBounds(out var bounds)) throw new InvalidOperationException(bounds);}
             Check(true,"Ribbonfin tail stays inside tank across 120 animation samples");
             Check(!shop.Model.BuyUpgrade().Success, "Insufficient funds block upgrade");
@@ -292,7 +292,7 @@ namespace EvolutionShop
             Check(!SaveStore.Read(corrupt,shop.Config,out _,out _,out _) && File.ReadAllText(corrupt)=="{not valid json", "Malformed save rejected and original preserved");
             shop.SetPanel(ShopPanel.Counter);
             yield return Ready();
-            Ok(shop.Perform(shop.Model.TransferToTank("tank-a")), "Stock a real unsold specimen before closing");
+            Ok(shop.TransferToDisplay("tank-a"), "Stock a real unsold specimen before closing");
             string closingSpecimen = shop.Model.GetTank("tank-a").Value.Id;
             shop.SetPanel(ShopPanel.CloseShop); yield return Capture("11-close-confirmation");
             shop.SetPanel(ShopPanel.Counter);

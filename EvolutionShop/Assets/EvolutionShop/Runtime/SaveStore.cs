@@ -10,13 +10,14 @@ namespace EvolutionShop
         public int formatVersion = SaveStore.CurrentFormatVersion;
         public SaveData game;
         public ShopDaySave cycle;
+        public TradeLedgerSave trades = new TradeLedgerSave();
         public float sensitivity = 1f;
         public float volume = 0.65f;
     }
 
     public static class SaveStore
     {
-        public const int CurrentFormatVersion = 2;
+        public const int CurrentFormatVersion = 3;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
         // Zero distinguishes an omitted envelope version from a current save.
@@ -24,6 +25,15 @@ namespace EvolutionShop
         private sealed class SlotHeader
         {
             public int formatVersion = 0;
+            public ReportHeader trades = null;
+        }
+
+        [Serializable]
+        private sealed class ReportHeader
+        {
+            // JsonUtility can manufacture inline objects for missing/null fields. A separate
+            // zero-default version detects them without TradeLedgerSave's version-one initializer.
+            public int version = 0;
         }
 
         public static bool Write(string path, SlotData data, out string error)
@@ -31,9 +41,10 @@ namespace EvolutionShop
             error = null;
             if (data == null || data.formatVersion != CurrentFormatVersion || data.game == null ||
                 data.game.version != 1 || !Finite(data.sensitivity) || !Finite(data.volume) ||
-                !ShopDayCycle.TryRestore(data.cycle, out _))
+                !ShopDayCycle.TryRestore(data.cycle, out _) ||
+                !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _))
             {
-                error = "Could not save: the current slot or day clock is invalid. Original file preserved.";
+                error = "Could not save: the current slot, day clock, or trading report is invalid. Original file preserved.";
                 return false;
             }
 
@@ -45,9 +56,12 @@ namespace EvolutionShop
                 if (File.Exists(path))
                 {
                     // Keep the first legacy file byte-for-byte, independently of the rotating backup.
-                    string legacyBackup = path + ".v1.bak";
-                    if (!File.Exists(legacyBackup) && IsVersionOne(File.ReadAllText(path)))
-                        File.Copy(path, legacyBackup, false);
+                    int legacyVersion = LegacyVersion(File.ReadAllText(path));
+                    if (legacyVersion != 0)
+                    {
+                        string legacyBackup = path + ".v" + legacyVersion + ".bak";
+                        if (!File.Exists(legacyBackup)) File.Copy(path, legacyBackup, false);
+                    }
                     File.Replace(temp, path, path + ".bak");
                 }
                 else File.Move(temp, path);
@@ -69,7 +83,8 @@ namespace EvolutionShop
                 string json = File.ReadAllText(path);
                 var header = JsonUtility.FromJson<SlotHeader>(json);
                 var candidate = JsonUtility.FromJson<SlotData>(json);
-                if (header == null || (header.formatVersion != 1 && header.formatVersion != CurrentFormatVersion) ||
+                if (header == null || (header.formatVersion != 1 && header.formatVersion != 2 &&
+                    header.formatVersion != CurrentFormatVersion) ||
                     candidate == null || candidate.game == null ||
                     !Finite(candidate.sensitivity) || !Finite(candidate.volume) ||
                     !GameModel.TryRestore(config, candidate.game, out var restoredGame, out _))
@@ -89,6 +104,26 @@ namespace EvolutionShop
                     return false;
                 }
 
+                if (header.formatVersion < CurrentFormatVersion)
+                {
+                    int stockedCount = 0;
+                    foreach (var tank in restoredGame.CaptureSave().tanks)
+                        if (restoredGame.GetTank(tank.tankId).HasValue) stockedCount++;
+                    candidate.trades = ShopTradeLedger.LegacyForCycle(candidate.cycle, stockedCount).CaptureSave();
+                }
+                else
+                {
+                    if (header.trades == null || header.trades.version != 1 ||
+                        !ShopTradeLedger.TryRestore(candidate.trades, candidate.cycle, out var restoredTrades))
+                    {
+                        error = "Saved trading report could not be validated. Your original file is preserved.";
+                        return false;
+                    }
+                    // Normalize empty inline day objects back to absent snapshots. Keep the
+                    // pending visitor identity until Session explicitly reconciles a reload.
+                    candidate.trades = restoredTrades.CaptureSave();
+                }
+
                 candidate.formatVersion = CurrentFormatVersion;
                 candidate.sensitivity = Mathf.Clamp(candidate.sensitivity, 0.25f, 2.5f);
                 candidate.volume = Mathf.Clamp01(candidate.volume);
@@ -103,17 +138,18 @@ namespace EvolutionShop
             }
         }
 
-        private static bool IsVersionOne(string json)
+        private static int LegacyVersion(string json)
         {
             try
             {
                 var header = JsonUtility.FromJson<SlotHeader>(json);
-                return header != null && header.formatVersion == 1;
+                return header != null && (header.formatVersion == 1 || header.formatVersion == 2)
+                    ? header.formatVersion : 0;
             }
             catch (ArgumentException)
             {
-                // Confirmed New game may replace a corrupt primary; it is not a version-one migration.
-                return false;
+                // Confirmed New game may replace a corrupt primary; it is not a legacy migration.
+                return 0;
             }
         }
 
