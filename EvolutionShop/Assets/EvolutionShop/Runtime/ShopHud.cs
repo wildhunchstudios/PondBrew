@@ -89,7 +89,7 @@ namespace EvolutionShop
             if (!string.IsNullOrEmpty(SaveError) || (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil))
             {
                 Box(new Rect(380, 24, 650, 67), ink);
-                GUI.Label(new Rect(400, 32, 610, 54), string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED â€” " + SaveError, centerStyle);
+                GUI.Label(new Rect(400, 32, 610, 54), string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED - " + SaveError, centerStyle);
             }
             if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
             {
