@@ -404,6 +404,8 @@ namespace EvolutionShop
             AudioListener.volume = Volume;
             BaselinePreview = false;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned);
+            // A successful restore supersedes notices from the state that was replaced.
+            message = null; messageUntil = 0;
             return true;
         }
         public void ConfirmNewGame()
