@@ -14,12 +14,13 @@ namespace EvolutionShop
         public int PlacementZ { get; private set; }
         public int PlacementRotation { get; private set; }
         string movingTableId;
+        string movingFacilityId;
         string placementDefinition = ShopLayout.TableDefinitionId;
         bool placementArmed, placementHasFloor;
         int previewX = int.MinValue, previewZ, previewRotation, previewPlayerX, previewPlayerZ, previewCash;
         readonly RaycastHit[] placementHits = new RaycastHit[32];
         bool layoutRoutesReady = true;
-        public int PlacementCost => movingTableId == null ? ShopLayout.DefinitionPrice(placementDefinition) : 0;
+        public int PlacementCost => movingFacilityId != null ? 0 : movingTableId == null ? ShopLayout.DefinitionPrice(placementDefinition) : 0;
 
         bool CanArrange => !Paused && !AutosaveBlocked && Cycle.Phase == ShopDayPhase.Night &&
             Customers != null && Customers.Ready && layoutRoutesReady && Customers.ActiveCount == 0;
@@ -36,6 +37,8 @@ namespace EvolutionShop
         public bool BeginPlacement(string ownedId = null, string definitionId = ShopLayout.TableDefinitionId)
         {
             if (Panel != ShopPanel.Arrange || !CanArrange) return false;
+            if (ShopLayout.IsFacility(ownedId)) return BeginFacilityPlacement(ownedId);
+            movingFacilityId = null;
             var owned = ownedId == null ? null : Layout.GetItem(ownedId);
             if (ownedId != null && !owned.HasValue) return false;
             if (owned.HasValue && DisplayHasReservation(ownedId))
@@ -44,19 +47,24 @@ namespace EvolutionShop
             if (ShopLayout.DefinitionName(placementDefinition) == null) return false;
             movingTableId = ownedId;
             PlacementRotation = owned.HasValue ? owned.Value.QuarterTurns : 0;
+            StartPlacementPreview();
+            return true;
+        }
+
+        void StartPlacementPreview()
+        {
             SetPanel(ShopPanel.None);
             PlacementActive = true; placementArmed = false; previewX = int.MinValue;
             message = null; messageUntil = 0; // A new preview replaces stale action/recovery notices; SaveError remains visible.
             SlapTarget = null; Focused = null; StopHarvest();
             World.SetHarvesting(false, null);
             UpdatePlacementAim();
-            return true;
         }
 
         void EndPlacementPreview()
         {
             PlacementActive = false; PlacementValid = false; placementArmed = false;
-            movingTableId = null;
+            movingTableId = null; movingFacilityId = null;
             if (World) World.HidePreview();
         }
 
@@ -64,7 +72,7 @@ namespace EvolutionShop
         {
             if (!PlacementActive) return;
             EndPlacementPreview(); SetPanel(ShopPanel.Arrange);
-            Notify("Placement cancelled. Your furniture and credits are unchanged.");
+            Notify("Placement cancelled. Your room layout and credits are unchanged.");
         }
 
         public void RotatePlacement()
@@ -107,6 +115,8 @@ namespace EvolutionShop
                     if (obstruction.IsChildOf(Player.transform)) continue;
                     var owned = obstruction.GetComponentInParent<PlacedWorkTable>();
                     if (owned && owned.Id == movingTableId) continue;
+                    var facility = obstruction.GetComponentInParent<Station>();
+                    if (movingFacilityId != null && facility && facility.FacilityId == movingFacilityId) continue;
                     placementHasFloor = false;
                 }
             }
@@ -116,8 +126,9 @@ namespace EvolutionShop
                 previewX = int.MinValue; World.HidePreview(); return;
             }
             Vector3 local = World.transform.InverseTransformPoint(ray.GetPoint(distance));
-            PlacementX = Mathf.RoundToInt(local.x / ShopLayout.GridSize);
-            PlacementZ = Mathf.RoundToInt(local.z / ShopLayout.GridSize);
+            FacilityAnchor(out float anchorX, out float anchorZ);
+            PlacementX = Mathf.RoundToInt((local.x - anchorX) / ShopLayout.GridSize);
+            PlacementZ = Mathf.RoundToInt((local.z - anchorZ) / ShopLayout.GridSize);
             Vector3 player = World.transform.InverseTransformPoint(Player.transform.position);
             int px = Mathf.RoundToInt(player.x * 4), pz = Mathf.RoundToInt(player.z * 4);
             if (previewX != PlacementX || previewZ != PlacementZ || previewRotation != PlacementRotation ||
@@ -128,7 +139,8 @@ namespace EvolutionShop
                 PlacementValid = ValidatePlacementCandidate(out _, out var reason);
                 PlacementMessage = reason;
             }
-            World.ShowPlacementPreview(placementDefinition, PlacementX * ShopLayout.GridSize, PlacementZ * ShopLayout.GridSize, PlacementRotation, PlacementValid);
+            if (movingFacilityId != null) World.ShowLabFacilityPreview(movingFacilityId, PlacementX * ShopLayout.GridSize + anchorX, PlacementZ * ShopLayout.GridSize + anchorZ, PlacementRotation, PlacementValid);
+            else World.ShowPlacementPreview(placementDefinition, PlacementX * ShopLayout.GridSize, PlacementZ * ShopLayout.GridSize, PlacementRotation, PlacementValid);
         }
 
         bool ValidatePlacementCandidate(out ShopLayout candidate, out string reason)
@@ -136,21 +148,25 @@ namespace EvolutionShop
             candidate = null;
             if (!PlacementActive || !placementHasFloor || !CanArrange)
             { reason = "Arrange rooms at night and aim at a clear floor."; return false; }
-            var result = Layout.TryPreview(placementDefinition, movingTableId, PlacementX, PlacementZ, PlacementRotation, out candidate);
+            var result = movingFacilityId != null ?
+                Layout.TryPreviewFacility(movingFacilityId, PlacementX, PlacementZ, PlacementRotation, out candidate) :
+                Layout.TryPreview(placementDefinition, movingTableId, PlacementX, PlacementZ, PlacementRotation, out candidate);
             if (!result.Success) { reason = PlacementFailureText(result.Failure); return false; }
             if (Model.Currency < PlacementCost) { reason = "Need " + PlacementCost + " credits. Previewing costs nothing."; return false; }
             var player = World.transform.InverseTransformPoint(Player.transform.position);
             if (movingTableId != null && DisplayHasReservation(movingTableId))
             { reason = "Finish the reserved order before moving this display."; return false; }
-            float width = ShopLayout.DefinitionWidth(placementDefinition), depth = ShopLayout.DefinitionDepth(placementDefinition);
+            float width = movingFacilityId != null ? ShopLayout.FacilityWidth(movingFacilityId) : ShopLayout.DefinitionWidth(placementDefinition);
+            float depth = movingFacilityId != null ? ShopLayout.FacilityDepth(movingFacilityId) : ShopLayout.DefinitionDepth(placementDefinition);
+            FacilityAnchor(out float anchorX, out float anchorZ);
             float halfX = (PlacementRotation % 2 == 0 ? width : depth) / 2;
             float halfZ = (PlacementRotation % 2 == 0 ? depth : width) / 2;
-            if (Mathf.Abs(player.x - PlacementX * ShopLayout.GridSize) < halfX + .4f &&
-                Mathf.Abs(player.z - PlacementZ * ShopLayout.GridSize) < halfZ + .4f)
+            if (Mathf.Abs(player.x - (PlacementX * ShopLayout.GridSize + anchorX)) < halfX + .4f &&
+                Mathf.Abs(player.z - (PlacementZ * ShopLayout.GridSize + anchorZ)) < halfZ + .4f)
             { reason = "Step outside the furniture footprint before placing it."; return false; }
             if (!candidate.CanReachMainAisle(player.x, player.z))
             { reason = "Keep a clear route from your position to the main aisle."; return false; }
-            reason = PlacementCost == 0 ? "Clear / place owned furniture for free" : "Clear / buy for " + PlacementCost + " credits";
+            reason = movingFacilityId != null ? "Clear / move equipment for free / contents and progress stay safe" : PlacementCost == 0 ? "Clear / place owned furniture for free" : "Clear / buy for " + PlacementCost + " credits";
             if (ShopLayout.IsDecor(placementDefinition))
                 reason += " / appeal " + Appeal.Points + " > " + candidate.AppealPoints + " of 30" + (candidate.AppealPoints == Appeal.Points ? " (lab or duplicate adds zero)" : "");
             if (movingTableId != null && DisplayHasStock(movingTableId)) reason += " / stock moves safely with it";
@@ -177,14 +193,16 @@ namespace EvolutionShop
                     "Customer routes could not recover. Save and reopen your shop.";
                 Notify(PlacementMessage); return false;
             }
-            var result = Layout.TryCommit(Model, Cycle.Phase, placementDefinition, movingTableId, PlacementX, PlacementZ, PlacementRotation, out var id);
+            var result = movingFacilityId != null ?
+                Layout.TryMoveFacility(Model, Cycle.Phase, movingFacilityId, PlacementX, PlacementZ, PlacementRotation) :
+                Layout.TryCommit(Model, Cycle.Phase, placementDefinition, movingTableId, PlacementX, PlacementZ, PlacementRotation, out _);
             if (!result.Success)
             {
                 RestoreCurrentLayout(); PlacementMessage = PlacementFailureText(result.Failure);
                 PlacementValid = false; Notify(PlacementMessage); return false;
             }
-            bool purchased = movingTableId == null;
-            int paid = PlacementCost; string name = ShopLayout.DefinitionName(placementDefinition);
+            bool purchased = movingTableId == null && movingFacilityId == null;
+            int paid = PlacementCost; string name = movingFacilityId != null ? ShopLayout.FacilityName(movingFacilityId) : ShopLayout.DefinitionName(placementDefinition);
             World.ApplyLayout(Layout); World.Refresh(Model);
             EndPlacementPreview(); SetPanel(ShopPanel.Arrange);
             SaveNow();
@@ -217,9 +235,14 @@ namespace EvolutionShop
         static bool SameLayout(ShopLayout left, ShopLayout right)
         {
             var a = left.Items; var b = right.Items;
-            if (a.Count != b.Count || left.StoreTier != right.StoreTier) return false;
+            if (a.Count != b.Count || left.StoreTier != right.StoreTier || left.LabTier != right.LabTier) return false;
             for (int i = 0; i < a.Count; i++)
                 if (a[i].Id != b[i].Id || a[i].DefinitionId != b[i].DefinitionId || a[i].X != b[i].X || a[i].Z != b[i].Z || a[i].QuarterTurns != b[i].QuarterTurns || a[i].Stored != b[i].Stored) return false;
+            foreach (var facility in left.Facilities)
+            {
+                var other = right.GetFacility(facility.Id);
+                if (!other.HasValue || facility.X != other.Value.X || facility.Z != other.Value.Z || facility.QuarterTurns != other.Value.QuarterTurns) return false;
+            }
             return true;
         }
 
@@ -241,7 +264,7 @@ namespace EvolutionShop
                 case LayoutFailure.StockedDisplay: return "Sell the creatures before storing or selling this display. Moving it with stock is free.";
                 case LayoutFailure.ReservedDisplay: return "Finish the reserved customer order first.";
                 case LayoutFailure.AlreadyStored: return "That furniture is already in storage.";
-                case LayoutFailure.CurrencyOverflow: return "There is no room for the full refund. Your furniture and credits are unchanged.";
+                case LayoutFailure.CurrencyOverflow: return "There is no room for the full refund. Your room layout and credits are unchanged.";
                 case LayoutFailure.LockedDefinition: return "Large displays unlock with the first store expansion.";
                 case LayoutFailure.WrongPhase: return "Arrange rooms during preparation night.";
                 case LayoutFailure.OutOfBounds: return "Keep the whole item inside its room. Displays belong in the store.";
@@ -287,10 +310,12 @@ namespace EvolutionShop
             foreach (var item in Layout.Items) if (ShopLayout.DefinitionSlotCount(item.DefinitionId) > 0) displayCount++; else if (item.DefinitionId == ShopLayout.TableDefinitionId) tableCount++;
             Text("Store appeal " + Appeal.Points + " / 30  |  Decor " + Layout.DecorCount + " / " + ShopLayout.DecorLimit);
             GUILayout.BeginHorizontal();
-            Button("Buy furniture", () => { showDecorCatalogue = false; showOwnedFurniture = false; panelScroll = Vector2.zero; });
-            Button("Decor + appeal", () => { showDecorCatalogue = true; showOwnedFurniture = false; panelScroll = Vector2.zero; });
-            Button("Owned / storage", () => { showOwnedFurniture = true; panelScroll = Vector2.zero; });
+            Button("Buy furniture", () => { showLabFacilities = false; showDecorCatalogue = false; showOwnedFurniture = false; panelScroll = Vector2.zero; });
+            Button("Decor + appeal", () => { showLabFacilities = false; showDecorCatalogue = true; showOwnedFurniture = false; panelScroll = Vector2.zero; });
+            Button("Owned / storage", () => { showLabFacilities = false; showOwnedFurniture = true; panelScroll = Vector2.zero; });
             GUILayout.EndHorizontal();
+            Button("Lab / expand and move equipment", () => OpenLabMenu());
+            if (showLabFacilities) { DrawLabArrangement(); return; }
             if (showOwnedFurniture) { DrawOwnedFurniture(); return; }
             if (showDecorCatalogue) { DrawDecorCatalogue(); return; }
             Text("Display furniture " + displayCount + " / " + Layout.DisplayLimit + " owned  |  Active creature slots " + Model.TankIds.Length);
@@ -318,7 +343,7 @@ namespace EvolutionShop
         {
             Box(new Rect(438, 505, 592, 140), ink);
             Box(new Rect(637, 357, 6, 6), Color.white);
-            GUI.Label(new Rect(454, 516, 560, 26), movingTableId == null ? "PLACE " + ShopLayout.DefinitionName(placementDefinition).ToUpperInvariant() + " / " + PlacementCost + " CREDITS" : "MOVE " + ShopLayout.DefinitionName(placementDefinition).ToUpperInvariant() + " / FREE", headingStyle);
+            GUI.Label(new Rect(454, 516, 560, 26), movingFacilityId != null ? "MOVE " + ShopLayout.FacilityName(movingFacilityId).ToUpperInvariant() + " / FREE" : movingTableId == null ? "PLACE " + ShopLayout.DefinitionName(placementDefinition).ToUpperInvariant() + " / " + PlacementCost + " CREDITS" : "MOVE " + ShopLayout.DefinitionName(placementDefinition).ToUpperInvariant() + " / FREE", headingStyle);
             GUI.Label(new Rect(454, 548, 560, 46), PlacementMessage, bodyStyle);
             GUI.Label(new Rect(454, 603, 560, 27), "R rotate  |  LEFT CLICK place  |  RIGHT CLICK / ESC cancel", smallStyle);
         }

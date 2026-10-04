@@ -129,7 +129,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void CanonicalNumericIdsSortNumericallyAndExhaustedSerialDoesNotWrap()
         {
-            var save = new LayoutSave { version = ShopLayout.SaveVersion, nextItemNumber = int.MaxValue,
+            var save = new LayoutSave { version = ShopLayout.SaveVersion, facilities = new ShopLayout().CaptureSave().facilities, nextItemNumber = int.MaxValue,
                 items = new[]
                 {
                     Item("table-10", true), Item("table-2", true), Item("table-2147483646", true)
@@ -252,14 +252,14 @@ namespace EvolutionShop.Tests
         [TestCase("tank-a")]
         public void NoncanonicalOwnedIdsRejectEvenWhenStored(string id)
         {
-            var save = new LayoutSave { version = ShopLayout.SaveVersion, nextItemNumber = 3, items = new[] { Item(id, true) } };
+            var save = new LayoutSave { version = ShopLayout.SaveVersion, facilities = new ShopLayout().CaptureSave().facilities, nextItemNumber = 3, items = new[] { Item(id, true) } };
             Assert.That(ShopLayout.TryRestore(save, out _), Is.False);
         }
 
         [Test]
         public void CurrentSerialDuplicatesAndStoredPoseCorruptionRemainStrict()
         {
-            var save = new LayoutSave { version = ShopLayout.SaveVersion, nextItemNumber = 3,
+            var save = new LayoutSave { version = ShopLayout.SaveVersion, facilities = new ShopLayout().CaptureSave().facilities, nextItemNumber = 3,
                 items = new[] { Item("table-1", true), Item("table-2", true) } };
             Assert.That(ShopLayout.TryRestore(save, out _), Is.True);
             save.nextItemNumber = 2; Assert.That(ShopLayout.TryRestore(save, out _), Is.False);

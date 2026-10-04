@@ -305,6 +305,7 @@ namespace EvolutionShop.Tests
         static LayoutItemSave Item(int number, int x, int z, int turns) => new LayoutItemSave
             { id = "table-" + number, definitionId = "work-table", x = x, z = z, quarterTurns = turns };
         static LayoutSave ThreeTables() => new LayoutSave { version = ShopLayout.SaveVersion, nextItemNumber = 4,
+            facilities = new ShopLayout().CaptureSave().facilities,
             items = new[] { Item(1, -4, -1, 0), Item(2, 4, -1, 0), Item(3, 9, 4, 1) } };
 
         SlotData ProgressSlot(ShopDayPhase phase, out GameModel model)
@@ -353,8 +354,16 @@ namespace EvolutionShop.Tests
 
         static string CurrentJson(SlotData slot, string layout) => "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
             ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
-            ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) + (layout == null ? "" : ",\"layout\":" + layout) +
+            ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) + (layout == null ? "" : ",\"layout\":" + WithCurrentLabFields(layout)) +
             ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.65}";
+
+        [Serializable] sealed class LabFields { public int labTier; public FacilitySave[] facilities; }
+        static string WithCurrentLabFields(string json)
+        {
+            if (json == null || !json.StartsWith("{", StringComparison.Ordinal) || json.Contains("\"facilities\"")) return json;
+            string fields = JsonUtility.ToJson(new LabFields { labTier = 0, facilities = new ShopLayout().CaptureSave().facilities });
+            return json.Insert(1, fields.Substring(1, fields.Length - 2) + (json == "{}" ? "" : ","));
+        }
         void Write(SlotData slot) => Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
         SlotData Read(out GameModel model)
         {

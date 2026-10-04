@@ -12,6 +12,7 @@ namespace EvolutionShop
         public StationKind Kind;
         public string Label;
         public string TankId;
+        public string FacilityId;
     }
 
     /// <summary>Presentation only. All quantities and transaction decisions belong to GameModel.</summary>
@@ -195,6 +196,7 @@ namespace EvolutionShop
             c.center = new Vector3(0, 1.0f, 0);
             c.size = new Vector3(1.7f, 2, 1.15f);
             stations.Add(s);
+            RegisterLabFacility(s);
             return s;
         }
 
@@ -206,13 +208,14 @@ namespace EvolutionShop
             var floor = MakeMaterial("Pale stone floor", new Color(0.56f, 0.68f, 0.66f), 0.04f, 0.28f);
             var wall = MakeMaterial("Ivory plaster", new Color(0.76f, 0.82f, 0.76f), 0, 0.22f);
             Shape(transform, "Floor", PrimitiveType.Cube, new Vector3(0, -.14f, 0), new Vector3(14, .28f, 11), floor, true);
-            Shape(transform, "Back wall", PrimitiveType.Cube, new Vector3(0, 2.1f, 5.6f), new Vector3(14, 4.2f, .3f), wall, true);
+            labRearAssembly = Group("Lab rear wall assembly", transform, Vector3.zero);
+            Shape(labRearAssembly, "Back wall", PrimitiveType.Cube, new Vector3(0, 2.1f, 5.6f), new Vector3(14, 4.2f, .3f), wall, true);
             storeWestWall = Shape(transform, "Store west wall", PrimitiveType.Cube, new Vector3(-7, 2.1f, -2.5f), new Vector3(.3f, 4.2f, 6), wall, true);
             Shape(transform, "Lab west wall", PrimitiveType.Cube, new Vector3(-7, 2.1f, 3), new Vector3(.3f, 4.2f, 5), wall, true);
             Shape(transform, "Right wall", PrimitiveType.Cube, new Vector3(7, 2.1f, 0), new Vector3(.3f, 4.2f, 11), wall, true);
             Shape(transform, "Front wall", PrimitiveType.Cube, new Vector3(0, 2.1f, -5.6f), new Vector3(14, 4.2f, .3f), wall, true);
-            Shape(transform, "Back wainscot", PrimitiveType.Cube, new Vector3(0, .65f, 5.42f), new Vector3(14, 1.3f, .07f), dark);
-            Shape(transform, "Back brass rail", PrimitiveType.Cube, new Vector3(0, 1.32f, 5.36f), new Vector3(14, .035f, .07f), trim);
+            Shape(labRearAssembly, "Back wainscot", PrimitiveType.Cube, new Vector3(0, .65f, 5.42f), new Vector3(14, 1.3f, .07f), dark);
+            Shape(labRearAssembly, "Back brass rail", PrimitiveType.Cube, new Vector3(0, 1.32f, 5.36f), new Vector3(14, .035f, .07f), trim);
             for (int x = -6; x <= 6; x += 2)
                 Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(x, .004f, 0), new Vector3(.012f, .004f, 11), shell);
             for (int z = -4; z <= 4; z += 2)
@@ -240,9 +243,9 @@ namespace EvolutionShop
             keyLight.shadows = LightShadows.Soft;
             storeFillLight = LightAt(new Vector3(-3, 2.8f, -2), new Color(1, .95f, .83f), 3.4f, 8);
             labFillLight = LightAt(new Vector3(1, 2.8f, 3), new Color(.75f, 1, .94f), 3.2f, 8);
-            Shape(transform, "Back lab identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
-            Text(transform, "CULTURE LAB", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
-            Text(transform, "GROW  /  COMBINE  /  IMPROVE", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
+            Shape(labRearAssembly, "Back lab identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
+            Text(labRearAssembly, "CULTURE LAB", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
+            Text(labRearAssembly, "GROW  /  COMBINE  /  IMPROVE", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
             var door = Group("Quiet entrance", transform, new Vector3(0, 0, -5.35f));
             door.localRotation = Quaternion.Euler(0, 180, 0);
             Shape(door, "Entrance", PrimitiveType.Cube, new Vector3(0, 1.25f, 0), new Vector3(2.1f, 2.5f, .05f), dark);
@@ -295,6 +298,7 @@ namespace EvolutionShop
             labFillLight.color = night ? new Color(.74f, .94f, 1f) : closing ? new Color(.74f, .98f, .97f) : new Color(.75f, 1f, .94f);
             labFillLight.intensity = 3.2f;
             RefreshWingLights();
+            RefreshLabWingLights();
         }
 
         Light LightAt(Vector3 position, Color color, float intensity, float range)

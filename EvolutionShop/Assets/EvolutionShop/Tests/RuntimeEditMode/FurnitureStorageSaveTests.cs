@@ -35,7 +35,7 @@ namespace EvolutionShop.Tests
             var expected = JsonUtility.FromJson<SlotData>(File.ReadAllText(FixturePath()));
             Assert.That(expected.formatVersion, Is.EqualTo(10)); Assert.That(expected.layout.version, Is.EqualTo(3));
             var loaded = Read(out var model); AssertSameProgress(expected, loaded, model);
-            Assert.That(loaded.formatVersion, Is.EqualTo(11)); Assert.That(loaded.layout.version, Is.EqualTo(4));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
             Assert.That(model.Currency, Is.EqualTo(104)); Assert.That(model.TankIds.Length, Is.EqualTo(2));
             Assert.That(loaded.layout.items.Length, Is.EqualTo(6)); Assert.That(loaded.layout.nextItemNumber, Is.EqualTo(7));
             foreach (var item in loaded.layout.items) Assert.That(item.stored, Is.False);
@@ -247,6 +247,8 @@ namespace EvolutionShop.Tests
             { Item(1, "small-display", 3, -5), Item(2, "large-display", -18, -3, true), Item(3, "coral-planter", -4, -1), Item(4, "bubble-lamp", 4, -1, true) } };
         SlotData FreshSlot(LayoutSave save, ShopDayPhase phase, out GameModel model)
         {
+            if (save.version == ShopLayout.SaveVersion && save.facilities == null)
+                save.facilities = new ShopLayout().CaptureSave().facilities;
             Assert.That(ShopLayout.TryRestore(save, out var layout), Is.True, "Tests start from valid geometry.");
             var game = new GameModel(layout.WithTankIds(config)).CaptureSave(); game.currency = 100;
             Assert.That(GameModel.TryRestore(layout.WithTankIds(config), game, out model, out _), Is.True);

@@ -239,6 +239,8 @@ namespace EvolutionShop.Tests
 
         SlotData Slot(LayoutSave save, ShopDayPhase phase, out GameModel model)
         {
+            if (save.version == ShopLayout.SaveVersion && save.facilities == null)
+                save.facilities = new ShopLayout().CaptureSave().facilities;
             Assert.That(ShopLayout.TryRestore(save, out var layout), Is.True, "Test layout must be a valid positive control.");
             var derived = layout.WithTankIds(config); var seed = new GameModel(derived).CaptureSave(); seed.currency = 600;
             Assert.That(GameModel.TryRestore(derived, seed, out model, out _), Is.True);
@@ -274,10 +276,18 @@ namespace EvolutionShop.Tests
         static string JsonWithLayout(SlotData slot, string layout) => "{\"formatVersion\":" + slot.formatVersion +
             ",\"game\":" + JsonUtility.ToJson(slot.game) + ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) +
             ",\"trades\":" + JsonUtility.ToJson(slot.trades) + ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) +
-            ",\"layout\":" + layout + ",\"sensitivity\":" + slot.sensitivity.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+            ",\"layout\":" + (slot.formatVersion == SaveStore.CurrentFormatVersion ? WithCurrentLabFields(layout) : layout) + ",\"sensitivity\":" + slot.sensitivity.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"volume\":" + slot.volume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"slapKey\":\"" + slot.slapKey + "\",\"humorVolume\":" + slot.humorVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"reducedGags\":" + (slot.reducedGags ? "true" : "false") + "}";
+
+        [Serializable] sealed class LabFields { public int labTier; public FacilitySave[] facilities; }
+        static string WithCurrentLabFields(string json)
+        {
+            if (json == null || !json.StartsWith("{", StringComparison.Ordinal) || json.Contains("\"facilities\"")) return json;
+            string fields = JsonUtility.ToJson(new LabFields { labTier = 0, facilities = new ShopLayout().CaptureSave().facilities });
+            return json.Insert(1, fields.Substring(1, fields.Length - 2) + (json == "{}" ? "" : ","));
+        }
 
         void AssertSameProgress(SlotData expected, SlotData actual, GameModel before, GameModel after, bool compareLayout = true)
         {

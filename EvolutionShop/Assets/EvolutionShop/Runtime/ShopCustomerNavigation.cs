@@ -65,8 +65,6 @@ namespace EvolutionShop
             labExclusion = new GameObject("Customer navigation / lab is not walkable");
             labExclusion.transform.SetParent(world.transform, false);
             var blocked = labExclusion.AddComponent<NavMeshModifierVolume>();
-            blocked.center = new Vector3(0, 2, 3.55f);
-            blocked.size = new Vector3(40, 8, 7); // Starts at z = .05, including the lab and the full expanded width.
             blocked.area = NavMesh.GetAreaFromName("Not Walkable");
             if (blocked.area < 0)
             {
@@ -100,6 +98,12 @@ namespace EvolutionShop
             Ready = false;
             try
             {
+                // Keep the actual bake excluded beyond the current rear wall, not merely the target filter.
+                // At tier zero this exactly reproduces the original z=.05..7.05 volume.
+                float labDepth = 7 + 4 * world.AppliedLayout.LabTier;
+                var blocked = labExclusion.GetComponent<NavMeshModifierVolume>();
+                blocked.center = new Vector3(0, 2, .05f + labDepth * .5f);
+                blocked.size = new Vector3(40, 8, labDepth);
                 Physics.SyncTransforms();
                 surface.RemoveData();
                 // BuildNavMesh leaves navMeshData unchanged if no replacement is produced. Clearing it prevents
@@ -149,6 +153,13 @@ namespace EvolutionShop
                 error = "Customer navigation unexpectedly extends into the lab.";
                 return false;
             }
+            for (int tier = 1; tier <= world.AppliedLayout.LabTier; tier++)
+                for (int column = -1; column <= 1; column++)
+                    if (HasNavigationAt(WorldPoint(new Vector3(column * 5, 0, 3.5f + tier * 4)), .1f))
+                    {
+                        error = "Customer navigation unexpectedly extends into lab expansion " + tier + ".";
+                        return false;
+                    }
             error = string.Empty;
             return true;
         }

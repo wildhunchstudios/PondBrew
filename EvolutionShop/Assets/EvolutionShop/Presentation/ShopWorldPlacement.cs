@@ -32,6 +32,8 @@ namespace EvolutionShop
             if (layout == null) throw new ArgumentNullException(nameof(layout));
             if (!cream) throw new InvalidOperationException("Build the shop world before applying furniture.");
             ApplyStoreExpansion(layout.StoreTier);
+            ApplyLabExpansion(layout.LabTier);
+            ApplyLabFacilityPoses(layout);
             AppliedLayout = layout;
             layoutIds.Clear();
             foreach (var item in layout.Items)
@@ -148,26 +150,11 @@ namespace EvolutionShop
 
         void EnsurePlacementPreview(string definitionId)
         {
+            if (ShopLayout.IsFacility(definitionId)) { EnsureLabFacilityPreview(definitionId); return; }
             PlacementDimensions(definitionId, out float width, out float depth, out _);
             if (placementPreview && previewDefinition == definitionId) return;
-            if (placementPreview)
-            {
-                labels.RemoveAll(label => !label.Text || label.Text.transform.IsChildOf(placementPreview));
-                placementPreview.gameObject.SetActive(false); Destroy(placementPreview.gameObject);
-            }
-            previewSurfaces.Clear(); previewFootprint.Clear(); previewWasValid = null;
-            previewDefinition = definitionId;
-            if (!previewValid)
-            {
-                previewValid = MakeGlass("Valid placement ghost", new Color(.18f, .95f, .62f, .24f));
-                previewInvalid = MakeGlass("Blocked placement ghost", new Color(1f, .18f, .18f, .24f));
-                footprintValid = MakeGlass("Valid placement footprint", new Color(.17f, 1f, .60f, .88f));
-                footprintInvalid = MakeGlass("Blocked placement footprint", new Color(1f, .12f, .12f, .88f));
-                foreach (var material in new[] { previewValid, previewInvalid, footprintValid, footprintInvalid })
-                    material.SetFloat("_Smoothness", .15f);
-            }
-            placementPreview = Group(definitionId == ShopLayout.TableDefinitionId ? "Worktable placement preview (no colliders)" :
-                ShopLayout.IsDecor(definitionId) ? "Decor placement preview (no colliders)" : "Display placement preview (no colliders)", transform, Vector3.zero);
+            BeginPlacementPreview(definitionId, definitionId == ShopLayout.TableDefinitionId ? "Worktable placement preview (no colliders)" :
+                ShopLayout.IsDecor(definitionId) ? "Decor placement preview (no colliders)" : "Display placement preview (no colliders)");
             if (definitionId == ShopLayout.TableDefinitionId) BuildWorktable(placementPreview, true);
             else if (ShopLayout.IsDecor(definitionId)) BuildPlacedDecor(placementPreview, definitionId, true);
             else BuildPlacedDisplay(placementPreview, null, definitionId, true);
@@ -185,6 +172,27 @@ namespace EvolutionShop
                 var accessLabel = Text(placementPreview, "FRONT ACCESS", new Vector3(0, .038f, -depth * .5f - .9f), .035f, dark.color, 1.08f);
                 accessLabel.transform.localRotation = Quaternion.Euler(90, 0, 0);
             }
+        }
+
+        void BeginPlacementPreview(string definitionId, string objectName)
+        {
+            if (placementPreview)
+            {
+                labels.RemoveAll(label => !label.Text || label.Text.transform.IsChildOf(placementPreview));
+                placementPreview.gameObject.SetActive(false); Destroy(placementPreview.gameObject);
+            }
+            previewSurfaces.Clear(); previewFootprint.Clear(); previewWasValid = null;
+            previewDefinition = definitionId;
+            if (!previewValid)
+            {
+                previewValid = MakeGlass("Valid placement ghost", new Color(.18f, .95f, .62f, .24f));
+                previewInvalid = MakeGlass("Blocked placement ghost", new Color(1f, .18f, .18f, .24f));
+                footprintValid = MakeGlass("Valid placement footprint", new Color(.17f, 1f, .60f, .88f));
+                footprintInvalid = MakeGlass("Blocked placement footprint", new Color(1f, .12f, .12f, .88f));
+                foreach (var material in new[] { previewValid, previewInvalid, footprintValid, footprintInvalid })
+                    material.SetFloat("_Smoothness", .15f);
+            }
+            placementPreview = Group(objectName, transform, Vector3.zero);
         }
 
         void PreviewMark(string name, Vector3 position, Vector3 scale)

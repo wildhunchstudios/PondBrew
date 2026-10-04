@@ -200,7 +200,8 @@ namespace EvolutionShop.Tests
         static LayoutSave AddLabDecor(LayoutSave save)
         {
             var items = new List<LayoutItemSave>(save.items); items.Add(Item(save.nextItemNumber, "coral-planter", 9, 4));
-            return new LayoutSave { version = ShopLayout.SaveVersion, storeTier = save.storeTier, nextItemNumber = save.nextItemNumber + 1, items = items.ToArray() };
+            return new LayoutSave { version = ShopLayout.SaveVersion, storeTier = save.storeTier, nextItemNumber = save.nextItemNumber + 1,
+                items = items.ToArray(), facilities = new ShopLayout().CaptureSave().facilities };
         }
         int Appeal(SlotData slot)
         { Assert.That(ShopLayout.TryRestore(slot.layout, out var layout), Is.True); return ShopAppeal.FromLayout(layout).Points; }

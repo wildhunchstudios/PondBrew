@@ -18,6 +18,7 @@ namespace EvolutionShop
         public bool OpenDecorMenu()
         {
             if (!OpenPlacementMenu()) return false;
+            showLabFacilities = false;
             showOwnedFurniture = false;
             showDecorCatalogue = true;
             return true;

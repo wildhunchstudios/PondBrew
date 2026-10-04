@@ -12,6 +12,7 @@ namespace EvolutionShop
         public bool OpenOwnedFurnitureMenu()
         {
             if (!OpenPlacementMenu()) return false;
+            showLabFacilities = false;
             showOwnedFurniture = true; showDecorCatalogue = false; panelScroll = Vector2.zero;
             return true;
         }

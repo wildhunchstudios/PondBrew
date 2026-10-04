@@ -29,16 +29,17 @@ namespace EvolutionShop
         // 8: owned work-table layout. 9: two store expansions and owned stock displays.
         // 10: initial decor. Appeal is derived from layout and is never a second saved authority.
         // 11: stored furniture, permanent sales, and stable IDs across ownership gaps.
-        // Formats 1-10 migrate in memory; historical saves never
+        // 12: two lab expansions and poses for the four existing production facilities.
+        // Formats 1-11 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 11;
+        public const int CurrentFormatVersion = 12;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 11 ? 2 : 0;
+            format >= 4 && format <= 12 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 11 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 12 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -150,9 +151,10 @@ namespace EvolutionShop
                 else
                 {
                     int layoutVersion = header.formatVersion == 8 ? 1 : header.formatVersion == 9 ? 2 :
-                        header.formatVersion == 10 ? 3 : 4;
+                        header.formatVersion == 10 ? 3 : header.formatVersion == 11 ? 4 : 5;
                     if (header.layout == null || header.layout.version != layoutVersion ||
-                        !new LayoutJsonShape(json, header.formatVersion >= 9, header.formatVersion >= 11).HasExplicitItemsArray() ||
+                        !new LayoutJsonShape(json, header.formatVersion >= 9, header.formatVersion >= 11,
+                            header.formatVersion >= 12).HasExplicitItemsArray() ||
                         !ShopLayout.TryRestore(candidate.layout, out restoredLayout))
                     {
                         error = "Saved layout could not be validated. Your original file is preserved.";
@@ -271,9 +273,10 @@ namespace EvolutionShop
             readonly string json;
             readonly bool requireStoreTier;
             readonly bool requireStored;
+            readonly bool requireLab;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; }
 
             public bool HasExplicitItemsArray()
             {
@@ -284,7 +287,7 @@ namespace EvolutionShop
             bool ReadObject(bool layout)
             {
                 if (!Take('{')) return false;
-                bool required = false, hasStoreTier = false;
+                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 SkipSpace();
                 if (Take('}')) return false;
@@ -313,11 +316,70 @@ namespace EvolutionShop
                             json[position] != ',' && json[position] != '}') return false;
                         hasStoreTier = true;
                     }
+                    else if (layout && requireLab && key == "labTier")
+                    {
+                        if (!ReadInteger(out int tier) || tier < 0 || tier > 2) return false;
+                        hasLabTier = true;
+                    }
+                    else if (layout && requireLab && key == "facilities")
+                    {
+                        if (!ReadFacilities()) return false;
+                        hasFacilities = true;
+                    }
                     else if (!SkipValue(0)) return false;
-                    if (Take('}')) return required && (!layout || !requireStoreTier || hasStoreTier);
+                    if (Take('}')) return required && (!layout ||
+                        ((!requireStoreTier || hasStoreTier) && (!requireLab || hasLabTier && hasFacilities)));
                     if (!Take(',')) return false;
                 }
                 return false;
+            }
+
+            bool ReadFacilities()
+            {
+                if (!Take('[') || Take(']')) return false;
+                int count = 0;
+                while (position < json.Length)
+                {
+                    if (++count > 4 || !ReadFacility()) return false;
+                    if (Take(']')) return count == 4;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadFacility()
+            {
+                if (!Take('{')) return false;
+                int required = 0;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    if (key == "id")
+                    { if (!ReadString(true, out _)) return false; required |= 1; }
+                    else if (key == "x" || key == "z" || key == "quarterTurns")
+                    {
+                        if (!ReadInteger(out int value) || key == "quarterTurns" && (value < 0 || value > 3)) return false;
+                        required |= key == "x" ? 2 : key == "z" ? 4 : 8;
+                    }
+                    else if (!SkipValue(0)) return false;
+                    if (Take('}')) return required == 15;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadInteger(out int value)
+            {
+                value = 0; SkipSpace(); int began = position;
+                if (position < json.Length && json[position] == '-') position++;
+                if (position >= json.Length || json[position] < '0' || json[position] > '9') return false;
+                if (json[position] == '0') position++;
+                else while (position < json.Length && json[position] >= '0' && json[position] <= '9') position++;
+                if (position < json.Length && !char.IsWhiteSpace(json[position]) &&
+                    json[position] != ',' && json[position] != '}') return false;
+                return int.TryParse(json.Substring(began, position - began), System.Globalization.NumberStyles.AllowLeadingSign,
+                    System.Globalization.CultureInfo.InvariantCulture, out value);
             }
 
             bool ReadItems()

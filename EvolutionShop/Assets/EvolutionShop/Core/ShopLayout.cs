@@ -9,7 +9,7 @@ namespace EvolutionShop
         None, WrongPhase, InvalidModel, UnknownItem, InvalidRotation, OutOfBounds,
         OverlapsFurniture, ProtectedAccess, UnreachableAccess, LimitReached, InsufficientFunds,
         UnknownDefinition, LockedDefinition, StockedDisplay, ModelMismatch,
-        ReservedDisplay, AlreadyStored, CurrencyOverflow
+        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility
     }
 
     public readonly struct LayoutResult
@@ -30,13 +30,33 @@ namespace EvolutionShop
         { Id = id; DefinitionId = definitionId; X = x; Z = z; QuarterTurns = turns; Stored = stored; }
     }
 
+    public readonly struct FacilityView
+    {
+        public readonly string Id;
+        // Grid offsets preserve the original non-grid anchors exactly during migration.
+        public readonly int X, Z, QuarterTurns;
+        public float WorldX => ShopLayout.FacilityAnchorX(Id) + X * ShopLayout.GridSize;
+        public float WorldZ => ShopLayout.FacilityAnchorZ(Id) + Z * ShopLayout.GridSize;
+        internal FacilityView(string id, int x, int z, int quarterTurns)
+        { Id = id; X = x; Z = z; QuarterTurns = quarterTurns; }
+    }
+
+    [Serializable]
+    public sealed class FacilitySave
+    {
+        public string id;
+        public int x, z, quarterTurns;
+    }
+
     [Serializable]
     public sealed class LayoutSave
     {
         public int version;
         public int storeTier;
+        public int labTier;
         public int nextItemNumber;
         public LayoutItemSave[] items;
+        public FacilitySave[] facilities;
     }
 
     [Serializable]
@@ -54,27 +74,64 @@ namespace EvolutionShop
     /// </summary>
     public sealed class ShopLayout
     {
-        public const int SaveVersion = 4, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 12, MaxStoreTier = 2, DecorLimit = 6;
+        public const int SaveVersion = 5, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 12, MaxStoreTier = 2, MaxLabTier = 2, DecorLimit = 6;
         public const float GridSize = .5f, TableWidth = 1.5f, TableDepth = 1f;
         public const string TableDefinitionId = "work-table";
         public const string SmallDisplayId = "small-display", LargeDisplayId = "large-display";
         public const string CoralPlanterId = "coral-planter", BubbleLampId = "bubble-lamp", SillyStatueId = "silly-statue";
+        public const string BloomFacilityId = "lab-bloom", FlowFacilityId = "lab-flow", IncubatorFacilityId = "lab-incubator", UpgradeFacilityId = "lab-upgrade";
         private const float BodyMargin = .35f, PathStep = .25f;
         private const float MinPathZ = -5f;
-        private const int PathHeight = 41;
+        private int PathHeight => 41 + 16 * LabTier;
         private float MinPathX => StoreMinX + .5f;
         private int PathWidth => 53 + 16 * StoreTier;
         private List<LayoutItemView> items = new List<LayoutItemView>();
+        private List<FacilityView> facilities = DefaultFacilities();
         private int nextItemNumber = 1;
         private bool[] reachable;
         private Rect[] bodyObstacles;
 
         public int StoreTier { get; private set; }
+        public int LabTier { get; private set; }
+        public float LabMaxZ => 5.5f + 4f * LabTier;
+        public int NextLabExpansionPrice => LabTier == 0 ? 60 : LabTier == 1 ? 120 : 0;
         public float StoreMinX => -7f - 4f * StoreTier;
         public int NextExpansionPrice => StoreTier == 0 ? 60 : StoreTier == 1 ? 120 : 0;
         public int DisplayLimit => StoreTier + 1;
         public int DecorCount => items.FindAll(item => IsDecor(item.DefinitionId)).Count;
         public int StoredCount => items.FindAll(item => item.Stored).Count;
+        public IReadOnlyList<FacilityView> Facilities => Array.AsReadOnly(facilities.ToArray());
+
+        public FacilityView? GetFacility(string id)
+        {
+            foreach (var facility in facilities) if (facility.Id == id) return facility;
+            return null;
+        }
+        public static bool IsFacility(string id) => FacilityName(id) != null;
+        public static string FacilityName(string id)
+            => id == BloomFacilityId ? "Bloom grower" : id == FlowFacilityId ? "Flow grower" :
+                id == IncubatorFacilityId ? "Incubator" : id == UpgradeFacilityId ? "Siphon upgrade" : null;
+        public static float FacilityWidth(string id)
+            => id == IncubatorFacilityId ? 2f : IsFacility(id) ? 1.75f : 0f;
+        public static float FacilityDepth(string id)
+            => id == BloomFacilityId || id == FlowFacilityId ? 1.6f : id == IncubatorFacilityId ? 1.5f : id == UpgradeFacilityId ? 1.25f : 0f;
+        internal static float FacilityAnchorX(string id)
+            => id == BloomFacilityId ? -4.2f : id == FlowFacilityId ? -1.4f : id == IncubatorFacilityId ? 2f : -5.5f;
+        internal static float FacilityAnchorZ(string id) => id == UpgradeFacilityId ? 1.9f : 3.85f;
+        private static List<FacilityView> DefaultFacilities() => new List<FacilityView>
+        {
+            new FacilityView(BloomFacilityId, 0, 0, 0), new FacilityView(FlowFacilityId, 0, 0, 0),
+            new FacilityView(IncubatorFacilityId, 0, 0, 0), new FacilityView(UpgradeFacilityId, 0, 0, 3)
+        };
+        public bool TryGetFacilityAccessPoint(string id, out float x, out float z)
+        {
+            x = z = 0;
+            var facility = GetFacility(id);
+            if (!facility.HasValue) return false;
+            Point point = FacilityAccessPoint(facility.Value);
+            x = point.X; z = point.Z;
+            return true;
+        }
         // A tiny derived mask avoids allocations when the HUD/customer cache polls appeal.
         // Moving furniture changes this value; it is never separately persisted.
         public int AppealPoints
@@ -168,10 +225,8 @@ namespace EvolutionShop
         // their narrower interaction colliders. Coordinates are local to the shop floor.
         private static readonly Rect[] FixedFurniture =
         {
-            Rect.At(-4.2f, 3.85f, 1.75f, 1.6f), Rect.At(-1.4f, 3.85f, 1.75f, 1.6f),
-            Rect.At(2f, 3.85f, 2f, 1.5f), Rect.At(5.5f, -1.2f, 1.5f, 2.2f),
-            Rect.At(5.5f, -3.85f, 1.5f, 2.2f), Rect.At(-5.5f, -2.2f, 1.3f, 2.4f),
-            Rect.At(-5.5f, 1.9f, 1.25f, 1.75f)
+            Rect.At(5.5f, -1.2f, 1.5f, 2.2f), Rect.At(5.5f, -3.85f, 1.5f, 2.2f),
+            Rect.At(-5.5f, -2.2f, 1.3f, 2.4f)
         };
         private static readonly Rect[] Partition =
         { new Rect(-7, .39f, -1.6f, .61f), new Rect(1.6f, .39f, 7, .61f) };
@@ -181,8 +236,7 @@ namespace EvolutionShop
             new Point(-3.8f, -2.8f), new Point(-2.85f, -3.55f), // Queue.
             new Point(3.7f, -1.2f), new Point(3.05f, -1.95f),
             new Point(3.7f, -3.85f), new Point(3.05f, -3.1f), // Two browse places per tank.
-            new Point(-4.2f, 2.35f), new Point(-1.4f, 2.35f), new Point(2f, 2.35f),
-            new Point(-4f, 1.9f), new Point(-3.9f, -2.2f) // Lab operators and counter.
+            new Point(-3.9f, -2.2f) // Counter; lab operator points follow their facility.
         };
         private static readonly Rect MainAisle = new Rect(-.6f, -5.2f, .6f, 2.4f);
         private static readonly Rect DoorClearance = new Rect(-1.6f, .05f, 1.6f, .95f);
@@ -210,7 +264,7 @@ namespace EvolutionShop
                 DecorCount >= DecorLimit && IsDecor(definitionId))) return LayoutResult.Fail(LayoutFailure.LimitReached);
             if (quarterTurns < 0 || quarterTurns > 3) return LayoutResult.Fail(LayoutFailure.InvalidRotation);
             // Bound integers before multiplying, indexing or allocating for untrusted input.
-            if (!ValidGrid(x, z, StoreTier)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
+            if (!ValidGrid(x, z, StoreTier, LabTier)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
             var proposed = Clone();
             string id = purchase ? ItemId(nextItemNumber) : movingId;
             var replacement = new LayoutItemView(id, definitionId, x, z, quarterTurns);
@@ -333,17 +387,70 @@ namespace EvolutionShop
             return LayoutResult.Ok();
         }
 
+        public LayoutResult TryPreviewLabExpansion(out ShopLayout candidate)
+        {
+            candidate = null;
+            if (LabTier >= MaxLabTier) return LayoutResult.Fail(LayoutFailure.LimitReached);
+            var proposed = Clone();
+            proposed.LabTier++;
+            LayoutResult valid = proposed.ValidateAll();
+            if (!valid.Success) return valid;
+            candidate = proposed;
+            return LayoutResult.Ok();
+        }
+
+        public LayoutResult TryExpandLab(GameModel model, ShopDayPhase phase)
+        {
+            if (phase != ShopDayPhase.Night) return LayoutResult.Fail(LayoutFailure.WrongPhase);
+            if (model == null) return LayoutResult.Fail(LayoutFailure.InvalidModel);
+            if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
+            LayoutResult valid = TryPreviewLabExpansion(out var candidate);
+            if (!valid.Success) return valid;
+            if (!model.TrySpendCredits(NextLabExpansionPrice)) return LayoutResult.Fail(LayoutFailure.InsufficientFunds);
+            Publish(candidate);
+            return LayoutResult.Ok();
+        }
+
+        public LayoutResult TryPreviewFacility(string id, int x, int z, int quarterTurns, out ShopLayout candidate)
+        {
+            candidate = null;
+            if (!IsFacility(id)) return LayoutResult.Fail(LayoutFailure.UnknownFacility);
+            if (quarterTurns < 0 || quarterTurns > 3) return LayoutResult.Fail(LayoutFailure.InvalidRotation);
+            if (!ValidFacilityOffsets(x, z)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
+            var proposed = Clone();
+            int index = proposed.facilities.FindIndex(facility => facility.Id == id);
+            proposed.facilities[index] = new FacilityView(id, x, z, quarterTurns);
+            LayoutResult valid = proposed.ValidateAll();
+            if (!valid.Success) return valid;
+            candidate = proposed;
+            return LayoutResult.Ok();
+        }
+
+        public LayoutResult TryMoveFacility(GameModel model, ShopDayPhase phase, string id, int x, int z, int quarterTurns)
+        {
+            if (phase != ShopDayPhase.Night) return LayoutResult.Fail(LayoutFailure.WrongPhase);
+            if (model == null) return LayoutResult.Fail(LayoutFailure.InvalidModel);
+            if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
+            LayoutResult valid = TryPreviewFacility(id, x, z, quarterTurns, out var candidate);
+            if (!valid.Success) return valid;
+            // Production lives in GameModel; relocating its one presentation never recreates or resets it.
+            Publish(candidate);
+            return LayoutResult.Ok();
+        }
+
         private void Publish(ShopLayout candidate)
         {
             items = candidate.items;
+            facilities = candidate.facilities;
             nextItemNumber = candidate.nextItemNumber;
             StoreTier = candidate.StoreTier;
+            LabTier = candidate.LabTier;
             reachable = candidate.reachable;
             bodyObstacles = candidate.bodyObstacles;
         }
 
-        private ShopLayout Clone() => new ShopLayout { nextItemNumber = nextItemNumber, StoreTier = StoreTier,
-            items = new List<LayoutItemView>(items) };
+        private ShopLayout Clone() => new ShopLayout { nextItemNumber = nextItemNumber, StoreTier = StoreTier, LabTier = LabTier,
+            items = new List<LayoutItemView>(items), facilities = new List<FacilityView>(facilities) };
         private int CountTables() => items.FindAll(item => item.DefinitionId == TableDefinitionId).Count;
         private int CountDisplays() => items.FindAll(item => DefinitionSlotCount(item.DefinitionId) > 0).Count;
         private bool MatchesModel(GameModel model)
@@ -358,13 +465,18 @@ namespace EvolutionShop
 
         public LayoutSave CaptureSave()
         {
-            var save = new LayoutSave { version = SaveVersion, storeTier = StoreTier,
-                nextItemNumber = nextItemNumber, items = new LayoutItemSave[items.Count] };
+            var save = new LayoutSave { version = SaveVersion, storeTier = StoreTier, labTier = LabTier,
+                nextItemNumber = nextItemNumber, items = new LayoutItemSave[items.Count], facilities = new FacilitySave[facilities.Count] };
             for (int i = 0; i < items.Count; i++)
             {
                 var item = items[i];
                 save.items[i] = new LayoutItemSave { id = item.Id, definitionId = item.DefinitionId,
                     x = item.X, z = item.Z, quarterTurns = item.QuarterTurns, stored = item.Stored };
+            }
+            for (int i = 0; i < facilities.Count; i++)
+            {
+                var facility = facilities[i];
+                save.facilities[i] = new FacilitySave { id = facility.Id, x = facility.X, z = facility.Z, quarterTurns = facility.QuarterTurns };
             }
             return save;
         }
@@ -372,7 +484,8 @@ namespace EvolutionShop
         public static bool TryRestore(LayoutSave save, out ShopLayout layout)
         {
             layout = null;
-            if (save == null || (save.version != 1 && save.version != 2 && save.version != 3 && save.version != SaveVersion) || save.storeTier < 0 || save.storeTier > MaxStoreTier ||
+            if (save == null || save.version < 1 || save.version > SaveVersion || save.storeTier < 0 || save.storeTier > MaxStoreTier ||
+                save.labTier < 0 || save.labTier > MaxLabTier || save.version < 5 && save.labTier != 0 ||
                 save.version == 1 && save.storeTier != 0 || save.items == null ||
                 save.items.Length > (save.version == 1 ? MaxItems : save.version == 2 ? 6 : MaxOwnedItems) ||
                 save.nextItemNumber < 1 || save.version < 4 && save.nextItemNumber != save.items.Length + 1) return false;
@@ -385,12 +498,13 @@ namespace EvolutionShop
                     save.version < 3 && IsDecor(item.definitionId) ||
                     save.version < 4 && item.stored ||
                     item.definitionId == LargeDisplayId && save.storeTier < 1 ||
-                    item.quarterTurns < 0 || item.quarterTurns > 3 || !ValidGrid(item.x, item.z, save.storeTier)) return false;
+                    item.quarterTurns < 0 || item.quarterTurns > 3 || !ValidGrid(item.x, item.z, save.storeTier, save.labTier)) return false;
                 if (!TryItemNumber(item.id, out int number) || number >= save.nextItemNumber || !seen.Add(number)) return false;
                 ordered.Add(item);
             }
             ordered.Sort((a, b) => { TryItemNumber(a.id, out int an); TryItemNumber(b.id, out int bn); return an.CompareTo(bn); });
-            var candidate = new ShopLayout { nextItemNumber = save.nextItemNumber, StoreTier = save.storeTier };
+            var candidate = new ShopLayout { nextItemNumber = save.nextItemNumber, StoreTier = save.storeTier, LabTier = save.labTier };
+            if (!TryReadFacilities(save, out candidate.facilities)) return false;
             foreach (var item in ordered)
             {
                 candidate.items.Add(new LayoutItemView(item.id, item.definitionId, item.x, item.z, item.quarterTurns, item.stored));
@@ -401,6 +515,25 @@ namespace EvolutionShop
             return true;
         }
 
+        private static bool TryReadFacilities(LayoutSave save, out List<FacilityView> result)
+        {
+            result = DefaultFacilities();
+            // Old saves have no relocation state. Exact default arrays also allow a current
+            // capture to represent an old fixture without smuggling new facility poses.
+            if (save.version < 5 && (save.facilities == null || save.facilities.Length == 0)) return true;
+            if (save.facilities == null || save.facilities.Length != result.Count) return false;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var facility in save.facilities)
+            {
+                if (facility == null || !IsFacility(facility.id) || !seen.Add(facility.id) ||
+                    !ValidFacilityOffsets(facility.x, facility.z) || facility.quarterTurns < 0 || facility.quarterTurns > 3) return false;
+                int index = result.FindIndex(value => value.Id == facility.id);
+                if (save.version < 5 && (facility.x != 0 || facility.z != 0 || facility.quarterTurns != result[index].QuarterTurns)) return false;
+                result[index] = new FacilityView(facility.id, facility.x, facility.z, facility.quarterTurns);
+            }
+            return true;
+        }
+
         private LayoutResult ValidateAll()
         {
             var access = RequiredAccessPoints();
@@ -408,16 +541,30 @@ namespace EvolutionShop
             {
                 if (items[i].Stored) continue;
                 Rect table = Footprint(items[i]);
-                if (table.MinX < StoreMinX + .2f || table.MaxX > 6.8f || table.MinZ < -5.4f || table.MaxZ > 5.4f ||
+                if (table.MinX < StoreMinX + .2f || table.MaxX > 6.8f || table.MinZ < -5.4f || table.MaxZ > LabMaxZ - .1f ||
                     table.MinX < -6.8f && table.MaxZ > .19f ||
                     DefinitionSlotCount(items[i].DefinitionId) > 0 && table.MaxZ > .19f)
                     return LayoutResult.Fail(LayoutFailure.OutOfBounds);
                 foreach (var wall in Partition) if (table.Overlaps(wall)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
                 foreach (var fixedItem in FixedFurniture) if (table.Overlaps(fixedItem)) return LayoutResult.Fail(LayoutFailure.OverlapsFurniture);
+                foreach (var facility in facilities) if (table.Overlaps(FacilityFootprint(facility))) return LayoutResult.Fail(LayoutFailure.OverlapsFurniture);
                 for (int j = 0; j < i; j++) if (!items[j].Stored && table.Overlaps(Footprint(items[j]))) return LayoutResult.Fail(LayoutFailure.OverlapsFurniture);
-                if (table.Overlaps(MainAisle) || table.Overlaps(DoorClearance)) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
+                if (OverlapsProtectedAisle(table)) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
                 foreach (var point in access)
                     if (table.Overlaps(Rect.At(point.X, point.Z, 1, 1))) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
+            }
+            for (int i = 0; i < facilities.Count; i++)
+            {
+                Rect body = FacilityFootprint(facilities[i]);
+                if (body.MinX < -6.8f || body.MaxX > 6.8f || body.MinZ < .81f || body.MaxZ > LabMaxZ - .1f)
+                    return LayoutResult.Fail(LayoutFailure.OutOfBounds);
+                for (int j = 0; j < i; j++)
+                    if (body.Overlaps(FacilityFootprint(facilities[j]))) return LayoutResult.Fail(LayoutFailure.OverlapsFurniture);
+                if (OverlapsProtectedAisle(body)) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
+                foreach (var point in access)
+                    if (body.Overlaps(Rect.At(point.X, point.Z, 1, 1))) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
+                // A lab-only operator may not stand in the store across the dividing wall.
+                if (FacilityAccessPoint(facilities[i]).Z < .95f) return LayoutResult.Fail(LayoutFailure.UnreachableAccess);
             }
             BuildReachability();
             foreach (var point in access)
@@ -435,10 +582,23 @@ namespace EvolutionShop
         {
             var points = new List<Point>(AccessPoints);
             for (int tier = 1; tier <= StoreTier; tier++) points.Add(new Point(-5f - tier * 4f, -2.5f));
+            for (int tier = 1; tier <= LabTier; tier++) points.Add(new Point(.25f, 3.5f + tier * 4f));
+            foreach (var facility in facilities) points.Add(FacilityAccessPoint(facility));
             foreach (var item in items)
                 if (!item.Stored && DefinitionSlotCount(item.DefinitionId) > 0)
                 { points.Add(BrowsePoint(item, 0)); points.Add(BrowsePoint(item, 1)); }
             return points;
+        }
+
+        private bool OverlapsProtectedAisle(Rect body)
+            => body.Overlaps(MainAisle) || body.Overlaps(DoorClearance) ||
+                LabTier > 0 && body.Overlaps(new Rect(-.35f, 5.4f, .85f, LabMaxZ - .3f));
+
+        private static Point FacilityAccessPoint(FacilityView facility)
+        {
+            float x = 0, z = -1.5f;
+            for (int turn = 0; turn < facility.QuarterTurns; turn++) { float oldX = x; x = z; z = -oldX; }
+            return new Point(facility.WorldX + x, facility.WorldZ + z);
         }
 
         private static Point BrowsePoint(LayoutItemView item, int spot)
@@ -472,9 +632,10 @@ namespace EvolutionShop
         {
             var obstacles = new List<Rect>();
             foreach (var rect in FixedFurniture) obstacles.Add(rect.Inflate(BodyMargin));
+            foreach (var facility in facilities) obstacles.Add(FacilityFootprint(facility).Inflate(BodyMargin));
             foreach (var rect in Partition) obstacles.Add(rect.Inflate(BodyMargin));
             // The extension is an L-shaped floor: its north edge is a wall, not extra lab.
-            if (StoreTier > 0) obstacles.Add(new Rect(StoreMinX - 1f, .19f - BodyMargin, -6.8f + BodyMargin, 6f));
+            if (StoreTier > 0) obstacles.Add(new Rect(StoreMinX - 1f, .19f - BodyMargin, -6.8f + BodyMargin, LabMaxZ + 1f));
             foreach (var item in items) if (!item.Stored) obstacles.Add(Footprint(item).Inflate(BodyMargin));
             bodyObstacles = obstacles.ToArray();
             reachable = new bool[PathWidth * PathHeight];
@@ -503,7 +664,7 @@ namespace EvolutionShop
 
         private bool Walkable(float x, float z)
         {
-            if (x < StoreMinX + .2f + BodyMargin || x > 6.8f - BodyMargin || z < -5.4f + BodyMargin || z > 5.4f - BodyMargin) return false;
+            if (x < StoreMinX + .2f + BodyMargin || x > 6.8f - BodyMargin || z < -5.4f + BodyMargin || z > LabMaxZ - .1f - BodyMargin) return false;
             foreach (var rect in bodyObstacles) if (rect.Contains(x, z)) return false;
             return true;
         }
@@ -516,8 +677,14 @@ namespace EvolutionShop
             => Rect.At(item.X * GridSize, item.Z * GridSize,
                 item.QuarterTurns % 2 == 0 ? DefinitionWidth(item.DefinitionId) : DefinitionDepth(item.DefinitionId),
                 item.QuarterTurns % 2 == 0 ? DefinitionDepth(item.DefinitionId) : DefinitionWidth(item.DefinitionId));
-        private static bool ValidGrid(int x, int z, int tier)
-            => x >= -13 - 8 * tier && x <= 13 && z >= -10 && z <= 10;
+        private static Rect FacilityFootprint(FacilityView facility)
+            => Rect.At(facility.WorldX, facility.WorldZ,
+                facility.QuarterTurns % 2 == 0 ? FacilityWidth(facility.Id) : FacilityDepth(facility.Id),
+                facility.QuarterTurns % 2 == 0 ? FacilityDepth(facility.Id) : FacilityWidth(facility.Id));
+        private static bool ValidGrid(int x, int z, int storeTier, int labTier)
+            => x >= -13 - 8 * storeTier && x <= 13 && z >= -10 && z <= 10 + 8 * labTier;
+        private static bool ValidFacilityOffsets(int x, int z)
+            => x >= -32 && x <= 32 && z >= -16 && z <= 32;
         private static string ItemId(int number) => "table-" + number.ToString(CultureInfo.InvariantCulture);
         private static bool TryItemNumber(string id, out int number)
         {
