@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-**R05.5 lab validation is delivered.** All five existing recipes and the conditioning process passed the lab gate, including six fresh-process production states and zero-cash recovery from full storage. All 1,209 Unity tests and final packaged Windows checks passed. R05 technical work is complete; human lab tuning remains open. Next bounded assignment: R06.1 presentation sample.
+**R05.5 lab validation is delivered.** All five existing recipes and the conditioning process passed the lab gate, including six fresh-process production states and zero-cash recovery from full storage. All 1,209 Unity tests and final packaged Windows checks passed. R05 technical work is complete; human lab tuning remains open. Active bounded assignment: R06.1 presentation sample.
 
 Updated: 2026-10-04. Working title only. Current validated source checkpoint: commit `4ceeb1d`, delivery tag **r05-lab-validated**. Prior R05.4 source `af48f3b`, tag **r05-4-airfin**. Prior R05.3 source `a0bbec1`, tag **r05-3-conditioning**. Prior R05.2 source `268256c`, tag **r05-2-research**. Prior R05.1b source `f2584d3`, tag **r05-1b-storage**. Prior R05.1a source `dd6eddb`, tag **r05-1a-lab**. Prior R04.5 source `36a3bd0`, tag **r04-5-layout**, added validation only over gameplay `e2b58ad`. Prior R04.4 tag **r04-4-storage**, domain/runtime `fa4c14f`. Prior R04.3 source `847f319`, tag **r04-3-decor**. Prior R04.2 source `14ad6b9`, tag **r04-2-expansion**. Prior R04.1 source `a9b474c`, tag **r04-1-placement**; domain/save `9088d53`. Previous R03.5 source `1dd96e4`, delivery tag **r03-trading-validated**. Earlier R03.4 source `ae27a64`, tag **r03-4-slap**; domain/save checkpoint `cc16447`. Prior reputation source `a620c9a`, tag **r03-3-reputation**, domain `78aad11`. Prior customer source `c478fe5`, tag **r03-2-customer-types**; later documentation-only commits do not change source or builds. Earlier: tag `r03-1-pricing` (`0067e95`); patched source `fb4e4d2`. Preserved failed-shutdown candidate checkpoint: **9197e1c**, tag **r02-cycle-validation-candidate**; its gameplay source was **2ab4929**. Continuous-cycle rule checkpoint: **4b28bfe**. Previous player tag: `r02-daily-report`; report implementation: `de2de99`. Customer rule checkpoint: `b711bc7`, tag `r02-customer-rules`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
 
@@ -285,7 +285,7 @@ Gate/playtest: a new facility produces a new kind of decision or creature, and l
 
 Depends on: R03–R05 playable behavior. Output: one representative finished-quality corner and a reusable humor system.
 
-- [ ] R06.1 Establish a coherent sample: one store corner, one lab station, one creature, one customer, and one employee model/animation set. Review in the actual game.
+- [~] R06.1 Establish a coherent sample: one store corner, one lab station, one creature, one customer, and one employee model/animation set. Review in the actual game.
 - [ ] R06.2 Define asset scale/pivots/materials, silhouettes, collision/access footprints, animation events, readability, and audio loudness conventions.
 - [ ] R06.3 Implement the six bounded incident types with reusable triggers/reactions, skip/cancel behavior, cooldowns, captions, and separate humor volume/reduced-gags setting. Preview the worker incident with a fixture/placeholder; connect it to real completed jobs in R07.5.
 - [ ] R06.4 Verify available gags during queues, closing, pauses, and interrupted actions; ensure comedy does not obscure money, stock, or readiness feedback. Real worker-job interruption tests belong to R07.5.
@@ -1108,3 +1108,15 @@ The native scene stages three Driftwing doses alongside the reserved conditionin
 **Playable delivery.** `EvolutionShop-LabValidated-Windows.zip` (69,546,964 bytes) and extracted `EvolutionShop-LabValidated-Windows/EvolutionShop.exe` in this task's outputs. ZIP SHA256 `610EAC2CE5E30AAFA83EC1171EAD0B48BA7C50E6553D0894362600D553D39F7E`; runtime DLL SHA256 `6D4A9A49C05446651B88C9A36973A0002BAA45EFDCEB336801D182A6833CC7D2`. The post-run extracted files and archive hash were rechecked. Run without smoke flags for normal play and the existing local save. WASD/mouse move/look, E station/panel, held left mouse culture collection, Tab journal, Escape pause. The user-facing playtest guide and selected evidence accompany the build.
 
 **Continuation.** Reverify workspace, pinned Editor and actual connection; preserve user saves and unrelated running players. Read any lab feedback before tuning. Start only R06.1's bounded visual sample next; review actual-game readability/scale/access and get visual/audio feedback before bulk assets. Do not conflate technical R05 completion with human approval of progression or tone.
+
+## R06.1 active assignment — presentation sample (2026-10-04)
+
+Owner: Codex. Baseline r05-lab-validated / c4fe0b1. Continue selects only this bounded sample. Direction: original rounded aquatic curiosity shop, teal enamel, honey wood, cream graphics and coral accents. No external asset source, paid provider, new package, staffing authority or save migration.
+
+- [~] R06.1a Reverify path/editor/connection, preserve protected file hashes, run exact-project baseline.
+- [ ] R06.1b Refine one front display corner and Bloom grower; keep interaction and navigation footprints.
+- [ ] R06.1c Integrate a Pondlet and casual visitor sample; build a shared employee model with idle, walk, greet and carry presentation. Preserve customer decisions/transactions.
+- [ ] R06.1d Add a paused, look-only sample viewer with clear employee-preview labeling and exact camera restoration. No preview creature enters inventory.
+- [ ] R06.1e Validate containment, pause/exit, material cleanup, customer routes/sale, lab interaction, Windows build and actual captures. Save small source/delivery checkpoints and update this guide.
+
+Acceptance: all five sample elements are inspectable in the actual game; normal growing and trading still work; preview never advances or mutates the saved shop. Actual screenshots are reviewed separately from automated assertions. Human visual tone acceptance and audio listening remain pending; no bulk content or R06.2 work in this assignment.
