@@ -151,6 +151,8 @@ namespace EvolutionShop
             if (!candidate.CanReachMainAisle(player.x, player.z))
             { reason = "Keep a clear route from your position to the main aisle."; return false; }
             reason = PlacementCost == 0 ? "Clear / move owned furniture for free" : "Clear / buy for " + PlacementCost + " credits";
+            if (ShopLayout.IsDecor(placementDefinition))
+                reason += " / appeal " + Appeal.Points + " > " + candidate.AppealPoints + " of 30" + (candidate.AppealPoints == Appeal.Points ? " (lab or duplicate adds zero)" : "");
             return true;
         }
 
@@ -240,7 +242,7 @@ namespace EvolutionShop
                 case LayoutFailure.OverlapsFurniture: return "That spot overlaps furniture or a machine.";
                 case LayoutFailure.ProtectedAccess: return "Keep the doorway, main aisle and service spaces clear.";
                 case LayoutFailure.UnreachableAccess: return "This would block access to a station.";
-                case LayoutFailure.LimitReached: return "This furniture limit is reached, or this display needs a store expansion.";
+                case LayoutFailure.LimitReached: return "This furniture limit is reached. Tables: 3; decor: 6; displays depend on store tier.";
                 case LayoutFailure.InsufficientFunds: return "Not enough credits. Nothing was purchased.";
                 case LayoutFailure.UnknownItem: return "That furniture is no longer available.";
                 default: return "That placement is unavailable. Nothing was purchased.";
@@ -275,13 +277,19 @@ namespace EvolutionShop
             Heading("Arrange your rooms / store tier " + (Layout.StoreTier + 1) + " of 3");
             if (Cycle.Phase != ShopDayPhase.Night) { Text("Come back during preparation night."); return; }
             int displayCount = 0, tableCount = 0;
-            foreach (var item in Layout.Items) if (ShopLayout.DefinitionSlotCount(item.DefinitionId) > 0) displayCount++; else tableCount++;
+            foreach (var item in Layout.Items) if (ShopLayout.DefinitionSlotCount(item.DefinitionId) > 0) displayCount++; else if (item.DefinitionId == ShopLayout.TableDefinitionId) tableCount++;
+            Text("Store appeal " + Appeal.Points + " / 30  |  Decor " + Layout.DecorCount + " / " + ShopLayout.DecorLimit);
+            GUILayout.BeginHorizontal();
+            Button("Furniture", () => showDecorCatalogue = false);
+            Button("Decor + appeal", () => showDecorCatalogue = true);
+            GUILayout.EndHorizontal();
+            if (showDecorCatalogue) { DrawDecorCatalogue(); DrawOwnedFurniture(); return; }
             Text("Display furniture " + displayCount + " / " + Layout.DisplayLimit + "  |  Total creature slots " + Model.TankIds.Length);
             if (Layout.StoreTier < 2)
             {
                 Small("Add a 4 m west wing. Keep the front entrance and lab unchanged. Display limit becomes " + (Layout.DisplayLimit + 1) + (Layout.StoreTier == 0 ? "; unlock large displays." : "."));
                 Button("Expand store / " + Layout.NextExpansionPrice + " credits", () => BuyStoreExpansion());
-                Small("Expansion buys floor space; display furniture is purchased separately. No customer or price bonus yet.");
+                Small("Expansion buys floor space; displays add capacity. Decor adds store appeal.");
             }
             else Small("Store fully expanded. Three purchased displays plus your two original tanks.");
             Space(); Heading("Buy furniture");
@@ -294,6 +302,11 @@ namespace EvolutionShop
             if (tableCount < ShopLayout.MaxItems)
                 Button("Work table / no creature slots / 12 credits", () => BeginPlacement());
             Small("Aim at the floor. R rotates; left click places; right click or Escape cancels. Green outline marks a valid footprint. Display fronts need customer access.");
+            DrawOwnedFurniture();
+        }
+
+        void DrawOwnedFurniture()
+        {
             Space(); Heading("Owned furniture / move for free");
             foreach (var item in Layout.Items)
             {

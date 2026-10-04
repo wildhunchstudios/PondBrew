@@ -54,14 +54,14 @@ namespace EvolutionShop.Tests
             slot.game = model.CaptureSave(); Write(slot); byte[] original = File.ReadAllBytes(PathFor());
             var loaded = Read(out var restored);
             AssertSameProgress(slot, loaded, model, restored);
-            Assert.That(loaded.layout.version, Is.EqualTo(2)); Assert.That(loaded.formatVersion, Is.EqualTo(9));
+            Assert.That(loaded.layout.version, Is.EqualTo(ShopLayout.SaveVersion)); Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(restored.CaptureSave().tanks.Length, Is.EqualTo(tier == 0 ? 3 : 4));
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original)); Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
         }
 
         [Test] public void ThreePurchasedDisplaysKeepSevenDistinctSlotsAcrossRepeatedFileSaves()
         {
-            var layout = new LayoutSave { version = 2, storeTier = 2, nextItemNumber = 4, items = new[]
+            var layout = new LayoutSave { version = ShopLayout.SaveVersion, storeTier = 2, nextItemNumber = 4, items = new[]
             {
                 new LayoutItemSave { id = "table-1", definitionId = "small-display", x = 3, z = -5 },
                 new LayoutItemSave { id = "table-2", definitionId = "large-display", x = -18, z = -3 },
@@ -130,7 +130,7 @@ namespace EvolutionShop.Tests
             }
             slot.game = model.CaptureSave(); byte[] original = WriteLegacy(slot);
             var loaded = Read(out var restored);
-            Assert.That(loaded.layout.storeTier, Is.Zero); Assert.That(loaded.layout.version, Is.EqualTo(2));
+            Assert.That(loaded.layout.storeTier, Is.Zero); Assert.That(loaded.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
             Assert.That(loaded.layout.items.Length, Is.EqualTo(3)); Assert.That(loaded.layout.nextItemNumber, Is.EqualTo(4));
             AssertSameProgress(slot, loaded, model, restored, false);
             for (int i = 0; i < 3; i++) Assert.That(JsonUtility.ToJson(loaded.layout.items[i]), Is.EqualTo(JsonUtility.ToJson(slot.layout.items[i])));
@@ -177,14 +177,14 @@ namespace EvolutionShop.Tests
                 problem == "nested-decoy" ? "\"metadata\":{\"storeTier\":0}," : "\"storeTier\":" + problem + ",";
             Assert.That(layout, Does.Contain("\"storeTier\":0"));
             // Build an explicit field order so JsonUtility's output order is not part of the guard test.
-            layout = "{\"version\":2," + replacement + "\"nextItemNumber\":1,\"items\":[]}";
+            layout = "{\"version\":" + ShopLayout.SaveVersion + "," + replacement + "\"nextItemNumber\":1,\"items\":[]}";
             RejectRead(JsonWithLayout(slot, layout));
         }
 
         [Test] public void EscapedDirectTierAndUnrelatedNestedTierAreAccepted()
         {
             var slot = Slot(new ShopLayout().CaptureSave(), ShopDayPhase.Night, out _);
-            string json = JsonWithLayout(slot, "{\"version\":2,\"\\u0073toreTier\":0,\"nextItemNumber\":1,\"items\":[],\"noise\":{\"storeTier\":99}}");
+            string json = JsonWithLayout(slot, "{\"version\":" + ShopLayout.SaveVersion + ",\"\\u0073toreTier\":0,\"nextItemNumber\":1,\"items\":[],\"noise\":{\"storeTier\":99}}");
             File.WriteAllText(PathFor(), json); byte[] original = File.ReadAllBytes(PathFor());
             Assert.That(Read(out _).layout.storeTier, Is.Zero); Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
         }
@@ -216,8 +216,8 @@ namespace EvolutionShop.Tests
         public void EnvelopeLayoutPairingsRemainExplicit(string problem)
         {
             var slot = Slot(new ShopLayout().CaptureSave(), ShopDayPhase.Night, out _);
-            if (problem == "format8-layout2") slot.formatVersion = 8;
-            else if (problem == "format9-layout1") slot.layout.version = 1;
+            if (problem == "format8-layout2") { slot.formatVersion = 8; slot.layout.version = 2; }
+            else if (problem == "format9-layout1") { slot.formatVersion = 9; slot.layout.version = 1; }
             else slot.formatVersion = SaveStore.CurrentFormatVersion + 1;
             RejectRead(JsonUtility.ToJson(slot));
         }
@@ -232,7 +232,7 @@ namespace EvolutionShop.Tests
 
         static LayoutSave DisplayLayout(int tier) => new LayoutSave
         {
-            version = 2, storeTier = tier, nextItemNumber = 2,
+            version = ShopLayout.SaveVersion, storeTier = tier, nextItemNumber = 2,
             items = new[] { new LayoutItemSave { id = "table-1", definitionId = tier == 0 ? "small-display" : "large-display",
                 x = tier == 0 ? 3 : tier == 1 ? -18 : -26, z = tier == 0 ? -5 : -3, quarterTurns = 0 } }
         };

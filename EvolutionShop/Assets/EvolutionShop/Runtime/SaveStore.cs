@@ -27,16 +27,17 @@ namespace EvolutionShop
         // 4: price tags (game 2) and price refusals (report 2). 5: several unresolved visitors (report 3).
         // 6: reputation. 7: slap outcomes and intentional slap/audio/motion settings.
         // 8: owned work-table layout. 9: two store expansions and owned stock displays.
-        // Formats 1-8 migrate in memory; historical saves never
+        // 10: initial decor. Appeal is derived from layout and is never a second saved authority.
+        // Formats 1-9 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 9;
+        public const int CurrentFormatVersion = 10;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 9 ? 2 : 0;
+            format >= 4 && format <= 10 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 9 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 10 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -147,7 +148,7 @@ namespace EvolutionShop
                 }
                 else
                 {
-                    int layoutVersion = header.formatVersion == 8 ? 1 : ShopLayout.SaveVersion;
+                    int layoutVersion = header.formatVersion == 8 ? 1 : header.formatVersion == 9 ? 2 : ShopLayout.SaveVersion;
                     if (header.layout == null || header.layout.version != layoutVersion ||
                         !new LayoutJsonShape(json, header.formatVersion >= 9).HasExplicitItemsArray() ||
                         !ShopLayout.TryRestore(candidate.layout, out restoredLayout))

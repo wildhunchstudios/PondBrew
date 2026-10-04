@@ -321,7 +321,7 @@ namespace EvolutionShop
             }
             else Small("No new arrivals. Unpaid creatures stay in their tanks when the night begins.");
             GUILayout.Space(8);
-            Small(ReputationLine() + " / arrival gap " + Reputation.ArrivalSeconds.ToString("0.#") + "s while space is free (max 2 visitors).");
+            Small(ReputationLine() + " / arrival gap " + Customers.NextArrivalSeconds.ToString("0.##") + "s while space is free (max 2 visitors).");
             Small(ReputationPriceNote());
         }
         TradeDaySave LastReportForDisplay()
@@ -475,15 +475,17 @@ namespace EvolutionShop
             Small("Three-second active-time cooldown; one reaction per visitor. Paid customers and departing visitors cannot be slapped. No money reward. Remap the key and adjust humor volume or reduced effects in Pause.");
             Space(); Heading("Your shop's reputation");
             Text(ReputationLine());
+            Text(Reputation.TierName);
             Small(Reputation.Tier < 2 ? "Next tier at " + Reputation.NextThreshold + " points." : "Highest tier reached. Reputation is capped at 100.");
             Text("Each completed sale earns 2 points. A visitor who leaves because prices are too high, patience runs out, or you slap them costs 1 point. A refusal followed by a purchase counts as a sale.");
             Small("No reputation loss for empty displays, closing, reloads, or route problems. Reputation stays between 0 and 100; it changes per visit, not at day end.");
-            Text("Better reputation brings arrivals closer together when there is room: currently " + Reputation.ArrivalSeconds.ToString("0.#") + " seconds between arrivals, with at most two visitors in the store.");
+            Text("Reputation and store appeal bring arrivals closer together when there is room: currently " + Customers.NextArrivalSeconds.ToString("0.##") + " seconds between arrivals, with at most two visitors in the store.");
             Text(ReputationPriceNote());
             Small("The bonus is added to each customer's usual limit; for example, 150% plus 10% of standard becomes 160%. Their budget still caps the purchase. Existing visitors keep the limits they arrived with; agreed prices stay fixed.");
             Small("At 10 points: 5s arrival gap, +10% of standard to price limits, +2 credits to budgets. At 30 points: 4s, +20%, +4 credits. Bonuses stop growing at the highest tier. These values are provisional.");
+            DrawAppealDetails();
             Space(); Heading("Your customers");
-            Small("Current limits for new arrivals, including reputation. Up to two visit at once and wait in line at the counter, first come, first served.");
+            Small("Current limits for new arrivals, including reputation and appeal. Up to two visit at once and wait in line at the counter, first come, first served.");
             foreach (var type in Customers.Archetypes)
                 if (type.Weight > 0) Text(type.DisplayName + ": " + CustomerNote(type));
         }
@@ -497,8 +499,8 @@ namespace EvolutionShop
                 default: return "pays up to " + type.TolerancePercent / 100f + "x standard, within a " + type.Budget + "-credit budget; waits " + type.PatienceSeconds + "s at the counter.";
             }
         }
-        string ReputationLine() => "Reputation " + Reputation.Points + " / 100 / " + Reputation.TierName;
-        string ReputationPriceNote() => "New visitors: +" + Reputation.PremiumPercent + "% of standard added to price limits; +" + Reputation.BudgetBonus + " credits to budgets.";
+        string ReputationLine() => "Reputation " + Reputation.Points + " / 100  |  Appeal " + Appeal.Points + " / 30";
+        string ReputationPriceNote() => "New visitors: +" + (Reputation.PremiumPercent + Appeal.ToleranceBonusPercent) + "% of standard added to price limits; +" + (Reputation.BudgetBonus + Appeal.BudgetBonus) + " credits to budgets.";
         void Heading(string text) => GUILayout.Label(text, headingStyle);
         void Text(string text) => GUILayout.Label(text, bodyStyle);
         void Small(string text) => GUILayout.Label(text, smallStyle);

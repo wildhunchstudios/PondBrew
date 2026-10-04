@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    /// <summary>Stable identity on an owned table's collider; no stock or economy authority.</summary>
+    /// <summary>Stable identity on owned furniture colliders; no stock or economy authority.</summary>
     public sealed class PlacedWorkTable : MonoBehaviour
     {
         public string Id { get; internal set; }
@@ -54,6 +54,7 @@ namespace EvolutionShop
                         collider.size = new Vector3(ShopLayout.TableWidth, .96f, ShopLayout.TableDepth);
                         BuildWorktable(root, false);
                     }
+                    else if (ShopLayout.IsDecor(item.DefinitionId)) BuildPlacedDecor(root, item.DefinitionId, false);
                     else BuildPlacedDisplay(root, item.Id, item.DefinitionId, false);
                     placedTables[item.Id] = table;
                 }
@@ -162,16 +163,20 @@ namespace EvolutionShop
                 foreach (var material in new[] { previewValid, previewInvalid, footprintValid, footprintInvalid })
                     material.SetFloat("_Smoothness", .15f);
             }
-            placementPreview = Group(definitionId == ShopLayout.TableDefinitionId ? "Worktable placement preview (no colliders)" : "Display placement preview (no colliders)", transform, Vector3.zero);
+            placementPreview = Group(definitionId == ShopLayout.TableDefinitionId ? "Worktable placement preview (no colliders)" :
+                ShopLayout.IsDecor(definitionId) ? "Decor placement preview (no colliders)" : "Display placement preview (no colliders)", transform, Vector3.zero);
             if (definitionId == ShopLayout.TableDefinitionId) BuildWorktable(placementPreview, true);
+            else if (ShopLayout.IsDecor(definitionId)) BuildPlacedDecor(placementPreview, definitionId, true);
             else BuildPlacedDisplay(placementPreview, null, definitionId, true);
             PreviewMark("Footprint left", new Vector3(-width * .5f + .015f, .028f, 0), new Vector3(.03f, .014f, depth));
             PreviewMark("Footprint right", new Vector3(width * .5f - .015f, .028f, 0), new Vector3(.03f, .014f, depth));
             PreviewMark("Footprint front", new Vector3(0, .028f, -depth * .5f + .015f), new Vector3(width, .014f, .03f));
             PreviewMark("Footprint back", new Vector3(0, .028f, depth * .5f - .015f), new Vector3(width, .014f, .03f));
             // An asymmetric stripe exposes quarter turns even when the transparent top is viewed obliquely.
-            PreviewMark("Front orientation stripe", new Vector3(0, definitionId == ShopLayout.TableDefinitionId ? .973f : 1.65f, -.33f), new Vector3(.55f, .012f, .045f));
-            if (definitionId != ShopLayout.TableDefinitionId)
+            float markerHeight = ShopLayout.IsDecor(definitionId) ? DecorHeight(definitionId) + .013f :
+                definitionId == ShopLayout.TableDefinitionId ? .973f : 1.65f;
+            PreviewMark("Front orientation stripe", new Vector3(0, markerHeight, -.33f), new Vector3(.55f, .012f, .045f));
+            if (ShopLayout.DefinitionSlotCount(definitionId) > 0)
             {
                 PreviewMark("Front access marker (outside furniture footprint)", new Vector3(0, .028f, -depth * .5f - .9f), new Vector3(1.2f, .014f, .34f));
                 var accessLabel = Text(placementPreview, "FRONT ACCESS", new Vector3(0, .038f, -depth * .5f - .9f), .035f, dark.color, 1.08f);
@@ -221,6 +226,7 @@ namespace EvolutionShop
 
         void DisposePlacementPresentation()
         {
+            DisposeDecorPresentation();
             if (previewValid) Destroy(previewValid);
             if (previewInvalid) Destroy(previewInvalid);
             if (footprintValid) Destroy(footprintValid);

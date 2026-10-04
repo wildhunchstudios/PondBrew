@@ -206,7 +206,7 @@ namespace EvolutionShop.Tests
             var save = layout.CaptureSave(); save.version = 1;
             Assert.That(ShopLayout.TryRestore(save, out var migrated), Is.True);
             Assert.That(migrated.GetItem("table-1").Value.X, Is.EqualTo(-4));
-            Assert.That(migrated.CaptureSave().version, Is.EqualTo(2));
+            Assert.That(migrated.CaptureSave().version, Is.EqualTo(ShopLayout.SaveVersion));
             save.storeTier = 1; Assert.That(ShopLayout.TryRestore(save, out _), Is.False);
             save.storeTier = 0; save.items[0].definitionId = ShopLayout.SmallDisplayId;
             Assert.That(ShopLayout.TryRestore(save, out _), Is.False);
@@ -267,3 +267,4 @@ namespace EvolutionShop.Tests
         }
     }
 }
+

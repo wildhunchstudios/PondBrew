@@ -205,8 +205,8 @@ namespace EvolutionShop.Tests
         {
             var slot = FreshSlot(); Write(slot); Read(out _); // Positive control for all other fields.
             string layout = problem == "missing" ? null : problem == "null" ? "null" :
-                problem == "empty" ? "{}" : problem == "missing-items" ? "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1}" :
-                problem == "null-items" ? "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1,\"items\":null}" :
+                problem == "empty" ? "{}" : problem == "missing-items" ? "{\"version\":" + ShopLayout.SaveVersion + ",\"storeTier\":0,\"nextItemNumber\":1}" :
+                problem == "null-items" ? "{\"version\":" + ShopLayout.SaveVersion + ",\"storeTier\":0,\"nextItemNumber\":1,\"items\":null}" :
                 "{\"storeTier\":0,\"nextItemNumber\":1,\"items\":[]}";
             AssertInvalidRead(CurrentJson(slot, layout));
         }
@@ -216,8 +216,8 @@ namespace EvolutionShop.Tests
         {
             var slot = FreshSlot(); Write(slot); Read(out _);
             string payload = problem == "nested-items"
-                ? "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1,\"metadata\":{\"items\":[]}}"
-                : "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1,\"note\":\"\\\"items\\\": []\"}";
+                ? "{\"version\":" + ShopLayout.SaveVersion + ",\"storeTier\":0,\"nextItemNumber\":1,\"metadata\":{\"items\":[]}}"
+                : "{\"version\":" + ShopLayout.SaveVersion + ",\"storeTier\":0,\"nextItemNumber\":1,\"note\":\"\\\"items\\\": []\"}";
             AssertInvalidRead(CurrentJson(slot, payload));
         }
 
@@ -228,7 +228,8 @@ namespace EvolutionShop.Tests
             var slot = FreshSlot(); Write(slot); Read(out _);
             string layout = JsonUtility.ToJson(slot.layout);
             if (problem == "layout-items") layout = layout.Replace("\"items\":[]", "\"items\":[],\"items\":[]");
-            if (problem == "layout-version") layout = layout.Replace("\"version\":2", "\"version\":2,\"version\":2");
+            if (problem == "layout-version") layout = layout.Replace("\"version\":" + ShopLayout.SaveVersion,
+                "\"version\":" + ShopLayout.SaveVersion + ",\"version\":" + ShopLayout.SaveVersion);
             string json = CurrentJson(slot, layout);
             if (problem == "root-layout") json = json.Replace("\"layout\":", "\"layout\":" + layout + ",\"layout\":");
             if (problem == "root-version") json = json.Replace("\"formatVersion\":" + SaveStore.CurrentFormatVersion,

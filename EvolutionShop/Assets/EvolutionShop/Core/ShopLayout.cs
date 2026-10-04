@@ -50,10 +50,11 @@ namespace EvolutionShop
     /// </summary>
     public sealed class ShopLayout
     {
-        public const int SaveVersion = 2, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 6, MaxStoreTier = 2;
+        public const int SaveVersion = 3, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 12, MaxStoreTier = 2, DecorLimit = 6;
         public const float GridSize = .5f, TableWidth = 1.5f, TableDepth = 1f;
         public const string TableDefinitionId = "work-table";
         public const string SmallDisplayId = "small-display", LargeDisplayId = "large-display";
+        public const string CoralPlanterId = "coral-planter", BubbleLampId = "bubble-lamp", SillyStatueId = "silly-statue";
         private const float BodyMargin = .35f, PathStep = .25f;
         private const float MinPathZ = -5f;
         private const int PathHeight = 41;
@@ -68,6 +69,25 @@ namespace EvolutionShop
         public float StoreMinX => -7f - 4f * StoreTier;
         public int NextExpansionPrice => StoreTier == 0 ? 60 : StoreTier == 1 ? 120 : 0;
         public int DisplayLimit => StoreTier + 1;
+        public int DecorCount => items.FindAll(item => IsDecor(item.DefinitionId)).Count;
+        // A tiny derived mask avoids allocations when the HUD/customer cache polls appeal.
+        // Moving furniture changes this value; it is never separately persisted.
+        public int AppealPoints
+        {
+            get
+            {
+                int mask = 0;
+                foreach (var item in items)
+                {
+                    if (Footprint(item).MaxZ >= .39f) continue;
+                    if (item.DefinitionId == CoralPlanterId) mask |= 1;
+                    else if (item.DefinitionId == BubbleLampId) mask |= 2;
+                    else if (item.DefinitionId == SillyStatueId) mask |= 4;
+                }
+                int unique = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
+                return unique * ShopAppeal.PointsPerDefinition;
+            }
+        }
         public string[] TankIds
         {
             get
@@ -80,14 +100,19 @@ namespace EvolutionShop
 
         public static string DefinitionName(string definitionId)
             => definitionId == TableDefinitionId ? "Work table" : definitionId == SmallDisplayId ? "Small display" :
-                definitionId == LargeDisplayId ? "Large display" : null;
+                definitionId == LargeDisplayId ? "Large display" : definitionId == CoralPlanterId ? "Coral planter" :
+                definitionId == BubbleLampId ? "Bubble lamp" : definitionId == SillyStatueId ? "Silly fish statue" : null;
         public static int DefinitionPrice(string definitionId)
-            => definitionId == TableDefinitionId ? TablePrice : definitionId == SmallDisplayId ? 24 : definitionId == LargeDisplayId ? 40 : 0;
+            => definitionId == TableDefinitionId ? TablePrice : definitionId == SmallDisplayId ? 24 : definitionId == LargeDisplayId ? 40 :
+                definitionId == CoralPlanterId ? 16 : definitionId == BubbleLampId ? 24 : definitionId == SillyStatueId ? 32 : 0;
         public static float DefinitionWidth(string definitionId)
-            => definitionId == TableDefinitionId || definitionId == SmallDisplayId ? 1.5f : definitionId == LargeDisplayId ? 2.5f : 0;
+            => definitionId == TableDefinitionId || definitionId == SmallDisplayId ? 1.5f : definitionId == LargeDisplayId ? 2.5f :
+                IsDecor(definitionId) ? 1f : 0;
         public static float DefinitionDepth(string definitionId) => DefinitionPrice(definitionId) > 0 ? 1f : 0;
         public static int DefinitionSlotCount(string definitionId)
             => definitionId == SmallDisplayId ? 1 : definitionId == LargeDisplayId ? 2 : 0;
+        public static bool IsDecor(string definitionId)
+            => definitionId == CoralPlanterId || definitionId == BubbleLampId || definitionId == SillyStatueId;
 
         public string[] GetSlotIds(string itemId)
         {
@@ -173,7 +198,8 @@ namespace EvolutionShop
             if (!purchase && GetItem(movingId).Value.DefinitionId != definitionId) return LayoutResult.Fail(LayoutFailure.UnknownDefinition);
             if (definitionId == LargeDisplayId && StoreTier < 1) return LayoutResult.Fail(LayoutFailure.LockedDefinition);
             if (purchase && (items.Count >= MaxOwnedItems || CountTables() >= MaxItems && definitionId == TableDefinitionId ||
-                CountDisplays() >= DisplayLimit && definitionId != TableDefinitionId)) return LayoutResult.Fail(LayoutFailure.LimitReached);
+                CountDisplays() >= DisplayLimit && DefinitionSlotCount(definitionId) > 0 ||
+                DecorCount >= DecorLimit && IsDecor(definitionId))) return LayoutResult.Fail(LayoutFailure.LimitReached);
             if (quarterTurns < 0 || quarterTurns > 3) return LayoutResult.Fail(LayoutFailure.InvalidRotation);
             // Bound integers before multiplying, indexing or allocating for untrusted input.
             if (!ValidGrid(x, z, StoreTier)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
@@ -256,7 +282,7 @@ namespace EvolutionShop
         private ShopLayout Clone() => new ShopLayout { nextItemNumber = nextItemNumber, StoreTier = StoreTier,
             items = new List<LayoutItemView>(items) };
         private int CountTables() => items.FindAll(item => item.DefinitionId == TableDefinitionId).Count;
-        private int CountDisplays() => items.Count - CountTables();
+        private int CountDisplays() => items.FindAll(item => DefinitionSlotCount(item.DefinitionId) > 0).Count;
         private bool MatchesModel(GameModel model)
         {
             string[] expected = TankIds;
@@ -283,14 +309,16 @@ namespace EvolutionShop
         public static bool TryRestore(LayoutSave save, out ShopLayout layout)
         {
             layout = null;
-            if (save == null || (save.version != 1 && save.version != SaveVersion) || save.storeTier < 0 || save.storeTier > MaxStoreTier ||
-                save.version == 1 && save.storeTier != 0 || save.items == null || save.items.Length > MaxOwnedItems ||
+            if (save == null || (save.version != 1 && save.version != 2 && save.version != SaveVersion) || save.storeTier < 0 || save.storeTier > MaxStoreTier ||
+                save.version == 1 && save.storeTier != 0 || save.items == null ||
+                save.items.Length > (save.version == 1 ? MaxItems : save.version == 2 ? 6 : MaxOwnedItems) ||
                 save.nextItemNumber != save.items.Length + 1) return false;
             var ordered = new LayoutItemSave[save.items.Length];
             foreach (var item in save.items)
             {
                 if (item == null || DefinitionPrice(item.definitionId) == 0 ||
                     save.version == 1 && item.definitionId != TableDefinitionId ||
+                    save.version < 3 && IsDecor(item.definitionId) ||
                     item.definitionId == LargeDisplayId && save.storeTier < 1 ||
                     item.quarterTurns < 0 || item.quarterTurns > 3 || !ValidGrid(item.x, item.z, save.storeTier)) return false;
                 int index = -1;
@@ -304,7 +332,7 @@ namespace EvolutionShop
                 if (item == null) return false;
                 candidate.items.Add(new LayoutItemView(item.id, item.definitionId, item.x, item.z, item.quarterTurns));
             }
-            if (candidate.CountTables() > MaxItems || candidate.CountDisplays() > candidate.DisplayLimit) return false;
+            if (candidate.CountTables() > MaxItems || candidate.CountDisplays() > candidate.DisplayLimit || candidate.DecorCount > DecorLimit) return false;
             if (!candidate.ValidateAll().Success) return false;
             layout = candidate;
             return true;

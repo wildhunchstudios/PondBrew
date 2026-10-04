@@ -27,7 +27,7 @@ namespace EvolutionShop
         readonly List<Visitor> line = new List<Visitor>();     // agreed orders, in the order they were agreed
         CustomerArchetype[] catalog, effectiveCatalog;
         ShopReputation cachedReputation;
-        int cachedTier = -1;
+        int cachedTier = -1, cachedAppealPoints = -1;
         bool baseEffects, cachedBaseEffects;
         int maxVisitors = 1;
         float untilArrival;
@@ -59,12 +59,21 @@ namespace EvolutionShop
             get => baseEffects;
             set => baseEffects = shop != null && shop.ValidationMode && value;
         }
-        public float NextArrivalSeconds => baseEffects ? rules.NextArrivalSeconds : shop.Reputation.ArrivalSeconds;
+        public float NextArrivalSeconds => baseEffects ? rules.NextArrivalSeconds : shop.Appeal.ArrivalSeconds(shop.Reputation);
         void RefreshReputation()
         {
-            if (effectiveCatalog != null && cachedReputation == shop.Reputation && cachedTier == shop.Reputation.Tier && cachedBaseEffects == baseEffects) return;
-            cachedReputation = shop.Reputation; cachedTier = shop.Reputation.Tier; cachedBaseEffects = baseEffects;
-            effectiveCatalog = baseEffects ? Array.ConvertAll(catalog, a => a.Copy()) : shop.Reputation.ApplyTo(catalog);
+            if (effectiveCatalog != null && cachedReputation == shop.Reputation && cachedTier == shop.Reputation.Tier && cachedAppealPoints == shop.Appeal.Points && cachedBaseEffects == baseEffects) return;
+            cachedReputation = shop.Reputation; cachedTier = shop.Reputation.Tier; cachedAppealPoints = shop.Appeal.Points; cachedBaseEffects = baseEffects;
+            effectiveCatalog = baseEffects ? Array.ConvertAll(catalog, a => a.Copy()) : shop.Appeal.ApplyTo(catalog, shop.Reputation);
+        }
+        public float PremiumSharePercent
+        {
+            get
+            {
+                RefreshReputation(); int total = 0, premium = 0;
+                foreach (var type in effectiveCatalog) { total += type.Weight; if (type.Id == CustomerArchetypes.Premium) premium = type.Weight; }
+                return total > 0 ? 100f * premium / total : 0;
+            }
         }
         public IReadOnlyList<CustomerVisit> Visits => visitors.ConvertAll(v => v.Visit);
         /// <summary>The order the counter serves next: the first one waiting, else the next one on its way.</summary>
