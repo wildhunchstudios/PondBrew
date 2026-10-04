@@ -67,6 +67,7 @@ namespace EvolutionShop
                 renderers++;
             }
             Check(renderers>0,"Every world/sample renderer has a supported material");
+            AuditPresentationContracts(stage);
             shop.SelectPresentationView(4);
             for(int i=0;i<4;i++)
             {

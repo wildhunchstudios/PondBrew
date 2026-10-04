@@ -9,6 +9,10 @@ namespace EvolutionShop
         /// <summary>Accepted playback requests, including gain zero; not proof of audible output.</summary>
         public int SlapPlaybackCount { get; private set; }
         public float LastSlapGain { get; private set; }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Validation reads the exact generated clips; no duplicated synthesis or playback.
+        internal AudioClip[] ValidationClips() => new[] { collect, confirm, reject, discovery, slap };
+#endif
         void Awake()
         {
             source = gameObject.AddComponent<AudioSource>();
