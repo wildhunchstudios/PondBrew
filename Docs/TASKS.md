@@ -67,3 +67,13 @@ Delivery: `EvolutionShop-TwoRooms-Windows.zip`, guide, evidence, and local check
 ## Deferred until user playtest
 
 Milestone 02 automation/workers/humor and Milestone 03 presentation sample. No implementation work has started; user playtest determines next changes.
+
+
+## Historical update — R05.4 fourth culture (2026-10-04)
+
+- [x] Verify the exact EvolutionShop workspace and Unity 6000.3.21f1 connection by guarded Editor launch; preserve 11 protected hashes.
+- [x] Implement placed-vat Mist research/collection and one Airfin species, Driftwing, without a new machine.
+- [x] Extend strict envelope16/game6 persistence and test frozen v15 migration/immutable archive.
+- [x] Pass 1,195 EditMode tests, Editor Airfin 81, final packaged Airfin 81/restart12/conditioning200, build with 0 errors/warnings.
+- [x] Save source and final delivery checkpoints; see the current roadmap and next R05.5 assignment in `../AGENTS.md`.
+- [ ] Human assessment: Mist research value, Driftwing appeal, four-culture readability, shop/lab pacing and audio.
