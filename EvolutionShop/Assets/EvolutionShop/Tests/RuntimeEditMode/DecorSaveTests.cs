@@ -34,7 +34,7 @@ namespace EvolutionShop.Tests
             byte[] original = File.ReadAllBytes(FixturePath()); File.WriteAllBytes(PathFor(), original);
             var expected = JsonUtility.FromJson<SlotData>(File.ReadAllText(FixturePath()));
             var loaded = Read(out var restored);
-            Assert.That(loaded.formatVersion, Is.EqualTo(10)); Assert.That(loaded.layout.version, Is.EqualTo(3));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
             Assert.That(loaded.layout.storeTier, Is.EqualTo(2)); Assert.That(loaded.layout.items.Length, Is.EqualTo(3));
             AssertSameProgress(expected, loaded, restored);
             Assert.That(restored.Currency, Is.EqualTo(52)); Assert.That(restored.TankIds.Length, Is.EqualTo(7));
@@ -200,7 +200,7 @@ namespace EvolutionShop.Tests
         static LayoutSave AddLabDecor(LayoutSave save)
         {
             var items = new List<LayoutItemSave>(save.items); items.Add(Item(save.nextItemNumber, "coral-planter", 9, 4));
-            return new LayoutSave { version = 3, storeTier = save.storeTier, nextItemNumber = save.nextItemNumber + 1, items = items.ToArray() };
+            return new LayoutSave { version = ShopLayout.SaveVersion, storeTier = save.storeTier, nextItemNumber = save.nextItemNumber + 1, items = items.ToArray() };
         }
         int Appeal(SlotData slot)
         { Assert.That(ShopLayout.TryRestore(slot.layout, out var layout), Is.True); return ShopAppeal.FromLayout(layout).Points; }
@@ -218,7 +218,7 @@ namespace EvolutionShop.Tests
             model = new GameModel(layout.WithTankIds(config)); var cycle = new ShopDayCycle();
             if (phase != ShopDayPhase.Night)
             { Assert.That(cycle.OpenShop(), Is.True); cycle.Tick(7); if (phase == ShopDayPhase.Closing) { Assert.That(cycle.RequestClose(), Is.True); cycle.Tick(.5f); } }
-            return new SlotData { game = model.CaptureSave(), layout = save, cycle = cycle.CaptureSave(),
+            return new SlotData { game = model.CaptureSave(), layout = layout.CaptureSave(), cycle = cycle.CaptureSave(),
                 trades = ShopTradeLedger.LegacyForCycle(cycle.CaptureSave(), 0).CaptureSave(),
                 reputation = new ReputationSave { version = 1, points = 38 }, sensitivity = 1.4f, volume = .3f,
                 slapKey = "G", humorVolume = .4f, reducedGags = true };

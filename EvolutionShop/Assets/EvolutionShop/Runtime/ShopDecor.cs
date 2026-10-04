@@ -18,6 +18,7 @@ namespace EvolutionShop
         public bool OpenDecorMenu()
         {
             if (!OpenPlacementMenu()) return false;
+            showOwnedFurniture = false;
             showDecorCatalogue = true;
             return true;
         }
@@ -32,7 +33,7 @@ namespace EvolutionShop
                 DecorButton(ShopLayout.BubbleLampId);
                 DecorButton(ShopLayout.SillyStatueId);
             }
-            else Text("All six decor places are owned. Move pieces between rooms for free.");
+            else Text("All six decor places are owned. Place stored pieces or move them for free.");
             Small("Each 10 appeal: arrivals 0.25s closer when space is free, +5% of standard to price limits, +1 credit to budgets, and more big spenders. At most two visitors; accepted prices never change.");
             Small("Each piece reserves 1 m x 1 m. Check the preview for its exact appeal change before paying.");
         }
@@ -40,7 +41,7 @@ namespace EvolutionShop
         {
             bool contributes = false;
             foreach (var item in Layout.Items)
-                if (item.DefinitionId == definition && item.Z * ShopLayout.GridSize + .5f < .39f) { contributes = true; break; }
+                if (!item.Stored && item.DefinitionId == definition && item.Z * ShopLayout.GridSize + .5f < .39f) { contributes = true; break; }
             string benefit = contributes ? "duplicate +0 appeal" : "+10 if placed in store";
             Button(ShopLayout.DefinitionName(definition) + " / " + ShopLayout.DefinitionPrice(definition) + " credits / " + benefit,
                 () => BeginPlacement(null, definition));

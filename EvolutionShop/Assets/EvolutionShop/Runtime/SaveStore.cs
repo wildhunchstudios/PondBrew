@@ -28,16 +28,17 @@ namespace EvolutionShop
         // 6: reputation. 7: slap outcomes and intentional slap/audio/motion settings.
         // 8: owned work-table layout. 9: two store expansions and owned stock displays.
         // 10: initial decor. Appeal is derived from layout and is never a second saved authority.
-        // Formats 1-9 migrate in memory; historical saves never
+        // 11: stored furniture, permanent sales, and stable IDs across ownership gaps.
+        // Formats 1-10 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 10;
+        public const int CurrentFormatVersion = 11;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 10 ? 2 : 0;
+            format >= 4 && format <= 11 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 10 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 11 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -148,9 +149,10 @@ namespace EvolutionShop
                 }
                 else
                 {
-                    int layoutVersion = header.formatVersion == 8 ? 1 : header.formatVersion == 9 ? 2 : ShopLayout.SaveVersion;
+                    int layoutVersion = header.formatVersion == 8 ? 1 : header.formatVersion == 9 ? 2 :
+                        header.formatVersion == 10 ? 3 : 4;
                     if (header.layout == null || header.layout.version != layoutVersion ||
-                        !new LayoutJsonShape(json, header.formatVersion >= 9).HasExplicitItemsArray() ||
+                        !new LayoutJsonShape(json, header.formatVersion >= 9, header.formatVersion >= 11).HasExplicitItemsArray() ||
                         !ShopLayout.TryRestore(candidate.layout, out restoredLayout))
                     {
                         error = "Saved layout could not be validated. Your original file is preserved.";
@@ -260,16 +262,18 @@ namespace EvolutionShop
         private static bool ValidHumorVolume(float value) => Finite(value) && value >= 0f && value <= 1f;
 
         // JsonUtility normalizes a missing/null array to [], which is otherwise a valid empty
-        // layout. Check only the raw root/layout shape; JsonUtility and domain restore still
+        // layout. Missing/malformed bools can likewise become false. Check only the raw
+        // root/layout/item shape; JsonUtility and domain restore still
         // own JSON deserialization and semantic validation. Never search for a token inside
         // an unrelated nested value or quoted string.
         private sealed class LayoutJsonShape
         {
             readonly string json;
             readonly bool requireStoreTier;
+            readonly bool requireStored;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier)
-            { this.json = json; this.requireStoreTier = requireStoreTier; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; }
 
             public bool HasExplicitItemsArray()
             {
@@ -295,7 +299,8 @@ namespace EvolutionShop
                     else if (layout && key == "items")
                     {
                         SkipSpace();
-                        if (position >= json.Length || json[position] != '[' || !SkipValue(0)) return false;
+                        if (position >= json.Length || json[position] != '[' ||
+                            !(requireStored ? ReadItems() : SkipValue(0))) return false;
                         required = true;
                     }
                     else if (layout && requireStoreTier && key == "storeTier")
@@ -310,6 +315,47 @@ namespace EvolutionShop
                     }
                     else if (!SkipValue(0)) return false;
                     if (Take('}')) return required && (!layout || !requireStoreTier || hasStoreTier);
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadItems()
+            {
+                if (!Take('[')) return false;
+                if (Take(']')) return true;
+                while (position < json.Length)
+                {
+                    if (!ReadItem()) return false;
+                    if (Take(']')) return true;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadItem()
+            {
+                if (!Take('{')) return false;
+                bool hasStored = false;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    if (key == "stored")
+                    {
+                        SkipSpace();
+                        int length = position + 4 <= json.Length &&
+                            string.CompareOrdinal(json, position, "true", 0, 4) == 0 ? 4 :
+                            position + 5 <= json.Length &&
+                            string.CompareOrdinal(json, position, "false", 0, 5) == 0 ? 5 : 0;
+                        if (length == 0) return false;
+                        position += length;
+                        if (position < json.Length && !char.IsWhiteSpace(json[position]) &&
+                            json[position] != ',' && json[position] != '}') return false;
+                        hasStored = true;
+                    }
+                    else if (!SkipValue(0)) return false;
+                    if (Take('}')) return hasStored;
                     if (!Take(',')) return false;
                 }
                 return false;

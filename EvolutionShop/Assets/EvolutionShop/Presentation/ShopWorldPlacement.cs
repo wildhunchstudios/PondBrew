@@ -26,7 +26,7 @@ namespace EvolutionShop
         bool? previewWasValid;
         string previewDefinition;
 
-        /// <summary>Reflects a validated candidate or committed layout. Existing table roots retain identity.</summary>
+        /// <summary>Reflects active furniture in a validated or committed layout. Existing placed roots retain identity.</summary>
         public void ApplyLayout(ShopLayout layout)
         {
             if (layout == null) throw new ArgumentNullException(nameof(layout));
@@ -36,6 +36,9 @@ namespace EvolutionShop
             layoutIds.Clear();
             foreach (var item in layout.Items)
             {
+                // Stored furniture keeps its domain identity but has no live collision or display stations.
+                // Excluding its ID also retires a previously placed root before the next navigation bake.
+                if (item.Stored) continue;
                 layoutIds.Add(item.Id);
                 placedTables.TryGetValue(item.Id, out var table);
                 if (table && table.DefinitionId != item.DefinitionId)

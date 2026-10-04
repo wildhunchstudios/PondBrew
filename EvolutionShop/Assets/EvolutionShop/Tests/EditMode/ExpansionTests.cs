@@ -113,7 +113,7 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void LargeSlotsPaySeparatelyAndAnyRemainingStockBlocksTheWholeDisplayMove()
+        public void LargeSlotsPaySeparatelyAndReservationsBlockMovesWhileUnclaimedStockMovesIntact()
         {
             var layout = new ShopLayout(); var model = Cash(100);
             Assert.That(layout.TryExpand(model, ShopDayPhase.Night).Success, Is.True);
@@ -126,13 +126,17 @@ namespace EvolutionShop.Tests
             var second = model.GetReservation(slots[1]).Value;
             string before = State(layout, model);
             Assert.That(layout.TryCommit(model, ShopDayPhase.Night, "table-1", -18, -7, 2, out _).Failure,
-                Is.EqualTo(LayoutFailure.StockedDisplay));
+                Is.EqualTo(LayoutFailure.ReservedDisplay));
             Assert.That(State(layout, model), Is.EqualTo(before));
             Assert.That(model.GetReservation(slots[1]).Value.CustomerId, Is.EqualTo("second"));
             Assert.That(model.SellReservedTank(slots[0], "first", first.SpecimenId).Success, Is.True);
             Assert.That(model.ReleaseReservation(slots[1], "second").Success, Is.True);
-            Assert.That(layout.TryCommit(model, ShopDayPhase.Night, "table-1", -18, -7, 2, out _).Failure,
-                Is.EqualTo(LayoutFailure.StockedDisplay), "Unclaimed stock still belongs to the display.");
+            string unclaimed = JsonUtility.ToJson(model.CaptureSave());
+            Assert.That(layout.TryCommit(model, ShopDayPhase.Night, "table-1", -18, -7, 2, out _).Success,
+                Is.True, "Night relocation carries the same unreserved stock in the same stable slot.");
+            Assert.That(model.GetTank(slots[1]).Value.Id, Is.EqualTo(second.SpecimenId));
+            Assert.That(JsonUtility.ToJson(model.CaptureSave()), Is.EqualTo(unclaimed));
+            Assert.That(layout.TryStore(model, ShopDayPhase.Night, "table-1").Failure, Is.EqualTo(LayoutFailure.StockedDisplay));
             Assert.That(model.ReserveTank(slots[1], "second").Success, Is.True);
             Assert.That(model.SellReservedTank(slots[1], "second", second.SpecimenId).Success, Is.True);
             Assert.That(model.SellReservedTank(slots[1], "second", second.SpecimenId).Success, Is.False);
@@ -234,7 +238,7 @@ namespace EvolutionShop.Tests
                 case "unowned wing": save.items[1].x = -26; break;
                 case "lab display": save.items[0].x = 9; save.items[0].z = 4; save.items[0].quarterTurns = 1; break;
                 case "duplicate id": save.items[1].id = save.items[0].id; break;
-                case "wrong counter": save.nextItemNumber++; break;
+                case "wrong counter": save.nextItemNumber = 2; break;
             }
             Assert.That(ShopLayout.TryRestore(save, out var restored), Is.False);
             Assert.That(restored, Is.Null);

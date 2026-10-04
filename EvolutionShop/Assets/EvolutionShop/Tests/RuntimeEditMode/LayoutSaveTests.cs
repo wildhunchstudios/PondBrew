@@ -293,7 +293,11 @@ namespace EvolutionShop.Tests
             string missingDirectory = Path.Combine(directory, "not-created", "slot.json");
             Assert.That(SaveStore.Write(missingDirectory, slot, out _), Is.False);
             Assert.That(Directory.Exists(Path.GetDirectoryName(missingDirectory)), Is.False);
-            AssertInvalidRead(JsonUtility.ToJson(slot));
+            // JsonUtility writes a null array as [], now a legitimate all-sold layout with a
+            // high-water ID counter. Keep this malformed-file case explicitly null on disk.
+            string invalidJson = JsonUtility.ToJson(slot);
+            if (problem == "missing-items") invalidJson = invalidJson.Replace("\"items\":[]", "\"items\":null");
+            AssertInvalidRead(invalidJson);
             Assert.That(File.ReadAllBytes(PathFor() + ".bak"), Is.EqualTo(backup));
         }
 

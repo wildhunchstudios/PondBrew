@@ -105,7 +105,9 @@ namespace EvolutionShop
             Check(true, "Both large-display residents remain inside their separate glass compartments over 60 animated frames");
             string fish1 = shop.Model.GetTank(largeSlots[0]).Value.Id, fish2 = shop.Model.GetTank(largeSlots[1]).Value.Id;
             Check(fish1 != fish2 && shop.DisplayedStockCount() == 2, "Large display holds two unique specimens counted in opening stock");
-            Check(shop.OpenPlacementMenu() && !shop.BeginPlacement(large) && shop.Model.GetTank(largeSlots[0]).Value.Id == fish1 && shop.Model.GetTank(largeSlots[1]).Value.Id == fish2, "Moving stocked display is rejected without losing either specimen");
+            Check(shop.OpenPlacementMenu() && shop.BeginPlacement(large) && shop.Model.GetTank(largeSlots[0]).Value.Id == fish1 && shop.Model.GetTank(largeSlots[1]).Value.Id == fish2, "Stocked display move preview retains both specimen identities");
+            shop.CancelPlacement();
+            Check(shop.Model.GetTank(largeSlots[0]).Value.Id == fish1 && shop.Model.GetTank(largeSlots[1]).Value.Id == fish2, "Cancelling stocked move keeps both specimens in the original display");
             yield return Capture("104-stocked-arrangement");
             Check(shop.SaveNow() && shop.ReloadSaved() && shop.Layout.StoreTier == 2 && shop.Model.GetTank(largeSlots[0]).Value.Id == fish1 && shop.Model.GetTank(largeSlots[1]).Value.Id == fish2, "Expanded stocked save roundtrip preserves tier, stable slot IDs and both unique specimens");
             shop.AllowValidationInput = false;

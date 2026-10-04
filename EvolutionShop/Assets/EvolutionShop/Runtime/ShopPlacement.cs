@@ -38,8 +38,8 @@ namespace EvolutionShop
             if (Panel != ShopPanel.Arrange || !CanArrange) return false;
             var owned = ownedId == null ? null : Layout.GetItem(ownedId);
             if (ownedId != null && !owned.HasValue) return false;
-            if (owned.HasValue && DisplayHasStock(ownedId))
-            { Notify("Sell the stock before moving this display. Its creatures stay safe here."); return false; }
+            if (owned.HasValue && DisplayHasReservation(ownedId))
+            { Notify("Finish the reserved order before moving this display."); return false; }
             placementDefinition = owned.HasValue ? owned.Value.DefinitionId : definitionId;
             if (ShopLayout.DefinitionName(placementDefinition) == null) return false;
             movingTableId = ownedId;
@@ -140,8 +140,8 @@ namespace EvolutionShop
             if (!result.Success) { reason = PlacementFailureText(result.Failure); return false; }
             if (Model.Currency < PlacementCost) { reason = "Need " + PlacementCost + " credits. Previewing costs nothing."; return false; }
             var player = World.transform.InverseTransformPoint(Player.transform.position);
-            if (movingTableId != null && DisplayHasStock(movingTableId))
-            { reason = "Sell the stock before moving this display."; return false; }
+            if (movingTableId != null && DisplayHasReservation(movingTableId))
+            { reason = "Finish the reserved order before moving this display."; return false; }
             float width = ShopLayout.DefinitionWidth(placementDefinition), depth = ShopLayout.DefinitionDepth(placementDefinition);
             float halfX = (PlacementRotation % 2 == 0 ? width : depth) / 2;
             float halfZ = (PlacementRotation % 2 == 0 ? depth : width) / 2;
@@ -150,9 +150,10 @@ namespace EvolutionShop
             { reason = "Step outside the furniture footprint before placing it."; return false; }
             if (!candidate.CanReachMainAisle(player.x, player.z))
             { reason = "Keep a clear route from your position to the main aisle."; return false; }
-            reason = PlacementCost == 0 ? "Clear / move owned furniture for free" : "Clear / buy for " + PlacementCost + " credits";
+            reason = PlacementCost == 0 ? "Clear / place owned furniture for free" : "Clear / buy for " + PlacementCost + " credits";
             if (ShopLayout.IsDecor(placementDefinition))
                 reason += " / appeal " + Appeal.Points + " > " + candidate.AppealPoints + " of 30" + (candidate.AppealPoints == Appeal.Points ? " (lab or duplicate adds zero)" : "");
+            if (movingTableId != null && DisplayHasStock(movingTableId)) reason += " / stock moves safely with it";
             return true;
         }
 
@@ -184,7 +185,7 @@ namespace EvolutionShop
             }
             bool purchased = movingTableId == null;
             int paid = PlacementCost; string name = ShopLayout.DefinitionName(placementDefinition);
-            World.ApplyLayout(Layout);
+            World.ApplyLayout(Layout); World.Refresh(Model);
             EndPlacementPreview(); SetPanel(ShopPanel.Arrange);
             SaveNow();
             Notify(purchased ? name + " placed / " + paid + " credits paid." : name + " moved. No charge.");
@@ -194,6 +195,8 @@ namespace EvolutionShop
         void RestoreCurrentLayout()
         {
             World.ApplyLayout(Layout);
+            World.Refresh(Model);
+            Focused = null;
             layoutRoutesReady = Customers.Navigation.Rebuild(World);
             if (!layoutRoutesReady)
                 Notify("Room navigation could not recover. Save and reopen before trading.", 10);
@@ -216,7 +219,7 @@ namespace EvolutionShop
             var a = left.Items; var b = right.Items;
             if (a.Count != b.Count || left.StoreTier != right.StoreTier) return false;
             for (int i = 0; i < a.Count; i++)
-                if (a[i].Id != b[i].Id || a[i].DefinitionId != b[i].DefinitionId || a[i].X != b[i].X || a[i].Z != b[i].Z || a[i].QuarterTurns != b[i].QuarterTurns) return false;
+                if (a[i].Id != b[i].Id || a[i].DefinitionId != b[i].DefinitionId || a[i].X != b[i].X || a[i].Z != b[i].Z || a[i].QuarterTurns != b[i].QuarterTurns || a[i].Stored != b[i].Stored) return false;
             return true;
         }
 
@@ -235,7 +238,10 @@ namespace EvolutionShop
         {
             switch (failure)
             {
-                case LayoutFailure.StockedDisplay: return "Sell all stock before moving this display.";
+                case LayoutFailure.StockedDisplay: return "Sell the creatures before storing or selling this display. Moving it with stock is free.";
+                case LayoutFailure.ReservedDisplay: return "Finish the reserved customer order first.";
+                case LayoutFailure.AlreadyStored: return "That furniture is already in storage.";
+                case LayoutFailure.CurrencyOverflow: return "There is no room for the full refund. Your furniture and credits are unchanged.";
                 case LayoutFailure.LockedDefinition: return "Large displays unlock with the first store expansion.";
                 case LayoutFailure.WrongPhase: return "Arrange rooms during preparation night.";
                 case LayoutFailure.OutOfBounds: return "Keep the whole item inside its room. Displays belong in the store.";
@@ -274,17 +280,20 @@ namespace EvolutionShop
 
         void DrawArrangement()
         {
+            if (pendingFurnitureSaleId != null) { DrawFurnitureSaleConfirmation(); return; }
             Heading("Arrange your rooms / store tier " + (Layout.StoreTier + 1) + " of 3");
             if (Cycle.Phase != ShopDayPhase.Night) { Text("Come back during preparation night."); return; }
             int displayCount = 0, tableCount = 0;
             foreach (var item in Layout.Items) if (ShopLayout.DefinitionSlotCount(item.DefinitionId) > 0) displayCount++; else if (item.DefinitionId == ShopLayout.TableDefinitionId) tableCount++;
             Text("Store appeal " + Appeal.Points + " / 30  |  Decor " + Layout.DecorCount + " / " + ShopLayout.DecorLimit);
             GUILayout.BeginHorizontal();
-            Button("Furniture", () => showDecorCatalogue = false);
-            Button("Decor + appeal", () => showDecorCatalogue = true);
+            Button("Buy furniture", () => { showDecorCatalogue = false; showOwnedFurniture = false; panelScroll = Vector2.zero; });
+            Button("Decor + appeal", () => { showDecorCatalogue = true; showOwnedFurniture = false; panelScroll = Vector2.zero; });
+            Button("Owned / storage", () => { showOwnedFurniture = true; panelScroll = Vector2.zero; });
             GUILayout.EndHorizontal();
-            if (showDecorCatalogue) { DrawDecorCatalogue(); DrawOwnedFurniture(); return; }
-            Text("Display furniture " + displayCount + " / " + Layout.DisplayLimit + "  |  Total creature slots " + Model.TankIds.Length);
+            if (showOwnedFurniture) { DrawOwnedFurniture(); return; }
+            if (showDecorCatalogue) { DrawDecorCatalogue(); return; }
+            Text("Display furniture " + displayCount + " / " + Layout.DisplayLimit + " owned  |  Active creature slots " + Model.TankIds.Length);
             if (Layout.StoreTier < 2)
             {
                 Small("Add a 4 m west wing. Keep the front entrance and lab unchanged. Display limit becomes " + (Layout.DisplayLimit + 1) + (Layout.StoreTier == 0 ? "; unlock large displays." : "."));
@@ -302,20 +311,7 @@ namespace EvolutionShop
             if (tableCount < ShopLayout.MaxItems)
                 Button("Work table / no creature slots / 12 credits", () => BeginPlacement());
             Small("Aim at the floor. R rotates; left click places; right click or Escape cancels. Green outline marks a valid footprint. Display fronts need customer access.");
-            DrawOwnedFurniture();
-        }
-
-        void DrawOwnedFurniture()
-        {
-            Space(); Heading("Owned furniture / move for free");
-            foreach (var item in Layout.Items)
-            {
-                string id = item.Id;
-                bool stocked = DisplayHasStock(id);
-                if (stocked) Small(ShopLayout.DefinitionName(item.DefinitionId) + " " + id.Replace("table-", "#") + " / stocked: sell contents before moving");
-                else Button("Move " + ShopLayout.DefinitionName(item.DefinitionId) + " " + id.Replace("table-", "#") + " / " + (item.Z < 1 ? "store" : "lab"), () => BeginPlacement(id));
-            }
-            Small("Original tanks stay fixed. Previewing a move keeps furniture at its old position until confirmed. Nothing is removed or refunded here.");
+            Small("Use Owned / storage to move, store, place or sell furniture you already own.");
         }
 
         void DrawPlacementOverlay()

@@ -1,0 +1,157 @@
+{
+    "formatVersion": 10,
+    "game": {
+        "version": 2,
+        "currency": 104,
+        "upgradeOwned": false,
+        "availableBloom": 0,
+        "availableFlow": 0,
+        "growers": [
+            {
+                "cultureId": "bloom",
+                "units": 6,
+                "secondsUntilNextUnit": 2.0
+            },
+            {
+                "cultureId": "flow",
+                "units": 6,
+                "secondsUntilNextUnit": 2.0
+            }
+        ],
+        "incubator": {
+            "phase": 0,
+            "stagedBloom": 0,
+            "stagedFlow": 0,
+            "speciesId": "",
+            "specimenId": "",
+            "secondsRemaining": 0.0
+        },
+        "tanks": [
+            {
+                "tankId": "tank-a",
+                "specimenId": "bcba05918f634c92829c33ec26045e8a",
+                "speciesId": "pondlet"
+            },
+            {
+                "tankId": "tank-b",
+                "specimenId": "4f7107c483a843689d5bc44f17f5702f",
+                "speciesId": "pondlet"
+            }
+        ],
+        "discoveries": [
+            "bubblebelly",
+            "pondlet"
+        ],
+        "prices": [
+            {
+                "speciesId": "bubblebelly",
+                "price": 17
+            }
+        ]
+    },
+    "cycle": {
+        "version": 1,
+        "dayNumber": 3,
+        "phase": 0,
+        "secondsRemaining": 0.0
+    },
+    "trades": {
+        "version": 4,
+        "hasCurrent": false,
+        "hasLast": true,
+        "current": {
+            "dayNumber": 0,
+            "partial": false,
+            "visitors": 0,
+            "sales": 0,
+            "noStock": 0,
+            "impatient": 0,
+            "closed": 0,
+            "interrupted": 0,
+            "pathProblems": 0,
+            "tooExpensive": 0,
+            "slapped": 0,
+            "stockedAtOpen": 0,
+            "stockedAtClose": 0,
+            "restocked": 0,
+            "revenue": 0
+        },
+        "last": {
+            "dayNumber": 2,
+            "partial": false,
+            "visitors": 2,
+            "sales": 0,
+            "noStock": 0,
+            "impatient": 0,
+            "closed": 2,
+            "interrupted": 0,
+            "pathProblems": 0,
+            "tooExpensive": 0,
+            "slapped": 0,
+            "stockedAtOpen": 2,
+            "stockedAtClose": 2,
+            "restocked": 0,
+            "revenue": 0
+        },
+        "pendingCustomerId": "",
+        "pendingCustomerIds": []
+    },
+    "reputation": {
+        "version": 1,
+        "points": 30
+    },
+    "layout": {
+        "version": 3,
+        "storeTier": 0,
+        "nextItemNumber": 7,
+        "items": [
+            {
+                "id": "table-1",
+                "definitionId": "coral-planter",
+                "x": -4,
+                "z": -1,
+                "quarterTurns": 0
+            },
+            {
+                "id": "table-2",
+                "definitionId": "coral-planter",
+                "x": -12,
+                "z": -8,
+                "quarterTurns": 0
+            },
+            {
+                "id": "table-3",
+                "definitionId": "bubble-lamp",
+                "x": 4,
+                "z": -1,
+                "quarterTurns": 0
+            },
+            {
+                "id": "table-4",
+                "definitionId": "silly-statue",
+                "x": 3,
+                "z": -5,
+                "quarterTurns": 0
+            },
+            {
+                "id": "table-5",
+                "definitionId": "coral-planter",
+                "x": 9,
+                "z": 4,
+                "quarterTurns": 0
+            },
+            {
+                "id": "table-6",
+                "definitionId": "bubble-lamp",
+                "x": 10,
+                "z": 8,
+                "quarterTurns": 0
+            }
+        ]
+    },
+    "sensitivity": 1.0,
+    "volume": 0.6499999761581421,
+    "slapKey": "F",
+    "humorVolume": 1.0,
+    "reducedGags": false
+}

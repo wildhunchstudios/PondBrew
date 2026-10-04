@@ -174,7 +174,7 @@ namespace EvolutionShop.Tests
             switch (fault)
             {
                 case "version": save.version = ShopLayout.SaveVersion + 1; break;
-                case "counter": save.nextItemNumber++; break;
+                case "counter": save.nextItemNumber = 2; break; // Must be greater than every owned ID, including after resale gaps.
                 case "id": save.items[0].id = "table-01"; break;
                 case "duplicate": save.items[1].id = save.items[0].id; break;
                 case "catalog": save.items[0].definitionId = "display"; break;

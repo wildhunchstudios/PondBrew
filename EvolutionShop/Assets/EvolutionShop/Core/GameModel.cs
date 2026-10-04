@@ -321,26 +321,35 @@ namespace EvolutionShop
             return true;
         }
 
-        // Allocate the complete new slot registry before committing either ownership or money.
-        // Existing specimens and reservations keep their identity, including queued price agreements.
-        internal bool TryPurchaseSlots(int cost, string[] newSlots)
+        // Layout supplies the complete active registry and one signed currency adjustment.
+        // Validate and allocate before publishing either, preserving surviving specimens/claims.
+        internal ActionResult TryApplyLayoutSlots(string[] desiredIds, int currencyDelta)
         {
-            if (cost <= 0 || Currency < cost || newSlots == null || newSlots.Length == 0 ||
-                config.TankIds.Length + newSlots.Length > 8) return false;
-            var expanded = new Dictionary<string, SpecimenView?>(tanks, StringComparer.Ordinal);
-            var ids = new string[config.TankIds.Length + newSlots.Length];
-            Array.Copy(config.TankIds, ids, config.TankIds.Length);
-            for (int i = 0; i < newSlots.Length; i++)
+            if (desiredIds == null || desiredIds.Length < 2 || desiredIds.Length > 8 ||
+                desiredIds[0] != config.TankIds[0] || desiredIds[1] != config.TankIds[1])
+                return ActionResult.Fail(FailureCode.InvalidSave);
+            long nextCurrency = (long)Currency + currencyDelta;
+            if (nextCurrency < 0) return ActionResult.Fail(FailureCode.InsufficientFunds);
+            if (nextCurrency > int.MaxValue) return ActionResult.Fail(FailureCode.CurrencyOverflow);
+            var desired = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in desiredIds)
             {
-                string id = newSlots[i];
-                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || expanded.ContainsKey(id)) return false;
-                expanded.Add(id, null);
-                ids[config.TankIds.Length + i] = id;
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !desired.Add(id))
+                    return ActionResult.Fail(FailureCode.InvalidSave);
             }
-            tanks = expanded;
+            foreach (var tank in tanks)
+                if (!desired.Contains(tank.Key))
+                {
+                    if (reservations.ContainsKey(tank.Key)) return ActionResult.Fail(FailureCode.TankReserved);
+                    if (tank.Value.HasValue) return ActionResult.Fail(FailureCode.TankFull);
+                }
+            var replacement = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
+            var ids = (string[])desiredIds.Clone();
+            foreach (string id in ids) replacement.Add(id, tanks.TryGetValue(id, out var value) ? value : null);
+            tanks = replacement;
             config.TankIds = ids;
-            Currency -= cost;
-            return true;
+            Currency = (int)nextCurrency;
+            return ActionResult.Ok();
         }
         public ActionResult BuyUpgrade()
         {

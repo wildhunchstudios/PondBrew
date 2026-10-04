@@ -348,6 +348,7 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            if (panel != ShopPanel.Arrange) pendingFurnitureSaleId = null;
             if (panel != ShopPanel.None && PlacementActive) EndPlacementPreview();
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();
             if (Panel != panel) panelScroll = Vector2.zero;
@@ -393,6 +394,7 @@ namespace EvolutionShop
             AutosaveBlocked = false;
             SaveError = null;
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
+            pendingFurnitureSaleId = null;
             AdoptLayout(restoredLayout);
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
