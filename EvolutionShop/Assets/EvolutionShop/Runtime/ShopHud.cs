@@ -50,8 +50,14 @@ namespace EvolutionShop
             GUI.Label(new Rect(38, 222, 280, 28), PhaseTitle(), headingStyle);
             GUI.Label(new Rect(38, 255, 280, 33), Paused ? "PAUSED / " + ClockText() : ClockText(), smallStyle);
             Box(new Rect(22, 610, 396, 88), ink);
-            GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "  FLOW " + Model.Available(CultureKind.Flow) + (Model.SparkResearchUnlocked ? "  SPARK " + Model.Available(CultureKind.Spark) : "") + (Model.MistResearchUnlocked ? "  MIST " + Model.Available(CultureKind.Mist) : ""), headingStyle);
-            GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist)), smallStyle);
+            string starterCultures = "BLOOM " + Model.Available(CultureKind.Bloom) + "  FLOW " + Model.Available(CultureKind.Flow);
+            if (Model.MistResearchUnlocked)
+            {
+                GUI.Label(new Rect(40, 616, 360, 26), starterCultures, headingStyle);
+                GUI.Label(new Rect(40, 641, 360, 26), "SPARK " + Model.Available(CultureKind.Spark) + "  MIST " + Model.Available(CultureKind.Mist), headingStyle);
+            }
+            else GUI.Label(new Rect(40, 620, 360, 28), starterCultures + (Model.SparkResearchUnlocked ? "  SPARK " + Model.Available(CultureKind.Spark) : ""), headingStyle);
+            GUI.Label(new Rect(40, Model.MistResearchUnlocked ? 670 : 652, 360, 26), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist)), smallStyle);
             Box(new Rect(438,662,548,36),ink);
             GUI.Label(new Rect(448,668,528,23), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
