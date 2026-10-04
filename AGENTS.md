@@ -1,8 +1,8 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-**R05.1a lab expansion and essential-facility relocation is implemented.** Full EditMode and native Editor scenarios passed. Windows build/package validation is in progress. R04 human layout acceptance remains pending; lab tuning is provisional.
+**R05.1a is delivered: two lab expansions and safe relocation of all four original working stations.** Unity 899 tests, native lab 144, dense-store 228, exact Windows lab 144/restart 16/storage 110 checks passed with clean exits. Next bounded assignment is **R05.1b functional specimen storage**, unstarted. Full R04 human layout acceptance and new lab tuning remain pending.
 
-Updated: 2026-10-04. Working title only. Current validated source checkpoint: commit `36a3bd0`, delivery tag **r04-5-layout**. Gameplay remains at `e2b58ad`; R04.5 adds validation only. Prior R04.4 tag **r04-4-storage**, domain/runtime `fa4c14f`. Prior R04.3 source `847f319`, tag **r04-3-decor**. Prior R04.2 source `14ad6b9`, tag **r04-2-expansion**. Prior R04.1 source `a9b474c`, tag **r04-1-placement**; domain/save `9088d53`. Previous R03.5 source `1dd96e4`, delivery tag **r03-trading-validated**. Earlier R03.4 source `ae27a64`, tag **r03-4-slap**; domain/save checkpoint `cc16447`. Prior reputation source `a620c9a`, tag **r03-3-reputation**, domain `78aad11`. Prior customer source `c478fe5`, tag **r03-2-customer-types**; later documentation-only commits do not change source or builds. Earlier: tag `r03-1-pricing` (`0067e95`); patched source `fb4e4d2`. Preserved failed-shutdown candidate checkpoint: **9197e1c**, tag **r02-cycle-validation-candidate**; its gameplay source was **2ab4929**. Continuous-cycle rule checkpoint: **4b28bfe**. Previous player tag: `r02-daily-report`; report implementation: `de2de99`. Customer rule checkpoint: `b711bc7`, tag `r02-customer-rules`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
+Updated: 2026-10-04. Working title only. Current validated source checkpoint: commit `dd6eddb`, delivery tag **r05-1a-lab**. Prior R04.5 source `36a3bd0`, tag **r04-5-layout**, added validation only over gameplay `e2b58ad`. Prior R04.4 tag **r04-4-storage**, domain/runtime `fa4c14f`. Prior R04.3 source `847f319`, tag **r04-3-decor**. Prior R04.2 source `14ad6b9`, tag **r04-2-expansion**. Prior R04.1 source `a9b474c`, tag **r04-1-placement**; domain/save `9088d53`. Previous R03.5 source `1dd96e4`, delivery tag **r03-trading-validated**. Earlier R03.4 source `ae27a64`, tag **r03-4-slap**; domain/save checkpoint `cc16447`. Prior reputation source `a620c9a`, tag **r03-3-reputation**, domain `78aad11`. Prior customer source `c478fe5`, tag **r03-2-customer-types**; later documentation-only commits do not change source or builds. Earlier: tag `r03-1-pricing` (`0067e95`); patched source `fb4e4d2`. Preserved failed-shutdown candidate checkpoint: **9197e1c**, tag **r02-cycle-validation-candidate**; its gameplay source was **2ab4929**. Continuous-cycle rule checkpoint: **4b28bfe**. Previous player tag: `r02-daily-report`; report implementation: `de2de99`. Customer rule checkpoint: `b711bc7`, tag `r02-customer-rules`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
 
 ## 1. Read this first
 
@@ -24,7 +24,7 @@ User instructions take precedence over this guide. Separate **user requirements*
 | Packages | URP `17.3.0`; Input System `1.19.0`; Test Framework `1.6.0` |
 | Editor executable | `C:\Program Files\Unity\Hub\Editor\6000.3.21f1\Editor\Unity.exe` |
 | Playable scene | `EvolutionShop/Assets/EvolutionShop/Scenes/Shop.unity` |
-| Current validation player | Builds/Windows-6000.3.21f1-r04-5-final/EvolutionShop.exe, source 36a3bd0, Windows x64 development/Mono. Exact EvolutionShop-EditedLayout-Windows package passed edited-layout 228, fresh-process reload 37 and storage regression 110 checks, all exit 0. Human R04 gate remains pending; previous builds retained |
+| Current validation player | Builds/Windows-6000.3.21f1-r05-1a-final/EvolutionShop.exe, source dd6eddb, Windows x64 development/Mono. Exact EvolutionShop-LabExpansion-Windows package: lab 144, fresh-process reload 16, storage 110 checks, all exit0. Human R04/lab feedback pending; previous builds retained |
 | Local save | `%USERPROFILE%\AppData\LocalLow\DumbVideoGameStudio\EvolutionShopPrototype\evolution-shop.json` |
 | Scene generation | `EvolutionShop.Editor.ProjectSetup.CreateScene`; menu **Evolution Shop > Rebuild playable scene** |
 | Runtime smoke / build | `EvolutionShop.Editor.ProjectSetup.RunSmoke` / `BuildWindows` |
@@ -272,7 +272,7 @@ Gate/playtest: expansion changes what the player can display/serve; players can 
 Depends on: R04 placement and R03 economy. Output: an expanded lab and a second meaningful production method.
 
 - [ ] R05.1 Apply shared placement to lab facilities/storage and two lab expansions; validate operator access and output paths.
-  - [ ] R05.1a Two rear expansions and existing essential-facility relocation: implemented; Editor validated, Windows delivery in progress.
+  - [x] R05.1a Two rear expansions and existing essential-facility relocation: delivered at r05-1a-lab; 899 EditMode tests, Editor lab 144/store 228, exact package lab 144/restart 16/storage 110, all final exits 0.
   - [ ] R05.1b Functional specimen storage: next bounded lab task, unstarted. Keep hidden lab inventory separate from customer display slots.
 - [ ] R05.2 Add culture unlocks toward the four-type ceiling, research clues, and progression-aware recipe definitions/journal.
 - [ ] R05.3 Add one conditioning facility and a small batch/known-recipe workflow. Make capacity, progress, output, and blocked reasons visible.
@@ -442,12 +442,12 @@ Current limitations: procedural prototype art/UI/audio, provisional prices and b
 
 | Active record | Value |
 |---|---|
-| Current request | Latest user Continue selected bounded R05.1a with provisional tuning; R04 human feedback stays pending. Implemented and Editor validated; Windows delivery in progress. |
-| Runtime changes in this request | Development-only edited-layout scenario and five focused/cumulative regression tests. No production gameplay, save schema, authored scene or package changes were required. |
+| Current request | Latest Continue completed bounded R05.1a under provisional lab tuning. R04 human feedback remains pending; no new human acceptance inferred. |
+| Runtime changes in this request | Two rear lab extensions, four essential facility poses/moves, shared night preview, dynamic operator access/customer exclusion and envelope12/layout5 migration; game2 unchanged. No specimen storage or new production process yet. |
 | User feedback | R02 accepted, then current R03.4 build accepted: "i playtested its good, continue for the next stage". General acceptance only; no invented detailed audio, control or three-shift human coverage |
-| Next action | Obtain human feedback on the delivered store layout: expansion benefits, stocked movement, storage/redeployment, clear access and expected stock/cash recovery. Resolve concrete reported R04 defects. Once the R04 gate is accepted, the next implementation assignment is R05.1 lab expansion/facility limits; do not start later lab work or staffing now. |
-| Human coverage / future acceptance | Prior R02/R03 user acceptance stands. R04.1–R04.5 automated evidence is complete; the new human layout-management question remains unanswered. Do not infer usability, audio, economy balance or full R04 acceptance from automated checks. |
-| Technical blocker / connection | No technical blocker observed in tested Windows configuration: 833 EditMode tests; Editor layout 228; exact package layout 228, restart 37 and storage 110 checks; all final exits 0. Unity 6000.3.21f1 verified through guarded exact-project native launches, with no active/callable/configured MCP. Reverify identity before new work. |
+| Next action | On next continuation, select R05.1b functional specimen storage as a bounded assignment. Preserve unique output ownership and separate storage from customer display slots. Incorporate any reported R04/lab playtest defects. R05.2 onward remains unstarted. |
+| Human coverage / future acceptance | Prior R02/R03 acceptance stands. R04 and R05.1a technical checks passed; human layout comfort/value feedback remains pending. Continuation authorized provisional lab implementation without accepting its tuning. |
+| Technical blocker / connection | No technical blocker in the executed configuration: 899 EditMode tests, Editor lab 144/store 228, exact package lab 144/restart 16/storage 110, final exits 0. Unity6000.3.21f1 exact-project guard verified; no MCP active. Reverify identity before next work. |
 
 When resuming implementation, select the first unfinished ready task, record its owner/status and intended acceptance check here, and keep the remaining roadmap planned. Do not mistake the unimplemented feature specifications above for existing behavior.
 
@@ -823,10 +823,43 @@ The latest user **Continue** authorizes a bounded lab implementation while the f
 - [x] B: Add two 4 m rear lab expansions (provisional 60/120 credits), room-specific bounds and reachable service positions. Preserve the store doorway and customer-only front floor.
 - [x] C: Relocate the four original working lab facilities through the shared night preview/rotate/cancel/commit flow. Preserve exact legacy anchors, machine identity, cultures, doses, incubation/output and upgrades. Essential facilities cannot be stored/sold or duplicated.
 - [x] D: Save envelope 12/layout 5 with four explicit facility poses and lab tier; keep game state version 2. Read old saves in memory and archive original V11 bytes before replacement. Test invalid schema, failed transactions and repeated reload.
-- [ ] E: Run baseline, full EditMode tests, native integrated scenario, Windows build and exact packaged scenario/restart; inspect visible captures and preserved hashes; update this guide and checkpoint.
+- [x] E: Run baseline, full EditMode tests, native integrated scenario, Windows build and exact packaged scenario/restart; inspect visible captures and preserved hashes; update this guide and checkpoint.
 
 R05.1 is split deliberately: **R05.1a** expansion + existing-facility relocation; **R05.1b** functional specimen storage using shared placement/output ownership remains unstarted. New machines/processes, culture unlocks, research and automation remain later assignments. Expansion adds floor, not production capacity. Do not call R05 complete after this slice.
 
 R05.1a source checkpoint: envelope12/layout5/game2; two4m rear extensions priced60/120 provisionally; four essential facilities move free at night with identity and production unchanged. Dynamic lab bounds/access, customer bake exclusion, shared previews/rotate/cancel, native rollback and changed-geometry reload are implemented. Original off-grid anchors migrate exactly through four stable IDs and half-metre offsets. No storage, new production machine, recipe or automation is included.
 
-Actual validation so far: verified exact Unity6000.3.21f1 project identity; pre-change storage baseline110checks/0errors/exit0; full Unity EditMode899/899passed,0failed/skipped,exit0 (833 retained +17 domain +49 file cases); corrected native lab144checks/0errors/exit0; prior dense edited-store228checks/0errors/exit0. Initial lab attempt stopped after61checks because its new assertion expected the preview to remain open after navigation recovery became unsafe. The established guard correctly closes it; the test now asserts that guard plus exact unchanged pose/specimen, with production behavior unchanged. Initial evidence is retained. Windows build/package, exact restart, visible captures and final hash preservation are still pending.
+Actual validation so far: verified exact Unity6000.3.21f1 project identity; pre-change storage baseline110checks/0errors/exit0; full Unity EditMode899/899passed,0failed/skipped,exit0 (833 retained +17 domain +49 file cases); corrected native lab 144checks/0errors/exit0; prior dense edited-store 228checks/0errors/exit0. Initial lab attempt stopped after61checks because its new assertion expected the preview to remain open after navigation recovery became unsafe. The established guard correctly closes it; the test now asserts that guard plus exact unchanged pose/specimen, with production behavior unchanged. Initial evidence is retained. Windows build/package, exact restart, visible captures and final hash preservation are still pending.
+
+### R05.1a delivered lab expansion and safe machine relocation — 2026-10-04
+
+Technically delivered on 2026-10-04 from source `dd6eddbb2e51c24de6ebe285cfbaa24204a96d26`; delivery tag `r05-1a-lab`. Unity 6000.3.21f1, Windows x64 development/Mono. Full R04 human layout acceptance and new lab affordability/usability remain pending. User continuation authorized this bounded provisional step.
+
+Implemented: two 4 m rear extensions for 60/120 credits; free night relocation of the four original lab stations through the shared preview, rotation, cancellation and commit flow. Machine identity, cultures, doses, incubation and output remain intact. Essential equipment cannot be stored/sold/duplicated. No additional stock capacity, recipes or automation.
+
+| Executed validation | Result | Evidence prefix |
+| --- | --- | --- |
+| Unity EditMode | 899/899 passed, 0 failed/skipped, exit 0 | `r05-1a-editmode-initial` |
+| Editor: prior storage baseline | 110 checks; zero runtime errors; exit 0 | `r05-1a-editor-baseline` |
+| Editor: lab scenario | 144 checks; zero runtime errors; exit 0 | `r05-1a-editor-lab-recovery-assertion` |
+| Editor: dense store regression | 228 checks; zero runtime errors; exit 0 | `r05-1a-editor-edited-regression` |
+| Exact package: visible lab scenario | 144 checks; zero runtime errors; exit 0 | `r05-1a-player-lab-packaged-visible` |
+| Exact package: fresh-process lab reload | 16 checks; zero runtime errors; exit 0 | `r05-1a-player-lab-packaged-restart` |
+| Exact package: furniture storage regression | 110 checks; zero runtime errors; exit 0 | `r05-1a-player-storage-packaged-regression` |
+| Windows build | Succeeded, 0 errors/warnings, 167,578,734 bytes, exit 0 | `r05-1a-build-final` |
+
+The 66 new tests comprise 17 domain cases and 49 actual-file cases. Coverage includes expansion bounds/prices/phase guards, no imaginary northwest floor, service reachability, atomic rejected relocation, both lab tiers with existing store layouts, preserved production phases, strict current JSON shape, frozen old envelope/layout versions, byte-preserving migration, immutable V11 archives and failed-archive recovery. Prior 833 cases remain passing.
+
+Native checks verified original station-root identity after repeated moves; staged culture and active/ready exact specimen retention; real input walking through the doorway and both new seams; all four relocated station interactions; east/rear wall containment; occupied-move rollback with a deliberate obstruction; actual customer bake exclusion throughout the lab; two buyers paying 16 credits once; changed-geometry reset/reload; and separate-process restoration. Final isolated fixture: lab tier 3, store tier 1, four moved facilities, upgrade owned, day 2, 812 credits and one stocked display. This fixture never replaced the normal user save.
+
+Initial lab scenario stopped after 61 successful checks on an incorrect new assertion that the preview stayed open when native navigation recovery was unsafe. The established safety guard closes that preview. Corrected only the scenario to assert closure plus exact retained layout/specimen; corrected Editor and final package passed. The initial failure log/report remain in evidence. No production guard was weakened.
+
+Visible 1280×720 package captures were inspected: lab menu, rotated green ghost and operator square, moved bench, ready incubator and expanded room. No blocking new visual defect found. The lab menu scrolls to its fourth Move button and help text. Some floating station subheads are faint or appear reversed when viewed from behind; camera close-ups crop the upper ghost/labels. These remain prototype presentation issues.
+
+All 11 protected scene/meta, package, project settings/version and normal save/backup hashes match the fresh baseline. No Unity/package upgrade, external asset import or other project access. Initial state had no active Editor/callable configured MCP; guarded native launches verified the exact EvolutionShop path and Unity version.
+
+All 290 shipped files match build → extracted package → ZIP by SHA-256. ZIP: 69,474,492 bytes; `46B293FFC68B7741ABAF26F90F4DA2AD20055FA19F5A4FA9EC4D079F44D52B04`. Runtime assembly: `5310568DFB3368891A72262753097F8BA86BB60BC271B342E5B7C7965908044E`. Builds exclude only build-only DoNotShip/BackUpThisFolder folders.
+
+Limits: explicit fixtures seed construction funds, accelerate initial stock and select customer types/camera positions. Placement/movement/rotation/cancellation, harvesting and E interactions use synthetic Input System input; menus and transactions use application commands. This is not evidence of natural affordability, human GUI clicking, eight-minute pacing, audio enjoyment, every layout or low-spec performance. Customers still pass through the player; art/UI/audio and balance remain provisional.
+
+R05.1a is complete. **Next bounded assignment: R05.1b functional specimen storage**, unstarted. Keep storage inventory separate from customer display slots and preserve unique specimen ownership. R05.2–R05.5 and later milestones remain unstarted. Human feedback on both store layout management and lab comfort/value is still welcome; do not mark it accepted from these checks.
