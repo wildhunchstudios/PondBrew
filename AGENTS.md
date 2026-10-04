@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-**R05.4 Mist culture and Driftwing Airfin are delivered.** The fourth renewable culture grows at the existing conditioning vat; Driftwing can be incubated, displayed, and sold. All 1,195 Unity tests and final packaged Windows checks passed with clean exits. Next bounded assignment: R05.5 cross-process validation. Full R05 and human tuning remain open.
+**R05.4 Mist culture and Driftwing Airfin are delivered.** The fourth renewable culture grows at the existing conditioning vat; Driftwing can be incubated, displayed, and sold. All 1,195 Unity tests and final packaged Windows checks passed with clean exits. Current bounded assignment: R05.5 cross-process validation, in progress. Full R05 and human tuning remain open.
 
 Updated: 2026-10-04. Working title only. Current validated source checkpoint: commit `af48f3b`, delivery tag **r05-4-airfin**. Prior R05.3 source `a0bbec1`, tag **r05-3-conditioning**. Prior R05.2 source `268256c`, tag **r05-2-research**. Prior R05.1b source `f2584d3`, tag **r05-1b-storage**. Prior R05.1a source `dd6eddb`, tag **r05-1a-lab**. Prior R04.5 source `36a3bd0`, tag **r04-5-layout**, added validation only over gameplay `e2b58ad`. Prior R04.4 tag **r04-4-storage**, domain/runtime `fa4c14f`. Prior R04.3 source `847f319`, tag **r04-3-decor**. Prior R04.2 source `14ad6b9`, tag **r04-2-expansion**. Prior R04.1 source `a9b474c`, tag **r04-1-placement**; domain/save `9088d53`. Previous R03.5 source `1dd96e4`, delivery tag **r03-trading-validated**. Earlier R03.4 source `ae27a64`, tag **r03-4-slap**; domain/save checkpoint `cc16447`. Prior reputation source `a620c9a`, tag **r03-3-reputation**, domain `78aad11`. Prior customer source `c478fe5`, tag **r03-2-customer-types**; later documentation-only commits do not change source or builds. Earlier: tag `r03-1-pricing` (`0067e95`); patched source `fb4e4d2`. Preserved failed-shutdown candidate checkpoint: **9197e1c**, tag **r02-cycle-validation-candidate**; its gameplay source was **2ab4929**. Continuous-cycle rule checkpoint: **4b28bfe**. Previous player tag: `r02-daily-report`; report implementation: `de2de99`. Customer rule checkpoint: `b711bc7`, tag `r02-customer-rules`. Baseline safety checkpoint: `78e99c4`, tag `r01-baseline-safety`.
 
@@ -442,8 +442,8 @@ Current limitations: procedural prototype art/UI/audio, provisional prices and b
 
 | Active record | Value |
 |---|---|
-| Current request | R05.4 delivered from latest Continue; next bounded assignment is R05.5. No new human acceptance inferred. |
-| Runtime changes in this request | Fourth renewable Mist culture at the placed vat, 40-credit night research, one Driftwing Airfin recipe and visible family, envelope 16 / game 6 / layout 7 migration. |
+| Current request | Latest Continue selects R05.5 lab validation. Owner: Codex. No new human acceptance inferred. |
+| Runtime changes in this request | R05.5 validation only unless a reproduced defect requires a bounded repair. Add meaningful edge/state/restart coverage for the existing five species and conditioning process. |
 | User feedback | R02 accepted, then current R03.4 build accepted: "i playtested its good, continue for the next stage". General acceptance only; no invented detailed audio, control or three-shift human coverage |
 | Next action | R05.5: exercise each recipe/process across invalid inputs, full storage, cancellations, relocation and save/load with work active. Use R05.4 playtest feedback before tuning. Full roster, staffing and automation remain later work. |
 | Human coverage / future acceptance | Prior R02/R03 acceptance stands. R04/R05 technical slices passed; human layout and lab/storage/research/conditioning usability and affordability feedback remains pending. |
@@ -1059,3 +1059,15 @@ The new seven focused save/domain cases increase 1,188 to 1,195 tests. They cove
 **Playtest and limits.** WASD/mouse move/look, E station/panel, hold left mouse for culture, Tab journal, Escape pause. The prior 64-credit vat is bought and placed from night arrangement→Lab; Mist research becomes available there after Lanternfin discovery. The final player starts fresh without validation flags and uses the normal compatible local save. Automated scenarios seed an isolated already-progressed v15 fixture, use selected casual visitors and application menu commands, and set some player/camera poses. They prove tested rules and rendering, not ordinary affordability timing, human GUI clicking, audio enjoyment, all room layouts or low-spec performance. Journal entries below the fold require scrolling; prototype art and player/customer passthrough remain. No technical blocker was found in the executed configuration.
 
 **Continuation.** Reverify exact workspace/editor/connection and inspect user playtest feedback. Next bounded assignment is R05.5 cross-process/content validation: invalid mixtures, full storage, cancellation, relocation and save/load with each production stage active. Do not add the full roster, staffing, automation or bulk art before this gate.
+
+
+### R05.5 active lab validation contract — 2026-10-04
+
+Owner: Codex. Baseline delivery `75f6f02`, gameplay `af48f3b`, tag `r05-4-airfin`. The latest Continue authorizes this bounded gate with provisional human tuning. Validate existing content rather than multiplying species or starting R06. Use isolated evidence saves and retain the user's active player processes and normal slot.
+
+- [~] R05.5-A: Reverify project/editor/module/process identity, preserve scene/package/settings/save hashes, and run a fresh guarded baseline in the exact Editor.
+- [ ] R05.5-B: Map existing coverage and add meaningful missing recipe/process boundary tests: all five recipes, invalid mixtures, shared capacity, full destinations, cancellations, ownership and active relocation. Preserve frozen historical fixtures.
+- [ ] R05.5-C: Exercise combined production and storage in Editor and Windows. Save separate snapshots of staged input, incubating/processing work, ready output, canceled output and displayed/stored residents; reload each in a fresh process and check identity, time, payments and conservation.
+- [ ] R05.5-D: Run the final relevant/full suite and target build, inspect runtime captures, package the exact tested player, compare protected hashes, update this guide and save a delivery checkpoint.
+
+Acceptance: each existing recipe/process has explicit pass/fail evidence; rejected inputs/full destinations preserve resources; cancellation and relocation preserve exact stock; fresh-process reload neither advances closed-app time nor duplicates creatures/payment. The zero-cash starter route stays recoverable. Evaluate player feedback and room access, explicit ownership states, maintainable harness boundaries, falsifiable assertions and R05 scope. Human pacing/audio/appeal and low-spec performance remain separate coverage; R06 asset samples wait for the next assignment.
