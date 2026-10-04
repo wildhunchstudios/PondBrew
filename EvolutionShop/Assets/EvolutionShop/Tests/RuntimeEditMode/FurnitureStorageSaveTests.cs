@@ -58,7 +58,7 @@ namespace EvolutionShop.Tests
             foreach (string id in new[] { "tank-a", "tank-b" })
             { Assert.That(reports.BeginVisit(id), Is.True); Ok(model.ReserveTank(id, id)); }
             if (phase == ShopDayPhase.Closing) { Assert.That(cycle.RequestClose(), Is.True); cycle.Tick(.5f); }
-            old.game = model.CaptureSave(); old.cycle = cycle.CaptureSave(); old.trades = reports.CaptureSave();
+            old.game = model.CaptureSave(); old.game.version = 2; old.cycle = cycle.CaptureSave(); old.trades = reports.CaptureSave();
             old.sensitivity = 1.6f; old.volume = .27f; old.slapKey = "G"; old.humorVolume = .4f; old.reducedGags = true;
             File.WriteAllText(PathFor(), JsonUtility.ToJson(old, true)); byte[] original = File.ReadAllBytes(PathFor());
             var loaded = Read(out var restored); AssertSameProgress(old, loaded, restored);
@@ -223,7 +223,7 @@ namespace EvolutionShop.Tests
         public void LegacyLayoutsAcceptAbsentStorageButCannotAcquireStoredOwnership(int format, int version)
         {
             var slot = FreshSlot(SingleItem("work-table", -4, -1), ShopDayPhase.Night, out _);
-            slot.formatVersion = format; slot.layout.version = version;
+            slot.formatVersion = format; slot.game.version = 2; slot.layout.version = version;
             string json = JsonUtility.ToJson(slot).Replace(",\"stored\":false", "").Replace("\"stored\":false,", "");
             File.WriteAllText(PathFor(), json); byte[] original = File.ReadAllBytes(PathFor());
             var loaded = Read(out _); Assert.That(loaded.layout.items[0].stored, Is.False);
@@ -235,7 +235,7 @@ namespace EvolutionShop.Tests
         public void EnvelopeLayoutMappingsRemainFrozen(int format, int version)
         {
             var slot = FreshSlot(new ShopLayout().CaptureSave(), ShopDayPhase.Night, out _);
-            Write(slot); Read(out _); slot.formatVersion = format; slot.layout.version = version;
+            Write(slot); Read(out _); slot.formatVersion = format; slot.game.version = 2; slot.layout.version = version;
             RejectRead(JsonUtility.ToJson(slot));
         }
 

@@ -107,8 +107,9 @@ namespace EvolutionShop
             if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.Queued) return "A customer is waiting. Use the front counter to serve.";
             if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter) return "A creature is reserved. Head to the front counter.";
             if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
-            if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Head to a display tank in the front store.";
+            if (Model.Incubator.Phase == IncubatorPhase.Ready) return Model.StorageIds.Length > 0 ? "Use an empty display or lab rack to store the ready creature." : "Head to a display tank in the front store.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
+            if (DisplayedStockCount() == 0 && StoredSpecimenCount > 0) return "Use E at an empty display to choose stored stock.";
             if (DisplayedStockCount() > 0) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
             if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
@@ -153,6 +154,7 @@ namespace EvolutionShop
                 case ShopPanel.Journal: DrawJournal(); break;
                 case ShopPanel.Tank: DrawTank(); break;
                 case ShopPanel.Arrange: DrawArrangement(); break;
+                case ShopPanel.StorageRack: DrawSpecimenRack(); break;
                 case ShopPanel.Pause:
                     Heading("Shop paused"); Text("The day clock, growers and incubation are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
@@ -199,8 +201,8 @@ namespace EvolutionShop
             var resident = Model.GetTank(selectedTank);
             if (resident == null)
             {
-                Text("This tank is empty. When a specimen is ready, press E here to transfer it.");
-                Small("Capacity: one specimen per tank. A full tank never consumes a waiting specimen.");
+                Text("This display is empty. Choose a ready or stored creature below.");
+                DrawDisplayStockSources();
                 return;
             }
             var species = Model.GetSpecies(resident.Value.SpeciesId);
@@ -210,6 +212,7 @@ namespace EvolutionShop
                 : species.DisplayName + " lives here. Open the shop and let a customer choose it.");
             if (Model.Incubator.Phase == IncubatorPhase.Ready)
                 Small("Your ready " + Model.GetSpecies(Model.Incubator.SpeciesId).DisplayName + " waits safely in the incubator until a tank is free.");
+            DrawDisplayStorageReturn(resident.Value, reservation.HasValue);
             DrawPriceTag(species);
         }
         void DrawPriceTag(SpeciesDefinition species)

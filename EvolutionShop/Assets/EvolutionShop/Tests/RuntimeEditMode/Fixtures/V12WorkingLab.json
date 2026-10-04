@@ -1,0 +1,137 @@
+{
+    "formatVersion": 12,
+    "game": {
+        "version": 2,
+        "currency": 812,
+        "upgradeOwned": true,
+        "availableBloom": 1,
+        "availableFlow": 1,
+        "growers": [
+            {
+                "cultureId": "bloom",
+                "units": 6,
+                "secondsUntilNextUnit": 2.0
+            },
+            {
+                "cultureId": "flow",
+                "units": 6,
+                "secondsUntilNextUnit": 2.0
+            }
+        ],
+        "incubator": {
+            "phase": 0,
+            "stagedBloom": 0,
+            "stagedFlow": 0,
+            "speciesId": "",
+            "specimenId": "",
+            "secondsRemaining": 0.0
+        },
+        "tanks": [
+            {
+                "tankId": "tank-a",
+                "specimenId": "a443bdbfc13b4af6b064e384b79b6c21",
+                "speciesId": "ribbonfin"
+            },
+            {
+                "tankId": "tank-b",
+                "specimenId": "",
+                "speciesId": ""
+            }
+        ],
+        "discoveries": [
+            "bubblebelly",
+            "pondlet",
+            "ribbonfin"
+        ],
+        "prices": []
+    },
+    "cycle": {
+        "version": 1,
+        "dayNumber": 2,
+        "phase": 0,
+        "secondsRemaining": 0.0
+    },
+    "trades": {
+        "version": 4,
+        "hasCurrent": false,
+        "hasLast": true,
+        "current": {
+            "dayNumber": 0,
+            "partial": false,
+            "visitors": 0,
+            "sales": 0,
+            "noStock": 0,
+            "impatient": 0,
+            "closed": 0,
+            "interrupted": 0,
+            "pathProblems": 0,
+            "tooExpensive": 0,
+            "slapped": 0,
+            "stockedAtOpen": 0,
+            "stockedAtClose": 0,
+            "restocked": 0,
+            "revenue": 0
+        },
+        "last": {
+            "dayNumber": 1,
+            "partial": false,
+            "visitors": 2,
+            "sales": 2,
+            "noStock": 0,
+            "impatient": 0,
+            "closed": 0,
+            "interrupted": 0,
+            "pathProblems": 0,
+            "tooExpensive": 0,
+            "slapped": 0,
+            "stockedAtOpen": 2,
+            "stockedAtClose": 0,
+            "restocked": 0,
+            "revenue": 16
+        },
+        "pendingCustomerId": "",
+        "pendingCustomerIds": []
+    },
+    "reputation": {
+        "version": 1,
+        "points": 4
+    },
+    "layout": {
+        "version": 5,
+        "storeTier": 0,
+        "labTier": 2,
+        "nextItemNumber": 1,
+        "items": [],
+        "facilities": [
+            {
+                "id": "lab-bloom",
+                "x": 0,
+                "z": 8,
+                "quarterTurns": 0
+            },
+            {
+                "id": "lab-flow",
+                "x": 0,
+                "z": 8,
+                "quarterTurns": 0
+            },
+            {
+                "id": "lab-incubator",
+                "x": 0,
+                "z": 14,
+                "quarterTurns": 1
+            },
+            {
+                "id": "lab-upgrade",
+                "x": 0,
+                "z": 18,
+                "quarterTurns": 3
+            }
+        ]
+    },
+    "sensitivity": 1.0,
+    "volume": 0.6499999761581421,
+    "slapKey": "F",
+    "humorVolume": 1.0,
+    "reducedGags": false
+}

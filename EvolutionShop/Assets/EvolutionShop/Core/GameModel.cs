@@ -10,12 +10,13 @@ namespace EvolutionShop
     /// </summary>
     public sealed class GameModel
     {
-        /// <summary>Version 2 adds price tags. Version 1 saves restore with standard prices.</summary>
-        public const int SaveVersion = 2;
+        /// <summary>Version 2 adds prices; version 3 adds separate, exact-identity lab storage.</summary>
+        public const int SaveVersion = 3;
 
         private readonly GameConfig config;
         private readonly Dictionary<string, SpeciesDefinition> species;
         private Dictionary<string, SpecimenView?> tanks;
+        private Dictionary<string, SpecimenView?> storage;
         private readonly Dictionary<string, ReservationView> reservations = new Dictionary<string, ReservationView>(StringComparer.Ordinal);
         private readonly HashSet<string> discoveries = new HashSet<string>(StringComparer.Ordinal);
         // Only tags that differ from the standard price are kept, so a save stays canonical.
@@ -31,6 +32,7 @@ namespace EvolutionShop
 
         public int Currency { get; private set; }
         public string[] TankIds => (string[])config.TankIds.Clone();
+        public string[] StorageIds => (string[])config.StorageIds.Clone();
         public bool UpgradeOwned { get; private set; }
         public int Capacity { get { return UpgradeOwned ? config.UpgradedCapacity : config.BaseCapacity; } }
         public float CollectionSecondsPerUnit
@@ -62,6 +64,8 @@ namespace EvolutionShop
             foreach (var definition in this.config.Species) species.Add(definition.Id, definition);
             tanks = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
             foreach (var id in this.config.TankIds) tanks.Add(id, null);
+            storage = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
+            foreach (var id in this.config.StorageIds) storage.Add(id, null);
             for (int i = 0; i < 2; i++)
             {
                 growerUnits[i] = this.config.InitialGrowerUnits;
@@ -84,6 +88,10 @@ namespace EvolutionShop
         public ReservationView? GetReservation(string tankId)
         {
             return tankId != null && reservations.TryGetValue(tankId, out var value) ? value : (ReservationView?)null;
+        }
+        public SpecimenView? GetStorage(string storageId)
+        {
+            return storageId != null && storage.TryGetValue(storageId, out var value) ? value : null;
         }
         public SpeciesDefinition GetSpecies(string speciesId)
         {
@@ -244,6 +252,45 @@ namespace EvolutionShop
             return ActionResult.Ok(specimen.SpeciesId, specimen.Id);
         }
 
+        public ActionResult StoreReadyOutput(string storageId)
+        {
+            if (storageId == null || !storage.ContainsKey(storageId)) return ActionResult.Fail(FailureCode.UnknownStorage);
+            if (phase != IncubatorPhase.Ready) return ActionResult.Fail(FailureCode.OutputNotReady);
+            if (storage[storageId].HasValue) return ActionResult.Fail(FailureCode.StorageFull);
+            var specimen = new SpecimenView(activeSpecimen, activeSpecies);
+            storage[storageId] = specimen;
+            phase = IncubatorPhase.Dosing;
+            activeSpecies = activeSpecimen = null;
+            incubationRemaining = 0f;
+            return ActionResult.Ok(specimen.SpeciesId, specimen.Id);
+        }
+
+        public ActionResult TransferStorageToTank(string storageId, string tankId, string expectedSpecimenId)
+        {
+            if (storageId == null || !storage.TryGetValue(storageId, out var source)) return ActionResult.Fail(FailureCode.UnknownStorage);
+            if (tankId == null || !tanks.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.UnknownTank);
+            if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (!source.HasValue) return ActionResult.Fail(FailureCode.StorageEmpty);
+            if (source.Value.Id != expectedSpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
+            if (tanks[tankId].HasValue) return ActionResult.Fail(FailureCode.TankFull);
+            tanks[tankId] = source;
+            storage[storageId] = null;
+            return ActionResult.Ok(source.Value.SpeciesId, source.Value.Id);
+        }
+
+        public ActionResult ReturnTankToStorage(string tankId, string storageId, string expectedSpecimenId)
+        {
+            if (tankId == null || !tanks.TryGetValue(tankId, out var source)) return ActionResult.Fail(FailureCode.UnknownTank);
+            if (storageId == null || !storage.ContainsKey(storageId)) return ActionResult.Fail(FailureCode.UnknownStorage);
+            if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (!source.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
+            if (source.Value.Id != expectedSpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
+            if (storage[storageId].HasValue) return ActionResult.Fail(FailureCode.StorageFull);
+            storage[storageId] = source;
+            tanks[tankId] = null;
+            return ActionResult.Ok(source.Value.SpeciesId, source.Value.Id);
+        }
+
         public ActionResult SellFromTank(string tankId)
         {
             if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
@@ -324,9 +371,13 @@ namespace EvolutionShop
         // Layout supplies the complete active registry and one signed currency adjustment.
         // Validate and allocate before publishing either, preserving surviving specimens/claims.
         internal ActionResult TryApplyLayoutSlots(string[] desiredIds, int currencyDelta)
+            => TryApplyLayoutSlots(desiredIds, config.StorageIds, currencyDelta);
+
+        internal ActionResult TryApplyLayoutSlots(string[] desiredIds, string[] desiredStorageIds, int currencyDelta)
         {
             if (desiredIds == null || desiredIds.Length < 2 || desiredIds.Length > 8 ||
-                desiredIds[0] != config.TankIds[0] || desiredIds[1] != config.TankIds[1])
+                desiredIds[0] != config.TankIds[0] || desiredIds[1] != config.TankIds[1] ||
+                desiredStorageIds == null || desiredStorageIds.Length > 6)
                 return ActionResult.Fail(FailureCode.InvalidSave);
             long nextCurrency = (long)Currency + currencyDelta;
             if (nextCurrency < 0) return ActionResult.Fail(FailureCode.InsufficientFunds);
@@ -337,17 +388,29 @@ namespace EvolutionShop
                 if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !desired.Add(id))
                     return ActionResult.Fail(FailureCode.InvalidSave);
             }
+            var desiredStorage = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in desiredStorageIds)
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || desired.Contains(id) || !desiredStorage.Add(id))
+                    return ActionResult.Fail(FailureCode.InvalidSave);
             foreach (var tank in tanks)
                 if (!desired.Contains(tank.Key))
                 {
                     if (reservations.ContainsKey(tank.Key)) return ActionResult.Fail(FailureCode.TankReserved);
                     if (tank.Value.HasValue) return ActionResult.Fail(FailureCode.TankFull);
                 }
+            foreach (var slot in storage)
+                if (!desiredStorage.Contains(slot.Key) && slot.Value.HasValue)
+                    return ActionResult.Fail(FailureCode.StorageFull);
             var replacement = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
             var ids = (string[])desiredIds.Clone();
             foreach (string id in ids) replacement.Add(id, tanks.TryGetValue(id, out var value) ? value : null);
+            var storedReplacement = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
+            var storageIds = (string[])desiredStorageIds.Clone();
+            foreach (string id in storageIds) storedReplacement.Add(id, storage.TryGetValue(id, out var value) ? value : null);
             tanks = replacement;
+            storage = storedReplacement;
             config.TankIds = ids;
+            config.StorageIds = storageIds;
             Currency = (int)nextCurrency;
             return ActionResult.Ok();
         }
@@ -374,6 +437,7 @@ namespace EvolutionShop
                     speciesId = activeSpecies, specimenId = activeSpecimen, secondsRemaining = incubationRemaining
                 },
                 tanks = new TankSave[config.TankIds.Length],
+                storage = new StorageSave[config.StorageIds.Length],
                 discoveries = new string[discoveries.Count]
             };
             for (int i = 0; i < 2; i++)
@@ -389,6 +453,16 @@ namespace EvolutionShop
                 save.tanks[i] = new TankSave
                 {
                     tankId = id, specimenId = value.HasValue ? value.Value.Id : null,
+                    speciesId = value.HasValue ? value.Value.SpeciesId : null
+                };
+            }
+            for (int i = 0; i < config.StorageIds.Length; i++)
+            {
+                string id = config.StorageIds[i];
+                var value = storage[id];
+                save.storage[i] = new StorageSave
+                {
+                    storageId = id, specimenId = value.HasValue ? value.Value.Id : null,
                     speciesId = value.HasValue ? value.Value.SpeciesId : null
                 };
             }
@@ -431,6 +505,10 @@ namespace EvolutionShop
             foreach (var tank in save.tanks)
                 candidate.tanks[tank.tankId] = string.IsNullOrEmpty(tank.specimenId)
                     ? (SpecimenView?)null : new SpecimenView(tank.specimenId, tank.speciesId);
+            if (save.version >= 3)
+                foreach (var slot in save.storage)
+                    candidate.storage[slot.storageId] = string.IsNullOrEmpty(slot.specimenId)
+                        ? (SpecimenView?)null : new SpecimenView(slot.specimenId, slot.speciesId);
             // Version 1 had no tags: every species restores at its standard price.
             if (save.version >= 2 && save.prices != null)
                 foreach (var tag in save.prices)
@@ -442,10 +520,15 @@ namespace EvolutionShop
 
         private bool ValidSave(SaveData save)
         {
-            if (save == null || (save.version != 1 && save.version != SaveVersion) || save.currency < 0 || save.availableBloom < 0 ||
+            if (save == null || save.version < 1 || save.version > SaveVersion || save.currency < 0 || save.availableBloom < 0 ||
                 save.availableFlow < 0 || save.growers == null || save.growers.Length != 2 ||
                 save.incubator == null || save.tanks == null || save.tanks.Length != config.TankIds.Length ||
                 save.discoveries == null) return false;
+            if (save.version < 3)
+            {
+                if (config.StorageIds.Length != 0 || save.storage != null && save.storage.Length != 0) return false;
+            }
+            else if (save.storage == null || save.storage.Length != config.StorageIds.Length) return false;
             var inc = save.incubator;
             int capacity = save.upgradeOwned ? config.UpgradedCapacity : config.BaseCapacity;
             if (inc.stagedBloom < 0 || inc.stagedFlow < 0 ||
@@ -490,6 +573,20 @@ namespace EvolutionShop
                     !specimens.Add(tank.specimenId)) return false;
             }
 
+            if (save.version >= 3)
+            {
+                var seenStorage = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var slot in save.storage)
+                {
+                    if (slot == null || slot.storageId == null || !storage.ContainsKey(slot.storageId) ||
+                        !seenStorage.Add(slot.storageId)) return false;
+                    if (string.IsNullOrEmpty(slot.specimenId) && string.IsNullOrEmpty(slot.speciesId)) continue;
+                    if (string.IsNullOrWhiteSpace(slot.specimenId) || slot.speciesId == null ||
+                        !species.ContainsKey(slot.speciesId) || !known.Contains(slot.speciesId) ||
+                        !specimens.Add(slot.specimenId)) return false;
+                }
+            }
+
             // Unity's JSON reader may give an absent array as null or empty. Version 1 never had tags.
             if (save.prices == null || save.prices.Length == 0) return true;
             if (save.version == 1) return false;
@@ -515,7 +612,8 @@ namespace EvolutionShop
                 !PositiveFinite(input.GrowerRefillSeconds) ||
                 !PositiveFinite(input.IncubationSeconds) || !PositiveFinite(input.BaseCollectionSeconds) ||
                 !PositiveFinite(input.UpgradedCollectionSeconds) || input.Species == null ||
-                input.Species.Length == 0 || input.TankIds == null || input.TankIds.Length < 2 || input.TankIds.Length > 8)
+                input.Species.Length == 0 || input.TankIds == null || input.TankIds.Length < 2 || input.TankIds.Length > 8 ||
+                input.StorageIds == null || input.StorageIds.Length > 6)
                 throw new ArgumentException("Invalid prototype tuning.", nameof(input));
             var copy = new GameConfig
             {
@@ -525,6 +623,7 @@ namespace EvolutionShop
                 BaseCollectionSeconds = input.BaseCollectionSeconds, UpgradedCollectionSeconds = input.UpgradedCollectionSeconds,
                 UpgradeCost = input.UpgradeCost, MinimumPrice = input.MinimumPrice,
                 MaximumPricePercent = input.MaximumPricePercent, TankIds = (string[])input.TankIds.Clone(),
+                StorageIds = (string[])input.StorageIds.Clone(),
                 Species = new SpeciesDefinition[input.Species.Length]
             };
             var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -544,6 +643,9 @@ namespace EvolutionShop
             foreach (var id in copy.TankIds)
                 if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !ids.Add(id))
                     throw new ArgumentException("Two to eight unique stable tank IDs are required.", nameof(input));
+            foreach (var id in copy.StorageIds)
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !ids.Add(id))
+                    throw new ArgumentException("Up to six unique storage IDs distinct from tank IDs are required.", nameof(input));
             return copy;
         }
 

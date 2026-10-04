@@ -392,7 +392,7 @@ namespace EvolutionShop.Tests
             Ok(model.SetPrice("pondlet", 9));
             Ok(model.SetPrice("bubblebelly", 7));
             var save = model.CaptureSave();
-            Assert.That(save.version, Is.EqualTo(2));
+            Assert.That(save.version, Is.EqualTo(GameModel.SaveVersion));
             Assert.That(save.prices.Length, Is.EqualTo(2));
             Assert.That(save.prices[0].speciesId, Is.EqualTo("bubblebelly"));
             Assert.That(save.prices[0].price, Is.EqualTo(7));
@@ -419,7 +419,7 @@ namespace EvolutionShop.Tests
             save.prices = shape == "null-prices" ? null : new PriceSave[0];
             Assert.That(GameModel.TryRestore(config, save, out var restored, out var error), Is.True, error.ToString());
             Assert.That(restored.GetPrice("pondlet").Value.Price, Is.EqualTo(6));
-            Assert.That(restored.CaptureSave().version, Is.EqualTo(2));
+            Assert.That(restored.CaptureSave().version, Is.EqualTo(GameModel.SaveVersion));
             Assert.That(restored.CaptureSave().prices, Is.Empty);
         }
 
@@ -447,7 +447,7 @@ namespace EvolutionShop.Tests
                 case "duplicate-species": save.prices = new[] { save.prices[0], new PriceSave { speciesId = "pondlet", price = 8 } }; break;
                 case "below-minimum": save.prices[0].price = 0; break;
                 case "above-maximum": save.prices[0].price = 19; break;
-                case "future-version": save.version = 3; break;
+                case "future-version": save.version = GameModel.SaveVersion + 1; break;
             }
             Assert.That(GameModel.TryRestore(config, save, out var restored, out var error), Is.False);
             Assert.That(restored, Is.Null);

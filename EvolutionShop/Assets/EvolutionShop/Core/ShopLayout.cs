@@ -9,7 +9,7 @@ namespace EvolutionShop
         None, WrongPhase, InvalidModel, UnknownItem, InvalidRotation, OutOfBounds,
         OverlapsFurniture, ProtectedAccess, UnreachableAccess, LimitReached, InsufficientFunds,
         UnknownDefinition, LockedDefinition, StockedDisplay, ModelMismatch,
-        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility
+        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility, StockedStorage
     }
 
     public readonly struct LayoutResult
@@ -74,10 +74,11 @@ namespace EvolutionShop
     /// </summary>
     public sealed class ShopLayout
     {
-        public const int SaveVersion = 5, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 12, MaxStoreTier = 2, MaxLabTier = 2, DecorLimit = 6;
+        public const int SaveVersion = 6, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 15, MaxStoreTier = 2, MaxLabTier = 2, DecorLimit = 6;
         public const float GridSize = .5f, TableWidth = 1.5f, TableDepth = 1f;
         public const string TableDefinitionId = "work-table";
         public const string SmallDisplayId = "small-display", LargeDisplayId = "large-display";
+        public const string RackDefinitionId = "specimen-rack";
         public const string CoralPlanterId = "coral-planter", BubbleLampId = "bubble-lamp", SillyStatueId = "silly-statue";
         public const string BloomFacilityId = "lab-bloom", FlowFacilityId = "lab-flow", IncubatorFacilityId = "lab-incubator", UpgradeFacilityId = "lab-upgrade";
         private const float BodyMargin = .35f, PathStep = .25f;
@@ -98,6 +99,8 @@ namespace EvolutionShop
         public float StoreMinX => -7f - 4f * StoreTier;
         public int NextExpansionPrice => StoreTier == 0 ? 60 : StoreTier == 1 ? 120 : 0;
         public int DisplayLimit => StoreTier + 1;
+        public int RackLimit => LabTier + 1;
+        public int RackCount => items.FindAll(item => item.DefinitionId == RackDefinitionId).Count;
         public int DecorCount => items.FindAll(item => IsDecor(item.DefinitionId)).Count;
         public int StoredCount => items.FindAll(item => item.Stored).Count;
         public IReadOnlyList<FacilityView> Facilities => Array.AsReadOnly(facilities.ToArray());
@@ -160,16 +163,26 @@ namespace EvolutionShop
             }
         }
 
+        public string[] StorageIds
+        {
+            get
+            {
+                var ids = new List<string>();
+                foreach (var item in items) if (!item.Stored) ids.AddRange(GetStorageSlotIds(item.Id));
+                return ids.ToArray();
+            }
+        }
+
         public static string DefinitionName(string definitionId)
             => definitionId == TableDefinitionId ? "Work table" : definitionId == SmallDisplayId ? "Small display" :
-                definitionId == LargeDisplayId ? "Large display" : definitionId == CoralPlanterId ? "Coral planter" :
+                definitionId == LargeDisplayId ? "Large display" : definitionId == RackDefinitionId ? "Specimen rack" : definitionId == CoralPlanterId ? "Coral planter" :
                 definitionId == BubbleLampId ? "Bubble lamp" : definitionId == SillyStatueId ? "Silly fish statue" : null;
         public static int DefinitionPrice(string definitionId)
             => definitionId == TableDefinitionId ? TablePrice : definitionId == SmallDisplayId ? 24 : definitionId == LargeDisplayId ? 40 :
-                definitionId == CoralPlanterId ? 16 : definitionId == BubbleLampId ? 24 : definitionId == SillyStatueId ? 32 : 0;
+                definitionId == CoralPlanterId ? 16 : definitionId == BubbleLampId ? 24 : definitionId == SillyStatueId || definitionId == RackDefinitionId ? 32 : 0;
         public static int DefinitionResalePrice(string definitionId) => DefinitionPrice(definitionId) / 2;
         public static float DefinitionWidth(string definitionId)
-            => definitionId == TableDefinitionId || definitionId == SmallDisplayId ? 1.5f : definitionId == LargeDisplayId ? 2.5f :
+            => definitionId == TableDefinitionId || definitionId == SmallDisplayId || definitionId == RackDefinitionId ? 1.5f : definitionId == LargeDisplayId ? 2.5f :
                 IsDecor(definitionId) ? 1f : 0;
         public static float DefinitionDepth(string definitionId) => DefinitionPrice(definitionId) > 0 ? 1f : 0;
         public static int DefinitionSlotCount(string definitionId)
@@ -190,7 +203,25 @@ namespace EvolutionShop
         {
             var copy = GameModel.CopyAndValidate(config);
             copy.TankIds = TankIds;
+            copy.StorageIds = StorageIds;
             return copy;
+        }
+
+        public string[] GetStorageSlotIds(string itemId)
+        {
+            var item = GetItem(itemId);
+            return item.HasValue && item.Value.DefinitionId == RackDefinitionId
+                ? new[] { itemId + "-storage-1", itemId + "-storage-2" } : Array.Empty<string>();
+        }
+
+        public bool TryGetStorageAccessPoint(string itemId, out float x, out float z)
+        {
+            x = z = 0;
+            var item = GetItem(itemId);
+            if (!item.HasValue || item.Value.Stored || item.Value.DefinitionId != RackDefinitionId) return false;
+            Point point = StorageAccessPoint(item.Value);
+            x = point.X; z = point.Z;
+            return true;
         }
 
         public bool TryGetBrowsePoint(string slot, int spot, out float x, out float z)
@@ -261,7 +292,7 @@ namespace EvolutionShop
             if (definitionId == LargeDisplayId && StoreTier < 1) return LayoutResult.Fail(LayoutFailure.LockedDefinition);
             if (purchase && (nextItemNumber == int.MaxValue || items.Count >= MaxOwnedItems || CountTables() >= MaxItems && definitionId == TableDefinitionId ||
                 CountDisplays() >= DisplayLimit && DefinitionSlotCount(definitionId) > 0 ||
-                DecorCount >= DecorLimit && IsDecor(definitionId))) return LayoutResult.Fail(LayoutFailure.LimitReached);
+                DecorCount >= DecorLimit && IsDecor(definitionId) || RackCount >= RackLimit && definitionId == RackDefinitionId)) return LayoutResult.Fail(LayoutFailure.LimitReached);
             if (quarterTurns < 0 || quarterTurns > 3) return LayoutResult.Fail(LayoutFailure.InvalidRotation);
             // Bound integers before multiplying, indexing or allocating for untrusted input.
             if (!ValidGrid(x, z, StoreTier, LabTier)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
@@ -296,7 +327,7 @@ namespace EvolutionShop
             if (!valid.Success) return valid;
             // All fallible validation/allocation precedes this debit. Moving owned furniture is free.
             string committedId = movingId ?? candidate.items[candidate.items.Count - 1].Id;
-            var changed = model.TryApplyLayoutSlots(candidate.TankIds, movingId == null ? -DefinitionPrice(definitionId) : 0);
+            var changed = model.TryApplyLayoutSlots(candidate.TankIds, candidate.StorageIds, movingId == null ? -DefinitionPrice(definitionId) : 0);
             if (!changed.Success) return LayoutResult.Fail(LayoutFailureFor(changed.Failure));
             itemId = committedId;
             Publish(candidate);
@@ -345,7 +376,9 @@ namespace EvolutionShop
                 if (model.GetTank(slot).HasValue) return LayoutResult.Fail(LayoutFailure.StockedDisplay);
             }
             int refund = selling ? DefinitionResalePrice(GetItem(itemId).Value.DefinitionId) : 0;
-            var changed = model.TryApplyLayoutSlots(candidate.TankIds, refund);
+            foreach (string slot in GetStorageSlotIds(itemId))
+                if (model.GetStorage(slot).HasValue) return LayoutResult.Fail(LayoutFailure.StockedStorage);
+            var changed = model.TryApplyLayoutSlots(candidate.TankIds, candidate.StorageIds, refund);
             if (!changed.Success) return LayoutResult.Fail(LayoutFailureFor(changed.Failure));
             Publish(candidate);
             return LayoutResult.Ok();
@@ -359,6 +392,7 @@ namespace EvolutionShop
                 case FailureCode.CurrencyOverflow: return LayoutFailure.CurrencyOverflow;
                 case FailureCode.TankReserved: return LayoutFailure.ReservedDisplay;
                 case FailureCode.TankFull: return LayoutFailure.StockedDisplay;
+                case FailureCode.StorageFull: return LayoutFailure.StockedStorage;
                 default: return LayoutFailure.ModelMismatch;
             }
         }
@@ -460,6 +494,11 @@ namespace EvolutionShop
             if (expected.Length != actual.Length) return false;
             var ids = new HashSet<string>(actual, StringComparer.Ordinal);
             foreach (string id in expected) if (!ids.Contains(id)) return false;
+            expected = StorageIds;
+            actual = model.StorageIds;
+            if (expected.Length != actual.Length) return false;
+            ids = new HashSet<string>(actual, StringComparer.Ordinal);
+            foreach (string id in expected) if (!ids.Contains(id)) return false;
             return true;
         }
 
@@ -487,7 +526,7 @@ namespace EvolutionShop
             if (save == null || save.version < 1 || save.version > SaveVersion || save.storeTier < 0 || save.storeTier > MaxStoreTier ||
                 save.labTier < 0 || save.labTier > MaxLabTier || save.version < 5 && save.labTier != 0 ||
                 save.version == 1 && save.storeTier != 0 || save.items == null ||
-                save.items.Length > (save.version == 1 ? MaxItems : save.version == 2 ? 6 : MaxOwnedItems) ||
+                save.items.Length > (save.version == 1 ? MaxItems : save.version == 2 ? 6 : save.version < 6 ? 12 : MaxOwnedItems) ||
                 save.nextItemNumber < 1 || save.version < 4 && save.nextItemNumber != save.items.Length + 1) return false;
             var ordered = new List<LayoutItemSave>(save.items.Length);
             var seen = new HashSet<int>();
@@ -496,6 +535,7 @@ namespace EvolutionShop
                 if (item == null || DefinitionPrice(item.definitionId) == 0 ||
                     save.version == 1 && item.definitionId != TableDefinitionId ||
                     save.version < 3 && IsDecor(item.definitionId) ||
+                    save.version < 6 && item.definitionId == RackDefinitionId ||
                     save.version < 4 && item.stored ||
                     item.definitionId == LargeDisplayId && save.storeTier < 1 ||
                     item.quarterTurns < 0 || item.quarterTurns > 3 || !ValidGrid(item.x, item.z, save.storeTier, save.labTier)) return false;
@@ -509,7 +549,7 @@ namespace EvolutionShop
             {
                 candidate.items.Add(new LayoutItemView(item.id, item.definitionId, item.x, item.z, item.quarterTurns, item.stored));
             }
-            if (candidate.CountTables() > MaxItems || candidate.CountDisplays() > candidate.DisplayLimit || candidate.DecorCount > DecorLimit) return false;
+            if (candidate.CountTables() > MaxItems || candidate.CountDisplays() > candidate.DisplayLimit || candidate.DecorCount > DecorLimit || candidate.RackCount > candidate.RackLimit) return false;
             if (!candidate.ValidateAll().Success) return false;
             layout = candidate;
             return true;
@@ -543,6 +583,7 @@ namespace EvolutionShop
                 Rect table = Footprint(items[i]);
                 if (table.MinX < StoreMinX + .2f || table.MaxX > 6.8f || table.MinZ < -5.4f || table.MaxZ > LabMaxZ - .1f ||
                     table.MinX < -6.8f && table.MaxZ > .19f ||
+                    items[i].DefinitionId == RackDefinitionId && table.MinZ < .81f ||
                     DefinitionSlotCount(items[i].DefinitionId) > 0 && table.MaxZ > .19f)
                     return LayoutResult.Fail(LayoutFailure.OutOfBounds);
                 foreach (var wall in Partition) if (table.Overlaps(wall)) return LayoutResult.Fail(LayoutFailure.OutOfBounds);
@@ -552,6 +593,8 @@ namespace EvolutionShop
                 if (OverlapsProtectedAisle(table)) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
                 foreach (var point in access)
                     if (table.Overlaps(Rect.At(point.X, point.Z, 1, 1))) return LayoutResult.Fail(LayoutFailure.ProtectedAccess);
+                if (items[i].DefinitionId == RackDefinitionId && StorageAccessPoint(items[i]).Z < .95f)
+                    return LayoutResult.Fail(LayoutFailure.UnreachableAccess);
             }
             for (int i = 0; i < facilities.Count; i++)
             {
@@ -587,6 +630,7 @@ namespace EvolutionShop
             foreach (var item in items)
                 if (!item.Stored && DefinitionSlotCount(item.DefinitionId) > 0)
                 { points.Add(BrowsePoint(item, 0)); points.Add(BrowsePoint(item, 1)); }
+                else if (!item.Stored && item.DefinitionId == RackDefinitionId) points.Add(StorageAccessPoint(item));
             return points;
         }
 
@@ -605,6 +649,13 @@ namespace EvolutionShop
         {
             float x = spot == 0 ? -.45f : .45f, z = -DefinitionDepth(item.DefinitionId) / 2f - .9f;
             // Unity Y-positive quarter turns: (x,z) -> (z,-x).
+            for (int turn = 0; turn < item.QuarterTurns; turn++) { float oldX = x; x = z; z = -oldX; }
+            return new Point(item.X * GridSize + x, item.Z * GridSize + z);
+        }
+
+        private static Point StorageAccessPoint(LayoutItemView item)
+        {
+            float x = 0, z = -1.4f;
             for (int turn = 0; turn < item.QuarterTurns; turn++) { float oldX = x; x = z; z = -oldX; }
             return new Point(item.X * GridSize + x, item.Z * GridSize + z);
         }

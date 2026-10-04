@@ -65,7 +65,7 @@ namespace EvolutionShop.Tests
             byte[] originalBytes = File.ReadAllBytes(path);
             Assert.That(SaveStore.Read(path, config, out var restored, out var slot, out var error), Is.True, error);
             Assert.That(File.ReadAllBytes(path), Is.EqualTo(originalBytes), "Read must not rewrite the saved slot.");
-            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.game.version, Is.EqualTo(2));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.game.version, Is.EqualTo(GameModel.SaveVersion));
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
             Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedClock));
             Assert.That(slot.sensitivity, Is.EqualTo(1.25f)); Assert.That(slot.volume, Is.EqualTo(0.42f));

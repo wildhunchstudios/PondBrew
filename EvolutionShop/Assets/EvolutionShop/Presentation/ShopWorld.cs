@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade, Display }
+    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade, Display, StorageRack }
 
     public sealed class Station : MonoBehaviour
     {
@@ -13,6 +13,7 @@ namespace EvolutionShop
         public string Label;
         public string TankId;
         public string FacilityId;
+        public string StorageItemId;
     }
 
     /// <summary>Presentation only. All quantities and transaction decisions belong to GameModel.</summary>
@@ -52,6 +53,8 @@ namespace EvolutionShop
             public float Seed;
             public bool Incubator;
             public TextMesh Status;
+            public TextMesh StorageStatus;
+            public HashSet<Material> StorageMaterials;
             public Bounds Interior = new Bounds(new Vector3(0, 1.57f, 0), new Vector3(1.94f, 1.06f, 1.24f));
         }
 
@@ -74,6 +77,7 @@ namespace EvolutionShop
         void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
         void OnDestroy()
         {
+            DisposeStoragePresentation();
             DisposePlacementPresentation();
             foreach (var material in fontMaterials.Values) if (material) Destroy(material);
         }
@@ -546,11 +550,12 @@ namespace EvolutionShop
             RefreshGrower(model, CultureKind.Bloom, StationKind.Bloom, bloomCells);
             RefreshGrower(model, CultureKind.Flow, StationKind.Flow, flowCells);
             var incubation = model.Incubator;
-            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  TRANSFER TO TANK" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW";
+            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW";
             SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
             RefreshPlacedDisplays(model);
+            RefreshStorageRacks(model);
             status[StationKind.Upgrade].text = upgraded ? "INSTALLED  /  8 UNIT RESERVOIR" : "24 COINS  /  COLLECT FASTER";
             toolReadout.text = (bloomCount + flowCount) + " / " + model.Capacity;
             for (int i = 0; i < reservoirCells.Count; i++)

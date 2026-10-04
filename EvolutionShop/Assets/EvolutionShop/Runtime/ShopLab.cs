@@ -62,6 +62,12 @@ namespace EvolutionShop
             else Small("Lab fully expanded. Both rear extensions are ready.");
             Small("Expansion adds space. Grower speed, incubation time and creature capacity stay the same.");
             Space();
+            Text("Specimen racks " + Layout.RackCount + " / " + Layout.RackLimit + " owned / " + StoredSpecimenCount + " creatures stored");
+            if (Layout.RackCount < Layout.RackLimit)
+                Button("Specimen rack / 2 slots / 32 credits", () => BeginPlacement(null, ShopLayout.RackDefinitionId));
+            else Small("Rack limit reached. Each lab expansion permits one more rack.");
+            Small("Racks free the incubator for the next creature. Hidden stock is never sold to customers. Move, store or sell racks from Owned / storage.");
+            Space();
             foreach (var facility in Layout.Facilities)
             {
                 string id = facility.Id;

@@ -37,7 +37,7 @@ namespace EvolutionShop.Tests
             var expected = JsonUtility.FromJson<SlotData>(File.ReadAllText(Fixture(fixture)));
             Assert.That(expected.formatVersion, Is.EqualTo(11)); Assert.That(expected.layout.version, Is.EqualTo(4));
             var loaded = Read(out var model); AssertSameState(expected, loaded, model);
-            Assert.That(loaded.formatVersion, Is.EqualTo(12)); Assert.That(loaded.layout.version, Is.EqualTo(5));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
             Assert.That(loaded.layout.labTier, Is.Zero); AssertCanonicalFacilities(loaded.layout);
             Assert.That(loaded.layout.items.Length, Is.EqualTo(owned));
             int occupied = 0; foreach (string tank in model.TankIds) if (model.GetTank(tank).HasValue) occupied++;
@@ -86,7 +86,7 @@ namespace EvolutionShop.Tests
                 before.Tick(phase == "ready" ? config.IncubationSeconds : 2.25f);
             }
             // This is still an actual v11 envelope: only its existing game state is varied.
-            old.game = before.CaptureSave(); File.WriteAllText(PathFor(), JsonUtility.ToJson(old, true));
+            old.game = before.CaptureSave(); old.game.version = 2; File.WriteAllText(PathFor(), JsonUtility.ToJson(old, true));
             byte[] legacy = File.ReadAllBytes(PathFor()); var slot = Read(out var model); AssertSameState(old, slot, model);
             Assert.That(ShopLayout.TryRestore(slot.layout, out var layout), Is.True);
             Assert.That(layout.TryExpandLab(model, ShopDayPhase.Night).Success, Is.True);
@@ -193,13 +193,13 @@ namespace EvolutionShop.Tests
         [TestCase(11, 5)] [TestCase(12, 4)]
         public void PreviousAndCurrentEnvelopeLayoutPairingsRemainStrict(int format, int version)
         {
-            var slot = ValidControl(); slot.formatVersion = format; slot.layout.version = version; RejectRead(JsonUtility.ToJson(slot));
+            var slot = ValidControl(); slot.formatVersion = format; slot.game.version = 2; slot.layout.version = version; RejectRead(JsonUtility.ToJson(slot));
         }
 
         [TestCase("tier")] [TestCase("pose")]
         public void LegacyLayoutCannotSmuggleLabExpansionOrRelocatedEquipment(string problem)
         {
-            var slot = ValidControl(); slot.formatVersion = 11; slot.layout.version = 4;
+            var slot = ValidControl(); slot.formatVersion = 11; slot.game.version = 2; slot.layout.version = 4;
             File.WriteAllText(PathFor(), JsonUtility.ToJson(slot)); AssertCanonicalFacilities(Read(out _).layout);
             if (problem == "tier") slot.layout.labTier = 1; else slot.layout.facilities[0].z = 1;
             RejectRead(JsonUtility.ToJson(slot));

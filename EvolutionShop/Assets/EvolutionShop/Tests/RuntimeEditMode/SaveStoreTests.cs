@@ -55,7 +55,7 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Write(PathFor(),slot,out var error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out var restored,out var loaded,out error),Is.True,error);
             Assert.That(JsonUtility.ToJson(restored.CaptureSave()),Is.EqualTo(JsonUtility.ToJson(model.CaptureSave())));
-            Assert.That(loaded.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.game.version,Is.EqualTo(2));
+            Assert.That(loaded.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.game.version,Is.EqualTo(GameModel.SaveVersion));
             Assert.That(loaded.sensitivity,Is.EqualTo(1.7f)); Assert.That(loaded.volume,Is.EqualTo(0.31f));
             Assert.That(SaveStore.Write(PathFor(),loaded,out error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out restored,out _,out error),Is.True,error);
@@ -88,7 +88,7 @@ namespace EvolutionShop.Tests
             Assert.That(SaveStore.Write(PathFor(),slot,out var error),Is.True,error);
             Assert.That(SaveStore.Read(PathFor(),config,out _,out var loaded,out error),Is.True,error);
             Assert.That(loaded.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion));
-            Assert.That(loaded.game.version,Is.EqualTo(2));
+            Assert.That(loaded.game.version,Is.EqualTo(GameModel.SaveVersion));
             Assert.That(ShopDayCycle.TryRestore(loaded.cycle,out var restored),Is.True);
             Assert.That(restored.DayNumber,Is.EqualTo(2)); Assert.That(restored.Phase,Is.EqualTo(phase));
             Assert.That(restored.SecondsRemaining,Is.EqualTo(day.SecondsRemaining));
@@ -108,7 +108,7 @@ namespace EvolutionShop.Tests
             Assert.That(model.Incubator.SpecimenId,Is.EqualTo("657d8c9c16744f6ab0436867af9d82d2"));
             Assert.That(model.Incubator.SecondsRemaining,Is.EqualTo(10)); Assert.That(slot.sensitivity,Is.EqualTo(1));
             Assert.That(slot.volume,Is.EqualTo(0.65f)); Assert.That(slot.formatVersion,Is.EqualTo(SaveStore.CurrentFormatVersion));
-            Assert.That(slot.game.version,Is.EqualTo(2)); Assert.That(slot.cycle.version,Is.EqualTo(1));
+            Assert.That(slot.game.version,Is.EqualTo(GameModel.SaveVersion)); Assert.That(slot.cycle.version,Is.EqualTo(1));
             Assert.That(slot.cycle.phase,Is.EqualTo(ShopDayPhase.Night)); Assert.That(slot.cycle.dayNumber,Is.EqualTo(1));
             Assert.That(slot.cycle.secondsRemaining,Is.Zero);
             Assert.That(slot.trades.version,Is.EqualTo(ShopTradeLedger.SaveVersion));
@@ -452,11 +452,11 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void FormatTwelveRetainsExplicitHistoricalGameAndReportPairings()
+        public void FormatThirteenRetainsExplicitHistoricalGameAndReportPairings()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(12));
-            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4 };
-            for (int format = 1; format <= 12; format++)
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(13));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4 };
+            for (int format = 1; format <= 13; format++)
             {
                 Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
                 Assert.That(SaveStore.ReportVersionFor(format), Is.EqualTo(reports[format]));

@@ -57,7 +57,7 @@ namespace EvolutionShop.Tests
             foreach (string id in new[] { "table-1-slot-1", "table-3-slot-2" })
             { Assert.That(reports.BeginVisit(id), Is.True); Ok(model.ReserveTank(id, id)); }
             if (phase == ShopDayPhase.Closing) { Assert.That(cycle.RequestClose(), Is.True); cycle.Tick(.5f); }
-            old.game = model.CaptureSave(); old.cycle = cycle.CaptureSave(); old.trades = reports.CaptureSave();
+            old.game = model.CaptureSave(); old.game.version = 2; old.cycle = cycle.CaptureSave(); old.trades = reports.CaptureSave();
             old.sensitivity = 1.6f; old.volume = .27f; old.slapKey = "G"; old.humorVolume = .4f; old.reducedGags = true;
             File.WriteAllText(PathFor(), JsonUtility.ToJson(old, true)); byte[] original = File.ReadAllBytes(PathFor());
             var loaded = Read(out var restored); AssertSameProgress(old, loaded, restored);
@@ -163,7 +163,7 @@ namespace EvolutionShop.Tests
         {
             var slot = FreshSlot(new LayoutSave { version = 3, nextItemNumber = 2, items = new[] { Item(1, "coral-planter", -4, -1) } },
                 ShopDayPhase.Night, out _);
-            slot.formatVersion = format; slot.layout.version = layoutVersion; RejectRead(JsonUtility.ToJson(slot));
+            slot.formatVersion = format; slot.game.version = 2; slot.layout.version = layoutVersion; RejectRead(JsonUtility.ToJson(slot));
         }
 
         [TestCase("decor-slot")] [TestCase("missing-display-slot")] [TestCase("stocked-display-reclassified-as-decor")]
@@ -183,7 +183,7 @@ namespace EvolutionShop.Tests
         public void EnvelopeLayoutVersionsStayExplicit(int format, int layoutVersion)
         {
             var slot = FreshSlot(new ShopLayout().CaptureSave(), ShopDayPhase.Night, out _);
-            Write(slot); Read(out _); slot.formatVersion = format; slot.layout.version = layoutVersion;
+            Write(slot); Read(out _); slot.formatVersion = format; slot.game.version = 2; slot.layout.version = layoutVersion;
             RejectRead(JsonUtility.ToJson(slot));
         }
 

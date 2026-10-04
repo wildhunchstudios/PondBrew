@@ -142,7 +142,7 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var slot, out var error), Is.True, error);
-                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.game.version, Is.EqualTo(2));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.game.version, Is.EqualTo(GameModel.SaveVersion));
                 Assert.That(slot.cycle.version, Is.EqualTo(1)); Assert.That(slot.trades.version, Is.EqualTo(ShopTradeLedger.SaveVersion));
                 Assert.That(JsonUtility.ToJson(restored.CaptureSave()), Is.EqualTo(expectedGame));
                 Assert.That(JsonUtility.ToJson(slot.cycle), Is.EqualTo(expectedCycle));

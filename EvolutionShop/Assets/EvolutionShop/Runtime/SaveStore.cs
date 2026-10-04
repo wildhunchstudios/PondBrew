@@ -30,16 +30,17 @@ namespace EvolutionShop
         // 10: initial decor. Appeal is derived from layout and is never a second saved authority.
         // 11: stored furniture, permanent sales, and stable IDs across ownership gaps.
         // 12: two lab expansions and poses for the four existing production facilities.
-        // Formats 1-11 migrate in memory; historical saves never
+        // 13: separate specimen-rack storage (game 3, layout 6).
+        // Formats 1-12 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 12;
+        public const int CurrentFormatVersion = 13;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 12 ? 2 : 0;
+            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 12 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 13 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -129,6 +130,14 @@ namespace EvolutionShop
             {
                 string json = File.ReadAllText(path);
                 var header = JsonUtility.FromJson<SlotHeader>(json);
+                // Check the new array and its entry fields before the full JsonUtility parse can
+                // manufacture empty/default values for missing, null or incorrectly typed data.
+                bool currentStorage = header != null && header.formatVersion == 13;
+                if (currentStorage && !new LayoutJsonShape(json, true, true, true, true).HasExplicitItemsArray())
+                {
+                    error = "Saved layout or storage shape could not be validated. Your original file is preserved.";
+                    return false;
+                }
                 var candidate = JsonUtility.FromJson<SlotData>(json);
                 // Each envelope carries exactly one game version: price tags arrived with format 4.
                 if (header == null || header.formatVersion < 1 || header.formatVersion > CurrentFormatVersion ||
@@ -151,10 +160,10 @@ namespace EvolutionShop
                 else
                 {
                     int layoutVersion = header.formatVersion == 8 ? 1 : header.formatVersion == 9 ? 2 :
-                        header.formatVersion == 10 ? 3 : header.formatVersion == 11 ? 4 : 5;
+                        header.formatVersion == 10 ? 3 : header.formatVersion == 11 ? 4 : header.formatVersion == 12 ? 5 : 6;
                     if (header.layout == null || header.layout.version != layoutVersion ||
-                        !new LayoutJsonShape(json, header.formatVersion >= 9, header.formatVersion >= 11,
-                            header.formatVersion >= 12).HasExplicitItemsArray() ||
+                        (!currentStorage && !new LayoutJsonShape(json, header.formatVersion >= 9, header.formatVersion >= 11,
+                            header.formatVersion >= 12).HasExplicitItemsArray()) ||
                         !ShopLayout.TryRestore(candidate.layout, out restoredLayout))
                     {
                         error = "Saved layout could not be validated. Your original file is preserved.";
@@ -274,9 +283,10 @@ namespace EvolutionShop
             readonly bool requireStoreTier;
             readonly bool requireStored;
             readonly bool requireLab;
+            readonly bool requireStorage;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; }
 
             public bool HasExplicitItemsArray()
             {
@@ -287,7 +297,7 @@ namespace EvolutionShop
             bool ReadObject(bool layout)
             {
                 if (!Take('{')) return false;
-                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false;
+                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 SkipSpace();
                 if (Take('}')) return false;
@@ -298,6 +308,11 @@ namespace EvolutionShop
                     {
                         if (!ReadObject(true)) return false;
                         required = true;
+                    }
+                    else if (!layout && requireStorage && key == "game")
+                    {
+                        if (!ReadGame()) return false;
+                        hasStorage = true;
                     }
                     else if (layout && key == "items")
                     {
@@ -327,8 +342,63 @@ namespace EvolutionShop
                         hasFacilities = true;
                     }
                     else if (!SkipValue(0)) return false;
-                    if (Take('}')) return required && (!layout ||
-                        ((!requireStoreTier || hasStoreTier) && (!requireLab || hasLabTier && hasFacilities)));
+                    if (Take('}')) return required && (layout ?
+                        ((!requireStoreTier || hasStoreTier) && (!requireLab || hasLabTier && hasFacilities)) :
+                        (!requireStorage || hasStorage));
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadGame()
+            {
+                if (!Take('{')) return false;
+                bool hasStorage = false;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    if (key == "storage")
+                    { if (!ReadStorage()) return false; hasStorage = true; }
+                    else if (!SkipValue(0)) return false;
+                    if (Take('}')) return hasStorage;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadStorage()
+            {
+                if (!Take('[')) return false;
+                if (Take(']')) return true;
+                while (position < json.Length)
+                {
+                    if (!Take('{')) return false;
+                    int required = 0;
+                    var keys = new HashSet<string>(StringComparer.Ordinal);
+                    while (position < json.Length)
+                    {
+                        if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                        if (key == "storageId")
+                        { if (!ReadString(true, out string id) || string.IsNullOrWhiteSpace(id)) return false; required |= 1; }
+                        else if (key == "specimenId" || key == "speciesId")
+                        {
+                            SkipSpace();
+                            if (position < json.Length && json[position] == '"')
+                            { if (!ReadString(false, out _)) return false; }
+                            else
+                            {
+                                if (position + 4 > json.Length || string.CompareOrdinal(json, position, "null", 0, 4) != 0) return false;
+                                position += 4;
+                            }
+                            required |= key == "specimenId" ? 2 : 4;
+                        }
+                        else if (!SkipValue(0)) return false;
+                        if (Take('}')) break;
+                        if (!Take(',')) return false;
+                    }
+                    if (required != 7) return false;
+                    if (Take(']')) return true;
                     if (!Take(',')) return false;
                 }
                 return false;

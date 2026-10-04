@@ -37,7 +37,7 @@ namespace EvolutionShop.Tests
             Write(slot); byte[] original = File.ReadAllBytes(PathFor());
             var loaded = Read(out var model);
             Assert.That(loaded.layout.items, Is.Empty); Assert.That(model.Currency, Is.Zero);
-            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.game.version, Is.EqualTo(2));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.game.version, Is.EqualTo(GameModel.SaveVersion));
             Assert.That(loaded.trades.version, Is.EqualTo(4)); Assert.That(loaded.reputation.version, Is.EqualTo(1));
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));

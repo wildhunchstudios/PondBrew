@@ -71,7 +71,7 @@ namespace EvolutionShop
             if (!Layout.GetItem(itemId).HasValue) { Notify("That owned furniture is no longer available."); return false; }
             if (DisplayHasReservation(itemId)) { Notify("Finish the reserved customer order first."); return false; }
             if (DisplayHasStock(itemId))
-            { Notify("Sell the creatures before storing or selling this display. You can move it with stock for free.", 6); return false; }
+            { Notify("Move or sell every creature before storing or selling this furniture. Moving it with stock is free.", 6); return false; }
             return true;
         }
 
@@ -93,7 +93,7 @@ namespace EvolutionShop
         void DrawOwnedFurniture()
         {
             Space(); Heading("Owned furniture / " + Layout.StoredCount + " in storage");
-            Small("Move stocked displays safely at night. Store empty furniture for free, or sell it for half its catalog price. Storage keeps ownership limits; it adds no active slots or appeal.");
+            Small("Move stocked displays and specimen racks safely at night. Store empty furniture for free, or sell it for half its catalog price. Storage keeps ownership limits; it adds no active slots or appeal.");
             foreach (var item in Layout.Items)
             {
                 string id = item.Id;
@@ -102,13 +102,13 @@ namespace EvolutionShop
                 Text(ShopLayout.DefinitionName(item.DefinitionId) + " " + id.Replace("table-", "#") + " / " + place + (stocked ? " / contains stock" : ""));
                 if (reserved) { Small("Reserved customer order: finish it before rearranging."); continue; }
                 Button((item.Stored ? "Place from storage" : stocked ? "Move with stock safely" : "Move") + " / free", () => BeginPlacement(id));
-                if (stocked) { Small("Store / sell blocked until every creature here has sold."); continue; }
+                if (stocked) { Small("Store / sell blocked until every creature has moved out or sold."); continue; }
                 GUILayout.BeginHorizontal();
                 if (!item.Stored) Button("Store / free", () => StoreFurniture(id));
                 Button("Sell / +" + ShopLayout.DefinitionResalePrice(item.DefinitionId) + " credits...", () => RequestFurnitureSale(id));
                 GUILayout.EndHorizontal();
             }
-            Small("Original tanks, machines and room extensions stay fixed. Stored pieces can be placed anywhere valid; cancel keeps them in storage.");
+            Small("Original tanks and room extensions cannot be removed. Move essential machines from the Lab menu. Stored pieces can be placed anywhere valid; cancel keeps them in storage.");
         }
 
         void DrawFurnitureSaleConfirmation()
@@ -119,7 +119,7 @@ namespace EvolutionShop
             Text("Receive " + ShopLayout.DefinitionResalePrice(item.Value.DefinitionId) + " credits. This removes the owned piece; buying it again costs the full catalog price.");
             Small("Only empty furniture can be sold. Store it instead if you want to use it again for free. Stock, production and the original stations remain safe.");
             if (Layout.TryPreviewSell(item.Value.Id, out var candidate).Success)
-                Text("Store appeal: " + Appeal.Points + " > " + candidate.AppealPoints + " / Active creature slots: " + Model.TankIds.Length + " > " + candidate.TankIds.Length);
+                Text("Store appeal: " + Appeal.Points + " > " + candidate.AppealPoints + " / Active creature slots: " + Model.TankIds.Length + " > " + candidate.TankIds.Length + " / Lab storage: " + Model.StorageIds.Length + " > " + candidate.StorageIds.Length);
             Button("Confirm sale / +" + ShopLayout.DefinitionResalePrice(item.Value.DefinitionId) + " credits", () => ConfirmFurnitureSale());
             Button("Keep furniture / back", CancelFurnitureSale);
         }

@@ -11,7 +11,7 @@ namespace EvolutionShop
         UndiscoveredRecipe, UnknownTank, TankFull, TankEmpty, OutputNotReady,
         InsufficientFunds, AlreadyUpgraded, CurrencyOverflow, InvalidSave,
         TankReserved, InvalidCustomer, ReservationMismatch, NoCustomerReady,
-        InvalidPrice, PriceTooHigh
+        InvalidPrice, PriceTooHigh, UnknownStorage, StorageFull, StorageEmpty, SpecimenMismatch
     }
 
     [Serializable]
@@ -53,6 +53,7 @@ namespace EvolutionShop
         public int MinimumPrice = 1;
         public int MaximumPricePercent = 300;
         public string[] TankIds = { "tank-a", "tank-b" };
+        public string[] StorageIds = Array.Empty<string>();
         public SpeciesDefinition[] Species =
         {
             new SpeciesDefinition("pondlet", "Pondlet", 1, 1, 6, "teardrop"),
@@ -165,6 +166,8 @@ namespace EvolutionShop
         public GrowerSave[] growers;
         public IncubatorSave incubator;
         public TankSave[] tanks;
+        // Version 3: separate lab storage; these locations are never customer displays.
+        public StorageSave[] storage;
         public string[] discoveries;
         // Version 2: price tags that differ from the standard price. Version 1 has none.
         public PriceSave[] prices;
@@ -194,6 +197,14 @@ namespace EvolutionShop
         public string speciesId;
         public string specimenId;
         public float secondsRemaining;
+    }
+
+    [Serializable]
+    public sealed class StorageSave
+    {
+        public string storageId;
+        public string specimenId;
+        public string speciesId;
     }
 
     [Serializable]

@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -323,10 +323,12 @@ namespace EvolutionShop
                 case StationKind.Bloom: case StationKind.Flow:
                     Notify("Hold left mouse to siphon living cultures."); break;
                 case StationKind.Incubator: SetPanel(ShopPanel.Incubator); break;
+                case StationKind.StorageRack:
+                    selectedRack = station.StorageItemId; SetPanel(ShopPanel.StorageRack); break;
                 case StationKind.TankA: case StationKind.TankB: case StationKind.Display:
                     selectedTank = station.TankId ?? (station.Kind == StationKind.TankA ? "tank-a" : "tank-b");
                     // An occupied tank opens its price tag; ready output waits safely in the incubator.
-                    if (Model.Incubator.Phase == IncubatorPhase.Ready && !Model.GetTank(selectedTank).HasValue)
+                    if (Model.Incubator.Phase == IncubatorPhase.Ready && !Model.GetTank(selectedTank).HasValue && StoredSpecimenCount == 0)
                         TransferToDisplay(selectedTank);
                     else SetPanel(ShopPanel.Tank);
                     break;
@@ -394,7 +396,7 @@ namespace EvolutionShop
             AutosaveBlocked = false;
             SaveError = null;
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
-            pendingFurnitureSaleId = null;
+            pendingFurnitureSaleId = null; selectedRack = null;
             AdoptLayout(restoredLayout);
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
@@ -419,6 +421,7 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
             { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
+            selectedRack = null;
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
@@ -445,6 +448,10 @@ namespace EvolutionShop
         {
             switch (code.ToString())
             {
+                case "UnknownStorage": return "That storage compartment is no longer available.";
+                case "StorageFull": return "That compartment is full. The waiting creature is safe.";
+                case "StorageEmpty": return "That storage compartment is empty.";
+                case "SpecimenMismatch": return "That exact creature has moved. Choose the current stock again.";
                 case "ReservoirFull": return "Reservoir full. Staged doses still reserve their return space.";
                 case "GrowerEmpty": case "EmptyGrower": return "Grower is replenishing. Try again shortly.";
                 case "InsufficientCulture": return "Collect enough Bloom and Flow first.";
