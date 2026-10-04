@@ -108,12 +108,12 @@ namespace EvolutionShop
             pondletStudy.gameObject.SetActive(sampleView==2);fishPedestal.gameObject.SetActive(sampleView==2);
             customerStudy.gameObject.SetActive(sampleView==3);employeeStudy.gameObject.SetActive(sampleView==4);
             Vector3 eye,look;
-            if(sampleView==0){eye=sampleTank.TransformPoint(new Vector3(-.7f,1.90f,-3.65f));look=sampleTank.TransformPoint(new Vector3(0,1.38f,.3f));}
+            if(sampleView==0){eye=sampleTank.TransformPoint(new Vector3(-.7f,1.90f,-3.65f));look=sampleTank.TransformPoint(new Vector3(0,1.16f,.3f));}
             else if(sampleView==1){eye=sampleBloom.TransformPoint(new Vector3(1.1f,1.72f,-2.90f));look=sampleBloom.TransformPoint(new Vector3(0,.98f,0));}
             else{eye=new Vector3(1.6f,1.55f,-5.08f);look=new Vector3(0,.72f,-2.35f);}
             camera.transform.SetPositionAndRotation(eye,Quaternion.LookRotation(look-eye));
             // Frame the full subject between the fixed header and preview controls at 16:9.
-            camera.fieldOfView=sampleView>=2?55:72;
+            camera.fieldOfView=sampleView>=2?57:72;
             foreach(var label in labels) FitLabel(label);
         }
         public void AnimatePresentationSample(CharacterSamplePose pose,float time,float angle)
