@@ -44,7 +44,7 @@ namespace EvolutionShop
                 layoutIds.Add(item.Id);
                 placedTables.TryGetValue(item.Id, out var table);
                 if (table && table.DefinitionId != item.DefinitionId)
-                { RetireStorageResidents(table.transform); RetirePlacementItem(table); table = null; }
+                { RetireConditioner(table.transform); RetireStorageResidents(table.transform); RetirePlacementItem(table); table = null; }
                 if (!table)
                 {
                     var root = Group(item.DefinitionId + " / " + item.Id, transform, Vector3.zero);
@@ -60,6 +60,7 @@ namespace EvolutionShop
                         BuildWorktable(root, false);
                     }
                     else if (item.DefinitionId == ShopLayout.RackDefinitionId) BuildPlacedStorage(root, item.Id, false);
+                    else if (item.DefinitionId == ShopLayout.ConditionerDefinitionId) BuildPlacedConditioner(root, item.Id, false);
                     else if (ShopLayout.IsDecor(item.DefinitionId)) BuildPlacedDecor(root, item.DefinitionId, false);
                     else BuildPlacedDisplay(root, item.Id, item.DefinitionId, false);
                     placedTables[item.Id] = table;
@@ -76,6 +77,7 @@ namespace EvolutionShop
                 var table = placedTables[id];
                 if (table)
                 {
+                    RetireConditioner(table.transform);
                     RetireStorageResidents(table.transform);
                     RetirePlacementItem(table);
                 }
@@ -159,9 +161,11 @@ namespace EvolutionShop
             if (placementPreview && previewDefinition == definitionId) return;
             BeginPlacementPreview(definitionId, definitionId == ShopLayout.TableDefinitionId ? "Worktable placement preview (no colliders)" :
                 definitionId == ShopLayout.RackDefinitionId ? "Specimen rack placement preview (no colliders)" :
+                definitionId == ShopLayout.ConditionerDefinitionId ? "Conditioning vat placement preview (no colliders)" :
                 ShopLayout.IsDecor(definitionId) ? "Decor placement preview (no colliders)" : "Display placement preview (no colliders)");
             if (definitionId == ShopLayout.TableDefinitionId) BuildWorktable(placementPreview, true);
             else if (definitionId == ShopLayout.RackDefinitionId) BuildPlacedStorage(placementPreview, null, true);
+            else if (definitionId == ShopLayout.ConditionerDefinitionId) BuildPlacedConditioner(placementPreview, null, true);
             else if (ShopLayout.IsDecor(definitionId)) BuildPlacedDecor(placementPreview, definitionId, true);
             else BuildPlacedDisplay(placementPreview, null, definitionId, true);
             PreviewMark("Footprint left", new Vector3(-width * .5f + .015f, .028f, 0), new Vector3(.03f, .014f, depth));
@@ -170,9 +174,10 @@ namespace EvolutionShop
             PreviewMark("Footprint back", new Vector3(0, .028f, depth * .5f - .015f), new Vector3(width, .014f, .03f));
             // An asymmetric stripe exposes quarter turns even when the transparent top is viewed obliquely.
             float markerHeight = ShopLayout.IsDecor(definitionId) ? DecorHeight(definitionId) + .013f :
-                definitionId == ShopLayout.TableDefinitionId ? .973f : definitionId == ShopLayout.RackDefinitionId ? 2.513f : 1.65f;
+                definitionId == ShopLayout.TableDefinitionId ? .973f : definitionId == ShopLayout.RackDefinitionId ? 2.513f : definitionId == ShopLayout.ConditionerDefinitionId ? 1.933f : 1.65f;
             PreviewMark("Front orientation stripe", new Vector3(0, markerHeight, -.33f), new Vector3(.55f, .012f, .045f));
             if (definitionId == ShopLayout.RackDefinitionId) StoragePreviewAccess();
+            if (definitionId == ShopLayout.ConditionerDefinitionId) ConditioningPreviewAccess();
             if (ShopLayout.DefinitionSlotCount(definitionId) > 0)
             {
                 PreviewMark("Front access marker (outside furniture footprint)", new Vector3(0, .028f, -depth * .5f - .9f), new Vector3(1.2f, .014f, .34f));

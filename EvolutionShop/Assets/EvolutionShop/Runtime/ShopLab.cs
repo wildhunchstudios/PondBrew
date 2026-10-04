@@ -68,6 +68,16 @@ namespace EvolutionShop
             else Small("Rack limit reached. Each lab expansion permits one more rack.");
             Small("Racks free the incubator for the next creature. Hidden stock is never sold to customers. Move, store or sell racks from Owned / storage.");
             Space();
+            Text("Conditioning vat / " + Layout.ConditionerCount + " of 1 owned");
+            if (Layout.ConditionerCount == 0)
+            {
+                if (!Model.SparkResearchUnlocked || !Model.IsDiscovered("lanternfin"))
+                    Small("Unlock: research Spark and discover Lanternfin by incubation first.");
+                else Button("Conditioning vat / 2 creatures / 64 credits", () => BeginPlacement(null, ShopLayout.ConditionerDefinitionId));
+            }
+            Small("Known Glow bath: 1–2 stored Pondlets + 1 collected Spark per batch become Lanternfin in 12 seconds. Two at once saves one Spark; the incubator stays free.");
+            Small("Requires a specimen rack for inputs. Collect outputs at a rack or display. Canceling returns the same Pondlets and your reserved Spark.");
+            Space();
             foreach (var facility in Layout.Facilities)
             {
                 string id = facility.Id;

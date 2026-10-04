@@ -33,7 +33,7 @@ namespace EvolutionShop.Tests
             var before = JsonUtility.FromJson<SlotData>(File.ReadAllText(Fixture()));
             Assert.That(before.formatVersion, Is.EqualTo(13)); Assert.That(before.game.version, Is.EqualTo(3)); Assert.That(before.layout.version, Is.EqualTo(6));
             var after = Read(out var model); AssertState(before, after, model);
-            Assert.That(after.formatVersion, Is.EqualTo(14)); Assert.That(after.game.version, Is.EqualTo(4)); Assert.That(after.layout.version, Is.EqualTo(6));
+            Assert.That(after.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(after.game.version, Is.EqualTo(GameModel.SaveVersion)); Assert.That(after.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
             Assert.That(model.SparkResearchReady, Is.True); Assert.That(model.SparkResearchUnlocked, Is.False);
             Assert.That(model.Currency, Is.EqualTo(224)); Assert.That(model.Available(CultureKind.Spark), Is.Zero); Assert.That(model.Staged(CultureKind.Spark), Is.Zero);
             Assert.That(model.GetGrower(CultureKind.Spark).Units, Is.Zero); Assert.That(model.GetGrower(CultureKind.Spark).SecondsToNextUnit, Is.EqualTo(config.GrowerRefillSeconds));
@@ -219,7 +219,7 @@ namespace EvolutionShop.Tests
         [TestCase(13, 4)] [TestCase(14, 3)] [TestCase(14, 2)] [TestCase(14, 5)]
         public void NewAndHistoricalGameMappingsRemainExplicit(int envelope, int version)
         {
-            var slot = ValidControl(); slot.formatVersion = envelope;
+            var slot = ValidControl(); slot.formatVersion = envelope; slot.layout.version = 6;
             slot.game = version < 4 ? LegacyGameSaveFixture.AsVersion(slot.game, version) : slot.game;
             slot.game.version = version == 5 ? GameModel.SaveVersion + 1 : version; RejectRead(JsonUtility.ToJson(slot));
         }

@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -176,7 +176,9 @@ namespace EvolutionShop
                 else sound.Feedback(true);
                 Notify("A new specimen is ready. Use an empty display or lab rack to store it.");
             }
-            if (phaseChanged || result.Matured) SaveNow();
+            if (result.ConditionedCount > 0)
+            { sound.Feedback(true); Notify(result.ConditionedCount + " Lanternfin ready in the conditioning vat. Collect at a rack or display."); }
+            if (phaseChanged || result.Matured || result.ConditionedCount > 0) SaveNow();
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
         }
         public bool OpenForDay()
@@ -323,12 +325,14 @@ namespace EvolutionShop
                 case StationKind.Bloom: case StationKind.Flow:
                     Notify("Hold left mouse to siphon living cultures."); break;
                 case StationKind.Incubator: SetPanel(ShopPanel.Incubator); break;
+                case StationKind.Conditioning:
+                    selectedConditioner = station.ConditionerItemId; conditioningInputs.Clear(); SetPanel(ShopPanel.Conditioning); break;
                 case StationKind.StorageRack:
                     selectedRack = station.StorageItemId; SetPanel(ShopPanel.StorageRack); break;
                 case StationKind.TankA: case StationKind.TankB: case StationKind.Display:
                     selectedTank = station.TankId ?? (station.Kind == StationKind.TankA ? "tank-a" : "tank-b");
                     // An occupied tank opens its price tag; ready output waits safely in the incubator.
-                    if (Model.Incubator.Phase == IncubatorPhase.Ready && !Model.GetTank(selectedTank).HasValue && StoredSpecimenCount == 0)
+                    if (Model.Incubator.Phase == IncubatorPhase.Ready && !Model.GetTank(selectedTank).HasValue && StoredSpecimenCount == 0 && ReadyConditionedCount == 0)
                         TransferToDisplay(selectedTank);
                     else SetPanel(ShopPanel.Tank);
                     break;
@@ -396,7 +400,7 @@ namespace EvolutionShop
             AutosaveBlocked = false;
             SaveError = null;
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
-            pendingFurnitureSaleId = null; selectedRack = null;
+            pendingFurnitureSaleId = null; selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             AdoptLayout(restoredLayout);
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
@@ -421,7 +425,7 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
             { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
             Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
-            selectedRack = null;
+            selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
@@ -448,6 +452,10 @@ namespace EvolutionShop
         {
             switch (code.ToString())
             {
+                case "UnknownConditioner": return "That conditioning vat is no longer placed.";
+                case "ConditionerBusy": return "Collect every waiting creature before starting another batch.";
+                case "InvalidConditioningInput": return "Choose one or two different stored Pondlets for this known process.";
+                case "ConditionerNotProcessing": return "There is no running batch to cancel.";
                 case "UnknownStorage": return "That storage compartment is no longer available.";
                 case "StorageFull": return "That compartment is full. The waiting creature is safe.";
                 case "StorageEmpty": return "That storage compartment is empty.";

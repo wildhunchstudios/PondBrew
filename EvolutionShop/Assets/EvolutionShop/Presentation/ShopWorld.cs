@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade, Display, StorageRack }
+    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade, Display, StorageRack, Conditioning }
 
     public sealed class Station : MonoBehaviour
     {
@@ -14,6 +14,7 @@ namespace EvolutionShop
         public string TankId;
         public string FacilityId;
         public string StorageItemId;
+        public string ConditionerItemId;
     }
 
     /// <summary>Presentation only. All quantities and transaction decisions belong to GameModel.</summary>
@@ -76,6 +77,7 @@ namespace EvolutionShop
         void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
         void OnDestroy()
         {
+            DisposeConditioningPresentation();
             DisposeResearchPresentation();
             DisposeStoragePresentation();
             DisposePlacementPresentation();
@@ -560,8 +562,10 @@ namespace EvolutionShop
             RefreshTank(model, "tank-b", StationKind.TankB);
             RefreshPlacedDisplays(model);
             RefreshStorageRacks(model);
+            RefreshConditioners(model);
             status[StationKind.Upgrade].text = upgraded ? "INSTALLED  /  8 UNIT RESERVOIR" : "24 COINS  /  COLLECT FASTER";
-            toolReadout.text = (bloomCount + flowCount + sparkCount) + " / " + model.Capacity;
+            // The capacity readout includes culture held for safe returns by active processes.
+            toolReadout.text = model.ReservedCultureCount + " / " + model.Capacity;
             for (int i = 0; i < reservoirCells.Count; i++)
             {
                 bool active = i < bloomCount + flowCount + sparkCount;
@@ -658,6 +662,7 @@ namespace EvolutionShop
             AnimateCells(bloomCells, time, .37f);
             AnimateCells(flowCells, time, 2.1f);
             AnimateSparkCells(time);
+            AnimateConditioners(time);
             if (incubationRing) incubationRing.localRotation = Quaternion.Euler(0, time * 24, 15);
             for (int i = 0; i < reservoirCells.Count; i++)
             {

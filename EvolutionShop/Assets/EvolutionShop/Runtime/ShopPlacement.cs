@@ -261,18 +261,19 @@ namespace EvolutionShop
         {
             switch (failure)
             {
+                case LayoutFailure.ConditionerOccupied: return "Collect every creature before storing or selling this vat. Moving it with stock is free.";
                 case LayoutFailure.StockedStorage: return "Empty this specimen rack into displays before storing or selling it. Moving it with stock is free.";
                 case LayoutFailure.StockedDisplay: return "Empty this furniture before storing or selling it. Moving it with stock is free.";
                 case LayoutFailure.ReservedDisplay: return "Finish the reserved customer order first.";
                 case LayoutFailure.AlreadyStored: return "That furniture is already in storage.";
                 case LayoutFailure.CurrencyOverflow: return "There is no room for the full refund. Your room layout and credits are unchanged.";
-                case LayoutFailure.LockedDefinition: return "Large displays unlock with the first store expansion.";
+                case LayoutFailure.LockedDefinition: return "Large displays need a store expansion; the conditioning vat needs Spark research and a discovered Lanternfin.";
                 case LayoutFailure.WrongPhase: return "Arrange rooms during preparation night.";
                 case LayoutFailure.OutOfBounds: return "Keep the whole item inside its room. Displays belong in the store.";
                 case LayoutFailure.OverlapsFurniture: return "That spot overlaps furniture or a machine.";
                 case LayoutFailure.ProtectedAccess: return "Keep the doorway, main aisle and service spaces clear.";
                 case LayoutFailure.UnreachableAccess: return "This would block access to a station.";
-                case LayoutFailure.LimitReached: return "This furniture limit is reached. Tables: 3; decor: 6; displays and racks depend on room tiers.";
+                case LayoutFailure.LimitReached: return "This furniture limit is reached. Tables: 3; decor: 6; vat: 1; displays and racks depend on room tiers.";
                 case LayoutFailure.InsufficientFunds: return "Not enough credits. Nothing was purchased.";
                 case LayoutFailure.UnknownItem: return "That furniture is no longer available.";
                 default: return "That placement is unavailable. Nothing was purchased.";
@@ -281,6 +282,8 @@ namespace EvolutionShop
 
         bool DisplayHasStock(string itemId)
         {
+            var machine = Model.GetConditioner(itemId);
+            if (machine.HasValue && (machine.Value.Count > 0 || machine.Value.Phase != ConditionerPhase.Idle)) return true;
             foreach (string slot in Layout.GetSlotIds(itemId))
                 if (Model.GetTank(slot).HasValue || Model.GetReservation(slot).HasValue) return true;
             foreach (string slot in Layout.GetStorageSlotIds(itemId))

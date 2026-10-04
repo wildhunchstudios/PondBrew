@@ -8,10 +8,10 @@ namespace EvolutionShop
     /// Staged doses reserve their return space until incubation starts, so invalid
     /// mixtures can always be recovered without losing a culture unit.
     /// </summary>
-    public sealed class GameModel
+    public sealed partial class GameModel
     {
-        /// <summary>Version 4 adds Spark research and a third culture; earlier production remains exact.</summary>
-        public const int SaveVersion = 4;
+        /// <summary>Version 5 adds conditioning jobs; earlier production remains exact.</summary>
+        public const int SaveVersion = 5;
         private const int CultureCount = 3;
 
         private readonly GameConfig config;
@@ -45,7 +45,7 @@ namespace EvolutionShop
         }
         public int ReservedCultureCount
         {
-            get { return available[0] + available[1] + available[2] + staged[0] + staged[1] + staged[2]; }
+            get { return available[0] + available[1] + available[2] + staged[0] + staged[1] + staged[2] + ReservedConditioningSpark; }
         }
         public IncubatorView Incubator
         {
@@ -70,6 +70,7 @@ namespace EvolutionShop
             foreach (var id in this.config.TankIds) tanks.Add(id, null);
             storage = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
             foreach (var id in this.config.StorageIds) storage.Add(id, null);
+            foreach (var id in this.config.ConditionerIds) conditioners.Add(id, new ConditionerState());
             for (int i = 0; i < CultureCount; i++)
             {
                 growerUnits[i] = i == (int)CultureKind.Spark ? 0 : this.config.InitialGrowerUnits;
@@ -245,12 +246,13 @@ namespace EvolutionShop
                 growerRemaining[i] = (float)remaining;
             }
 
-            if (phase != IncubatorPhase.Incubating) return default;
+            int conditioned = TickConditioners(simulationSeconds);
+            if (phase != IncubatorPhase.Incubating) return new TickResult(false, false, null, null, conditioned);
             incubationRemaining = Math.Max(0f, incubationRemaining - simulationSeconds);
-            if (incubationRemaining > 0f) return default;
+            if (incubationRemaining > 0f) return new TickResult(false, false, null, null, conditioned);
             phase = IncubatorPhase.Ready;
             bool first = discoveries.Add(activeSpecies);
-            return new TickResult(true, first, activeSpecies, activeSpecimen);
+            return new TickResult(true, first, activeSpecies, activeSpecimen, conditioned);
         }
 
         public ActionResult TransferToTank(string tankId)
@@ -388,10 +390,14 @@ namespace EvolutionShop
             => TryApplyLayoutSlots(desiredIds, config.StorageIds, currencyDelta);
 
         internal ActionResult TryApplyLayoutSlots(string[] desiredIds, string[] desiredStorageIds, int currencyDelta)
+            => TryApplyLayoutSlots(desiredIds, desiredStorageIds, config.ConditionerIds, currencyDelta);
+
+        internal ActionResult TryApplyLayoutSlots(string[] desiredIds, string[] desiredStorageIds, string[] desiredConditionerIds, int currencyDelta)
         {
             if (desiredIds == null || desiredIds.Length < 2 || desiredIds.Length > 8 ||
                 desiredIds[0] != config.TankIds[0] || desiredIds[1] != config.TankIds[1] ||
-                desiredStorageIds == null || desiredStorageIds.Length > 6)
+                desiredStorageIds == null || desiredStorageIds.Length > 6 ||
+                desiredConditionerIds == null || desiredConditionerIds.Length > 1)
                 return ActionResult.Fail(FailureCode.InvalidSave);
             long nextCurrency = (long)Currency + currencyDelta;
             if (nextCurrency < 0) return ActionResult.Fail(FailureCode.InsufficientFunds);
@@ -406,6 +412,13 @@ namespace EvolutionShop
             foreach (string id in desiredStorageIds)
                 if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || desired.Contains(id) || !desiredStorage.Add(id))
                     return ActionResult.Fail(FailureCode.InvalidSave);
+            var desiredMachines = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in desiredConditionerIds)
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || desired.Contains(id) || desiredStorage.Contains(id) || !desiredMachines.Add(id))
+                    return ActionResult.Fail(FailureCode.InvalidSave);
+            foreach (var machine in conditioners)
+                if (!desiredMachines.Contains(machine.Key) && (machine.Value.Phase != ConditionerPhase.Idle || machine.Value.Count != 0))
+                    return ActionResult.Fail(FailureCode.ConditionerBusy);
             foreach (var tank in tanks)
                 if (!desired.Contains(tank.Key))
                 {
@@ -421,8 +434,13 @@ namespace EvolutionShop
             var storedReplacement = new Dictionary<string, SpecimenView?>(StringComparer.Ordinal);
             var storageIds = (string[])desiredStorageIds.Clone();
             foreach (string id in storageIds) storedReplacement.Add(id, storage.TryGetValue(id, out var value) ? value : null);
+            var machineReplacement = new Dictionary<string, ConditionerState>(StringComparer.Ordinal);
+            var machineIds = (string[])desiredConditionerIds.Clone();
+            foreach (string id in machineIds) machineReplacement.Add(id, conditioners.TryGetValue(id, out var value) ? value : new ConditionerState());
             tanks = replacement;
             storage = storedReplacement;
+            conditioners = machineReplacement;
+            config.ConditionerIds = machineIds;
             config.TankIds = ids;
             config.StorageIds = storageIds;
             Currency = (int)nextCurrency;
@@ -465,6 +483,7 @@ namespace EvolutionShop
                 },
                 tanks = new TankSave[config.TankIds.Length],
                 storage = new StorageSave[config.StorageIds.Length],
+                conditioners = CaptureConditioners(),
                 discoveries = new string[discoveries.Count]
             };
             for (int i = 0; i < CultureCount; i++)
@@ -539,6 +558,7 @@ namespace EvolutionShop
                 foreach (var slot in save.storage)
                     candidate.storage[slot.storageId] = string.IsNullOrEmpty(slot.specimenId)
                         ? (SpecimenView?)null : new SpecimenView(slot.specimenId, slot.speciesId);
+            if (save.version >= 5) candidate.RestoreConditioners(save.conditioners);
             // Version 1 had no tags: every species restores at its standard price.
             if (save.version >= 2 && save.prices != null)
                 foreach (var tag in save.prices)
@@ -624,6 +644,8 @@ namespace EvolutionShop
                 }
             }
 
+            if (!ValidConditionerSave(save, known, specimens, capacity)) return false;
+
             // Unity's JSON reader may give an absent array as null or empty. Version 1 never had tags.
             if (save.prices == null || save.prices.Length == 0) return true;
             if (save.version == 1) return false;
@@ -647,15 +669,17 @@ namespace EvolutionShop
                 input.UpgradeCost < 0 || input.SparkResearchCost < 0 || input.MinimumPrice < 1 ||
                 input.MaximumPricePercent < 100 || input.MaximumPricePercent > 1000 ||
                 !PositiveFinite(input.GrowerRefillSeconds) ||
-                !PositiveFinite(input.IncubationSeconds) || !PositiveFinite(input.BaseCollectionSeconds) ||
+                !PositiveFinite(input.IncubationSeconds) || !PositiveFinite(input.ConditioningSeconds) || !PositiveFinite(input.BaseCollectionSeconds) ||
                 !PositiveFinite(input.UpgradedCollectionSeconds) || input.Species == null ||
                 input.Species.Length == 0 || input.TankIds == null || input.TankIds.Length < 2 || input.TankIds.Length > 8 ||
-                input.StorageIds == null || input.StorageIds.Length > 6)
+                input.StorageIds == null || input.StorageIds.Length > 6 ||
+                input.ConditionerIds == null || input.ConditionerIds.Length > 1)
                 throw new ArgumentException("Invalid prototype tuning.", nameof(input));
             var copy = new GameConfig
             {
                 GrowerCapacity = input.GrowerCapacity, InitialGrowerUnits = input.InitialGrowerUnits,
                 GrowerRefillSeconds = input.GrowerRefillSeconds, IncubationSeconds = input.IncubationSeconds,
+                ConditioningSeconds = input.ConditioningSeconds, ConditionerIds = (string[])input.ConditionerIds.Clone(),
                 BaseCapacity = input.BaseCapacity, UpgradedCapacity = input.UpgradedCapacity,
                 BaseCollectionSeconds = input.BaseCollectionSeconds, UpgradedCollectionSeconds = input.UpgradedCollectionSeconds,
                 UpgradeCost = input.UpgradeCost, SparkResearchCost = input.SparkResearchCost, MinimumPrice = input.MinimumPrice,
@@ -683,6 +707,9 @@ namespace EvolutionShop
             foreach (var id in copy.StorageIds)
                 if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !ids.Add(id))
                     throw new ArgumentException("Up to six unique storage IDs distinct from tank IDs are required.", nameof(input));
+            foreach (var id in copy.ConditionerIds)
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !ids.Add(id))
+                    throw new ArgumentException("Up to one unique conditioner ID distinct from stock slots is required.", nameof(input));
             return copy;
         }
 

@@ -4,6 +4,7 @@ namespace EvolutionShop
 {
     public enum CultureKind { Bloom = 0, Flow = 1, Spark = 2 }
     public enum IncubatorPhase { Dosing = 0, Incubating = 1, Ready = 2 }
+    public enum ConditionerPhase { Idle = 0, Processing = 1, Ready = 2 }
     public enum FailureCode
     {
         None, InvalidCulture, GrowerEmpty, ReservoirFull, InsufficientCulture,
@@ -12,7 +13,8 @@ namespace EvolutionShop
         InsufficientFunds, AlreadyUpgraded, CurrencyOverflow, InvalidSave,
         TankReserved, InvalidCustomer, ReservationMismatch, NoCustomerReady,
         InvalidPrice, PriceTooHigh, UnknownStorage, StorageFull, StorageEmpty, SpecimenMismatch,
-        ResearchLocked, ResearchPrerequisiteMissing, ResearchAlreadyUnlocked
+        ResearchLocked, ResearchPrerequisiteMissing, ResearchAlreadyUnlocked,
+        UnknownConditioner, ConditionerBusy, InvalidConditioningInput, ConditionerNotProcessing
     }
 
     [Serializable]
@@ -46,6 +48,7 @@ namespace EvolutionShop
         public int InitialGrowerUnits = 4;
         public float GrowerRefillSeconds = 2f;
         public float IncubationSeconds = 10f;
+        public float ConditioningSeconds = 12f;
         public int BaseCapacity = 4;
         public int UpgradedCapacity = 8;
         public float BaseCollectionSeconds = 0.6f;
@@ -57,6 +60,7 @@ namespace EvolutionShop
         public int MaximumPricePercent = 300;
         public string[] TankIds = { "tank-a", "tank-b" };
         public string[] StorageIds = Array.Empty<string>();
+        public string[] ConditionerIds = Array.Empty<string>();
         public SpeciesDefinition[] Species =
         {
             new SpeciesDefinition("pondlet", "Pondlet", 1, 1, 6, "teardrop"),
@@ -92,9 +96,11 @@ namespace EvolutionShop
         public readonly bool FirstDiscovery;
         public readonly string SpeciesId;
         public readonly string SpecimenId;
-        internal TickResult(bool matured, bool firstDiscovery, string speciesId, string specimenId)
+        public readonly int ConditionedCount;
+        internal TickResult(bool matured, bool firstDiscovery, string speciesId, string specimenId, int conditionedCount = 0)
         {
             Matured = matured; FirstDiscovery = firstDiscovery; SpeciesId = speciesId; SpecimenId = specimenId;
+            ConditionedCount = conditionedCount;
         }
     }
 
@@ -176,6 +182,8 @@ namespace EvolutionShop
         public TankSave[] tanks;
         // Version 3: separate lab storage; these locations are never customer displays.
         public StorageSave[] storage;
+        // Version 5: bounded conditioning jobs own their inputs and completed outputs.
+        public ConditionerSave[] conditioners;
         public string[] discoveries;
         // Version 2: price tags that differ from the standard price. Version 1 has none.
         public PriceSave[] prices;

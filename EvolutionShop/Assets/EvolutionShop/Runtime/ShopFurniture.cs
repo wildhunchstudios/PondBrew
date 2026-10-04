@@ -93,7 +93,7 @@ namespace EvolutionShop
         void DrawOwnedFurniture()
         {
             Space(); Heading("Owned furniture / " + Layout.StoredCount + " in storage");
-            Small("Move stocked displays and specimen racks safely at night. Store empty furniture for free, or sell it for half its catalog price. Storage keeps ownership limits; it adds no active slots or appeal.");
+            Small("Move stocked displays, racks and the conditioning vat safely at night. Store empty furniture for free, or sell it for half its catalog price. Storage keeps ownership limits; it adds no active slots or appeal.");
             foreach (var item in Layout.Items)
             {
                 string id = item.Id;

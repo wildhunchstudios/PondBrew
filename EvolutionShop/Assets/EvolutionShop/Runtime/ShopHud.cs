@@ -108,6 +108,7 @@ namespace EvolutionShop
             if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter) return "A creature is reserved. Head to the front counter.";
             if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
             if (Model.Incubator.Phase == IncubatorPhase.Ready) return Model.StorageIds.Length > 0 ? "Use an empty display or lab rack to store the ready creature." : "Head to a display tank in the front store.";
+            if (ReadyConditionedCount > 0) return "Use E at an empty rack or display to collect vat output.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
             if (DisplayedStockCount() == 0 && StoredSpecimenCount > 0) return "Use E at an empty display to choose stored stock.";
             if (DisplayedStockCount() > 0) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
@@ -157,8 +158,9 @@ namespace EvolutionShop
                 case ShopPanel.Tank: DrawTank(); break;
                 case ShopPanel.Arrange: DrawArrangement(); break;
                 case ShopPanel.StorageRack: DrawSpecimenRack(); break;
+                case ShopPanel.Conditioning: DrawConditioning(); break;
                 case ShopPanel.Pause:
-                    Heading("Shop paused"); Text("The day clock, growers and incubation are paused. Your progress saves automatically.");
+                    Heading("Shop paused"); Text("The day clock and all lab production are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");

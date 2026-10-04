@@ -37,7 +37,7 @@ namespace EvolutionShop.Tests
             var old = JsonUtility.FromJson<SlotData>(File.ReadAllText(Fixture(name)));
             Assert.That(old.formatVersion, Is.EqualTo(format)); Assert.That(old.layout.version, Is.EqualTo(layoutVersion)); Assert.That(old.game.version, Is.EqualTo(2));
             var slot = Read(out var model); AssertState(old, slot, model);
-            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.layout.version, Is.EqualTo(6)); Assert.That(slot.game.version, Is.EqualTo(GameModel.SaveVersion));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.layout.version, Is.EqualTo(ShopLayout.SaveVersion)); Assert.That(slot.game.version, Is.EqualTo(GameModel.SaveVersion));
             Assert.That(slot.game.storage, Is.Empty); Assert.That(model.StorageIds, Is.Empty);
             Assert.That(ShopLayout.TryRestore(slot.layout, out var layout), Is.True); Assert.That(layout.RackCount, Is.Zero);
             Assert.That(model.Currency, Is.EqualTo(cash)); int count = 0;

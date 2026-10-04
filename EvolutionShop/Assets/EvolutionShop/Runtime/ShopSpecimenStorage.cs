@@ -95,6 +95,7 @@ namespace EvolutionShop
                     Text(StorageLocation(id) + " / empty");
                     if (Model.Incubator.Phase == IncubatorPhase.Ready)
                         Button("Store ready " + Model.GetSpecies(Model.Incubator.SpeciesId).DisplayName + " here", () => StoreReadyInRack(slot));
+                    DrawConditioningSources(slot);
                 }
             }
             Small("To stock a creature, walk to an empty store display and press E, then choose its rack compartment. At an unreserved stocked display you can return it to any empty rack slot.");
@@ -115,6 +116,7 @@ namespace EvolutionShop
                 any = true; string slot = id, expected = resident.Value.Id;
                 Button("Stock " + Model.GetSpecies(resident.Value.SpeciesId).DisplayName + " / " + StorageLocation(id), () => StockDisplayFromStorage(slot, expected));
             }
+            any |= DrawConditioningSources(null);
             if (!any) Text("No ready or stored creatures yet. Grow a recipe in the lab first.");
             Small("One specimen per display. Only displayed creatures attract customers; lab stock stays safe until you choose it.");
         }
