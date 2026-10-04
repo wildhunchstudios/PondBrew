@@ -183,7 +183,7 @@ namespace EvolutionShop
                 "New game clears progression/reports and preserves the player's key/accessibility settings");
             SetReputationFixture(30); // Explicit isolated legacy boundary fixture, with empty report history.
             var legacyTrades = shop.Reports.CaptureSave(); legacyTrades.version = 3;
-            string legacy = "{\"formatVersion\":6,\"game\":" + JsonUtility.ToJson(shop.Model.CaptureSave()) + ",\"cycle\":" +
+            string legacy = "{\"formatVersion\":6,\"game\":" + LegacySmokeGameV2Json() + ",\"cycle\":" +
                 JsonUtility.ToJson(shop.Cycle.CaptureSave()) + ",\"trades\":" + JsonUtility.ToJson(legacyTrades) +
                 ",\"reputation\":" + JsonUtility.ToJson(shop.Reputation.CaptureSave()) + ",\"sensitivity\":1,\"volume\":0.65}";
             File.WriteAllText(shop.SavePath, legacy);
@@ -217,3 +217,4 @@ namespace EvolutionShop
     }
 }
 #endif
+

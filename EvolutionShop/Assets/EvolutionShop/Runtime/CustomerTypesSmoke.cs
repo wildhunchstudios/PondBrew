@@ -267,7 +267,7 @@ namespace EvolutionShop
             SeedStock("pondlet", "tank-a");
             Ok(shop.SetSpeciesPrice("pondlet", 8), "Tag a Pondlet at 8 for the format-4 fixture");
             var trades = shop.Reports.CaptureSave(); trades.version = 2; trades.pendingCustomerIds = null;
-            string formatFour = "{\"formatVersion\":4,\"game\":" + JsonUtility.ToJson(shop.Model.CaptureSave(), true) + ",\"cycle\":" +
+            string formatFour = "{\"formatVersion\":4,\"game\":" + LegacySmokeGameV2Json(true) + ",\"cycle\":" +
                 JsonUtility.ToJson(shop.Cycle.CaptureSave(), true) + ",\"trades\":" + JsonUtility.ToJson(trades, true) +
                 ",\"sensitivity\":" + shop.Sensitivity.ToString(System.Globalization.CultureInfo.InvariantCulture) +
                 ",\"volume\":" + shop.Volume.ToString(System.Globalization.CultureInfo.InvariantCulture) + "}";
@@ -371,3 +371,4 @@ namespace EvolutionShop
     }
 }
 #endif
+
