@@ -1113,10 +1113,12 @@ The native scene stages three Driftwing doses alongside the reserved conditionin
 
 Owner: Codex. Baseline r05-lab-validated / c4fe0b1. Continue selects only this bounded sample. Direction: original rounded aquatic curiosity shop, teal enamel, honey wood, cream graphics and coral accents. No external asset source, paid provider, new package, staffing authority or save migration.
 
-- [~] R06.1a Reverify path/editor/connection, preserve protected file hashes, run exact-project baseline.
-- [ ] R06.1b Refine one front display corner and Bloom grower; keep interaction and navigation footprints.
-- [ ] R06.1c Integrate a Pondlet and casual visitor sample; build a shared employee model with idle, walk, greet and carry presentation. Preserve customer decisions/transactions.
-- [ ] R06.1d Add a paused, look-only sample viewer with clear employee-preview labeling and exact camera restoration. No preview creature enters inventory.
-- [ ] R06.1e Validate containment, pause/exit, material cleanup, customer routes/sale, lab interaction, Windows build and actual captures. Save small source/delivery checkpoints and update this guide.
+- [x] R06.1a Reverify path/editor/connection, preserve protected file hashes, run exact-project baseline.
+- [x] R06.1b Refine one front display corner and Bloom grower; keep interaction and navigation footprints.
+- [x] R06.1c Integrate a Pondlet and casual visitor sample; build a shared employee model with idle, walk, greet and carry presentation. Preserve customer decisions/transactions.
+- [x] R06.1d Add a paused, look-only sample viewer with clear employee-preview labeling and exact camera restoration. No preview creature enters inventory.
+- [~] R06.1e Validate containment, pause/exit, material cleanup, customer routes/sale, lab interaction, Windows build and actual captures. Save small source/delivery checkpoints and update this guide.
 
 Acceptance: all five sample elements are inspectable in the actual game; normal growing and trading still work; preview never advances or mutates the saved shop. Actual screenshots are reviewed separately from automated assertions. Human visual tone acceptance and audio listening remain pending; no bulk content or R06.2 work in this assignment.
+
+R06.1 source checkpoint evidence: guarded Editor identifies C:/dev/DumbVideoGameStudio/EvolutionShop on 6000.3.21f1; baseline Airfin81 passes with no runtime errors, exit0. Initial sample scenario passes59 with no runtime errors, exit0: actual Bloom/Flow harvest, normal-time Pondlet maturation, animated containment, five paused views, four employee poses, frozen/resumed motion, unchanged model/clock/disk, restored camera, repeated entry, live visitor pause and6-credit checkout/reload. Camera renders inspected. Full EditMode suite1209/1209, no failures/skips, exit0. Screenshot review prompted local task lights, stronger small-sign contrast and wider framing to leave room for viewer controls. Windows build, exact packaged run and visible HUD review remain pending at this source checkpoint. Human tone/audio approval is not recorded.

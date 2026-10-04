@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -18,7 +18,7 @@ namespace EvolutionShop
         public ShopCustomers Customers { get; private set; }
         public ShopPanel Panel { get; private set; }
         public Station Focused { get; private set; }
-        public bool Paused => Panel == ShopPanel.Pause || Panel == ShopPanel.Reset || Panel == ShopPanel.Welcome;
+        public bool Paused => Panel == ShopPanel.Pause || Panel == ShopPanel.Reset || Panel == ShopPanel.Welcome || Panel == ShopPanel.Presentation;
         public bool ValidationMode { get; private set; }
         public string SavePath { get; private set; }
         public float Sensitivity = 1;
@@ -107,13 +107,14 @@ namespace EvolutionShop
             if (placementAtFrameStart) HandlePlacementInput(keyboard);
             if (HandleSlapRebind(keyboard)) return;
             if (!placementAtFrameStart && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
-                SetPanel(Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
+                SetPanel(Panel == ShopPanel.Presentation ? ShopPanel.Pause : Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
             if (!placementAtFrameStart && keyboard != null && keyboard.tabKey.wasPressedThisFrame && !Paused)
                 SetPanel(Panel == ShopPanel.Journal ? ShopPanel.None : ShopPanel.Journal);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (keyboard != null && keyboard.f8Key.wasPressedThisFrame && Model.UpgradeOwned)
                 SetBaselinePreview(!BaselinePreview);
 #endif
+            if (Panel == ShopPanel.Presentation) TickPresentationView();
             Player.Sensitivity = Sensitivity;
             Player.InputEnabled = Panel == ShopPanel.None && (!ValidationMode || AllowValidationInput);
             if (!Paused)
@@ -354,6 +355,8 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            if (Panel != panel && Panel == ShopPanel.Presentation) EndPresentationView();
+            if (Panel != panel && panel == ShopPanel.Presentation) BeginPresentationView();
             if (panel != ShopPanel.Arrange) pendingFurnitureSaleId = null;
             if (panel != ShopPanel.None && PlacementActive) EndPlacementPreview();
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();

@@ -77,6 +77,7 @@ namespace EvolutionShop
         void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
         void OnDestroy()
         {
+            DisposeSamplePresentation();
             DisposeConditioningPresentation();
             DisposeResearchPresentation();
             DisposeStoragePresentation();
@@ -345,6 +346,7 @@ namespace EvolutionShop
                 cell.name = name + " unit " + (i + 1);
                 cells.Add(cell);
             }
+            if (bloom) BuildLabSample(r);
             return r;
         }
 
@@ -420,6 +422,7 @@ namespace EvolutionShop
                 var bubble = Shape(r, "Air bubble", PrimitiveType.Sphere, new Vector3(.72f, 1.16f + i * .21f, .29f), Vector3.one * (.025f + i * .008f), glass);
                 bubbles.Add(bubble);
             }
+            if (id == "tank-a") BuildStoreSample(r);
         }
 
         void Counter(Vector3 position)

@@ -36,6 +36,7 @@ namespace EvolutionShop
             Styles();
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);
+            if (Panel == ShopPanel.Presentation) { DrawPresentationView(); GUI.matrix=Matrix4x4.identity; return; }
             Box(new Rect(22, 22, 338, 78), ink);
             Box(new Rect(22, 22, 4, 78), mint);
             GUI.Label(new Rect(40, 29, 310, 32), "EVOLUTION SHOP", titleStyle);
@@ -168,7 +169,7 @@ namespace EvolutionShop
                 case ShopPanel.StorageRack: DrawSpecimenRack(); break;
                 case ShopPanel.Conditioning: DrawConditioning(); break;
                 case ShopPanel.Pause:
-                    Heading("Shop paused"); Text("The day clock and all lab production are paused. Your progress saves automatically.");
+                    Heading("Shop paused"); Button("View presentation sample", () => SetPanel(ShopPanel.Presentation)); Text("The day clock and all lab production are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");

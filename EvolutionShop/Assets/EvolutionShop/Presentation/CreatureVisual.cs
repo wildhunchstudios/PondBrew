@@ -3,7 +3,7 @@ using UnityEngine;
 namespace EvolutionShop
 {
     /// <summary>Original smooth procedural placeholder. Animation never changes simulation state.</summary>
-    public sealed class CreatureVisual : MonoBehaviour
+    public sealed partial class CreatureVisual : MonoBehaviour
     {
         Transform tail;
         Transform finLeft;
@@ -18,6 +18,7 @@ namespace EvolutionShop
         public void Build(string speciesId)
         {
             species = speciesId;
+            if (speciesId == "pondlet") { BuildPondlet(); return; }
             if (speciesId == "lanternfin") { BuildLanternfin(); return; }
             if (speciesId == "driftwing") { BuildDriftwing(); return; }
             phase = speciesId == "pondlet" ? 0 : speciesId == "bubblebelly" ? 1.7f : 3.5f;
@@ -87,7 +88,7 @@ namespace EvolutionShop
             float frequency = species == "bubblebelly" ? 4.1f : species == "ribbonfin" ? 3.5f : 6.8f;
             float wave = Mathf.Sin(time * frequency + phase);
             if (tail) tail.localRotation = Quaternion.Euler(0, wave * (species == "ribbonfin" ? 26 : 19), 0);
-            if (finLeft) finLeft.localRotation = Quaternion.Euler(wave * 12, -18, -20 + wave * 22);
+            if (finLeft) finLeft.localRotation = Quaternion.Euler(wave * 12, species == "pondlet" ? 162 : -18, -20 + wave * 22);
             if (finRight) finRight.localRotation = Quaternion.Euler(wave * -12, 18, 20 - wave * 22);
             if (crest) crest.localRotation = Quaternion.Euler(0, 0, wave * 7);
         }
@@ -150,6 +151,8 @@ namespace EvolutionShop
 
         void OnDestroy()
         {
+            if (pondletFinMesh) Destroy(pondletFinMesh);
+            if (pondletMaterials != null) foreach (var material in pondletMaterials) if (material) Destroy(material);
             if (driftwingMaterials != null) foreach (var material in driftwingMaterials) if (material) Destroy(material);
             if (lanternMaterials == null) return;
             // Storage may already have released these private materials when retiring a resident.

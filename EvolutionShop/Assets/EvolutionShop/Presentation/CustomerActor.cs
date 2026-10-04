@@ -293,6 +293,15 @@ namespace EvolutionShop
             var cream = Material("Visitor / cream collar", new Color(.95f, .91f, .74f));
             var gold = Material("Visitor / gold trim", new Color(1f, .74f, .26f), .7f);
             var eyes = Material("Visitor / dark eyes", new Color(.025f, .048f, .049f), .65f);
+            if (look == "casual")
+            {
+                body = Group("Visitor appearance", transform, Vector3.zero);
+                var sample = body.gameObject.AddComponent<ShopCharacterVisual>(); sample.Build(false);
+                leftLeg=sample.LeftLeg; rightLeg=sample.RightLeg; leftArm=sample.LeftArm; rightArm=sample.RightArm;
+                bodyBaseScale=body.localScale;
+            }
+            else
+            {
             body = Group("Visitor appearance", transform, Vector3.zero);
             if (look == "premium") body.localScale = Vector3.one * 1.07f;
             bodyBaseScale = body.localScale;
@@ -343,6 +352,7 @@ namespace EvolutionShop
             for (int i = 0; i < 3; i++)
                 ShopWorld.Shape(body, "Cardigan button", PrimitiveType.Sphere, new Vector3(0, 1.20f - i * .13f, .173f), Vector3.one * .034f, look == "premium" ? gold : cream);
 
+            }
             BuildSlapStars(gold, look == "premium" ? 2.03f : 1.82f);
 
             captionBase = look == "premium" ? 2.36f : 2.03f;
