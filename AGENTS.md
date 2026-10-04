@@ -491,7 +491,7 @@ Current limitations: procedural prototype art/UI/audio, provisional prices and b
 
 | Active record | Value |
 |---|---|
-| Current request | R06.3 delivered from latest Continue. Owner: Codex/root. No new human acceptance inferred. |
+| Current request | R06.4 interruption validation is active from latest Continue. Owner root; comedy_policy independent read-only review. No human acceptance inferred. |
 | Runtime changes in this request | Six-beat transient comedy kit; live visitor/fish/incubator reactions, captions, Backspace skip, paused preview and two bounded service/comedy audio voices. Worker preview-only; scenes/packages/settings/economy/save schema unchanged. |
 | User feedback | R02 accepted, then current R03.4 build accepted: "i playtested its good, continue for the next stage". General acceptance only; no invented detailed audio, control or three-shift human coverage |
 | Next action | R06.4 only: broaden available-gag interruption and queue/closing/pause coverage, capture live incubator and fish subjects from useful viewpoints, verify money/stock/readiness visibility. R06.5 human listening/tone remains pending; no staffing, automation or bulk assets. |
@@ -1256,9 +1256,15 @@ The exact packaged total is **351 assertions across three separate scenarios**, 
 
 ## R06.4 active assignment — interruption validation (2026-10-05)
 
-- [~] R06.4a Reverify exact workspace/editor identity and immutable protection baseline; map existing coverage and failure hypotheses. Owner root; comedy_policy read-only lifecycle review.
-- [ ] R06.4b Add bounded development-only interruption scenarios for customer gags, readiness, panels/pause, closing, reload/reset/disable, service priority and recovery. Owner root; preserve production rules unless an executed failure justifies a focused fix.
-- [ ] R06.4c Run Editor and exact Windows package gates; inspect live fish/incubator/queue screenshots, preserve normal saves and record failures. Owner root.
+- [x] R06.4a Reverify exact workspace/editor identity and immutable protection baseline; map existing coverage and failure hypotheses. Owner root; comedy_policy read-only lifecycle review.
+- [x] R06.4b Add bounded development-only interruption scenarios for customer gags, readiness, panels/pause, closing, reload/reset/disable, service priority and recovery. Owner root; preserve production rules unless an executed failure justifies a focused fix.
+- [~] R06.4c Run Editor and exact Windows package gates; inspect live fish/incubator/queue screenshots, preserve normal saves and record failures. Owner root.
 - [ ] R06.4d Update canonical/historical records, deliver playable and evidence, save local checkpoint. Owner root.
 
 Acceptance: active and pending gags cancel or pause according to the existing contract without duplicate payment, lost stock, stale poses/audio or blocked readiness. Returning from interruptions permits normal production/trading. Preview remains paused and worker-only. Actual live subject captures must show readable currency, readiness and queue feedback. Use real runtime frames and isolated validation saves; explicit seed/timer shortcuts are reported. No new joke families, staffing, automation, schema/package/scene changes or R06.5 listening approval. Consider player feedback priority, room sightlines, explicit transient ownership, reusable harness helpers, falsifiable transaction/pose/audio assertions and this milestone boundary before implementing.
+
+R06.4a completed: fresh installed/pinned6000.3.21f1/c02631ffc030 with Windows module; no existing Editor/MCP assumed. Fresh guarded Editor reports exact EvolutionShop project. Prior comedy155 passed with zero runtime errors/exit0. Eleven protected hashes captured and four unrelated player PIDs preserved. Plan checkpoint c242571.
+
+R06.4b progress: new development-only ComedyGateSmoke reproduces stale preview stage/camera on session disable (initial run3 completed checks) and active gag writes to a disabled customer (preview-fixed run31). Focused cleanup/availability guards pass those same assertions in later runs. New harness failures after43 (spawn order versus queue order),46 (legacy one-visitor closing helper) and151 (slash in bubble name interpreted as hierarchy path) are fixture errors, retained and corrected without relaxing gameplay. Review strengthened exact reservation owner/price snapshots, reload ledger/reputation idempotence, muted-source gain checks and pending-event checks inside the actual4–8second due window. Subject camera setup was corrected to retain root yaw under live look input. Final runtime/build/suite/delivery checks remain pending; R06.4 is not yet marked complete.
+
+R06.4b completed: Editor interruption gate251 passes with zero runtime errors and exit0 (r06-4-editor-belch-fixed). The subject-fixture-fixed run reproduced active belch feedback surviving collection after154 completed checks; a ready-output availability guard now clears it. Preview disable relinquishes its borrowed camera/stage and rejects stale preview commands; disabled customer owners are excluded and reject late pose writes. No inventory/economy/save schema changed. Final full Unity EditMode suite1246 passed, failed0/skipped0, exit0 (r06-4-editmode-final-suite). Camera-only renders confirm live fish and bubble subject framing; exact Windows UI review/build remain pending.

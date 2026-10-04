@@ -8,7 +8,7 @@ namespace EvolutionShop
         // destination, caption, patience or transaction. Normal gait restores the base each frame.
         public void SetComedyPose(ComedyKind kind,float elapsed,bool reduced)
         {
-            if(!initialized || paused || !body || IsSlapReacting || reduced || elapsed<ShopComedy.ReactionDelaySeconds)return;
+            if(!isActiveAndEnabled || !initialized || paused || !body || IsSlapReacting || reduced || elapsed<ShopComedy.ReactionDelaySeconds)return;
             float wave=Mathf.Sin(elapsed*6f);
             if(kind==ComedyKind.Fart)
                 rightArm.localRotation=Quaternion.Euler(-112,0,-20);

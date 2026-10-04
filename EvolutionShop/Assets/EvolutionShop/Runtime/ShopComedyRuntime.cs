@@ -26,8 +26,9 @@ namespace EvolutionShop
             {if(Comedy.Active && Comedy.Kind!=ComedyKind.Slap)CancelComedy();belchWait=-1;}
             if(wasActive && !Comedy.Active) ClearComedyVisuals();
             if(Comedy.Active && comedyVisitor!=null &&
-                (Customers.ActorOf(comedyVisitor)!=comedyActor || comedyVisitor.Phase==CustomerPhase.Paid || comedyVisitor.Phase==CustomerPhase.Leaving || comedyVisitor.Phase==CustomerPhase.Finished)) CancelComedy();
+                (!comedyActor || !comedyActor.isActiveAndEnabled || Customers.ActorOf(comedyVisitor)!=comedyActor || comedyVisitor.Phase==CustomerPhase.Paid || comedyVisitor.Phase==CustomerPhase.Leaving || comedyVisitor.Phase==CustomerPhase.Finished)) CancelComedy();
             if(Comedy.Active && mimicTank!=null && !Model.GetTank(mimicTank).HasValue) CancelComedy();
+            if(Comedy.Active && Comedy.Kind==ComedyKind.Belch && Model.Incubator.Phase!=IncubatorPhase.Ready) CancelComedy();
             if(belchWait>=0)
             {
                 belchWait=Mathf.Max(0,belchWait-seconds);belchExpiry-=seconds;
@@ -60,7 +61,7 @@ namespace EvolutionShop
                 {
                     if(candidate.Phase!=CustomerPhase.Browsing && candidate.Phase!=CustomerPhase.Queued)continue;
                     var visual=Customers.ActorOf(candidate);
-                    if(visual && Vector3.Distance(Player.transform.position,visual.transform.position)<7f)
+                    if(visual && visual.isActiveAndEnabled && Vector3.Distance(Player.transform.position,visual.transform.position)<7f)
                     {visit=candidate;actor=visual;break;}
                 }
                 if(visit==null)return false;
@@ -102,7 +103,7 @@ namespace EvolutionShop
         }
         void ResetComedyTransient()
         {
-            CancelComedy();PreviewComedy.Cancel();belchWait=-1;ambientWait=18;
+            CancelComedy();StopComedyPreview();belchWait=-1;ambientWait=18;
         }
         void ComedyInput(Keyboard keyboard,bool gameplayAtFrameStart)
         {
@@ -119,18 +120,24 @@ namespace EvolutionShop
             if(Comedy.Kind==ComedyKind.Belch && World.TryGetLabFacility(ShopLayout.IncubatorFacilityId,out var incubator))
                 World.ShowComedyBubble(incubator.TransformPoint(new Vector3(0,2.0f,0)),Comedy.Elapsed,Comedy.Reduced);
         }
-        void OnDisable(){if(initialized)ResetComedyTransient();}
+        void OnDisable()
+        {
+            if(!initialized)return;
+            // Release the look-only stage and borrowed camera before this owner stops ticking.
+            if(Panel==ShopPanel.Presentation && Player && World)SetPanel(ShopPanel.Pause);
+            ResetComedyTransient();
+        }
 
         public void OpenComedyPreview()
         {
-            if(Panel!=ShopPanel.Pause)return;
+            if(!isActiveAndEnabled || Panel!=ShopPanel.Pause)return;
             SetPanel(ShopPanel.Presentation);ComedyPreview=true;
             SelectPresentationView(4);previewKind=ComedyKind.WorkerCelebration;
             Player.View.fieldOfView=68;
         }
         public bool PlayComedyPreview(ComedyKind kind)
         {
-            if(Panel!=ShopPanel.Presentation || !ComedyPreview || !System.Enum.IsDefined(typeof(ComedyKind),kind))return false;
+            if(!isActiveAndEnabled || Panel!=ShopPanel.Presentation || !ComedyPreview || !System.Enum.IsDefined(typeof(ComedyKind),kind))return false;
             StopComedyPreview();PreviewComedy=new ShopComedy();previewKind=kind;
             SelectPresentationView(kind==ComedyKind.WorkerCelebration?4:kind==ComedyKind.Mimic || kind==ComedyKind.Belch?2:3);
             Player.View.fieldOfView=68;
