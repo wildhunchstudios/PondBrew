@@ -112,6 +112,28 @@ namespace EvolutionShop
             head.localRotation=Quaternion.Euler(0,pose==CharacterSamplePose.Idle?Mathf.Sin(time*.8f)*7:0,pose==CharacterSamplePose.Greet?-6:0);
             parcel.gameObject.SetActive(pose==CharacterSamplePose.Carry);
         }
+        public void PoseComedy(ComedyKind kind,float elapsed,bool reduced)
+        {
+            Pose(CharacterSamplePose.Idle,0);
+            if(!built || reduced || (kind!=ComedyKind.WorkerCelebration && kind!=ComedyKind.Slap && elapsed<ShopComedy.ReactionDelaySeconds))return;
+            float wave=Mathf.Sin(elapsed*6);
+            if(kind==ComedyKind.WorkerCelebration)
+            {
+                LeftLeg.localRotation=Quaternion.Euler(wave*12,0,0);
+                RightLeg.localRotation=Quaternion.Euler(-wave*12,0,0);
+                LeftArm.localRotation=Quaternion.Euler(-20,0,-100-wave*12);
+                RightArm.localRotation=Quaternion.Euler(-20,0,100+wave*12);
+                head.localRotation=Quaternion.Euler(0,0,wave*5);
+            }
+            else if(kind==ComedyKind.Complaint)
+            {
+                LeftArm.localRotation=Quaternion.Euler(-25,0,-50-wave*8);
+                RightArm.localRotation=Quaternion.Euler(-25,0,50+wave*8);
+            }
+            else if(kind==ComedyKind.Fart)RightArm.localRotation=Quaternion.Euler(-112,0,-20);
+            else if(kind==ComedyKind.Slap)head.localRotation=Quaternion.Euler(0,0,wave*12*Mathf.Clamp01(1-elapsed/2.6f));
+            else Pose(CharacterSamplePose.Greet,elapsed);
+        }
         void OnDestroy() { foreach(var material in materials) if(material) Destroy(material); }
     }
 }

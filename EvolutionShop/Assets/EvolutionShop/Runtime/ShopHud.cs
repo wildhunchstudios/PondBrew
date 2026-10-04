@@ -106,6 +106,7 @@ namespace EvolutionShop
                 GUI.Label(new Rect(40, 350, 278, 42), species.DisplayName, titleStyle);
                 GUI.Label(new Rect(38, 396, 278, 30), RecipeText(species), centerStyle);
             }
+            DrawComedyCaption();
             if (BaselinePreview) GUI.Label(new Rect(440, 102, 520, 27), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", smallStyle);
             GUI.matrix = Matrix4x4.identity;
         }
@@ -169,7 +170,7 @@ namespace EvolutionShop
                 case ShopPanel.StorageRack: DrawSpecimenRack(); break;
                 case ShopPanel.Conditioning: DrawConditioning(); break;
                 case ShopPanel.Pause:
-                    Heading("Shop paused"); Button("View presentation sample", () => SetPanel(ShopPanel.Presentation)); Text("The day clock and all lab production are paused. Your progress saves automatically.");
+                    Heading("Shop paused"); Button("View presentation sample", () => SetPanel(ShopPanel.Presentation)); Button("Preview comedy kit", OpenComedyPreview); Text("The day clock and all lab production are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
@@ -179,7 +180,7 @@ namespace EvolutionShop
                     Button(WaitingForSlapKey ? "Press a letter / Escape cancels" : "Change slap key / " + SlapKey, BeginSlapRebind);
                     Text("Humor volume: " + Mathf.RoundToInt(HumorVolume * 100) + "%");
                     HumorVolume = GUILayout.HorizontalSlider(HumorVolume, 0, 1);
-                    ReducedGags = GUILayout.Toggle(ReducedGags, "Reduced gag effects (no stars, smaller motion)");
+                    ReducedGags = GUILayout.Toggle(ReducedGags, "Reduced gags (less motion, longer quiet time)");
                     Space(); Button("Save and resume", () => { if (SaveNow()) SetPanel(ShopPanel.None); });
                     Button("Reload local save", () => { if (ReloadSaved()) { SetPanel(ShopPanel.None); Notify("Local save restored. Unpaid visits cancelled; their creatures remain in the tanks."); } });
                     Button("New game...", () => SetPanel(ShopPanel.Reset));

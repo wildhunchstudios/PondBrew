@@ -115,6 +115,7 @@ namespace EvolutionShop
                 SetBaselinePreview(!BaselinePreview);
 #endif
             if (Panel == ShopPanel.Presentation) TickPresentationView();
+            ComedyInput(keyboard,gameplayAtFrameStart);
             Player.Sensitivity = Sensitivity;
             Player.InputEnabled = Panel == ShopPanel.None && (!ValidationMode || AllowValidationInput);
             if (!Paused)
@@ -161,6 +162,7 @@ namespace EvolutionShop
             }
             var result = Model.Tick(seconds);
             Customers.Tick(seconds);
+            TickComedy(seconds);
             if (phaseChanged && Cycle.Phase == ShopDayPhase.Night)
             {
                 Reports.FinishDay(DisplayedStockCount());
@@ -168,6 +170,7 @@ namespace EvolutionShop
             }
             if (result.Matured)
             {
+                belchWait=4f;belchExpiry=8f;
                 if (result.FirstDiscovery)
                 {
                     revealedSpecies = result.SpeciesId;
@@ -199,6 +202,7 @@ namespace EvolutionShop
         public bool CloseForNight()
         {
             if (Paused || !Cycle.RequestClose()) return false;
+            CancelComedy();belchWait=-1;
             World.SetDayPhase(Cycle.Phase);
             Notify("Closing in 3 seconds. Finish checkout now; unpaid orders release safely for the night.");
             SaveNow();
@@ -355,6 +359,7 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            if(Panel!=panel && panel!=ShopPanel.None){CancelComedy();belchWait=-1;}
             if (Panel != panel && Panel == ShopPanel.Presentation) EndPresentationView();
             if (Panel != panel && panel == ShopPanel.Presentation) BeginPresentationView();
             if (panel != ShopPanel.Arrange) pendingFurnitureSaleId = null;
@@ -402,7 +407,7 @@ namespace EvolutionShop
             if (!TryApplyLayoutGeometry(restoredLayout)) return false;
             AutosaveBlocked = false;
             SaveError = null;
-            Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
+            ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             pendingFurnitureSaleId = null; selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             AdoptLayout(restoredLayout);
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
@@ -427,7 +432,7 @@ namespace EvolutionShop
             if (!TryApplyLayoutGeometry(freshLayout)) return;
             if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
             { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
-            Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
+            ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; World.SetDayPhase(Cycle.Phase);

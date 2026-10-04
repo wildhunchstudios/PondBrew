@@ -169,6 +169,8 @@ namespace EvolutionShop
             yield return MoveFor(Key.R, .05f);
             Check(closing.Outcome == CustomerOutcome.Slapped && shop.Reports.Current.slapped == 3 && shop.Reputation.Points == 6,
                 "A queued closing-time slap cancels safely before night, exactly once");
+            yield return null;
+            Check(shop.Comedy.Active && shop.Comedy.Kind==ComedyKind.Slap,"Closing cleanup preserves newly accepted slap feedback across frames");
             yield return WaitFor(() => shop.Cycle.Phase == ShopDayPhase.Night && customers.ActiveCount == 0, 10, "night interrupting any remaining reaction");
             var report = shop.Reports.Last;
             Check(report.visitors == 5 && report.sales == 2 && report.slapped == 3 && report.revenue == 16 && report.closed == 0 &&

@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 namespace EvolutionShop
 {
     /// <summary>Navigation and presentation for one visitor. Never owns stock, payment, or visit decisions.</summary>
-    public sealed class CustomerActor : MonoBehaviour
+    public sealed partial class CustomerActor : MonoBehaviour
     {
         public bool PathFailed => pathFailed;
         public string LastError { get; private set; } = string.Empty;

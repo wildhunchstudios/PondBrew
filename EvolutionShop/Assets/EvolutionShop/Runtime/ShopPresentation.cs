@@ -21,6 +21,7 @@ namespace EvolutionShop
 
         void BeginPresentationView()
         {
+            ComedyPreview=false;
             sampleCameraPosition=Player.View.transform.localPosition;
             sampleCameraRotation=Player.View.transform.localRotation;
             sampleCameraFov=Player.View.fieldOfView;
@@ -31,6 +32,7 @@ namespace EvolutionShop
         }
         void EndPresentationView()
         {
+            StopComedyPreview();ComedyPreview=false;
             World.HidePresentationSample();
             Player.View.transform.localPosition=sampleCameraPosition;
             Player.View.transform.localRotation=sampleCameraRotation;
@@ -52,11 +54,13 @@ namespace EvolutionShop
         public void SetPresentationMotion(bool enabled){if(Panel==ShopPanel.Presentation) PresentationMotion=enabled;}
         void TickPresentationView()
         {
+            if(ComedyPreview){TickComedyPreview();return;}
             if(PresentationMotion) sampleClock+=Time.unscaledDeltaTime;
             World.AnimatePresentationSample(PresentationPose,sampleClock,sampleAngle);
         }
         void DrawPresentationView()
         {
+            if(ComedyPreview){DrawComedyPreview();return;}
             Box(new Rect(24,22,1232,83),ink);Box(new Rect(24,22,4,83),mint);
             GUI.Label(new Rect(44,29,1000,23),"PRESENTATION STUDY  /  "+(PresentationView+1)+" OF 5  /  YOUR SHOP IS PAUSED",smallStyle);
             GUI.Label(new Rect(44,53,1090,42),sampleTitles[PresentationView],titleStyle);

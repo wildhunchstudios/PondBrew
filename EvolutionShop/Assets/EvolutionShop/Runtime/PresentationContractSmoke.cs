@@ -15,6 +15,7 @@ namespace EvolutionShop
             public List<VisualContractRow> visuals = new List<VisualContractRow>();
             public List<AudioContractRow> audio = new List<AudioContractRow>();
             public float oneOfEachPeakSum;
+            public float boundedVoicePeakSum;
         }
         [Serializable] sealed class VisualContractRow
         {
@@ -58,10 +59,15 @@ namespace EvolutionShop
                         Bounds bounds=ContractMeshBounds(root);
                         if(!initialized){swept=bounds;initialized=true;}else swept.Encapsulate(bounds);
                     }
+                int gagSamples=0;
+                if(character)
+                    for(int kind=0;kind<6;kind++)
+                        for(int frame=0;frame<=52;frame++)
+                        {character.PoseComedy((ComedyKind)kind,frame*.05f,false);swept.Encapsulate(ContractMeshBounds(root));gagSamples++;}
                 var limits=character
                     ? new Bounds(new Vector3(0,.905f,.125f),new Vector3(1.7f,1.89f,1.55f))
                     : new Bounds(new Vector3(0,0,.175f),new Vector3(1.2f,.8f,1.35f));
-                report.visuals.Add(ContractVisualRow(root,swept,limits,poses*481));SaveReport();
+                report.visuals.Add(ContractVisualRow(root,swept,limits,poses*481+gagSamples));SaveReport();
                 Check(limits.Contains(swept.min) && limits.Contains(swept.max),"Posed meshes stay within the documented local envelope / "+root.name);
                 Check(root.localPosition==position && root.localScale==scale && Quaternion.Angle(root.localRotation,rotation)<.001f,"Presentation poses have no root motion / "+root.name);
                 Check(root.GetComponentsInChildren<Collider>(true).Length==0 && root.GetComponentsInChildren<Station>(true).Length==0,"Visual rig owns no colliders or interaction stations / "+root.name);
@@ -76,7 +82,8 @@ namespace EvolutionShop
                 Check(collider.transform==bloom,"Bloom decoration adds no child collision");
 
             var clips=shop.GetComponent<ShopAudio>().ValidationClips();
-            Check(clips.Length==5,"Audit covers all five current generated audio cues");
+            Check(clips.Length==15,"Audit covers five service/slap cues and ten comedy variations");
+            float servicePeak=0,comedyPeak=0;
             for(int index=0;index<clips.Length;index++)
             {
                 var clip=clips[index];
@@ -93,12 +100,13 @@ namespace EvolutionShop
                     samplePeak=peak,rms=(float)Math.Sqrt(square/samples.Length),dc=(float)(sum/samples.Length),first=samples[0],last=samples[samples.Length-1],wav="audio-cue-"+index+".wav"};
                 row.peakDbfs=20*Mathf.Log10(Mathf.Max(row.samplePeak,1e-9f));row.rmsDbfs=20*Mathf.Log10(Mathf.Max(row.rms,1e-9f));
                 report.audio.Add(row);report.oneOfEachPeakSum+=peak;SaveReport();
+                if(index<4)servicePeak=Mathf.Max(servicePeak,peak);else comedyPeak=Mathf.Max(comedyPeak,peak);
                 Check(peak>0 && peak<=.25f && row.rms<=.12f && Mathf.Abs(row.dc)<=.005f,"Cue meets project peak, RMS and DC ceilings / "+clip.name);
                 Check(Mathf.Abs(row.first)<=.005f && Mathf.Abs(row.last)<=.005f,"Cue starts/ends near zero / "+clip.name);
                 WriteContractWav(Path.Combine(evidence,row.wav),samples,clip.frequency);
             }
-            SaveReport();
-            Check(report.oneOfEachPeakSum<1f,"Conservative sum of one instance of each cue stays below full scale before gains");
+            report.boundedVoicePeakSum=servicePeak+comedyPeak;SaveReport();
+            Check(report.boundedVoicePeakSum<1f,"Worst service plus comedy voice peak sum stays below full scale before gains");
             shop.SelectPresentationView(4);
         }
 
