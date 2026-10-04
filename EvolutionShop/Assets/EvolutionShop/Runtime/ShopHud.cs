@@ -109,7 +109,7 @@ namespace EvolutionShop
             if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
             if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Head to a display tank in the front store.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
-            if (Model.GetTank("tank-a") != null || Model.GetTank("tank-b") != null) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
+            if (DisplayedStockCount() > 0) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
             if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
             if (!Model.UpgradeOwned) return "Grow and sell creatures. Save " + Config.UpgradeCost + " credits for a larger siphon.";
@@ -195,7 +195,7 @@ namespace EvolutionShop
         }
         void DrawTank()
         {
-            Heading(selectedTank == "tank-a" ? "Display tank A" : "Display tank B");
+            Heading(World.SlotName(selectedTank));
             var resident = Model.GetTank(selectedTank);
             if (resident == null)
             {
@@ -294,14 +294,14 @@ namespace EvolutionShop
                 DrawCustomerOrder();
                 Space(); Small("DISPLAY STOCK");
             }
-            foreach (var id in Config.TankIds)
+            foreach (var id in Model.TankIds)
             {
                 var fish = Model.GetTank(id);
-                if (fish == null) { Small(id == "tank-a" ? "Tank A / empty" : "Tank B / empty"); continue; }
+                if (fish == null) { Small(World.SlotName(id) + " / empty"); continue; }
                 var species = Model.GetSpecies(fish.Value.SpeciesId);
                 var reserved = Model.GetReservation(id);
                 var tag = Model.GetPrice(species.Id).Value;
-                Small((id == "tank-a" ? "Tank A: " : "Tank B: ") + species.DisplayName + " / " + (reserved.HasValue
+                Small((World.SlotName(id) + ": ") + species.DisplayName + " / " + (reserved.HasValue
                     ? "RESERVED at the agreed " + reserved.Value.Price + " credits"
                     : tag.Price + " credits (" + Customers.BuyerTypes(tag) + " of " + Customers.ArrivingTypes + " customer types buy) / available"));
             }
@@ -372,13 +372,13 @@ namespace EvolutionShop
         string ReportPreparationTip(TradeDaySave report)
         {
             int empty = 0;
-            foreach (string tank in Config.TankIds) if (!Model.GetTank(tank).HasValue) empty++;
+            foreach (string tank in Model.TankIds) if (!Model.GetTank(tank).HasValue) empty++;
             var incubator = Model.Incubator;
             if (incubator.Phase == IncubatorPhase.Ready)
             {
                 if (empty > 0)
                     return "Your " + Model.GetSpecies(incubator.SpeciesId).DisplayName + " is ready. Press E at an empty front tank to stock it before opening.";
-                return "Both displays are stocked. Keep the finished specimen in its incubator until a sale frees a tank.";
+                return "All display slots are stocked. Keep the finished specimen in its incubator until a sale frees a tank.";
             }
             if (empty > 0)
             {

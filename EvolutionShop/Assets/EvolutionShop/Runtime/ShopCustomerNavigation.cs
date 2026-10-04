@@ -36,9 +36,9 @@ namespace EvolutionShop
         /// <summary>Spot 0 faces the display; spot 1 stands beside it, toward the middle of the store.</summary>
         public Vector3 BrowseSpot(string tankId, int spot)
         {
-            float z = tankId == "tank-b" ? -3.85f : -1.2f;
-            return spot <= 0 ? WorldPoint(new Vector3(3.7f, 0, z))
-                : WorldPoint(new Vector3(3.05f, 0, tankId == "tank-b" ? z + .75f : z - .75f));
+            if (world && world.AppliedLayout.TryGetBrowsePoint(tankId, Mathf.Clamp(spot, 0, BrowseSpotsPerDisplay - 1), out float x, out float z))
+                return WorldPoint(new Vector3(x, 0, z));
+            return new Vector3(float.NaN, 0, float.NaN);
         }
 
         /// <summary>Spot 0 is at the counter; later spots wait behind it.</summary>
@@ -66,7 +66,7 @@ namespace EvolutionShop
             labExclusion.transform.SetParent(world.transform, false);
             var blocked = labExclusion.AddComponent<NavMeshModifierVolume>();
             blocked.center = new Vector3(0, 2, 3.55f);
-            blocked.size = new Vector3(18, 8, 7); // Starts at z = .05, including the entire doorway/lab.
+            blocked.size = new Vector3(40, 8, 7); // Starts at z = .05, including the lab and the full expanded width.
             blocked.area = NavMesh.GetAreaFromName("Not Walkable");
             if (blocked.area < 0)
             {
@@ -122,7 +122,7 @@ namespace EvolutionShop
 
         bool ValidateRequiredRoutes(out string error)
         {
-            foreach (string tank in new[] { "tank-a", "tank-b" })
+            foreach (string tank in world.AppliedLayout.TankIds)
                 for (int spot = 0; spot < BrowseSpotsPerDisplay; spot++)
                     for (int place = 0; place < QueueCapacity; place++)
                         if (!CanReach(EntryPoint, BrowseSpot(tank, spot)) || !CanReach(BrowseSpot(tank, spot), QueueSpot(place)))
@@ -134,6 +134,12 @@ namespace EvolutionShop
                 if (!CanReach(QueueSpot(place), ExitPoint))
                 {
                     error = "Queue place " + place + " has no walkable exit.";
+                    return false;
+                }
+            for (int tier = 1; tier <= world.AppliedLayout.StoreTier; tier++)
+                if (!CanReach(EntryPoint, WorldPoint(new Vector3(-5 - tier * 4, 0, -2.5f))))
+                {
+                    error = "Store gallery " + tier + " has no complete route from the entrance.";
                     return false;
                 }
             // Probe the bake itself, independently of destination validation, to catch a missing modifier.
@@ -167,7 +173,7 @@ namespace EvolutionShop
         {
             if (!world || !Finite(position)) return false;
             Vector3 p = world.transform.InverseTransformPoint(position);
-            return p.x >= -6.55f && p.x <= 6.55f && p.z >= -5.2f && p.z < .05f && p.y >= -.2f && p.y <= .45f;
+            return p.x >= world.AppliedLayout.StoreMinX + .45f && p.x <= 6.55f && p.z >= -5.2f && p.z < .05f && p.y >= -.2f && p.y <= .45f;
         }
 
         public bool TryResolveDestination(Vector3 desired, out Vector3 position)

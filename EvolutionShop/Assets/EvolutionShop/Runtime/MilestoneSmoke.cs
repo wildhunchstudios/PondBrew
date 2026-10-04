@@ -49,20 +49,21 @@ namespace EvolutionShop
             bool reputation = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionReputationSmoke") >= 0;
             bool slap = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionSlapSmoke") >= 0;
             bool trading = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionTradingSmoke") >= 0;
+            bool expansion = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionExpansionSmoke") >= 0;
             bool placement = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPlacementSmoke") >= 0;
-            if (!reputation && !slap && !trading && !placement)
+            if (!reputation && !slap && !trading && !placement && !expansion)
             {
                 shop.Customers.UseBaseReputationEffectsForValidation = true;
                 limitations.Add("Earlier scenarios retain base customer demand/budgets/tolerances through an explicit validation-only hook; reputation still scores, and real tier effects are covered by the reputation scenario.");
             }
-            if (!customerTypes && !reputation && !slap && !trading && !placement)
+            if (!customerTypes && !reputation && !slap && !trading && !placement && !expansion)
             {
                 // Earlier scenarios were written for one visitor of the R02/R03.1 customer type at a time.
                 shop.Customers.MaxVisitors = 1;
                 shop.Customers.ForcedArchetypeId = CustomerArchetypes.Casual;
                 limitations.Add("Pinned to one casual visitor at a time (R03.2 validation hook) to keep this earlier scenario's assumptions; customer types and two concurrent visitors are covered by the customer-types scenario.");
             }
-            stack.Push(placement ? PlacementScenario() : trading ? TradingShiftScenario() : nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
+            stack.Push(expansion ? ExpansionScenario() : placement ? PlacementScenario() : trading ? TradingShiftScenario() : nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
                 customerTypes ? CustomerTypesScenario() : reputation ? ReputationScenario() : slap ? SlapScenario() : Scenario());
             bool failed = false;
             while (stack.Count > 0)
@@ -83,7 +84,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = placement ? "R04.1 shared room placement" : trading ? "R03.5 ordinary trading shifts" : nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" :
+                scenario = expansion ? "R04.2 expanded store and display stock" : placement ? "R04.1 shared room placement" : trading ? "R03.5 ordinary trading shifts" : nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" :
                     customerTypes ? "R03.2 customer types and two-visitor queue" : reputation ? "R03.3 reputation and capped demand" : slap ? "R03.4 intentional cartoon slap" : "Integrated regression",
                 context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
                 unityVersion = Application.unityVersion,

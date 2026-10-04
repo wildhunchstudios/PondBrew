@@ -9,10 +9,12 @@ namespace EvolutionShop
     public sealed class PlacedWorkTable : MonoBehaviour
     {
         public string Id { get; internal set; }
+        public string DefinitionId { get; internal set; }
     }
 
     public sealed partial class ShopWorld
     {
+        public ShopLayout AppliedLayout { get; private set; } = new ShopLayout();
         readonly Dictionary<string, PlacedWorkTable> placedTables = new Dictionary<string, PlacedWorkTable>();
         readonly HashSet<string> layoutIds = new HashSet<string>();
         readonly List<string> retiredTableIds = new List<string>();
@@ -22,26 +24,37 @@ namespace EvolutionShop
         Mesh placementCube;
         Material previewValid, previewInvalid, footprintValid, footprintInvalid;
         bool? previewWasValid;
+        string previewDefinition;
 
         /// <summary>Reflects a validated candidate or committed layout. Existing table roots retain identity.</summary>
         public void ApplyLayout(ShopLayout layout)
         {
             if (layout == null) throw new ArgumentNullException(nameof(layout));
             if (!cream) throw new InvalidOperationException("Build the shop world before applying furniture.");
+            ApplyStoreExpansion(layout.StoreTier);
+            AppliedLayout = layout;
             layoutIds.Clear();
             foreach (var item in layout.Items)
             {
                 layoutIds.Add(item.Id);
-                if (!placedTables.TryGetValue(item.Id, out var table) || !table)
+                placedTables.TryGetValue(item.Id, out var table);
+                if (table && table.DefinitionId != item.DefinitionId)
+                { RetirePlacementItem(table); table = null; }
+                if (!table)
                 {
-                    var root = Group("Worktable / " + item.Id, transform, Vector3.zero);
+                    var root = Group(item.DefinitionId + " / " + item.Id, transform, Vector3.zero);
                     table = root.gameObject.AddComponent<PlacedWorkTable>();
                     table.Id = item.Id;
+                    table.DefinitionId = item.DefinitionId;
                     // One solid footprint keeps both the player and the navigation bake out from under the table.
-                    var collider = root.gameObject.AddComponent<BoxCollider>();
-                    collider.center = new Vector3(0, .48f, 0);
-                    collider.size = new Vector3(ShopLayout.TableWidth, .96f, ShopLayout.TableDepth);
-                    BuildWorktable(root, false);
+                    if (item.DefinitionId == ShopLayout.TableDefinitionId)
+                    {
+                        var collider = root.gameObject.AddComponent<BoxCollider>();
+                        collider.center = new Vector3(0, .48f, 0);
+                        collider.size = new Vector3(ShopLayout.TableWidth, .96f, ShopLayout.TableDepth);
+                        BuildWorktable(root, false);
+                    }
+                    else BuildPlacedDisplay(root, item.Id, item.DefinitionId, false);
                     placedTables[item.Id] = table;
                 }
                 table.transform.localPosition = new Vector3(item.X * ShopLayout.GridSize, 0, item.Z * ShopLayout.GridSize);
@@ -55,12 +68,7 @@ namespace EvolutionShop
             {
                 var table = placedTables[id];
                 if (table)
-                {
-                    // Destroy is deferred. A same-frame rollback/bake must not see retired obstacles.
-                    foreach (var collider in table.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
-                    table.gameObject.SetActive(false);
-                    Destroy(table.gameObject);
-                }
+                    RetirePlacementItem(table);
                 placedTables.Remove(id);
             }
             Physics.SyncTransforms();
@@ -76,13 +84,16 @@ namespace EvolutionShop
 
         /// <summary>Coordinates are world-local metres, and rotation is a quarter-turn index, not degrees.</summary>
         public void ShowPlacementPreview(float x, float z, int rotation, bool valid)
+            => ShowPlacementPreview(ShopLayout.TableDefinitionId, x, z, rotation, valid);
+
+        public void ShowPlacementPreview(string definitionId, float x, float z, int rotation, bool valid)
         {
             if (float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(z) || float.IsInfinity(z))
             {
                 HidePreview();
                 return;
             }
-            EnsurePlacementPreview();
+            EnsurePlacementPreview(definitionId);
             placementPreview.localPosition = new Vector3(x, 0, z);
             placementPreview.localRotation = Quaternion.Euler(0, QuarterTurn(rotation) * 90, 0);
             if (previewWasValid != valid)
@@ -123,32 +134,49 @@ namespace EvolutionShop
             part.gameObject.AddComponent<MeshFilter>().sharedMesh = PlacementCube();
             var renderer = part.gameObject.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = preview ? previewValid : material;
-            if (preview)
+            if (preview || material != null && material.renderQueue >= 3000)
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
-                previewSurfaces.Add(renderer);
             }
+            if (preview) previewSurfaces.Add(renderer);
         }
 
-        void EnsurePlacementPreview()
+        void EnsurePlacementPreview(string definitionId)
         {
-            if (placementPreview) return;
-            previewValid = MakeGlass("Valid placement ghost", new Color(.18f, .95f, .62f, .24f));
-            previewInvalid = MakeGlass("Blocked placement ghost", new Color(1f, .18f, .18f, .24f));
-            footprintValid = MakeGlass("Valid placement footprint", new Color(.17f, 1f, .60f, .88f));
-            footprintInvalid = MakeGlass("Blocked placement footprint", new Color(1f, .12f, .12f, .88f));
-            foreach (var material in new[] { previewValid, previewInvalid, footprintValid, footprintInvalid })
-                material.SetFloat("_Smoothness", .15f);
-            placementPreview = Group("Worktable placement preview (no colliders)", transform, Vector3.zero);
-            BuildWorktable(placementPreview, true);
-            // Outer edges match the exact 1.5 x 1 metre reservation envelope.
-            PreviewMark("Footprint left", new Vector3(-.735f, .028f, 0), new Vector3(.03f, .014f, 1f));
-            PreviewMark("Footprint right", new Vector3(.735f, .028f, 0), new Vector3(.03f, .014f, 1f));
-            PreviewMark("Footprint front", new Vector3(0, .028f, -.485f), new Vector3(1.5f, .014f, .03f));
-            PreviewMark("Footprint back", new Vector3(0, .028f, .485f), new Vector3(1.5f, .014f, .03f));
+            PlacementDimensions(definitionId, out float width, out float depth, out _);
+            if (placementPreview && previewDefinition == definitionId) return;
+            if (placementPreview)
+            {
+                labels.RemoveAll(label => !label.Text || label.Text.transform.IsChildOf(placementPreview));
+                placementPreview.gameObject.SetActive(false); Destroy(placementPreview.gameObject);
+            }
+            previewSurfaces.Clear(); previewFootprint.Clear(); previewWasValid = null;
+            previewDefinition = definitionId;
+            if (!previewValid)
+            {
+                previewValid = MakeGlass("Valid placement ghost", new Color(.18f, .95f, .62f, .24f));
+                previewInvalid = MakeGlass("Blocked placement ghost", new Color(1f, .18f, .18f, .24f));
+                footprintValid = MakeGlass("Valid placement footprint", new Color(.17f, 1f, .60f, .88f));
+                footprintInvalid = MakeGlass("Blocked placement footprint", new Color(1f, .12f, .12f, .88f));
+                foreach (var material in new[] { previewValid, previewInvalid, footprintValid, footprintInvalid })
+                    material.SetFloat("_Smoothness", .15f);
+            }
+            placementPreview = Group(definitionId == ShopLayout.TableDefinitionId ? "Worktable placement preview (no colliders)" : "Display placement preview (no colliders)", transform, Vector3.zero);
+            if (definitionId == ShopLayout.TableDefinitionId) BuildWorktable(placementPreview, true);
+            else BuildPlacedDisplay(placementPreview, null, definitionId, true);
+            PreviewMark("Footprint left", new Vector3(-width * .5f + .015f, .028f, 0), new Vector3(.03f, .014f, depth));
+            PreviewMark("Footprint right", new Vector3(width * .5f - .015f, .028f, 0), new Vector3(.03f, .014f, depth));
+            PreviewMark("Footprint front", new Vector3(0, .028f, -depth * .5f + .015f), new Vector3(width, .014f, .03f));
+            PreviewMark("Footprint back", new Vector3(0, .028f, depth * .5f - .015f), new Vector3(width, .014f, .03f));
             // An asymmetric stripe exposes quarter turns even when the transparent top is viewed obliquely.
-            PreviewMark("Front orientation stripe", new Vector3(0, .973f, -.33f), new Vector3(.55f, .012f, .045f));
+            PreviewMark("Front orientation stripe", new Vector3(0, definitionId == ShopLayout.TableDefinitionId ? .973f : 1.65f, -.33f), new Vector3(.55f, .012f, .045f));
+            if (definitionId != ShopLayout.TableDefinitionId)
+            {
+                PreviewMark("Front access marker (outside furniture footprint)", new Vector3(0, .028f, -depth * .5f - .9f), new Vector3(1.2f, .014f, .34f));
+                var accessLabel = Text(placementPreview, "FRONT ACCESS", new Vector3(0, .038f, -depth * .5f - .9f), .035f, dark.color, 1.08f);
+                accessLabel.transform.localRotation = Quaternion.Euler(90, 0, 0);
+            }
         }
 
         void PreviewMark(string name, Vector3 position, Vector3 scale)

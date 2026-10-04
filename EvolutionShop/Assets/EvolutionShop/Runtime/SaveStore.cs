@@ -26,16 +26,17 @@ namespace EvolutionShop
     {
         // 4: price tags (game 2) and price refusals (report 2). 5: several unresolved visitors (report 3).
         // 6: reputation. 7: slap outcomes and intentional slap/audio/motion settings.
-        // 8: owned work-table layout. Formats 1-7 migrate in memory; historical saves never
+        // 8: owned work-table layout. 9: two store expansions and owned stock displays.
+        // Formats 1-8 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 8;
+        public const int CurrentFormatVersion = 9;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 8 ? 2 : 0;
+            format >= 4 && format <= 9 ? 2 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format == 7 || format == 8 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 9 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -82,7 +83,9 @@ namespace EvolutionShop
                 !ShopDayCycle.TryRestore(data.cycle, out _) ||
                 !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _) ||
                 !ShopReputation.TryRestore(data.reputation, out _) ||
-                !ShopLayout.TryRestore(data.layout, out _) ||
+                data.layout == null || data.layout.version != ShopLayout.SaveVersion ||
+                !ShopLayout.TryRestore(data.layout, out var layout) ||
+                !GameModel.TryRestore(layout.WithTankIds(GameConfig.CreateDefault()), data.game, out _, out _) ||
                 !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume))
             {
                 error = "Could not save: the current slot, day clock, trading report, reputation, layout, or gag settings are invalid. Original file preserved.";
@@ -128,10 +131,35 @@ namespace EvolutionShop
                 if (header == null || header.formatVersion < 1 || header.formatVersion > CurrentFormatVersion ||
                     candidate == null || candidate.game == null ||
                     candidate.game.version != GameVersionFor(header.formatVersion) ||
-                    !Finite(candidate.sensitivity) || !Finite(candidate.volume) ||
-                    !GameModel.TryRestore(config, candidate.game, out var restoredGame, out _))
+                    !Finite(candidate.sensitivity) || !Finite(candidate.volume))
                 {
                     error = "Save could not be validated. Your original file is preserved. Confirm New game to replace it.";
+                    return false;
+                }
+
+                // Furniture owns the stock-slot registry. Validate it before inventory so an
+                // orphan slot cannot grant capacity, and a missing slot cannot delete stock.
+                ShopLayout restoredLayout;
+                if (header.formatVersion < 8)
+                {
+                    restoredLayout = new ShopLayout();
+                    candidate.layout = restoredLayout.CaptureSave();
+                }
+                else
+                {
+                    int layoutVersion = header.formatVersion == 8 ? 1 : ShopLayout.SaveVersion;
+                    if (header.layout == null || header.layout.version != layoutVersion ||
+                        !new LayoutJsonShape(json, header.formatVersion >= 9).HasExplicitItemsArray() ||
+                        !ShopLayout.TryRestore(candidate.layout, out restoredLayout))
+                    {
+                        error = "Saved layout could not be validated. Your original file is preserved.";
+                        return false;
+                    }
+                    candidate.layout = restoredLayout.CaptureSave();
+                }
+                if (!GameModel.TryRestore(restoredLayout.WithTankIds(config), candidate.game, out var restoredGame, out _))
+                {
+                    error = "Saved stock and layout could not be validated. Your original file is preserved.";
                     return false;
                 }
 
@@ -196,24 +224,6 @@ namespace EvolutionShop
                     return false;
                 }
 
-                if (header.formatVersion < 8)
-                {
-                    // Layout did not exist in historical formats. Ignore stray future fields;
-                    // migration neither buys furniture nor changes the original file.
-                    candidate.layout = new ShopLayout().CaptureSave();
-                }
-                else
-                {
-                    if (header.layout == null || header.layout.version != 1 ||
-                        !new LayoutJsonShape(json).HasExplicitItemsArray() ||
-                        !ShopLayout.TryRestore(candidate.layout, out var restoredLayout))
-                    {
-                        error = "Saved layout could not be validated. Your original file is preserved.";
-                        return false;
-                    }
-                    candidate.layout = restoredLayout.CaptureSave();
-                }
-
                 // A version 1 game restores with standard prices; capture it in the current form.
                 candidate.game = restoredGame.CaptureSave();
                 candidate.formatVersion = CurrentFormatVersion;
@@ -255,8 +265,10 @@ namespace EvolutionShop
         private sealed class LayoutJsonShape
         {
             readonly string json;
+            readonly bool requireStoreTier;
             int position;
-            public LayoutJsonShape(string json) { this.json = json; }
+            public LayoutJsonShape(string json, bool requireStoreTier)
+            { this.json = json; this.requireStoreTier = requireStoreTier; }
 
             public bool HasExplicitItemsArray()
             {
@@ -267,7 +279,7 @@ namespace EvolutionShop
             bool ReadObject(bool layout)
             {
                 if (!Take('{')) return false;
-                bool required = false;
+                bool required = false, hasStoreTier = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 SkipSpace();
                 if (Take('}')) return false;
@@ -285,8 +297,18 @@ namespace EvolutionShop
                         if (position >= json.Length || json[position] != '[' || !SkipValue(0)) return false;
                         required = true;
                     }
+                    else if (layout && requireStoreTier && key == "storeTier")
+                    {
+                        // A missing/null/bool/string/fraction must not normalize to valid tier 0.
+                        SkipSpace();
+                        if (position >= json.Length || json[position] < '0' || json[position] > '2') return false;
+                        position++;
+                        if (position < json.Length && !char.IsWhiteSpace(json[position]) &&
+                            json[position] != ',' && json[position] != '}') return false;
+                        hasStoreTier = true;
+                    }
                     else if (!SkipValue(0)) return false;
-                    if (Take('}')) return required;
+                    if (Take('}')) return required && (!layout || !requireStoreTier || hasStoreTier);
                     if (!Take(',')) return false;
                 }
                 return false;

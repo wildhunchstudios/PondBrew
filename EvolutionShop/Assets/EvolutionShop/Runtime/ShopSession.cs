@@ -204,7 +204,7 @@ namespace EvolutionShop
         public int DisplayedStockCount()
         {
             int count = 0;
-            foreach (string tankId in Config.TankIds) if (Model.GetTank(tankId).HasValue) count++;
+            foreach (string tankId in Model.TankIds) if (Model.GetTank(tankId).HasValue) count++;
             return count;
         }
         public bool ShowDayReport()
@@ -323,8 +323,8 @@ namespace EvolutionShop
                 case StationKind.Bloom: case StationKind.Flow:
                     Notify("Hold left mouse to siphon living cultures."); break;
                 case StationKind.Incubator: SetPanel(ShopPanel.Incubator); break;
-                case StationKind.TankA: case StationKind.TankB:
-                    selectedTank = station.Kind == StationKind.TankA ? "tank-a" : "tank-b";
+                case StationKind.TankA: case StationKind.TankB: case StationKind.Display:
+                    selectedTank = station.TankId ?? (station.Kind == StationKind.TankA ? "tank-a" : "tank-b");
                     // An occupied tank opens its price tag; ready output waits safely in the incubator.
                     if (Model.Incubator.Phase == IncubatorPhase.Ready && !Model.GetTank(selectedTank).HasValue)
                         TransferToDisplay(selectedTank);

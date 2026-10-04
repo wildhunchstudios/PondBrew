@@ -5,12 +5,13 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade }
+    public enum StationKind { Bloom, Flow, Incubator, TankA, TankB, Counter, Upgrade, Display }
 
     public sealed class Station : MonoBehaviour
     {
         public StationKind Kind;
         public string Label;
+        public string TankId;
     }
 
     /// <summary>Presentation only. All quantities and transaction decisions belong to GameModel.</summary>
@@ -49,6 +50,8 @@ namespace EvolutionShop
             public string SpeciesId;
             public float Seed;
             public bool Incubator;
+            public TextMesh Status;
+            public Bounds Interior = new Bounds(new Vector3(0, 1.57f, 0), new Vector3(1.94f, 1.06f, 1.24f));
         }
 
         sealed class Particle
@@ -204,7 +207,8 @@ namespace EvolutionShop
             var wall = MakeMaterial("Ivory plaster", new Color(0.76f, 0.82f, 0.76f), 0, 0.22f);
             Shape(transform, "Floor", PrimitiveType.Cube, new Vector3(0, -.14f, 0), new Vector3(14, .28f, 11), floor, true);
             Shape(transform, "Back wall", PrimitiveType.Cube, new Vector3(0, 2.1f, 5.6f), new Vector3(14, 4.2f, .3f), wall, true);
-            Shape(transform, "Left wall", PrimitiveType.Cube, new Vector3(-7, 2.1f, 0), new Vector3(.3f, 4.2f, 11), wall, true);
+            storeWestWall = Shape(transform, "Store west wall", PrimitiveType.Cube, new Vector3(-7, 2.1f, -2.5f), new Vector3(.3f, 4.2f, 6), wall, true);
+            Shape(transform, "Lab west wall", PrimitiveType.Cube, new Vector3(-7, 2.1f, 3), new Vector3(.3f, 4.2f, 5), wall, true);
             Shape(transform, "Right wall", PrimitiveType.Cube, new Vector3(7, 2.1f, 0), new Vector3(.3f, 4.2f, 11), wall, true);
             Shape(transform, "Front wall", PrimitiveType.Cube, new Vector3(0, 2.1f, -5.6f), new Vector3(14, 4.2f, .3f), wall, true);
             Shape(transform, "Back wainscot", PrimitiveType.Cube, new Vector3(0, .65f, 5.42f), new Vector3(14, 1.3f, .07f), dark);
@@ -290,6 +294,7 @@ namespace EvolutionShop
             storeFillLight.intensity = night ? 2.25f : closing ? 3f : 3.4f;
             labFillLight.color = night ? new Color(.74f, .94f, 1f) : closing ? new Color(.74f, .98f, .97f) : new Color(.75f, 1f, .94f);
             labFillLight.intensity = 3.2f;
+            RefreshWingLights();
         }
 
         Light LightAt(Vector3 position, Color color, float intensity, float range)
@@ -380,6 +385,7 @@ namespace EvolutionShop
         void Aquarium(StationKind kind, string id, Vector3 position, string title, float seed)
         {
             var r = MakeStation(kind, title, position, 90).transform;
+            r.GetComponent<Station>().TankId = id;
             r.GetComponent<BoxCollider>().size = new Vector3(2.1f, 2.1f, 1.3f);
             Shape(r, "Display cabinet", PrimitiveType.Cube, new Vector3(0, .43f, 0), new Vector3(2.03f, .86f, 1.33f), dark);
             Shape(r, "Tank lower rim", PrimitiveType.Cube, new Vector3(0, .91f, 0), new Vector3(2.14f, .14f, 1.42f), cream);
@@ -490,6 +496,7 @@ namespace EvolutionShop
 
         static void FitLabel(LabelFit fit)
         {
+            if (!fit.Text) return;
             var bounds = fit.Text.GetComponent<Renderer>().localBounds.size;
             if (bounds.x <= .00001f || bounds.y <= .00001f) return;
             float scale = Mathf.Min(fit.Height / bounds.y, fit.Width / bounds.x);
@@ -539,6 +546,7 @@ namespace EvolutionShop
             SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
+            RefreshPlacedDisplays(model);
             status[StationKind.Upgrade].text = upgraded ? "INSTALLED  /  8 UNIT RESERVOIR" : "24 COINS  /  COLLECT FASTER";
             toolReadout.text = (bloomCount + flowCount) + " / " + model.Capacity;
             for (int i = 0; i < reservoirCells.Count; i++)
@@ -711,7 +719,7 @@ namespace EvolutionShop
                     {
                         Vector3 corner = bounds.center + Vector3.Scale(bounds.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
                         Vector3 local = tank.InverseTransformPoint(corner);
-                        if (Mathf.Abs(local.x) > .97f || local.y < 1.04f || local.y > 2.10f || Mathf.Abs(local.z) > .62f)
+                        if (!display.Interior.Contains(local))
                         {
                             details = pair.Key + " / " + display.SpeciesId + " / " + renderer.name + " outside tank at " + local;
                             return false;

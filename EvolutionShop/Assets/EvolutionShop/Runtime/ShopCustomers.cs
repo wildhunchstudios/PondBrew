@@ -178,7 +178,7 @@ namespace EvolutionShop
             var report = shop.Reports.Current;
             var type = ChooseArchetype(report == null ? 0 : report.visitors);
             var entry = new Visitor();
-            var visit = new CustomerVisit(shop.Model, shop.Config.TankIds, rules, type, tank => Contended(tank, entry));
+            var visit = new CustomerVisit(shop.Model, shop.Model.TankIds, rules, type, tank => Contended(tank, entry));
             if (!shop.Reports.BeginVisit(visit.Id))
             {
                 Debug.LogWarning("EVOLUTION_CUSTOMER_LEDGER the day report could not record a new visitor; arrival skipped.");
@@ -240,7 +240,7 @@ namespace EvolutionShop
         int ChooseBrowseSpot(Visitor visitor)
         {
             foreach (var other in visitors)
-                if (other != visitor && other.Visit.TargetTankId == visitor.Visit.TargetTankId && other.BrowseSpot == 0 &&
+                if (other != visitor && (Navigation.BrowseSpot(other.Visit.TargetTankId, 0) - Navigation.BrowseSpot(visitor.Visit.TargetTankId, 0)).sqrMagnitude < .04f && other.BrowseSpot == 0 &&
                     (other.Visit.Phase == CustomerPhase.Arriving || other.Visit.Phase == CustomerPhase.Browsing)) return 1;
             return 0;
         }

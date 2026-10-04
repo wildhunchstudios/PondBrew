@@ -15,7 +15,7 @@ namespace EvolutionShop
 
         private readonly GameConfig config;
         private readonly Dictionary<string, SpeciesDefinition> species;
-        private readonly Dictionary<string, SpecimenView?> tanks;
+        private Dictionary<string, SpecimenView?> tanks;
         private readonly Dictionary<string, ReservationView> reservations = new Dictionary<string, ReservationView>(StringComparer.Ordinal);
         private readonly HashSet<string> discoveries = new HashSet<string>(StringComparer.Ordinal);
         // Only tags that differ from the standard price are kept, so a save stays canonical.
@@ -30,6 +30,7 @@ namespace EvolutionShop
         private float incubationRemaining;
 
         public int Currency { get; private set; }
+        public string[] TankIds => (string[])config.TankIds.Clone();
         public bool UpgradeOwned { get; private set; }
         public int Capacity { get { return UpgradeOwned ? config.UpgradedCapacity : config.BaseCapacity; } }
         public float CollectionSecondsPerUnit
@@ -319,6 +320,28 @@ namespace EvolutionShop
             Currency -= amount;
             return true;
         }
+
+        // Allocate the complete new slot registry before committing either ownership or money.
+        // Existing specimens and reservations keep their identity, including queued price agreements.
+        internal bool TryPurchaseSlots(int cost, string[] newSlots)
+        {
+            if (cost <= 0 || Currency < cost || newSlots == null || newSlots.Length == 0 ||
+                config.TankIds.Length + newSlots.Length > 8) return false;
+            var expanded = new Dictionary<string, SpecimenView?>(tanks, StringComparer.Ordinal);
+            var ids = new string[config.TankIds.Length + newSlots.Length];
+            Array.Copy(config.TankIds, ids, config.TankIds.Length);
+            for (int i = 0; i < newSlots.Length; i++)
+            {
+                string id = newSlots[i];
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || expanded.ContainsKey(id)) return false;
+                expanded.Add(id, null);
+                ids[config.TankIds.Length + i] = id;
+            }
+            tanks = expanded;
+            config.TankIds = ids;
+            Currency -= cost;
+            return true;
+        }
         public ActionResult BuyUpgrade()
         {
             if (UpgradeOwned) return ActionResult.Fail(FailureCode.AlreadyUpgraded);
@@ -472,7 +495,7 @@ namespace EvolutionShop
             return true;
         }
 
-        private static GameConfig CopyAndValidate(GameConfig input)
+        internal static GameConfig CopyAndValidate(GameConfig input)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (input.GrowerCapacity <= 0 || input.InitialGrowerUnits < 0 ||
@@ -483,7 +506,7 @@ namespace EvolutionShop
                 !PositiveFinite(input.GrowerRefillSeconds) ||
                 !PositiveFinite(input.IncubationSeconds) || !PositiveFinite(input.BaseCollectionSeconds) ||
                 !PositiveFinite(input.UpgradedCollectionSeconds) || input.Species == null ||
-                input.Species.Length == 0 || input.TankIds == null || input.TankIds.Length != 2)
+                input.Species.Length == 0 || input.TankIds == null || input.TankIds.Length < 2 || input.TankIds.Length > 8)
                 throw new ArgumentException("Invalid prototype tuning.", nameof(input));
             var copy = new GameConfig
             {
@@ -510,8 +533,8 @@ namespace EvolutionShop
             }
             ids.Clear();
             foreach (var id in copy.TankIds)
-                if (string.IsNullOrWhiteSpace(id) || !ids.Add(id))
-                    throw new ArgumentException("Exactly two unique stable tank IDs are required.", nameof(input));
+                if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || !ids.Add(id))
+                    throw new ArgumentException("Two to eight unique stable tank IDs are required.", nameof(input));
             return copy;
         }
 

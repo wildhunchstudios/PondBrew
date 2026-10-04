@@ -32,12 +32,12 @@ namespace EvolutionShop.Tests
         [Test] public void EmptyLayoutRoundTripDoesNotCreateFurnitureOrSpendCredits()
         {
             var slot = FreshSlot();
-            Assert.That(slot.layout.version, Is.EqualTo(1));
+            Assert.That(slot.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
             Assert.That(slot.layout.nextItemNumber, Is.EqualTo(1)); Assert.That(slot.layout.items, Is.Empty);
             Write(slot); byte[] original = File.ReadAllBytes(PathFor());
             var loaded = Read(out var model);
             Assert.That(loaded.layout.items, Is.Empty); Assert.That(model.Currency, Is.Zero);
-            Assert.That(loaded.formatVersion, Is.EqualTo(8)); Assert.That(loaded.game.version, Is.EqualTo(2));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(loaded.game.version, Is.EqualTo(2));
             Assert.That(loaded.trades.version, Is.EqualTo(4)); Assert.That(loaded.reputation.version, Is.EqualTo(1));
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
@@ -69,7 +69,7 @@ namespace EvolutionShop.Tests
             for (int i = 0; i < 2; i++)
             {
                 var slot = Read(out var model);
-                Assert.That(slot.formatVersion, Is.EqualTo(8)); Assert.That(slot.layout.version, Is.EqualTo(1));
+                Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.layout.version, Is.EqualTo(ShopLayout.SaveVersion));
                 Assert.That(slot.layout.nextItemNumber, Is.EqualTo(1)); Assert.That(slot.layout.items, Is.Empty);
                 Assert.That(model.Currency, Is.Zero); Assert.That(slot.reputation.points, Is.Zero);
                 Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
@@ -205,9 +205,9 @@ namespace EvolutionShop.Tests
         {
             var slot = FreshSlot(); Write(slot); Read(out _); // Positive control for all other fields.
             string layout = problem == "missing" ? null : problem == "null" ? "null" :
-                problem == "empty" ? "{}" : problem == "missing-items" ? "{\"version\":1,\"nextItemNumber\":1}" :
-                problem == "null-items" ? "{\"version\":1,\"nextItemNumber\":1,\"items\":null}" :
-                "{\"nextItemNumber\":1,\"items\":[]}";
+                problem == "empty" ? "{}" : problem == "missing-items" ? "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1}" :
+                problem == "null-items" ? "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1,\"items\":null}" :
+                "{\"storeTier\":0,\"nextItemNumber\":1,\"items\":[]}";
             AssertInvalidRead(CurrentJson(slot, layout));
         }
 
@@ -216,8 +216,8 @@ namespace EvolutionShop.Tests
         {
             var slot = FreshSlot(); Write(slot); Read(out _);
             string payload = problem == "nested-items"
-                ? "{\"version\":1,\"nextItemNumber\":1,\"metadata\":{\"items\":[]}}"
-                : "{\"version\":1,\"nextItemNumber\":1,\"note\":\"\\\"items\\\": []\"}";
+                ? "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1,\"metadata\":{\"items\":[]}}"
+                : "{\"version\":2,\"storeTier\":0,\"nextItemNumber\":1,\"note\":\"\\\"items\\\": []\"}";
             AssertInvalidRead(CurrentJson(slot, payload));
         }
 
@@ -228,10 +228,11 @@ namespace EvolutionShop.Tests
             var slot = FreshSlot(); Write(slot); Read(out _);
             string layout = JsonUtility.ToJson(slot.layout);
             if (problem == "layout-items") layout = layout.Replace("\"items\":[]", "\"items\":[],\"items\":[]");
-            if (problem == "layout-version") layout = layout.Replace("\"version\":1", "\"version\":1,\"version\":1");
+            if (problem == "layout-version") layout = layout.Replace("\"version\":2", "\"version\":2,\"version\":2");
             string json = CurrentJson(slot, layout);
             if (problem == "root-layout") json = json.Replace("\"layout\":", "\"layout\":" + layout + ",\"layout\":");
-            if (problem == "root-version") json = json.Replace("\"formatVersion\":8", "\"formatVersion\":8,\"formatVersion\":8");
+            if (problem == "root-version") json = json.Replace("\"formatVersion\":" + SaveStore.CurrentFormatVersion,
+                "\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"formatVersion\":" + SaveStore.CurrentFormatVersion);
             AssertInvalidRead(json, null); // The native JSON reader may also reject duplicate keys.
         }
 
@@ -271,7 +272,7 @@ namespace EvolutionShop.Tests
             {
                 case "null": slot.layout = null; break;
                 case "version-zero": slot.layout.version = 0; break;
-                case "future-version": slot.layout.version = 2; break;
+                case "future-version": slot.layout.version = ShopLayout.SaveVersion + 1; break;
                 case "missing-items": slot.layout.items = null; break;
                 case "null-item": slot.layout.items[0] = null; break;
                 case "duplicate-id": slot.layout.items[1].id = slot.layout.items[0].id; break;
@@ -298,7 +299,7 @@ namespace EvolutionShop.Tests
         SlotData FreshSlot() => new SlotData { game = new GameModel(config).CaptureSave(), cycle = new ShopDayCycle().CaptureSave() };
         static LayoutItemSave Item(int number, int x, int z, int turns) => new LayoutItemSave
             { id = "table-" + number, definitionId = "work-table", x = x, z = z, quarterTurns = turns };
-        static LayoutSave ThreeTables() => new LayoutSave { version = 1, nextItemNumber = 4,
+        static LayoutSave ThreeTables() => new LayoutSave { version = ShopLayout.SaveVersion, nextItemNumber = 4,
             items = new[] { Item(1, -4, -1, 0), Item(2, 4, -1, 0), Item(3, 9, 4, 1) } };
 
         SlotData ProgressSlot(ShopDayPhase phase, out GameModel model)
@@ -345,7 +346,7 @@ namespace EvolutionShop.Tests
             File.WriteAllText(PathFor(), json); return File.ReadAllBytes(PathFor());
         }
 
-        static string CurrentJson(SlotData slot, string layout) => "{\"formatVersion\":8,\"game\":" + JsonUtility.ToJson(slot.game) +
+        static string CurrentJson(SlotData slot, string layout) => "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
             ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
             ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) + (layout == null ? "" : ",\"layout\":" + layout) +
             ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.65}";
