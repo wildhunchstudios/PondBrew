@@ -77,3 +77,7 @@ Milestone 02 automation/workers/humor and Milestone 03 presentation sample. No i
 - [x] Pass 1,195 EditMode tests, Editor Airfin 81, final packaged Airfin 81/restart12/conditioning200, build with 0 errors/warnings.
 - [x] Save source and final delivery checkpoints; see the current roadmap and next R05.5 assignment in `../AGENTS.md`.
 - [ ] Human assessment: Mist research value, Driftwing appeal, four-culture readability, shop/lab pacing and audio.
+
+## Historical update — R05.5 lab validation (2026-10-04)
+
+Current contract: `../AGENTS.md`. Source `4ceeb1d`, tag `r05-lab-validated`. R05.5 technical gate is complete: full EditMode 1,209/1,209; Editor and exact packaged lab flow 174 each; fresh-process restarts staged 25, working 23, canceled 24, partial 24, ready 25, recovered 21; packaged Airfin 81; all zero runtime errors and exits 0. Windows build succeeded with zero errors/warnings. All 290 shipped files match; all 11 protected baseline files match. Added 14 tests and a development-only harness; production rules/schema are unchanged. Initial diagnostic/test-pose and driver failures are retained and explained in AGENTS.md. Final playable: `EvolutionShop-LabValidated-Windows.zip` in Codex task outputs. Human lab tuning, audio and natural affordability remain pending. Next bounded assignment: R06.1 presentation sample; no bulk assets, staffing or automation yet.
