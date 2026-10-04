@@ -198,6 +198,15 @@ namespace EvolutionShop
 
         IEnumerator SpecimenBounds(string label)
         {
+            Check(shop.World.ValidateTankBounds(out var immediate), label + " / immediate resident pose / " + immediate);
+            // Deterministic presentation-only sweep samples many body/tail phase combinations.
+            // It does not advance model time, sales, growers or the shop day.
+            for (int sample = 0; sample <= 2400; sample++)
+            {
+                shop.World.Animate(sample * .05f, 0);
+                if (!shop.World.ValidateTankBounds(out var error)) throw new InvalidOperationException(label + " / sweep " + sample + " / " + error);
+            }
+            Check(true, label + " / 120-second animation sweep at0.05-second samples stays contained");
             for (int frame = 0; frame < 90; frame++)
             { if (!shop.World.ValidateTankBounds(out var error)) throw new InvalidOperationException(label + " / " + error); yield return null; }
             Check(true, label + " / animated residents remain inside their compartments over90frames");

@@ -90,8 +90,14 @@ namespace EvolutionShop
                     ReleaseStorageCreature(display);
                     SetCreature(display, species);
                     if (display.Creature)
+                    {
+                        // New residents can render before the next world animation update (including reload).
+                        // Start broadside so a long tail cannot briefly point through the shallow rack glass.
+                        display.Creature.transform.localRotation = Quaternion.Euler(0, -90, 0);
+                        display.Creature.Animate(lastTime + display.Seed);
                         foreach (var renderer in display.Creature.GetComponentsInChildren<Renderer>(true))
                             foreach (var material in renderer.sharedMaterials) if (material) display.StorageMaterials.Add(material);
+                    }
                 }
                 string number = pair.Key.EndsWith("-1", StringComparison.Ordinal) ? "1" : "2";
                 display.StorageStatus.text = number + " / " + (resident.HasValue ? SpeciesName(species).ToUpperInvariant() : "EMPTY");
