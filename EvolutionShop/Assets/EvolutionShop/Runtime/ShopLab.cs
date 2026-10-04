@@ -77,6 +77,7 @@ namespace EvolutionShop
             }
             Small("Known Glow bath: 1–2 stored Pondlets + 1 collected Spark per batch become Lanternfin in 12 seconds. Two at once saves one Spark; the incubator stays free.");
             Small("Requires a specimen rack for inputs. Collect outputs at a rack or display. Canceling returns the same Pondlets and your reserved Spark.");
+            Small("After discovering Lanternfin, use E at a placed vat during preparation night to research renewable Mist for " + Config.MistResearchCost + " credits. Hold left mouse at the vat to collect it.");
             Space();
             foreach (var facility in Layout.Facilities)
             {

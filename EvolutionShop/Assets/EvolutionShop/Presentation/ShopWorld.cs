@@ -551,12 +551,13 @@ namespace EvolutionShop
             bloomCount = model.Available(CultureKind.Bloom);
             flowCount = model.Available(CultureKind.Flow);
             sparkCount = model.Available(CultureKind.Spark);
+            mistCount = model.Available(CultureKind.Mist);
             SetToolUpgrade(model.UpgradeOwned);
             RefreshGrower(model, CultureKind.Bloom, StationKind.Bloom, bloomCells);
             RefreshGrower(model, CultureKind.Flow, StationKind.Flow, flowCells);
             RefreshSparkModule(model);
             var incubation = model.Incubator;
-            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW" + (model.SparkResearchUnlocked ? "  +  " + incubation.Spark + " SPARK" : "");
+            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW" + (model.SparkResearchUnlocked ? "  +  " + incubation.Spark + " SPARK" : "") + (model.MistResearchUnlocked ? "  +  " + incubation.Mist + " MIST" : "");
             SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
@@ -568,8 +569,8 @@ namespace EvolutionShop
             toolReadout.text = model.ReservedCultureCount + " / " + model.Capacity;
             for (int i = 0; i < reservoirCells.Count; i++)
             {
-                bool active = i < bloomCount + flowCount + sparkCount;
-                CultureKind culture = i < bloomCount ? CultureKind.Bloom : i < bloomCount + flowCount ? CultureKind.Flow : CultureKind.Spark;
+                bool active = i < bloomCount + flowCount + sparkCount + mistCount;
+                CultureKind culture = i < bloomCount ? CultureKind.Bloom : i < bloomCount + flowCount ? CultureKind.Flow : i < bloomCount + flowCount + sparkCount ? CultureKind.Spark : CultureKind.Mist;
                 var cell = reservoirCells[i];
                 if (active && cell.name != CultureVisualName(culture))
                 {
@@ -598,7 +599,7 @@ namespace EvolutionShop
                 (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  " + model.GetPrice(tank.Value.SpeciesId).Value.Price + " CREDITS");
         }
 
-        static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : id == "lanternfin" ? "Lanternfin" : "Unknown";
+        static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : id == "lanternfin" ? "Lanternfin" : id == "driftwing" ? "Driftwing" : "Unknown";
 
         void SetCreature(Display display, string species)
         {
@@ -608,10 +609,10 @@ namespace EvolutionShop
             display.Creature = null;
             if (string.IsNullOrEmpty(species)) return;
             var r = Group(species, display.Root, Vector3.zero);
-            r.localScale = Vector3.one * (display.Incubator ? (species == "ribbonfin" ? .54f : .62f) : .69f);
+            r.localScale = Vector3.one * (display.Incubator ? (species == "ribbonfin" ? .54f : species == "driftwing" ? .52f : .62f) : species == "driftwing" ? .59f : .69f);
             display.Creature = r.gameObject.AddComponent<CreatureVisual>();
             display.Creature.Build(species);
-            if (species == "lanternfin")
+            if (species == "lanternfin" || species == "driftwing")
             {
                 r.localRotation = Quaternion.Euler(0, -90, 0);
                 display.Creature.Animate(lastTime + display.Seed);
@@ -643,10 +644,12 @@ namespace EvolutionShop
         {
             if (!ToolChamber) return;
             var source = kind == CultureKind.Bloom ? bloomRoot : kind == CultureKind.Flow ? flowRoot :
-                kind == CultureKind.Spark && lastModel != null && lastModel.SparkResearchUnlocked ? upgradeRoot : null;
+                kind == CultureKind.Spark && lastModel != null && lastModel.SparkResearchUnlocked ? upgradeRoot :
+                kind == CultureKind.Mist && lastModel != null && lastModel.MistResearchUnlocked && lastModel.ConditionerIds.Length > 0 &&
+                TryGetConditioner(lastModel.ConditionerIds[0], out var vatRoot) ? vatRoot : null;
             if (!source) return;
             var p = CultureOrganism(transform, kind, .095f);
-            Vector3 from = source.TransformPoint(kind == CultureKind.Spark ? new Vector3(0, 1.5f, -.27f) : new Vector3(.36f, 1.0f, -.76f));
+            Vector3 from = source.TransformPoint(kind == CultureKind.Spark ? new Vector3(0, 1.5f, -.27f) : kind == CultureKind.Mist ? new Vector3(0, .85f, -.53f) : new Vector3(.36f, 1.0f, -.76f));
             p.position = from;
             particles.Add(new Particle { Root = p, Start = from, Seed = particles.Count * 1.73f });
         }

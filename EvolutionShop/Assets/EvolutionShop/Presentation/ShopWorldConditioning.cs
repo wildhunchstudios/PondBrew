@@ -11,6 +11,8 @@ namespace EvolutionShop
             public TextMesh Status;
             public readonly ConditioningResident[] Residents = new ConditioningResident[2];
             public Transform Paddle;
+            public TextMesh MistStatus;
+            public readonly List<Transform> MistCells = new List<Transform>();
             public bool Processing;
         }
 
@@ -66,6 +68,16 @@ namespace EvolutionShop
                     Status = Text(root, "0 / 2  /  EMPTY", new Vector3(0, .53f, -.519f), .047f, new Color(1f, .88f, .53f), 1.76f) };
                 Text(root, "E / LOAD, CONDITION, COLLECT", new Vector3(0, .20f, -.519f), .033f, cream.color, 1.76f);
                 conditioners.Add(itemId, vat);
+                TablePart(root, "Mist culture plaque", new Vector3(0, 1.04f, -.51f), new Vector3(1.48f, .18f, .05f), dark, false);
+                vat.MistStatus = Text(root, "MIST RESEARCH", new Vector3(0, 1.04f, -.538f), .038f, new Color(.70f, 1f, .96f), 1.39f);
+                for (int i = 0; i < 6; i++)
+                {
+                    var cell = MistOrganism(root, .11f);
+                    cell.name = "Mist grower unit " + (i + 1);
+                    cell.localPosition = new Vector3((i - 2.5f) * .23f, .85f, -.53f);
+                    vat.MistCells.Add(cell);
+                    cell.gameObject.SetActive(false);
+                }
             }
             for (int i = 0; i < 2; i++)
             {
@@ -104,6 +116,9 @@ namespace EvolutionShop
                 // Candidate geometry can precede the model registry during atomic placement preflight.
                 var view = model.GetConditioner(pair.Key);
                 vat.Processing = view.HasValue && view.Value.Phase == ConditionerPhase.Processing;
+                var mist = model.GetGrower(CultureKind.Mist);
+                vat.MistStatus.text = model.MistResearchUnlocked ? "MIST " + mist.Units + " / " + mist.Capacity : "MIST RESEARCH / E";
+                for (int i = 0; i < vat.MistCells.Count; i++) vat.MistCells[i].gameObject.SetActive(model.MistResearchUnlocked && i < mist.Units);
                 int count = view.HasValue ? view.Value.Count : 0;
                 vat.Status.text = count + " / 2  /  " + (vat.Processing ? Mathf.CeilToInt(view.Value.SecondsRemaining) + "s REMAINING" :
                     view.HasValue && view.Value.Phase == ConditionerPhase.Ready ? "READY / COLLECT" : "EMPTY / ADD PONDLETS");
@@ -132,7 +147,11 @@ namespace EvolutionShop
         void AnimateConditioners(float time)
         {
             foreach (var vat in conditioners.Values)
+            {
                 if (vat.Paddle) vat.Paddle.localRotation = Quaternion.Euler(0, 0, vat.Processing ? time * 65f : 45f);
+                for (int i = 0; i < vat.MistCells.Count; i++)
+                    vat.MistCells[i].localPosition = new Vector3((i - 2.5f) * .23f, .85f + Mathf.Sin(time * 2f + i) * .025f, -.53f);
+            }
         }
 
         void RetireConditioner(Transform root)

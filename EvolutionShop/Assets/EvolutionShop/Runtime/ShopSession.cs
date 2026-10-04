@@ -463,7 +463,9 @@ namespace EvolutionShop
                 case "ReservoirFull": return "Reservoir full. Staged doses still reserve their return space.";
                 case "GrowerEmpty": case "EmptyGrower": return "Grower is replenishing. Try again shortly.";
                 case "InsufficientCulture": return "Collect enough of each required culture first.";
-                case "ResearchLocked": return "Unlock Spark research at the lab bench first.";
+                case "ResearchLocked": return "Unlock the required Spark or Mist culture in the back lab first.";
+                case "MistPrerequisiteMissing": return "Discover Lanternfin and place a conditioning vat before Mist research.";
+                case "MistAlreadyUnlocked": return "Mist is already unlocked. No payment taken.";
                 case "ResearchPrerequisiteMissing": return "Discover Pondlet, Bubblebelly and Ribbonfin before Spark research.";
                 case "ResearchAlreadyUnlocked": return "Spark research is already unlocked. No payment taken.";
                 case "IncubatorBusy": return "Incubator occupied. Finish and transfer its specimen first.";

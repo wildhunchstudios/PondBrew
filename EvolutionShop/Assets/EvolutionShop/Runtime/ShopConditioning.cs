@@ -103,6 +103,7 @@ namespace EvolutionShop
             var vat = state.Value;
             Text("Known process: 1–2 Pondlets + 1 Spark per batch → Lanternfin");
             Small("12 active seconds. Two at once saves one Spark; incubation can run alongside it.");
+            DrawMistResearch();
             Space();
             if (vat.Phase == ConditionerPhase.Idle)
             {

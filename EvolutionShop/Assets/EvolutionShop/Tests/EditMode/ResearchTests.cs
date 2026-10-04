@@ -163,7 +163,7 @@ namespace EvolutionShop.Tests
             Assert.That(restored.Incubator.SecondsRemaining, Is.EqualTo(6.75f)); Assert.That(restored.Currency, Is.EqualTo(77));
             Assert.That(restored.Available(CultureKind.Bloom), Is.EqualTo(1)); Assert.That(restored.SparkResearchReady, Is.True);
             Assert.That(restored.SparkResearchUnlocked, Is.False); Assert.That(restored.GetGrower(CultureKind.Spark).Units, Is.Zero);
-            Assert.That(restored.CaptureSave().growers.Length, Is.EqualTo(3));
+            Assert.That(restored.CaptureSave().growers.Length, Is.EqualTo(4));
             foreach (var grower in old.growers)
             {
                 var now = restored.GetGrower(grower.cultureId == "bloom" ? CultureKind.Bloom : CultureKind.Flow);

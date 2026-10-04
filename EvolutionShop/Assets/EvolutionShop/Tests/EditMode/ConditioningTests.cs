@@ -215,7 +215,7 @@ namespace EvolutionShop.Tests
         public void HistoricalGamesMigrateEmptyAndRejectConditionerState(int version)
         {
             var config = GameConfig.CreateDefault(); var save = new GameModel(config).CaptureSave(); save.version = version;
-            if (version < 4) Array.Resize(ref save.growers, 2);
+            Array.Resize(ref save.growers, version < 4 ? 2 : 3);
             if (version < 3) save.storage = null;
             save.conditioners = null;
             Assert.That(Restore(config, save).CaptureSave().conditioners, Is.Empty);

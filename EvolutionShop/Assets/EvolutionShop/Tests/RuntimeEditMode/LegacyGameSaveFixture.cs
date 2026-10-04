@@ -13,9 +13,13 @@ namespace EvolutionShop.Tests
             Assert.That(game.sparkResearchUnlocked, Is.False);
             Assert.That(game.availableSpark, Is.Zero);
             Assert.That(game.incubator.stagedSpark, Is.Zero);
+            Assert.That(game.mistResearchUnlocked, Is.False);
+            Assert.That(game.availableMist, Is.Zero);
+            Assert.That(game.incubator.stagedMist, Is.Zero);
             Assert.That(game.discoveries, Does.Not.Contain("lanternfin"));
+            Assert.That(game.discoveries, Does.Not.Contain("driftwing"));
             game.version = version;
-            game.growers = Array.FindAll(game.growers, grower => grower == null || grower.cultureId != "spark");
+            game.growers = Array.FindAll(game.growers, grower => grower == null || grower.cultureId != "spark" && grower.cultureId != "mist");
             return game;
         }
     }

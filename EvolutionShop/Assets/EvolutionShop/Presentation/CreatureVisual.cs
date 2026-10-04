@@ -13,11 +13,13 @@ namespace EvolutionShop
         float phase;
         Transform lanternBulb;
         Material[] lanternMaterials;
+        Material[] driftwingMaterials;
 
         public void Build(string speciesId)
         {
             species = speciesId;
             if (speciesId == "lanternfin") { BuildLanternfin(); return; }
+            if (speciesId == "driftwing") { BuildDriftwing(); return; }
             phase = speciesId == "pondlet" ? 0 : speciesId == "bubblebelly" ? 1.7f : 3.5f;
             bool round = speciesId == "bubblebelly";
             bool ribbon = speciesId == "ribbonfin";
@@ -63,6 +65,15 @@ namespace EvolutionShop
 
         public void Animate(float time)
         {
+            if (species == "driftwing")
+            {
+                float wingWave = Mathf.Sin(time * 3.8f + .4f);
+                if (finLeft) finLeft.localRotation = Quaternion.Euler(wingWave * 14, -12, -18 + wingWave * 17);
+                if (finRight) finRight.localRotation = Quaternion.Euler(-wingWave * 14, 12, 18 - wingWave * 17);
+                if (tail) tail.localRotation = Quaternion.Euler(0, wingWave * 13, wingWave * 5);
+                if (crest) crest.localRotation = Quaternion.Euler(0, 0, wingWave * 6);
+                return;
+            }
             if (species == "lanternfin")
             {
                 float flutter = Mathf.Sin(time * 4.6f + 1.1f);
@@ -110,8 +121,36 @@ namespace EvolutionShop
             Animate(0);
         }
 
+        void BuildDriftwing()
+        {
+            var body = ShopWorld.MakeMaterial("Driftwing opal body", new Color(.40f, .79f, .84f), .04f, .55f);
+            var wing = ShopWorld.MakeMaterial("Driftwing pearl sails", new Color(.74f, .98f, .92f), .04f, .45f);
+            var belly = ShopWorld.MakeMaterial("Driftwing pale belly", new Color(1f, .94f, .82f), 0, .38f);
+            var pupil = ShopWorld.MakeMaterial("Driftwing bright eyes", new Color(.04f, .10f, .13f), 0, .7f);
+            driftwingMaterials = new[] { body, wing, belly, pupil };
+            ShopWorld.Shape(transform, "Tapered Airfin body", PrimitiveType.Sphere, Vector3.zero, new Vector3(.43f, .34f, .66f), body);
+            ShopWorld.Shape(transform, "Pearl chest", PrimitiveType.Sphere, new Vector3(0, -.08f, -.06f), new Vector3(.36f, .25f, .54f), belly);
+            tail = new GameObject("Driftwing trailing tail").transform;
+            tail.SetParent(transform, false); tail.localPosition = new Vector3(0, 0, .20f);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                ShopWorld.Shape(transform, "Driftwing eye", PrimitiveType.Sphere, new Vector3(side * .16f, .07f, -.24f), Vector3.one * .12f, belly);
+                ShopWorld.Shape(transform, "Driftwing pupil", PrimitiveType.Sphere, new Vector3(side * .16f, .07f, -.29f), Vector3.one * .055f, pupil);
+                ShopWorld.Shape(tail, "Trailing pearl ribbon", PrimitiveType.Sphere,
+                    new Vector3(side * .10f, .02f, .23f), new Vector3(.055f, .12f, .45f), wing).localRotation = Quaternion.Euler(0, side * 13, 0);
+            }
+            finLeft = ShopWorld.Shape(transform, "Airfin left sail", PrimitiveType.Sphere,
+                new Vector3(-.52f, .04f, .03f), new Vector3(.48f, .055f, .50f), wing);
+            finRight = ShopWorld.Shape(transform, "Airfin right sail", PrimitiveType.Sphere,
+                new Vector3(.52f, .04f, .03f), new Vector3(.48f, .055f, .50f), wing);
+            crest = ShopWorld.Shape(transform, "Airfin dorsal sail", PrimitiveType.Sphere,
+                new Vector3(0, .23f, .12f), new Vector3(.075f, .28f, .41f), wing);
+            Animate(0);
+        }
+
         void OnDestroy()
         {
+            if (driftwingMaterials != null) foreach (var material in driftwingMaterials) if (material) Destroy(material);
             if (lanternMaterials == null) return;
             // Storage may already have released these private materials when retiring a resident.
             foreach (var material in lanternMaterials) if (material) Destroy(material);

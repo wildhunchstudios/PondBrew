@@ -221,7 +221,7 @@ namespace EvolutionShop.Tests
             Assert.That(model.BuyUpgrade().Failure, Is.EqualTo(FailureCode.InsufficientFunds));
             foreach (var recipe in config.Species)
             {
-                if (recipe.Spark > 0) continue; // This baseline economy fixture sells the three starter species.
+                if (recipe.Spark > 0 || recipe.Mist > 0) continue; // This baseline economy fixture sells the three starter species.
                 Produce(recipe.Id, "tank-a");
                 AssertOk(model.SellFromTank("tank-a"));
             }
@@ -324,7 +324,7 @@ namespace EvolutionShop.Tests
         {
             foreach (var recipe in config.Species)
             {
-                if (recipe.Spark > 0) continue; // Research is a separate purchase, outside this upgrade round trip.
+                if (recipe.Spark > 0 || recipe.Mist > 0) continue; // Research is a separate purchase, outside this upgrade round trip.
                 Produce(recipe.Id, "tank-a");
                 AssertOk(model.SellFromTank("tank-a"));
             }
@@ -513,7 +513,7 @@ namespace EvolutionShop.Tests
         }
 
         [TestCase(-1)]
-        [TestCase(3)]
+        [TestCase(4)]
         [TestCase(int.MaxValue)]
         public void ReleaseInvalidCultureIsAtomic(int invalidKind)
         {

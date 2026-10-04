@@ -7,16 +7,17 @@ namespace EvolutionShop
     public sealed partial class ShopWorld
     {
         readonly List<Transform> sparkCells = new List<Transform>();
-        Material sparkMat, sparkCoreMat;
+        Material sparkMat, sparkCoreMat, mistMat;
         Transform upgradeRoot, sparkModule;
         Station upgradeStation;
         TextMesh sparkStatus, researchHint;
-        int sparkCount;
+        int sparkCount, mistCount;
         CultureKind harvestingCulture;
 
         void BuildResearchMaterials()
         {
             sparkMat = MakeMaterial("Spark lavender pearls", new Color(.70f, .43f, .96f), .08f, .62f);
+            mistMat = MakeMaterial("Mist opal droplets", new Color(.62f, .94f, .94f), .05f, .42f);
             sparkCoreMat = MakeMaterial("Spark warm gold core", new Color(1f, .86f, .30f), .04f, .5f);
             sparkCoreMat.EnableKeyword("_EMISSION");
             sparkCoreMat.SetColor("_EmissionColor", new Color(.22f, .12f, .025f));
@@ -71,19 +72,23 @@ namespace EvolutionShop
             if (!station) return false;
             if (station.Kind == StationKind.Bloom) return true;
             if (station.Kind == StationKind.Flow) { culture = CultureKind.Flow; return true; }
+            if (station.Kind == StationKind.Conditioning && lastModel != null && lastModel.MistResearchUnlocked &&
+                lastModel.GetConditioner(station.ConditionerItemId).HasValue)
+            { culture = CultureKind.Mist; return true; }
             if (station.Kind == StationKind.Upgrade && lastModel != null && lastModel.SparkResearchUnlocked)
             { culture = CultureKind.Spark; return true; }
             return false;
         }
 
         static string CultureVisualName(CultureKind culture)
-            => culture == CultureKind.Bloom ? "Bloom" : culture == CultureKind.Flow ? "Flow" : "Spark";
+            => culture == CultureKind.Bloom ? "Bloom" : culture == CultureKind.Flow ? "Flow" : culture == CultureKind.Spark ? "Spark" : "Mist";
 
         Transform CultureOrganism(Transform parent, CultureKind culture, float scale)
         {
             if (culture == CultureKind.Bloom) return Organism(parent, true, bloomMat, scale);
             if (culture == CultureKind.Flow) return Organism(parent, false, flowMat, scale);
             if (culture == CultureKind.Spark) return SparkOrganism(parent, scale);
+            if (culture == CultureKind.Mist) return MistOrganism(parent, scale);
             throw new ArgumentOutOfRangeException(nameof(culture));
         }
 
@@ -101,10 +106,20 @@ namespace EvolutionShop
             return root;
         }
 
+        Transform MistOrganism(Transform parent, float scale)
+        {
+            var root = Group("Mist opal droplet", parent, Vector3.zero);
+            root.localScale = Vector3.one * scale;
+            Shape(root, "Mist pearl", PrimitiveType.Sphere, Vector3.zero, new Vector3(.62f, .84f, .62f), mistMat);
+            Shape(root, "Mist satellite", PrimitiveType.Sphere, new Vector3(.42f, .45f, 0), Vector3.one * .25f, cream);
+            return root;
+        }
+
         void DisposeResearchPresentation()
         {
             if (sparkMat) Destroy(sparkMat);
             if (sparkCoreMat) Destroy(sparkCoreMat);
+            if (mistMat) Destroy(mistMat);
         }
     }
 }

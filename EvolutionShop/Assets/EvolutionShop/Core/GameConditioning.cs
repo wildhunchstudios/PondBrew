@@ -216,7 +216,7 @@ namespace EvolutionShop
                 else return false;
             }
             var inc = save.incubator;
-            return (long)save.availableBloom + save.availableFlow + save.availableSpark + inc.stagedBloom + inc.stagedFlow + inc.stagedSpark + reservedSpark <= capacity;
+            return (long)save.availableBloom + save.availableFlow + save.availableSpark + save.availableMist + inc.stagedBloom + inc.stagedFlow + inc.stagedSpark + inc.stagedMist + reservedSpark <= capacity;
         }
 
         private static bool ValidConditionerResident(string id, string speciesId, HashSet<string> known, HashSet<string> specimens)

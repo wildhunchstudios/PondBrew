@@ -50,8 +50,8 @@ namespace EvolutionShop
             GUI.Label(new Rect(38, 222, 280, 28), PhaseTitle(), headingStyle);
             GUI.Label(new Rect(38, 255, 280, 33), Paused ? "PAUSED / " + ClockText() : ClockText(), smallStyle);
             Box(new Rect(22, 610, 396, 88), ink);
-            GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "  FLOW " + Model.Available(CultureKind.Flow) + (Model.SparkResearchUnlocked ? "  SPARK " + Model.Available(CultureKind.Spark) : ""), headingStyle);
-            GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark)), smallStyle);
+            GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "  FLOW " + Model.Available(CultureKind.Flow) + (Model.SparkResearchUnlocked ? "  SPARK " + Model.Available(CultureKind.Spark) : "") + (Model.MistResearchUnlocked ? "  MIST " + Model.Available(CultureKind.Mist) : ""), headingStyle);
+            GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist)), smallStyle);
             Box(new Rect(438,662,548,36),ink);
             GUI.Label(new Rect(448,668,528,23), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
@@ -79,7 +79,7 @@ namespace EvolutionShop
                     Box(new Rect(420, 525, 440, 67), ink);
                     GUI.Label(new Rect(435, 531, 410, 26), Focused.Label, centerStyle);
                     bool culture = TryStationCulture(Focused, out var focusCulture);
-                    string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold LEFT MOUSE: Spark / E: research" : "Hold LEFT MOUSE to collect") : "Press E to interact";
+                    string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold LEFT MOUSE: Spark / E: research" : focusCulture == CultureKind.Mist ? "Hold LEFT MOUSE: Mist / E: vat" : "Hold LEFT MOUSE to collect") : "Press E to interact";
                     GUI.Label(new Rect(435, 556, 410, 26), hint, centerStyle);
                     if (HarvestProgress > 0) {Box(new Rect(460, 598, 360, 5), ink); Box(new Rect(460, 598, 360 * HarvestProgress, 5), mint);}
                 }
@@ -115,6 +115,8 @@ namespace EvolutionShop
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
             if (Model.SparkResearchReady && !Model.SparkResearchUnlocked) return "At night: research Spark at the lab bench / " + Config.SparkResearchCost + " credits.";
             if (Model.SparkResearchUnlocked && !Model.IsDiscovered("lanternfin")) return "Try one Bloom + one Flow + one Spark.";
+            if (Model.MistResearchReady && !Model.MistResearchUnlocked) return "At night: research Mist at the placed vat / " + Config.MistResearchCost + " credits.";
+            if (Model.MistResearchUnlocked && !Model.IsDiscovered("driftwing")) return "Try one Bloom + one Flow + one Mist for an Airfin.";
             if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
             if (!Model.UpgradeOwned) return "Grow and sell creatures. Save " + Config.UpgradeCost + " credits for a larger siphon.";
             if (Model.DiscoveredSpeciesIds.Count < 3) return "Discover the remaining creatures by changing one dose.";
@@ -268,16 +270,18 @@ namespace EvolutionShop
             if (inc.Phase == IncubatorPhase.Ready)
             { Text(Model.GetSpecies(inc.SpeciesId).DisplayName + " is ready!"); Text("Use E at an empty front display or a lab rack to store your creature and free the incubator."); return; }
             Text("Add exact integer doses. One recipe makes one specimen.");
-            Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW" + (Model.SparkResearchUnlocked ? "  +  " + inc.Spark + " SPARK" : ""));
+            Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW" + (Model.SparkResearchUnlocked ? "  +  " + inc.Spark + " SPARK" : "") + (Model.MistResearchUnlocked ? "  +  " + inc.Mist + " MIST" : ""));
             GUILayout.BeginHorizontal();
             Button("+ Bloom", () => Perform(Model.Dose(CultureKind.Bloom)));
             Button("+ Flow", () => Perform(Model.Dose(CultureKind.Flow)));
             if (Model.SparkResearchUnlocked) Button("+ Spark", () => Perform(Model.Dose(CultureKind.Spark)));
+            if (Model.MistResearchUnlocked) Button("+ Mist", () => Perform(Model.Dose(CultureKind.Mist)));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             Button("- Bloom", () => Perform(Model.ReturnDose(CultureKind.Bloom)));
             Button("- Flow", () => Perform(Model.ReturnDose(CultureKind.Flow)));
             if (Model.SparkResearchUnlocked) Button("- Spark", () => Perform(Model.ReturnDose(CultureKind.Spark)));
+            if (Model.MistResearchUnlocked) Button("- Mist", () => Perform(Model.ReturnDose(CultureKind.Mist)));
             GUILayout.EndHorizontal();
             Button("Begin incubation  /  " + Config.IncubationSeconds + " sec", () => { if (Perform(Model.BeginIncubation()).Success) SetPanel(ShopPanel.None); });
             Button("Return all doses safely", () => Perform(Model.ClearDoses()));
@@ -287,9 +291,11 @@ namespace EvolutionShop
             Button("Release 1 Bloom", () => Perform(Model.ReleaseCulture(CultureKind.Bloom)));
             Button("Release 1 Flow", () => Perform(Model.ReleaseCulture(CultureKind.Flow)));
             if (Model.SparkResearchUnlocked) Button("Release 1 Spark", () => Perform(Model.ReleaseCulture(CultureKind.Spark)));
+            if (Model.MistResearchUnlocked) Button("Release 1 Mist", () => Perform(Model.ReleaseCulture(CultureKind.Mist)));
             GUILayout.EndHorizontal();
             Space(); Small("LAB NOTES: A balanced pair brings a Pondlet. More Bloom makes a rounder body; more Flow makes a longer tail.");
             if (Model.SparkResearchUnlocked) Small("SPARK CLUE: A balanced Bloom/Flow pair needs one Spark.");
+            if (Model.MistResearchUnlocked) Small("AIRFIN CLUE: A balanced Bloom/Flow pair needs one Mist.");
             foreach (var species in Config.Species)
                 if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + RecipeText(species, true) + ")", () => Perform(Model.UseKnownRecipe(species.Id)));
         }
@@ -378,7 +384,7 @@ namespace EvolutionShop
             GUILayout.Space(8);
             Heading("Prepare for the next day");
             Text(ReportPreparationTip(report));
-            Small(Model.SparkResearchUnlocked ? "Free Bloom, Flow and Spark. Untimed preparation; your lab keeps growing." : "Free Bloom + Flow. Untimed preparation; your lab keeps growing.");
+            Small(Model.MistResearchUnlocked ? "Free Bloom, Flow, Spark and Mist. Untimed preparation; your lab keeps growing." : Model.SparkResearchUnlocked ? "Free Bloom, Flow and Spark. Untimed preparation; your lab keeps growing." : "Free Bloom + Flow. Untimed preparation; your lab keeps growing.");
         }
         string ReportPreparationTip(TradeDaySave report)
         {
@@ -475,10 +481,12 @@ namespace EvolutionShop
                 if (Model.IsDiscovered(species.Id))
                 {
                     var tag = Model.GetPrice(species.Id).Value;
-                    Heading(species.DisplayName);
+                    Heading(species.DisplayName + " / " + species.FamilyId);
                     Text(RecipeText(species) + "  /  standard " + tag.Standard + " credits" +
                         (tag.Price == tag.Standard ? "" : "  /  your tag " + tag.Price));
                 }
+                else if (species.Mist > 0)
+                { Heading(Model.MistResearchUnlocked ? "Unknown Airfin specimen" : "Airfin research locked"); Small(Model.MistResearchUnlocked ? "One Bloom + one Flow + one Mist. Use the incubator / 10 seconds." : "Discover Lanternfin, place the conditioning vat, then research Mist there for " + Config.MistResearchCost + " credits."); }
                 else if (species.Spark > 0)
                 { Heading(Model.SparkResearchUnlocked ? "Unknown Spark specimen" : "Spark research locked"); Small(Model.SparkResearchUnlocked ? "A balanced Bloom/Flow pair needs one Spark. Use the incubator / 10 seconds." : "Discover the three starter species, then research Spark at the back lab bench for " + Config.SparkResearchCost + " credits."); }
                 else {Heading("Unknown specimen"); Small(species.Id == "pondlet" ? "Begin with a balanced pair." : species.Id == "bubblebelly" ? "A little more Bloom may round things out." : "A little more Flow may stretch a tail.");}

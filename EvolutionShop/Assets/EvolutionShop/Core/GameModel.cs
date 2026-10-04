@@ -10,9 +10,9 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GameModel
     {
-        /// <summary>Version 5 adds conditioning jobs; earlier production remains exact.</summary>
-        public const int SaveVersion = 5;
-        private const int CultureCount = 3;
+        /// <summary>Version 6 adds the Mist culture and Airfin family; earlier saves remain exact.</summary>
+        public const int SaveVersion = 6;
+        private const int CultureCount = 4;
 
         private readonly GameConfig config;
         private readonly Dictionary<string, SpeciesDefinition> species;
@@ -36,8 +36,11 @@ namespace EvolutionShop
         public string[] StorageIds => (string[])config.StorageIds.Clone();
         public bool UpgradeOwned { get; private set; }
         public bool SparkResearchUnlocked { get; private set; }
+        public bool MistResearchUnlocked { get; private set; }
         public bool SparkResearchReady => discoveries.Contains("pondlet") && discoveries.Contains("bubblebelly") && discoveries.Contains("ribbonfin");
-        public bool IsCultureUnlocked(CultureKind culture) => ValidCulture((int)culture) && (culture != CultureKind.Spark || SparkResearchUnlocked);
+        public bool MistResearchReady => SparkResearchUnlocked && discoveries.Contains("lanternfin") && config.ConditionerIds.Length > 0;
+        public bool IsCultureUnlocked(CultureKind culture) => ValidCulture((int)culture) &&
+            (culture != CultureKind.Spark || SparkResearchUnlocked) && (culture != CultureKind.Mist || MistResearchUnlocked);
         public int Capacity { get { return UpgradeOwned ? config.UpgradedCapacity : config.BaseCapacity; } }
         public float CollectionSecondsPerUnit
         {
@@ -45,11 +48,11 @@ namespace EvolutionShop
         }
         public int ReservedCultureCount
         {
-            get { return available[0] + available[1] + available[2] + staged[0] + staged[1] + staged[2] + ReservedConditioningSpark; }
+            get { return available[0] + available[1] + available[2] + available[3] + staged[0] + staged[1] + staged[2] + staged[3] + ReservedConditioningSpark; }
         }
         public IncubatorView Incubator
         {
-            get { return new IncubatorView(phase, staged[0], staged[1], activeSpecies, activeSpecimen, incubationRemaining, staged[2]); }
+            get { return new IncubatorView(phase, staged[0], staged[1], activeSpecies, activeSpecimen, incubationRemaining, staged[2], staged[3]); }
         }
         public IReadOnlyList<string> DiscoveredSpeciesIds
         {
@@ -73,7 +76,7 @@ namespace EvolutionShop
             foreach (var id in this.config.ConditionerIds) conditioners.Add(id, new ConditionerState());
             for (int i = 0; i < CultureCount; i++)
             {
-                growerUnits[i] = i == (int)CultureKind.Spark ? 0 : this.config.InitialGrowerUnits;
+                growerUnits[i] = i >= (int)CultureKind.Spark ? 0 : this.config.InitialGrowerUnits;
                 growerRemaining[i] = this.config.GrowerRefillSeconds;
             }
             phase = IncubatorPhase.Dosing;
@@ -180,7 +183,7 @@ namespace EvolutionShop
         public ActionResult ClearDoses()
         {
             if (phase != IncubatorPhase.Dosing) return ActionResult.Fail(FailureCode.IncubatorBusy);
-            if (staged[0] + staged[1] + staged[2] == 0) return ActionResult.Fail(FailureCode.AlreadyEmpty);
+            if (staged[0] + staged[1] + staged[2] + staged[3] == 0) return ActionResult.Fail(FailureCode.AlreadyEmpty);
             for (int i = 0; i < CultureCount; i++) { available[i] += staged[i]; staged[i] = 0; }
             return ActionResult.Ok();
         }
@@ -190,19 +193,22 @@ namespace EvolutionShop
             if (phase != IncubatorPhase.Dosing) return ActionResult.Fail(FailureCode.IncubatorBusy);
             if (speciesId == null || !species.TryGetValue(speciesId, out var recipe))
                 return ActionResult.Fail(FailureCode.UnknownSpecies);
-            if (recipe.Spark > 0 && !SparkResearchUnlocked) return ActionResult.Fail(FailureCode.ResearchLocked);
+            if (recipe.Spark > 0 && !SparkResearchUnlocked || recipe.Mist > 0 && !MistResearchUnlocked) return ActionResult.Fail(FailureCode.ResearchLocked);
             if (!discoveries.Contains(speciesId)) return ActionResult.Fail(FailureCode.UndiscoveredRecipe);
             int bloom = available[0] + staged[0];
             int flow = available[1] + staged[1];
             int spark = available[2] + staged[2];
-            if (bloom < recipe.Bloom || flow < recipe.Flow || spark < recipe.Spark)
+            int mist = available[3] + staged[3];
+            if (bloom < recipe.Bloom || flow < recipe.Flow || spark < recipe.Spark || mist < recipe.Mist)
                 return ActionResult.Fail(FailureCode.InsufficientCulture);
             available[0] = bloom - recipe.Bloom;
             available[1] = flow - recipe.Flow;
             available[2] = spark - recipe.Spark;
+            available[3] = mist - recipe.Mist;
             staged[0] = recipe.Bloom;
             staged[1] = recipe.Flow;
             staged[2] = recipe.Spark;
+            staged[3] = recipe.Mist;
             return ActionResult.Ok(speciesId);
         }
 
@@ -211,12 +217,12 @@ namespace EvolutionShop
             if (phase != IncubatorPhase.Dosing) return ActionResult.Fail(FailureCode.IncubatorBusy);
             SpeciesDefinition match = null;
             foreach (var definition in config.Species)
-                if (definition.Bloom == staged[0] && definition.Flow == staged[1] && definition.Spark == staged[2]) { match = definition; break; }
+                if (definition.Bloom == staged[0] && definition.Flow == staged[1] && definition.Spark == staged[2] && definition.Mist == staged[3]) { match = definition; break; }
             if (match == null) return ActionResult.Fail(FailureCode.InvalidRecipe);
-            if (match.Spark > 0 && !SparkResearchUnlocked) return ActionResult.Fail(FailureCode.ResearchLocked);
+            if (match.Spark > 0 && !SparkResearchUnlocked || match.Mist > 0 && !MistResearchUnlocked) return ActionResult.Fail(FailureCode.ResearchLocked);
             activeSpecies = match.Id;
             activeSpecimen = Guid.NewGuid().ToString("N");
-            staged[0] = staged[1] = staged[2] = 0;
+            staged[0] = staged[1] = staged[2] = staged[3] = 0;
             incubationRemaining = config.IncubationSeconds;
             phase = IncubatorPhase.Incubating;
             return ActionResult.Ok(activeSpecies, activeSpecimen);
@@ -458,6 +464,18 @@ namespace EvolutionShop
             return ActionResult.Ok();
         }
 
+        public ActionResult BuyMistResearch()
+        {
+            if (MistResearchUnlocked) return ActionResult.Fail(FailureCode.MistAlreadyUnlocked);
+            if (!MistResearchReady) return ActionResult.Fail(FailureCode.MistPrerequisiteMissing);
+            if (Currency < config.MistResearchCost) return ActionResult.Fail(FailureCode.InsufficientFunds);
+            Currency -= config.MistResearchCost;
+            MistResearchUnlocked = true;
+            growerUnits[(int)CultureKind.Mist] = config.InitialGrowerUnits;
+            growerRemaining[(int)CultureKind.Mist] = config.GrowerRefillSeconds;
+            return ActionResult.Ok();
+        }
+
         public ActionResult BuyUpgrade()
         {
             if (UpgradeOwned) return ActionResult.Fail(FailureCode.AlreadyUpgraded);
@@ -475,10 +493,11 @@ namespace EvolutionShop
                 version = SaveVersion, currency = Currency, upgradeOwned = UpgradeOwned,
                 availableBloom = available[0], availableFlow = available[1],
                 availableSpark = available[2], sparkResearchUnlocked = SparkResearchUnlocked,
+                availableMist = available[3], mistResearchUnlocked = MistResearchUnlocked,
                 growers = new GrowerSave[CultureCount],
                 incubator = new IncubatorSave
                 {
-                    phase = phase, stagedBloom = staged[0], stagedFlow = staged[1], stagedSpark = staged[2],
+                    phase = phase, stagedBloom = staged[0], stagedFlow = staged[1], stagedSpark = staged[2], stagedMist = staged[3],
                     speciesId = activeSpecies, specimenId = activeSpecimen, secondsRemaining = incubationRemaining
                 },
                 tanks = new TankSave[config.TankIds.Length],
@@ -534,9 +553,11 @@ namespace EvolutionShop
             candidate.Currency = save.currency;
             candidate.UpgradeOwned = save.upgradeOwned;
             candidate.SparkResearchUnlocked = save.sparkResearchUnlocked;
+            candidate.MistResearchUnlocked = save.mistResearchUnlocked;
             candidate.available[0] = save.availableBloom;
             candidate.available[1] = save.availableFlow;
             candidate.available[2] = save.availableSpark;
+            candidate.available[3] = save.availableMist;
             foreach (var grower in save.growers)
             {
                 int i = CultureIndex(grower.cultureId);
@@ -547,6 +568,7 @@ namespace EvolutionShop
             candidate.staged[0] = save.incubator.stagedBloom;
             candidate.staged[1] = save.incubator.stagedFlow;
             candidate.staged[2] = save.incubator.stagedSpark;
+            candidate.staged[3] = save.incubator.stagedMist;
             candidate.activeSpecies = EmptyToNull(save.incubator.speciesId);
             candidate.activeSpecimen = EmptyToNull(save.incubator.specimenId);
             candidate.incubationRemaining = save.incubator.secondsRemaining;
@@ -571,7 +593,7 @@ namespace EvolutionShop
         private bool ValidSave(SaveData save)
         {
             if (save == null || save.version < 1 || save.version > SaveVersion || save.currency < 0 || save.availableBloom < 0 ||
-                save.availableFlow < 0 || save.availableSpark < 0 || save.growers == null || save.growers.Length != (save.version < 4 ? 2 : CultureCount) ||
+                save.availableFlow < 0 || save.availableSpark < 0 || save.availableMist < 0 || save.growers == null || save.growers.Length != (save.version < 4 ? 2 : save.version < 6 ? 3 : CultureCount) ||
                 save.incubator == null || save.tanks == null || save.tanks.Length != config.TankIds.Length ||
                 save.discoveries == null) return false;
             if (save.version < 3)
@@ -582,25 +604,30 @@ namespace EvolutionShop
             var inc = save.incubator;
             if (save.version < 4 && (save.sparkResearchUnlocked || save.availableSpark != 0 || inc.stagedSpark != 0)) return false;
             if (!save.sparkResearchUnlocked && (save.availableSpark != 0 || inc.stagedSpark != 0)) return false;
+            if (save.version < 6 && (save.mistResearchUnlocked || save.availableMist != 0 || inc.stagedMist != 0)) return false;
+            if (!save.mistResearchUnlocked && (save.availableMist != 0 || inc.stagedMist != 0)) return false;
             int capacity = save.upgradeOwned ? config.UpgradedCapacity : config.BaseCapacity;
-            if (inc.stagedBloom < 0 || inc.stagedFlow < 0 || inc.stagedSpark < 0 ||
-                (long)save.availableBloom + save.availableFlow + save.availableSpark + inc.stagedBloom + inc.stagedFlow + inc.stagedSpark > capacity ||
+            if (inc.stagedBloom < 0 || inc.stagedFlow < 0 || inc.stagedSpark < 0 || inc.stagedMist < 0 ||
+                (long)save.availableBloom + save.availableFlow + save.availableSpark + save.availableMist + inc.stagedBloom + inc.stagedFlow + inc.stagedSpark + inc.stagedMist > capacity ||
                 !Finite(inc.secondsRemaining) || inc.secondsRemaining < 0f ||
                 inc.secondsRemaining > config.IncubationSeconds) return false;
             var seenCultures = new HashSet<string>(StringComparer.Ordinal);
             foreach (var grower in save.growers)
             {
-                if (grower == null || CultureIndex(grower.cultureId) < 0 || save.version < 4 && grower.cultureId == "spark" ||
+                if (grower == null || CultureIndex(grower.cultureId) < 0 || (save.version < 4 && grower.cultureId == "spark" || save.version < 6 && grower.cultureId == "mist") ||
                     !seenCultures.Add(grower.cultureId) || grower.units < 0 || grower.units > config.GrowerCapacity ||
                     !Finite(grower.secondsUntilNextUnit) || grower.secondsUntilNextUnit <= 0f ||
                     grower.secondsUntilNextUnit > config.GrowerRefillSeconds) return false;
                 if (grower.cultureId == "spark" && !save.sparkResearchUnlocked &&
                     (grower.units != 0 || grower.secondsUntilNextUnit != config.GrowerRefillSeconds)) return false;
+                if (grower.cultureId == "mist" && !save.mistResearchUnlocked &&
+                    (grower.units != 0 || grower.secondsUntilNextUnit != config.GrowerRefillSeconds)) return false;
             }
             var known = new HashSet<string>(StringComparer.Ordinal);
             foreach (var id in save.discoveries)
-                if (!HasResearchForSpecies(id, save.sparkResearchUnlocked) || !known.Add(id)) return false;
+                if (!HasResearchForSpecies(id, save.sparkResearchUnlocked, save.mistResearchUnlocked) || !known.Add(id)) return false;
             if (save.sparkResearchUnlocked && (!known.Contains("pondlet") || !known.Contains("bubblebelly") || !known.Contains("ribbonfin"))) return false;
+            if (save.mistResearchUnlocked && (!save.sparkResearchUnlocked || !known.Contains("lanternfin"))) return false;
             var specimens = new HashSet<string>(StringComparer.Ordinal);
             if (inc.phase == IncubatorPhase.Dosing)
             {
@@ -609,8 +636,8 @@ namespace EvolutionShop
             }
             else if (inc.phase == IncubatorPhase.Incubating || inc.phase == IncubatorPhase.Ready)
             {
-                if (inc.stagedBloom != 0 || inc.stagedFlow != 0 || inc.stagedSpark != 0 ||
-                    !HasResearchForSpecies(inc.speciesId, save.sparkResearchUnlocked) ||
+                if (inc.stagedBloom != 0 || inc.stagedFlow != 0 || inc.stagedSpark != 0 || inc.stagedMist != 0 ||
+                    !HasResearchForSpecies(inc.speciesId, save.sparkResearchUnlocked, save.mistResearchUnlocked) ||
                     string.IsNullOrWhiteSpace(inc.specimenId) ||
                     !specimens.Add(inc.specimenId)) return false;
                 if (inc.phase == IncubatorPhase.Incubating && inc.secondsRemaining <= 0f) return false;
@@ -625,7 +652,7 @@ namespace EvolutionShop
                 if (tank == null || tank.tankId == null || !tanks.ContainsKey(tank.tankId) ||
                     !seenTanks.Add(tank.tankId)) return false;
                 if (string.IsNullOrEmpty(tank.specimenId) && string.IsNullOrEmpty(tank.speciesId)) continue;
-                if (string.IsNullOrWhiteSpace(tank.specimenId) || !HasResearchForSpecies(tank.speciesId, save.sparkResearchUnlocked) ||
+                if (string.IsNullOrWhiteSpace(tank.specimenId) || !HasResearchForSpecies(tank.speciesId, save.sparkResearchUnlocked, save.mistResearchUnlocked) ||
                     !known.Contains(tank.speciesId) ||
                     !specimens.Add(tank.specimenId)) return false;
             }
@@ -638,7 +665,7 @@ namespace EvolutionShop
                     if (slot == null || slot.storageId == null || !storage.ContainsKey(slot.storageId) ||
                         !seenStorage.Add(slot.storageId)) return false;
                     if (string.IsNullOrEmpty(slot.specimenId) && string.IsNullOrEmpty(slot.speciesId)) continue;
-                    if (string.IsNullOrWhiteSpace(slot.specimenId) || !HasResearchForSpecies(slot.speciesId, save.sparkResearchUnlocked) ||
+                    if (string.IsNullOrWhiteSpace(slot.specimenId) || !HasResearchForSpecies(slot.speciesId, save.sparkResearchUnlocked, save.mistResearchUnlocked) ||
                         !known.Contains(slot.speciesId) ||
                         !specimens.Add(slot.specimenId)) return false;
                 }
@@ -666,7 +693,7 @@ namespace EvolutionShop
             if (input.GrowerCapacity <= 0 || input.InitialGrowerUnits < 0 ||
                 input.InitialGrowerUnits > input.GrowerCapacity ||
                 input.BaseCapacity <= 0 || input.UpgradedCapacity < input.BaseCapacity ||
-                input.UpgradeCost < 0 || input.SparkResearchCost < 0 || input.MinimumPrice < 1 ||
+                input.UpgradeCost < 0 || input.SparkResearchCost < 0 || input.MistResearchCost < 0 || input.MinimumPrice < 1 ||
                 input.MaximumPricePercent < 100 || input.MaximumPricePercent > 1000 ||
                 !PositiveFinite(input.GrowerRefillSeconds) ||
                 !PositiveFinite(input.IncubationSeconds) || !PositiveFinite(input.ConditioningSeconds) || !PositiveFinite(input.BaseCollectionSeconds) ||
@@ -682,7 +709,7 @@ namespace EvolutionShop
                 ConditioningSeconds = input.ConditioningSeconds, ConditionerIds = (string[])input.ConditionerIds.Clone(),
                 BaseCapacity = input.BaseCapacity, UpgradedCapacity = input.UpgradedCapacity,
                 BaseCollectionSeconds = input.BaseCollectionSeconds, UpgradedCollectionSeconds = input.UpgradedCollectionSeconds,
-                UpgradeCost = input.UpgradeCost, SparkResearchCost = input.SparkResearchCost, MinimumPrice = input.MinimumPrice,
+                UpgradeCost = input.UpgradeCost, SparkResearchCost = input.SparkResearchCost, MistResearchCost = input.MistResearchCost, MinimumPrice = input.MinimumPrice,
                 MaximumPricePercent = input.MaximumPricePercent, TankIds = (string[])input.TankIds.Clone(),
                 StorageIds = (string[])input.StorageIds.Clone(),
                 Species = new SpeciesDefinition[input.Species.Length]
@@ -693,10 +720,10 @@ namespace EvolutionShop
             {
                 var value = input.Species[i];
                 if (value == null || string.IsNullOrWhiteSpace(value.Id) || !ids.Add(value.Id) ||
-                    string.IsNullOrWhiteSpace(value.DisplayName) || string.IsNullOrWhiteSpace(value.PresentationId) ||
-                    value.Bloom < 0 || value.Flow < 0 || value.Spark < 0 || (long)value.Bloom + value.Flow + value.Spark <= 0 ||
-                    (long)value.Bloom + value.Flow + value.Spark > input.UpgradedCapacity || value.SaleValue < input.MinimumPrice ||
-                    !recipes.Add(value.Bloom + ":" + value.Flow + ":" + value.Spark))
+                    string.IsNullOrWhiteSpace(value.DisplayName) || string.IsNullOrWhiteSpace(value.PresentationId) || string.IsNullOrWhiteSpace(value.FamilyId) ||
+                    value.Bloom < 0 || value.Flow < 0 || value.Spark < 0 || value.Mist < 0 || (long)value.Bloom + value.Flow + value.Spark + value.Mist <= 0 ||
+                    (long)value.Bloom + value.Flow + value.Spark + value.Mist > input.UpgradedCapacity || value.SaleValue < input.MinimumPrice ||
+                    !recipes.Add(value.Bloom + ":" + value.Flow + ":" + value.Spark + ":" + value.Mist))
                     throw new ArgumentException("Invalid or ambiguous species definition.", nameof(input));
                 copy.Species[i] = value.Copy();
             }
@@ -717,10 +744,10 @@ namespace EvolutionShop
         {
             return prices.TryGetValue(speciesId, out int tag) ? tag : species[speciesId].SaleValue;
         }
-        private bool HasResearchForSpecies(string id, bool sparkUnlocked)
-            => id != null && species.TryGetValue(id, out var definition) && (definition.Spark == 0 || sparkUnlocked);
-        private static string CultureId(int index) => index == 0 ? "bloom" : index == 1 ? "flow" : "spark";
-        private static int CultureIndex(string id) => id == "bloom" ? 0 : id == "flow" ? 1 : id == "spark" ? 2 : -1;
+        private bool HasResearchForSpecies(string id, bool sparkUnlocked, bool mistUnlocked)
+            => id != null && species.TryGetValue(id, out var definition) && (definition.Spark == 0 || sparkUnlocked) && (definition.Mist == 0 || mistUnlocked);
+        private static string CultureId(int index) => index == 0 ? "bloom" : index == 1 ? "flow" : index == 2 ? "spark" : "mist";
+        private static int CultureIndex(string id) => id == "bloom" ? 0 : id == "flow" ? 1 : id == "spark" ? 2 : id == "mist" ? 3 : -1;
         private static bool ValidCulture(int index) { return index >= 0 && index < CultureCount; }
         private static bool ValidCustomer(string customerId) { return !string.IsNullOrWhiteSpace(customerId) && customerId.Length <= 128; }
         private static int CultureIndexOrThrow(CultureKind culture)

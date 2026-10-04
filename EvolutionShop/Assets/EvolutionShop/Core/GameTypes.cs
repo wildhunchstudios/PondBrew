@@ -2,7 +2,7 @@ using System;
 
 namespace EvolutionShop
 {
-    public enum CultureKind { Bloom = 0, Flow = 1, Spark = 2 }
+    public enum CultureKind { Bloom = 0, Flow = 1, Spark = 2, Mist = 3 }
     public enum IncubatorPhase { Dosing = 0, Incubating = 1, Ready = 2 }
     public enum ConditionerPhase { Idle = 0, Processing = 1, Ready = 2 }
     public enum FailureCode
@@ -14,7 +14,8 @@ namespace EvolutionShop
         TankReserved, InvalidCustomer, ReservationMismatch, NoCustomerReady,
         InvalidPrice, PriceTooHigh, UnknownStorage, StorageFull, StorageEmpty, SpecimenMismatch,
         ResearchLocked, ResearchPrerequisiteMissing, ResearchAlreadyUnlocked,
-        UnknownConditioner, ConditionerBusy, InvalidConditioningInput, ConditionerNotProcessing
+        UnknownConditioner, ConditionerBusy, InvalidConditioningInput, ConditionerNotProcessing,
+        MistPrerequisiteMissing, MistAlreadyUnlocked
     }
 
     [Serializable]
@@ -25,19 +26,21 @@ namespace EvolutionShop
         public int Bloom;
         public int Flow;
         public int Spark;
+        public int Mist;
+        public string FamilyId;
         public int SaleValue;
         public string PresentationId;
 
         public SpeciesDefinition() { }
-        public SpeciesDefinition(string id, string name, int bloom, int flow, int saleValue, string presentationId, int spark = 0)
+        public SpeciesDefinition(string id, string name, int bloom, int flow, int saleValue, string presentationId, int spark = 0, int mist = 0, string familyId = "Brookkin")
         {
-            Id = id; DisplayName = name; Bloom = bloom; Flow = flow; Spark = spark;
+            Id = id; DisplayName = name; Bloom = bloom; Flow = flow; Spark = spark; Mist = mist; FamilyId = familyId;
             SaleValue = saleValue; PresentationId = presentationId;
         }
 
         internal SpeciesDefinition Copy()
         {
-            return new SpeciesDefinition(Id, DisplayName, Bloom, Flow, SaleValue, PresentationId, Spark);
+            return new SpeciesDefinition(Id, DisplayName, Bloom, Flow, SaleValue, PresentationId, Spark, Mist, FamilyId);
         }
     }
 
@@ -55,6 +58,7 @@ namespace EvolutionShop
         public float UpgradedCollectionSeconds = 0.3f;
         public int UpgradeCost = 24;
         public int SparkResearchCost = 48;
+        public int MistResearchCost = 40;
         // A species' value is its standard price. Players may tag it from MinimumPrice up to this percentage.
         public int MinimumPrice = 1;
         public int MaximumPricePercent = 300;
@@ -66,7 +70,8 @@ namespace EvolutionShop
             new SpeciesDefinition("pondlet", "Pondlet", 1, 1, 6, "teardrop"),
             new SpeciesDefinition("bubblebelly", "Bubblebelly", 2, 1, 10, "round"),
             new SpeciesDefinition("ribbonfin", "Ribbonfin", 1, 2, 10, "ribbon"),
-            new SpeciesDefinition("lanternfin", "Lanternfin", 1, 1, 14, "lantern", 1)
+            new SpeciesDefinition("lanternfin", "Lanternfin", 1, 1, 14, "lantern", 1),
+            new SpeciesDefinition("driftwing", "Driftwing", 1, 1, 18, "wing", 0, 1, "Airfin")
         };
 
         public static GameConfig CreateDefault() { return new GameConfig(); }
@@ -122,12 +127,13 @@ namespace EvolutionShop
         public readonly int Bloom;
         public readonly int Flow;
         public readonly int Spark;
+        public readonly int Mist;
         public readonly string SpeciesId;
         public readonly string SpecimenId;
         public readonly float SecondsRemaining;
-        internal IncubatorView(IncubatorPhase phase, int bloom, int flow, string speciesId, string specimenId, float remaining, int spark = 0)
+        internal IncubatorView(IncubatorPhase phase, int bloom, int flow, string speciesId, string specimenId, float remaining, int spark = 0, int mist = 0)
         {
-            Phase = phase; Bloom = bloom; Flow = flow; Spark = spark;
+            Phase = phase; Bloom = bloom; Flow = flow; Spark = spark; Mist = mist;
             SpeciesId = speciesId; SpecimenId = specimenId; SecondsRemaining = remaining;
         }
     }
@@ -177,6 +183,9 @@ namespace EvolutionShop
         // Version 4: research unlock and third-culture quantities. Old saves remain locked.
         public bool sparkResearchUnlocked;
         public int availableSpark;
+        // Version 6: fourth renewable culture and new family.
+        public bool mistResearchUnlocked;
+        public int availableMist;
         public GrowerSave[] growers;
         public IncubatorSave incubator;
         public TankSave[] tanks;
@@ -211,6 +220,7 @@ namespace EvolutionShop
         public int stagedBloom;
         public int stagedFlow;
         public int stagedSpark;
+        public int stagedMist;
         public string speciesId;
         public string specimenId;
         public float secondsRemaining;

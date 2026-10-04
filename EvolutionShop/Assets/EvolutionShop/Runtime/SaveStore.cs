@@ -33,16 +33,16 @@ namespace EvolutionShop
         // 13: separate specimen-rack storage (game 3, layout 6).
         // 14: Spark research and a third culture (game 4; layout remains 6).
         // 15: an owned conditioning vat and exact batch residents (game 5, layout 7).
-        // Formats 1-14 migrate in memory; historical saves never
+        // Formats 1-15 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 15;
+        public const int CurrentFormatVersion = 16;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : 0;
+            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format == 16 ? 6 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 15 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 16 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -137,7 +137,7 @@ namespace EvolutionShop
                 // manufacture empty/default values for missing, null or incorrectly typed data.
                 bool currentStorage = header != null && header.formatVersion >= 13 && header.formatVersion <= CurrentFormatVersion;
                 if (currentStorage && !new LayoutJsonShape(json, true, true, true, true,
-                    header.formatVersion >= 14, header.formatVersion >= 15).HasExplicitItemsArray())
+                    header.formatVersion >= 14, header.formatVersion >= 15, header.formatVersion >= 16).HasExplicitItemsArray())
                 {
                     error = "Saved layout, storage, research or conditioning shape could not be validated. Your original file is preserved.";
                     return false;
@@ -302,9 +302,10 @@ namespace EvolutionShop
             readonly bool requireStorage;
             readonly bool requireResearch;
             readonly bool requireConditioners;
+            readonly bool requireMist;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; }
 
             public bool HasExplicitItemsArray()
             {
@@ -372,7 +373,7 @@ namespace EvolutionShop
             {
                 if (!Take('{')) return false;
                 bool hasStorage = false, hasConditioners = false;
-                int researchFields = 0;
+                int researchFields = 0, mistFields = 0;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 while (position < json.Length)
                 {
@@ -383,6 +384,10 @@ namespace EvolutionShop
                     { if (!ReadBoolean()) return false; researchFields |= 1; }
                     else if (requireResearch && key == "availableSpark")
                     { if (!ReadInteger(out _)) return false; researchFields |= 2; }
+                    else if (requireMist && key == "mistResearchUnlocked")
+                    { if (!ReadBoolean()) return false; mistFields |= 1; }
+                    else if (requireMist && key == "availableMist")
+                    { if (!ReadInteger(out _)) return false; mistFields |= 2; }
                     else if (requireResearch && key == "growers")
                     { if (!ReadGrowers()) return false; researchFields |= 4; }
                     else if (requireResearch && key == "incubator")
@@ -391,7 +396,7 @@ namespace EvolutionShop
                     { if (!ReadConditioners()) return false; hasConditioners = true; }
                     else if (!SkipValue(0)) return false;
                     if (Take('}')) return hasStorage && (!requireResearch || researchFields == 15) &&
-                        (!requireConditioners || hasConditioners);
+                        (!requireConditioners || hasConditioners) && (!requireMist || mistFields == 3);
                     if (!Take(',')) return false;
                 }
                 return false;
@@ -442,14 +447,15 @@ namespace EvolutionShop
             bool ReadIncubator()
             {
                 if (!Take('{')) return false;
-                bool hasSpark = false;
+                bool hasSpark = false, hasMist = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 while (position < json.Length)
                 {
                     if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
                     if (key == "stagedSpark") { if (!ReadInteger(out _)) return false; hasSpark = true; }
+                    else if (requireMist && key == "stagedMist") { if (!ReadInteger(out _)) return false; hasMist = true; }
                     else if (!SkipValue(0)) return false;
-                    if (Take('}')) return hasSpark;
+                    if (Take('}')) return hasSpark && (!requireMist || hasMist);
                     if (!Take(',')) return false;
                 }
                 return false;
@@ -461,7 +467,7 @@ namespace EvolutionShop
                 int count = 0;
                 while (position < json.Length)
                 {
-                    if (++count > 3 || !Take('{')) return false;
+                    if (++count > (requireMist ? 4 : 3) || !Take('{')) return false;
                     int required = 0;
                     var keys = new HashSet<string>(StringComparer.Ordinal);
                     while (position < json.Length)
@@ -475,7 +481,7 @@ namespace EvolutionShop
                         if (!Take(',')) return false;
                     }
                     if (required != 7) return false;
-                    if (Take(']')) return count == 3;
+                    if (Take(']')) return count == (requireMist ? 4 : 3);
                     if (!Take(',')) return false;
                 }
                 return false;
