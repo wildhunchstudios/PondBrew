@@ -31,16 +31,17 @@ namespace EvolutionShop
         // 11: stored furniture, permanent sales, and stable IDs across ownership gaps.
         // 12: two lab expansions and poses for the four existing production facilities.
         // 13: separate specimen-rack storage (game 3, layout 6).
-        // Formats 1-12 migrate in memory; historical saves never
+        // 14: Spark research and a third culture (game 4; layout remains 6).
+        // Formats 1-13 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 13;
+        public const int CurrentFormatVersion = 14;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : 0;
+            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 13 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 14 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -132,10 +133,11 @@ namespace EvolutionShop
                 var header = JsonUtility.FromJson<SlotHeader>(json);
                 // Check the new array and its entry fields before the full JsonUtility parse can
                 // manufacture empty/default values for missing, null or incorrectly typed data.
-                bool currentStorage = header != null && header.formatVersion == 13;
-                if (currentStorage && !new LayoutJsonShape(json, true, true, true, true).HasExplicitItemsArray())
+                bool currentStorage = header != null && header.formatVersion >= 13 && header.formatVersion <= CurrentFormatVersion;
+                if (currentStorage && !new LayoutJsonShape(json, true, true, true, true,
+                    header.formatVersion >= 14).HasExplicitItemsArray())
                 {
-                    error = "Saved layout or storage shape could not be validated. Your original file is preserved.";
+                    error = "Saved layout, storage or research shape could not be validated. Your original file is preserved.";
                     return false;
                 }
                 var candidate = JsonUtility.FromJson<SlotData>(json);
@@ -284,9 +286,10 @@ namespace EvolutionShop
             readonly bool requireStored;
             readonly bool requireLab;
             readonly bool requireStorage;
+            readonly bool requireResearch;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; }
 
             public bool HasExplicitItemsArray()
             {
@@ -354,17 +357,104 @@ namespace EvolutionShop
             {
                 if (!Take('{')) return false;
                 bool hasStorage = false;
+                int researchFields = 0;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 while (position < json.Length)
                 {
                     if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
                     if (key == "storage")
                     { if (!ReadStorage()) return false; hasStorage = true; }
+                    else if (requireResearch && key == "sparkResearchUnlocked")
+                    { if (!ReadBoolean()) return false; researchFields |= 1; }
+                    else if (requireResearch && key == "availableSpark")
+                    { if (!ReadInteger(out _)) return false; researchFields |= 2; }
+                    else if (requireResearch && key == "growers")
+                    { if (!ReadGrowers()) return false; researchFields |= 4; }
+                    else if (requireResearch && key == "incubator")
+                    { if (!ReadIncubator()) return false; researchFields |= 8; }
                     else if (!SkipValue(0)) return false;
-                    if (Take('}')) return hasStorage;
+                    if (Take('}')) return hasStorage && (!requireResearch || researchFields == 15);
                     if (!Take(',')) return false;
                 }
                 return false;
+            }
+
+            bool ReadIncubator()
+            {
+                if (!Take('{')) return false;
+                bool hasSpark = false;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    if (key == "stagedSpark") { if (!ReadInteger(out _)) return false; hasSpark = true; }
+                    else if (!SkipValue(0)) return false;
+                    if (Take('}')) return hasSpark;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadGrowers()
+            {
+                if (!Take('[') || Take(']')) return false;
+                int count = 0;
+                while (position < json.Length)
+                {
+                    if (++count > 3 || !Take('{')) return false;
+                    int required = 0;
+                    var keys = new HashSet<string>(StringComparer.Ordinal);
+                    while (position < json.Length)
+                    {
+                        if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                        if (key == "cultureId") { if (!ReadString(true, out _)) return false; required |= 1; }
+                        else if (key == "units") { if (!ReadInteger(out _)) return false; required |= 2; }
+                        else if (key == "secondsUntilNextUnit") { if (!ReadFiniteNumber()) return false; required |= 4; }
+                        else if (!SkipValue(0)) return false;
+                        if (Take('}')) break;
+                        if (!Take(',')) return false;
+                    }
+                    if (required != 7) return false;
+                    if (Take(']')) return count == 3;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadBoolean()
+            {
+                SkipSpace();
+                int length = position + 4 <= json.Length && string.CompareOrdinal(json, position, "true", 0, 4) == 0 ? 4 :
+                    position + 5 <= json.Length && string.CompareOrdinal(json, position, "false", 0, 5) == 0 ? 5 : 0;
+                if (length == 0) return false;
+                position += length;
+                return position >= json.Length || char.IsWhiteSpace(json[position]) || json[position] == ',' || json[position] == '}';
+            }
+
+            bool ReadFiniteNumber()
+            {
+                SkipSpace(); int began = position;
+                if (position < json.Length && json[position] == '-') position++;
+                if (position >= json.Length || json[position] < '0' || json[position] > '9') return false;
+                if (json[position] == '0') position++;
+                else while (position < json.Length && json[position] >= '0' && json[position] <= '9') position++;
+                if (position < json.Length && json[position] == '.')
+                {
+                    position++; int fraction = position;
+                    while (position < json.Length && json[position] >= '0' && json[position] <= '9') position++;
+                    if (position == fraction) return false;
+                }
+                if (position < json.Length && (json[position] == 'e' || json[position] == 'E'))
+                {
+                    position++;
+                    if (position < json.Length && (json[position] == '+' || json[position] == '-')) position++;
+                    int exponent = position;
+                    while (position < json.Length && json[position] >= '0' && json[position] <= '9') position++;
+                    if (position == exponent) return false;
+                }
+                if (position < json.Length && !char.IsWhiteSpace(json[position]) && json[position] != ',' && json[position] != '}') return false;
+                return float.TryParse(json.Substring(began, position - began), System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out float value) && Finite(value);
             }
 
             bool ReadStorage()

@@ -188,17 +188,17 @@ namespace EvolutionShop.Tests
             Ok(model.SetPrice("pondlet", 8));
             int format = problem.EndsWith("format-3", StringComparison.Ordinal) || problem == "refusals-in-report-1" ? 3
                 : problem.EndsWith("format-4", StringComparison.Ordinal) ? 4 : problem == "future-format" ? SaveStore.CurrentFormatVersion + 1 : 5;
-            var game = model.CaptureSave(); game.version = 2;
+            var game = model.CaptureSave(); game = LegacyGameSaveFixture.AsVersion(game, 2);
             var trades = reports.CaptureSave();
             // Start from each format's true inner versions, then break exactly one thing.
-            if (format == 3) { game.version = 1; game.prices = null; trades.version = 1; }
+            if (format == 3) { game = LegacyGameSaveFixture.AsVersion(game, 1); game.prices = null; trades.version = 1; }
             if (format == 4) trades.version = 2;
             if (format == 5 || format == 6) trades.version = 3;
             switch (problem)
             {
                 case "tags-in-format-3": game.prices = new[] { new PriceSave { speciesId = "pondlet", price = 8 } }; break;
-                case "game-1-in-format-5": game.version = 1; game.prices = null; break;
-                case "game-2-in-format-3": game = model.CaptureSave(); game.version = 2; break;
+                case "game-1-in-format-5": game = LegacyGameSaveFixture.AsVersion(game, 1); game.prices = null; break;
+                case "game-2-in-format-3": game = model.CaptureSave(); game = LegacyGameSaveFixture.AsVersion(game, 2); break;
                 case "report-1-in-format-4": trades.version = 1; break;
                 case "report-2-in-format-3": trades.version = 2; break;
                 case "report-2-in-format-5": trades.version = 2; break;
@@ -231,7 +231,7 @@ namespace EvolutionShop.Tests
             var slot = Slot();
             Write(slot);
             byte[] primary = File.ReadAllBytes(PathFor());
-            if (problem == "game-1") { slot.game.version = 1; slot.game.prices = null; }
+            if (problem == "game-1") { slot.game = LegacyGameSaveFixture.AsVersion(slot.game, 1); slot.game.prices = null; }
             if (problem == "report-1") slot.trades.version = 1;
             if (problem == "missing-report") slot.trades = null;
             Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.False);
@@ -252,7 +252,7 @@ namespace EvolutionShop.Tests
         byte[] WriteFormatThree()
         {
             var game = model.CaptureSave();
-            game.version = 1;
+            game = LegacyGameSaveFixture.AsVersion(game, 1);
             game.prices = null;
             var trades = reports.CaptureSave();
             trades.version = 1;

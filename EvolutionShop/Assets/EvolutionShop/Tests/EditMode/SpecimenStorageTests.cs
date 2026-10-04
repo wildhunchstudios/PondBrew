@@ -211,6 +211,7 @@ namespace EvolutionShop.Tests
             var config = GameConfig.CreateDefault(); var model = new GameModel(config);
             Produce(model); Ok(model.TransferToTank("tank-a"));
             var legacy = model.CaptureSave(); legacy.version = version; legacy.storage = null;
+            Array.Resize(ref legacy.growers, 2); // Historical storage migration must start with the actual old culture shape.
             Assert.That(GameModel.TryRestore(config, legacy, out var restored, out _), Is.True);
             Assert.That(restored.StorageIds, Is.Empty); Assert.That(restored.CaptureSave().storage, Is.Empty);
             Assert.That(restored.GetTank("tank-a").Value.Id, Is.EqualTo(model.GetTank("tank-a").Value.Id));

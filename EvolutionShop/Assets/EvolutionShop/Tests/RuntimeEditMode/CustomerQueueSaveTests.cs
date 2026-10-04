@@ -130,7 +130,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void FormatFiveVersionsArePaired()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(13));
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(14));
             Assert.That(SaveStore.GameVersionFor(5), Is.EqualTo(2));
             Assert.That(SaveStore.ReportVersionFor(5), Is.EqualTo(3));
             Assert.That(SaveStore.ReportVersionFor(4), Is.EqualTo(2));
@@ -149,7 +149,7 @@ namespace EvolutionShop.Tests
         /// <summary>The exact shape the R03.1 player wrote: envelope 4, game 2 with tags, report 2 with one pending field.</summary>
         byte[] WriteFormatFour(string pendingId)
         {
-            var game = model.CaptureSave(); game.version = 2;
+            var game = model.CaptureSave(); game = LegacyGameSaveFixture.AsVersion(game, 2);
             var trades = reports.CaptureSave();
             trades.version = 2;
             trades.pendingCustomerIds = null;

@@ -42,7 +42,7 @@ namespace EvolutionShop
             GUI.Label(new Rect(40, 65, 310, 25), ReputationLine(), smallStyle);
             Box(new Rect(1050, 22, 208, 78), ink);
             GUI.Label(new Rect(1069, 31, 175, 30), Model.Currency + "  CREDITS", statStyle);
-            GUI.Label(new Rect(1069, 63, 175, 23), Model.DiscoveredSpeciesIds.Count + " / 3 discovered", smallStyle);
+            GUI.Label(new Rect(1069, 63, 175, 23), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discovered", smallStyle);
             Box(new Rect(22, 116, 310, 82), ink);
             GUI.Label(new Rect(38, 125, 275, 21), "YOUR NEXT STEP", smallStyle);
             GUI.Label(new Rect(38, 149, 278, 44), Objective(), bodyStyle);
@@ -50,8 +50,8 @@ namespace EvolutionShop
             GUI.Label(new Rect(38, 222, 280, 28), PhaseTitle(), headingStyle);
             GUI.Label(new Rect(38, 255, 280, 33), Paused ? "PAUSED / " + ClockText() : ClockText(), smallStyle);
             Box(new Rect(22, 610, 396, 88), ink);
-            GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "     FLOW " + Model.Available(CultureKind.Flow), headingStyle);
-            GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow)), smallStyle);
+            GUI.Label(new Rect(40, 620, 360, 28), "BLOOM " + Model.Available(CultureKind.Bloom) + "  FLOW " + Model.Available(CultureKind.Flow) + (Model.SparkResearchUnlocked ? "  SPARK " + Model.Available(CultureKind.Spark) : ""), headingStyle);
+            GUI.Label(new Rect(40, 652, 360, 30), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark)), smallStyle);
             Box(new Rect(438,662,548,36),ink);
             GUI.Label(new Rect(448,668,528,23), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
@@ -78,8 +78,8 @@ namespace EvolutionShop
                 {
                     Box(new Rect(420, 525, 440, 67), ink);
                     GUI.Label(new Rect(435, 531, 410, 26), Focused.Label, centerStyle);
-                    bool culture = Focused.Kind == StationKind.Bloom || Focused.Kind == StationKind.Flow;
-                    string hint = culture ? "Hold LEFT MOUSE to collect" : "Press E to interact";
+                    bool culture = TryStationCulture(Focused, out var focusCulture);
+                    string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold LEFT MOUSE: Spark / E: research" : "Hold LEFT MOUSE to collect") : "Press E to interact";
                     GUI.Label(new Rect(435, 556, 410, 26), hint, centerStyle);
                     if (HarvestProgress > 0) {Box(new Rect(460, 598, 360, 5), ink); Box(new Rect(460, 598, 360 * HarvestProgress, 5), mint);}
                 }
@@ -89,7 +89,7 @@ namespace EvolutionShop
             if (!string.IsNullOrEmpty(SaveError) || (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil))
             {
                 Box(new Rect(380, 24, 650, 67), ink);
-                GUI.Label(new Rect(400, 32, 610, 54), string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED — " + SaveError, centerStyle);
+                GUI.Label(new Rect(400, 32, 610, 54), string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED â€” " + SaveError, centerStyle);
             }
             if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
             {
@@ -97,7 +97,7 @@ namespace EvolutionShop
                 Box(new Rect(22, 310, 310, 137), ink);
                 GUI.Label(new Rect(38, 320, 278, 25), "DISCOVERED / JOURNAL UPDATED", centerStyle);
                 GUI.Label(new Rect(40, 350, 278, 42), species.DisplayName, titleStyle);
-                GUI.Label(new Rect(38, 396, 278, 30), species.Bloom + " Bloom + " + species.Flow + " Flow", centerStyle);
+                GUI.Label(new Rect(38, 396, 278, 30), RecipeText(species), centerStyle);
             }
             if (BaselinePreview) GUI.Label(new Rect(440, 102, 520, 27), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", smallStyle);
             GUI.matrix = Matrix4x4.identity;
@@ -112,6 +112,8 @@ namespace EvolutionShop
             if (DisplayedStockCount() == 0 && StoredSpecimenCount > 0) return "Use E at an empty display to choose stored stock.";
             if (DisplayedStockCount() > 0) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
+            if (Model.SparkResearchReady && !Model.SparkResearchUnlocked) return "At night: research Spark at the lab bench / " + Config.SparkResearchCost + " credits.";
+            if (Model.SparkResearchUnlocked && !Model.IsDiscovered("lanternfin")) return "Try one Bloom + one Flow + one Spark.";
             if (!Model.UpgradeOwned && Model.Currency >= Config.UpgradeCost) return "Buy the larger siphon at the back lab bench.";
             if (!Model.UpgradeOwned) return "Grow and sell creatures. Save " + Config.UpgradeCost + " credits for a larger siphon.";
             if (Model.DiscoveredSpeciesIds.Count < 3) return "Discover the remaining creatures by changing one dose.";
@@ -175,7 +177,7 @@ namespace EvolutionShop
                     break;
                 case ShopPanel.Reset:
                     Heading("Start a new game?");
-                    Text("This replaces your one local save: currency, cultures, discoveries, creatures, furniture, upgrade, and incubation progress will reset to preparation night 1.");
+                    Text("This replaces your one local save: currency, cultures, discoveries, creatures, furniture, research, upgrade, and incubation progress will reset to preparation night 1.");
                     Space(); Button("Cancel / keep my shop", () => SetPanel(ShopPanel.Pause));
                     Space(); Button("Confirm new game", ConfirmNewGame);
                     break;
@@ -262,16 +264,18 @@ namespace EvolutionShop
                 return;
             }
             if (inc.Phase == IncubatorPhase.Ready)
-            { Text(Model.GetSpecies(inc.SpeciesId).DisplayName + " is ready!"); Text("Return through the doorway to an empty tank in the front store, then press E to transfer it."); return; }
+            { Text(Model.GetSpecies(inc.SpeciesId).DisplayName + " is ready!"); Text("Use E at an empty front display or a lab rack to store your creature and free the incubator."); return; }
             Text("Add exact integer doses. One recipe makes one specimen.");
-            Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW");
+            Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW" + (Model.SparkResearchUnlocked ? "  +  " + inc.Spark + " SPARK" : ""));
             GUILayout.BeginHorizontal();
             Button("+ Bloom", () => Perform(Model.Dose(CultureKind.Bloom)));
             Button("+ Flow", () => Perform(Model.Dose(CultureKind.Flow)));
+            if (Model.SparkResearchUnlocked) Button("+ Spark", () => Perform(Model.Dose(CultureKind.Spark)));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             Button("- Bloom", () => Perform(Model.ReturnDose(CultureKind.Bloom)));
             Button("- Flow", () => Perform(Model.ReturnDose(CultureKind.Flow)));
+            if (Model.SparkResearchUnlocked) Button("- Spark", () => Perform(Model.ReturnDose(CultureKind.Spark)));
             GUILayout.EndHorizontal();
             Button("Begin incubation  /  " + Config.IncubationSeconds + " sec", () => { if (Perform(Model.BeginIncubation()).Success) SetPanel(ShopPanel.None); });
             Button("Return all doses safely", () => Perform(Model.ClearDoses()));
@@ -280,10 +284,12 @@ namespace EvolutionShop
             GUILayout.BeginHorizontal();
             Button("Release 1 Bloom", () => Perform(Model.ReleaseCulture(CultureKind.Bloom)));
             Button("Release 1 Flow", () => Perform(Model.ReleaseCulture(CultureKind.Flow)));
+            if (Model.SparkResearchUnlocked) Button("Release 1 Spark", () => Perform(Model.ReleaseCulture(CultureKind.Spark)));
             GUILayout.EndHorizontal();
             Space(); Small("LAB NOTES: A balanced pair brings a Pondlet. More Bloom makes a rounder body; more Flow makes a longer tail.");
+            if (Model.SparkResearchUnlocked) Small("SPARK CLUE: A balanced Bloom/Flow pair needs one Spark.");
             foreach (var species in Config.Species)
-                if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + species.Bloom + "B + " + species.Flow + "F)", () => Perform(Model.UseKnownRecipe(species.Id)));
+                if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + RecipeText(species, true) + ")", () => Perform(Model.UseKnownRecipe(species.Id)));
         }
         void DrawCounter()
         {
@@ -370,7 +376,7 @@ namespace EvolutionShop
             GUILayout.Space(8);
             Heading("Prepare for the next day");
             Text(ReportPreparationTip(report));
-            Small("Free Bloom + Flow. Untimed preparation; your lab keeps growing.");
+            Small(Model.SparkResearchUnlocked ? "Free Bloom, Flow and Spark. Untimed preparation; your lab keeps growing." : "Free Bloom + Flow. Untimed preparation; your lab keeps growing.");
         }
         string ReportPreparationTip(TradeDaySave report)
         {
@@ -445,7 +451,8 @@ namespace EvolutionShop
         }
         void DrawUpgrade()
         {
-            Heading("A little more room to grow");
+            DrawSparkResearch();
+            Space(); Heading("Siphon equipment");
             Text("SIPHON MK II\nA visibly larger chamber and faster collection.");
             Space(); Heading(Config.BaseCapacity + "  to  " + Config.UpgradedCapacity + " culture units");
             Text("Collection time: " + Config.BaseCollectionSeconds.ToString("0.0") + "s to " + Config.UpgradedCollectionSeconds.ToString("0.0") + "s per unit.");
@@ -467,11 +474,14 @@ namespace EvolutionShop
                 {
                     var tag = Model.GetPrice(species.Id).Value;
                     Heading(species.DisplayName);
-                    Text(species.Bloom + " Bloom + " + species.Flow + " Flow  /  standard " + tag.Standard + " credits" +
+                    Text(RecipeText(species) + "  /  standard " + tag.Standard + " credits" +
                         (tag.Price == tag.Standard ? "" : "  /  your tag " + tag.Price));
                 }
+                else if (species.Spark > 0)
+                { Heading(Model.SparkResearchUnlocked ? "Unknown Spark specimen" : "Spark research locked"); Small(Model.SparkResearchUnlocked ? "A balanced Bloom/Flow pair needs one Spark. Use the incubator / 10 seconds." : "Discover the three starter species, then research Spark at the back lab bench for " + Config.SparkResearchCost + " credits."); }
                 else {Heading("Unknown specimen"); Small(species.Id == "pondlet" ? "Begin with a balanced pair." : species.Id == "bubblebelly" ? "A little more Bloom may round things out." : "A little more Flow may stretch a tail.");}
             }
+            Space(); Small("All current recipes use the incubator / " + Config.IncubationSeconds + " seconds. Cultures replenish for free during active days and nights.");
             Space(); Small("Known recipes can be prepared in one click at the incubator, using cultures you have collected.");
             Space(); Heading("Cartoon slap");
             Text("Tap " + SlapKey + " while aiming at a nearby unpaid customer, with every panel closed. This is separate from E service. They protest and leave; their unpaid creature stays in its tank and reputation drops by 1.");

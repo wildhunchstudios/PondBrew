@@ -416,6 +416,7 @@ namespace EvolutionShop.Tests
             Ok(model.SetPrice("pondlet", 9));
             var save = model.CaptureSave();
             save.version = 1;
+            Array.Resize(ref save.growers, 2); // Version 1 carried only Bloom and Flow.
             save.prices = shape == "null-prices" ? null : new PriceSave[0];
             Assert.That(GameModel.TryRestore(config, save, out var restored, out var error), Is.True, error.ToString());
             Assert.That(restored.GetPrice("pondlet").Value.Price, Is.EqualTo(6));
@@ -439,7 +440,7 @@ namespace EvolutionShop.Tests
             var save = model.CaptureSave();
             switch (problem)
             {
-                case "tags-in-version-one": save.version = 1; break;
+                case "tags-in-version-one": save.version = 1; Array.Resize(ref save.growers, 2); break;
                 case "null-entry": save.prices = new PriceSave[] { null }; break;
                 case "null-species": save.prices[0].speciesId = null; break;
                 case "unknown-species": save.prices[0].speciesId = "unknown"; break;

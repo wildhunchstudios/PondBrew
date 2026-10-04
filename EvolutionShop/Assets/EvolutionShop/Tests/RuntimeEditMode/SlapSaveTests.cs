@@ -200,7 +200,7 @@ namespace EvolutionShop.Tests
         [TestCase(6, 4)] [TestCase(7, 3)]
         public void ReportVersionMustMatchItsEnvelope(int format, int report)
         {
-            var slot = FreshSlot(); slot.formatVersion = format; slot.game.version = 2; slot.trades.version = report;
+            var slot = FreshSlot(); slot.formatVersion = format; slot.game = LegacyGameSaveFixture.AsVersion(slot.game, 2); slot.trades.version = report;
             AssertInvalidRead(JsonUtility.ToJson(slot), "trading report");
         }
 
@@ -238,7 +238,7 @@ namespace EvolutionShop.Tests
         }
         byte[] WriteLegacy(int format, SlotData slot)
         {
-            slot.game.version = format < 4 ? 1 : 2; if (format < 4) slot.game.prices = null;
+            slot.game = LegacyGameSaveFixture.AsVersion(slot.game, format < 4 ? 1 : 2); if (format < 4) slot.game.prices = null;
             slot.trades.version = format == 3 ? 1 : format == 4 ? 2 : 3;
             if (format < 5) slot.trades.pendingCustomerIds = null;
             string json = "{\n  \"formatVersion\": " + format + ",\n  \"game\": " + JsonUtility.ToJson(slot.game, true) +

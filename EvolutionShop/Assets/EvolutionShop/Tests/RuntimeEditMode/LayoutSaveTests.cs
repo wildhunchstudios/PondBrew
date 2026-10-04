@@ -337,7 +337,7 @@ namespace EvolutionShop.Tests
 
         byte[] WriteLegacy(int format, SlotData slot, bool strayLayout)
         {
-            slot.game.version = format <= 3 ? 1 : 2;
+            slot.game = LegacyGameSaveFixture.AsVersion(slot.game, format <= 3 ? 1 : 2);
             if (format <= 3) slot.game.prices = null;
             slot.trades.version = format == 3 ? 1 : format == 4 ? 2 : format <= 6 ? 3 : 4;
             if (format < 5) slot.trades.pendingCustomerIds = null;

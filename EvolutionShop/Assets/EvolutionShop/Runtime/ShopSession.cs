@@ -136,9 +136,9 @@ namespace EvolutionShop
             }
             FindFocus();
             bool held = Panel == ShopPanel.None && Mouse.current != null && Mouse.current.leftButton.isPressed;
-            bool grower = Focused != null && (Focused.Kind == StationKind.Bloom || Focused.Kind == StationKind.Flow);
+            bool grower = TryStationCulture(Focused, out var culture);
             if (held && grower)
-                Harvest(Focused.Kind == StationKind.Bloom ? CultureKind.Bloom : CultureKind.Flow, Time.deltaTime);
+                Harvest(culture, Time.deltaTime);
             else StopHarvest();
             World.SetHarvesting(held && grower && HarvestProgress > 0, Focused);
             if (Panel == ShopPanel.None && keyboard != null && keyboard.eKey.wasPressedThisFrame && Focused != null)
@@ -174,7 +174,7 @@ namespace EvolutionShop
                     sound.Discovery();
                 }
                 else sound.Feedback(true);
-                Notify("A new specimen is ready. Take it to an empty display tank.");
+                Notify("A new specimen is ready. Use an empty display or lab rack to store it.");
             }
             if (phaseChanged || result.Matured) SaveNow();
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
@@ -294,9 +294,9 @@ namespace EvolutionShop
         }
         public void Harvest(CultureKind kind, float dt)
         {
-            if (Paused) return;
+            if (Paused || !Model.IsCultureUnlocked(kind)) return;
             if (harvesting != kind) { harvestClock = 0; harvesting = kind; }
-            if (Model.Available(CultureKind.Bloom) + Model.Available(CultureKind.Flow) + Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) >= (BaselinePreview ? Config.BaseCapacity : Model.Capacity))
+            if (Model.ReservedCultureCount >= (BaselinePreview ? Config.BaseCapacity : Model.Capacity))
             {
                 HarvestProgress = 0;
                 Notify("Reservoir full. Dose or release spare culture at the incubator.", 1);
@@ -454,7 +454,10 @@ namespace EvolutionShop
                 case "SpecimenMismatch": return "That exact creature has moved. Choose the current stock again.";
                 case "ReservoirFull": return "Reservoir full. Staged doses still reserve their return space.";
                 case "GrowerEmpty": case "EmptyGrower": return "Grower is replenishing. Try again shortly.";
-                case "InsufficientCulture": return "Collect enough Bloom and Flow first.";
+                case "InsufficientCulture": return "Collect enough of each required culture first.";
+                case "ResearchLocked": return "Unlock Spark research at the lab bench first.";
+                case "ResearchPrerequisiteMissing": return "Discover Pondlet, Bubblebelly and Ribbonfin before Spark research.";
+                case "ResearchAlreadyUnlocked": return "Spark research is already unlocked. No payment taken.";
                 case "IncubatorBusy": return "Incubator occupied. Finish and transfer its specimen first.";
                 case "InvalidRecipe": case "UnsupportedRecipe": return "Unsupported mixture. Return every dose safely, or adjust the counts.";
                 case "TankFull": return "Tank full. Sell its resident at the counter first. Your new specimen is safe.";

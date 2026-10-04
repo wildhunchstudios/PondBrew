@@ -216,8 +216,8 @@ namespace EvolutionShop.Tests
         public void EnvelopeLayoutPairingsRemainExplicit(string problem)
         {
             var slot = Slot(new ShopLayout().CaptureSave(), ShopDayPhase.Night, out _);
-            if (problem == "format8-layout2") { slot.formatVersion = 8; slot.game.version = 2; slot.layout.version = 2; }
-            else if (problem == "format9-layout1") { slot.formatVersion = 9; slot.game.version = 2; slot.layout.version = 1; }
+            if (problem == "format8-layout2") { slot.formatVersion = 8; slot.game = LegacyGameSaveFixture.AsVersion(slot.game, 2); slot.layout.version = 2; }
+            else if (problem == "format9-layout1") { slot.formatVersion = 9; slot.game = LegacyGameSaveFixture.AsVersion(slot.game, 2); slot.layout.version = 1; }
             else slot.formatVersion = SaveStore.CurrentFormatVersion + 1;
             RejectRead(JsonUtility.ToJson(slot));
         }
@@ -264,12 +264,12 @@ namespace EvolutionShop.Tests
                 new LayoutItemSave { id = "table-2", definitionId = "work-table", x = 4, z = -1, quarterTurns = 0 },
                 new LayoutItemSave { id = "table-3", definitionId = "work-table", x = 9, z = 4, quarterTurns = 1 }
             } };
-            var slot = Slot(layout, phase, out model); slot.formatVersion = 8; slot.game.version = 2; return slot;
+            var slot = Slot(layout, phase, out model); slot.formatVersion = 8; slot.game = LegacyGameSaveFixture.AsVersion(slot.game, 2); return slot;
         }
 
         byte[] WriteLegacy(SlotData slot)
         {
-            slot.game.version = 2;
+            slot.game = LegacyGameSaveFixture.AsVersion(slot.game, 2);
             string layout = JsonUtility.ToJson(slot.layout).Replace("\"storeTier\":0,", "").Replace(",\"storeTier\":0", "");
             File.WriteAllText(PathFor(), JsonWithLayout(slot, layout)); return File.ReadAllBytes(PathFor());
         }

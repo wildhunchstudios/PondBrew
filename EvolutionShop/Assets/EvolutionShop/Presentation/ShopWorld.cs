@@ -40,7 +40,6 @@ namespace EvolutionShop
         Transform bloomRoot, flowRoot, incubationRing, toolNozzle, toolBody, toolUpgradeBand;
         TextMesh toolReadout;
         bool upgraded, harvesting;
-        Station harvestingStation;
         float emissionClock, lastTime, harvestKick;
         int bloomCount, flowCount;
         GameModel lastModel;
@@ -77,6 +76,7 @@ namespace EvolutionShop
         void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
         void OnDestroy()
         {
+            DisposeResearchPresentation();
             DisposeStoragePresentation();
             DisposePlacementPresentation();
             foreach (var material in fontMaterials.Values) if (material) Destroy(material);
@@ -118,6 +118,7 @@ namespace EvolutionShop
             glow.SetColor("_EmissionColor", new Color(0.15f, 0.55f, 0.3f));
             glass = MakeGlass("Clear aquarium glass", new Color(0.61f, 0.91f, 0.95f, 0.085f));
             water = MakeGlass("Aquatic water tint", new Color(0.17f, 0.73f, 0.84f, 0.085f));
+            BuildResearchMaterials();
             Room();
             bloomRoot = Grower(StationKind.Bloom, new Vector3(-4.2f, 0, 3.85f), "BLOOM", "01 / PETAL CULTURE", bloomMat, bloomCells, true);
             flowRoot = Grower(StationKind.Flow, new Vector3(-1.4f, 0, 3.85f), "FLOW", "02 / STREAM CULTURE", flowMat, flowCells, false);
@@ -445,9 +446,10 @@ namespace EvolutionShop
             Shape(r, "Upgrade base", PrimitiveType.Cylinder, new Vector3(0, 1.09f, 0), new Vector3(.64f, .06f, .64f), gold);
             Ring(r, "Upgrade feature ring", new Vector3(0, 1.5f, 0), .40f, .034f, glow).localRotation = Quaternion.Euler(0, 0, 22);
             Text(r, "4  >  8", new Vector3(0, 1.53f, -.34f), .11f, new Color(.09f, .24f, .25f), .49f);
-            Faceplate(r, "SIPHON UPGRADE", new Vector3(0, .62f, -.566f), gold);
+            Faceplate(r, "RESEARCH / SIPHON", new Vector3(0, .62f, -.566f), gold);
             status[StationKind.Upgrade] = Text(r, "24 COINS  /  COLLECT FASTER", new Vector3(0, .32f, -.583f), .04f, Color.white);
-            Text(r, "MORE ROOM TO GROW", new Vector3(0, 2.30f, 0), .05f, new Color(.1f, .27f, .28f));
+            researchHint = Text(r, "RESEARCH / DISCOVER 3 SPECIES", new Vector3(0, 2.30f, 0), .05f, new Color(.1f, .27f, .28f), 1.65f);
+            BuildSparkModule(r);
         }
 
         void Tool(Transform camera)
@@ -546,28 +548,31 @@ namespace EvolutionShop
             lastModel = model;
             bloomCount = model.Available(CultureKind.Bloom);
             flowCount = model.Available(CultureKind.Flow);
+            sparkCount = model.Available(CultureKind.Spark);
             SetToolUpgrade(model.UpgradeOwned);
             RefreshGrower(model, CultureKind.Bloom, StationKind.Bloom, bloomCells);
             RefreshGrower(model, CultureKind.Flow, StationKind.Flow, flowCells);
+            RefreshSparkModule(model);
             var incubation = model.Incubator;
-            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW";
+            status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW" + (model.SparkResearchUnlocked ? "  +  " + incubation.Spark + " SPARK" : "");
             SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
             RefreshPlacedDisplays(model);
             RefreshStorageRacks(model);
             status[StationKind.Upgrade].text = upgraded ? "INSTALLED  /  8 UNIT RESERVOIR" : "24 COINS  /  COLLECT FASTER";
-            toolReadout.text = (bloomCount + flowCount) + " / " + model.Capacity;
+            toolReadout.text = (bloomCount + flowCount + sparkCount) + " / " + model.Capacity;
             for (int i = 0; i < reservoirCells.Count; i++)
             {
-                bool active = i < bloomCount + flowCount;
-                bool bloom = i < bloomCount;
+                bool active = i < bloomCount + flowCount + sparkCount;
+                CultureKind culture = i < bloomCount ? CultureKind.Bloom : i < bloomCount + flowCount ? CultureKind.Flow : CultureKind.Spark;
                 var cell = reservoirCells[i];
-                if (active && cell.name != (bloom ? "Bloom" : "Flow"))
+                if (active && cell.name != CultureVisualName(culture))
                 {
+                    cell.gameObject.SetActive(false);
                     Destroy(cell.gameObject);
-                    reservoirCells[i] = cell = Organism(ToolChamber, bloom, bloom ? bloomMat : flowMat, .026f);
-                    cell.name = bloom ? "Bloom" : "Flow";
+                    reservoirCells[i] = cell = CultureOrganism(ToolChamber, culture, .026f);
+                    cell.name = CultureVisualName(culture);
                 }
                 cell.gameObject.SetActive(active);
             }
@@ -589,7 +594,7 @@ namespace EvolutionShop
                 (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  " + model.GetPrice(tank.Value.SpeciesId).Value.Price + " CREDITS");
         }
 
-        static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : "Unknown";
+        static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : id == "lanternfin" ? "Lanternfin" : "Unknown";
 
         void SetCreature(Display display, string species)
         {
@@ -602,6 +607,11 @@ namespace EvolutionShop
             r.localScale = Vector3.one * (display.Incubator ? (species == "ribbonfin" ? .54f : .62f) : .69f);
             display.Creature = r.gameObject.AddComponent<CreatureVisual>();
             display.Creature.Build(species);
+            if (species == "lanternfin")
+            {
+                r.localRotation = Quaternion.Euler(0, -90, 0);
+                display.Creature.Animate(lastTime + display.Seed);
+            }
         }
 
         public void SetToolUpgrade(bool value)
@@ -615,8 +625,7 @@ namespace EvolutionShop
 
         public void SetHarvesting(bool active, Station station)
         {
-            harvesting = active && station && (station.Kind == StationKind.Bloom || station.Kind == StationKind.Flow);
-            harvestingStation = station;
+            harvesting = active && TryHarvestCulture(station, out harvestingCulture);
         }
 
         public void PulseHarvest(CultureKind kind)
@@ -629,10 +638,11 @@ namespace EvolutionShop
         void SpawnParticle(CultureKind kind)
         {
             if (!ToolChamber) return;
-            var source = kind == CultureKind.Bloom ? bloomRoot : flowRoot;
+            var source = kind == CultureKind.Bloom ? bloomRoot : kind == CultureKind.Flow ? flowRoot :
+                kind == CultureKind.Spark && lastModel != null && lastModel.SparkResearchUnlocked ? upgradeRoot : null;
             if (!source) return;
-            var p = Organism(transform, kind == CultureKind.Bloom, kind == CultureKind.Bloom ? bloomMat : flowMat, .095f);
-            Vector3 from = source.TransformPoint(new Vector3(.36f, 1.0f, -.76f));
+            var p = CultureOrganism(transform, kind, .095f);
+            Vector3 from = source.TransformPoint(kind == CultureKind.Spark ? new Vector3(0, 1.5f, -.27f) : new Vector3(.36f, 1.0f, -.76f));
             p.position = from;
             particles.Add(new Particle { Root = p, Start = from, Seed = particles.Count * 1.73f });
         }
@@ -647,6 +657,7 @@ namespace EvolutionShop
             foreach (var font in fontMaterials.Keys) FontAtlasRebuilt(font);
             AnimateCells(bloomCells, time, .37f);
             AnimateCells(flowCells, time, 2.1f);
+            AnimateSparkCells(time);
             if (incubationRing) incubationRing.localRotation = Quaternion.Euler(0, time * 24, 15);
             for (int i = 0; i < reservoirCells.Count; i++)
             {
@@ -679,7 +690,7 @@ namespace EvolutionShop
                 if (emissionClock <= 0)
                 {
                     emissionClock = .12f;
-                    SpawnParticle(harvestingStation.Kind == StationKind.Bloom ? CultureKind.Bloom : CultureKind.Flow);
+                    SpawnParticle(harvestingCulture);
                 }
             }
             for (int i = particles.Count - 1; i >= 0; i--)

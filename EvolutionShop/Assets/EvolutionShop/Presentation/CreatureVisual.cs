@@ -11,10 +11,13 @@ namespace EvolutionShop
         Transform crest;
         string species;
         float phase;
+        Transform lanternBulb;
+        Material[] lanternMaterials;
 
         public void Build(string speciesId)
         {
             species = speciesId;
+            if (speciesId == "lanternfin") { BuildLanternfin(); return; }
             phase = speciesId == "pondlet" ? 0 : speciesId == "bubblebelly" ? 1.7f : 3.5f;
             bool round = speciesId == "bubblebelly";
             bool ribbon = speciesId == "ribbonfin";
@@ -60,12 +63,58 @@ namespace EvolutionShop
 
         public void Animate(float time)
         {
+            if (species == "lanternfin")
+            {
+                float flutter = Mathf.Sin(time * 4.6f + 1.1f);
+                if (tail) tail.localRotation = Quaternion.Euler(0, flutter * 16, 0);
+                if (finLeft) finLeft.localRotation = Quaternion.Euler(flutter * 7, -12, -16 + flutter * 14);
+                if (finRight) finRight.localRotation = Quaternion.Euler(-flutter * 7, 12, 16 - flutter * 14);
+                if (crest) crest.localRotation = Quaternion.Euler(0, 0, flutter * 5);
+                if (lanternBulb) lanternBulb.localScale = Vector3.one * (.20f + Mathf.Sin(time * 2.2f) * .012f);
+                return;
+            }
             float frequency = species == "bubblebelly" ? 4.1f : species == "ribbonfin" ? 3.5f : 6.8f;
             float wave = Mathf.Sin(time * frequency + phase);
             if (tail) tail.localRotation = Quaternion.Euler(0, wave * (species == "ribbonfin" ? 26 : 19), 0);
             if (finLeft) finLeft.localRotation = Quaternion.Euler(wave * 12, -18, -20 + wave * 22);
             if (finRight) finRight.localRotation = Quaternion.Euler(wave * -12, 18, 20 - wave * 22);
             if (crest) crest.localRotation = Quaternion.Euler(0, 0, wave * 7);
+        }
+
+        void BuildLanternfin()
+        {
+            var body = ShopWorld.MakeMaterial("Lanternfin lavender body", new Color(.56f, .39f, .83f), .05f, .63f);
+            var fin = ShopWorld.MakeMaterial("Lanternfin soft wing fins", new Color(.80f, .66f, .96f), .03f, .45f);
+            var cream = ShopWorld.MakeMaterial("Lanternfin pale belly", new Color(1f, .94f, .78f), 0, .35f);
+            var pupil = ShopWorld.MakeMaterial("Lanternfin curious pupils", new Color(.045f, .025f, .09f), 0, .7f);
+            var light = ShopWorld.MakeMaterial("Lanternfin warm lantern", new Color(1f, .83f, .27f), .02f, .42f);
+            light.EnableKeyword("_EMISSION");
+            light.SetColor("_EmissionColor", new Color(.32f, .16f, .025f));
+            lanternMaterials = new[] { body, fin, cream, pupil, light };
+            ShopWorld.Shape(transform, "Compact lantern body", PrimitiveType.Sphere, Vector3.zero, new Vector3(.45f, .4f, .65f), body);
+            ShopWorld.Shape(transform, "Lanternfin cream belly", PrimitiveType.Sphere, new Vector3(0, -.066f, -.045f), new Vector3(.39f, .29f, .55f), cream);
+            tail = new GameObject("Lanternfin short tail").transform;
+            tail.SetParent(transform, false); tail.localPosition = new Vector3(0, 0, .25f);
+            ShopWorld.Shape(tail, "Rounded lantern tail paddle", PrimitiveType.Sphere, new Vector3(0, 0, .17f), new Vector3(.075f, .27f, .26f), fin);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                ShopWorld.Shape(transform, "Lanternfin bright eye", PrimitiveType.Sphere, new Vector3(side * .145f, .065f, -.215f), Vector3.one * .13f, cream);
+                ShopWorld.Shape(transform, "Lanternfin pupil", PrimitiveType.Sphere, new Vector3(side * .145f, .065f, -.270f), Vector3.one * .067f, pupil);
+                ShopWorld.Shape(transform, "Lanternfin eye glint", PrimitiveType.Sphere, new Vector3(side * .145f - .013f, .083f, -.3f), Vector3.one * .021f, cream);
+            }
+            finLeft = ShopWorld.Shape(transform, "Lanternfin left wing", PrimitiveType.Sphere, new Vector3(-.27f, -.045f, .08f), new Vector3(.38f, .07f, .38f), fin);
+            finRight = ShopWorld.Shape(transform, "Lanternfin right wing", PrimitiveType.Sphere, new Vector3(.27f, -.045f, .08f), new Vector3(.38f, .07f, .38f), fin);
+            crest = ShopWorld.Shape(transform, "Lanternfin back crest", PrimitiveType.Sphere, new Vector3(0, .19f, .11f), new Vector3(.07f, .13f, .3f), fin);
+            ShopWorld.Shape(transform, "Short lantern stalk", PrimitiveType.Capsule, new Vector3(0, .235f, -.24f), new Vector3(.035f, .10f, .035f), body).localRotation = Quaternion.Euler(-20, 0, 0);
+            lanternBulb = ShopWorld.Shape(transform, "Glowing forehead lantern", PrimitiveType.Sphere, new Vector3(0, .39f, -.29f), Vector3.one * .2f, light);
+            Animate(0);
+        }
+
+        void OnDestroy()
+        {
+            if (lanternMaterials == null) return;
+            // Storage may already have released these private materials when retiring a resident.
+            foreach (var material in lanternMaterials) if (material) Destroy(material);
         }
     }
 }

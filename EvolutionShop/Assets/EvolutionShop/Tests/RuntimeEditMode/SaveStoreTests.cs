@@ -162,7 +162,7 @@ namespace EvolutionShop.Tests
         [TestCase("settings")]
         public void InvalidLegacyDataFailsMigrationWithoutChangingOriginal(string problem)
         {
-            var legacy=FreshSlot(); legacy.formatVersion=1; legacy.cycle=null; legacy.game.version=1; legacy.game.prices=null;
+            var legacy=FreshSlot(); legacy.formatVersion=1; legacy.cycle=null; legacy.game = LegacyGameSaveFixture.AsVersion(legacy.game, 1); legacy.game.prices=null;
             if(problem=="game") legacy.game.currency=-1;
             else legacy.sensitivity=float.NaN;
             string json=JsonUtility.ToJson(legacy); File.WriteAllText(PathFor(),json);
@@ -182,7 +182,7 @@ namespace EvolutionShop.Tests
         [TestCase("missing-format")]
         public void InvalidVersionTwoSlotIsRejectedWithoutExposingPartialGame(string problem)
         {
-            var data=FreshSlot(); data.formatVersion=2; data.trades=null; data.game.version=1; data.game.prices=null;
+            var data=FreshSlot(); data.formatVersion=2; data.trades=null; data.game = LegacyGameSaveFixture.AsVersion(data.game, 1); data.game.prices=null;
             switch(problem)
             {
                 case "null-cycle": data.cycle=null; break;
@@ -452,11 +452,11 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void FormatThirteenRetainsExplicitHistoricalGameAndReportPairings()
+        public void FormatFourteenRetainsExplicitHistoricalGameAndReportPairings()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(13));
-            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4 };
-            for (int format = 1; format <= 13; format++)
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(14));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4 };
+            for (int format = 1; format <= 14; format++)
             {
                 Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
                 Assert.That(SaveStore.ReportVersionFor(format), Is.EqualTo(reports[format]));
@@ -482,7 +482,7 @@ namespace EvolutionShop.Tests
         byte[] WriteLegacyReputationSlot(int format)
         {
             var slot = PaidReputationSlot(out _, out _, out _);
-            slot.game.version = format < 4 ? 1 : 2;
+            slot.game = LegacyGameSaveFixture.AsVersion(slot.game, format < 4 ? 1 : 2);
             if (format < 4) slot.game.prices = null;
             slot.trades.version = format == 3 ? 1 : format == 4 ? 2 : 3;
             if (format < 5) slot.trades.pendingCustomerIds = null;

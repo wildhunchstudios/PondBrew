@@ -37,7 +37,7 @@ namespace EvolutionShop.Tests
             var old = JsonUtility.FromJson<SlotData>(File.ReadAllText(Fixture(name)));
             Assert.That(old.formatVersion, Is.EqualTo(format)); Assert.That(old.layout.version, Is.EqualTo(layoutVersion)); Assert.That(old.game.version, Is.EqualTo(2));
             var slot = Read(out var model); AssertState(old, slot, model);
-            Assert.That(slot.formatVersion, Is.EqualTo(13)); Assert.That(slot.layout.version, Is.EqualTo(6)); Assert.That(slot.game.version, Is.EqualTo(3));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(slot.layout.version, Is.EqualTo(6)); Assert.That(slot.game.version, Is.EqualTo(GameModel.SaveVersion));
             Assert.That(slot.game.storage, Is.Empty); Assert.That(model.StorageIds, Is.Empty);
             Assert.That(ShopLayout.TryRestore(slot.layout, out var layout), Is.True); Assert.That(layout.RackCount, Is.Zero);
             Assert.That(model.Currency, Is.EqualTo(cash)); int count = 0;
@@ -228,14 +228,14 @@ namespace EvolutionShop.Tests
         [TestCase(12, 3, 5)] [TestCase(13, 2, 6)] [TestCase(12, 2, 6)] [TestCase(13, 3, 5)]
         public void NewAndPreviousGameLayoutPairingsRemainFrozen(int envelope, int game, int layout)
         {
-            var slot = Fresh(); Write(slot); Read(out _); slot.formatVersion = envelope; slot.game.version = game; slot.layout.version = layout;
+            var slot = Fresh(); Write(slot); Read(out _); slot.formatVersion = envelope; slot.game = LegacyGameSaveFixture.AsVersion(slot.game, game); slot.layout.version = layout;
             RejectRead(JsonUtility.ToJson(slot));
         }
 
         [TestCase(1)] [TestCase(2)]
         public void OldGameVersionsCannotAcquireStorageByAddingNewFields(int gameVersion)
         {
-            var slot = Fresh(); slot.formatVersion = gameVersion == 1 ? 3 : 12; slot.game.version = gameVersion;
+            var slot = Fresh(); slot.formatVersion = gameVersion == 1 ? 3 : 12; slot.game = LegacyGameSaveFixture.AsVersion(slot.game, gameVersion);
             if (gameVersion == 1) { slot.game.prices = null; slot.trades.version = 1; } else slot.layout.version = 5;
             slot.game.storage = new[] { new StorageSave { storageId = First } };
             RejectRead(JsonUtility.ToJson(slot));

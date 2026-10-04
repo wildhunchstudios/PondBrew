@@ -301,7 +301,7 @@ namespace EvolutionShop.Tests
 
         string PathFor() => Path.Combine(directory, "slot.json");
         // Formats 1-3 carried game version 1, which had no price tags.
-        SaveData LegacyGame() { var game = model.CaptureSave(); game.version = 1; game.prices = null; return game; }
+        SaveData LegacyGame() { var game = model.CaptureSave(); game = LegacyGameSaveFixture.AsVersion(game, 1); game.prices = null; return game; }
         int StockedCount() => (model.GetTank("tank-a").HasValue ? 1 : 0) + (model.GetTank("tank-b").HasValue ? 1 : 0);
         SlotData Slot() => new SlotData
         {
