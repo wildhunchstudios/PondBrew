@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "checkedDate": "2026-10-05",
+  "baselineCommit": "927576db718b511db21ea804c6f94d6087548e9f",
+  "projectRoot": "C:\\dev\\DumbVideoGameStudio",
+  "unityProject": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop",
+  "preservation": {
+    "unityVersion": "6000.3.21f1",
+    "engineUpgrade": false,
+    "approvedArtDirection": "Cozy colorful cartoon front shop; quirky cartoon science back lab",
+    "gameplayMilestone": "R06.5v1 delivered; revised-look/audio feedback pending; R07 unstarted"
+  },
+  "policies": {
+    "paidGenerationEnabled": false,
+    "apiAccessApproved": false,
+    "externalAssetUploadsApproved": false,
+    "budget": null,
+    "newAutomaticHooks": false,
+    "automaticProjectTrustChange": false
+  },
+  "components": [
+    {
+      "name": "Unity CLI",
+      "version": "1.0.0-beta.6",
+      "path": "C:\\Users\\retai\\AppData\\Local\\Unity\\bin\\unity.exe",
+      "status": "already working CLI; live Editor connection pending approval",
+      "source": "https://docs.unity.com/en-us/unity-cli",
+      "evidence": [
+        "unity-status-baseline.json",
+        "unity-batch-exit.json",
+        "unity-batch-inspection.log"
+      ],
+      "rollback": "Existing CLI preserved; remove only new project-local unity-cli skill if unwanted."
+    },
+    {
+      "name": "Unity Pipeline",
+      "version": "0.8.0-exp.1",
+      "status": "pending approval; NOT installed",
+      "source": "https://packages.unity.com/com.unity.pipeline",
+      "sha1": "62c08c808737255821f3449466689a527a2eea50",
+      "proposal": "Docs/tooling/UNITY_CONTROL_PROPOSAL.md",
+      "rollback": "No project package mutation occurred."
+    },
+    {
+      "name": "Blender",
+      "version": "5.0.1",
+      "path": "C:\\Program Files\\Blender Foundation\\Blender 5.0\\blender.exe",
+      "status": "already installed; scratch scene read verified",
+      "evidence": [
+        "blender-ready.json",
+        "blender-mcp-probe.json",
+        "blender-stopped.json"
+      ]
+    },
+    {
+      "name": "mcp-for-blender",
+      "version": "2.1.6",
+      "source": "https://github.com/ahujasid/mcp-for-blender",
+      "reviewedCommit": "46a9bf467a2470bad8f10391dd271af9872db551",
+      "path": "C:\\dev\\DumbVideoGameStudio\\.tooling\\blender-venv",
+      "scope": "project-local environment and session addon, no global preference changes",
+      "status": "installed and verified over MCP; native Codex activation pending project trust/reload",
+      "pythonDependencies": "Tools/Tooling/requirements-lock.txt",
+      "addonSha256": "eb0facf69781a30e69792532087d8d41c6a14fcd323353250abe7988ee297fa5",
+      "loopback": "127.0.0.1:19876",
+      "telemetry": false,
+      "safeMode": true,
+      "enabledTools": [
+        "get_scene_info",
+        "execute_blender_code",
+        "look"
+      ],
+      "rollback": "Stop owned session with Tools/Tooling/Stop-Blender.ps1; remove this project MCP table and optional ignored environment. Leave existing global addon/preferences alone."
+    },
+    {
+      "name": "Context7",
+      "serverVersionObserved": "4.1.1",
+      "url": "https://mcp.context7.com/mcp",
+      "scope": "project .codex/config.toml; one remote MCP mode",
+      "status": "verified anonymous resolve and documentation retrieval; native Codex activation pending project trust/reload",
+      "library": "/unity-technologies/inputsystem",
+      "requestedVersion": "1.19.0",
+      "actualSourceVersion": "develop branch; exact version not established",
+      "fallback": "EvolutionShop/Library/PackageCache/com.unity.inputsystem@21a28c3a6c83/Documentation~/Actions.md",
+      "evidence": [
+        "context7-remote-probe.json"
+      ],
+      "rollback": "Remove only the context7 project MCP table; no global package or API key was installed."
+    },
+    {
+      "name": "Figma",
+      "version": "15.0.0",
+      "plugin": "figma@openai-curated-remote",
+      "path": "C:\\Users\\retai\\.codex\\plugins\\cache\\openai-curated-remote\\figma\\15.0.0",
+      "scope": "Codex official plugin",
+      "status": "installed/enabled; pending connector authentication or refresh and permitted design read",
+      "publicManifestVersionReviewed": "2.0.20 (marketplace resolved 15.0.0; actual installed manifest subsequently reviewed)",
+      "evidence": [
+        "selected-plugins-final.json",
+        "figma-remote-probe.json"
+      ],
+      "rollback": "User may uninstall the new Figma plugin through Plugins; no Figma file was changed."
+    },
+    {
+      "name": "Unity Essentials workflow skills",
+      "version": "0.1.3",
+      "plugin": "unity-workbench",
+      "status": "already installed; preserved",
+      "evidence": [
+        "selected-plugins-final.json"
+      ]
+    },
+    {
+      "name": "Project skills",
+      "scope": ".agents/skills",
+      "status": "6 authored plus official Unity CLI skill installed; 7 format validators passed",
+      "skills": [
+        {
+          "name": "game-art-direction",
+          "path": ".agents/skills/game-art-direction/SKILL.md",
+          "sha256": "13703c7c5f098a69ae96a84d2f9e825f3eccc2a34a3f10c7a2930e4f64a178f0"
+        },
+        {
+          "name": "blender-to-unity-assets",
+          "path": ".agents/skills/blender-to-unity-assets/SKILL.md",
+          "sha256": "73283626074ed4191ff504e3fa79ef27c633b1b6869668d1b44d5359512284c4"
+        },
+        {
+          "name": "unity-game-ui-ux",
+          "path": ".agents/skills/unity-game-ui-ux/SKILL.md",
+          "sha256": "892d9919e6ddd7b9d846fc7a82cbb49bb0e583e4f2a3cb676e886cc386594911"
+        },
+        {
+          "name": "game-research-evidence",
+          "path": ".agents/skills/game-research-evidence/SKILL.md",
+          "sha256": "8f4fb27cbdb3905dc90ba399ab42962fe5a890edc75d79108a0f2adfe3248546"
+        },
+        {
+          "name": "game-economy-simulation",
+          "path": ".agents/skills/game-economy-simulation/SKILL.md",
+          "sha256": "d8fbb92a02c01f26ee5b833a61b15899bcb40e963f897171ca7bb9e8f8ed0637"
+        },
+        {
+          "name": "game-session-handoff",
+          "path": ".agents/skills/game-session-handoff/SKILL.md",
+          "sha256": "ff9dc2723ae6e6cd14d53d674153ce472eca2fc4149e18caf4e70602d86783f5"
+        },
+        {
+          "name": "unity-cli",
+          "path": ".agents/skills/unity-cli/SKILL.md",
+          "sha256": "7d37583dbe79665cd61de80adfd287362a3b713d99cca7cc936f60e05d4a93de"
+        }
+      ]
+    }
+  ],
+  "existingBlenderAddon": {
+    "path": "C:\\Users\\retai\\AppData\\Roaming\\Blender Foundation\\Blender\\5.0\\scripts\\addons\\addon.py",
+    "version": [
+      1,
+      2
+    ],
+    "sha256": "8a95c52fd0141a0e90943e96804845bd25b76c944f7355e422b96db971f50050",
+    "preserved": true,
+    "activeDuringTest": false
+  },
+  "evidenceRoot": "Docs/Evidence/toolkit-2026-10-05",
+  "skipped": {
+    "competingUnityBridges": "No duplicate provider; Pipeline proposal uses existing official CLI.",
+    "Superpowers": "Reviewed upstream session-start hook and Codex manifest (hooks empty); full methodology duplicates installed Unity workflows. Bounded review/evidence guidance lives in project handoff skill.",
+    "CreativeProduction": "Native image generation and installed asset skills already cover current art task; no new service gap.",
+    "Impeccable": "No browser frontend in active scope.",
+    "Playwright": "Native Windows Unity game; existing browser tools cover any incidental browsing.",
+    "GitHub": "No issue/PR/CI integration gap in this local-only assignment; gh absent on PATH; no remote operations.",
+    "Exa": "Native web plus Context7 suffices.",
+    "Meshy": "Paid generation disabled; no API access/upload consent/budget.",
+    "GameDevelopmentStudio": "Skills already installed; game-dev CLI unavailable on PATH, adapter/provider workflows unverified.",
+    "Build3DGameRooms": "Installed skill retained; paid Meshy dependency not activated.",
+    "BrowserGameStudio": "Existing browser skills retained but not used to replace Unity."
+  }
+}

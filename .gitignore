@@ -12,3 +12,6 @@ Builds/
 *.tmp
 .DS_Store
 EvolutionShop/.vscode/
+
+# Project-local tooling environments and scratch sessions
+.tooling/

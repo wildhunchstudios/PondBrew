@@ -1,0 +1,18 @@
+# Evolution Shop only. No duplicate Unity MCP: use the existing Unity CLI.
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+enabled_tools = ["resolve-library-id", "query-docs"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+
+[mcp_servers.blender]
+command = 'C:\dev\DumbVideoGameStudio\.tooling\blender-venv\Scripts\mcp-for-blender.exe'
+enabled_tools = ["get_scene_info", "execute_blender_code", "look"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+
+[mcp_servers.blender.env]
+BLENDER_HOST = "127.0.0.1"
+BLENDER_PORT = "19876"
+BLENDER_MCP_SAFE_MODE = "1"
+DISABLE_TELEMETRY = "true"
