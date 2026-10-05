@@ -26,6 +26,10 @@ namespace EvolutionShop
             smallStyle = new GUIStyle(bodyStyle) {fontSize = 13};
             smallStyle.normal.textColor = new Color(0.31f, 0.39f, 0.34f);
             buttonStyle = new GUIStyle(GUI.skin.button) {fontSize = 16, fontStyle = FontStyle.Bold, wordWrap = true, padding = new RectOffset(14,14,10,10)};
+            // The built-in grey button backgrounds need dark text with the cream panel palette.
+            Color buttonInk = new Color(0.025f, 0.075f, 0.065f);
+            buttonStyle.normal.textColor = buttonStyle.hover.textColor = buttonStyle.active.textColor = buttonStyle.focused.textColor = buttonInk;
+            buttonStyle.onNormal.textColor = buttonStyle.onHover.textColor = buttonStyle.onActive.textColor = buttonStyle.onFocused.textColor = buttonInk;
             statStyle = new GUIStyle(headingStyle); statStyle.normal.textColor = mint;
             centerStyle = new GUIStyle(bodyStyle) {alignment = TextAnchor.MiddleCenter};
             controlsStyle = new GUIStyle(smallStyle) {alignment = TextAnchor.MiddleCenter, wordWrap = false};
