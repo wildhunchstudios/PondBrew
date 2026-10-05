@@ -135,6 +135,13 @@ namespace EvolutionShop
             for(var current=node;current!=root;current=current.parent)if(!current.gameObject.activeSelf)return false;
             return true;
         }
+        static int ContractTriangleCount(Mesh mesh)
+        {
+            int count = 0;
+            for (int i = 0; i < mesh.subMeshCount; i++)
+                if (mesh.GetTopology(i) == MeshTopology.Triangles) count += (int)mesh.GetIndexCount(i) / 3;
+            return count;
+        }
         static VisualContractRow ContractVisualRow(Transform root,Bounds bounds,Bounds limits,int samples)
         {
             var materials=new HashSet<Material>();int meshes=0,triangles=0;
@@ -142,7 +149,7 @@ namespace EvolutionShop
             foreach(var filter in root.GetComponentsInChildren<MeshFilter>(true))
             {
                 if(!filter.sharedMesh)throw new InvalidOperationException("Missing sample mesh: "+filter.name);
-                meshes++;triangles+=filter.sharedMesh.triangles.Length/3;
+                meshes++;triangles+=ContractTriangleCount(filter.sharedMesh);
             }
             foreach(var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
             {

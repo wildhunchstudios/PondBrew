@@ -77,6 +77,7 @@ namespace EvolutionShop
         void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
         void OnDestroy()
         {
+            DisposeRedesign();
             DisposeSamplePresentation();
             DisposeRoomArt();
             DisposeConditioningPresentation();
@@ -344,6 +345,9 @@ namespace EvolutionShop
                 cells.Add(cell);
             }
             if (bloom) BuildLabSample(r);
+            if (AttachRedesign(r, "GrowerBase", "Rounded machine foot", "Porcelain grower base", "Culture stripe", "Chamber lower collar", "Ribbed base seam", "Bloom pressure gauge"))
+                RedesignLabelDepth(r, -.64f, 2.30f, 1.28f, true);
+            AttachRedesign(r, "GrowerCap", "Rounded lid", "Bloom cap stripe", "Cap hand grip");
             return r;
         }
 
@@ -384,6 +388,8 @@ namespace EvolutionShop
             status[StationKind.Incubator] = Text(r, "ADD MEASURED DOSES", new Vector3(0, .31f, -.674f), .045f, Color.white);
             Text(r, "03 / MAKE A LITTLE LIFE", new Vector3(0, 2.40f, 0), .047f, new Color(.1f, .27f, .28f), 1.9f);
             AddIncubatorArt(r);
+            if (AttachRedesign(r, "IncubatorBase", "Incubator pedestal", "Rounded worktop", "Incubator enamel finish"))
+                RedesignLabelDepth(r, -.738f, .72f, 1.38f);
             var display = Group("Incubator creature", r, new Vector3(0, 1.48f, 0));
             displays["incubator"] = new Display { Root = display, Incubator = true, Seed = 3.5f };
             for (int i = 0; i < 2; i++)
@@ -421,6 +427,8 @@ namespace EvolutionShop
                 bubbles.Add(bubble);
             }
             BuildStoreSample(r, id == "tank-a");
+            if (AttachRedesign(r, "DisplayCabinet", "Display cabinet", "Tank lower rim", "Inset wood cabinet door", "Raised door panel", "Cabinet pull"))
+                RedesignLabelDepth(r, -.765f, 2.22f, 1.64f);
         }
 
         void Counter(Vector3 position)
@@ -438,6 +446,8 @@ namespace EvolutionShop
             Shape(r, "Service bell base", PrimitiveType.Cylinder, new Vector3(-.61f, 1.17f, -.15f), new Vector3(.3f, .035f, .3f), dark);
             Shape(r, "Service bell", PrimitiveType.Sphere, new Vector3(-.61f, 1.21f, -.15f), new Vector3(.25f, .13f, .25f), gold);
             AddCounterArt(r);
+            if (AttachRedesign(r, "ServiceCounter", "Sales counter cabinet", "Sales counter top", "Counter toe", "Friendly counter finish"))
+                RedesignLabelDepth(r, -.61f, .54f, 1.5f);
         }
 
         void Upgrade(Vector3 position)
@@ -478,6 +488,10 @@ namespace EvolutionShop
             Shape(toolBody, "Siphon readout panel", PrimitiveType.Cube, new Vector3(0, .04f, -.17f), new Vector3(.21f, .08f, .012f), dark);
             toolReadout = Text(toolBody, "0 / 4", new Vector3(0, .04f, -.181f), .019f, new Color(.6f, 1f, .84f), .16f);
             for (int i = 0; i < 8; i++) reservoirCells.Add(Organism(ToolChamber, true, bloomMat, .026f));
+            if (AttachRedesign(toolBody, "SiphonCrown")) toolPumpCrown = redesignVisuals[redesignVisuals.Count - 1];
+            if (AttachRedesign(toolBody, "Siphon", "Soft grip", "Base coupling"))
+                foreach (Transform child in toolNozzle)
+                    if (child.name == "Barrel" || child.name == "Nozzle collar") child.gameObject.SetActive(false);
         }
 
         void Faceplate(Transform parent, string title, Vector3 position, Material accent)
@@ -628,6 +642,9 @@ namespace EvolutionShop
             ToolChamber.localScale = value ? new Vector3(1.35f, 1.48f, 1.35f) : Vector3.one;
             ToolChamber.localPosition = new Vector3(0, value ? .067f : .02f, .025f);
             toolUpgradeBand.gameObject.SetActive(value);
+            // Move only the authored pump above the resized cap; keep the grip/nozzle at the hand.
+            if (toolPumpCrown) toolPumpCrown.localPosition = Vector3.up *
+                (ToolChamber.localPosition.y + .115f * ToolChamber.localScale.y - .135f);
         }
 
         public void SetHarvesting(bool active, Station station)

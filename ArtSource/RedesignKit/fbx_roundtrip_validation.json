@@ -1,0 +1,205 @@
+{
+  "blender": "5.0.1",
+  "kind": "Local Blender FBX export/reimport verification; not Unity proof",
+  "passed": true,
+  "assets": [
+    {
+      "id": "DisplayCabinet",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 6900,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 5.960464477539063e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -1.0499999523162842,
+          -3.9258907236217055e-08,
+          -0.6500000357627869
+        ],
+        "max": [
+          1.0499999523162842,
+          0.9800000190734863,
+          0.6499999165534973
+        ]
+      }
+    },
+    {
+      "id": "ServiceCounter",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 7464,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 5.960464477539063e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -1.2000000476837158,
+          -3.1709117109812723e-08,
+          -0.5500000715255737
+        ],
+        "max": [
+          1.2000000476837158,
+          1.0999999046325684,
+          0.5499999523162842
+        ]
+      }
+    },
+    {
+      "id": "GrowerBase",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 5336,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 5.960464477539063e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.7618763446807861,
+          -3.812644067124893e-08,
+          -0.6740000247955322
+        ],
+        "max": [
+          0.7618763446807861,
+          1.0049999952316284,
+          0.6399999856948853
+        ]
+      }
+    },
+    {
+      "id": "GrowerCap",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 1656,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 1.7881393432617188e-07,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.6079999804496765,
+          2.0899999141693115,
+          -0.5000401735305786
+        ],
+        "max": [
+          0.6079999804496765,
+          2.244999885559082,
+          0.5700398087501526
+        ]
+      }
+    },
+    {
+      "id": "IncubatorBase",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 4268,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 5.960464477539063e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.949999988079071,
+          -4.378878060151692e-08,
+          -0.7000000476837158
+        ],
+        "max": [
+          0.949999988079071,
+          0.9000000357627869,
+          0.6999999284744263
+        ]
+      }
+    },
+    {
+      "id": "Siphon",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 1192,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 1.4901161193847656e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.11091835796833038,
+          -0.26499998569488525,
+          -0.1159999817609787
+        ],
+        "max": [
+          0.07657311111688614,
+          0.1552184820175171,
+          0.4950000047683716
+        ]
+      }
+    },
+    {
+      "id": "SiphonCrown",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 908,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 1.862645149230957e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.06749996542930603,
+          0.12399999797344208,
+          -0.04000001773238182
+        ],
+        "max": [
+          0.06749998778104782,
+          0.29600000381469727,
+          0.0899999588727951
+        ]
+      }
+    },
+    {
+      "id": "WallSign",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 2100,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 4.470348358154297e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.8100000023841858,
+          0.02000001072883606,
+          -0.16850005090236664
+        ],
+        "max": [
+          0.8100000023841858,
+          0.8400000333786011,
+          0.05499999597668648
+        ]
+      }
+    },
+    {
+      "id": "BotanicalShelf",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 3976,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 1.4901161193847656e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.7400000095367432,
+          -0.02298162132501602,
+          -0.18900002539157867
+        ],
+        "max": [
+          0.7400000095367432,
+          0.6460829377174377,
+          0.16099998354911804
+        ]
+      }
+    }
+  ]
+}

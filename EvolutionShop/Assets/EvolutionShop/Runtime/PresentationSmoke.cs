@@ -25,6 +25,7 @@ namespace EvolutionShop
             syntheticKeyboard.MakeCurrent();cycleMouse.MakeCurrent();
             shop.Customers.ArrivalsEnabled=false;
             Check(shop.World.Stations.Count==7 && shop.Customers.Ready,"Presentation retains seven stations and baked store navigation");
+            AuditRedesignKit();
             yield return ResearchHarvest(CultureKind.Bloom);yield return ResearchHarvest(CultureKind.Flow);
             yield return ResearchFacilityPanel(ShopLayout.IncubatorFacilityId,ShopPanel.Incubator);
             Ok(shop.Perform(shop.Model.Dose(CultureKind.Bloom)),"Stage real harvested Bloom");
@@ -150,7 +151,7 @@ namespace EvolutionShop
                 int meshes=0,triangles=0,colliders=0,lights=0;
                 var materials=new System.Collections.Generic.HashSet<Material>();
                 foreach(var filter in shop.World.GetComponentsInChildren<MeshFilter>(true))
-                    if(filter.sharedMesh){meshes++;triangles+=filter.sharedMesh.triangles.Length/3;}
+                    if(filter.sharedMesh){meshes++;triangles+=ContractTriangleCount(filter.sharedMesh);}
                 foreach(var renderer in shop.World.GetComponentsInChildren<Renderer>(true))
                     foreach(var material in renderer.sharedMaterials)if(material)materials.Add(material);
                 foreach(var collider in shop.World.GetComponentsInChildren<Collider>(true))if(collider.enabled)colliders++;

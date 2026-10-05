@@ -445,7 +445,7 @@ namespace EvolutionShop
         }
         void OnApplicationFocus(bool focus) { if (!focus && initialized && !ValidationMode && !Paused) SetPanel(ShopPanel.Pause); }
         void OnApplicationQuit() { if (initialized && !quitRequested) SaveNow(); }
-        void OnDestroy() { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+        void OnDestroy() { DisposeHudTheme(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         void Quit()
         {
             if (!SaveNow()) { SetPanel(ShopPanel.Pause); return; }

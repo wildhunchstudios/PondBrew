@@ -1,0 +1,81 @@
+{
+  "scope": "All pre-existing FBX/meta except intentionally revised Siphon.fbx",
+  "preserved": [
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\BotanicalShelf.fbx",
+      "sha256": "A128BE96C87361EE48F334CB5F369DFA35CD0619DF1BC47342F83805CC15BD7B"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\BotanicalShelf.fbx.meta",
+      "sha256": "3B06BCF5A74A37E0F6579B0B80264E3A1A70D9B9E294062EE9573D815E3092D7"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\DisplayCabinet.fbx",
+      "sha256": "55FA4879B27BEEB107220B696D22CBFB932800C8765C9CE6553E23071AB3077A"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\DisplayCabinet.fbx.meta",
+      "sha256": "FCBAC9549D8E1E340C91538D6289962FFAE0A4B70C653740E815F6024484F39C"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\GrowerBase.fbx",
+      "sha256": "2B67ECF5D52D5A5DFFFA3B90339230D79D07CDBCD6926C9C3F5B096851852608"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\GrowerBase.fbx.meta",
+      "sha256": "015B975AC75D319BA1669951D000C89AF714B952714381754F5935661D1FD3E3"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\GrowerCap.fbx",
+      "sha256": "DD3359A7D43CA8082728F4A8149A44920B9B666119DF13DAC78CECCB6022ECDC"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\GrowerCap.fbx.meta",
+      "sha256": "E2F80C78CDD43648D3B28868FB3DC326D6059AD5A2337F5E6150C4E07049714A"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\IncubatorBase.fbx",
+      "sha256": "439E36FA1493C14990717283900E7F2AEED4EB904DFBF8270A7169518CFB75F9"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\IncubatorBase.fbx.meta",
+      "sha256": "E6CFCA6587EE92336B890631B759899F7CAB016F19285F7D321854F511B60ED9"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\ServiceCounter.fbx",
+      "sha256": "BD9B75FBA81BACC1C13E4285BA0C8EB07B1157C113309BF04EEB759D383D07B1"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\ServiceCounter.fbx.meta",
+      "sha256": "7DCA249736F62498C187462638B5086622555F700E965B867B3A11335DD40B04"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\Siphon.fbx.meta",
+      "sha256": "B66F7747F6B2E166641FB55E1D7DB739C46AF486D0AFD1D7BD9BD59B083C091D"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\WallSign.fbx",
+      "sha256": "D804D1CCAEC4DDB81D5276D2AC81639A396038486E9F8E97D355D777F5A6FB38"
+    },
+    {
+      "unchanged": true,
+      "path": "C:\\dev\\DumbVideoGameStudio\\EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\RedesignKit\\WallSign.fbx.meta",
+      "sha256": "5D5B8C3553A3ECACB1ADA938FA0AD910E026B1E140277F4FCF50BDE007F244EF"
+    }
+  ],
+  "passed": true
+}

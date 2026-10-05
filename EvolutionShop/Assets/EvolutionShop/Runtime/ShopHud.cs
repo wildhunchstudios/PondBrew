@@ -5,51 +5,64 @@ namespace EvolutionShop
     public sealed partial class ShopSession
     {
         GUIStyle titleStyle, headingStyle, bodyStyle, smallStyle, buttonStyle, statStyle, centerStyle, controlsStyle, hudTitleStyle, hudBodyStyle, hudSmallStyle, hudCurrencyStyle, toggleStyle;
+        GUIStyle hudLightStyle, hudLightSmallStyle, hudBadgeStyle, hudKeyStyle, hudLargeCurrencyStyle, hudLongDayStyle;
+        ShopUiTheme hudTheme;
         readonly GUIContent hudMeasure = new GUIContent();
-        // These shared panel colours also keep station menus and the preview kit coherent.
-        readonly Color ink = new Color(1f, 0.968f, 0.876f, 0.96f);
-        readonly Color mint = new Color(0.13f, 0.43f, 0.39f);
-        readonly Color hudInk = new Color(0.16f, 0.27f, 0.26f);
-        readonly Color coral = new Color(0.79f, 0.38f, 0.29f);
+        readonly Color ink = ShopUiTheme.Paper;
+        readonly Color mint = ShopUiTheme.Teal;
+        readonly Color hudInk = ShopUiTheme.Ink;
+        readonly Color coral = ShopUiTheme.Coral;
         Vector2 panelScroll;
         ShopTradeLedger reportDisplayLedger;
         TradeDaySave reportDisplaySnapshot;
         int reportDisplayDay = -1;
+
         void Styles()
         {
             if (titleStyle != null) return;
-            titleStyle = new GUIStyle(GUI.skin.label) {fontSize = 28, fontStyle = FontStyle.Bold};
+            hudTheme = new ShopUiTheme(GUI.skin);
+            titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 28, fontStyle = FontStyle.Bold };
             titleStyle.normal.textColor = hudInk;
-            headingStyle = new GUIStyle(titleStyle) {fontSize = 20};
-            bodyStyle = new GUIStyle(GUI.skin.label) {fontSize = 16, wordWrap = true};
+            headingStyle = new GUIStyle(titleStyle) { fontSize = 20 };
+            bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 16, wordWrap = true };
             bodyStyle.normal.textColor = hudInk;
-            smallStyle = new GUIStyle(bodyStyle) {fontSize = 13};
-            smallStyle.normal.textColor = new Color(0.31f, 0.39f, 0.34f);
-            buttonStyle = new GUIStyle(GUI.skin.button) {fontSize = 16, fontStyle = FontStyle.Bold, wordWrap = true, padding = new RectOffset(14,14,10,10)};
-            // The built-in grey button backgrounds need dark text with the cream panel palette.
-            Color buttonInk = new Color(0.025f, 0.075f, 0.065f);
-            buttonStyle.normal.textColor = buttonStyle.hover.textColor = buttonStyle.active.textColor = buttonStyle.focused.textColor = buttonInk;
-            buttonStyle.onNormal.textColor = buttonStyle.onHover.textColor = buttonStyle.onActive.textColor = buttonStyle.onFocused.textColor = buttonInk;
+            smallStyle = new GUIStyle(bodyStyle) { fontSize = 13 };
+            smallStyle.normal.textColor = ShopUiTheme.Muted;
+            buttonStyle = hudTheme.Button;
             statStyle = new GUIStyle(headingStyle); statStyle.normal.textColor = mint;
-            centerStyle = new GUIStyle(bodyStyle) {alignment = TextAnchor.MiddleCenter};
-            controlsStyle = new GUIStyle(smallStyle) {alignment = TextAnchor.MiddleCenter, wordWrap = false};
-            hudTitleStyle = new GUIStyle(headingStyle) {fontSize = 18, wordWrap = true};
-            hudBodyStyle = new GUIStyle(bodyStyle) {fontSize = 15};
-            hudSmallStyle = new GUIStyle(smallStyle) {fontSize = 12, wordWrap = true};
-            hudCurrencyStyle = new GUIStyle(statStyle) {fontSize = 18};
+            centerStyle = new GUIStyle(bodyStyle) { alignment = TextAnchor.MiddleCenter };
+            controlsStyle = new GUIStyle(smallStyle) { alignment = TextAnchor.MiddleCenter, wordWrap = false };
+            hudTitleStyle = new GUIStyle(headingStyle) { fontSize = 16, wordWrap = true };
+            hudBodyStyle = new GUIStyle(bodyStyle) { fontSize = 14 };
+            hudSmallStyle = new GUIStyle(smallStyle) { fontSize = 11, wordWrap = true };
+            hudCurrencyStyle = new GUIStyle(statStyle) { fontSize = 22, alignment = TextAnchor.MiddleLeft };
+            hudLargeCurrencyStyle = new GUIStyle(hudCurrencyStyle) { fontSize = 17 };
+            hudLightStyle = new GUIStyle(hudTitleStyle); hudLightStyle.normal.textColor = ink;
+            hudLightSmallStyle = new GUIStyle(hudSmallStyle); hudLightSmallStyle.normal.textColor = new Color(.83f, .9f, .8f);
+            hudLongDayStyle = new GUIStyle(hudLightStyle) { fontSize = 10 };
+            hudBadgeStyle = new GUIStyle(hudBodyStyle) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            hudKeyStyle = new GUIStyle(hudLightStyle) { alignment = TextAnchor.MiddleCenter, wordWrap = false };
             toggleStyle = new GUIStyle(GUI.skin.toggle);
             toggleStyle.normal.textColor = toggleStyle.hover.textColor = toggleStyle.active.textColor = toggleStyle.focused.textColor = hudInk;
             toggleStyle.onNormal.textColor = toggleStyle.onHover.textColor = toggleStyle.onActive.textColor = toggleStyle.onFocused.textColor = hudInk;
         }
+
+        // Called by the session owner; UI textures/skin are never shared imported assets.
+        void DisposeHudTheme()
+        {
+            hudTheme?.Dispose(); hudTheme = null; titleStyle = null; hudLightControlsStyle = null;
+        }
+
         static void Box(Rect rect, Color color)
         {
             Color before = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = before;
         }
         void HudCard(Rect rect, Color accent)
         {
-            Box(new Rect(rect.x + 2, rect.y + 3, rect.width, rect.height), new Color(0.12f, 0.19f, 0.15f, 0.18f));
-            Box(rect, ink);
-            Box(new Rect(rect.x, rect.y, 3, rect.height), accent);
+            hudTheme.Draw(new Rect(rect.x, rect.y + 3, rect.width, rect.height), hudTheme.Shadow);
+            hudTheme.Draw(rect, hudTheme.Card);
+            // A small stitched tab identifies the card without adding a heavy frame.
+            hudTheme.Draw(new Rect(rect.x + 12, rect.y + 1, Mathf.Min(34, rect.width - 24), 4), hudTheme.Accent, accent);
         }
         float HudTextHeight(string text, GUIStyle style, float width)
         {
@@ -60,122 +73,176 @@ namespace EvolutionShop
         {
             if (!initialized) return;
             Styles();
+            Matrix4x4 previousMatrix = GUI.matrix;
+            GUISkin previousSkin = GUI.skin;
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);
-            if (Panel == ShopPanel.Presentation) { DrawPresentationView(); GUI.matrix=Matrix4x4.identity; return; }
-            DrawCompactStatus();
-            DrawCultureStatus();
-            HudCard(new Rect(438, 674, 548, 28), mint);
-            GUI.Label(new Rect(448, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
-            if (Panel == ShopPanel.None && !PlacementActive)
+            GUI.skin = hudTheme.Skin;
+            try
             {
-                Box(new Rect(636, 356, 8, 8), new Color(0.13f, 0.27f, 0.24f, 0.65f));
-                Box(new Rect(638, 358, 4, 4), new Color(1f, 0.98f, 0.86f, 0.95f));
-                float hintTop = 638;
-                if (Focused != null)
+                if (Panel == ShopPanel.Presentation) { DrawPresentationView(); return; }
+                DrawCompactStatus();
+                DrawCultureStatus();
+                hudTheme.Draw(new Rect(433, 676, 548, 26), hudTheme.DarkCard);
+                GUI.Label(new Rect(443, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", hudLightControlsStyle);
+                if (Panel == ShopPanel.None && !PlacementActive) DrawFocusPrompt();
+                if (Panel != ShopPanel.None) DrawPanel();
+                if (PlacementActive) DrawPlacementOverlay();
+                DrawHudNotice();
+                DrawDiscoveryCard();
+                DrawComedyCaption();
+                if (BaselinePreview)
                 {
-                    bool culture = TryStationCulture(Focused, out var focusCulture);
-                    string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold LEFT MOUSE: Spark / E: research" : focusCulture == CultureKind.Mist ? "Hold LEFT MOUSE: Mist / E: vat" : "Hold LEFT MOUSE to collect") : "Press E to interact";
-                    float labelHeight = Mathf.Max(22, HudTextHeight(Focused.Label, centerStyle, 410));
-                    float hintHeight = Mathf.Max(22, HudTextHeight(hint, centerStyle, 410));
-                    float height = labelHeight + hintHeight + 16;
-                    hintTop -= height;
-                    HudCard(new Rect(420, hintTop, 440, height), mint);
-                    GUI.Label(new Rect(435, hintTop + 7, 410, labelHeight), Focused.Label, centerStyle);
-                    GUI.Label(new Rect(435, hintTop + 7 + labelHeight, 410, hintHeight), hint, centerStyle);
-                    if (HarvestProgress > 0)
-                    {
-                        Box(new Rect(435, 642, 410, 5), ink);
-                        Box(new Rect(435, 642, 410 * HarvestProgress, 5), mint);
-                    }
-                }
-                if (SlapTarget != null)
-                {
-                    string slapHint = SlapCooldownRemaining > 0 ? "Slap ready in " + SlapCooldownRemaining.ToString("0.0") + "s" :
-                        "Press " + SlapKey + " to slap / -1 reputation";
-                    float nameHeight = Mathf.Max(21, HudTextHeight(SlapTarget.ArchetypeName, centerStyle, 410));
-                    float hintHeight = Mathf.Max(21, HudTextHeight(slapHint, centerStyle, 410));
-                    float height = nameHeight + hintHeight + 14;
-                    float top = hintTop - height - 8;
-                    HudCard(new Rect(420, top, 440, height), coral);
-                    GUI.Label(new Rect(435, top + 6, 410, nameHeight), SlapTarget.ArchetypeName, centerStyle);
-                    GUI.Label(new Rect(435, top + 6 + nameHeight, 410, hintHeight), slapHint, centerStyle);
+                    HudCard(new Rect(430, 646, 562, 22), coral);
+                    GUI.Label(new Rect(441, 648, 540, 20), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", hudSmallStyle);
                 }
             }
-            if (Panel != ShopPanel.None) DrawPanel();
-            if (PlacementActive) DrawPlacementOverlay();
-            if (!string.IsNullOrEmpty(SaveError) || (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil))
-            {
-                string notice = string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED - " + SaveError;
-                float height = Mathf.Max(44, HudTextHeight(notice, centerStyle, 604) + 18);
-                // Transient feedback gets its own lane; never cover the clock, money or gag caption.
-                float top = Panel != ShopPanel.None ? 20 : Comedy.Active ? 208 : 112;
-                HudCard(new Rect(366, top, 642, height), string.IsNullOrEmpty(SaveError) ? mint : coral);
-                GUI.Label(new Rect(385, top + 9, 604, height - 18), notice, centerStyle);
-            }
-            if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
-            {
-                var species = Model.GetSpecies(revealedSpecies);
-                string recipe = RecipeText(species);
-                float recipeHeight = Mathf.Max(22, HudTextHeight(recipe, hudBodyStyle, 296));
-                float nameHeight = Mathf.Max(27, HudTextHeight(species.DisplayName, hudTitleStyle, 296));
-                HudCard(new Rect(18, 130, 326, 40 + nameHeight + recipeHeight), coral);
-                GUI.Label(new Rect(32, 140, 296, 19), "DISCOVERED / JOURNAL UPDATED", hudSmallStyle);
-                GUI.Label(new Rect(32, 160, 296, nameHeight), species.DisplayName, hudTitleStyle);
-                GUI.Label(new Rect(32, 160 + nameHeight, 296, recipeHeight), recipe, hudBodyStyle);
-            }
-            DrawComedyCaption();
-            if (BaselinePreview)
-            {
-                HudCard(new Rect(420, 646, 566, 22), coral);
-                GUI.Label(new Rect(431, 648, 545, 20), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", hudSmallStyle);
-            }
-            GUI.matrix = Matrix4x4.identity;
+            finally { GUI.skin = previousSkin; GUI.matrix = previousMatrix; }
         }
+
+        GUIStyle hudLightControlsStyle;
+        void DrawFocusPrompt()
+        {
+            hudTheme.Draw(new Rect(635, 355, 10, 10), hudTheme.Shadow);
+            hudTheme.Draw(new Rect(637, 357, 6, 6), hudTheme.Accent, ink);
+            float hintTop = 654;
+            if (Focused != null)
+            {
+                bool culture = TryStationCulture(Focused, out var focusCulture);
+                string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold left mouse to collect  /  E research" : focusCulture == CultureKind.Mist ? "Hold left mouse to collect  /  E vat" : "Hold left mouse to collect") : "Use station";
+                float labelHeight = Mathf.Max(21, HudTextHeight(Focused.Label, hudTitleStyle, 320));
+                float hintHeight = Mathf.Max(18, HudTextHeight(hint, hudSmallStyle, 320));
+                float height = labelHeight + hintHeight + 21;
+                hintTop -= height;
+                HudCard(new Rect(424, hintTop, 432, height), mint);
+                hudTheme.Draw(new Rect(436, hintTop + 12, 44, 37), hudTheme.DarkCard);
+                GUI.Label(new Rect(438, hintTop + 12, 40, 37), culture ? "LMB" : "E", hudKeyStyle);
+                GUI.Label(new Rect(492, hintTop + 9, 350, labelHeight), Focused.Label, hudTitleStyle);
+                GUI.Label(new Rect(492, hintTop + 9 + labelHeight, 350, hintHeight), hint, hudSmallStyle);
+                if (HarvestProgress > 0)
+                {
+                    hudTheme.Draw(new Rect(492, hintTop + height - 7, 348, 4), hudTheme.Inset);
+                    hudTheme.Draw(new Rect(492, hintTop + height - 7, 348 * Mathf.Clamp01(HarvestProgress), 4), hudTheme.Accent, mint);
+                }
+            }
+            if (SlapTarget != null)
+            {
+                string hint = SlapCooldownRemaining > 0 ? "Ready in " + SlapCooldownRemaining.ToString("0.0") + "s" : "Cartoon slap  /  -1 reputation";
+                float nameHeight = Mathf.Max(20, HudTextHeight(SlapTarget.ArchetypeName, hudTitleStyle, 300));
+                float height = nameHeight + 39;
+                float top = hintTop - height - 8;
+                HudCard(new Rect(444, top, 392, height), coral);
+                hudTheme.Draw(new Rect(456, top + 11, 36, 36), hudTheme.DarkCard);
+                GUI.Label(new Rect(457, top + 11, 34, 36), SlapKey.ToString(), hudKeyStyle);
+                GUI.Label(new Rect(504, top + 7, 318, nameHeight), SlapTarget.ArchetypeName, hudTitleStyle);
+                GUI.Label(new Rect(504, top + 9 + nameHeight, 318, 22), hint, hudSmallStyle);
+            }
+        }
+
+        float HudObjectiveHeight() => Mathf.Max(34, HudTextHeight(Objective(), hudBodyStyle, 246)) + 41;
         void DrawCompactStatus()
         {
-            HudCard(new Rect(18, 18, 326, 100), mint);
-            GUI.Label(new Rect(32, 24, 296, 26), PhaseTitle(), hudTitleStyle);
-            GUI.Label(new Rect(32, 51, 296, 34), Paused ? "PAUSED / " + ClockText() : ClockText(), hudSmallStyle);
-            GUI.Label(new Rect(32, 91, 296, 19), ReputationLine(), hudSmallStyle);
+            if (hudLightControlsStyle == null)
+            {
+                hudLightControlsStyle = new GUIStyle(controlsStyle);
+                hudLightControlsStyle.normal.textColor = ink;
+            }
+            // No persistent card crosses the top-centre view of the room.
+            hudTheme.Draw(new Rect(18, 21, 140, 54), hudTheme.Shadow);
+            hudTheme.Draw(new Rect(18, 18, 140, 54), hudTheme.DarkCard);
+            hudTheme.Icon(new Rect(28, 29, 31, 31), Cycle.Phase == ShopDayPhase.Night ? ShopUiTheme.Symbol.Moon : ShopUiTheme.Symbol.Sun);
+            GUI.Label(new Rect(67, 25, 83, 23), "DAY " + Cycle.DayNumber, Cycle.DayNumber > 9999 ? hudLongDayStyle : hudLightStyle);
+            GUI.Label(new Rect(67, 49, 83, 16), Paused ? "PAUSED" : Cycle.Phase == ShopDayPhase.Night ? "NIGHT PREP" : Cycle.Phase == ShopDayPhase.Open ? "SHOP OPEN" : "CLOSING", hudLightSmallStyle);
+            HudCard(new Rect(168, 18, 128, 54), mint);
+            int seconds = Mathf.CeilToInt(Cycle.SecondsRemaining);
+            string clock = Cycle.Phase == ShopDayPhase.Night ? "NO RUSH" : (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00");
+            GUI.Label(new Rect(180, 25, 104, 23), clock, hudBadgeStyle);
+            GUI.Label(new Rect(179, 49, 106, 18), Cycle.Phase == ShopDayPhase.Night ? "Untimed preparation" : Cycle.Phase == ShopDayPhase.Open ? "Time left to trade" : "Until preparation", hudSmallStyle);
 
-            string objective = Objective();
-            float objectiveHeight = Mathf.Max(36, HudTextHeight(objective, hudBodyStyle, 610));
-            HudCard(new Rect(364, 18, 644, objectiveHeight + 37), mint);
-            GUI.Label(new Rect(380, 25, 612, 18), "EVOLUTION SHOP  /  YOUR NEXT STEP", hudSmallStyle);
-            GUI.Label(new Rect(380, 45, 610, objectiveHeight), objective, hudBodyStyle);
+            if (Panel == ShopPanel.None)
+            {
+                float height = HudObjectiveHeight();
+                HudCard(new Rect(18, 86, 278, height), mint);
+                hudTheme.Icon(new Rect(30, 97, 20, 20), ShopUiTheme.Symbol.Leaf);
+                GUI.Label(new Rect(57, 99, 221, 18), "YOUR NEXT STEP", hudSmallStyle);
+                GUI.Label(new Rect(32, 123, 246, height - 40), Objective(), hudBodyStyle);
+            }
 
-            string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
-            HudCard(new Rect(1028, 18, 234, 100), Model.Incubator.Phase == IncubatorPhase.Ready ? coral : mint);
-            GUI.Label(new Rect(1042, 24, 206, 28), Model.Currency + "  CREDITS", hudCurrencyStyle);
-            GUI.Label(new Rect(1042, 53, 206, 20), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discovered", hudSmallStyle);
-            GUI.Label(new Rect(1042, 82, 206, 25), machine, hudBodyStyle);
+            HudCard(new Rect(1030, 18, 232, 54), ShopUiTheme.Honey);
+            hudTheme.Icon(new Rect(1042, 27, 36, 36), ShopUiTheme.Symbol.Coin);
+            GUI.Label(new Rect(1086, 22, 162, 30), Model.Currency.ToString("N0"), Model.Currency > 9999999 ? hudLargeCurrencyStyle : hudCurrencyStyle);
+            GUI.Label(new Rect(1088, 49, 160, 18), "SHOP CREDITS", hudSmallStyle);
+            HudCard(new Rect(1030, 82, 232, 41), mint);
+            hudTheme.Icon(new Rect(1041, 91, 23, 23), ShopUiTheme.Symbol.Star);
+            GUI.Label(new Rect(1071, 94, 178, 22), "Rep " + Reputation.Points + "/100   |   Appeal " + Appeal.Points + "/30", hudSmallStyle);
+
+            bool ready = Model.Incubator.Phase == IncubatorPhase.Ready;
+            string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "Growing / " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : ready ? "Specimen ready!" : "Ready to create";
+            HudCard(new Rect(1030, 133, 232, 66), ready ? coral : mint);
+            hudTheme.Icon(new Rect(1042, 145, 31, 31), ShopUiTheme.Symbol.Flask);
+            GUI.Label(new Rect(1084, 144, 164, 24), machine, hudTitleStyle);
+            GUI.Label(new Rect(1084, 172, 164, 18), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discoveries", hudSmallStyle);
             if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0)
             {
                 string status = Customers.Status;
-                float statusHeight = Mathf.Max(34, HudTextHeight(status, hudBodyStyle, 206));
-                HudCard(new Rect(1028, 130, 234, statusHeight + 38), mint);
-                GUI.Label(new Rect(1042, 137, 206, 19), "FRONT STORE", hudSmallStyle);
-                GUI.Label(new Rect(1042, 158, 206, statusHeight), status, hudBodyStyle);
+                float statusHeight = Mathf.Max(34, HudTextHeight(status, hudBodyStyle, 204));
+                HudCard(new Rect(1030, 209, 232, statusHeight + 38), mint);
+                GUI.Label(new Rect(1044, 219, 204, 18), "AT THE FRONT COUNTER", hudSmallStyle);
+                GUI.Label(new Rect(1044, 240, 204, statusHeight), status, hudBodyStyle);
             }
         }
+
         void DrawCultureStatus()
         {
-            bool extraRow = Model.SparkResearchUnlocked || Model.MistResearchUnlocked;
-            float height = extraRow ? 80 : 57;
-            float top = 702 - height;
-            HudCard(new Rect(18, top, 388, height), mint);
-            DrawCultureCount(new Rect(32, top + 7, 176, 22), "BLOOM", Model.Available(CultureKind.Bloom), coral);
-            DrawCultureCount(new Rect(219, top + 7, 172, 22), "FLOW", Model.Available(CultureKind.Flow), new Color(0.2f, 0.49f, 0.62f));
-            if (Model.SparkResearchUnlocked) DrawCultureCount(new Rect(32, top + 30, 176, 22), "SPARK", Model.Available(CultureKind.Spark), new Color(0.72f, 0.47f, 0.17f));
-            if (Model.MistResearchUnlocked) DrawCultureCount(new Rect(219, top + 30, 172, 22), "MIST", Model.Available(CultureKind.Mist), new Color(0.49f, 0.39f, 0.62f));
-            GUI.Label(new Rect(32, 678, 358, 21), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "   |   Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist)), hudSmallStyle);
+            int count = 2 + (Model.SparkResearchUnlocked ? 1 : 0) + (Model.MistResearchUnlocked ? 1 : 0);
+            float width = 28 + count * 80;
+            int capacity = BaselinePreview ? Config.BaseCapacity : Model.Capacity;
+            bool full = Model.ReservedCultureCount >= capacity;
+            int staged = Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist);
+            HudCard(new Rect(18, 612, width, 90), full ? coral : mint);
+            GUI.Label(new Rect(31, 622, width - 24, 19), "SIPHON  " + Model.ReservedCultureCount + "/" + capacity + (full ? "  FULL" : "") + "  /  " + staged + " staged", hudSmallStyle);
+            DrawCultureCount(new Rect(31, 646, 73, 41), "BLOOM", Model.Available(CultureKind.Bloom), ShopUiTheme.Symbol.Bloom);
+            DrawCultureCount(new Rect(111, 646, 73, 41), "FLOW", Model.Available(CultureKind.Flow), ShopUiTheme.Symbol.Flow);
+            int next = 2;
+            if (Model.SparkResearchUnlocked) DrawCultureCount(new Rect(31 + 80 * next++, 646, 73, 41), "SPARK", Model.Available(CultureKind.Spark), ShopUiTheme.Symbol.Spark);
+            if (Model.MistResearchUnlocked) DrawCultureCount(new Rect(31 + 80 * next, 646, 73, 41), "MIST", Model.Available(CultureKind.Mist), ShopUiTheme.Symbol.Mist);
+            hudTheme.Draw(new Rect(31, 693, width - 26, 3), hudTheme.Inset);
+            float fill = Mathf.Clamp01(Model.ReservedCultureCount / (float)Mathf.Max(1, capacity));
+            if (fill > 0) hudTheme.Draw(new Rect(31, 693, (width - 26) * fill, 3), hudTheme.Accent, full ? coral : mint);
         }
-        void DrawCultureCount(Rect rect, string label, int amount, Color color)
+        void DrawCultureCount(Rect rect, string label, int amount, ShopUiTheme.Symbol symbol)
         {
-            Box(new Rect(rect.x, rect.y + 5, 5, 12), color);
-            GUI.Label(new Rect(rect.x + 13, rect.y, rect.width - 13, rect.height), label + "  " + amount, hudBodyStyle);
+            hudTheme.Icon(new Rect(rect.x, rect.y, 23, 23), symbol);
+            GUI.Label(new Rect(rect.x + 28, rect.y - 3, 42, 26), amount.ToString(), hudCurrencyStyle);
+            GUI.Label(new Rect(rect.x + 2, rect.y + 24, rect.width, 18), label, hudSmallStyle);
         }
+
+        void DrawHudNotice()
+        {
+            if (string.IsNullOrEmpty(SaveError) && (string.IsNullOrEmpty(message) || Time.unscaledTime >= messageUntil)) return;
+            string notice = string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED - " + SaveError;
+            hudMeasure.text = notice;
+            float width = Mathf.Clamp(centerStyle.CalcSize(hudMeasure).x + 44, 230, 600);
+            float height = Mathf.Max(38, HudTextHeight(notice, centerStyle, width - 32) + 18);
+            float top = Panel != ShopPanel.None ? 35 : Comedy.Active ? 208 : 82;
+            float left = (1280 - width) / 2;
+            HudCard(new Rect(left, top, width, height), string.IsNullOrEmpty(SaveError) ? mint : coral);
+            GUI.Label(new Rect(left + 16, top + 9, width - 32, height - 18), notice, centerStyle);
+        }
+        void DrawDiscoveryCard()
+        {
+            if (Panel != ShopPanel.None || Time.unscaledTime >= revealUntil || string.IsNullOrEmpty(revealedSpecies)) return;
+            var species = Model.GetSpecies(revealedSpecies);
+            string recipe = RecipeText(species);
+            float recipeHeight = Mathf.Max(20, HudTextHeight(recipe, hudBodyStyle, 246));
+            float nameHeight = Mathf.Max(24, HudTextHeight(species.DisplayName, hudTitleStyle, 246));
+            float top = 98 + HudObjectiveHeight();
+            HudCard(new Rect(18, top, 278, 40 + nameHeight + recipeHeight), coral);
+            GUI.Label(new Rect(32, top + 11, 246, 18), "NEW DISCOVERY / JOURNAL UPDATED", hudSmallStyle);
+            GUI.Label(new Rect(32, top + 31, 246, nameHeight), species.DisplayName, hudTitleStyle);
+            GUI.Label(new Rect(32, top + 31 + nameHeight, 246, recipeHeight), recipe, hudBodyStyle);
+        }
+
         string Objective()
         {
             if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.Queued) return "A customer is waiting. Use the front counter to serve.";
@@ -208,8 +275,13 @@ namespace EvolutionShop
             bool dayReportPanel = Panel == ShopPanel.DayReport;
             bool closePanel = !dayReportPanel && Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset;
             bool fixedFooter = dayReportPanel || closePanel;
-            Box(new Rect(0,0,1280,720), new Color(0.015f,0.045f,0.06f,0.38f));
+            Box(new Rect(0,0,1280,720), new Color(.025f,.075f,.07f,.48f));
+            hudTheme.Draw(new Rect(342,112,596,528), hudTheme.Shadow);
+            hudTheme.Draw(new Rect(344,106,592,528), hudTheme.DarkCard);
             HudCard(new Rect(350,112,580,518), mint);
+            hudTheme.Draw(new Rect(310,127,48,48), hudTheme.DarkCard);
+            hudTheme.Icon(new Rect(318,135,32,32), Panel == ShopPanel.Incubator || Panel == ShopPanel.Conditioning || Panel == ShopPanel.Upgrade ? ShopUiTheme.Symbol.Flask : ShopUiTheme.Symbol.Leaf);
+            // Content and footer anchors are deliberately retained for established input scenarios.
             GUILayout.BeginArea(new Rect(377,130,526,fixedFooter ? 423 : 477));
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
             switch (Panel)
@@ -269,6 +341,7 @@ namespace EvolutionShop
             if (fixedFooter)
             {
                 // Keep the exit visible even when panel content needs scrolling.
+                Box(new Rect(377,558,526,1), new Color(.72f,.76f,.64f));
                 GUILayout.BeginArea(new Rect(377,570,526,47));
                 Button(dayReportPanel ? "Continue preparation  /  ESC" : "Close  /  ESC", () => SetPanel(ShopPanel.None));
                 GUILayout.EndArea();
@@ -601,6 +674,14 @@ namespace EvolutionShop
         void Text(string text) => GUILayout.Label(text, bodyStyle);
         void Small(string text) => GUILayout.Label(text, smallStyle);
         void Space() => GUILayout.Space(12);
-        void Button(string text, System.Action action) { if (GUILayout.Button(text, buttonStyle, GUILayout.MinHeight(38))) action(); }
+        void Button(string text, System.Action action)
+        {
+            bool primary = text.StartsWith("Enter your shop") || text.StartsWith("Begin incubation") ||
+                text.StartsWith("Serve customer") || text.StartsWith("Open for day") || text.StartsWith("Continue preparation") ||
+                text.StartsWith("Save and resume") || text.StartsWith("Start conditioning") || text.StartsWith("Research ");
+            bool caution = text.StartsWith("Confirm new game") || text.StartsWith("Close today's shop") || text.StartsWith("Save and quit");
+            var style = caution ? hudTheme.DangerButton : primary ? hudTheme.PrimaryButton : buttonStyle;
+            if (GUILayout.Button(text, style, GUILayout.MinHeight(38))) action();
+        }
     }
 }

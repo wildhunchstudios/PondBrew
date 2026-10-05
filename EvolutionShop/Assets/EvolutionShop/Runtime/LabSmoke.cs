@@ -106,6 +106,14 @@ namespace EvolutionShop
             Check(shop.Model.UpgradeOwned, "Relocated upgrade bench retains functional upgrade authority");
             yield return Capture("141-expanded-lab-upgrade");
             shop.SetPanel(ShopPanel.None);
+            // Existing comparison changes presentation only, with the legitimately purchased tool.
+            shop.SetBaselinePreview(true);
+            Check(shop.BaselinePreview, "Empty upgraded tool supports the original-size visual comparison");
+            AuditSiphonPumpClearance();
+            yield return GateCapture("244-siphon-original-capacity");
+            shop.SetBaselinePreview(false);
+            AuditSiphonPumpClearance();
+            yield return GateCapture("245-siphon-upgraded-capacity");
             yield return EditedWalkTo(new Vector2(-4, 9.7f), "leave upgrade");
             yield return EditedWalkTo(new Vector2(0, 9.7f), "incubator aisle");
             yield return EditedWalkTo(new Vector2(.5f, 10.85f), "rotated incubator operator point");

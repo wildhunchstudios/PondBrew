@@ -1,0 +1,536 @@
+{
+  "schema": 1,
+  "title": "Evolution Shop original cozy shop / quirky lab kit",
+  "origin": {
+    "author": "Original local asset authorship by Codex for this Evolution Shop task",
+    "external_sources": [],
+    "license": "Original project work; no third-party source or third-party asset license",
+    "paid_generation": false,
+    "external_uploads": false
+  },
+  "blender_version": "5.0.1",
+  "source_script": "Tools/Art/create_redesign_kit.py",
+  "source_script_sha256": "545eeffca7125e663222f889f3c14997ca191c3bffdce7ce85f9dab5c59d8e4f",
+  "blend_source": "ArtSource/RedesignKit/EvolutionShop_RedesignKit.blend",
+  "blend_sha256": "65506544d0afc3fe5d4a8fa0fcf50d3db9047f23bdd58484b76fb32ef4bb98a1",
+  "scale": "1 unit = 1 metre",
+  "front": "Unity local -Z",
+  "up": "Unity +Y",
+  "pivot": "Furniture floor centre at (0,0,0); GrowerCap remains at vessel height in floor-root coordinates. Siphon and SiphonCrown use existing hand origin; crown translates Y +0.1022m with upgraded reservoir. Optional wall accents use a lower-centre attachment; BotanicalShelf bracket extends 0.023m below attachment.",
+  "export_settings": {
+    "format": "FBX",
+    "forward": "-Z",
+    "up": "Y",
+    "global_scale": 1,
+    "apply_unit_scale": true,
+    "apply_scale_options": "FBX_SCALE_UNITS",
+    "bake_space_transform": true,
+    "animations": false
+  },
+  "unity_import_expected": {
+    "globalScale": 1,
+    "useFileScale": true,
+    "animationType": "None",
+    "importAnimation": false,
+    "addCollider": false,
+    "material_mapping": "Root owner remaps RW_* names to shared URP/Lit materials"
+  },
+  "materials": {
+    "RW_Oak": {
+      "srgb_hex": "#754426",
+      "roughness": 0.55,
+      "metallic": 0
+    },
+    "RW_Honey": {
+      "srgb_hex": "#C98B46",
+      "roughness": 0.42,
+      "metallic": 0
+    },
+    "RW_PaleOak": {
+      "srgb_hex": "#E7B777",
+      "roughness": 0.44,
+      "metallic": 0
+    },
+    "RW_Teal": {
+      "srgb_hex": "#246F68",
+      "roughness": 0.3,
+      "metallic": 0
+    },
+    "RW_Mint": {
+      "srgb_hex": "#8CCCB0",
+      "roughness": 0.3,
+      "metallic": 0
+    },
+    "RW_Cream": {
+      "srgb_hex": "#F5E5BD",
+      "roughness": 0.4,
+      "metallic": 0
+    },
+    "RW_Coral": {
+      "srgb_hex": "#ED795E",
+      "roughness": 0.3,
+      "metallic": 0
+    },
+    "RW_Brass": {
+      "srgb_hex": "#D5AA4D",
+      "roughness": 0.3,
+      "metallic": 0.5
+    },
+    "RW_Ink": {
+      "srgb_hex": "#253C3E",
+      "roughness": 0.5,
+      "metallic": 0
+    },
+    "RW_Leaf": {
+      "srgb_hex": "#538A4C",
+      "roughness": 0.5,
+      "metallic": 0
+    },
+    "RW_Sky": {
+      "srgb_hex": "#8CCCD4",
+      "roughness": 0.28,
+      "metallic": 0
+    }
+  },
+  "materials_exception": "Multiple shared opaque flat-color slots preserve clean authored color separation without textures; root maps/reuses shared palette. No glass/emission imported.",
+  "assets": [
+    {
+      "id": "DisplayCabinet",
+      "description": "Teal two-door specimen cabinet with turned feet, routed panels, bow handles and scalloped honey-wood rim. No tank/glass.",
+      "triangles": 6900,
+      "vertices": 3510,
+      "bounds_unity_m": {
+        "min": [
+          -1.0499999523162842,
+          0.0,
+          -0.6499999761581421
+        ],
+        "max": [
+          1.0499999523162842,
+          0.9799999594688416,
+          0.6499999761581421
+        ],
+        "size": [
+          2.0999999046325684,
+          0.9799999594688416,
+          1.2999999523162842
+        ]
+      },
+      "material_slots": [
+        "RW_Oak",
+        "RW_Honey",
+        "RW_Teal",
+        "RW_Mint",
+        "RW_Brass",
+        "RW_PaleOak"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/DisplayCabinet.fbx",
+      "sha256": "55fa4879b27beeb107220b696d22cbfb932800c8765c9ce6553e23071ab3077a",
+      "bytes": 227676
+    },
+    {
+      "id": "ServiceCounter",
+      "description": "Welcoming reeded wood counter with rounded honey slab, blank cream nameplate and scalloped apron.",
+      "triangles": 7464,
+      "vertices": 3794,
+      "bounds_unity_m": {
+        "min": [
+          -1.2000000476837158,
+          0.0,
+          -0.550000011920929
+        ],
+        "max": [
+          1.2000000476837158,
+          1.0999999046325684,
+          0.550000011920929
+        ],
+        "size": [
+          2.4000000953674316,
+          1.0999999046325684,
+          1.100000023841858
+        ]
+      },
+      "material_slots": [
+        "RW_Oak",
+        "RW_Honey",
+        "RW_Coral",
+        "RW_PaleOak",
+        "RW_Teal",
+        "RW_Cream",
+        "RW_Brass"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/ServiceCounter.fbx",
+      "sha256": "bd9b75fba81bacc1c13e4285ba0c8eb07b1157c113309bf04eeb759d383d07b1",
+      "bytes": 245180
+    },
+    {
+      "id": "GrowerBase",
+      "description": "Mint/coral rounded grower base with visible brass vessel collar, analog dial, chunky buttons and sweeping side pickups. Central vessel stays open above collar.",
+      "triangles": 5336,
+      "vertices": 2724,
+      "bounds_unity_m": {
+        "min": [
+          -0.7618763446807861,
+          0.0,
+          -0.6739999651908875
+        ],
+        "max": [
+          0.7618763446807861,
+          1.0049999952316284,
+          0.6399999856948853
+        ],
+        "size": [
+          1.5237526893615723,
+          1.0049999952316284,
+          1.3139999508857727
+        ]
+      },
+      "material_slots": [
+        "RW_Ink",
+        "RW_Teal",
+        "RW_Mint",
+        "RW_Coral",
+        "RW_Cream",
+        "RW_Brass"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/GrowerBase.fbx",
+      "sha256": "2b67ecf5d52d5a5dfffa3b90339230d79d07cdbcd6926c9c3f5b096851852608",
+      "bytes": 181708
+    },
+    {
+      "id": "GrowerCap",
+      "description": "Low domed coral cap with teal gasket and chunky cream rivets; authored floor-relative for unchanged station vessel.",
+      "triangles": 1656,
+      "vertices": 848,
+      "bounds_unity_m": {
+        "min": [
+          -0.6079999804496765,
+          2.0899999141693115,
+          -0.5000399947166443
+        ],
+        "max": [
+          0.6079999804496765,
+          2.244999885559082,
+          0.5700399875640869
+        ],
+        "size": [
+          1.215999960899353,
+          0.1549999713897705,
+          1.0700799822807312
+        ]
+      },
+      "material_slots": [
+        "RW_Teal",
+        "RW_Coral",
+        "RW_Cream"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/GrowerCap.fbx",
+      "sha256": "dd3359a7d43ca8082728f4a8149a44920b9b666119df13dac78ceccb6022ecdc",
+      "bytes": 60444
+    },
+    {
+      "id": "IncubatorBase",
+      "description": "Wide mint incubator base with soft cream working rim, dark instrument recess, gauge and coral/brass controls; no vessel replacement.",
+      "triangles": 4268,
+      "vertices": 2184,
+      "bounds_unity_m": {
+        "min": [
+          -0.949999988079071,
+          0.0,
+          -0.699999988079071
+        ],
+        "max": [
+          0.949999988079071,
+          0.8999999761581421,
+          0.699999988079071
+        ],
+        "size": [
+          1.899999976158142,
+          0.8999999761581421,
+          1.399999976158142
+        ]
+      },
+      "material_slots": [
+        "RW_Ink",
+        "RW_Teal",
+        "RW_Mint",
+        "RW_Cream",
+        "RW_Coral",
+        "RW_Brass"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/IncubatorBase.fbx",
+      "sha256": "439e36fa1493c14990717283900e7f2aeed4eb904dfbf8270a7169518cfb75f9",
+      "bytes": 148348
+    },
+    {
+      "id": "Siphon",
+      "description": "Mint shaped grip, open brass reservoir cage and +Z spout. Existing transparent reservoir remains at (0,.02,.025), Y -.09..+.13; root stays at existing tool origin. Pump crown is a separate SiphonCrown export.",
+      "triangles": 1192,
+      "vertices": 612,
+      "bounds_unity_m": {
+        "min": [
+          -0.11091835796833038,
+          -0.26499998569488525,
+          -0.11599999666213989
+        ],
+        "max": [
+          0.07657311111688614,
+          0.1552184820175171,
+          0.4950000047683716
+        ],
+        "size": [
+          0.18749146908521652,
+          0.42021846771240234,
+          0.6110000014305115
+        ]
+      },
+      "material_slots": [
+        "RW_Mint",
+        "RW_Teal",
+        "RW_Brass",
+        "RW_Cream"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/Siphon.fbx",
+      "sha256": "c8411c21aad0219ad0fca6577cd344b55439279a4ebccfed52bdd940045fe889",
+      "bytes": 54172
+    },
+    {
+      "id": "SiphonCrown",
+      "description": "Separate brass base, cream stem and coral pump bulb in existing TOOL-ROOT coordinates. Attach at zero for base tool; translate Y +0.1022m with upgraded reservoir cap. No independent gameplay or collider.",
+      "triangles": 908,
+      "vertices": 462,
+      "bounds_unity_m": {
+        "min": [
+          -0.06749996542930603,
+          0.12399999797344208,
+          -0.03999999910593033
+        ],
+        "max": [
+          0.06749998778104782,
+          0.29600000381469727,
+          0.0899999737739563
+        ],
+        "size": [
+          0.13499995321035385,
+          0.1720000058412552,
+          0.12999997287988663
+        ]
+      },
+      "material_slots": [
+        "RW_Brass",
+        "RW_Cream",
+        "RW_Coral",
+        "RW_Teal"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/SiphonCrown.fbx",
+      "attachment": {
+        "parent": "Existing tool root",
+        "base_local_position": [
+          0,
+          0,
+          0
+        ],
+        "upgraded_local_position": [
+          0,
+          0.1022,
+          0
+        ],
+        "bulb_center_base": [
+          0,
+          0.236,
+          0.025
+        ],
+        "bulb_center_upgraded": [
+          0,
+          0.3382,
+          0.025
+        ],
+        "preserved_reservoir_cap_center_y": [
+          0.135,
+          0.2372
+        ]
+      },
+      "sha256": "7e78764246573e8fc6a56083a4e1048146c0a86ad91f824186ea8f9eb9e24799",
+      "bytes": 43628
+    },
+    {
+      "id": "WallSign",
+      "description": "Original fish-and-bubbles emblem on rounded teal/honey sign, without text. Optional decorative accent.",
+      "triangles": 2100,
+      "vertices": 1072,
+      "bounds_unity_m": {
+        "min": [
+          -0.8100000023841858,
+          0.02000001072883606,
+          -0.16850000619888306
+        ],
+        "max": [
+          0.8100000023841858,
+          0.8400000333786011,
+          0.054999999701976776
+        ],
+        "size": [
+          1.6200000047683716,
+          0.820000022649765,
+          0.22350000590085983
+        ]
+      },
+      "material_slots": [
+        "RW_Oak",
+        "RW_Honey",
+        "RW_Teal",
+        "RW_Cream",
+        "RW_Coral",
+        "RW_Ink",
+        "RW_Brass",
+        "RW_Mint"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/WallSign.fbx",
+      "sha256": "d804d1ccaec4ddb81d5276d2ac81639a396038486e9f8e97d355d777f5a6fb38",
+      "bytes": 85500
+    },
+    {
+      "id": "BotanicalShelf",
+      "description": "Small honey-wood shelf with two sculpted potted plants and opaque coral reagent bottle. Optional wall dressing.",
+      "triangles": 3976,
+      "vertices": 2048,
+      "bounds_unity_m": {
+        "min": [
+          -0.7400000095367432,
+          -0.02298162877559662,
+          -0.18900001049041748
+        ],
+        "max": [
+          0.7400000095367432,
+          0.6460829377174377,
+          0.16099999845027924
+        ],
+        "size": [
+          1.4800000190734863,
+          0.6690645664930344,
+          0.3500000089406967
+        ]
+      },
+      "material_slots": [
+        "RW_Teal",
+        "RW_PaleOak",
+        "RW_Brass",
+        "RW_Coral",
+        "RW_Oak",
+        "RW_Leaf",
+        "RW_Mint",
+        "RW_Cream"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/BotanicalShelf.fbx",
+      "sha256": "a128be96c87361ee48f334cb5f369dfa35cd0619df1bc47342f83805cc15bd7b",
+      "bytes": 152492
+    }
+  ],
+  "render": "ArtSource/RedesignKit/RedesignKit_ContactSheet.png",
+  "roundtrip_validation": "ArtSource/RedesignKit/fbx_roundtrip_validation.json",
+  "validation_limits": [
+    "Contact sheet is a Blender studio render, not Unity import/runtime evidence.",
+    "Unity orientation, scale, shader mapping, footprints, play-distance readability and player captures remain for root integration.",
+    "No LOD or performance improvement claim; face counts are measured geometry only.",
+    "Editable blend presents separated models; regenerate/export via script to restore original floor-root export coordinates."
+  ]
+}
