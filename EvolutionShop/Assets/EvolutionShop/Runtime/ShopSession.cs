@@ -123,6 +123,7 @@ namespace EvolutionShop
                 Advance(Time.deltaTime);
                 visualClock += Time.deltaTime;
                 World.Animate(visualClock, Time.deltaTime);
+                World.LabDoor.Tick(Player.transform.position, Time.deltaTime);
                 saveClock += Time.deltaTime;
                 if (saveClock >= 5) SaveNow();
             }

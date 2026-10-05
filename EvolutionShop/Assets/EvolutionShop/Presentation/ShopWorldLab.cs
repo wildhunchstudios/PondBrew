@@ -85,6 +85,7 @@ namespace EvolutionShop
             var light = Group("Lab extension fill light", root, new Vector3(0, 2.8f, z)).gameObject.AddComponent<Light>();
             light.type = LightType.Point; light.range = 9; light.shadows = LightShadows.None;
             labWingLights[index] = light;
+            DecorateWorkingLabWing(root, index);
         }
 
         void RefreshLabWingLights()

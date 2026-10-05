@@ -233,6 +233,7 @@ namespace EvolutionShop
             Shape(transform, "Front store floor", PrimitiveType.Cube, new Vector3(0, .001f, -2.5f), new Vector3(13.7f, .002f, 6), artHoney);
             Shape(transform, "Flush lab threshold", PrimitiveType.Cube, new Vector3(0, .008f, .5f), new Vector3(3.2f, .01f, .3f), trim);
             Partition(wall);
+            BuildLabDoor();
             for (int i = -1; i <= 1; i++)
             {
                 Shape(transform, "Ceiling cross beam", PrimitiveType.Cube, new Vector3(0, 4.02f, i * 3.2f), new Vector3(14, .12f, .20f), artHoney);
@@ -262,7 +263,7 @@ namespace EvolutionShop
 
         void Partition(Material wall)
         {
-            // Actual wall colliders stop movement and interaction rays. No collider spans the doorway.
+            // Full partition plus the solid pocket door stop movement and interaction rays when closed.
             // Clear opening: 3.2 m wide and 2.8 m high; the player capsule is 0.6 m wide / 1.75 m tall.
             Shape(transform, "Store-lab partition left", PrimitiveType.Cube, new Vector3(-4.3f, 2.1f, .5f), new Vector3(5.4f, 4.2f, .22f), wall, true);
             Shape(transform, "Store-lab partition right", PrimitiveType.Cube, new Vector3(4.3f, 2.1f, .5f), new Vector3(5.4f, 4.2f, .22f), wall, true);
@@ -276,10 +277,10 @@ namespace EvolutionShop
             Shape(transform, "Doorway lintel trim", PrimitiveType.Cube, new Vector3(0, 2.83f, .5f), new Vector3(3.4f, .06f, .31f), dark);
             // The store identity sits above the opening, so the entrance view clearly reads as a shop.
             Shape(transform, "Front store identity panel", PrimitiveType.Cube, new Vector3(0, 3.5f, .335f), new Vector3(4.85f, .76f, .045f), artTeal);
-            Text(transform, "EVOLUTION SHOP", new Vector3(0, 3.60f, .30f), .145f, cream.color, 4.45f);
-            Text(transform, "CURIOUS CREATURES. HAPPY HOMES.", new Vector3(0, 3.30f, .30f), .04f, artButter.color, 4.35f);
-            Shape(transform, "Back lab direction plaque", PrimitiveType.Cube, new Vector3(0, 2.94f, .335f), new Vector3(2.8f, .21f, .045f), dark);
-            Text(transform, "BACK LAB", new Vector3(0, 2.94f, .30f), .065f, new Color(.58f, 1, .84f), 2.5f);
+            Text(transform, "LITTLE TIDE AQUATICS", new Vector3(0, 3.60f, .30f), .145f, cream.color, 4.45f);
+            Text(transform, "CURIOUS FISH. HAPPY LITTLE WORLDS.", new Vector3(0, 3.30f, .30f), .04f, artButter.color, 4.35f);
+            Shape(transform, "Back lab direction plaque", PrimitiveType.Cube, new Vector3(0, 3.075f, .335f), new Vector3(2.8f, .17f, .045f), dark);
+            Text(transform, "BACK LAB", new Vector3(0, 3.075f, .30f), .065f, new Color(.58f, 1, .84f), 2.5f);
             var returnSign = Group("Return to front store sign", transform, new Vector3(0, 0, .665f));
             returnSign.localRotation = Quaternion.Euler(0, 180, 0);
             Shape(returnSign, "Store direction plaque", PrimitiveType.Cube, new Vector3(0, 3.02f, 0), new Vector3(3, .32f, .045f), dark);

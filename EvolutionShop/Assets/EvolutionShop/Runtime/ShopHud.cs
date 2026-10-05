@@ -288,7 +288,7 @@ namespace EvolutionShop
             {
                 case ShopPanel.Welcome:
                     Heading("Welcome to your little shop");
-                    Text("Front store: display tanks and sales counter. Through the doorway: your back lab, with growers, incubator, and upgrade bench.");
+                    Text("Front store: display tanks and sales counter. The automatic lab door opens when you approach and closes behind you. Beyond it: your back lab, with growers, incubator, and upgrade bench.");
                     Space();
                     Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
                     Space();

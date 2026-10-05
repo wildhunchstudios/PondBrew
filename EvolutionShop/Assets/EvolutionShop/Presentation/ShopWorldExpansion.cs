@@ -68,6 +68,7 @@ namespace EvolutionShop
             var light = Group("Gallery fill light", root, new Vector3(x, 2.8f, -2.4f)).gameObject.AddComponent<Light>();
             light.type = LightType.Point; light.range = 7; light.shadows = LightShadows.None;
             wingLights[index] = light;
+            DecorateAquaticStoreWing(root, index);
         }
 
         void RefreshWingLights()

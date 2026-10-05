@@ -102,56 +102,7 @@ namespace EvolutionShop
 
         void BuildRoomArt()
         {
-            var room = Group("Cozy shop architectural study", transform, Vector3.zero);
-            // Flush artwork: keep the original solid floor and every protected aisle unchanged.
-            for (int row = 0; row < 12; row++)
-                for (int column = 0; column < 7; column++)
-                {
-                    float x = -5.91f + column * 1.97f;
-                    float z = -5.23f + row * .475f;
-                    ArtBox(room, "Oak floorboard", new Vector3(x, .009f, z), new Vector3(1.952f, .013f, .461f),
-                        (column + row) % 3 == 0 ? artPaleOak : artHoney, false);
-                    // A tiny grain stroke gives direction without a noisy texture or extra renderer.
-                    if ((column + row) % 3 == 0)
-                        ArtBox(room, "Quiet wood grain", new Vector3(x + .16f, .017f, z + .095f), new Vector3(.62f, .002f, .014f), artHoney, false);
-                }
-            ArtBox(room, "Welcome mat edge", new Vector3(0, .022f, -4.35f), new Vector3(2.8f, .008f, 1.10f), artCoral);
-            ArtBox(room, "Welcome mat", new Vector3(0, .027f, -4.35f), new Vector3(2.55f, .007f, .88f), artTeal);
-            for (int i = -3; i <= 3; i++)
-                ArtBox(room, "Welcome mat stitch", new Vector3(i * .33f, .032f, -4.35f), new Vector3(.02f, .002f, .66f), artMint, false);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                var partition = Group("Shop wall panelling", room, new Vector3(side * 4.25f, 0, .355f));
-                ShopPanelling(partition, 5.18f);
-                var front = Group("Window nook", room, new Vector3(side * 3.75f, 0, -5.38f));
-                front.localRotation = Quaternion.Euler(0, 180, 0);
-                ShopPanelling(front, 4.76f);
-                ArtWindow(front);
-                ArtShelfPlant(front, new Vector3(side * .94f, 1.20f, -.18f), .45f);
-            }
-            // A plant shelf on the fixed east partition has no footprint in the walking space.
-            var shelf = Group("Little shop keepsakes", room, new Vector3(4.25f, 0, .25f));
-            ArtBox(shelf, "Oak shelf", new Vector3(0, 2.34f, -.07f), new Vector3(2.28f, .11f, .38f), artPaleOak);
-            ArtShelfPlant(shelf, new Vector3(-.75f, 2.42f, -.10f), .5f);
-            ArtBottle(shelf, new Vector3(.64f, 2.4f, -.10f), artCoral, .55f);
-            ArtBottle(shelf, new Vector3(.89f, 2.4f, -.10f), artButter, .40f);
-            ArtFishSign(room, new Vector3(-4.0f, 2.58f, .245f));
-            Pendant(room, new Vector3(-3.4f, 3.36f, -2.18f), artCoral);
-            Pendant(room, new Vector3(3.5f, 3.36f, -2.18f), artMint);
-            SealArt(room);
-
-            var west = Group("Moving west wall shop finish", transform, new Vector3(-6.81f, 0, -2.5f));
-            west.localRotation = Quaternion.Euler(0, -90, 0);
-            ShopPanelling(west, 5.75f);
-            ArtBox(west, "Wall shop shelf", new Vector3(0, 2.55f, -.10f), new Vector3(2.8f, .12f, .40f), artHoney);
-            ArtShelfPlant(west, new Vector3(-.90f, 2.64f, -.12f), .57f);
-            ArtBottle(west, new Vector3(.65f, 2.62f, -.12f), artCoral, .66f);
-            ArtBottle(west, new Vector3(.98f, 2.62f, -.12f), artButter, .46f);
-            SealArt(west);
-            // SetParent(true) compensates the wall primitive's scale and follows all expansion tiers.
-            west.SetParent(storeWestWall, true);
-
-            BuildQuirkyLabArt();
+            BuildAquaticRooms();
         }
 
         void ShopPanelling(Transform root, float width)
@@ -228,38 +179,6 @@ namespace EvolutionShop
             Shape(root, "Milk glass bulb", PrimitiveType.Sphere, new Vector3(0, -.24f, 0), new Vector3(.26f, .20f, .26f), glow);
             var light = Group("Warm pendant light", parent, position + Vector3.down * .39f).gameObject.AddComponent<Light>();
             light.type = LightType.Point; light.color = new Color(1, .80f, .56f); light.intensity = 1.8f; light.range = 4.5f; light.shadows = LightShadows.None;
-        }
-
-        void BuildQuirkyLabArt()
-        {
-            var floor = Group("Quirky lab tile study", transform, Vector3.zero);
-            for (int row = 0; row < 6; row++)
-                for (int column = 0; column < 17; column++)
-                    ArtBox(floor, "Soft checker tile", new Vector3(-6.40f + column * .80f, .019f, .99f + row * .80f), new Vector3(.78f, .008f, .78f), (column + row) % 2 == 0 ? artTile : cream, false);
-            ArtBox(floor, "Lab threshold enamel", new Vector3(0, .027f, .5f), new Vector3(3.17f, .006f, .24f), artCoral, false);
-            for (int side = -1; side <= 1; side += 2)
-                ArtBox(floor, "Mint lab side rail", new Vector3(side * 6.81f, 1.30f, 3.02f), new Vector3(.06f, .09f, 4.65f), artMint);
-            SealArt(floor);
-
-            var rear = Group("Lab wall science dressing", labRearAssembly, Vector3.zero);
-            ArtBox(rear, "Mint tile splashback", new Vector3(0, 1.08f, 5.33f), new Vector3(13.55f, 2.05f, .065f), artMint, false);
-            for (int i = -6; i <= 6; i++)
-                ArtBox(rear, "Splashback grout", new Vector3(i, 1.08f, 5.287f), new Vector3(.018f, 1.95f, .012f), artTile, false);
-            for (int row = 1; row <= 3; row++)
-                ArtBox(rear, "Splashback row", new Vector3(0, row * .5f, 5.287f), new Vector3(13.48f, .018f, .012f), artTile, false);
-            ArtBox(rear, "Splashback cream rail", new Vector3(0, 2.15f, 5.25f), new Vector3(13.6f, .12f, .13f), cream);
-            // Pipes sit against the moving rear wall above the existing machine envelopes.
-            ArtPipe(rear, new Vector3(-6.1f, 2.67f, 5.12f), new Vector3(-4.9f, 2.67f, 5.12f), artCoral);
-            ArtPipe(rear, new Vector3(-4.9f, 2.67f, 5.12f), new Vector3(-4.9f, 3.65f, 5.12f), artCoral);
-            ArtPipe(rear, new Vector3(-4.9f, 3.65f, 5.12f), new Vector3(-3.4f, 3.65f, 5.12f), artCoral);
-            ArtPipe(rear, new Vector3(5.8f, 2.50f, 5.12f), new Vector3(5.8f, 3.65f, 5.12f), artButter);
-            ArtPipe(rear, new Vector3(5.8f, 3.65f, 5.12f), new Vector3(3.4f, 3.65f, 5.12f), artButter);
-            ArtGauge(rear, new Vector3(-4.90f, 3.04f, 5.01f), .85f);
-            ArtGauge(rear, new Vector3(5.80f, 3.16f, 5.01f), .68f);
-            ArtBox(rear, "Reagent shelf", new Vector3(4.2f, 2.52f, 5.01f), new Vector3(2.4f, .13f, .47f), artTeal);
-            for (int i = 0; i < 4; i++)
-                ArtBottle(rear, new Vector3(3.45f + i * .49f, 2.60f, 4.99f), i % 2 == 0 ? artCoral : artSky, .68f + i % 2 * .14f);
-            SealArt(rear);
         }
 
         void ArtPipe(Transform parent, Vector3 start, Vector3 end, Material material)
