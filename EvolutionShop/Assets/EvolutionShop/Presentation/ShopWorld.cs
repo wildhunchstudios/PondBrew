@@ -78,6 +78,7 @@ namespace EvolutionShop
         void OnDestroy()
         {
             DisposeSamplePresentation();
+            DisposeRoomArt();
             DisposeConditioningPresentation();
             DisposeResearchPresentation();
             DisposeStoragePresentation();
@@ -122,6 +123,7 @@ namespace EvolutionShop
             glass = MakeGlass("Clear aquarium glass", new Color(0.61f, 0.91f, 0.95f, 0.085f));
             water = MakeGlass("Aquatic water tint", new Color(0.17f, 0.73f, 0.84f, 0.085f));
             BuildResearchMaterials();
+            BuildArtPalette();
             Room();
             bloomRoot = Grower(StationKind.Bloom, new Vector3(-4.2f, 0, 3.85f), "BLOOM", "01 / PETAL CULTURE", bloomMat, bloomCells, true);
             flowRoot = Grower(StationKind.Flow, new Vector3(-1.4f, 0, 3.85f), "FLOW", "02 / STREAM CULTURE", flowMat, flowCells, false);
@@ -210,11 +212,13 @@ namespace EvolutionShop
 
         void Room()
         {
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.53f, 0.66f, 0.69f);
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(.70f, .77f, .84f);
+            RenderSettings.ambientEquatorColor = new Color(.58f, .55f, .46f);
+            RenderSettings.ambientGroundColor = new Color(.31f, .28f, .23f);
             RenderSettings.fog = false;
-            var floor = MakeMaterial("Pale stone floor", new Color(0.56f, 0.68f, 0.66f), 0.04f, 0.28f);
-            var wall = MakeMaterial("Ivory plaster", new Color(0.76f, 0.82f, 0.76f), 0, 0.22f);
+            var floor = artTile;
+            var wall = ArtMaterial("vanilla plaster", new Color(.94f, .87f, .71f), .18f);
             Shape(transform, "Floor", PrimitiveType.Cube, new Vector3(0, -.14f, 0), new Vector3(14, .28f, 11), floor, true);
             labRearAssembly = Group("Lab rear wall assembly", transform, Vector3.zero);
             Shape(labRearAssembly, "Back wall", PrimitiveType.Cube, new Vector3(0, 2.1f, 5.6f), new Vector3(14, 4.2f, .3f), wall, true);
@@ -224,22 +228,14 @@ namespace EvolutionShop
             Shape(transform, "Front wall", PrimitiveType.Cube, new Vector3(0, 2.1f, -5.6f), new Vector3(14, 4.2f, .3f), wall, true);
             Shape(labRearAssembly, "Back wainscot", PrimitiveType.Cube, new Vector3(0, .65f, 5.42f), new Vector3(14, 1.3f, .07f), dark);
             Shape(labRearAssembly, "Back brass rail", PrimitiveType.Cube, new Vector3(0, 1.32f, 5.36f), new Vector3(14, .035f, .07f), trim);
-            for (int x = -6; x <= 6; x += 2)
-                Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(x, .004f, 0), new Vector3(.012f, .004f, 11), shell);
-            for (int z = -4; z <= 4; z += 2)
-                Shape(transform, "Floor joint", PrimitiveType.Cube, new Vector3(0, .005f, z), new Vector3(14, .004f, .012f), shell);
-            // Flush floor accents make the shop and production lab legible without adding obstacles.
-            var shopFloor = MakeMaterial("Warm store stone", new Color(.78f, .74f, .62f), .03f, .28f);
-            var shopMat = MakeMaterial("Store sand runner", new Color(.65f, .58f, .40f), 0, .22f);
-            Shape(transform, "Front store floor", PrimitiveType.Cube, new Vector3(0, .001f, -2.5f), new Vector3(13.7f, .002f, 6), shopFloor);
-            Shape(transform, "Front store runner", PrimitiveType.Cube, new Vector3(0, .008f, -2.4f), new Vector3(7.8f, .01f, 4.3f), shopMat);
-            Shape(transform, "Back lab work area", PrimitiveType.Cube, new Vector3(0, .008f, 2.75f), new Vector3(10.4f, .01f, 3.4f), shell);
+            // The stable floor object name is also used by the store expansion material lookup.
+            Shape(transform, "Front store floor", PrimitiveType.Cube, new Vector3(0, .001f, -2.5f), new Vector3(13.7f, .002f, 6), artHoney);
             Shape(transform, "Flush lab threshold", PrimitiveType.Cube, new Vector3(0, .008f, .5f), new Vector3(3.2f, .01f, .3f), trim);
             Partition(wall);
             for (int i = -1; i <= 1; i++)
             {
-                Shape(transform, "Ceiling cross beam", PrimitiveType.Cube, new Vector3(0, 4.02f, i * 3.2f), new Vector3(14, .12f, .20f), dark);
-                Shape(transform, "Linear ceiling light", PrimitiveType.Cube, new Vector3(0, 3.94f, i * 3.2f), new Vector3(5.8f, .06f, .16f), glow);
+                Shape(transform, "Ceiling cross beam", PrimitiveType.Cube, new Vector3(0, 4.02f, i * 3.2f), new Vector3(14, .12f, .20f), artHoney);
+                if (i > 0) Shape(transform, "Lab ceiling light", PrimitiveType.Cube, new Vector3(0, 3.94f, i * 3.2f), new Vector3(4.2f, .06f, .16f), glow);
             }
             Shape(transform, "Ceiling", PrimitiveType.Cube, new Vector3(0, 4.25f, 0), new Vector3(14, .18f, 11), wall);
             keyLight = new GameObject("Soft shop light").AddComponent<Light>();
@@ -251,15 +247,16 @@ namespace EvolutionShop
             keyLight.shadows = LightShadows.Soft;
             storeFillLight = LightAt(new Vector3(-3, 2.8f, -2), new Color(1, .95f, .83f), 3.4f, 8);
             labFillLight = LightAt(new Vector3(1, 2.8f, 3), new Color(.75f, 1, .94f), 3.2f, 8);
-            Shape(labRearAssembly, "Back lab identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(8.4f, 1.00f, .07f), dark);
-            Text(labRearAssembly, "CULTURE LAB", new Vector3(0, 3.52f, 5.30f), .28f, new Color(.89f, .96f, .86f), 7.4f);
-            Text(labRearAssembly, "GROW  /  COMBINE  /  IMPROVE", new Vector3(0, 3.12f, 5.29f), .065f, new Color(.52f, .88f, .79f), 5.8f);
+            Shape(labRearAssembly, "Back lab identity panel", PrimitiveType.Cube, new Vector3(0, 3.30f, 5.36f), new Vector3(6.2f, .78f, .07f), artTeal);
+            Text(labRearAssembly, "THE CURIOSITY LAB", new Vector3(0, 3.43f, 5.30f), .15f, cream.color, 5.7f);
+            Text(labRearAssembly, "BIG IDEAS. LITTLE CREATURES.", new Vector3(0, 3.14f, 5.29f), .045f, artButter.color, 4.8f);
             var door = Group("Quiet entrance", transform, new Vector3(0, 0, -5.35f));
             door.localRotation = Quaternion.Euler(0, 180, 0);
-            Shape(door, "Entrance", PrimitiveType.Cube, new Vector3(0, 1.25f, 0), new Vector3(2.1f, 2.5f, .05f), dark);
+            Shape(door, "Entrance", PrimitiveType.Cube, new Vector3(0, 1.25f, 0), new Vector3(2.1f, 2.5f, .05f), artTeal);
             Shape(door, "Door porthole", PrimitiveType.Cylinder, new Vector3(0, 1.6f, -.06f), new Vector3(.73f, .035f, .73f), trim).localRotation = Quaternion.Euler(90, 0, 0);
             Shape(door, "Porthole glass", PrimitiveType.Cylinder, new Vector3(0, 1.6f, -.10f), new Vector3(.62f, .025f, .62f), shell).localRotation = Quaternion.Euler(90, 0, 0);
-            Text(door, "A LITTLE LIFE STARTS HERE", new Vector3(0, 2.94f, -.09f), .08f, new Color(.07f, .2f, .23f), 3.1f);
+            Text(door, "A LITTLE LIFE STARTS HERE", new Vector3(0, 2.94f, -.09f), .065f, new Color(.07f, .2f, .23f), 3.1f);
+            BuildRoomArt();
         }
 
         void Partition(Material wall)
@@ -277,9 +274,9 @@ namespace EvolutionShop
             }
             Shape(transform, "Doorway lintel trim", PrimitiveType.Cube, new Vector3(0, 2.83f, .5f), new Vector3(3.4f, .06f, .31f), dark);
             // The store identity sits above the opening, so the entrance view clearly reads as a shop.
-            Shape(transform, "Front store identity panel", PrimitiveType.Cube, new Vector3(0, 3.5f, .335f), new Vector3(7.8f, .9f, .045f), dark);
-            Text(transform, "EVOLUTION SHOP", new Vector3(0, 3.65f, .30f), .21f, new Color(.96f, .95f, .83f), 7.1f);
-            Text(transform, "FRONT STORE  /  DISPLAY & EXCHANGE", new Vector3(0, 3.29f, .30f), .055f, new Color(.81f, .84f, .65f), 5.8f);
+            Shape(transform, "Front store identity panel", PrimitiveType.Cube, new Vector3(0, 3.5f, .335f), new Vector3(4.85f, .76f, .045f), artTeal);
+            Text(transform, "EVOLUTION SHOP", new Vector3(0, 3.60f, .30f), .145f, cream.color, 4.45f);
+            Text(transform, "CURIOUS CREATURES. HAPPY HOMES.", new Vector3(0, 3.30f, .30f), .04f, artButter.color, 4.35f);
             Shape(transform, "Back lab direction plaque", PrimitiveType.Cube, new Vector3(0, 2.94f, .335f), new Vector3(2.8f, .21f, .045f), dark);
             Text(transform, "BACK LAB", new Vector3(0, 2.94f, .30f), .065f, new Color(.58f, 1, .84f), 2.5f);
             var returnSign = Group("Return to front store sign", transform, new Vector3(0, 0, .665f));
@@ -296,13 +293,13 @@ namespace EvolutionShop
                 throw new InvalidOperationException("Build the shop before applying its day phase.");
 
             // Ambient light, luminous strips, tank materials, and station lighting remain readable.
-            // Closing stays warm while customers finish; the preparation night is cooler, not dark.
+            // The exterior key becomes cooler at night; shop practical lighting stays warm and welcoming.
             bool night = phase == ShopDayPhase.Night;
             bool closing = phase == ShopDayPhase.Closing;
             keyLight.color = night ? new Color(.70f, .82f, 1f) : closing ? new Color(1f, .89f, .76f) : new Color(1f, .95f, .84f);
             keyLight.intensity = night ? 1.12f : closing ? 1.45f : 1.65f;
-            storeFillLight.color = night ? new Color(.62f, .78f, 1f) : closing ? new Color(1f, .87f, .69f) : new Color(1f, .95f, .83f);
-            storeFillLight.intensity = night ? 2.25f : closing ? 3f : 3.4f;
+            storeFillLight.color = night ? new Color(1f, .83f, .63f) : closing ? new Color(1f, .87f, .69f) : new Color(1f, .95f, .83f);
+            storeFillLight.intensity = night ? 2.65f : closing ? 3f : 3.4f;
             labFillLight.color = night ? new Color(.74f, .94f, 1f) : closing ? new Color(.74f, .98f, .97f) : new Color(.75f, 1f, .94f);
             labFillLight.intensity = 3.2f;
             RefreshWingLights();
@@ -376,7 +373,7 @@ namespace EvolutionShop
         void Incubator(Vector3 position)
         {
             var r = MakeStation(StationKind.Incubator, "Incubator", position).transform;
-            Shape(r, "Incubator pedestal", PrimitiveType.Cube, new Vector3(0, .42f, 0), new Vector3(1.85f, .84f, 1.3f), dark);
+            Shape(r, "Incubator pedestal", PrimitiveType.Cube, new Vector3(0, .42f, 0), new Vector3(1.85f, .84f, 1.3f), artTeal);
             Shape(r, "Rounded worktop", PrimitiveType.Cube, new Vector3(0, .85f, 0), new Vector3(1.99f, .10f, 1.43f), cream);
             Shape(r, "Crystal incubator dome", PrimitiveType.Sphere, new Vector3(0, 1.48f, 0), new Vector3(1.55f, 1.5f, 1.25f), glass);
             Shape(r, "Incubator fluid", PrimitiveType.Sphere, new Vector3(0, 1.42f, 0), new Vector3(1.45f, 1.3f, 1.16f), water);
@@ -386,6 +383,7 @@ namespace EvolutionShop
             Faceplate(r, "INCUBATOR", new Vector3(0, .58f, -.663f), shell);
             status[StationKind.Incubator] = Text(r, "ADD MEASURED DOSES", new Vector3(0, .31f, -.674f), .045f, Color.white);
             Text(r, "03 / MAKE A LITTLE LIFE", new Vector3(0, 2.40f, 0), .047f, new Color(.1f, .27f, .28f), 1.9f);
+            AddIncubatorArt(r);
             var display = Group("Incubator creature", r, new Vector3(0, 1.48f, 0));
             displays["incubator"] = new Display { Root = display, Incubator = true, Seed = 3.5f };
             for (int i = 0; i < 2; i++)
@@ -422,7 +420,7 @@ namespace EvolutionShop
                 var bubble = Shape(r, "Air bubble", PrimitiveType.Sphere, new Vector3(.72f, 1.16f + i * .21f, .29f), Vector3.one * (.025f + i * .008f), glass);
                 bubbles.Add(bubble);
             }
-            if (id == "tank-a") BuildStoreSample(r);
+            BuildStoreSample(r, id == "tank-a");
         }
 
         void Counter(Vector3 position)
@@ -430,7 +428,7 @@ namespace EvolutionShop
             var r = MakeStation(StationKind.Counter, "Sales counter", position, -90).transform;
             r.GetComponent<BoxCollider>().size = new Vector3(2.25f, 2.2f, 1.15f);
             r.GetComponent<BoxCollider>().center = new Vector3(0, 1.1f, 0);
-            Shape(r, "Sales counter cabinet", PrimitiveType.Cube, new Vector3(0, .51f, 0), new Vector3(2.15f, 1.02f, 1.04f), shell);
+            Shape(r, "Sales counter cabinet", PrimitiveType.Cube, new Vector3(0, .51f, 0), new Vector3(2.15f, 1.02f, 1.04f), artMint);
             Shape(r, "Sales counter top", PrimitiveType.Cube, new Vector3(0, 1.08f, 0), new Vector3(2.36f, .12f, 1.24f), cream);
             Shape(r, "Counter toe", PrimitiveType.Cube, new Vector3(0, .08f, 0), new Vector3(2.1f, .16f, 1f), dark);
             Faceplate(r, "CREATURE EXCHANGE", new Vector3(0, .65f, -.534f), dark);
@@ -439,6 +437,7 @@ namespace EvolutionShop
             Text(r, "CHECKOUT", new Vector3(.58f, 1.29f, -.105f), .044f, new Color(.57f, 1, .84f), .42f);
             Shape(r, "Service bell base", PrimitiveType.Cylinder, new Vector3(-.61f, 1.17f, -.15f), new Vector3(.3f, .035f, .3f), dark);
             Shape(r, "Service bell", PrimitiveType.Sphere, new Vector3(-.61f, 1.21f, -.15f), new Vector3(.25f, .13f, .25f), gold);
+            AddCounterArt(r);
         }
 
         void Upgrade(Vector3 position)

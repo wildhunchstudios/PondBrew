@@ -23,21 +23,25 @@ namespace EvolutionShop
             light.type=LightType.Point;light.color=new Color(1,.85f,.66f);
             light.intensity=intensity;light.range=range;light.shadows=LightShadows.None;
         }
-        void BuildStoreSample(Transform tank)
+        void BuildStoreSample(Transform tank, bool hero)
         {
-            sampleTank=tank;
-            var wood=SampleMaterial("honey wood",new Color(.63f,.36f,.16f));
-            var lightWood=SampleMaterial("cut oak",new Color(.84f,.62f,.33f));
-            var sea=SampleMaterial("painted teal",new Color(.10f,.35f,.33f));
-            var coral=SampleMaterial("coral sign",new Color(.83f,.29f,.20f));
-            var back=Group("Little Wonders store corner",tank,new Vector3(0,0,1.17f));
-            Shape(back,"Teal wall panel",PrimitiveType.Cube,new Vector3(0,1.74f,0),new Vector3(2.40f,3.38f,.09f),sea);
-            for(int i=-4;i<=4;i++)
-                Shape(back,"Oak fluted panel",PrimitiveType.Cube,new Vector3(i*.26f,1.61f,-.058f),new Vector3(.115f,2.98f,.075f),wood);
-            Shape(back,"Crown sign",PrimitiveType.Cube,new Vector3(0,2.92f,-.12f),new Vector3(2.32f,.58f,.08f),cream);
-            Text(back,"LITTLE WONDERS",new Vector3(0,3.02f,-.17f),.112f,new Color(.045f,.19f,.20f),2.08f);
-            Text(back,"GROWN HERE. LOVED EVERYWHERE.",new Vector3(0,2.80f,-.17f),.044f,new Color(.025f,.065f,.07f),2.06f);
-            Shape(back,"Coral sign underline",PrimitiveType.Cube,new Vector3(0,2.65f,-.16f),new Vector3(2.32f,.045f,.09f),coral);
+            if (hero) sampleTank=tank;
+            var wood=artHoney;
+            var lightWood=artPaleOak;
+            var sea=artTeal;
+            var coral=artCoral;
+            if (hero)
+            {
+                var back=Group("Little Wonders store corner",tank,new Vector3(0,0,1.17f));
+                ArtBox(back,"Teal wall panel",new Vector3(0,1.74f,0),new Vector3(2.40f,3.38f,.09f),sea);
+                for(int i=-4;i<=4;i++)
+                    ArtBox(back,"Oak fluted panel",new Vector3(i*.26f,1.61f,-.058f),new Vector3(.085f,2.98f,.075f),wood);
+                ArtBox(back,"Crown sign",new Vector3(0,2.92f,-.12f),new Vector3(2.32f,.58f,.08f),cream);
+                Text(back,"LITTLE WONDERS",new Vector3(0,3.02f,-.17f),.10f,new Color(.045f,.19f,.20f),2.08f);
+                Text(back,"GROWN HERE. LOVED EVERYWHERE.",new Vector3(0,2.80f,-.17f),.036f,new Color(.025f,.065f,.07f),2.06f);
+                ArtBox(back,"Coral sign underline",new Vector3(0,2.65f,-.16f),new Vector3(2.32f,.045f,.09f),coral);
+                SealArt(back);
+            }
             for(int side=-1;side<=1;side+=2)
             {
                 Shape(tank,"Inset wood cabinet door",PrimitiveType.Cube,new Vector3(side*.505f,.405f,-.673f),new Vector3(.89f,.70f,.032f),wood);
@@ -48,7 +52,7 @@ namespace EvolutionShop
             Shape(tank,"Label rail",PrimitiveType.Cube,new Vector3(0,.47f,-.738f),new Vector3(1.56f,.46f,.025f),dark);
             foreach(var label in tank.GetComponentsInChildren<TextMesh>())
                 if(label.transform.localPosition.y<.8f){var p=label.transform.localPosition;p.z=-.765f;label.transform.localPosition=p;}
-            Shape(tank,"Enamel canopy",PrimitiveType.Cube,new Vector3(0,2.22f,0),new Vector3(2.15f,.09f,1.42f),sea);
+            ArtBox(tank,"Enamel canopy",new Vector3(0,2.22f,0),new Vector3(2.15f,.09f,1.42f),sea);
             Shape(tank,"Canopy warm light",PrimitiveType.Cube,new Vector3(0,2.166f,-.13f),new Vector3(1.77f,.016f,.17f),glow);
             SampleLight(tank,new Vector3(-.2f,2.55f,-1.1f),3.2f,3.5f);
             for(int i=0;i<5;i++)

@@ -176,9 +176,13 @@ namespace EvolutionShop
         void DrawComedyCaption()
         {
             if(Panel!=ShopPanel.None || !Comedy.Active)return;
-            Box(new Rect(360,112,660,82),ink);
-            GUI.Label(new Rect(378,119,624,47),Comedy.Caption,centerStyle);
-            GUI.Label(new Rect(378,164,624,21),"BACKSPACE: skip gag  /  service and movement stay available",controlsStyle);
+            hudMeasure.text=Comedy.Caption;
+            float width=Mathf.Clamp(centerStyle.CalcSize(hudMeasure).x+36,548,644);
+            float left=686-width*0.5f;
+            float captionHeight=Mathf.Max(24,HudTextHeight(Comedy.Caption,centerStyle,width-36));
+            HudCard(new Rect(left,112,width,captionHeight+35),coral);
+            GUI.Label(new Rect(left+18,118,width-36,captionHeight),Comedy.Caption,centerStyle);
+            GUI.Label(new Rect(left+18,121+captionHeight,width-36,21),"BACKSPACE: skip gag  /  service and movement stay available",controlsStyle);
         }
         void DrawComedyPreview()
         {

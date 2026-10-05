@@ -4,9 +4,13 @@ namespace EvolutionShop
 {
     public sealed partial class ShopSession
     {
-        GUIStyle titleStyle, headingStyle, bodyStyle, smallStyle, buttonStyle, statStyle, centerStyle, controlsStyle;
-        readonly Color ink = new Color(0.035f, 0.08f, 0.105f, 0.96f);
-        readonly Color mint = new Color(0.5f, 0.95f, 0.77f);
+        GUIStyle titleStyle, headingStyle, bodyStyle, smallStyle, buttonStyle, statStyle, centerStyle, controlsStyle, hudTitleStyle, hudBodyStyle, hudSmallStyle, hudCurrencyStyle, toggleStyle;
+        readonly GUIContent hudMeasure = new GUIContent();
+        // These shared panel colours also keep station menus and the preview kit coherent.
+        readonly Color ink = new Color(1f, 0.968f, 0.876f, 0.96f);
+        readonly Color mint = new Color(0.13f, 0.43f, 0.39f);
+        readonly Color hudInk = new Color(0.16f, 0.27f, 0.26f);
+        readonly Color coral = new Color(0.79f, 0.38f, 0.29f);
         Vector2 panelScroll;
         ShopTradeLedger reportDisplayLedger;
         TradeDaySave reportDisplaySnapshot;
@@ -15,20 +19,38 @@ namespace EvolutionShop
         {
             if (titleStyle != null) return;
             titleStyle = new GUIStyle(GUI.skin.label) {fontSize = 28, fontStyle = FontStyle.Bold};
-            titleStyle.normal.textColor = Color.white;
+            titleStyle.normal.textColor = hudInk;
             headingStyle = new GUIStyle(titleStyle) {fontSize = 20};
             bodyStyle = new GUIStyle(GUI.skin.label) {fontSize = 16, wordWrap = true};
-            bodyStyle.normal.textColor = new Color(0.86f, 0.93f, 0.94f);
+            bodyStyle.normal.textColor = hudInk;
             smallStyle = new GUIStyle(bodyStyle) {fontSize = 13};
-            smallStyle.normal.textColor = new Color(0.63f, 0.78f, 0.80f);
+            smallStyle.normal.textColor = new Color(0.31f, 0.39f, 0.34f);
             buttonStyle = new GUIStyle(GUI.skin.button) {fontSize = 16, fontStyle = FontStyle.Bold, wordWrap = true, padding = new RectOffset(14,14,10,10)};
             statStyle = new GUIStyle(headingStyle); statStyle.normal.textColor = mint;
             centerStyle = new GUIStyle(bodyStyle) {alignment = TextAnchor.MiddleCenter};
             controlsStyle = new GUIStyle(smallStyle) {alignment = TextAnchor.MiddleCenter, wordWrap = false};
+            hudTitleStyle = new GUIStyle(headingStyle) {fontSize = 18, wordWrap = true};
+            hudBodyStyle = new GUIStyle(bodyStyle) {fontSize = 15};
+            hudSmallStyle = new GUIStyle(smallStyle) {fontSize = 12, wordWrap = true};
+            hudCurrencyStyle = new GUIStyle(statStyle) {fontSize = 18};
+            toggleStyle = new GUIStyle(GUI.skin.toggle);
+            toggleStyle.normal.textColor = toggleStyle.hover.textColor = toggleStyle.active.textColor = toggleStyle.focused.textColor = hudInk;
+            toggleStyle.onNormal.textColor = toggleStyle.onHover.textColor = toggleStyle.onActive.textColor = toggleStyle.onFocused.textColor = hudInk;
         }
         static void Box(Rect rect, Color color)
         {
             Color before = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = before;
+        }
+        void HudCard(Rect rect, Color accent)
+        {
+            Box(new Rect(rect.x + 2, rect.y + 3, rect.width, rect.height), new Color(0.12f, 0.19f, 0.15f, 0.18f));
+            Box(rect, ink);
+            Box(new Rect(rect.x, rect.y, 3, rect.height), accent);
+        }
+        float HudTextHeight(string text, GUIStyle style, float width)
+        {
+            hudMeasure.text = text;
+            return Mathf.Ceil(style.CalcHeight(hudMeasure, width));
         }
         void OnGUI()
         {
@@ -37,78 +59,118 @@ namespace EvolutionShop
             float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 720f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1280 * scale) / 2, (Screen.height - 720 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);
             if (Panel == ShopPanel.Presentation) { DrawPresentationView(); GUI.matrix=Matrix4x4.identity; return; }
-            Box(new Rect(22, 22, 338, 78), ink);
-            Box(new Rect(22, 22, 4, 78), mint);
-            GUI.Label(new Rect(40, 29, 310, 32), "EVOLUTION SHOP", titleStyle);
-            GUI.Label(new Rect(40, 65, 310, 25), ReputationLine(), smallStyle);
-            Box(new Rect(1050, 22, 208, 78), ink);
-            GUI.Label(new Rect(1069, 31, 175, 30), Model.Currency + "  CREDITS", statStyle);
-            GUI.Label(new Rect(1069, 63, 175, 23), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discovered", smallStyle);
-            Box(new Rect(22, 116, 310, 82), ink);
-            GUI.Label(new Rect(38, 125, 275, 21), "YOUR NEXT STEP", smallStyle);
-            GUI.Label(new Rect(38, 149, 278, 44), Objective(), bodyStyle);
-            Box(new Rect(22, 212, 310, 84), ink);
-            GUI.Label(new Rect(38, 222, 280, 28), PhaseTitle(), headingStyle);
-            GUI.Label(new Rect(38, 255, 280, 33), Paused ? "PAUSED / " + ClockText() : ClockText(), smallStyle);
-            Box(new Rect(22, 610, 396, 88), ink);
-            string starterCultures = "BLOOM " + Model.Available(CultureKind.Bloom) + "  FLOW " + Model.Available(CultureKind.Flow);
-            if (Model.MistResearchUnlocked)
-            {
-                GUI.Label(new Rect(40, 616, 360, 26), starterCultures, headingStyle);
-                GUI.Label(new Rect(40, 641, 360, 26), "SPARK " + Model.Available(CultureKind.Spark) + "  MIST " + Model.Available(CultureKind.Mist), headingStyle);
-            }
-            else GUI.Label(new Rect(40, 620, 360, 28), starterCultures + (Model.SparkResearchUnlocked ? "  SPARK " + Model.Available(CultureKind.Spark) : ""), headingStyle);
-            GUI.Label(new Rect(40, Model.MistResearchUnlocked ? 670 : 652, 360, 26), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "  |  Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist)), smallStyle);
-            Box(new Rect(438,662,548,36),ink);
-            GUI.Label(new Rect(448,668,528,23), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
-            string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
-            Box(new Rect(1050, 116, 208, 68), ink);
-            GUI.Label(new Rect(1067, 126, 175, 48), machine, bodyStyle);
-            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0)
-            {
-                Box(new Rect(1050, 200, 208, 130), ink);
-                GUI.Label(new Rect(1067, 209, 175, 23), "FRONT STORE", smallStyle);
-                GUI.Label(new Rect(1067, 235, 175, 86), Customers.Status, bodyStyle);
-            }
+            DrawCompactStatus();
+            DrawCultureStatus();
+            HudCard(new Rect(438, 674, 548, 28), mint);
+            GUI.Label(new Rect(448, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", controlsStyle);
             if (Panel == ShopPanel.None && !PlacementActive)
             {
-                Box(new Rect(637, 357, 6, 6), new Color(1,1,1,0.85f));
-                if (SlapTarget != null)
-                {
-                    Box(new Rect(420, 446, 440, 67), ink);
-                    GUI.Label(new Rect(435, 450, 410, 26), SlapTarget.ArchetypeName, centerStyle);
-                    string slapHint = SlapCooldownRemaining > 0 ? "Slap ready in " + SlapCooldownRemaining.ToString("0.0") + "s" :
-                        "Press " + SlapKey + " to slap / -1 reputation";
-                    GUI.Label(new Rect(435, 477, 410, 26), slapHint, centerStyle);
-                }
+                Box(new Rect(636, 356, 8, 8), new Color(0.13f, 0.27f, 0.24f, 0.65f));
+                Box(new Rect(638, 358, 4, 4), new Color(1f, 0.98f, 0.86f, 0.95f));
+                float hintTop = 638;
                 if (Focused != null)
                 {
-                    Box(new Rect(420, 525, 440, 67), ink);
-                    GUI.Label(new Rect(435, 531, 410, 26), Focused.Label, centerStyle);
                     bool culture = TryStationCulture(Focused, out var focusCulture);
                     string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold LEFT MOUSE: Spark / E: research" : focusCulture == CultureKind.Mist ? "Hold LEFT MOUSE: Mist / E: vat" : "Hold LEFT MOUSE to collect") : "Press E to interact";
-                    GUI.Label(new Rect(435, 556, 410, 26), hint, centerStyle);
-                    if (HarvestProgress > 0) {Box(new Rect(460, 598, 360, 5), ink); Box(new Rect(460, 598, 360 * HarvestProgress, 5), mint);}
+                    float labelHeight = Mathf.Max(22, HudTextHeight(Focused.Label, centerStyle, 410));
+                    float hintHeight = Mathf.Max(22, HudTextHeight(hint, centerStyle, 410));
+                    float height = labelHeight + hintHeight + 16;
+                    hintTop -= height;
+                    HudCard(new Rect(420, hintTop, 440, height), mint);
+                    GUI.Label(new Rect(435, hintTop + 7, 410, labelHeight), Focused.Label, centerStyle);
+                    GUI.Label(new Rect(435, hintTop + 7 + labelHeight, 410, hintHeight), hint, centerStyle);
+                    if (HarvestProgress > 0)
+                    {
+                        Box(new Rect(435, 642, 410, 5), ink);
+                        Box(new Rect(435, 642, 410 * HarvestProgress, 5), mint);
+                    }
+                }
+                if (SlapTarget != null)
+                {
+                    string slapHint = SlapCooldownRemaining > 0 ? "Slap ready in " + SlapCooldownRemaining.ToString("0.0") + "s" :
+                        "Press " + SlapKey + " to slap / -1 reputation";
+                    float nameHeight = Mathf.Max(21, HudTextHeight(SlapTarget.ArchetypeName, centerStyle, 410));
+                    float hintHeight = Mathf.Max(21, HudTextHeight(slapHint, centerStyle, 410));
+                    float height = nameHeight + hintHeight + 14;
+                    float top = hintTop - height - 8;
+                    HudCard(new Rect(420, top, 440, height), coral);
+                    GUI.Label(new Rect(435, top + 6, 410, nameHeight), SlapTarget.ArchetypeName, centerStyle);
+                    GUI.Label(new Rect(435, top + 6 + nameHeight, 410, hintHeight), slapHint, centerStyle);
                 }
             }
             if (Panel != ShopPanel.None) DrawPanel();
             if (PlacementActive) DrawPlacementOverlay();
             if (!string.IsNullOrEmpty(SaveError) || (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil))
             {
-                Box(new Rect(380, 24, 650, 67), ink);
-                GUI.Label(new Rect(400, 32, 610, 54), string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED - " + SaveError, centerStyle);
+                string notice = string.IsNullOrEmpty(SaveError) ? message : "PROGRESS NOT SAVED - " + SaveError;
+                float height = Mathf.Max(44, HudTextHeight(notice, centerStyle, 604) + 18);
+                // Transient feedback gets its own lane; never cover the clock, money or gag caption.
+                float top = Panel != ShopPanel.None ? 20 : Comedy.Active ? 208 : 112;
+                HudCard(new Rect(366, top, 642, height), string.IsNullOrEmpty(SaveError) ? mint : coral);
+                GUI.Label(new Rect(385, top + 9, 604, height - 18), notice, centerStyle);
             }
             if (Panel == ShopPanel.None && Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies))
             {
                 var species = Model.GetSpecies(revealedSpecies);
-                Box(new Rect(22, 310, 310, 137), ink);
-                GUI.Label(new Rect(38, 320, 278, 25), "DISCOVERED / JOURNAL UPDATED", centerStyle);
-                GUI.Label(new Rect(40, 350, 278, 42), species.DisplayName, titleStyle);
-                GUI.Label(new Rect(38, 396, 278, 30), RecipeText(species), centerStyle);
+                string recipe = RecipeText(species);
+                float recipeHeight = Mathf.Max(22, HudTextHeight(recipe, hudBodyStyle, 296));
+                float nameHeight = Mathf.Max(27, HudTextHeight(species.DisplayName, hudTitleStyle, 296));
+                HudCard(new Rect(18, 130, 326, 40 + nameHeight + recipeHeight), coral);
+                GUI.Label(new Rect(32, 140, 296, 19), "DISCOVERED / JOURNAL UPDATED", hudSmallStyle);
+                GUI.Label(new Rect(32, 160, 296, nameHeight), species.DisplayName, hudTitleStyle);
+                GUI.Label(new Rect(32, 160 + nameHeight, 296, recipeHeight), recipe, hudBodyStyle);
             }
             DrawComedyCaption();
-            if (BaselinePreview) GUI.Label(new Rect(440, 102, 520, 27), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", smallStyle);
+            if (BaselinePreview)
+            {
+                HudCard(new Rect(420, 646, 566, 22), coral);
+                GUI.Label(new Rect(431, 648, 545, 20), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", hudSmallStyle);
+            }
             GUI.matrix = Matrix4x4.identity;
+        }
+        void DrawCompactStatus()
+        {
+            HudCard(new Rect(18, 18, 326, 100), mint);
+            GUI.Label(new Rect(32, 24, 296, 26), PhaseTitle(), hudTitleStyle);
+            GUI.Label(new Rect(32, 51, 296, 34), Paused ? "PAUSED / " + ClockText() : ClockText(), hudSmallStyle);
+            GUI.Label(new Rect(32, 91, 296, 19), ReputationLine(), hudSmallStyle);
+
+            string objective = Objective();
+            float objectiveHeight = Mathf.Max(36, HudTextHeight(objective, hudBodyStyle, 610));
+            HudCard(new Rect(364, 18, 644, objectiveHeight + 37), mint);
+            GUI.Label(new Rect(380, 25, 612, 18), "EVOLUTION SHOP  /  YOUR NEXT STEP", hudSmallStyle);
+            GUI.Label(new Rect(380, 45, 610, objectiveHeight), objective, hudBodyStyle);
+
+            string machine = Model.Incubator.Phase == IncubatorPhase.Incubating ? "INCUBATING  " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s" : Model.Incubator.Phase == IncubatorPhase.Ready ? "SPECIMEN READY" : "INCUBATOR AVAILABLE";
+            HudCard(new Rect(1028, 18, 234, 100), Model.Incubator.Phase == IncubatorPhase.Ready ? coral : mint);
+            GUI.Label(new Rect(1042, 24, 206, 28), Model.Currency + "  CREDITS", hudCurrencyStyle);
+            GUI.Label(new Rect(1042, 53, 206, 20), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discovered", hudSmallStyle);
+            GUI.Label(new Rect(1042, 82, 206, 25), machine, hudBodyStyle);
+            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0)
+            {
+                string status = Customers.Status;
+                float statusHeight = Mathf.Max(34, HudTextHeight(status, hudBodyStyle, 206));
+                HudCard(new Rect(1028, 130, 234, statusHeight + 38), mint);
+                GUI.Label(new Rect(1042, 137, 206, 19), "FRONT STORE", hudSmallStyle);
+                GUI.Label(new Rect(1042, 158, 206, statusHeight), status, hudBodyStyle);
+            }
+        }
+        void DrawCultureStatus()
+        {
+            bool extraRow = Model.SparkResearchUnlocked || Model.MistResearchUnlocked;
+            float height = extraRow ? 80 : 57;
+            float top = 702 - height;
+            HudCard(new Rect(18, top, 388, height), mint);
+            DrawCultureCount(new Rect(32, top + 7, 176, 22), "BLOOM", Model.Available(CultureKind.Bloom), coral);
+            DrawCultureCount(new Rect(219, top + 7, 172, 22), "FLOW", Model.Available(CultureKind.Flow), new Color(0.2f, 0.49f, 0.62f));
+            if (Model.SparkResearchUnlocked) DrawCultureCount(new Rect(32, top + 30, 176, 22), "SPARK", Model.Available(CultureKind.Spark), new Color(0.72f, 0.47f, 0.17f));
+            if (Model.MistResearchUnlocked) DrawCultureCount(new Rect(219, top + 30, 172, 22), "MIST", Model.Available(CultureKind.Mist), new Color(0.49f, 0.39f, 0.62f));
+            GUI.Label(new Rect(32, 678, 358, 21), "Siphon " + Model.ReservedCultureCount + " / " + (BaselinePreview ? Config.BaseCapacity : Model.Capacity) + "   |   Staged " + (Model.Staged(CultureKind.Bloom) + Model.Staged(CultureKind.Flow) + Model.Staged(CultureKind.Spark) + Model.Staged(CultureKind.Mist)), hudSmallStyle);
+        }
+        void DrawCultureCount(Rect rect, string label, int amount, Color color)
+        {
+            Box(new Rect(rect.x, rect.y + 5, 5, 12), color);
+            GUI.Label(new Rect(rect.x + 13, rect.y, rect.width - 13, rect.height), label + "  " + amount, hudBodyStyle);
         }
         string Objective()
         {
@@ -143,8 +205,7 @@ namespace EvolutionShop
             bool closePanel = !dayReportPanel && Panel != ShopPanel.Welcome && Panel != ShopPanel.Pause && Panel != ShopPanel.Reset;
             bool fixedFooter = dayReportPanel || closePanel;
             Box(new Rect(0,0,1280,720), new Color(0.015f,0.045f,0.06f,0.38f));
-            Box(new Rect(350,112,580,518), ink);
-            Box(new Rect(350,112,580,3), mint);
+            HudCard(new Rect(350,112,580,518), mint);
             GUILayout.BeginArea(new Rect(377,130,526,fixedFooter ? 423 : 477));
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
             switch (Panel)
@@ -180,7 +241,7 @@ namespace EvolutionShop
                     Button(WaitingForSlapKey ? "Press a letter / Escape cancels" : "Change slap key / " + SlapKey, BeginSlapRebind);
                     Text("Humor volume: " + Mathf.RoundToInt(HumorVolume * 100) + "%");
                     HumorVolume = GUILayout.HorizontalSlider(HumorVolume, 0, 1);
-                    ReducedGags = GUILayout.Toggle(ReducedGags, "Reduced gags (less motion, longer quiet time)");
+                    ReducedGags = GUILayout.Toggle(ReducedGags, "Reduced gags (less motion, longer quiet time)", toggleStyle);
                     Space(); Button("Save and resume", () => { if (SaveNow()) SetPanel(ShopPanel.None); });
                     Button("Reload local save", () => { if (ReloadSaved()) { SetPanel(ShopPanel.None); Notify("Local save restored. Unpaid visits cancelled; their creatures remain in the tanks."); } });
                     Button("New game...", () => SetPanel(ShopPanel.Reset));

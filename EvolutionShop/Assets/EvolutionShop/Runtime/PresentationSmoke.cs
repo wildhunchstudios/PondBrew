@@ -37,6 +37,7 @@ namespace EvolutionShop
             shop.World.Refresh(shop.Model);
             yield return SpecimenBounds("Refined Pondlet");
             LabRoutesCheck("Presentation additions");
+            yield return ArtDirectionCaptures("night");
             shop.SetPanel(ShopPanel.None);
             AimAt(new Vector3(1,.2f,-2.8f),new Vector3(5.5f,1.55f,-1.2f));
             yield return null;
@@ -97,6 +98,7 @@ namespace EvolutionShop
             Check(shop.World.GetComponentsInChildren<ShopCharacterVisual>(true).Length==modelCount,"Repeated preview entry reuses its models without growth");
             shop.SetPanel(ShopPanel.None);
             yield return EnterCounter();Check(shop.OpenForDay(),"Open actual shop after preview");
+            yield return ArtDirectionCaptures("day");
             var visit=Spawn(CustomerArchetypes.Casual);
             var actor=shop.Customers.ActorOf(visit);
             Check(actor.GetComponentInChildren<ShopCharacterVisual>()!=null,"Actual casual visitor uses the sample rig");
@@ -115,6 +117,46 @@ namespace EvolutionShop
             Check(shop.Reports.Last.sales==1 && shop.Reports.Last.revenue==6 && shop.SaveNow() && shop.ReloadSaved(),"Sample sale survives normal closing and reload");
             shop.SetPanel(ShopPanel.None);
             Check(shop.World.Stations.Count==7 && shop.Customers.Ready,"Reload preserves station registry and customer routes");
+        }
+
+        IEnumerator ArtDirectionCaptures(string phase)
+        {
+            limitations.Add("R06.5 art captures / " + phase + ": actual room render and HUD; diagnostic camera positions near player eye height, no human timing or art acceptance inferred.");
+            Vector3 position=shop.Player.transform.position;
+            Quaternion rotation=shop.Player.transform.rotation;
+            Vector3 viewPosition=shop.Player.View.transform.localPosition;
+            Quaternion viewRotation=shop.Player.View.transform.localRotation;
+            bool validationInput=shop.AllowValidationInput;
+            try
+            {
+                shop.SetPanel(ShopPanel.None);
+                GateAim(new Vector3(-1.4f,.05f,-4.65f),new Vector3(4.9f,1.55f,-.7f));
+                yield return GateCapture("240-"+phase+"-cozy-displays");
+                GateAim(new Vector3(1.35f,.05f,-.10f),new Vector3(-3.35f,1.50f,-3.4f));
+                yield return GateCapture("241-"+phase+"-cozy-counter");
+                GateAim(new Vector3(1.0f,.05f,1.28f),new Vector3(-1.5f,1.5f,4.45f));
+                yield return GateCapture("242-"+phase+"-quirky-lab");
+            }
+            finally
+            {
+                shop.Player.Teleport(position,rotation);
+                shop.Player.View.transform.localPosition=viewPosition;
+                shop.Player.View.transform.localRotation=viewRotation;
+                shop.AllowValidationInput=validationInput;
+            }
+            Check(Vector3.Distance(shop.Player.transform.position,position)<.001f && Quaternion.Angle(shop.Player.View.transform.localRotation,viewRotation)<.001f,"Art camera walkthrough restores player and view / "+phase);
+            if(phase=="night")
+            {
+                int meshes=0,triangles=0,colliders=0,lights=0;
+                var materials=new System.Collections.Generic.HashSet<Material>();
+                foreach(var filter in shop.World.GetComponentsInChildren<MeshFilter>(true))
+                    if(filter.sharedMesh){meshes++;triangles+=filter.sharedMesh.triangles.Length/3;}
+                foreach(var renderer in shop.World.GetComponentsInChildren<Renderer>(true))
+                    foreach(var material in renderer.sharedMaterials)if(material)materials.Add(material);
+                foreach(var collider in shop.World.GetComponentsInChildren<Collider>(true))if(collider.enabled)colliders++;
+                foreach(var light in shop.World.GetComponentsInChildren<Light>(true))if(light.enabled)lights++;
+                File.WriteAllText(Path.Combine(evidence,"room-render-inventory.txt"),"Meshes="+meshes+"\nTriangle instances="+triangles+"\nMaterial instances="+materials.Count+"\nEnabled world colliders="+colliders+"\nEnabled lights="+lights+"\nIncludes shared primitive instances and inactive presentation objects; counts are not draw calls or performance measurements.");
+            }
         }
     }
 }
