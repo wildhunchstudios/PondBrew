@@ -18,6 +18,7 @@ namespace EvolutionShop
         internal readonly GUIStyle Card, DarkCard, Shadow, Inset, Accent, Button, PrimaryButton, DangerButton;
         readonly List<Texture2D> textures = new List<Texture2D>();
         readonly Dictionary<Symbol, Texture2D> icons = new Dictionary<Symbol, Texture2D>();
+        readonly Dictionary<GUIStyle, GUIStyle> compactSurfaces = new Dictionary<GUIStyle, GUIStyle>();
 
         internal ShopUiTheme(GUISkin source)
         {
@@ -76,6 +77,10 @@ namespace EvolutionShop
         {
             var style = new GUIStyle { border = new RectOffset(14, 14, 14, 14) };
             style.normal.background = Rounded(fill, outline);
+            var compact = new GUIStyle(style) { border = new RectOffset(8, 8, 8, 8) };
+            // The smaller texture radius fits entirely within its eight-pixel corner slices.
+            compact.normal.background = Rounded(fill, outline, 7.5f);
+            compactSurfaces.Add(style, compact);
             return style;
         }
 
@@ -101,7 +106,7 @@ namespace EvolutionShop
             style.onNormal.textColor = style.onHover.textColor = style.onActive.textColor = style.onFocused.textColor = text;
         }
 
-        Texture2D Rounded(Color fill, Color outline)
+        Texture2D Rounded(Color fill, Color outline, float radius = 11.5f)
         {
             const int size = 40;
             var texture = Own(new Texture2D(size, size, TextureFormat.RGBA32, false));
@@ -109,9 +114,10 @@ namespace EvolutionShop
             for (int y = 0; y < size; y++)
                 for (int x = 0; x < size; x++)
                 {
-                    float dx = Mathf.Max(Mathf.Abs(x + .5f - size / 2f) - 8, 0);
-                    float dy = Mathf.Max(Mathf.Abs(y + .5f - size / 2f) - 8, 0);
-                    float distance = Mathf.Sqrt(dx * dx + dy * dy) - 11.5f;
+                    float innerExtent = size / 2f - .5f - radius;
+                    float dx = Mathf.Max(Mathf.Abs(x + .5f - size / 2f) - innerExtent, 0);
+                    float dy = Mathf.Max(Mathf.Abs(y + .5f - size / 2f) - innerExtent, 0);
+                    float distance = Mathf.Sqrt(dx * dx + dy * dy) - radius;
                     Color color = outline.a > 0 ? Color.Lerp(fill, outline, Mathf.Clamp01(distance + 2)) : fill;
                     color.a *= Mathf.Clamp01(.5f - distance);
                     pixels[y * size + x] = color;
@@ -233,10 +239,15 @@ namespace EvolutionShop
             Color before = GUI.color;
             if (tint.HasValue) GUI.color = before * tint.Value;
             // IMGUI preserves nine-slice corner sizes even when their sum exceeds the
-            // destination. Tiny meters, tabs and the reticle must stay inside their rect.
-            // Stretch the same owned texture for those cases; never mutate shared styles.
+            // destination. Short cards use prebuilt compact corners; only tiny meters,
+            // tabs and the reticle stretch. No style mutation/allocation occurs on repaint.
             if (rect.width < style.border.horizontal || rect.height < style.border.vertical)
-                GUI.DrawTexture(rect, style.normal.background, ScaleMode.StretchToFill, true);
+            {
+                if (rect.width >= 16 && rect.height >= 16 && compactSurfaces.TryGetValue(style, out var compact))
+                    compact.Draw(rect, GUIContent.none, false, false, false, false);
+                else
+                    GUI.DrawTexture(rect, style.normal.background, ScaleMode.StretchToFill, true);
+            }
             else
                 style.Draw(rect, GUIContent.none, false, false, false, false);
             GUI.color = before;
@@ -245,7 +256,7 @@ namespace EvolutionShop
         public void Dispose()
         {
             foreach (var texture in textures) if (texture) UnityEngine.Object.Destroy(texture);
-            textures.Clear(); icons.Clear();
+            textures.Clear(); icons.Clear(); compactSurfaces.Clear();
             if (Skin) UnityEngine.Object.Destroy(Skin);
         }
     }
