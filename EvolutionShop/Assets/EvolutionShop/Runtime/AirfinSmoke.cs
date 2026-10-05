@@ -69,6 +69,8 @@ namespace EvolutionShop
                 "Normal-time maturation discovers one distinct Airfin at standard price 18");
             yield return ResearchFacilityPanel(ShopLayout.IncubatorFacilityId, ShopPanel.Incubator);
             yield return Capture("192-airfin-ready");
+            AuditHatcheryCreature();
+            shop.SetPanel(ShopPanel.None); yield return Capture("255-hatchery-driftwing-ready");
             yield return SpecimenRackPanel("table-1");
             Check(shop.StoreReadyInRack("table-1-storage-2"), "Physical rack stores the exact first Airfin away from customers");
             yield return SpecimenDisplayPanel("tank-a");

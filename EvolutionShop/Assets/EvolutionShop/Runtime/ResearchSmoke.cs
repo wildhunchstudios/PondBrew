@@ -98,6 +98,8 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.Incubator);
             yield return WaitFor(() => shop.Model.Incubator.Phase == IncubatorPhase.Ready, 16, "first natural Lanternfin maturity");
             Check(Time.realtimeSinceStartup - began >= shop.Config.IncubationSeconds && shop.Model.Incubator.SpecimenId == first && shop.Model.Incubator.SpeciesId == "lanternfin" && shop.Model.IsDiscovered("lanternfin"), "First Lanternfin matures after ordinary time and discovers once");
+            AuditHatcheryCreature();
+            shop.SetPanel(ShopPanel.None); yield return Capture("254-hatchery-lanternfin-ready");
             shop.SetPanel(ShopPanel.Journal); yield return Capture("165-lanternfin-journal");
             yield return SpecimenRackPanel(rack);
             Check(shop.StoreReadyInRack(slots[0]) && shop.Model.GetStorage(slots[0]).Value.Id == first, "Physical rack stores the exact newly discovered Lanternfin");

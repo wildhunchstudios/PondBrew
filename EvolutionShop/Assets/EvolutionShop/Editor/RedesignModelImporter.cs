@@ -7,7 +7,9 @@ namespace EvolutionShop.Editor
     {
         void OnPreprocessModel()
         {
-            if (!assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/RedesignKit/")) return;
+            if (!assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/RedesignKit/") &&
+                !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/LabRefreshKit/") &&
+                !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/CollectorKit/")) return;
             var importer = (ModelImporter)assetImporter;
             importer.globalScale = 1;
             importer.useFileScale = true;

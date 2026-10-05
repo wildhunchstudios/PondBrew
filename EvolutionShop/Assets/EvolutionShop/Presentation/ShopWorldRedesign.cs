@@ -8,7 +8,6 @@ namespace EvolutionShop
         readonly Dictionary<string, Material> redesignPalette = new Dictionary<string, Material>();
         readonly List<Transform> redesignVisuals = new List<Transform>();
         public IReadOnlyList<Transform> RedesignVisuals => redesignVisuals;
-        Transform toolPumpCrown;
 
         Material RedesignMaterial(string name)
         {
@@ -37,8 +36,11 @@ namespace EvolutionShop
         }
 
         bool AttachRedesign(Transform parent, string asset, params string[] replaced)
+            => AttachAuthored(parent, "RedesignKit", asset, replaced);
+
+        bool AttachAuthored(Transform parent, string kit, string asset, params string[] replaced)
         {
-            var source = Resources.Load<GameObject>("Art/RedesignKit/" + asset);
+            var source = Resources.Load<GameObject>("Art/" + kit + "/" + asset);
             // Retain the existing geometry if the optional visual resource cannot load.
             if (!source) { Debug.LogWarning("Missing redesign visual: " + asset); return false; }
             var visual = Instantiate(source, parent, false).transform;

@@ -109,10 +109,10 @@ namespace EvolutionShop
             // Existing comparison changes presentation only, with the legitimately purchased tool.
             shop.SetBaselinePreview(true);
             Check(shop.BaselinePreview, "Empty upgraded tool supports the original-size visual comparison");
-            AuditSiphonPumpClearance();
+            AuditCollectorCapacityClearance();
             yield return GateCapture("244-siphon-original-capacity");
             shop.SetBaselinePreview(false);
-            AuditSiphonPumpClearance();
+            AuditCollectorCapacityClearance();
             yield return GateCapture("245-siphon-upgraded-capacity");
             yield return EditedWalkTo(new Vector2(-4, 9.7f), "leave upgrade");
             yield return EditedWalkTo(new Vector2(0, 9.7f), "incubator aisle");

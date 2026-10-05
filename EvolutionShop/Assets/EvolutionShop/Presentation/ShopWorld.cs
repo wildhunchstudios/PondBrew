@@ -388,11 +388,12 @@ namespace EvolutionShop
             status[StationKind.Incubator] = Text(r, "ADD MEASURED DOSES", new Vector3(0, .31f, -.674f), .045f, Color.white);
             Text(r, "03 / MAKE A LITTLE LIFE", new Vector3(0, 2.40f, 0), .047f, new Color(.1f, .27f, .28f), 1.9f);
             AddIncubatorArt(r);
-            if (AttachRedesign(r, "IncubatorBase", "Incubator pedestal", "Rounded worktop", "Incubator enamel finish"))
+            bool hatchery = BuildHatcheryVisual(r);
+            if (!hatchery && AttachRedesign(r, "IncubatorBase", "Incubator pedestal", "Rounded worktop", "Incubator enamel finish"))
                 RedesignLabelDepth(r, -.738f, .72f, 1.38f);
             var display = Group("Incubator creature", r, new Vector3(0, 1.48f, 0));
             displays["incubator"] = new Display { Root = display, Incubator = true, Seed = 3.5f };
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; !hatchery && i < 2; i++)
             {
                 var color = i == 0 ? bloomMat : flowMat;
                 Shape(r, "Measured dose port", PrimitiveType.Cylinder, new Vector3((i == 0 ? -.65f : .65f), 1.02f, -.55f), new Vector3(.24f, .045f, .24f), color);
@@ -464,11 +465,12 @@ namespace EvolutionShop
             status[StationKind.Upgrade] = Text(r, "24 COINS  /  COLLECT FASTER", new Vector3(0, .32f, -.583f), .04f, Color.white);
             researchHint = Text(r, "RESEARCH / DISCOVER 3 SPECIES", new Vector3(0, 2.30f, 0), .05f, new Color(.1f, .27f, .28f), 1.65f);
             BuildSparkModule(r);
+            BuildResearchBenchVisual(r);
         }
 
         void Tool(Transform camera)
         {
-            ToolRoot = Group("Culture siphon", camera, new Vector3(.34f, -.26f, .54f));
+            ToolRoot = Group("Culture siphon", camera, new Vector3(.33f, -.16f, .58f));
             ToolRoot.localScale = Vector3.one * .62f;
             ToolRoot.localRotation = Quaternion.Euler(-5, -7, -5);
             toolBody = Group("Siphon chassis", ToolRoot, Vector3.zero);
@@ -488,13 +490,7 @@ namespace EvolutionShop
             Shape(toolBody, "Siphon readout panel", PrimitiveType.Cube, new Vector3(0, .04f, -.17f), new Vector3(.21f, .08f, .012f), dark);
             toolReadout = Text(toolBody, "0 / 4", new Vector3(0, .04f, -.181f), .019f, new Color(.6f, 1f, .84f), .16f);
             for (int i = 0; i < 8; i++) reservoirCells.Add(Organism(ToolChamber, true, bloomMat, .026f));
-            // The support cage shares the live chamber's size and position in both upgrades.
-            if (AttachRedesign(ToolChamber, "SiphonCage"))
-                redesignVisuals[redesignVisuals.Count - 1].localPosition = new Vector3(0,-.02f,-.025f);
-            if (AttachRedesign(toolBody, "SiphonCrown")) toolPumpCrown = redesignVisuals[redesignVisuals.Count - 1];
-            if (AttachRedesign(toolBody, "Siphon", "Soft grip", "Base coupling"))
-                foreach (Transform child in toolNozzle)
-                    if (child.name == "Barrel" || child.name == "Nozzle collar") child.gameObject.SetActive(false);
+            BuildCollectorVisual();
         }
 
         void Faceplate(Transform parent, string title, Vector3 position, Material accent)
@@ -578,6 +574,7 @@ namespace EvolutionShop
             var incubation = model.Incubator;
             status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW" + (model.SparkResearchUnlocked ? "  +  " + incubation.Spark + " SPARK" : "") + (model.MistResearchUnlocked ? "  +  " + incubation.Mist + " MIST" : "");
             SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
+            RefreshHatcheryLamp(incubation.Phase);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
             RefreshPlacedDisplays(model);
@@ -645,9 +642,7 @@ namespace EvolutionShop
             ToolChamber.localScale = value ? new Vector3(1.35f, 1.48f, 1.35f) : Vector3.one;
             ToolChamber.localPosition = new Vector3(0, value ? .067f : .02f, .025f);
             toolUpgradeBand.gameObject.SetActive(value);
-            // Move only the authored pump above the resized cap; keep the grip/nozzle at the hand.
-            if (toolPumpCrown) toolPumpCrown.localPosition = Vector3.up *
-                (ToolChamber.localPosition.y + .115f * ToolChamber.localScale.y - .135f);
+            // The authored reservoir cap shares this chamber's transform at both capacities.
         }
 
         public void SetHarvesting(bool active, Station station)
@@ -737,7 +732,7 @@ namespace EvolutionShop
             harvestKick = Mathf.MoveTowards(harvestKick, 0, dt * 5);
             if (ToolRoot)
             {
-                ToolRoot.localPosition = new Vector3(.34f, -.26f + Mathf.Sin(time * 1.6f) * .003f, .54f - harvestKick * .017f);
+                ToolRoot.localPosition = new Vector3(.33f, -.16f + Mathf.Sin(time * 1.6f) * .003f, .58f - harvestKick * .017f);
                 toolNozzle.localRotation = Quaternion.Euler(0, 0, harvesting ? Mathf.Sin(time * 39) * 3 : 0);
             }
         }

@@ -1,0 +1,99 @@
+{
+  "blender": "5.0.1",
+  "passed": true,
+  "kind": "Local FBX export/reimport plus bounds and sampled open-reservoir exclusion; not Unity import/runtime evidence",
+  "assets": [
+    {
+      "id": "CollectorBody",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 6692,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 1.4901161193847656e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.17908118665218353,
+          -0.2587350308895111,
+          -0.17899997532367706
+        ],
+        "max": [
+          0.17908118665218353,
+          0.16450001299381256,
+          0.4950000047683716
+        ]
+      },
+      "body_clearance_sampling": [
+        {
+          "size": "base",
+          "glass_center_tool_local": [
+            0,
+            0.02,
+            0.025
+          ],
+          "glass_radius_m": 0.1,
+          "glass_half_height_m": 0.11,
+          "mesh_vertex_edge_midpoint_face_center_probes": 30164,
+          "probes_inside_open_glass": 0
+        },
+        {
+          "size": "upgraded",
+          "glass_center_tool_local": [
+            0,
+            0.067,
+            0.025
+          ],
+          "glass_radius_m": 0.135,
+          "glass_half_height_m": 0.1628,
+          "mesh_vertex_edge_midpoint_face_center_probes": 30164,
+          "probes_inside_open_glass": 0
+        }
+      ],
+      "muzzle_z_extents_m": [
+        0.451,
+        0.495
+      ],
+      "effect_center_m": [
+        0,
+        0.05,
+        0.489
+      ]
+    },
+    {
+      "id": "CollectorCap",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 1196,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 7.450580596923828e-09,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.12099999934434891,
+          0.11699999123811722,
+          -0.1210000067949295
+        ],
+        "max": [
+          0.12099999934434891,
+          0.17800000309944153,
+          0.12099999189376831
+        ]
+      },
+      "base_tool_root_bounds_y_m": [
+        0.1369999912381172,
+        0.19800000309944152
+      ],
+      "upgraded_tool_root_bounds_y_m": [
+        0.24015998703241348,
+        0.3304400045871735
+      ],
+      "intentional_overlap": "Lower lid gasket joins the preserved top reservoir seal; no hidden upright pump or independent offset."
+    }
+  ],
+  "limits": [
+    "Vertex/edge-midpoint/face-center exclusion is a sampled geometry audit, not exhaustive triangle-cylinder collision proof.",
+    "Source studio render reviewed separately; player visibility/effect alignment and actual Unity import remain root integration."
+  ]
+}

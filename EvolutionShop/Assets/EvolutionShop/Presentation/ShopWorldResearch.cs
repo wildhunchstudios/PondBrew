@@ -47,8 +47,8 @@ namespace EvolutionShop
             bool unlocked = model.SparkResearchUnlocked;
             sparkModule.gameObject.SetActive(unlocked);
             upgradeStation.Label = unlocked ? "Spark grower / Siphon upgrade" : "Research / Siphon upgrade";
-            researchHint.text = unlocked ? "SPARK CULTURE / HOLD LMB" : model.SparkResearchReady ?
-                "SPARK RESEARCH READY / E" : "RESEARCH / DISCOVER 3 SPECIES";
+            researchHint.text = unlocked ? "SPARK / HOLD LMB" : model.SparkResearchReady ?
+                "RESEARCH READY / E" : "DISCOVER 3 SPECIES";
             if (!unlocked) return;
             var grower = model.GetGrower(CultureKind.Spark);
             sparkStatus.text = "SPARK " + grower.Units + " / " + grower.Capacity;

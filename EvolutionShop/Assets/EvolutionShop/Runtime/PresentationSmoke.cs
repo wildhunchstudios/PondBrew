@@ -32,8 +32,13 @@ namespace EvolutionShop
             Ok(shop.Perform(shop.Model.Dose(CultureKind.Flow)),"Stage real harvested Flow");
             Ok(shop.Perform(shop.Model.BeginIncubation()),"Start sample Pondlet production");
             float started=Time.realtimeSinceStartup;
+            shop.SetPanel(ShopPanel.None);
+            yield return Capture("252-hatchery-growing");
+            AuditHatcheryCreature();
             yield return WaitFor(()=>shop.Model.Incubator.Phase==IncubatorPhase.Ready,16,"sample ordinary-time growth");
             Check(Time.realtimeSinceStartup-started>=shop.Config.IncubationSeconds-.1f,"Pondlet matures through ordinary runtime time");
+            yield return Capture("253-hatchery-ready");
+            AuditHatcheryCreature();
             Ok(shop.Perform(shop.Model.TransferToTank("tank-a")),"Put actual Pondlet in refined display");
             shop.World.Refresh(shop.Model);
             yield return SpecimenBounds("Refined Pondlet");
@@ -137,6 +142,12 @@ namespace EvolutionShop
                 yield return GateCapture("241-"+phase+"-cozy-counter");
                 GateAim(new Vector3(1.0f,.05f,1.28f),new Vector3(-1.5f,1.5f,4.45f));
                 yield return GateCapture("242-"+phase+"-quirky-lab");
+                shop.World.TryGetLabFacility(ShopLayout.UpgradeFacilityId, out var research);
+                GateAim(research.TransformPoint(new Vector3(-.10f,.05f,-2.3f)),research.TransformPoint(new Vector3(0,1.26f,0)));
+                yield return GateCapture("250-"+phase+"-research-workshop");
+                shop.World.TryGetLabFacility(ShopLayout.IncubatorFacilityId, out var hatchery);
+                GateAim(hatchery.TransformPoint(new Vector3(-.35f,.05f,-2.4f)),hatchery.TransformPoint(new Vector3(0,1.38f,0)));
+                yield return GateCapture("251-"+phase+"-hatchery");
             }
             finally
             {

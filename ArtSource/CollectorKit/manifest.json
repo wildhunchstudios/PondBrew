@@ -1,0 +1,274 @@
+{
+  "schema": 1,
+  "title": "Evolution Shop original retro culture vacuum",
+  "origin": {
+    "author": "Original local Blender authorship by Codex for Evolution Shop",
+    "external_sources": [],
+    "license": "Original project work; no third-party source or asset license",
+    "paid_generation": false,
+    "external_uploads": false
+  },
+  "blender_version": "5.0.1",
+  "source_script": "Tools/Art/create_collector_kit.py",
+  "source_script_sha256": "2fc07b4ecb3d35e5395de1c979ceb520cc22084e279d5d1bcc82561319a68f55",
+  "blend_source": "ArtSource/CollectorKit/EvolutionShop_CollectorKit.blend",
+  "blend_sha256": "2ae4eb406052cd651bfe91e88cee4929fe5f83140c00b8d4ca7286e4ffa91c71",
+  "scale": "1 unit = 1 metre",
+  "up": "Unity +Y",
+  "front": "Suction muzzle +Z; rear readout -Z",
+  "export_settings": {
+    "format": "FBX",
+    "forward": "-Z",
+    "up": "Y",
+    "global_scale": 1,
+    "apply_unit_scale": true,
+    "apply_scale_options": "FBX_SCALE_UNITS",
+    "bake_space_transform": true,
+    "animations": false
+  },
+  "unity_import_expected": {
+    "globalScale": 1,
+    "useFileScale": true,
+    "importAnimation": false,
+    "addCollider": false,
+    "material_mapping": "Root remaps existing RW_* names to shared owned URP/Lit palette"
+  },
+  "materials": {
+    "RW_Oak": {
+      "srgb_hex": "#754426",
+      "roughness": 0.55,
+      "metallic": 0
+    },
+    "RW_Honey": {
+      "srgb_hex": "#C98B46",
+      "roughness": 0.42,
+      "metallic": 0
+    },
+    "RW_PaleOak": {
+      "srgb_hex": "#E7B777",
+      "roughness": 0.44,
+      "metallic": 0
+    },
+    "RW_Teal": {
+      "srgb_hex": "#246F68",
+      "roughness": 0.3,
+      "metallic": 0
+    },
+    "RW_Mint": {
+      "srgb_hex": "#8CCCB0",
+      "roughness": 0.3,
+      "metallic": 0
+    },
+    "RW_Cream": {
+      "srgb_hex": "#F5E5BD",
+      "roughness": 0.4,
+      "metallic": 0
+    },
+    "RW_Coral": {
+      "srgb_hex": "#ED795E",
+      "roughness": 0.3,
+      "metallic": 0
+    },
+    "RW_Brass": {
+      "srgb_hex": "#D5AA4D",
+      "roughness": 0.3,
+      "metallic": 0.5
+    },
+    "RW_Ink": {
+      "srgb_hex": "#253C3E",
+      "roughness": 0.5,
+      "metallic": 0
+    },
+    "RW_Leaf": {
+      "srgb_hex": "#538A4C",
+      "roughness": 0.5,
+      "metallic": 0
+    },
+    "RW_Sky": {
+      "srgb_hex": "#8CCCD4",
+      "roughness": 0.28,
+      "metallic": 0
+    }
+  },
+  "materials_exception": "Shared opaque palette slots preserve original flat-color separation without textures. No glass imported. Runtime owns transparent vessel.",
+  "assets": [
+    {
+      "id": "CollectorBody",
+      "description": "Original compact retro horizontal culture vacuum: rounded cream/teal motor, open coral suction bell, wide coral fins, angled mint comfort grip and low rear readout frame. Reservoir space remains open.",
+      "triangles": 6692,
+      "vertices": 3396,
+      "bounds_unity_m": {
+        "min": [
+          -0.17908118665218353,
+          -0.2587350308895111,
+          -0.17899999022483826
+        ],
+        "max": [
+          0.17908118665218353,
+          0.16449999809265137,
+          0.4950000047683716
+        ],
+        "size": [
+          0.35816237330436707,
+          0.4232350289821625,
+          0.6739999949932098
+        ]
+      },
+      "material_slots": [
+        "RW_Cream",
+        "RW_Teal",
+        "RW_Mint",
+        "RW_Coral",
+        "RW_Brass"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/CollectorKit/CollectorBody.fbx",
+      "attachment": {
+        "parent": "Existing ToolBody",
+        "local_position": [
+          0,
+          0,
+          0
+        ],
+        "local_rotation_euler": [
+          0,
+          0,
+          0
+        ],
+        "local_scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "muzzle_effect_center_tool_local": [
+        0,
+        0.05,
+        0.489
+      ],
+      "readout_text_center_tool_local": [
+        0,
+        -0.129,
+        -0.182
+      ],
+      "readout_text_max_width_m": 0.135,
+      "readout_text_height_m": 0.03,
+      "forward_motor_min_z_m": 0.181,
+      "upgraded_glass_max_z_m": 0.16,
+      "sha256": "b53c30b6e79a8ebbbcf1bee3af28b2d16027fa7cb90242612e207ec31088e09a",
+      "bytes": 231884
+    },
+    {
+      "id": "CollectorCap",
+      "description": "Low saucer lid and wide mint twist handle in ToolChamber-local coordinates. Follows existing chamber position/scale; no upright stem or pump bulb.",
+      "triangles": 1196,
+      "vertices": 608,
+      "bounds_unity_m": {
+        "min": [
+          -0.12099999934434891,
+          0.11699999868869781,
+          -0.12099999934434891
+        ],
+        "max": [
+          0.12099999934434891,
+          0.17800000309944153,
+          0.12099999934434891
+        ],
+        "size": [
+          0.24199999868869781,
+          0.06100000441074371,
+          0.24199999868869781
+        ]
+      },
+      "material_slots": [
+        "RW_Teal",
+        "RW_Cream",
+        "RW_Mint",
+        "RW_Coral"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/CollectorKit/CollectorCap.fbx",
+      "attachment": {
+        "parent": "Existing ToolChamber",
+        "local_position": [
+          0,
+          0,
+          0
+        ],
+        "local_rotation_euler": [
+          0,
+          0,
+          0
+        ],
+        "local_scale": [
+          1,
+          1,
+          1
+        ],
+        "upgrade_rule": "Inherit established ToolChamber position and positive scale; no independent animation or translation."
+      },
+      "sha256": "142b84fad93714d843cb6df0b9e40b9d49e41c06b3cddd7250c4fd355570c8ae",
+      "bytes": 53212
+    }
+  ],
+  "renders": [
+    "ArtSource/CollectorKit/CollectorKit_ContactSheet.png",
+    "ArtSource/CollectorKit/CollectorKit_MuzzleReview.png"
+  ],
+  "integration": {
+    "remove_old": "Siphon, SiphonCage, SiphonCrown authored visuals and old grip/base/barrel/nozzle collar/readout panel; keep runtime glass/rims/cells/band/effect light.",
+    "readout": "Move existing live text to (0,-.129,-.182), max width .135, full height .030. Model has an inset, no baked text.",
+    "base_chamber": {
+      "position": [
+        0,
+        0.02,
+        0.025
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "upgraded_chamber": {
+      "position": [
+        0,
+        0.067,
+        0.025
+      ],
+      "scale": [
+        1.35,
+        1.48,
+        1.35
+      ]
+    },
+    "cap": "Parent CollectorCap directly to ToolChamber at identity; no manual translation.",
+    "muzzle_effect": "Keep existing nozzle effect center (0,.05,.489). The mouth is hollow; existing light remains visible."
+  },
+  "validation_limits": [
+    "Blender contact views are source reviews, not in-game captures or Unity import evidence.",
+    "Both review assemblies include non-exported glass/rim/culture proxies; these remain runtime-owned.",
+    "Actual first-person camera, cap fit, effect alignment, upgrade motion and readout legibility must pass root integration.",
+    "No LOD, collision or performance claim. Editable blend displays source meshes at review offsets; generator exports at the documented origins."
+  ]
+}
