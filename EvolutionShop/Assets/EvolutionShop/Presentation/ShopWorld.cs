@@ -488,6 +488,9 @@ namespace EvolutionShop
             Shape(toolBody, "Siphon readout panel", PrimitiveType.Cube, new Vector3(0, .04f, -.17f), new Vector3(.21f, .08f, .012f), dark);
             toolReadout = Text(toolBody, "0 / 4", new Vector3(0, .04f, -.181f), .019f, new Color(.6f, 1f, .84f), .16f);
             for (int i = 0; i < 8; i++) reservoirCells.Add(Organism(ToolChamber, true, bloomMat, .026f));
+            // The support cage shares the live chamber's size and position in both upgrades.
+            if (AttachRedesign(ToolChamber, "SiphonCage"))
+                redesignVisuals[redesignVisuals.Count - 1].localPosition = new Vector3(0,-.02f,-.025f);
             if (AttachRedesign(toolBody, "SiphonCrown")) toolPumpCrown = redesignVisuals[redesignVisuals.Count - 1];
             if (AttachRedesign(toolBody, "Siphon", "Soft grip", "Base coupling"))
                 foreach (Transform child in toolNozzle)

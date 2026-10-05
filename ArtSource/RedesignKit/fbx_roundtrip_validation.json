@@ -117,7 +117,7 @@
       "id": "Siphon",
       "sha256_matches": true,
       "mesh_count": 1,
-      "triangles": 1192,
+      "triangles": 1072,
       "triangle_count_matches": true,
       "max_bounds_error_m": 1.4901161193847656e-08,
       "positive_determinants": true,
@@ -129,9 +129,31 @@
           -0.1159999817609787
         ],
         "max": [
-          0.07657311111688614,
+          0.061000000685453415,
           0.1552184820175171,
           0.4950000047683716
+        ]
+      }
+    },
+    {
+      "id": "SiphonCage",
+      "sha256_matches": true,
+      "mesh_count": 1,
+      "triangles": 120,
+      "triangle_count_matches": true,
+      "max_bounds_error_m": 1.1175870895385742e-08,
+      "positive_determinants": true,
+      "uv_layers": 1,
+      "bounds_roundtrip_unity_m": {
+        "min": [
+          -0.07657311111688614,
+          -0.09090040624141693,
+          0.01759680174291134
+        ],
+        "max": [
+          0.07657311111688614,
+          0.14473861455917358,
+          0.04358670115470886
         ]
       }
     },

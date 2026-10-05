@@ -214,7 +214,7 @@ def finish(name, description):
     obj.parent=root
     root['origin']='Original authored Evolution Shop kit; no external source assets'
     root['unity_front']='-Z'
-    root['unity_pivot']=('existing tool origin; root coordinates retained' if name in {'Siphon','SiphonCrown'} else 'floor centre; GrowerCap remains floor-relative for direct fit')
+    root['unity_pivot']=('existing tool origin; root coordinates retained' if name in {'Siphon','SiphonCrown','SiphonCage'} else 'floor centre; GrowerCap remains floor-relative for direct fit')
     coords=[un(obj.matrix_world@v.co) for v in obj.data.vertices]
     mins=[min(v[i] for v in coords) for i in range(3)]
     maxs=[max(v[i] for v in coords) for i in range(3)]
@@ -317,12 +317,19 @@ finish('IncubatorBase','Wide mint incubator base with soft cream working rim, da
 lathe('Siphon shaped grip',(0,0,-.07),[(.027,-.265),(.037,-.251),(.044,-.215),(.046,-.165),(.04,-.120),(.031,-.099)],'RW_Mint',24)
 lathe('Siphon lower vessel seat',(0,0,.025),[(.033,-.110),(.059,-.103),(.061,-.09),(.052,-.077)],'RW_Teal',24)
 tube('Grip link',[(0,-.11,-.07),(0,-.10,-.025),(0,-.097,.025)],.029,'RW_Teal',10)
-for side in [-1,1]:
-    tube('Reservoir protective rail',[(side*.05,-.087,.026),(side*.067,-.047,.035),(side*.068,.079,.035),(side*.05,.142,.026)],.009,'RW_Brass',8)
 tube('Sweeping siphon spout',[(0,.139,.062),(0,.114,.136),(0,.060,.190),(0,.050,.303),(0,.055,.398),(0,.051,.470)],.018,'RW_Brass',10)
 ellipsoid('Spout nozzle',(0,.05,.479),(.047,.046,.032),'RW_Cream',16,8)
 arc('Siphon grip guard',(-.035,-.163,-.06),.066,.076,math.pi*.45,math.pi*1.58,'RW_Teal',.010,12)
-finish('Siphon','Mint shaped grip, open brass reservoir cage and +Z spout. Existing transparent reservoir remains at (0,.02,.025), Y -.09..+.13; root stays at existing tool origin. Pump crown is a separate SiphonCrown export.')
+finish('Siphon','Fixed mint shaped grip, lower seat and +Z spout. Existing transparent reservoir remains at (0,.02,.025), Y -.09..+.13; root stays at existing tool origin. Moving pump crown and reservoir cage are separate SiphonCrown/SiphonCage exports.')
+
+# These two rails belong to the scalable chamber, not the fixed hand tool.
+# Preserve TOOL-ROOT source coordinates; runtime attaches under ToolChamber at
+# (0,-.02,-.025), letting the established glass/rims scale own their motion.
+for side in [-1,1]:
+    tube('Reservoir protective rail',[(side*.05,-.087,.026),(side*.067,-.047,.035),(side*.068,.079,.035),(side*.05,.142,.026)],.009,'RW_Brass',8)
+finish('SiphonCage','Both original brass reservoir cage struts in TOOL-ROOT coordinates. Parent under existing ToolChamber with localPosition (0,-.02,-.025) so rails inherit chamber expansion with glass and rims. No grip, nozzle or pump crown geometry.')
+RECORDS[-1]['attachment']={'parent':'Existing ToolChamber','local_position':[0,-.02,-.025],
+    'source_coordinates':'Existing tool root','scale_owner':'Existing ToolChamber, shared with glass and both reservoir rims'}
 
 # The reservoir cap rises with upgrades. Keep the complete pump crown separate
 # in TOOL-ROOT coordinates, so the runtime visual child translates by +.1022m
@@ -386,7 +393,7 @@ for name,(root,obj) in ASSETS.items():
 # Contact sheet is a Blender studio view, explicitly not Unity proof.
 positions={'DisplayCabinet':(-2.1,0,-1.45),'ServiceCounter':(1.65,0,-1.45),
            'GrowerBase':(-2.0,0,1.1),'GrowerCap':(-2.0,0,1.1),
-           'IncubatorBase':(.3,0,1.1),'Siphon':(2.18,.32,1.05),'SiphonCrown':(2.18,.32,1.05),
+           'IncubatorBase':(.3,0,1.1),'Siphon':(2.18,.32,1.05),'SiphonCrown':(2.18,.32,1.05),'SiphonCage':(2.18,.32,1.05),
            'WallSign':(-.55,.94,2.52),'BotanicalShelf':(1.4,.97,2.48)}
 for name,(root,obj) in ASSETS.items(): root.location=u(positions[name])
 # Isolate optional cap lower in studio solely for silhouette; floor-relative export is unaffected.
@@ -436,7 +443,7 @@ manifest={'schema':1,'title':'Evolution Shop original cozy shop / quirky lab kit
  'source_script_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
  'blend_source':str(blend.relative_to(REPO)).replace('\\','/'),'blend_sha256':hashlib.sha256(blend.read_bytes()).hexdigest(),
  'scale':'1 unit = 1 metre','front':'Unity local -Z','up':'Unity +Y',
- 'pivot':'Furniture floor centre at (0,0,0); GrowerCap remains at vessel height in floor-root coordinates. Siphon and SiphonCrown use existing hand origin; crown translates Y +0.1022m with upgraded reservoir. Optional wall accents use a lower-centre attachment; BotanicalShelf bracket extends 0.023m below attachment.',
+ 'pivot':'Furniture floor centre at (0,0,0); GrowerCap remains at vessel height in floor-root coordinates. Siphon, SiphonCrown and SiphonCage use existing hand origin. Crown translates Y +0.1022m with upgraded reservoir; cage attaches under ToolChamber at (0,-.02,-.025) and inherits chamber scale. Optional wall accents use a lower-centre attachment; BotanicalShelf bracket extends 0.023m below attachment.',
  'export_settings':{'format':'FBX','forward':'-Z','up':'Y','global_scale':1,'apply_unit_scale':True,'apply_scale_options':'FBX_SCALE_UNITS','bake_space_transform':True,'animations':False},
  'unity_import_expected':{'globalScale':1,'useFileScale':True,'animationType':'None','importAnimation':False,'addCollider':False,'material_mapping':'Root owner remaps RW_* names to shared URP/Lit materials'},
  'materials':{name:{'srgb_hex':'#'+data[0],'roughness':data[1],'metallic':data[2]} for name,data in PALETTE.items()},

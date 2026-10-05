@@ -10,13 +10,13 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_redesign_kit.py",
-  "source_script_sha256": "545eeffca7125e663222f889f3c14997ca191c3bffdce7ce85f9dab5c59d8e4f",
+  "source_script_sha256": "fde6591e4e40ef57e236f39efafa7930c0ce0b6763f82f88282ba36156379213",
   "blend_source": "ArtSource/RedesignKit/EvolutionShop_RedesignKit.blend",
-  "blend_sha256": "65506544d0afc3fe5d4a8fa0fcf50d3db9047f23bdd58484b76fb32ef4bb98a1",
+  "blend_sha256": "c478d4323e2269060a15a6b56b74a6ab6ff60d4d4f404695db27d7464eedaa6d",
   "scale": "1 unit = 1 metre",
   "front": "Unity local -Z",
   "up": "Unity +Y",
-  "pivot": "Furniture floor centre at (0,0,0); GrowerCap remains at vessel height in floor-root coordinates. Siphon and SiphonCrown use existing hand origin; crown translates Y +0.1022m with upgraded reservoir. Optional wall accents use a lower-centre attachment; BotanicalShelf bracket extends 0.023m below attachment.",
+  "pivot": "Furniture floor centre at (0,0,0); GrowerCap remains at vessel height in floor-root coordinates. Siphon, SiphonCrown and SiphonCage use existing hand origin. Crown translates Y +0.1022m with upgraded reservoir; cage attaches under ToolChamber at (0,-.02,-.025) and inherits chamber scale. Optional wall accents use a lower-centre attachment; BotanicalShelf bracket extends 0.023m below attachment.",
   "export_settings": {
     "format": "FBX",
     "forward": "-Z",
@@ -319,9 +319,9 @@
     },
     {
       "id": "Siphon",
-      "description": "Mint shaped grip, open brass reservoir cage and +Z spout. Existing transparent reservoir remains at (0,.02,.025), Y -.09..+.13; root stays at existing tool origin. Pump crown is a separate SiphonCrown export.",
-      "triangles": 1192,
-      "vertices": 612,
+      "description": "Fixed mint shaped grip, lower seat and +Z spout. Existing transparent reservoir remains at (0,.02,.025), Y -.09..+.13; root stays at existing tool origin. Moving pump crown and reservoir cage are separate SiphonCrown/SiphonCage exports.",
+      "triangles": 1072,
+      "vertices": 548,
       "bounds_unity_m": {
         "min": [
           -0.11091835796833038,
@@ -329,12 +329,12 @@
           -0.11599999666213989
         ],
         "max": [
-          0.07657311111688614,
+          0.061000000685453415,
           0.1552184820175171,
           0.4950000047683716
         ],
         "size": [
-          0.18749146908521652,
+          0.1719183586537838,
           0.42021846771240234,
           0.6110000014305115
         ]
@@ -357,8 +357,58 @@
       ],
       "colliders": 0,
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/Siphon.fbx",
-      "sha256": "c8411c21aad0219ad0fca6577cd344b55439279a4ebccfed52bdd940045fe889",
-      "bytes": 54172
+      "sha256": "cbe6a0cccff5e2d5e5a11508e7e323576b72ccee3e35b2688960344debee60d1",
+      "bytes": 49276
+    },
+    {
+      "id": "SiphonCage",
+      "description": "Both original brass reservoir cage struts in TOOL-ROOT coordinates. Parent under existing ToolChamber with localPosition (0,-.02,-.025) so rails inherit chamber expansion with glass and rims. No grip, nozzle or pump crown geometry.",
+      "triangles": 120,
+      "vertices": 64,
+      "bounds_unity_m": {
+        "min": [
+          -0.07657311111688614,
+          -0.09090040624141693,
+          0.017596812918782234
+        ],
+        "max": [
+          0.07657311111688614,
+          0.14473861455917358,
+          0.04358670860528946
+        ],
+        "size": [
+          0.15314622223377228,
+          0.23563902080059052,
+          0.025989895686507225
+        ]
+      },
+      "material_slots": [
+        "RW_Brass"
+      ],
+      "uv_layers": [
+        "UVMap"
+      ],
+      "mirrored": false,
+      "negative_scale": false,
+      "root_scale": [
+        1,
+        1,
+        1
+      ],
+      "colliders": 0,
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/RedesignKit/SiphonCage.fbx",
+      "attachment": {
+        "parent": "Existing ToolChamber",
+        "local_position": [
+          0,
+          -0.02,
+          -0.025
+        ],
+        "source_coordinates": "Existing tool root",
+        "scale_owner": "Existing ToolChamber, shared with glass and both reservoir rims"
+      },
+      "sha256": "ba48ee856dc644683e6de3a71b8ff63119c0db9c7c3e71f1f825a51c6027aae5",
+      "bytes": 20060
     },
     {
       "id": "SiphonCrown",
