@@ -156,7 +156,17 @@ namespace EvolutionShop
             Check(shop.Model.Incubator.SecondsRemaining<reportProduction && shop.Cycle.Phase==ShopDayPhase.Night && shop.Reports.Last.sales==0, "Night incubation advances during report reading without changing completed results");
             yield return Capture("32-empty-day-report");
             var legacyCycle=new ShopDayCycle(); legacyCycle.OpenShop(); legacyCycle.Tick(11);
-            var legacyGame=shop.Model.CaptureSave(); legacyGame.version=1; legacyGame.prices=null; // Format 2 carried game version 1, without price tags.
+            var legacyGame=shop.Model.CaptureSave();
+            Check(!legacyGame.sparkResearchUnlocked && legacyGame.availableSpark==0 && legacyGame.incubator.stagedSpark==0 &&
+                !legacyGame.mistResearchUnlocked && legacyGame.availableMist==0 && legacyGame.incubator.stagedMist==0 &&
+                Array.IndexOf(legacyGame.discoveries,"lanternfin")<0 && Array.IndexOf(legacyGame.discoveries,"driftwing")<0 &&
+                (legacyGame.storage==null || legacyGame.storage.Length==0) && (legacyGame.conditioners==null || legacyGame.conditioners.Length==0),
+                "Legacy fixture contains no later culture, discovery, storage or conditioning progress");
+            // Match the historical two-grower shape, as the existing EditMode legacy fixtures do.
+            // Preserve earned cash, upgrade, stock, incubation and the original two grower values.
+            legacyGame.version=1; legacyGame.prices=null;
+            legacyGame.growers=Array.FindAll(legacyGame.growers,g=>g==null || g.cultureId!="spark" && g.cultureId!="mist");
+            Check(GameModel.TryRestore(shop.Config,legacyGame,out _,out _),"Historical two-culture v2 game fixture validates before file migration");
             string legacyJson=JsonUtility.ToJson(new SlotData {formatVersion=2,game=legacyGame,cycle=legacyCycle.CaptureSave(),trades=null,sensitivity=shop.Sensitivity,volume=shop.Volume},true);
             File.WriteAllText(shop.SavePath,legacyJson); // Isolated smoke slot only; simulate the delivered v2 player format.
             Check(shop.ReloadSaved() && shop.Reports.Current.partial && shop.Reports.Current.sales==0 && shop.Model.Currency==2 && shop.Model.UpgradeOwned && File.ReadAllText(shop.SavePath)==legacyJson, "Runtime v2 reload preserves progress and starts explicitly partial day statistics without writing");
