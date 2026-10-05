@@ -70,3 +70,7 @@ Reviewed and preserved generated normalization: PC_RPAsset prefilter keyword fie
 Room, stations, tool, cultures, and creatures are original procedural code using Unity primitives and URP materials. Short collection/transaction/discovery sounds are synthesized in `ShopAudio`. Unity URP/template/package dependencies are recorded in manifest/lock. No third-party game assets, paid services, or other-project assets were imported.
 
 See `README.md` for play instructions and `RESUME.md` for exact continuation state. Do not begin later milestones before the user's first playtest.
+
+## Historical record — R06.5v2 redesign, 2026-10-05
+
+Core original Blender assets and native IMGUI redesign delivered at source `056ac01`, tag `r06-5-redesign`. Final EditMode: 1,246 passed; Windows build errors: 0/warnings: 0; exact package presentation: 248 / lab: 151 / edited: 228 / airfin: 81 / slap: 59 / comedy: 155 = 922 assertions, runtime errors: 0/exits: 0. All 11 protected files unchanged. Canonical scope, corrected failures, limitations and next playtest are in AGENTS.md; full raw evidence under Docs/Evidence/r06-5-redesign-*. Prior records remain historical. Human revised-look/audio feedback is next; no R07 work.
