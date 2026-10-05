@@ -15,6 +15,7 @@ namespace EvolutionShop
         {
             Check(shop.Customers.Ready, "Customer NavMesh built successfully in the running shop");
             var nav = shop.Customers.Navigation;
+            int expectedBuildCount = nav.BuildCount;
             Check(nav.CanReach(nav.EntryPoint, nav.BrowsePoint("tank-a")) && nav.CanReach(nav.EntryPoint, nav.BrowsePoint("tank-b")), "Both display browsing points have complete entry paths");
             Check(nav.CanReach(nav.BrowsePoint("tank-a"),nav.QueuePoint) && nav.CanReach(nav.QueuePoint,nav.ExitPoint), "Display-to-counter and counter-to-exit paths are complete");
             Check(!nav.HasNavigationAt(new Vector3(0,0,1),0.1f) && !nav.HasNavigationAt(new Vector3(0,0,3),0.1f), "Actual baked NavMesh excludes doorway lab side and back lab");
@@ -69,7 +70,7 @@ namespace EvolutionShop
             Check(shop.Customers.Visit.TargetTankId=="tank-b", "Next visitor selects the remaining stocked display");
             string carried = shop.Customers.Visit.SpecimenId;
             shop.SetPanel(ShopPanel.Pause);
-            Check(shop.SaveNow() && shop.ReloadSaved(), "Save and reload a real queued purchase");
+            Check(shop.SaveNow() && ReloadCustomerSave(nav, ref expectedBuildCount), "Save and reload a real queued purchase");
             Check(shop.Customers.Visit==null && !shop.Model.GetReservation("tank-b").HasValue && shop.Model.GetTank("tank-b").Value.Id==carried && shop.Model.Currency==6, "Reload cancels the unpaid visitor but preserves exact stock and completed income");
             Check(shop.Reports.Current.sales==1 && shop.Reports.Current.revenue==6 && shop.Reports.Current.interrupted==1, "Reload retains earned day income and counts the unpaid visit as interrupted");
             yield return EnterCounter();
@@ -81,7 +82,7 @@ namespace EvolutionShop
             var firstReport=shop.Reports.Last;
             Check(shop.Panel==ShopPanel.DayReport && firstReport.dayNumber==1 && firstReport.visitors==3 && firstReport.sales==2 && firstReport.revenue==16 && firstReport.interrupted==1 && firstReport.stockedAtClose==0, "Day one report opens automatically with both sales and the interrupted visit");
             yield return Capture("30-first-day-report");
-            Check(shop.Customers.ActiveCount==0 && shop.SaveNow() && shop.ReloadSaved() && shop.Model.Currency==16, "Night cleanup and reload preserve the completed closing sale");
+            Check(shop.Customers.ActiveCount==0 && shop.SaveNow() && ReloadCustomerSave(nav, ref expectedBuildCount) && shop.Model.Currency==16, "Night cleanup and reload preserve the completed closing sale");
             Check(shop.ShowDayReport() && shop.Reports.Last.revenue==16 && shop.Model.Currency==16 && shop.ShowDayReport() && shop.Model.Currency==16, "Saved report can reopen repeatedly without paying income again");
 
             SeedStock("ribbonfin","tank-a");
@@ -92,7 +93,7 @@ namespace EvolutionShop
             Check(shop.CloseForNight(), "Close with an unpaid queued creature");
             yield return WaitForNight(6);
             Check(shop.Model.Currency==16 && shop.Model.GetTank("tank-a").Value.Id==cancelled && !shop.Model.GetReservation("tank-a").HasValue, "Expired closing releases the queued creature without payment or stock loss");
-            Check(shop.Customers.ActiveCount==0 && shop.SaveNow() && shop.ReloadSaved(), "Closed visit cleanup survives a real reload");
+            Check(shop.Customers.ActiveCount==0 && shop.SaveNow() && ReloadCustomerSave(nav, ref expectedBuildCount), "Closed visit cleanup survives a real reload");
             Check(shop.Reports.Last.dayNumber==2 && shop.Reports.Last.sales==0 && shop.Reports.Last.closed==1 && shop.Reports.Last.stockedAtClose==1, "Second report resets sales and records the safely returned closing order");
             yield return Capture("23-unpaid-order-returned");
 
@@ -109,7 +110,7 @@ namespace EvolutionShop
             yield return null; // Let the runtime director record the injected outcome before save/reload.
             // Simulate lost navigation after the domain timeout and prove the director recovers on reload.
             shop.SetPanel(ShopPanel.Pause);
-            Check(shop.SaveNow() && shop.ReloadSaved() && shop.Customers.Visit==null && shop.Model.Currency==16, "Blocked visit reload resets transient navigation and retains progression");
+            Check(shop.SaveNow() && ReloadCustomerSave(nav, ref expectedBuildCount) && shop.Customers.Visit==null && shop.Model.Currency==16, "Blocked visit reload resets transient navigation and retains progression");
             yield return EnterCounter();
             yield return WaitForCustomer(CustomerPhase.Queued,26);
             Check(shop.ServeCustomer() && shop.Model.Currency==26, "Another real customer buys the released Ribbonfin for ten");
@@ -120,7 +121,7 @@ namespace EvolutionShop
             Check(shop.Customers.Visit.Outcome==CustomerOutcome.NoStock && shop.Model.Currency==2, "Empty displays cause a no-stock departure without money changes");
             yield return WaitForNoCustomer(12);
             Check(customerNavigationSamples>100, "Observed " + customerNavigationSamples + " navigation frames with at most one visitor, always inside the front store");
-            Check(nav.BuildCount==1, "Customer changes and reloads reuse one navigation build");
+            Check(nav.BuildCount==expectedBuildCount, "Customer activity reuses navigation between explicit layout reloads");
             Check(shop.SaveNow(), "Save the customer-funded upgrade to the isolated evidence slot");
             File.Copy(shop.SavePath,Path.Combine(evidence,"customer-progress.json"),true);
             SeedStock("pondlet","tank-a");
@@ -132,7 +133,7 @@ namespace EvolutionShop
             Check(recoveryReport.dayNumber==3 && recoveryReport.visitors==4 && recoveryReport.sales==1 && recoveryReport.revenue==10 && recoveryReport.impatient==1 && recoveryReport.pathProblems==1 && recoveryReport.noStock==1 && recoveryReport.restocked==1 && recoveryReport.stockedAtClose==1, "Recovery report reconciles sale, impatience, blocked travel, no stock and restocking");
             Check(shop.Model.Currency==2 && recoveryReport.revenue==10 && !shop.Paused, "Report income is separate from spent cash and night production remains active");
             yield return Capture("31-recovery-day-report");
-            Check(shop.SaveNow() && shop.ReloadSaved() && shop.ShowDayReport() && shop.Reports.Last.revenue==10 && shop.Reports.Last.noStock==1 && shop.Model.Currency==2, "Full recovery report survives file reload without replaying payments");
+            Check(shop.SaveNow() && ReloadCustomerSave(nav, ref expectedBuildCount) && shop.ShowDayReport() && shop.Reports.Last.revenue==10 && shop.Reports.Last.noStock==1 && shop.Model.Currency==2, "Full recovery report survives file reload without replaying payments");
             File.Copy(shop.SavePath,Path.Combine(evidence,"report-progress.json"),true);
             yield return MoveFor(Key.Escape,0.05f);
             Check(shop.Panel==ShopPanel.None, "Real Escape input dismisses the day report");
@@ -156,7 +157,7 @@ namespace EvolutionShop
             var legacyGame=shop.Model.CaptureSave(); legacyGame.version=1; legacyGame.prices=null; // Format 2 carried game version 1, without price tags.
             string legacyJson=JsonUtility.ToJson(new SlotData {formatVersion=2,game=legacyGame,cycle=legacyCycle.CaptureSave(),trades=null,sensitivity=shop.Sensitivity,volume=shop.Volume},true);
             File.WriteAllText(shop.SavePath,legacyJson); // Isolated smoke slot only; simulate the delivered v2 player format.
-            Check(shop.ReloadSaved() && shop.Reports.Current.partial && shop.Reports.Current.sales==0 && shop.Model.Currency==2 && shop.Model.UpgradeOwned && File.ReadAllText(shop.SavePath)==legacyJson, "Runtime v2 reload preserves progress and starts explicitly partial day statistics without writing");
+            Check(ReloadCustomerSave(nav, ref expectedBuildCount) && shop.Reports.Current.partial && shop.Reports.Current.sales==0 && shop.Model.Currency==2 && shop.Model.UpgradeOwned && File.ReadAllText(shop.SavePath)==legacyJson, "Runtime v2 reload preserves progress and starts explicitly partial day statistics without writing");
             Check(shop.CloseForNight(), "Migrated partial day can close normally");
             yield return WaitForNight(6);
             Check(shop.Reports.Last.partial && shop.Reports.Last.revenue==0 && shop.Reports.Last.stockedAtClose==1 && File.ReadAllText(shop.SavePath+".v2.bak")==legacyJson, "Migrated report does not invent earlier income and archives the exact v2 save");
@@ -165,6 +166,18 @@ namespace EvolutionShop
             shop.ConfirmNewGame();
             Check(shop.Reports.Current==null && shop.Reports.Last==null, "Confirmed new game clears report history with progression");
         }
+        // Room placement has required one native rebuild per explicit layout restore since R04.
+        // Count those restores precisely while still rejecting rebakes caused by ordinary visitors.
+        bool ReloadCustomerSave(ShopCustomerNavigation navigation, ref int expectedBuildCount)
+        {
+            Check(navigation.BuildCount == expectedBuildCount, "No unsolicited navigation rebuild before saved layout restore");
+            if (!shop.ReloadSaved()) return false;
+            Check(ReferenceEquals(navigation, shop.Customers.Navigation) && navigation.Ready &&
+                navigation.BuildCount == expectedBuildCount + 1, "Saved layout restore rebuilds the existing navigation exactly once");
+            expectedBuildCount++;
+            return true;
+        }
+
         void SeedStock(string speciesId,string tankId)
         {
             var model=shop.Model;

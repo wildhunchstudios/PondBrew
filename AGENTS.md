@@ -1525,3 +1525,6 @@ R06.5v4 source checkpoint: original room finish/expansion implementation is inte
 
 
 R06.5v4 candidate package: rooms63, presentation271, lab153 passed, runtime errors/exits0. Native screenshot review found coplanar old/new jamb trim and daytime captures covered by the counter modal. Removed redundant old trim and separated decorative frame from the wall face; the room capture route now closes its modal explicitly. Prior candidate/evidence retained. Refreshed final-source validation/build/package pending; do not relabel candidate screenshots as final.
+
+
+R06.5v4 exact v2 package: rooms65, presentation271, lab153, edited228 passed with runtime errors/exits0. Broader legacy regression passed158 assertions then failed its old nav.BuildCount==1 assumption. Source inspection confirms ReloadSaved has intentionally called native navigation rebuild through layout restoration since earlier placement work. Baseline comparison on the preserved previous delivery is running. Narrow diagnostic correction counts exactly one rebuild for each explicit restore and asserts no unsolicited rebuilds between restores; no navigation/gameplay behavior changed. Corrected full route/build/package validation remains pending; retain both failure records.
