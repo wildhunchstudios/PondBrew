@@ -19,7 +19,7 @@ namespace EvolutionShop
             // Static frame stays separate from the moving leaves and leaves the original 3.2m passage clear.
             var frame = Group("Laboratory door frame", transform, new Vector3(0, 0, .5f));
             for (int side = -1; side <= 1; side += 2)
-                ArtBox(frame, "Porcelain door jamb", new Vector3(side * 1.69f, 1.4f, 0), new Vector3(.18f, 2.8f, .42f), cream);
+                ArtBox(frame, "Porcelain door jamb", new Vector3(side * 1.70f, 1.4f, 0), new Vector3(.18f, 2.8f, .42f), cream);
             ArtBox(frame, "Door motor cover", new Vector3(0, 2.83f, 0), new Vector3(3.55f, .24f, .44f), artTeal);
             for (int side = -1; side <= 1; side += 2)
             {

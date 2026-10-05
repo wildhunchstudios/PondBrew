@@ -1522,3 +1522,6 @@ Design: front uses honey/teal aquarium retail fixtures, aquatic imagery and fish
 
 
 R06.5v4 source checkpoint: original room finish/expansion implementation is integrated, door lifecycle Editor route passed52 assertions and exit0. Actual camera views inspected. Initial opacity diagnostic incorrectly included world-label glyph alpha; corrected to distinguish opaque geometry and retained failed evidence. Independent source review found door details extending beyond the wall pocket; compressed those details and added actual bounds checks. Final EditMode suite passed 1246, failed/skipped0, exit0. Windows package and exact-package runtime validation still pending. Sources are original runtime-authored room meshes reusing owned palette; no Blender asset changes or new tool installation.
+
+
+R06.5v4 candidate package: rooms63, presentation271, lab153 passed, runtime errors/exits0. Native screenshot review found coplanar old/new jamb trim and daytime captures covered by the counter modal. Removed redundant old trim and separated decorative frame from the wall face; the room capture route now closes its modal explicitly. Prior candidate/evidence retained. Refreshed final-source validation/build/package pending; do not relabel candidate screenshots as final.

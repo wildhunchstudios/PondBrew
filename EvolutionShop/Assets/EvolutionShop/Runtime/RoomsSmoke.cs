@@ -117,6 +117,8 @@ namespace EvolutionShop
 
         IEnumerator RoomsViews(string phase)
         {
+            shop.SetPanel(ShopPanel.None);
+            Check(shop.Panel==ShopPanel.None,"Room screenshots have gameplay HUD without a modal / "+phase);
             GateAim(new Vector3(0,.05f,-4.85f),new Vector3(0,1.9f,.5f));
             yield return new WaitForSeconds(1.6f);yield return GateCapture("261-"+phase+"-aquatic-store");
             GateAim(new Vector3(-2.6f,.05f,-4.5f),new Vector3(4.3f,1.8f,-1f));yield return GateCapture("262-"+phase+"-aquatic-displays");

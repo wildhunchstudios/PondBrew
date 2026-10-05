@@ -270,7 +270,6 @@ namespace EvolutionShop
             Shape(transform, "Store-lab doorway header", PrimitiveType.Cube, new Vector3(0, 3.5f, .5f), new Vector3(3.2f, 1.4f, .22f), wall, true);
             for (int side = -1; side <= 1; side += 2)
             {
-                Shape(transform, "Doorway jamb", PrimitiveType.Cube, new Vector3(side * 1.65f, 1.4f, .5f), new Vector3(.10f, 2.8f, .31f), dark);
                 Shape(transform, "Store partition base", PrimitiveType.Cube, new Vector3(side * 4.3f, .12f, .365f), new Vector3(5.4f, .24f, .04f), dark);
                 Shape(transform, "Lab partition base", PrimitiveType.Cube, new Vector3(side * 4.3f, .12f, .635f), new Vector3(5.4f, .24f, .04f), dark);
             }
