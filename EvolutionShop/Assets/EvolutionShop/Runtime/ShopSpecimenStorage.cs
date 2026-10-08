@@ -89,7 +89,8 @@ namespace EvolutionShop
                 var resident = Model.GetStorage(id); string slot = id;
                 Space();
                 if (resident.HasValue)
-                    Text(StorageLocation(id) + " / " + Model.GetSpecies(resident.Value.SpeciesId).DisplayName);
+                    Text(StorageLocation(id) + " / " + Model.GetSpecies(resident.Value.SpeciesId).DisplayName +
+                        (Model.IsStorageReservedForStocking(id) ? " / reserved for Nori's delivery" : ""));
                 else
                 {
                     Text(StorageLocation(id) + " / empty");
@@ -105,6 +106,7 @@ namespace EvolutionShop
         void DrawDisplayStockSources()
         {
             bool any = false;
+            if (Model.IsTankReservedForStocking(selectedTank)) Small("Nori is delivering to this display. Pause stocking at the counter to release it.");
             if (Model.Incubator.Phase == IncubatorPhase.Ready)
             {
                 any = true;
@@ -114,7 +116,8 @@ namespace EvolutionShop
             {
                 var resident = Model.GetStorage(id); if (!resident.HasValue) continue;
                 any = true; string slot = id, expected = resident.Value.Id;
-                Button("Stock " + Model.GetSpecies(resident.Value.SpeciesId).DisplayName + " / " + StorageLocation(id), () => StockDisplayFromStorage(slot, expected));
+                StaffButton("Stock " + Model.GetSpecies(resident.Value.SpeciesId).DisplayName + " / " + StorageLocation(id),
+                    !Model.IsStorageReservedForStocking(id) && !Model.IsTankReservedForStocking(selectedTank), () => StockDisplayFromStorage(slot, expected));
             }
             any |= DrawConditioningSources(null);
             if (!any) Text("No ready or stored creatures yet. Grow a recipe in the lab first.");

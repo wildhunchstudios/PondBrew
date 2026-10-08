@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -52,6 +52,7 @@ namespace EvolutionShop
             {
                 Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
                 ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
+                ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
                 ShopLayout.TryRestore(slot.layout, out var layout); Layout = layout;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
@@ -63,7 +64,7 @@ namespace EvolutionShop
                 Cycle = new ShopDayCycle();
                 Reports = new ShopTradeLedger();
                 Reputation = new ShopReputation();
-                Staff = new ShopStaff();
+                Staff = new ShopStaff();Stocking=new ShopStocking();
                 if (!ValidationMode && File.Exists(SavePath))
                 {
                     AutosaveBlocked = true;
@@ -91,6 +92,7 @@ namespace EvolutionShop
             Player.Teleport(spawn, Quaternion.identity);
             sound = gameObject.AddComponent<ShopAudio>();
             Cashier=gameObject.AddComponent<ShopCashier>();Cashier.Initialize(this);
+            Stocker=gameObject.AddComponent<ShopStocker>();Stocker.Initialize(this);
             InitializeSlap();
             AudioListener.volume = Volume;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
@@ -126,7 +128,7 @@ namespace EvolutionShop
                 Advance(Time.deltaTime);
                 visualClock += Time.deltaTime;
                 World.Animate(visualClock, Time.deltaTime);
-                World.LabDoor.Tick(Player.transform.position, Time.deltaTime);
+                World.LabDoor.Tick(Player.transform.position, Time.deltaTime, Stocker.ActiveDoorPosition);
                 saveClock += Time.deltaTime;
                 if (saveClock >= 5) SaveNow();
             }
@@ -167,11 +169,13 @@ namespace EvolutionShop
             var result = Model.Tick(seconds);
             Customers.Tick(seconds);
             Cashier.Tick(seconds);
+            Stocker.Tick(seconds);
             TickComedy(seconds);
             if (phaseChanged && Cycle.Phase == ShopDayPhase.Night)
             {
                 Reports.FinishDay(DisplayedStockCount());
                 BeginScheduledStaffNight();
+                BeginScheduledStockerNight();
                 ShowDayReport();
             }
             if (result.Matured)
@@ -365,6 +369,7 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            if (panel==ShopPanel.Arrange && Stocker) Stocker.ResetTransient();
             if(Panel!=panel && panel!=ShopPanel.None){CancelComedy();belchWait=-1;}
             if (Panel != panel && Panel == ShopPanel.Presentation) EndPresentationView();
             if (Panel != panel && panel == ShopPanel.Presentation) BeginPresentationView();
@@ -399,6 +404,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
+            Stocking.PruneTargets(Model);
             var slot = CaptureStaffSlot(Model,Staff);
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
@@ -416,9 +422,11 @@ namespace EvolutionShop
             ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             pendingFurnitureSaleId = null; selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             AdoptLayout(restoredLayout);
+            Stocker.ResetTransient();
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
-            Cashier.ResetTransient();Cashier.RefreshVisual();
+                ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
+            Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
             World.SetDayPhase(Cycle.Phase);
@@ -442,9 +450,10 @@ namespace EvolutionShop
             { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
             ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
+            Stocker.ResetTransient();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
-            Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();
-            Cashier.ResetTransient();Cashier.RefreshVisual();World.SetDayPhase(Cycle.Phase);
+            Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();
+            Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
@@ -474,6 +483,7 @@ namespace EvolutionShop
                 case "InvalidConditioningInput": return "Choose one or two different stored Pondlets for this known process.";
                 case "ConditionerNotProcessing": return "There is no running batch to cancel.";
                 case "UnknownStorage": return "That storage compartment is no longer available.";
+                case "StockReserved": return "Nori has reserved this creature or display. Pause stocking to use it manually.";
                 case "StorageFull": return "That compartment is full. The waiting creature is safe.";
                 case "StorageEmpty": return "That storage compartment is empty.";
                 case "SpecimenMismatch": return "That exact creature has moved. Choose the current stock again.";

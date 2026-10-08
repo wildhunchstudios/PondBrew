@@ -182,12 +182,13 @@ namespace EvolutionShop
             hudTheme.Icon(new Rect(1042, 145, 31, 31), ShopUiTheme.Symbol.Flask);
             GUI.Label(new Rect(1084, 144, 164, 24), machine, hudTitleStyle);
             GUI.Label(new Rect(1084, 172, 164, 18), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discoveries", hudSmallStyle);
-            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0)
+            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0 || Stocking.Employee.Hired)
             {
-                string status = Customers.Status + (Staff.Hired ? "\nPip: " + Cashier.Status : "");
+                string status = Customers.Status + (Staff.Hired ? "\nPip: " + Cashier.Status : "") +
+                    (Stocking.Employee.Hired ? "\nNori: " + Stocker.Status : "");
                 float statusHeight = Mathf.Max(34, HudTextHeight(status, hudBodyStyle, 204));
                 HudCard(new Rect(1030, 209, 232, statusHeight + 38), mint);
-                GUI.Label(new Rect(1044, 219, 204, 18), "AT THE FRONT COUNTER", hudSmallStyle);
+                GUI.Label(new Rect(1044, 219, 204, 18), "SHOP & CREW", hudSmallStyle);
                 GUI.Label(new Rect(1044, 240, 204, statusHeight), status, hudBodyStyle);
             }
         }
@@ -300,6 +301,8 @@ namespace EvolutionShop
                 case ShopPanel.Incubator: DrawIncubator(); break;
                 case ShopPanel.Counter: DrawCounter(); break;
                 case ShopPanel.Staff: DrawStaffPanel(); break;
+                case ShopPanel.Stocker: DrawStockerPanel(); break;
+                case ShopPanel.StockerTargets: DrawStockerTargets(); break;
                 case ShopPanel.DayReport: DrawDayReport(); break;
                 case ShopPanel.Upgrade: DrawUpgrade(); break;
                 case ShopPanel.Journal: DrawJournal(); break;
@@ -449,7 +452,7 @@ namespace EvolutionShop
         void DrawCounter()
         {
             Heading("The sales counter");
-            Button("Staff / "+(Staff.Hired ? "Pip the cashier" : "hire a cashier"),()=>OpenStaffMenu());
+            Button("Staff / cashier and stocker",()=>OpenStaffMenu());
             if (Staff.Hired) Small(Cashier.Status);
             if (Cycle.Phase == ShopDayPhase.Night) Button("Arrange rooms / work tables", () => OpenPlacementMenu());
             bool night = Cycle.Phase == ShopDayPhase.Night;
@@ -517,7 +520,7 @@ namespace EvolutionShop
             GUILayout.Space(8);
             GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
             Text("Specimens sold: " + report.sales + "    /    Visitors: " + report.visitors);
-            int wages=Staff.WagesForDay(report.dayNumber);
+            int wages=Staff.WagesForDay(report.dayNumber)+Stocking.Employee.WagesForDay(report.dayNumber);
             Small("Cash now: " + Model.Currency + " credits    /    Duty wages: " + wages + " credits");
             Small("Sales minus staff wages: " + ((long)report.revenue-wages) + " credits / other investments excluded");
             Small("Shop reputation now: " + Reputation.Points + " / 100 / " + Reputation.TierName);

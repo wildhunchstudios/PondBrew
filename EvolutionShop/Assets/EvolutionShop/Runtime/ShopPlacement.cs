@@ -164,6 +164,12 @@ namespace EvolutionShop
             if (Mathf.Abs(player.x - (PlacementX * ShopLayout.GridSize + anchorX)) < halfX + .4f &&
                 Mathf.Abs(player.z - (PlacementZ * ShopLayout.GridSize + anchorZ)) < halfZ + .4f)
             { reason = "Step outside the furniture footprint before placing it."; return false; }
+            if (Stocker && Stocker.Actor && Stocker.Actor.isActiveAndEnabled)
+            {
+                Vector3 worker=World.transform.InverseTransformPoint(Stocker.Actor.transform.position);
+                if (!candidate.CanReachMainAisle(worker.x,worker.z))
+                { reason="Keep Nori's standing space connected to the aisle.";return false; }
+            }
             if (!candidate.CanReachMainAisle(player.x, player.z))
             { reason = "Keep a clear route from your position to the main aisle."; return false; }
             reason = movingFacilityId != null ? "Clear / move equipment for free / contents and progress stay safe" : PlacementCost == 0 ? "Clear / place owned furniture for free" : "Clear / buy for " + PlacementCost + " credits";
@@ -261,6 +267,7 @@ namespace EvolutionShop
         {
             switch (failure)
             {
+                case LayoutFailure.StockReserved: return "Nori has reserved this rack or display. Pause stocking before moving it.";
                 case LayoutFailure.ConditionerOccupied: return "Collect every creature before storing or selling this vat. Moving it with stock is free.";
                 case LayoutFailure.StockedStorage: return "Empty this specimen rack into displays before storing or selling it. Moving it with stock is free.";
                 case LayoutFailure.StockedDisplay: return "Empty this furniture before storing or selling it. Moving it with stock is free.";
