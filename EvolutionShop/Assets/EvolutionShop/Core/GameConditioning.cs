@@ -72,6 +72,7 @@ namespace EvolutionShop
             {
                 string source = sourceStorageIds[i];
                 if (source == null || !storage.TryGetValue(source, out var resident)) return ActionResult.Fail(FailureCode.UnknownStorage);
+                if (IsStorageReservedForStocking(source)) return ActionResult.Fail(FailureCode.StockReserved);
                 if (!resident.HasValue) return ActionResult.Fail(FailureCode.StorageEmpty);
                 if (string.IsNullOrWhiteSpace(expectedSpecimenIds[i]) || resident.Value.Id != expectedSpecimenIds[i])
                     return ActionResult.Fail(FailureCode.SpecimenMismatch);
@@ -102,6 +103,7 @@ namespace EvolutionShop
             var result = ReadyConditionerResident(id, slot, expectedSpecimenId, out var machine, out var resident);
             if (!result.Success) return result;
             if (storageId == null || !storage.TryGetValue(storageId, out var target)) return ActionResult.Fail(FailureCode.UnknownStorage);
+            if (IsStorageReservedForStocking(storageId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (target.HasValue) return ActionResult.Fail(FailureCode.StorageFull);
             storage[storageId] = resident;
             DrainConditionerSlot(machine, slot);
@@ -114,6 +116,7 @@ namespace EvolutionShop
             if (!result.Success) return result;
             if (tankId == null || !tanks.TryGetValue(tankId, out var target)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (target.HasValue) return ActionResult.Fail(FailureCode.TankFull);
             tanks[tankId] = resident;
             DrainConditionerSlot(machine, slot);

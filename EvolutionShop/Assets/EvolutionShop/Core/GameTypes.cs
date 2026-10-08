@@ -15,7 +15,7 @@ namespace EvolutionShop
         InvalidPrice, PriceTooHigh, UnknownStorage, StorageFull, StorageEmpty, SpecimenMismatch,
         ResearchLocked, ResearchPrerequisiteMissing, ResearchAlreadyUnlocked,
         UnknownConditioner, ConditionerBusy, InvalidConditioningInput, ConditionerNotProcessing,
-        MistPrerequisiteMissing, MistAlreadyUnlocked
+        MistPrerequisiteMissing, MistAlreadyUnlocked, StockReserved
     }
 
     [Serializable]

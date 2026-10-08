@@ -9,7 +9,7 @@ namespace EvolutionShop
         None, WrongPhase, InvalidModel, UnknownItem, InvalidRotation, OutOfBounds,
         OverlapsFurniture, ProtectedAccess, UnreachableAccess, LimitReached, InsufficientFunds,
         UnknownDefinition, LockedDefinition, StockedDisplay, ModelMismatch,
-        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility, StockedStorage, ConditionerOccupied
+        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility, StockedStorage, ConditionerOccupied, StockReserved
     }
 
     public readonly struct LayoutResult
@@ -72,7 +72,7 @@ namespace EvolutionShop
     /// candidate; a successful night commit debits the authoritative GameModel once.
     /// Runtime must also preflight actual player/collider/NavMesh access before committing.
     /// </summary>
-    public sealed class ShopLayout
+    public sealed partial class ShopLayout
     {
         public const int SaveVersion = 7, TablePrice = 12, MaxItems = 3, MaxOwnedItems = 16, MaxStoreTier = 2, MaxLabTier = 2, DecorLimit = 6, ConditionerLimit = 1;
         public const float GridSize = .5f, TableWidth = 1.5f, TableDepth = 1f;
@@ -345,6 +345,7 @@ namespace EvolutionShop
             if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
             if (definitionId == ConditionerDefinitionId && (movingId == null || GetItem(movingId)?.Stored == true) &&
                 (!model.SparkResearchUnlocked || !model.IsDiscovered("lanternfin"))) return LayoutResult.Fail(LayoutFailure.LockedDefinition);
+            if (movingId != null && HasStockTransfer(model, movingId)) return LayoutResult.Fail(LayoutFailure.StockReserved);
             if (movingId != null)
                 foreach (string slot in GetSlotIds(movingId))
                     if (model.GetReservation(slot).HasValue)
@@ -396,6 +397,7 @@ namespace EvolutionShop
             if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
             var valid = PreviewRemoval(itemId, selling, out var candidate);
             if (!valid.Success) return valid;
+            if (HasStockTransfer(model, itemId)) return LayoutResult.Fail(LayoutFailure.StockReserved);
             foreach (string slot in GetSlotIds(itemId))
             {
                 if (model.GetReservation(slot).HasValue) return LayoutResult.Fail(LayoutFailure.ReservedDisplay);
@@ -413,6 +415,13 @@ namespace EvolutionShop
             return LayoutResult.Ok();
         }
 
+        private bool HasStockTransfer(GameModel model, string itemId)
+        {
+            foreach (string slot in GetSlotIds(itemId)) if (model.IsTankReservedForStocking(slot)) return true;
+            foreach (string slot in GetStorageSlotIds(itemId)) if (model.IsStorageReservedForStocking(slot)) return true;
+            return false;
+        }
+
         private static LayoutFailure LayoutFailureFor(FailureCode failure)
         {
             switch (failure)
@@ -420,6 +429,7 @@ namespace EvolutionShop
                 case FailureCode.InsufficientFunds: return LayoutFailure.InsufficientFunds;
                 case FailureCode.CurrencyOverflow: return LayoutFailure.CurrencyOverflow;
                 case FailureCode.TankReserved: return LayoutFailure.ReservedDisplay;
+                case FailureCode.StockReserved: return LayoutFailure.StockReserved;
                 case FailureCode.TankFull: return LayoutFailure.StockedDisplay;
                 case FailureCode.StorageFull: return LayoutFailure.StockedStorage;
                 default: return LayoutFailure.ModelMismatch;

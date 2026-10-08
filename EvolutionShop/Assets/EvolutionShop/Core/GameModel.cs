@@ -265,6 +265,7 @@ namespace EvolutionShop
         {
             if (tankId == null || !tanks.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (phase != IncubatorPhase.Ready) return ActionResult.Fail(FailureCode.OutputNotReady);
+            if (IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (tanks[tankId].HasValue) return ActionResult.Fail(FailureCode.TankFull);
             var specimen = new SpecimenView(activeSpecimen, activeSpecies);
             tanks[tankId] = specimen;
@@ -278,6 +279,7 @@ namespace EvolutionShop
         {
             if (storageId == null || !storage.ContainsKey(storageId)) return ActionResult.Fail(FailureCode.UnknownStorage);
             if (phase != IncubatorPhase.Ready) return ActionResult.Fail(FailureCode.OutputNotReady);
+            if (IsStorageReservedForStocking(storageId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (storage[storageId].HasValue) return ActionResult.Fail(FailureCode.StorageFull);
             var specimen = new SpecimenView(activeSpecimen, activeSpecies);
             storage[storageId] = specimen;
@@ -292,6 +294,7 @@ namespace EvolutionShop
             if (storageId == null || !storage.TryGetValue(storageId, out var source)) return ActionResult.Fail(FailureCode.UnknownStorage);
             if (tankId == null || !tanks.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (IsStorageReservedForStocking(storageId) || IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (!source.HasValue) return ActionResult.Fail(FailureCode.StorageEmpty);
             if (source.Value.Id != expectedSpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
             if (tanks[tankId].HasValue) return ActionResult.Fail(FailureCode.TankFull);
@@ -305,6 +308,7 @@ namespace EvolutionShop
             if (tankId == null || !tanks.TryGetValue(tankId, out var source)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (storageId == null || !storage.ContainsKey(storageId)) return ActionResult.Fail(FailureCode.UnknownStorage);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (IsStorageReservedForStocking(storageId) || IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (!source.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             if (source.Value.Id != expectedSpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
             if (storage[storageId].HasValue) return ActionResult.Fail(FailureCode.StorageFull);
@@ -317,6 +321,7 @@ namespace EvolutionShop
         {
             if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (!value.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             var specimen = value.Value;
             int price = CurrentPrice(specimen.SpeciesId);
@@ -340,6 +345,7 @@ namespace EvolutionShop
             if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (!ValidCustomer(customerId)) return ActionResult.Fail(FailureCode.InvalidCustomer);
             if (maximumPrice < 0) return ActionResult.Fail(FailureCode.InvalidPrice);
+            if (IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (!value.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
             foreach (var reservation in reservations.Values)
@@ -422,6 +428,9 @@ namespace EvolutionShop
             foreach (string id in desiredConditionerIds)
                 if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || desired.Contains(id) || desiredStorage.Contains(id) || !desiredMachines.Add(id))
                     return ActionResult.Fail(FailureCode.InvalidSave);
+            foreach (var claim in stockTransfers.Values)
+                if (!desired.Contains(claim.TankId) || !desiredStorage.Contains(claim.StorageId))
+                    return ActionResult.Fail(FailureCode.StockReserved);
             foreach (var machine in conditioners)
                 if (!desiredMachines.Contains(machine.Key) && (machine.Value.Phase != ConditionerPhase.Idle || machine.Value.Count != 0))
                     return ActionResult.Fail(FailureCode.ConditionerBusy);

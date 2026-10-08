@@ -50,7 +50,7 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restoredGame, out var loaded, out error), Is.True, error);
-                Assert.That(loaded.formatVersion, Is.EqualTo(17));
+                Assert.That(loaded.formatVersion, Is.EqualTo(18));
                 Assert.That(loaded.game.version, Is.EqualTo(6));
                 Assert.That(loaded.trades.version, Is.EqualTo(4));
                 Assert.That(loaded.layout.version, Is.EqualTo(7));
@@ -109,14 +109,16 @@ namespace EvolutionShop.Tests
             old.trades.version = version < 3 ? 4 : SaveStore.ReportVersionFor(version);
             old.layout.version = version <= 8 ? 1 : version == 9 ? 2 : version == 10 ? 3 :
                 version == 11 ? 4 : version == 12 ? 5 : version <= 14 ? 6 : 7;
-            string json = WithoutStaff(JsonUtility.ToJson(old), old.staff);
+            string json = WithoutStaff(JsonUtility.ToJson(old), old.staff).Replace("\"stocker\":" + JsonUtility.ToJson(old.stocker) + ",", "");
             File.WriteAllText(PathFor(), json); byte[] original = File.ReadAllBytes(PathFor());
             Assert.That(SaveStore.Read(PathFor(), config, out var model, out var slot, out var error), Is.True, error);
             Assert.That(model.Currency, Is.EqualTo(37));
-            Assert.That(slot.formatVersion, Is.EqualTo(17));
+            Assert.That(slot.formatVersion, Is.EqualTo(18));
             Assert.That(ShopStaff.TryRestore(slot.staff, slot.cycle.dayNumber, out var staff), Is.True);
             Assert.That(staff.Hired || staff.Scheduled || staff.Paused, Is.False);
             Assert.That(staff.PaidDay, Is.Zero); Assert.That(staff.PreviousPaidDay, Is.Zero);
+            Assert.That(slot.stocker.employee.hired || slot.stocker.employee.scheduled, Is.False);
+            Assert.That(slot.stocker.employee.paidWage, Is.Zero); Assert.That(slot.stocker.targets, Is.Empty);
             Assert.That(File.ReadAllBytes(PathFor()), Is.EqualTo(original));
             Assert.That(File.Exists(PathFor() + ".v" + version + ".bak"), Is.False);
             Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.True, error);

@@ -17,12 +17,24 @@ namespace EvolutionShop
         public int previousPaidWage;
     }
 
-    /// <summary>One cashier's employment and paid night/day periods; no scene or job ownership.</summary>
+    /// <summary>One employee's employment and paid night/day periods; no scene or job ownership.</summary>
     public sealed class ShopStaff
     {
         public const int SaveVersion = 1;
         public const string CashierId = "cashier-pip";
         public const int CashierWage = 4;
+        public const string StockerId = "stocker-nori";
+        public const int StockerWage = 4;
+
+        public string EmployeeId { get; }
+        public int Wage { get; }
+
+        public ShopStaff(string employeeId = CashierId)
+        {
+            if (!KnownEmployee(employeeId)) throw new ArgumentException("Unknown employee.", nameof(employeeId));
+            EmployeeId = employeeId;
+            Wage = WageFor(employeeId);
+        }
 
         public bool Hired { get; private set; }
         public bool Scheduled { get; private set; }
@@ -70,11 +82,11 @@ namespace EvolutionShop
             if (PaidDay == cycle.DayNumber) return true;
             // No callbacks/allocations occur after spending: the charge and its receipt commit
             // together on the simulation thread. Failed spending changes neither authority.
-            if (!game.TrySpendCredits(CashierWage)) return false;
+            if (!game.TrySpendCredits(Wage)) return false;
             PreviousPaidDay = PaidDay;
             PreviousPaidWage = PaidWage;
             PaidDay = cycle.DayNumber;
-            PaidWage = CashierWage;
+            PaidWage = Wage;
             return true;
         }
 
@@ -85,20 +97,23 @@ namespace EvolutionShop
 
         public StaffSave CaptureSave() => new StaffSave
         {
-            version = SaveVersion, employeeId = CashierId, hired = Hired, scheduled = Scheduled,
+            version = SaveVersion, employeeId = EmployeeId, hired = Hired, scheduled = Scheduled,
             paused = Paused, paidDay = PaidDay, paidWage = PaidWage,
             previousPaidDay = PreviousPaidDay, previousPaidWage = PreviousPaidWage
         };
 
-        public static bool TryRestore(StaffSave save, int day, out ShopStaff staff)
+        public static bool TryRestore(StaffSave save, int day, out ShopStaff staff) =>
+            TryRestore(save, day, CashierId, out staff);
+
+        public static bool TryRestore(StaffSave save, int day, string employeeId, out ShopStaff staff)
         {
             staff = null;
-            if (save == null || save.version != SaveVersion || save.employeeId != CashierId || day < 1 ||
+            if (!KnownEmployee(employeeId) || save == null || save.version != SaveVersion || save.employeeId != employeeId || day < 1 ||
                 (!save.hired && (save.scheduled || save.paused)) ||
-                !ValidReceipt(save.paidDay, save.paidWage, day) ||
-                !ValidReceipt(save.previousPaidDay, save.previousPaidWage, day) ||
+                !ValidReceipt(save.paidDay, save.paidWage, day, WageFor(employeeId)) ||
+                !ValidReceipt(save.previousPaidDay, save.previousPaidWage, day, WageFor(employeeId)) ||
                 (save.previousPaidDay > 0 && save.previousPaidDay >= save.paidDay)) return false;
-            staff = new ShopStaff
+            staff = new ShopStaff(employeeId)
             {
                 Hired = save.hired, Scheduled = save.scheduled, Paused = save.paused,
                 PaidDay = save.paidDay, PaidWage = save.paidWage,
@@ -107,7 +122,10 @@ namespace EvolutionShop
             return true;
         }
 
-        private static bool ValidReceipt(int paidDay, int wage, int day) =>
-            paidDay == 0 ? wage == 0 : paidDay > 0 && paidDay <= day && wage == CashierWage;
+        private static bool KnownEmployee(string employeeId) => employeeId == CashierId || employeeId == StockerId;
+        private static int WageFor(string employeeId) => employeeId == StockerId ? StockerWage : CashierWage;
+
+        private static bool ValidReceipt(int paidDay, int wage, int day, int expectedWage) =>
+            paidDay == 0 ? wage == 0 : paidDay > 0 && paidDay <= day && wage == expectedWage;
     }
 }
