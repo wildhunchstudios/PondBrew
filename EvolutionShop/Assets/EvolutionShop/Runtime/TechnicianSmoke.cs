@@ -186,7 +186,7 @@ namespace EvolutionShop
             yield return TechnicianWait(()=>shop.Technician.Carrying,35,"technician collects ready output and carries parcel");
             Check(shop.Model.Incubator.SpecimenId==producedId && !shop.Model.GetStorage(slots[1]).HasValue &&
                 shop.Technician.TravelDistance>1,"Carrying is presentation; exact specimen remains in incubator until durable rack delivery");
-            GateAim(new Vector3(0,.2f,3),shop.Technician.Actor.transform.position+Vector3.up*1.1f);
+            GateAim(new Vector3(4.5f,.2f,2.1f),shop.Technician.Actor.transform.position+Vector3.up*1.1f);
             yield return GateCapture("312-technician-carrying");StockerParkPlayer();
             int completed=shop.Technician.CompletedJobs;beforeModel=shop.Model;Directory.CreateDirectory(blockedTemp);
             try

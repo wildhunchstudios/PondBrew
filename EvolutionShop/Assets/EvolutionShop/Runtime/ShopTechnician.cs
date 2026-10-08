@@ -36,7 +36,7 @@ namespace EvolutionShop
         GameModel claimedModel;
         ShopLayout claimedLayout;
         ShopLaboratory claimedLaboratory;
-        string expectedSpecimenId, expectedSpeciesId, status = "No technician hired";
+        string expectedSpecimenId, expectedSpeciesId, expectedSpeciesName, status = "No technician hired";
         WorkPhase phase;
         WorkerPathPoint[] route, deliveryRoute;
         int routeIndex;
@@ -144,7 +144,7 @@ namespace EvolutionShop
                     routeIndex = 0;
                     phase = WorkPhase.ToRack;
                     serviceTime = 0;
-                    status = "Carrying reserved incubator output to " + TargetStorageId;
+                    status = "Carrying " + expectedSpeciesName + " to the reserved lab rack";
                     break;
                 case WorkPhase.Deliver:
                     // The parcel never owns stock. Until the saved delivery commits, the creature
@@ -297,6 +297,7 @@ namespace EvolutionShop
                     TargetStorageId = storageId;
                     expectedSpecimenId = specimenId;
                     expectedSpeciesId = speciesId;
+                    expectedSpeciesName = shop.Model.GetSpecies(speciesId)?.DisplayName ?? "the creature";
                     startsRecipe = start;
                     Vector3 origin = Actor.transform.position;
                     if (!shop.Layout.TryGetFacilityAccessPoint(ShopLayout.IncubatorFacilityId, out float ix, out float iz) ||
@@ -310,7 +311,7 @@ namespace EvolutionShop
                     routeIndex = 0;
                     phase = start ? WorkPhase.ToIncubatorForStart : WorkPhase.ToIncubatorForOutput;
                     serviceTime = doorWait = 0;
-                    status = start ? "Walking to incubator / cultures reserved for " + speciesId :
+                    status = start ? "Walking to incubator / cultures reserved for " + expectedSpeciesName :
                         "Walking to collect assigned incubator output";
                     return;
                 }
@@ -330,7 +331,7 @@ namespace EvolutionShop
                         phase == WorkPhase.ToIncubatorForOutput ? WorkPhase.Pickup : WorkPhase.Deliver;
                     serviceTime = 0;
                     status = phase == WorkPhase.StartRecipe ? "Preparing the assigned known recipe" :
-                        phase == WorkPhase.Pickup ? "Collecting reserved incubator output" : "Placing the creature into " + TargetStorageId;
+                        phase == WorkPhase.Pickup ? "Collecting reserved incubator output" : "Placing " + expectedSpeciesName + " into the reserved lab rack";
                     return;
                 }
                 Vector3 from = Actor.transform.position;
@@ -364,8 +365,8 @@ namespace EvolutionShop
                 TravelDistance += travel;
                 distance -= travel;
                 Animate(carrying ? CharacterSamplePose.Carry : CharacterSamplePose.Walk, travel / MoveSpeed);
-                status = carrying ? "Carrying reserved incubator output to " + TargetStorageId :
-                    startsRecipe ? "Walking to prepare " + expectedSpeciesId : "Walking to collect assigned incubator output";
+                status = carrying ? "Carrying " + expectedSpeciesName + " to the reserved lab rack" :
+                    startsRecipe ? "Walking to prepare " + expectedSpeciesName : "Walking to collect assigned incubator output";
                 if ((target - to).sqrMagnitude < .000001f) routeIndex++;
             }
         }
@@ -406,7 +407,7 @@ namespace EvolutionShop
         {
             if (claimedModel != null && CurrentJobId != null)
                 claimedModel.CancelTechnicianClaim(CurrentJobId, ShopStaff.TechnicianId);
-            CurrentJobId = TargetStorageId = expectedSpecimenId = expectedSpeciesId = null;
+            CurrentJobId = TargetStorageId = expectedSpecimenId = expectedSpeciesId = expectedSpeciesName = null;
             claimedModel = null;
             claimedLayout = null;
             claimedLaboratory = null;
@@ -485,6 +486,14 @@ namespace EvolutionShop
             Fail("No safe staff standing space / clear the main aisle and refresh Moss from Staff");
         }
 
+        void LateUpdate()
+        {
+            if (!nameCaption || !shop || !shop.Player || !shop.Player.View) return;
+            // Match customer captions: TextMesh faces local -Z; keep its front toward the player.
+            Vector3 away = nameCaption.transform.position - shop.Player.View.transform.position;
+            away.y = 0;
+            if (away.sqrMagnitude > .001f) nameCaption.transform.rotation = Quaternion.LookRotation(away);
+        }
         void FontAtlasRebuilt(Font rebuilt)
         {
             if (font && rebuilt == font && font.material && nameMaterial)
