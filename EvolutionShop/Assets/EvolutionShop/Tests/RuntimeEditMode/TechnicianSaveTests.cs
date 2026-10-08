@@ -42,7 +42,7 @@ namespace EvolutionShop.Tests
             for (int i = 0; i < 3; i++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out error), Is.True, error);
-                Assert.That(loaded.formatVersion, Is.EqualTo(19));
+                Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
                 Assert.That(ShopLaboratory.TryRestore(loaded.technician, restored, 1, out var restoredLab), Is.True);
                 Assert.That(restoredLab.Employee.Paused, Is.True);
                 Assert.That(restoredLab.Employee.WagesForDay(1), Is.EqualTo(4));
@@ -69,7 +69,7 @@ namespace EvolutionShop.Tests
             string json = WithoutTechnician(JsonUtility.ToJson(slot), slot.technician);
             File.WriteAllText(PathFor(), json); byte[] old = File.ReadAllBytes(PathFor());
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out var error), Is.True, error);
-            Assert.That(loaded.formatVersion, Is.EqualTo(19));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(JsonUtility.ToJson(loaded.staff), Is.EqualTo(cashier));
             Assert.That(JsonUtility.ToJson(loaded.stocker), Is.EqualTo(stocker));
             Assert.That(loaded.technician.employee.hired || loaded.technician.employee.scheduled, Is.False);

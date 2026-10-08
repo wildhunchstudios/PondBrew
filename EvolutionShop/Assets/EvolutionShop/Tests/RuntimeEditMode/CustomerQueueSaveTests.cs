@@ -130,7 +130,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void FormatFiveVersionsArePaired()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(19));
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(20));
             Assert.That(SaveStore.GameVersionFor(5), Is.EqualTo(2));
             Assert.That(SaveStore.ReportVersionFor(5), Is.EqualTo(3));
             Assert.That(SaveStore.ReportVersionFor(4), Is.EqualTo(2));

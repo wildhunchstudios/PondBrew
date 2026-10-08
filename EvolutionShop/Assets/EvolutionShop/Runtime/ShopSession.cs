@@ -54,6 +54,7 @@ namespace EvolutionShop
                 ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
                 ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
                 ShopLaboratory.TryRestore(slot.technician,Model,Cycle.DayNumber,out var laboratory);Laboratory=laboratory;
+                RestoreTutorial(slot.tutorial);
                 ShopLayout.TryRestore(slot.layout, out var layout); Layout = layout;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
@@ -431,6 +432,7 @@ namespace EvolutionShop
             ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
                 ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
                 ShopLaboratory.TryRestore(slot.technician,Model,Cycle.DayNumber,out var laboratory);Laboratory=laboratory;
+                RestoreTutorial(slot.tutorial);
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
@@ -458,6 +460,7 @@ namespace EvolutionShop
             Stocker.ResetTransient();Technician.ResetTransient();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
+            Tutorial = new ShopTutorial();
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;

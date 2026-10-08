@@ -85,7 +85,7 @@ namespace EvolutionShop
         SlotData CaptureStaffSlot(GameModel game,ShopStaff staff,ShopStocking stocking=null,ShopTradeLedger reports=null,ShopLaboratory laboratory=null) => new SlotData
         {
             game=game.CaptureSave(),cycle=Cycle.CaptureSave(),trades=(reports??Reports).CaptureSave(),
-            reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),technician=(laboratory??Laboratory).CaptureSave(game),
+            reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),technician=(laboratory??Laboratory).CaptureSave(game),tutorial=Tutorial.CaptureSave(),
             sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags
         };
 

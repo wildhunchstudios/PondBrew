@@ -26,6 +26,7 @@ namespace EvolutionShop
             version = ShopLaboratory.SaveVersion, employee = new ShopStaff(ShopStaff.TechnicianId).CaptureSave(),
             queue = Array.Empty<LabOrderSave>()
         };
+        public TutorialSave tutorial = new ShopTutorial().CaptureSave();
         public float sensitivity = 1f;
         public float volume = 0.65f;
         public string slapKey = "F";
@@ -47,16 +48,17 @@ namespace EvolutionShop
         // 16: Mist research (game 6). 17: first cashier employment and paid-period receipts.
         // 18: stocker employment and explicit display targets; jobs/reservations stay transient.
         // 19: technician employment, finite recipe priorities, and exact active batch ticket.
-        // Formats 1-18 migrate in memory; historical saves never
+        // 20: guided-opening learning receipts; legacy saves remain unguided.
+        // Formats 1-19 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 19;
+        public const int CurrentFormatVersion = 20;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format >= 16 && format <= 19 ? 6 : 0;
+            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format >= 16 && format <= 20 ? 6 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 19 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 20 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -109,10 +111,11 @@ namespace EvolutionShop
                 !GameModel.TryRestore(layout.WithTankIds(GameConfig.CreateDefault()), data.game, out var game, out _) ||
                 !ShopStocking.TryRestore(data.stocker, game, data.cycle.dayNumber, out _) ||
                 !ShopLaboratory.TryRestore(data.technician, game, data.cycle.dayNumber, out _) ||
+                !ShopTutorial.TryRestore(data.tutorial, game, data.cycle.dayNumber, out _) ||
                 !ValidOwnedConditionerProgress(layout, game) ||
                 !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume))
             {
-                error = "Could not save: the current slot, day clock, trading report, reputation, layout, staff, stocker, technician, or gag settings are invalid. Original file preserved.";
+                error = "Could not save: the current slot, day clock, trading report, reputation, layout, staff, stocker, technician, tutorial, or gag settings are invalid. Original file preserved.";
                 return false;
             }
 
@@ -155,9 +158,10 @@ namespace EvolutionShop
                 bool currentStorage = header != null && header.formatVersion >= 13 && header.formatVersion <= CurrentFormatVersion;
                 if (currentStorage && !new LayoutJsonShape(json, true, true, true, true,
                     header.formatVersion >= 14, header.formatVersion >= 15, header.formatVersion >= 16,
-                    header.formatVersion >= 17, header.formatVersion >= 18, header.formatVersion >= 19).HasExplicitItemsArray())
+                    header.formatVersion >= 17, header.formatVersion >= 18, header.formatVersion >= 19,
+                    header.formatVersion >= 20).HasExplicitItemsArray())
                 {
-                    error = "Saved layout, storage, research, conditioning, staff, stocker or technician shape could not be validated. Your original file is preserved.";
+                    error = "Saved layout, storage, research, conditioning, staff, stocker, technician or tutorial shape could not be validated. Your original file is preserved.";
                     return false;
                 }
                 var candidate = JsonUtility.FromJson<SlotData>(json);
@@ -252,6 +256,7 @@ namespace EvolutionShop
                         if (restoredGame.GetTank(tank.tankId).HasValue) stockedCount++;
                     candidate.trades = ShopTradeLedger.LegacyForCycle(candidate.cycle, stockedCount).CaptureSave();
                 }
+
                 else
                 {
                     int reportVersion = ReportVersionFor(header.formatVersion);
@@ -264,6 +269,17 @@ namespace EvolutionShop
                     // Normalize empty inline day objects back to absent snapshots and upgrade a
                     // version 1 report. Keep the pending visitor until Session reconciles a reload.
                     candidate.trades = restoredTrades.CaptureSave();
+                }
+
+                if (header.formatVersion < 20)
+                {
+                    // Preserve established shops: migration neither invents learning nor starts guidance.
+                    candidate.tutorial = ShopTutorial.LegacyUnguided().CaptureSave();
+                }
+                else if (!ShopTutorial.TryRestore(candidate.tutorial, restoredGame, candidate.cycle.dayNumber, out _))
+                {
+                    error = "Saved tutorial progress could not be validated. Your original file is preserved.";
+                    return false;
                 }
 
                 if (header.formatVersion < 6)
@@ -357,9 +373,10 @@ namespace EvolutionShop
             readonly bool requireStaff;
             readonly bool requireStocker;
             readonly bool requireTechnician;
+            readonly bool requireTutorial;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false, bool requireStaff = false, bool requireStocker = false, bool requireTechnician = false)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; this.requireStaff = requireStaff; this.requireStocker = requireStocker; this.requireTechnician = requireTechnician; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false, bool requireStaff = false, bool requireStocker = false, bool requireTechnician = false, bool requireTutorial = false)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; this.requireStaff = requireStaff; this.requireStocker = requireStocker; this.requireTechnician = requireTechnician; this.requireTutorial = requireTutorial; }
 
             public bool HasExplicitItemsArray()
             {
@@ -370,7 +387,7 @@ namespace EvolutionShop
             bool ReadObject(bool layout)
             {
                 if (!Take('{')) return false;
-                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false, hasStaff = false, hasStocker = false, hasTechnician = false;
+                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false, hasStaff = false, hasStocker = false, hasTechnician = false, hasTutorial = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 SkipSpace();
                 if (Take('}')) return false;
@@ -402,6 +419,11 @@ namespace EvolutionShop
                         if (!ReadTechnician()) return false;
                         hasTechnician = true;
                     }
+                    else if (!layout && requireTutorial && key == "tutorial")
+                    {
+                        if (!ReadTutorial()) return false;
+                        hasTutorial = true;
+                    }
                     else if (layout && key == "items")
                     {
                         SkipSpace();
@@ -432,7 +454,60 @@ namespace EvolutionShop
                     else if (!SkipValue(0)) return false;
                     if (Take('}')) return required && (layout ?
                         ((!requireStoreTier || hasStoreTier) && (!requireLab || hasLabTier && hasFacilities)) :
-                        (!requireStorage || hasStorage) && (!requireStaff || hasStaff) && (!requireStocker || hasStocker) && (!requireTechnician || hasTechnician));
+                        (!requireStorage || hasStorage) && (!requireStaff || hasStaff) && (!requireStocker || hasStocker) &&
+                        (!requireTechnician || hasTechnician) && (!requireTutorial || hasTutorial));
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadTutorial()
+            {
+                if (!Take('{')) return false;
+                int required = 0;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    switch (key)
+                    {
+                        case "version": if (!ReadInteger(out _)) return false; required |= 1; break;
+                        case "mode": if (!ReadInteger(out _)) return false; required |= 2; break;
+                        case "facts": if (!ReadInteger(out _)) return false; required |= 4; break;
+                        case "firstSaleAccommodationEnded": if (!ReadBoolean()) return false; required |= 8; break;
+                        case "practiceAssisted": if (!ReadBoolean()) return false; required |= 16; break;
+                        case "reportAcknowledged": if (!ReadBoolean()) return false; required |= 32; break;
+                        case "handoffCompleted": if (!ReadBoolean()) return false; required |= 64; break;
+                        case "reportDay": if (!ReadInteger(out _)) return false; required |= 128; break;
+                        case "practiceBlockedSpecimenId": if (!ReadNullableString()) return false; required |= 256; break;
+                        case "first": if (!ReadTutorialChain()) return false; required |= 512; break;
+                        case "practice": if (!ReadTutorialChain()) return false; required |= 1024; break;
+                        default: if (!SkipValue(0)) return false; break;
+                    }
+                    if (Take('}')) return required == 2047;
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadTutorialChain()
+            {
+                if (!Take('{')) return false;
+                int required = 0;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    switch (key)
+                    {
+                        case "specimenId": if (!ReadNullableString()) return false; required |= 1; break;
+                        case "speciesId": if (!ReadNullableString()) return false; required |= 2; break;
+                        case "ready": if (!ReadBoolean()) return false; required |= 4; break;
+                        case "manuallyDisplayed": if (!ReadBoolean()) return false; required |= 8; break;
+                        case "saleDay": if (!ReadInteger(out _)) return false; required |= 16; break;
+                        default: if (!SkipValue(0)) return false; break;
+                    }
+                    if (Take('}')) return required == 31;
                     if (!Take(',')) return false;
                 }
                 return false;

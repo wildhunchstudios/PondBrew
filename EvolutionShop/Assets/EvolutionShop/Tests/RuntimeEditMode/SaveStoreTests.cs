@@ -453,10 +453,10 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void FormatNineteenRetainsExplicitHistoricalGameAndReportPairings()
+        public void FormatTwentyRetainsExplicitHistoricalGameAndReportPairings()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(19));
-            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5, 6, 6, 6, 6 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(20));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5, 6, 6, 6, 6, 6 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
             for (int format = 1; format <= SaveStore.CurrentFormatVersion; format++)
             {
                 Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
