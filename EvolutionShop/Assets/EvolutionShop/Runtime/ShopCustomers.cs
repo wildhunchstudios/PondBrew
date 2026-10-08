@@ -327,9 +327,24 @@ namespace EvolutionShop
         }
 
         /// <summary>Serves the first waiting order. With nobody waiting, reports why on the next visitor.</summary>
-        public ActionResult? Serve()
+        public ActionResult? Serve() => Serve(FirstQueued() ?? Front());
+
+        /// <summary>
+        /// Commits only the exact queued visitor a cashier has worked on. A stale job cannot
+        /// silently charge a different visitor after manual checkout, cancellation, or reload.
+        /// </summary>
+        public ActionResult? ServeExpected(CustomerVisit expected)
         {
-            var target = FirstQueued() ?? Front();
+            var target = Find(expected);
+            if (!shop || shop.Paused || !isActiveAndEnabled || !Ready || !Navigation.isActiveAndEnabled ||
+                target == null || target != FirstQueued() || expected.Phase != CustomerPhase.Queued ||
+                !target.Actor || !target.Actor.isActiveAndEnabled || target.Actor.PathFailed)
+                return null;
+            return Serve(target);
+        }
+
+        ActionResult? Serve(Visitor target)
+        {
             if (target == null) return null;
             var result = target.Visit.Serve(shop.Cycle.Phase);
             RecordOutcome(target, !result.Success);

@@ -52,6 +52,7 @@ namespace EvolutionShop
             bool comedyGate = ShopSession.Arg("-evolutionComedyGateSmoke") != null;
             bool comedy = ShopSession.Arg("-evolutionComedySmoke") != null;
             bool rooms = ShopSession.Arg("-evolutionRoomsSmoke") != null;
+            bool staff = ShopSession.Arg("-evolutionStaffSmoke") != null;
             bool presentation = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPresentationSmoke") >= 0;
             bool labGate = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionLabGateSmoke") >= 0;
             bool airfin = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionAirfinSmoke") >= 0;
@@ -64,19 +65,19 @@ namespace EvolutionShop
             bool decor = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionDecorSmoke") >= 0;
             bool expansion = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionExpansionSmoke") >= 0;
             bool placement = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPlacementSmoke") >= 0;
-            if (!reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms)
+            if (!reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms && !staff)
             {
                 shop.Customers.UseBaseReputationEffectsForValidation = true;
                 limitations.Add("Earlier scenarios retain base customer demand/budgets/tolerances through an explicit validation-only hook; reputation still scores, and real tier effects are covered by the reputation scenario.");
             }
-            if (!customerTypes && !reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms)
+            if (!customerTypes && !reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms && !staff)
             {
                 // Earlier scenarios were written for one visitor of the R02/R03.1 customer type at a time.
                 shop.Customers.MaxVisitors = 1;
                 shop.Customers.ForcedArchetypeId = CustomerArchetypes.Casual;
                 limitations.Add("Pinned to one casual visitor at a time (R03.2 validation hook) to keep this earlier scenario's assumptions; customer types and two concurrent visitors are covered by the customer-types scenario.");
             }
-            stack.Push(rooms ? RoomsScenario() : comedyGate ? ComedyGateScenario() : comedy ? ComedyScenario() : presentation ? PresentationScenario() : labGate ? LabGateScenario() : airfin ? AirfinScenario() : conditioning ? ConditioningScenario() : research ? ResearchScenario() : specimens ? SpecimenStorageScenario() : lab ? LabScenario() : editedLayout ? EditedLayoutScenario() : storage ? FurnitureStorageScenario() : decor ? DecorScenario() : expansion ? ExpansionScenario() : placement ? PlacementScenario() : trading ? TradingShiftScenario() : nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
+            stack.Push(staff ? StaffScenario() : rooms ? RoomsScenario() : comedyGate ? ComedyGateScenario() : comedy ? ComedyScenario() : presentation ? PresentationScenario() : labGate ? LabGateScenario() : airfin ? AirfinScenario() : conditioning ? ConditioningScenario() : research ? ResearchScenario() : specimens ? SpecimenStorageScenario() : lab ? LabScenario() : editedLayout ? EditedLayoutScenario() : storage ? FurnitureStorageScenario() : decor ? DecorScenario() : expansion ? ExpansionScenario() : placement ? PlacementScenario() : trading ? TradingShiftScenario() : nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
                 customerTypes ? CustomerTypesScenario() : reputation ? ReputationScenario() : slap ? SlapScenario() : Scenario());
             bool failed = false;
             while (stack.Count > 0)
@@ -97,7 +98,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = rooms ? "R06.5v4 aquatic rooms and solid lab door" : comedyGate ? "R06.4 comedy interruption and feedback gate" : comedy ? "R06.3 bounded comedy kit and preview" : presentation ? "R06.1 presentation sample and paused viewer" : labGate ? "R05.5 combined laboratory production and restart gate" : airfin ? "R05.4 Mist culture and Driftwing Airfin" : conditioning ? "R05.3 known conditioning batches" : research ? "R05.2 Spark research and Lanternfin progression" : specimens ? "R05.1b functional specimen storage" : lab ? "R05.1a lab expansion and essential facility relocation" : editedLayout ? "R04.5 edited layouts and obstruction recovery" : storage ? "R04.4 furniture storage and stocked relocation" : decor ? "R04.3 decor and capped appeal" : expansion ? "R04.2 expanded store and display stock" : placement ? "R04.1 shared room placement" : trading ? "R03.5 ordinary trading shifts" : nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" :
+                scenario = staff ? "R07.1-R07.2 hired cashier and duty wages" : rooms ? "R06.5v4 aquatic rooms and solid lab door" : comedyGate ? "R06.4 comedy interruption and feedback gate" : comedy ? "R06.3 bounded comedy kit and preview" : presentation ? "R06.1 presentation sample and paused viewer" : labGate ? "R05.5 combined laboratory production and restart gate" : airfin ? "R05.4 Mist culture and Driftwing Airfin" : conditioning ? "R05.3 known conditioning batches" : research ? "R05.2 Spark research and Lanternfin progression" : specimens ? "R05.1b functional specimen storage" : lab ? "R05.1a lab expansion and essential facility relocation" : editedLayout ? "R04.5 edited layouts and obstruction recovery" : storage ? "R04.4 furniture storage and stocked relocation" : decor ? "R04.3 decor and capped appeal" : expansion ? "R04.2 expanded store and display stock" : placement ? "R04.1 shared room placement" : trading ? "R03.5 ordinary trading shifts" : nativeUi ? "Native GUI click probe" : continuous ? "Continuous fresh-save two-day route" : pricing ? "R03.1 pricing and reactions" :
                     customerTypes ? "R03.2 customer types and two-visitor queue" : reputation ? "R03.3 reputation and capped demand" : slap ? "R03.4 intentional cartoon slap" : "Integrated regression",
                 context = Application.isEditor ? "Unity Editor Play mode (automated timed session)" : "Windows standalone development player (automated timed session)",
                 unityVersion = Application.unityVersion,

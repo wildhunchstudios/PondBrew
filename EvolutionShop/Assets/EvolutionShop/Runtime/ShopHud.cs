@@ -184,7 +184,7 @@ namespace EvolutionShop
             GUI.Label(new Rect(1084, 172, 164, 18), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discoveries", hudSmallStyle);
             if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0)
             {
-                string status = Customers.Status;
+                string status = Customers.Status + (Staff.Hired ? "\nPip: " + Cashier.Status : "");
                 float statusHeight = Mathf.Max(34, HudTextHeight(status, hudBodyStyle, 204));
                 HudCard(new Rect(1030, 209, 232, statusHeight + 38), mint);
                 GUI.Label(new Rect(1044, 219, 204, 18), "AT THE FRONT COUNTER", hudSmallStyle);
@@ -245,14 +245,14 @@ namespace EvolutionShop
 
         string Objective()
         {
-            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.Queued) return "A customer is waiting. Use the front counter to serve.";
-            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter) return "A creature is reserved. Head to the front counter.";
+            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.Queued) return Staff.IsOnDuty(Cycle.DayNumber) ? "Pip is handling checkout. Keep stock ready, or help at the counter." : "A customer is waiting. Use the front counter to serve.";
+            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter && !Staff.IsOnDuty(Cycle.DayNumber)) return "A creature is reserved. Head to the front counter.";
             if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
             if (Model.Incubator.Phase == IncubatorPhase.Ready) return Model.StorageIds.Length > 0 ? "Use an empty display or lab rack to store the ready creature." : "Head to a display tank in the front store.";
             if (ReadyConditionedCount > 0) return "Use E at an empty rack or display to collect vat output.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
             if (DisplayedStockCount() == 0 && StoredSpecimenCount > 0) return "Use E at an empty display to choose stored stock.";
-            if (DisplayedStockCount() > 0) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : "Let customers browse, then serve their orders at the counter.";
+            if (DisplayedStockCount() > 0) return Cycle.Phase == ShopDayPhase.Night ? "Stock is ready. Open for the day at the front counter." : Staff.IsOnDuty(Cycle.DayNumber) ? "Pip handles checkout. Keep your displays stocked." : "Let customers browse, then serve their orders at the counter.";
             if (Model.DiscoveredSpeciesIds.Count == 0) return "Back lab: mix one Bloom + one Flow.";
             if (Model.SparkResearchReady && !Model.SparkResearchUnlocked) return "At night: research Spark at the lab bench / " + Config.SparkResearchCost + " credits.";
             if (Model.SparkResearchUnlocked && !Model.IsDiscovered("lanternfin")) return "Try one Bloom + one Flow + one Spark.";
@@ -299,6 +299,7 @@ namespace EvolutionShop
                     break;
                 case ShopPanel.Incubator: DrawIncubator(); break;
                 case ShopPanel.Counter: DrawCounter(); break;
+                case ShopPanel.Staff: DrawStaffPanel(); break;
                 case ShopPanel.DayReport: DrawDayReport(); break;
                 case ShopPanel.Upgrade: DrawUpgrade(); break;
                 case ShopPanel.Journal: DrawJournal(); break;
@@ -448,6 +449,8 @@ namespace EvolutionShop
         void DrawCounter()
         {
             Heading("The sales counter");
+            Button("Staff / "+(Staff.Hired ? "Pip the cashier" : "hire a cashier"),()=>OpenStaffMenu());
+            if (Staff.Hired) Small(Cashier.Status);
             if (Cycle.Phase == ShopDayPhase.Night) Button("Arrange rooms / work tables", () => OpenPlacementMenu());
             bool night = Cycle.Phase == ShopDayPhase.Night;
             if (night) Text("Preparation night for day " + Cycle.DayNumber + ". Stock your front tanks, then open when ready.");
@@ -514,7 +517,9 @@ namespace EvolutionShop
             GUILayout.Space(8);
             GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
             Text("Specimens sold: " + report.sales + "    /    Visitors: " + report.visitors);
-            Small("Cash now: " + Model.Currency + " credits    /    Wages: 0 (no employees)");
+            int wages=Staff.WagesForDay(report.dayNumber);
+            Small("Cash now: " + Model.Currency + " credits    /    Duty wages: " + wages + " credits");
+            Small("Sales minus staff wages: " + ((long)report.revenue-wages) + " credits / other investments excluded");
             Small("Shop reputation now: " + Reputation.Points + " / 100 / " + Reputation.TierName);
             GUILayout.Space(8);
             Heading("Display stock");
