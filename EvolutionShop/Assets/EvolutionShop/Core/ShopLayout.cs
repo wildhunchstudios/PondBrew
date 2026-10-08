@@ -9,7 +9,7 @@ namespace EvolutionShop
         None, WrongPhase, InvalidModel, UnknownItem, InvalidRotation, OutOfBounds,
         OverlapsFurniture, ProtectedAccess, UnreachableAccess, LimitReached, InsufficientFunds,
         UnknownDefinition, LockedDefinition, StockedDisplay, ModelMismatch,
-        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility, StockedStorage, ConditionerOccupied, StockReserved
+        ReservedDisplay, AlreadyStored, CurrencyOverflow, UnknownFacility, StockedStorage, ConditionerOccupied, StockReserved, TechnicianReserved
     }
 
     public readonly struct LayoutResult
@@ -345,6 +345,7 @@ namespace EvolutionShop
             if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
             if (definitionId == ConditionerDefinitionId && (movingId == null || GetItem(movingId)?.Stored == true) &&
                 (!model.SparkResearchUnlocked || !model.IsDiscovered("lanternfin"))) return LayoutResult.Fail(LayoutFailure.LockedDefinition);
+            if (movingId != null && HasTechnicianClaim(model, movingId)) return LayoutResult.Fail(LayoutFailure.TechnicianReserved);
             if (movingId != null && HasStockTransfer(model, movingId)) return LayoutResult.Fail(LayoutFailure.StockReserved);
             if (movingId != null)
                 foreach (string slot in GetSlotIds(movingId))
@@ -397,6 +398,7 @@ namespace EvolutionShop
             if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
             var valid = PreviewRemoval(itemId, selling, out var candidate);
             if (!valid.Success) return valid;
+            if (HasTechnicianClaim(model, itemId)) return LayoutResult.Fail(LayoutFailure.TechnicianReserved);
             if (HasStockTransfer(model, itemId)) return LayoutResult.Fail(LayoutFailure.StockReserved);
             foreach (string slot in GetSlotIds(itemId))
             {
@@ -415,6 +417,12 @@ namespace EvolutionShop
             return LayoutResult.Ok();
         }
 
+        private bool HasTechnicianClaim(GameModel model, string itemId)
+        {
+            foreach (string slot in GetStorageSlotIds(itemId)) if (model.IsStorageReservedForTechnician(slot)) return true;
+            return false;
+        }
+
         private bool HasStockTransfer(GameModel model, string itemId)
         {
             foreach (string slot in GetSlotIds(itemId)) if (model.IsTankReservedForStocking(slot)) return true;
@@ -430,6 +438,7 @@ namespace EvolutionShop
                 case FailureCode.CurrencyOverflow: return LayoutFailure.CurrencyOverflow;
                 case FailureCode.TankReserved: return LayoutFailure.ReservedDisplay;
                 case FailureCode.StockReserved: return LayoutFailure.StockReserved;
+                case FailureCode.TechnicianReserved: return LayoutFailure.TechnicianReserved;
                 case FailureCode.TankFull: return LayoutFailure.StockedDisplay;
                 case FailureCode.StorageFull: return LayoutFailure.StockedStorage;
                 default: return LayoutFailure.ModelMismatch;
@@ -504,6 +513,8 @@ namespace EvolutionShop
             if (phase != ShopDayPhase.Night) return LayoutResult.Fail(LayoutFailure.WrongPhase);
             if (model == null) return LayoutResult.Fail(LayoutFailure.InvalidModel);
             if (!MatchesModel(model)) return LayoutResult.Fail(LayoutFailure.ModelMismatch);
+            if (id == IncubatorFacilityId && model.IsIncubatorReservedForTechnician)
+                return LayoutResult.Fail(LayoutFailure.TechnicianReserved);
             LayoutResult valid = TryPreviewFacility(id, x, z, quarterTurns, out var candidate);
             if (!valid.Success) return valid;
             // Production lives in GameModel; relocating its one presentation never recreates or resets it.

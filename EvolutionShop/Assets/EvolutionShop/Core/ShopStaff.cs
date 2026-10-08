@@ -25,6 +25,8 @@ namespace EvolutionShop
         public const int CashierWage = 4;
         public const string StockerId = "stocker-nori";
         public const int StockerWage = 4;
+        public const string TechnicianId = "technician-moss";
+        public const int TechnicianWage = 4;
 
         public string EmployeeId { get; }
         public int Wage { get; }
@@ -122,8 +124,8 @@ namespace EvolutionShop
             return true;
         }
 
-        private static bool KnownEmployee(string employeeId) => employeeId == CashierId || employeeId == StockerId;
-        private static int WageFor(string employeeId) => employeeId == StockerId ? StockerWage : CashierWage;
+        private static bool KnownEmployee(string employeeId) => employeeId == CashierId || employeeId == StockerId || employeeId == TechnicianId;
+        private static int WageFor(string employeeId) => employeeId == TechnicianId ? TechnicianWage : employeeId == StockerId ? StockerWage : CashierWage;
 
         private static bool ValidReceipt(int paidDay, int wage, int day, int expectedWage) =>
             paidDay == 0 ? wage == 0 : paidDay > 0 && paidDay <= day && wage == expectedWage;

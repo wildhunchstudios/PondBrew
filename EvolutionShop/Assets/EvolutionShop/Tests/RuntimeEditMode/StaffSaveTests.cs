@@ -50,7 +50,7 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restoredGame, out var loaded, out error), Is.True, error);
-                Assert.That(loaded.formatVersion, Is.EqualTo(18));
+                Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
                 Assert.That(loaded.game.version, Is.EqualTo(6));
                 Assert.That(loaded.trades.version, Is.EqualTo(4));
                 Assert.That(loaded.layout.version, Is.EqualTo(7));
@@ -113,7 +113,7 @@ namespace EvolutionShop.Tests
             File.WriteAllText(PathFor(), json); byte[] original = File.ReadAllBytes(PathFor());
             Assert.That(SaveStore.Read(PathFor(), config, out var model, out var slot, out var error), Is.True, error);
             Assert.That(model.Currency, Is.EqualTo(37));
-            Assert.That(slot.formatVersion, Is.EqualTo(18));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(ShopStaff.TryRestore(slot.staff, slot.cycle.dayNumber, out var staff), Is.True);
             Assert.That(staff.Hired || staff.Scheduled || staff.Paused, Is.False);
             Assert.That(staff.PaidDay, Is.Zero); Assert.That(staff.PreviousPaidDay, Is.Zero);

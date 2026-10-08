@@ -72,6 +72,7 @@ namespace EvolutionShop
             {
                 string source = sourceStorageIds[i];
                 if (source == null || !storage.TryGetValue(source, out var resident)) return ActionResult.Fail(FailureCode.UnknownStorage);
+                if (IsStorageReservedForTechnician(source)) return ActionResult.Fail(FailureCode.TechnicianReserved);
                 if (IsStorageReservedForStocking(source)) return ActionResult.Fail(FailureCode.StockReserved);
                 if (!resident.HasValue) return ActionResult.Fail(FailureCode.StorageEmpty);
                 if (string.IsNullOrWhiteSpace(expectedSpecimenIds[i]) || resident.Value.Id != expectedSpecimenIds[i])
@@ -80,6 +81,8 @@ namespace EvolutionShop
                 if (i == 0) first = resident; else second = resident;
             }
             if (available[(int)CultureKind.Spark] < 1) return ActionResult.Fail(FailureCode.InsufficientCulture);
+            if (available[(int)CultureKind.Spark] <= TechnicianReservedCulture((int)CultureKind.Spark))
+                return ActionResult.Fail(FailureCode.TechnicianReserved);
             // Every possible rejection precedes this publication of the ownership change.
             foreach (string source in sourceStorageIds) storage[source] = null;
             available[(int)CultureKind.Spark]--;
@@ -103,6 +106,7 @@ namespace EvolutionShop
             var result = ReadyConditionerResident(id, slot, expectedSpecimenId, out var machine, out var resident);
             if (!result.Success) return result;
             if (storageId == null || !storage.TryGetValue(storageId, out var target)) return ActionResult.Fail(FailureCode.UnknownStorage);
+            if (IsStorageReservedForTechnician(storageId)) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (IsStorageReservedForStocking(storageId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (target.HasValue) return ActionResult.Fail(FailureCode.StorageFull);
             storage[storageId] = resident;

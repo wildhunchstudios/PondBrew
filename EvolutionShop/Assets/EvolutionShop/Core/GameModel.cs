@@ -153,11 +153,13 @@ namespace EvolutionShop
             if (!ValidCulture(i)) return ActionResult.Fail(FailureCode.InvalidCulture);
             if (!IsCultureUnlocked(culture)) return ActionResult.Fail(FailureCode.ResearchLocked);
             if (available[i] <= 0) return ActionResult.Fail(FailureCode.InsufficientCulture);
+            if (available[i] <= TechnicianReservedCulture(i)) return ActionResult.Fail(FailureCode.TechnicianReserved);
             available[i]--;
             return ActionResult.Ok();
         }
         public ActionResult Dose(CultureKind culture)
         {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
             int i = (int)culture;
             if (!ValidCulture(i)) return ActionResult.Fail(FailureCode.InvalidCulture);
             if (!IsCultureUnlocked(culture)) return ActionResult.Fail(FailureCode.ResearchLocked);
@@ -170,6 +172,7 @@ namespace EvolutionShop
 
         public ActionResult ReturnDose(CultureKind culture)
         {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
             int i = (int)culture;
             if (!ValidCulture(i)) return ActionResult.Fail(FailureCode.InvalidCulture);
             if (!IsCultureUnlocked(culture)) return ActionResult.Fail(FailureCode.ResearchLocked);
@@ -182,6 +185,7 @@ namespace EvolutionShop
 
         public ActionResult ClearDoses()
         {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (phase != IncubatorPhase.Dosing) return ActionResult.Fail(FailureCode.IncubatorBusy);
             if (staged[0] + staged[1] + staged[2] + staged[3] == 0) return ActionResult.Fail(FailureCode.AlreadyEmpty);
             for (int i = 0; i < CultureCount; i++) { available[i] += staged[i]; staged[i] = 0; }
@@ -189,6 +193,12 @@ namespace EvolutionShop
         }
 
         public ActionResult UseKnownRecipe(string speciesId)
+        {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
+            return UseKnownRecipeCore(speciesId);
+        }
+
+        private ActionResult UseKnownRecipeCore(string speciesId)
         {
             if (phase != IncubatorPhase.Dosing) return ActionResult.Fail(FailureCode.IncubatorBusy);
             if (speciesId == null || !species.TryGetValue(speciesId, out var recipe))
@@ -214,14 +224,22 @@ namespace EvolutionShop
 
         public ActionResult BeginIncubation()
         {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (phase != IncubatorPhase.Dosing) return ActionResult.Fail(FailureCode.IncubatorBusy);
             SpeciesDefinition match = null;
             foreach (var definition in config.Species)
                 if (definition.Bloom == staged[0] && definition.Flow == staged[1] && definition.Spark == staged[2] && definition.Mist == staged[3]) { match = definition; break; }
             if (match == null) return ActionResult.Fail(FailureCode.InvalidRecipe);
             if (match.Spark > 0 && !SparkResearchUnlocked || match.Mist > 0 && !MistResearchUnlocked) return ActionResult.Fail(FailureCode.ResearchLocked);
+            return StartIncubation(match, Guid.NewGuid().ToString("N"));
+        }
+
+        // Both callers validate all inputs before reaching this single production commit.
+        // The technician supplies a stable ID so a saved staging clone and the live model agree.
+        private ActionResult StartIncubation(SpeciesDefinition match, string specimenId)
+        {
             activeSpecies = match.Id;
-            activeSpecimen = Guid.NewGuid().ToString("N");
+            activeSpecimen = specimenId;
             staged[0] = staged[1] = staged[2] = staged[3] = 0;
             incubationRemaining = config.IncubationSeconds;
             phase = IncubatorPhase.Incubating;
@@ -263,6 +281,7 @@ namespace EvolutionShop
 
         public ActionResult TransferToTank(string tankId)
         {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (tankId == null || !tanks.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (phase != IncubatorPhase.Ready) return ActionResult.Fail(FailureCode.OutputNotReady);
             if (IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
@@ -277,8 +296,10 @@ namespace EvolutionShop
 
         public ActionResult StoreReadyOutput(string storageId)
         {
+            if (IsIncubatorReservedForTechnician) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (storageId == null || !storage.ContainsKey(storageId)) return ActionResult.Fail(FailureCode.UnknownStorage);
             if (phase != IncubatorPhase.Ready) return ActionResult.Fail(FailureCode.OutputNotReady);
+            if (IsStorageReservedForTechnician(storageId)) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (IsStorageReservedForStocking(storageId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (storage[storageId].HasValue) return ActionResult.Fail(FailureCode.StorageFull);
             var specimen = new SpecimenView(activeSpecimen, activeSpecies);
@@ -294,6 +315,7 @@ namespace EvolutionShop
             if (storageId == null || !storage.TryGetValue(storageId, out var source)) return ActionResult.Fail(FailureCode.UnknownStorage);
             if (tankId == null || !tanks.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (IsStorageReservedForTechnician(storageId)) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (IsStorageReservedForStocking(storageId) || IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (!source.HasValue) return ActionResult.Fail(FailureCode.StorageEmpty);
             if (source.Value.Id != expectedSpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
@@ -308,6 +330,7 @@ namespace EvolutionShop
             if (tankId == null || !tanks.TryGetValue(tankId, out var source)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (storageId == null || !storage.ContainsKey(storageId)) return ActionResult.Fail(FailureCode.UnknownStorage);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
+            if (IsStorageReservedForTechnician(storageId)) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (IsStorageReservedForStocking(storageId) || IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (!source.HasValue) return ActionResult.Fail(FailureCode.TankEmpty);
             if (source.Value.Id != expectedSpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
@@ -428,6 +451,8 @@ namespace EvolutionShop
             foreach (string id in desiredConditionerIds)
                 if (string.IsNullOrWhiteSpace(id) || id.Length > 128 || desired.Contains(id) || desiredStorage.Contains(id) || !desiredMachines.Add(id))
                     return ActionResult.Fail(FailureCode.InvalidSave);
+            if (technicianClaim.HasValue && !desiredStorage.Contains(technicianClaim.Value.StorageId))
+                return ActionResult.Fail(FailureCode.TechnicianReserved);
             foreach (var claim in stockTransfers.Values)
                 if (!desired.Contains(claim.TankId) || !desiredStorage.Contains(claim.StorageId))
                     return ActionResult.Fail(FailureCode.StockReserved);

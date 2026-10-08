@@ -45,6 +45,7 @@ namespace EvolutionShop
                 if (!source.HasValue || source.Value.Id != existing.SpecimenId) return ActionResult.Fail(FailureCode.SpecimenMismatch);
                 return ActionResult.Ok(source.Value.SpeciesId, source.Value.Id);
             }
+            if (IsStorageReservedForTechnician(storageId)) return ActionResult.Fail(FailureCode.TechnicianReserved);
             if (IsStorageReservedForStocking(storageId) || IsTankReservedForStocking(tankId)) return ActionResult.Fail(FailureCode.StockReserved);
             if (reservations.ContainsKey(tankId)) return ActionResult.Fail(FailureCode.TankReserved);
             if (!source.HasValue) return ActionResult.Fail(FailureCode.StorageEmpty);

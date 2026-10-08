@@ -44,7 +44,7 @@ namespace EvolutionShop.Tests
             for (int attempt = 0; attempt < 3; attempt++)
             {
                 Assert.That(SaveStore.Read(PathFor(), config, out var restoredGame, out var loaded, out error), Is.True, error);
-                Assert.That(loaded.formatVersion, Is.EqualTo(18));
+                Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
                 Assert.That(ShopStocking.TryRestore(loaded.stocker, restoredGame, 2, out var restored), Is.True);
                 Assert.That(restored.Employee.WagesForDay(1), Is.EqualTo(4));
                 Assert.That(restored.Employee.WagesForDay(2), Is.EqualTo(4));
@@ -69,7 +69,7 @@ namespace EvolutionShop.Tests
             string json = WithoutStocker(JsonUtility.ToJson(slot), slot.stocker);
             File.WriteAllText(PathFor(), json); byte[] old = File.ReadAllBytes(PathFor());
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out var error), Is.True, error);
-            Assert.That(loaded.formatVersion, Is.EqualTo(18));
+            Assert.That(loaded.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(JsonUtility.ToJson(loaded.staff), Is.EqualTo(cashierJson));
             Assert.That(loaded.stocker.employee.hired || loaded.stocker.employee.scheduled, Is.False);
             Assert.That(loaded.stocker.employee.paidWage, Is.Zero); Assert.That(loaded.stocker.targets, Is.Empty);
