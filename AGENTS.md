@@ -1,5 +1,7 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
+**Active R07.3:** Nori the stocker, taking reserved rack specimens to explicitly configured empty displays. User requested continuation; cashier balance/playtest remains provisional. R07.4+ unstarted.
+
 **R07.1–R07.2 delivered:** first useful cashier, source `44dfdc9`, tag **r07-first-cashier**. Night hiring/scheduling, saved wages and automatic checkout alongside the player. Full EditMode 1342; Editor 102; Windows 307; build errors/warnings 0. Human cashier playtest pending; R07.3+ remain unstarted.
 
 **R06.5v4 visually accepted (2026-10-08):** aquatic store and working lab fully separated by an automatic opaque door. Source `f05a1dc`, tag **r06-5-aquatic-rooms**. EditMode 1246, packaged assertions 899, build errors/warnings: 0. User: "Good looks good continue with the next tasks". Proceed with cashier behavior; this does not claim human audio listening or release-wide acceptance.
@@ -358,7 +360,7 @@ Depends on: R03 service, R04 paths, R05 facilities. R06 supplies visual conventi
 
 - [x] R07.1 Add night hiring/scheduling, visible roles/wages, once-per-duty-period payment covering night and the following day, and the no-funds/manual-work fallback.
 - [x] R07.2 Implement cashier jobs first; verify queue ownership and exactly-once payouts while the player can also serve.
-- [ ] R07.3 Add stocker jobs with source/destination reservations, target displays, and visible blocked states.
+- [~] R07.3 Add stocker jobs with source/destination reservations, target displays, and visible blocked states.
 - [ ] R07.4 Add lab technician jobs for known recipes, priorities, reassignment, and safe cancellation/dismissal.
 - [ ] R07.5 Integrate the worker-completion gag and test safe interruptions. Test contention with the player, two jobs requesting one item, blocked routes, dismissal/reactivation, wage payment/reload across night/day, and at least one duty period per role.
 
@@ -1602,3 +1604,23 @@ Coverage includes failed wage writes, zero-cash/manual recovery, duty toggles/re
 **Limitations/next action.** Provisional 4-credit/2.2-second tuning; scripted arrivals, accelerated recipe preparation and labelled credit fixtures do not establish ordinary campaign balance. Session menu commands and synthetic input are distinguished from native mouse-click coverage. No human audio listening, exhaustive layout/aspect-ratio coverage, new-game hired-roster reset runtime case or performance benchmark; reset code was reviewed and general reset regression ran. One visible and one hidden route overlapped, so no performance inference. No stocker, lab technician or worker gag integration yet. Ask the user to play a staffed shift and judge value/schedule clarity/remaining manual load; next bounded assignment after feedback or explicit continuation is **R07.3 stocker**, retaining stock reservations and ownership. Do not implement R07.3 in this completed turn.
 
 **Delivery.** Build `Builds/Windows-6000.3.21f1-r07-1-cashier/EvolutionShop.exe`; archive **EvolutionShop-Cashier-Windows.zip**, 70710479 bytes, SHA256 `CB8BBAF0554ACA576F21C0F49A399E0F43C5A1B7CF76ADAD72B7A7546AAFE102`. Chat outputs contain extracted player, Playtest guide, validation JSON, actual screenshots and this guide snapshot. Checkpoints: plan 9272efa, domain 5134cce, playable 44dfdc9, final documentation/evidence delivery tagged r07-first-cashier. AGENTS remains sole live guide; historical TASKS/RESUME/VALIDATION receive a dated pointer.
+
+
+## R07.3 active assignment — useful rack-to-display stocker (2026-10-08)
+
+Explicit "Continue" authorizes the next bounded assignment. Preserve approved rooms, cashier, engine/packages and normal saves. Do not infer human cashier feedback or expand into lab technician/automatic production/worker gag work.
+
+- [x] R07.3a root: clean source27b3d3b; fresh path/pin/install/module/process/status and exact-project Editor probe verified. Unity6000.3.21f1; no connected live bridge; guarded batch exit0. Four existing players preserved; eleven protected files freshly hashed in r07-3 evidence.
+- [~] R07.3b r07_3_staff_save: extend existing role wage ledger; saved stocker employment/targets and strict envelope18 migration, including preserving format17 cashier receipts. Own ShopStaff, new ShopStocking, SaveStore and save-focused tests/current-format fixture maintenance.
+- [~] R07.3c r07_3_stock_authority: transient exact source/destination reservations and atomic rack-to-display commit; reject competing manual/conditioning/layout operations; reusable conservative full-room lattice route and meaningful domain/path tests. Own core stock/model/layout/path files and tests.
+- [~] R07.3d r07_3_stocker_actor: one visible walking/carrying worker, bounded route failure and explicit retry, door proximity without admitting customers, lifecycle/pause release. Own ShopStocker and optional ShopRoomDoor extension.
+- [~] R07.3e root: physical-counter stocker controls, target selection, durable commands/commit, report/HUD, lifecycle/construction integration, isolated smoke with actual movement and capture, review and checkpoint.
+- [ ] R07.3f root: required compile/tests/runtime, current cashier regression, Windows delivery, fresh-process save validation, protected-state checks, final documentation/tag and playtest.
+
+Player contract: hire Nori at night, initially unscheduled and with all displays off. Provisional4-credit period covers preparation night plus following day, independently of cashier wages. Choose each display slot: off, any available rack species, or one discovered species; desired count is one because each existing slot owns one specimen. Both phases may restock. Targets removed by furniture storage/sale are pruned when saving and must be explicitly configured again when redeployed. Pause/reassignment cancels intent; manual operation stays available after release. Failure never generates debt or deletes stock.
+
+Ownership: one transient stable job reserves one exact occupied rack slot/specimen and one empty unreserved display. The original specimen remains authoritative in its rack until successful delivery; the worker's carry crate is presentation of reserved transport, not another inventory. Claimed source and destination reject manual moves, conditioning and competing worker claims. At destination stage the resulting stock and report, persist successfully, then publish the same transaction on the live model so customers retain their reservation owner. Reload/cancel/missing actor/route failure releases transient claims with the original fish safe. Saving during travel records the original source, never partial cargo or offline work.
+
+Room/navigation: use existing layout's conservative lattice and segment clearance with actual physical obstruction checks. The stocker can traverse the lab door; customers retain their store-only NavMesh exclusion. Worker approach opens/holds the same door, pauses freeze it, physical obstructions block the job with a recoverable reason and explicit retry. Keep a full-size approved employee rig and measure walking/carry routes. No second NavMesh, package, scene rewrite or art bulk-production.
+
+Verification contract: exact ownership/payment and old saves; two callers competing for one fish/destination; manual/conditioning denial; cancellation/reload/failed delivery write; dynamic blocked path and retry; pause/disable/placement; night/day wages for two independent roles; real rack→door→display walking; customer sale of delivered specimen; current cashier regression; native720p/1080p menu/carry screenshots; protected save/settings/scene hashes and local checkpoints. Balance, human mouse/audio feel and exhaustive layout/performance remain separately reported.
