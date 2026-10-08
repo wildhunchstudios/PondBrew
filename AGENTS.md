@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-**Tutorial Option1 selected — specification ready:** Opening Night guided first shift is prioritized before R07.5. Ten lessons, fifteen implementation/validation assignments, named owners and completion gates are defined in the TUT specification at the end. Next implementation: **TUT-00 baseline verification → TUT-01 event/state contract**. Game code is unchanged; R07.4 remains the latest playable.
+**Tutorial implementation started:** Opening Night is prioritized before R07.5. TUT-00 baseline verified; TUT-01 interfaces frozen; TUT-02 authority implementation active. This bounded assignment implements TUT-02–03 lesson authority and compatible persistence, with Unity EditMode validation. Runtime observations, guided UI, customer pacing and tester delivery remain subsequent TUT-04–12 work. R07.4 remains the latest distributed playable.
 
 **R07.4 delivered:** Moss starts ordered known recipes from collected cultures and safely carries output to lab racks. Source `4a373b4`, tag **r07-lab-technician**. EditMode1594; Editor135; exact Windows459; build errors/warnings0. Staffing tuning/human playtest pending. Tutorial TUT is now the next implementation priority; R07.5 is queued afterward and R08 remains unstarted.
 
@@ -513,12 +513,12 @@ Current limitations: procedural prototype art/UI/audio, provisional prices and b
 
 | Active record | Value |
 |---|---|
-| Current request | Option1 Opening Night selected. Full tutorial specification, tasks, owners, dependencies and technical/human completion gates documented; implementation not started in this documentation assignment. |
+| Current request | Start the approved Opening Night tutorial. Active bounded group: TUT-00–03 environment, authority and save foundation. Later runtime/UI/customer and tester gates remain pending. |
 | Runtime changes | Known-recipe priorities, durable active batches, physical start/carry jobs, safe failure/reload, three-role wages and counter controls. Approved rooms and cashier/stocker preserved. |
 | User feedback | User selected the guided first shift for external testers. Prior visual/gameplay approvals stand. Tutorial usability and current three-role affordability remain untested with new players. |
-| Next action | TUT-00 baseline verification, then TUT-01 event/state contract. Implement successive ready TUT tasks through verified tester delivery and actual usability evidence. No repeated design selection needed. R07.5 follows TUT; R08 unstarted. |
+| Next action | Finish TUT-01 contract, implement and test TUT-02–03, checkpoint; then TUT-04 runtime observation/lifecycle and TUT-05 native UI. R07.5 follows TUT; R08 unstarted. |
 | Human coverage | Mouse-menu operation, ordinary affordability/pacing, sound and exhaustive arrangements remain unverified by this scripted assignment. |
-| Technical state / connection | R07.4 baseline only: EditMode1594; exact Windows459; build0 errors/0 warnings; clean exits. Last recorded CLI0 Editors/guarded batch working. TUT source and validation unstarted. Reverify project/editor/connection and protected files at TUT-00. |
+| Technical state / connection | TUT-00 fresh Unity6000.3.21f1/c02631ffc030 pin/executable/Windows support verified. CLI1.0.0-beta.6 reports0 connected Editors; no callable live MCP. Exact-project guarded scene probe exit0. Prior R07.4 tests remain historical; new tutorial tests pending. |
 
 When resuming implementation, select the first unfinished ready task, record its owner/status and intended acceptance check here, and keep the remaining roadmap planned. Do not mistake the unimplemented feature specifications above for existing behavior.
 
@@ -1861,9 +1861,9 @@ All unchecked rows are planned. Each row is one bounded assignment or clearly sc
 | Status / task | Owner | Depends on | Concrete output and acceptance |
 |---|---|---|---|
 | [x] TUT-SPEC | Lead | User selected Option1 | This approved-direction specification, task ownership and completion gates saved. Documentation review only; no runtime validation claimed. |
-| [ ] TUT-00 Verify baseline and preserve | Lead | TUT-SPEC | Clean/understood worktree, correct workspace/pin/installed modules/live connection status, protected hashes and existing processes recorded; capture isolated envelope19 paid-technician fixture; planning checkpoint. |
-| [ ] TUT-01 Freeze event/state contract | Lead + domain/save | TUT-00 | Map real action origins and stable IDs; define snapshot/mode/learned-fact APIs, practice attribution, arrival-policy inputs and save shape. Document concrete interfaces/file ownership here before parallel edits. |
-| [ ] TUT-02 Implement lesson authority | Domain/save | TUT-01 | Deterministic bounded state and objective selection for ON01–10, idempotent outcomes, alternate valid recipe and out-of-order handling; meaningful domain tests cover loops, assistance, skip and replaced candidates. |
+| [x] TUT-00 Verify baseline and preserve | Lead | TUT-SPEC | Clean/understood worktree, correct workspace/pin/installed modules/live connection status, protected hashes and existing processes recorded; capture isolated envelope19 paid-technician fixture; planning checkpoint. |
+| [x] TUT-01 Freeze event/state contract | Lead + domain/save | TUT-00 | Map real action origins and stable IDs; define snapshot/mode/learned-fact APIs, practice attribution, arrival-policy inputs and save shape. Document concrete interfaces/file ownership here before parallel edits. |
+| [~] TUT-02 Implement lesson authority | Domain/save | TUT-01 | Deterministic bounded state and objective selection for ON01–10, idempotent outcomes, alternate valid recipe and out-of-order handling; meaningful domain tests cover loops, assistance, skip and replaced candidates. |
 | [ ] TUT-03 Persist and migrate | Domain/save | TUT-02 | Next save envelope, typed validation, versions1–19 migration and backup/failed-write coverage; current paid staff/active batch round-trips unchanged; save/core test checkpoint. |
 | [ ] TUT-04 Wire lifecycle and action observations | Lead | TUT-03 | Entry/resume/skip/reset/help modes and all successful manual/worker event hooks share the full save; real gameplay can reach both loop milestones without UI automation bypass. No stale candidate or duplicate event progress. |
 | [ ] TUT-05 Build native objective/help presentation | UI/level-guidance | TUT-01 (merge after04) | Single objective resolver, concise welcome, optional paused help, reliable close/back/skip and correct input labels; integrate with existing theme. No mockup-only completion. |
@@ -1898,3 +1898,48 @@ Final receipt must distinguish **implemented**, **automatically validated**, **n
 ### TUT.11 Current status and exact continuation
 
 TUT-SPEC complete: Option1 recorded as selected; full implementation/recovery/validation contract and owner/dependency assignments are documented. Independent specification review checked lesson/economy/save/ownership gates; its two material issues are resolved here: capacity recovery explicitly releases unwanted culture after returning doses, and10 creates the Windows QA candidate before11 requires native-input proof. Static documentation checks verify task IDs, dependency order and one canonical plan. No game source/scene/settings/save was changed, no editor connection was asserted and no new test/build was run. Next implementation assignment: **TUT-00 baseline verification, then TUT-01 event/state contract**. After that,02–03 plus05 can be assigned within their file boundaries. Stop at each recorded gate only for actual missing evidence or material blockers, not to reconfirm this approved tutorial direction. Do not return to R07.5 until this priority is completed or the user redirects it.
+
+
+### TUT execution checkpoint — baseline (2026-10-08)
+
+TUT-00 complete; root owns integration/evidence/AGENTS, `tutorial_domain` owns domain/save code and tests after TUT-01. Bounded current implementation group is TUT-00–03: deterministic lesson authority plus atomic persistence/migration. Player-facing lessons and Windows delivery remain TUT-04–12; no tutorial-ready build is claimed at this foundation checkpoint.
+
+Fresh evidence `Docs/Evidence/tut-00-*`: approved root/project verified; clean baseline6af07dd before evidence creation; correct pin and installed6000.3.21f1/c02631ffc030; Windows support present. CLI1.0.0-beta.6 status returns STATUS_NO_INSTANCES/count0 (probe exit1 means no live connection); no callable Unity MCP. Guarded EnsurePlayableScene probe logged exact EvolutionShop identity and exited0. No Editor was running. Four pre-existing players18420/29528/39396/47552 are preserved; process command lines were unavailable, so only IDs/names are asserted. Eleven normal-save/backup/scene/package/settings files freshly hashed. No bridge/package/upgrade installed and no scene rewrite.
+
+Preserved byte-exact isolated envelope19 fixture `Tests/RuntimeEditMode/Fixtures/V19PaidActiveTechnician.json` from the previously validated r07-4-player-technician-final-720 smoke save: day2 paid Moss with live incubation ticket. This is historical validation data, never the user's normal slot. TUT-03 will execute migration/backup checks against these exact bytes. A generated .meta will be retained on import. Baseline constants rechecked:0 starting credits,10-second incubation, Pondlet1 Bloom+1 Flow at6 credits, upgrade24, game schema6/envelope19. No new gameplay tests/builds yet.
+
+Six-perspective scope: learn one real manual loop then repeat; retain the two-room/door paths; model explicit bounded facts and success origins; keep pure C# authority separate from HUD; test exact specimen/payment/save identities and interrupted progress; freeze interfaces before parallel owners and ship no partial tutorial as tester-ready.
+
+
+### TUT-01 frozen implementation contract (2026-10-08)
+
+Root and `tutorial_domain` reviewed real action/save boundaries. TUT-01 complete; TUT-02 implementation active. Names below are the agreed interface, not evidence that all runtime hooks exist. TUT-02 tests execute before TUT-03 is marked active. The lead will serialize Unity runs and checkpoints. Domain owner exclusively writes ShopTutorial.cs/SaveStore.cs and tutorial domain/save/format tests; root owns ShopTutorialSession.cs/ShopSession.cs/ShopStaffSession.cs, evidence and AGENTS. No UI files are assigned in this bounded foundation group.
+
+**Domain API.** Pure C# `ShopTutorial`; `TutorialMode` Offered/Active/Completed/Skipped/LegacyUnguided; `TutorialActionOrigin` Player/Worker (all three staff roles share non-player classification; runtime preserves concrete origin at the hook). `TutorialLesson` None plus Orient/Collect/Prepare/Grow/Display/PriceAndOpen/Serve/Practice/CloseAndReview/NextPlan maps to ON01–10. `TutorialFacts` contains Moved, Looked, LabVisited, BloomCollected, FlowCollected, RecipePrepared, CreatureReady, CreatureDisplayed, PriceViewed, ShopOpened. Enum ranges and unknown bits are rejected.
+
+`new ShopTutorial()` creates Offered; `LegacyUnguided()` creates the migration mode. Read-only properties Mode, Facts, FirstSaleAccommodationActive, PracticeAssisted; `CurrentLesson(ShopDayCycle)` derives the next unmet lesson. `Start()`, `Skip()`, `MarkPracticeAssisted()`, `Finish(ShopDayCycle)` return whether the state changed, not persistence success. Finish needs both manual loops, a qualifying acknowledged report, and Night after the practice sale's day. Repeated commands cannot award progress or rewards.
+
+Observation API: `ObserveOrientation(bool moved,bool looked,bool inLab)`; `ObserveCollection(GameModel,CultureKind,ActionResult,TutorialActionOrigin)`; `ObservePrepared(GameModel,string speciesId,TutorialActionOrigin)`; `ObserveStarted(GameModel,ActionResult,TutorialActionOrigin)`; `ObserveReady(GameModel)`; `ObserveDisplayed(GameModel,ActionResult,TutorialActionOrigin)`; `ObservePriceViewed()`; `ObserveOpened(bool success)`; `ObserveSale(GameModel,ActionResult,TutorialActionOrigin,int day)`; `ObserveReportAcknowledged(int day)`. Methods return changed, accept only valid successful outcomes and cross-check the actual model/ID/location as applicable. Tutorial owns no currency, doses, creatures, claims or day clock. `Reconcile(GameModel)` clears unavailable unfinished candidates without erasing learned concepts or committed sale receipts; it never transfers items.
+
+`CaptureSave()` returns a detached bounded snapshot. `TryRestore(TutorialSave,GameModel,int currentDay,out ShopTutorial)` validates schema, mode/flag dependencies, identity/species, live candidates, chronology and handoff consistency. DTO `TutorialSave`: version1, mode, facts, firstSaleAccommodationEnded, practiceAssisted, reportAcknowledged, handoffCompleted, reportDay, practiceBlockedSpecimenId and first/practice `TutorialChainSave` objects. Each chain has specimenId/speciesId, ready, manuallyDisplayed, saleDay. Empty chains use empty IDs/false/0. Sold chains are immutable receipts. Only two chains; no event history or Unity references.
+
+When the first qualifying sale occurs, record any unrelated already-started incubator ID as practiceBlockedSpecimenId. That single exclusion is necessary so replaying a successful pre-sale start cannot masquerade as a new practice batch. It is not a third progression chain; the first chain is already a completed receipt. Clear the exclusion when a genuinely later valid manual start begins. A worker sale ends arrival grace but does not complete either manual proof. An invalidated unfinished candidate yields to a new manual batch; completed concepts survive.
+
+**Save contract.** Envelope20, game6/report4 unchanged; SlotData.tutorial defaults Offered for an explicitly fresh slot. All reads of versions1–19 explicitly migrate to LegacyUnguided. Strict JSON shape checks require every tutorial field, correct primitive/object types and unique keys before JsonUtility can invent default values; then domain consistency validation runs. Current-format missing/invalid/future tutorial data preserves original bytes and blocks read/write. First migration write keeps exact .vN.bak. Root adds the minimum runtime property/restore/reset/capture plumbing during03 so existing staff snapshots carry tutorial data; this does not count as04 action/lifecycle completion or a player-visible tutorial. New Game replaces the state only after existing successful reset write. No second save file.
+
+**Actual integration map for TUT-04 (pending).**
+
+| Gameplay boundary | Required observation before snapshot |
+|---|---|
+| ShopSession.Harvest: Model.Collect succeeds | Player collection, then SaveNow; UI click alone is not evidence. |
+| ShopHud dosing / known-recipe controls currently call Model.Dose/UseKnownRecipe through Perform | Root introduces narrow command wrappers for manual preparation, preserving ordinary failures; no tutorial authority in generic Perform or audio. |
+| ShopHud Begin incubation currently calls Model.BeginIncubation | Player start with returned stable specimen/species; observe before Perform saves. |
+| ShopSession.Advance after Model.Tick | Maturity reconciliation before worker actions can move/sell output; normal10 seconds and pause behavior retained. |
+| TransferToDisplay / ShopSpecimenStorage.StockDisplayFromStorage | Player exact-ID display observation before Perform/SaveNow; rack detour remains possible. |
+| ServeCustomer / ServeCashier after Customers.Serve/ServeExpected | Player versus Worker exact successful checkout before Perform saves. CustomerVisit/GameModel retain transaction authority. |
+| Stocker CompleteStockTransfer / technician staged start/output transactions | Observe on a cloned tutorial alongside staged game before atomic write; publish together only after success. Failed writes leave both old states. Worker actions never become manual proof. |
+| OpenForDay / price panel entry / DayReport acknowledgement | Observe only successful open, actual viewed price information and actual qualifying report close/ack, including Esc path. |
+| Player movement/look and valid lab station access | Observe real input/arrival, not validation camera teleport; use the existing world/door geometry. |
+| Awake / ReloadSaved / ConfirmNewGame / CaptureStaffSlot | Restore/carry full snapshot; successful reset only. Never silently replace active/skipped/completed/legacy tutorial state on staff writes. |
+
+TUT-05 uses the existing Objective() resolver/native IMGUI theme. TUT-07 queries FirstSaleAccommodationActive through a production arrival policy, never validation ForcedArchetypeId/ScriptedArchetypes. Scene, packages, pin, native input/markers and customer tuning remain unchanged in TUT-00–03. No tutorial runtime or Windows pass is claimed by this contract.
