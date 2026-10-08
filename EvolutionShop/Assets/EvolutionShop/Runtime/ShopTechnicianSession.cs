@@ -119,14 +119,18 @@ namespace EvolutionShop
                 if (!lab.MarkStarted(claim.SpeciesId,claim.SpecimenId)) return false;
             }
             else lab.ClearActive();
-            if (!SaveStore.Write(SavePath,CaptureStaffSlot(staged,Staff,null,null,lab),out var error))
+            var tutorial=CopyTutorial();
+            if (start) tutorial.ObserveStarted(staged,stagedResult,TutorialActionOrigin.Worker);
+            tutorial.Reconcile(staged);
+            var slot=CaptureStaffSlot(staged,Staff,null,null,lab);slot.tutorial=tutorial.CaptureSave();
+            if (!SaveStore.Write(SavePath,slot,out var error))
             { SaveError=error;Notify("Moss could not save this action. All cultures and creatures remain at their original station. Retry after saving is available.");return false; }
             // Synchronous main-thread persistence cannot advance another transaction. Keep
             // the actual model so customer and stocker reservations retain their owner.
             ActionResult result=start ? Model.CompleteTechnicianStart(jobId,ShopStaff.TechnicianId) : Model.CompleteTechnicianOutput(jobId,ShopStaff.TechnicianId);
             if (!result.Success || result.SpecimenId!=claim.SpecimenId)
                 throw new InvalidOperationException("Validated technician transaction changed during persistence.");
-            Laboratory=lab;SaveError=null;saveClock=0;World.Refresh(Model);
+            Laboratory=lab;Tutorial=tutorial;SaveError=null;saveClock=0;World.Refresh(Model);
             Notify(start ? "Moss started "+Model.GetSpecies(claim.SpeciesId).DisplayName+". The incubator is processing." :
                 "Moss stored "+Model.GetSpecies(claim.SpeciesId).DisplayName+" in the lab rack.");
             return true;

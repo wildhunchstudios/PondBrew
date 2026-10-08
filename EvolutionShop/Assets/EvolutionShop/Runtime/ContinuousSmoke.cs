@@ -369,6 +369,7 @@ namespace EvolutionShop
 
         void CycleObserve()
         {
+            if (tutorialRun) { ObserveTutorialNavigation(); return; }
             if (tradingRun != null) { CheckTradingInvariants(); return; }
             if (Time.realtimeSinceStartup - cycleStarted > 360f) throw new TimeoutException("Continuous scenario exceeded its six-minute watchdog");
             ObserveCustomerNavigation();

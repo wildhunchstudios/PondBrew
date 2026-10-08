@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,6 +10,7 @@ namespace EvolutionShop
         public Camera View { get; private set; }
         public float Sensitivity { get; set; } = 1f;
         public bool InputEnabled { get; set; }
+        public event Action<bool, bool, bool> ControlledMotion;
         CharacterController body;
         float pitch;
         public void Initialize(Camera view)
@@ -27,6 +29,8 @@ namespace EvolutionShop
         void Update()
         {
             if (!InputEnabled || View == null) return;
+            Vector3 before = transform.position;
+            Quaternion beforeLook = View.transform.rotation;
             var mouse = Mouse.current;
             var keyboard = Keyboard.current;
             if (mouse != null)
@@ -45,6 +49,10 @@ namespace EvolutionShop
             move = Vector2.ClampMagnitude(move, 1);
             Vector3 worldMove = transform.right * move.x + transform.forward * move.y;
             body.Move((worldMove * 3.2f + Vector3.down * 3f) * Time.deltaTime);
+            Vector3 travelled = transform.position - before; travelled.y = 0;
+            bool moved = move.sqrMagnitude > 0 && travelled.sqrMagnitude > .00000001f;
+            bool looked = Quaternion.Angle(beforeLook, View.transform.rotation) > .001f;
+            if (moved || looked) ControlledMotion?.Invoke(moved, looked, transform.position.z > .8f);
         }
         public void Teleport(Vector3 position, Quaternion rotation)
         {

@@ -84,7 +84,7 @@ namespace EvolutionShop
                 DrawCompactStatus();
                 DrawCultureStatus();
                 hudTheme.Draw(new Rect(433, 676, 548, 26), hudTheme.DarkCard);
-                GUI.Label(new Rect(443, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move   |   E interact   |   TAB journal   |   ESC pause", hudLightControlsStyle);
+                GUI.Label(new Rect(443, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move  |  E use  |  TAB journal  |  F1 help  |  ESC pause", hudLightControlsStyle);
                 if (Panel == ShopPanel.None && !PlacementActive) DrawFocusPrompt();
                 if (Panel != ShopPanel.None) DrawPanel();
                 if (PlacementActive) DrawPlacementOverlay();
@@ -164,7 +164,7 @@ namespace EvolutionShop
                 float height = HudObjectiveHeight();
                 HudCard(new Rect(18, 86, 278, height), mint);
                 hudTheme.Icon(new Rect(30, 97, 20, 20), ShopUiTheme.Symbol.Leaf);
-                GUI.Label(new Rect(57, 99, 221, 18), "YOUR NEXT STEP", hudSmallStyle);
+                GUI.Label(new Rect(57, 99, 221, 18), Tutorial.Mode == TutorialMode.Active ? "OPENING NIGHT  /  F1 HELP" : "YOUR NEXT STEP", hudSmallStyle);
                 GUI.Label(new Rect(32, 123, 246, height - 40), Objective(), hudBodyStyle);
             }
 
@@ -247,9 +247,14 @@ namespace EvolutionShop
 
         string Objective()
         {
-            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.Queued) return Staff.IsOnDuty(Cycle.DayNumber) ? "Pip is handling checkout. Keep stock ready, or help at the counter." : "A customer is waiting. Use the front counter to serve.";
-            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter && !Staff.IsOnDuty(Cycle.DayNumber)) return "A creature is reserved. Head to the front counter.";
+            if (AutosaveBlocked) return "Your save is protected; progress cannot be saved. Press ESC for save recovery.";
+            if (!string.IsNullOrEmpty(SaveError)) return "Progress is not saved. Press ESC to retry saving or reload your last saved shop.";
+            if (Customers.NextToServe != null && Customers.NextToServe.Phase == CustomerPhase.Queued)
+                return Tutorial.Mode == TutorialMode.Active ? "A customer is waiting. Serve at the front counter yourself." : Staff.IsOnDuty(Cycle.DayNumber) ? "Pip is handling checkout. Keep stock ready, or help at the counter." : "A customer is waiting. Use the front counter to serve.";
+            if (Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter && (Tutorial.Mode == TutorialMode.Active || !Staff.IsOnDuty(Cycle.DayNumber))) return "A creature is reserved. Head to the front counter.";
             if (Cycle.Phase == ShopDayPhase.Closing) return "Closing up. Unsold stock stays safe for tomorrow.";
+            string tutorialObjective = TutorialObjective();
+            if (!string.IsNullOrEmpty(tutorialObjective)) return tutorialObjective;
             if (Model.Incubator.Phase == IncubatorPhase.Ready) return Model.StorageIds.Length > 0 ? "Use an empty display or lab rack to store the ready creature." : "Head to a display tank in the front store.";
             if (ReadyConditionedCount > 0) return "Use E at an empty rack or display to collect vat output.";
             if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "New life is growing. Gather your next cultures.";
@@ -288,17 +293,8 @@ namespace EvolutionShop
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
             switch (Panel)
             {
-                case ShopPanel.Welcome:
-                    Heading("Welcome to your little shop");
-                    Text("Front store: display tanks and sales counter. The automatic lab door opens when you approach and closes behind you. Beyond it: your back lab, with growers, incubator, and upgrade bench.");
-                    Space();
-                    Text("WASD to move / mouse to look\nHold LEFT MOUSE at a grower to collect\nE to use a station / TAB for your journal\nESC to pause, change settings, or save");
-                    Space();
-                    Text("Prepare at night: mix one Bloom and one Flow in the lab, then take your creature to a front tank. Open at the counter. Customers browse, choose a creature and wait for checkout. Use E at the counter and serve their order before their patience runs out.");
-                    Text("Press E at a stocked tank to change its price tag. Four kinds of customer react to your price differently; if it is too high for them they walk away. The journal (TAB) describes each.");
-                    Small("Nights are untimed. Growers are free. One local save; production and the clock stop while paused or the application is closed.");
-                    Space(); Button("Enter your shop", () => SetPanel(ShopPanel.None));
-                    break;
+                case ShopPanel.Welcome: DrawTutorialWelcome(); break;
+                case ShopPanel.TutorialHelp: DrawTutorialHelp(); break;
                 case ShopPanel.Incubator: DrawIncubator(); break;
                 case ShopPanel.Counter: DrawCounter(); break;
                 case ShopPanel.Staff: DrawStaffPanel(); break;
@@ -314,7 +310,10 @@ namespace EvolutionShop
                 case ShopPanel.StorageRack: DrawSpecimenRack(); break;
                 case ShopPanel.Conditioning: DrawConditioning(); break;
                 case ShopPanel.Pause:
-                    Heading("Shop paused"); Button("View presentation sample", () => SetPanel(ShopPanel.Presentation)); Button("Preview comedy kit", OpenComedyPreview); Text("The day clock and all lab production are paused. Your progress saves automatically.");
+                    Heading("Shop paused");
+                    Button("Opening Night help  /  F1", () => OpenTutorialHelp());
+                    if (Tutorial.Mode == TutorialMode.Active) Button("Skip guidance / keep my shop", () => SkipTutorial());
+                    Button("View presentation sample", () => SetPanel(ShopPanel.Presentation)); Button("Preview comedy kit", OpenComedyPreview); Text("The day clock and all lab production are paused. Your progress saves automatically.");
                     Space(); Text("Mouse sensitivity: " + Sensitivity.ToString("0.00"));
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
@@ -350,7 +349,15 @@ namespace EvolutionShop
                 // Keep the exit visible even when panel content needs scrolling.
                 Box(new Rect(377,558,526,1), new Color(.72f,.76f,.64f));
                 GUILayout.BeginArea(new Rect(377,570,526,47));
-                Button(dayReportPanel ? "Continue preparation  /  ESC" : "Close  /  ESC", () => SetPanel(ShopPanel.None));
+                if (Panel == ShopPanel.TutorialHelp)
+                    Button("Back to my shop  /  ESC or F1", CloseTutorialHelp);
+                else
+                {
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button(dayReportPanel ? "Continue preparation  /  ESC" : "Close  /  ESC", dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38))) BackFromPanel();
+                    if (GUILayout.Button("Help  /  F1", buttonStyle, GUILayout.MinHeight(38))) OpenTutorialHelp();
+                    GUILayout.EndHorizontal();
+                }
                 GUILayout.EndArea();
             }
         }
@@ -426,32 +433,32 @@ namespace EvolutionShop
             Text("Add exact integer doses. One recipe makes one specimen.");
             Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW" + (Model.SparkResearchUnlocked ? "  +  " + inc.Spark + " SPARK" : "") + (Model.MistResearchUnlocked ? "  +  " + inc.Mist + " MIST" : ""));
             GUILayout.BeginHorizontal();
-            Button("+ Bloom", () => Perform(Model.Dose(CultureKind.Bloom)));
-            Button("+ Flow", () => Perform(Model.Dose(CultureKind.Flow)));
-            if (Model.SparkResearchUnlocked) Button("+ Spark", () => Perform(Model.Dose(CultureKind.Spark)));
-            if (Model.MistResearchUnlocked) Button("+ Mist", () => Perform(Model.Dose(CultureKind.Mist)));
+            Button("+ Bloom", () => DoseCulture(CultureKind.Bloom));
+            Button("+ Flow", () => DoseCulture(CultureKind.Flow));
+            if (Model.SparkResearchUnlocked) Button("+ Spark", () => DoseCulture(CultureKind.Spark));
+            if (Model.MistResearchUnlocked) Button("+ Mist", () => DoseCulture(CultureKind.Mist));
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            Button("- Bloom", () => Perform(Model.ReturnDose(CultureKind.Bloom)));
-            Button("- Flow", () => Perform(Model.ReturnDose(CultureKind.Flow)));
-            if (Model.SparkResearchUnlocked) Button("- Spark", () => Perform(Model.ReturnDose(CultureKind.Spark)));
-            if (Model.MistResearchUnlocked) Button("- Mist", () => Perform(Model.ReturnDose(CultureKind.Mist)));
+            Button("- Bloom", () => ReturnCultureDose(CultureKind.Bloom));
+            Button("- Flow", () => ReturnCultureDose(CultureKind.Flow));
+            if (Model.SparkResearchUnlocked) Button("- Spark", () => ReturnCultureDose(CultureKind.Spark));
+            if (Model.MistResearchUnlocked) Button("- Mist", () => ReturnCultureDose(CultureKind.Mist));
             GUILayout.EndHorizontal();
-            Button("Begin incubation  /  " + Config.IncubationSeconds + " sec", () => { if (Perform(Model.BeginIncubation()).Success) SetPanel(ShopPanel.None); });
-            Button("Return all doses safely", () => Perform(Model.ClearDoses()));
+            Button("Begin incubation  /  " + Config.IncubationSeconds + " sec", () => BeginManualIncubation());
+            Button("Return all doses safely", () => ClearCultureDoses());
             Small("Doses reserve room in your siphon until incubation begins. Unsupported mixtures never consume resources.");
             Space(); Small("Siphon full of one culture? Return staged doses above, then release a spare carried unit. Growers replenish for free.");
             GUILayout.BeginHorizontal();
-            Button("Release 1 Bloom", () => Perform(Model.ReleaseCulture(CultureKind.Bloom)));
-            Button("Release 1 Flow", () => Perform(Model.ReleaseCulture(CultureKind.Flow)));
-            if (Model.SparkResearchUnlocked) Button("Release 1 Spark", () => Perform(Model.ReleaseCulture(CultureKind.Spark)));
-            if (Model.MistResearchUnlocked) Button("Release 1 Mist", () => Perform(Model.ReleaseCulture(CultureKind.Mist)));
+            Button("Release 1 Bloom", () => ReleaseCulture(CultureKind.Bloom));
+            Button("Release 1 Flow", () => ReleaseCulture(CultureKind.Flow));
+            if (Model.SparkResearchUnlocked) Button("Release 1 Spark", () => ReleaseCulture(CultureKind.Spark));
+            if (Model.MistResearchUnlocked) Button("Release 1 Mist", () => ReleaseCulture(CultureKind.Mist));
             GUILayout.EndHorizontal();
             Space(); Small("LAB NOTES: A balanced pair brings a Pondlet. More Bloom makes a rounder body; more Flow makes a longer tail.");
             if (Model.SparkResearchUnlocked) Small("SPARK CLUE: A balanced Bloom/Flow pair needs one Spark.");
             if (Model.MistResearchUnlocked) Small("AIRFIN CLUE: A balanced Bloom/Flow pair needs one Mist.");
             foreach (var species in Config.Species)
-                if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + RecipeText(species, true) + ")", () => Perform(Model.UseKnownRecipe(species.Id)));
+                if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + RecipeText(species, true) + ")", () => PrepareKnownRecipe(species.Id));
         }
         void DrawCounter()
         {
@@ -688,7 +695,9 @@ namespace EvolutionShop
         void Space() => GUILayout.Space(12);
         void Button(string text, System.Action action)
         {
-            bool primary = text.StartsWith("Enter your shop") || text.StartsWith("Begin incubation") ||
+            bool primary = text.StartsWith("Enter your shop") || text.StartsWith("Start guided opening") ||
+                text.StartsWith("Continue guided opening") || text.StartsWith("Continue my shop") ||
+                text.StartsWith("Continue running my shop") || text.StartsWith("Begin incubation") ||
                 text.StartsWith("Serve customer") || text.StartsWith("Open for day") || text.StartsWith("Continue preparation") ||
                 text.StartsWith("Save and resume") || text.StartsWith("Start conditioning") || text.StartsWith("Research ");
             bool caution = text.StartsWith("Confirm new game") || text.StartsWith("Close today's shop") || text.StartsWith("Save and quit");

@@ -98,6 +98,7 @@ namespace EvolutionShop
             int agreed=expected.Price;
             var result=Customers.ServeExpected(expected);
             if (!result.HasValue) return false;
+            Tutorial.ObserveSale(Model,result.Value,TutorialActionOrigin.Worker,Cycle.DayNumber);
             bool success=Perform(result.Value).Success;
             if (success) Notify("Pip served a customer / "+agreed+" credits received.");
             return success;

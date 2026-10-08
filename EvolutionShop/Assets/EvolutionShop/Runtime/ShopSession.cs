@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets, Technician, TechnicianOrders }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets, Technician, TechnicianOrders, TutorialHelp }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -18,7 +18,7 @@ namespace EvolutionShop
         public ShopCustomers Customers { get; private set; }
         public ShopPanel Panel { get; private set; }
         public Station Focused { get; private set; }
-        public bool Paused => Panel == ShopPanel.Pause || Panel == ShopPanel.Reset || Panel == ShopPanel.Welcome || Panel == ShopPanel.Presentation;
+        public bool Paused => Panel == ShopPanel.Pause || Panel == ShopPanel.Reset || Panel == ShopPanel.Welcome || Panel == ShopPanel.Presentation || Panel == ShopPanel.TutorialHelp;
         public bool ValidationMode { get; private set; }
         public string SavePath { get; private set; }
         public float Sensitivity = 1;
@@ -84,6 +84,7 @@ namespace EvolutionShop
             camera.gameObject.AddComponent<AudioListener>();
             Player = new GameObject("Player").AddComponent<ShopPlayer>();
             Player.Initialize(camera);
+            Player.ControlledMotion += ObserveTutorialMotion;
             World = new GameObject("Evolution Shop").AddComponent<ShopWorld>();
             World.Build(camera); World.ApplyLayout(Layout);
             World.SetDayPhase(Cycle.Phase);
@@ -115,7 +116,9 @@ namespace EvolutionShop
             if (placementAtFrameStart) HandlePlacementInput(keyboard);
             if (HandleSlapRebind(keyboard)) return;
             if (!placementAtFrameStart && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
-                SetPanel(Panel == ShopPanel.Presentation ? ShopPanel.Pause : Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
+                BackFromPanel();
+            else if (!placementAtFrameStart && keyboard != null && keyboard.f1Key.wasPressedThisFrame)
+            { if (Panel == ShopPanel.TutorialHelp) CloseTutorialHelp(); else OpenTutorialHelp(); }
             if (!placementAtFrameStart && keyboard != null && keyboard.tabKey.wasPressedThisFrame && !Paused)
                 SetPanel(Panel == ShopPanel.Journal ? ShopPanel.None : ShopPanel.Journal);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -170,6 +173,7 @@ namespace EvolutionShop
                 Notify(Cycle.Phase == ShopDayPhase.Night ? "Night preparation. Your unsold stock is safe. Prepare for day " + Cycle.DayNumber + "." : "Closing time. The next preparation night begins shortly.");
             }
             var result = Model.Tick(seconds);
+            Tutorial.Reconcile(Model);
             Customers.Tick(seconds);
             Cashier.Tick(seconds);
             Stocker.Tick(seconds);
@@ -209,6 +213,7 @@ namespace EvolutionShop
             if (!Reports.BeginDay(Cycle.DayNumber, DisplayedStockCount()))
             { Notify("The day report could not begin. Save and reload before opening."); return false; }
             Cycle.OpenShop();
+            Tutorial.ObserveOpened(true);
             World.SetDayPhase(Cycle.Phase);
             Notify("Day " + Cycle.DayNumber + " is open. Serve the counter and keep your tanks stocked.");
             SaveNow();
@@ -241,7 +246,8 @@ namespace EvolutionShop
         public ActionResult TransferToDisplay(string tankId)
         {
             var result = Model.TransferToTank(tankId);
-            if (result.Success) Reports.RecordRestock();
+            if (result.Success)
+            { Reports.RecordRestock(); Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player); }
             return Perform(result);
         }
         public bool IsAtCounter
@@ -265,6 +271,7 @@ namespace EvolutionShop
             int agreed = Customers.NextToServe == null ? 0 : Customers.NextToServe.Price;
             var result = Customers.Serve();
             if (!result.HasValue) { Notify("No customer is waiting to check out yet."); return false; }
+            Tutorial.ObserveSale(Model, result.Value, TutorialActionOrigin.Player, Cycle.DayNumber);
             bool success = Perform(result.Value).Success;
             if (success) Notify("Sold for the agreed " + agreed + " credits! Your customer is taking their new creature home.");
             return success;
@@ -333,6 +340,7 @@ namespace EvolutionShop
             var result = Model.Collect(kind);
             if (result.Success)
             {
+                Tutorial.ObserveCollection(Model, kind, result, TutorialActionOrigin.Player);
                 World.PulseHarvest(kind); sound.Collect(); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); SaveNow();
             }
             else Notify(FailureText(result.Failure));
@@ -340,6 +348,10 @@ namespace EvolutionShop
         public void StopHarvest() { harvesting = null; harvestClock = 0; HarvestProgress = 0; }
         public void Interact(Station station)
         {
+            if (!station || Paused || PlacementActive) return;
+            if (Player && World && station.transform.position.z > .5f &&
+                Vector3.Distance(Player.transform.position, station.transform.position) < 4.5f &&
+                Tutorial.ObserveOrientation(false, false, true)) SaveNow();
             switch (station.Kind)
             {
                 case StationKind.Bloom: case StationKind.Flow:
@@ -374,6 +386,8 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            bool acknowledgedReport = Panel == ShopPanel.DayReport && panel == ShopPanel.None &&
+                Tutorial.ObserveReportAcknowledged(Reports.LastDayNumber);
             if (panel==ShopPanel.Arrange) { if (Stocker) Stocker.ResetTransient();if (Technician) Technician.ResetTransient(); }
             if(Panel!=panel && panel!=ShopPanel.None){CancelComedy();belchWait=-1;}
             if (Panel != panel && Panel == ShopPanel.Presentation) EndPresentationView();
@@ -382,6 +396,8 @@ namespace EvolutionShop
             if (panel != ShopPanel.None && PlacementActive) EndPlacementPreview();
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();
             if (Panel != panel) panelScroll = Vector2.zero;
+            bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
+                Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
             Panel = panel;
             if (panel != ShopPanel.Pause) WaitingForSlapKey = false;
             if (SlapGesture != null) SlapGesture.SetPaused(Paused);
@@ -389,7 +405,8 @@ namespace EvolutionShop
             StopHarvest();
             Cursor.lockState = panel == ShopPanel.None ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = panel != ShopPanel.None;
-            if (Player != null) Player.InputEnabled = panel == ShopPanel.None && !ValidationMode;
+            if (Player != null) Player.InputEnabled = panel == ShopPanel.None && (!ValidationMode || AllowValidationInput);
+            if (acknowledgedReport || viewedPrice) SaveNow();
         }
         public bool SetBaselinePreview(bool enabled)
         {
@@ -409,7 +426,7 @@ namespace EvolutionShop
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
                 return false;
             }
-            Stocking.PruneTargets(Model);Laboratory.Reconcile(Model);
+            Stocking.PruneTargets(Model);Laboratory.Reconcile(Model);Tutorial.Reconcile(Model);
             var slot = CaptureStaffSlot(Model,Staff);
             bool success = SaveStore.Write(SavePath, slot, out var error);
             SaveError = success ? null : error;
@@ -460,18 +477,18 @@ namespace EvolutionShop
             Stocker.ResetTransient();Technician.ResetTransient();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
-            Tutorial = new ShopTutorial();
+            Tutorial = new ShopTutorial(); ClearTutorialHelpReturn();
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
-            SetPanel(ShopPanel.None); Notify("Preparation night 1. Grow your first stock, then open at the front counter.");
+            SetPanel(ShopPanel.Welcome); Notify("Preparation night 1. Choose your opening and grow your first stock.");
         }
         void OnApplicationFocus(bool focus) { if (!focus && initialized && !ValidationMode && !Paused) SetPanel(ShopPanel.Pause); }
         void OnApplicationQuit() { if (initialized && !quitRequested) SaveNow(); }
-        void OnDestroy() { DisposeHudTheme(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+        void OnDestroy() { if (Player) Player.ControlledMotion -= ObserveTutorialMotion; DisposeHudTheme(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         void Quit()
         {
             if (!SaveNow()) { SetPanel(ShopPanel.Pause); return; }

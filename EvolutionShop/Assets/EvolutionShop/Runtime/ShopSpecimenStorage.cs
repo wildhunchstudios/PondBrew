@@ -49,7 +49,8 @@ namespace EvolutionShop
         {
             if (!AtDisplay()) return false;
             var result = Model.TransferStorageToTank(storageId, selectedTank, expectedSpecimenId);
-            if (result.Success) Reports.RecordRestock();
+            if (result.Success)
+            { Reports.RecordRestock(); Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player); }
             Perform(result);
             if (result.Success) Notify("Stored creature moved into this display. It is available to customers.");
             return result.Success;

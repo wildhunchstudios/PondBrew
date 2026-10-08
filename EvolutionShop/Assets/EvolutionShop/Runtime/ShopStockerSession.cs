@@ -97,16 +97,20 @@ namespace EvolutionShop
             if (!GameModel.TryRestore(Layout.WithTankIds(Config),Model.CaptureSave(),out var staged,out _) ||
                 !ShopTradeLedger.TryRestore(Reports.CaptureSave(),Cycle.CaptureSave(),out var ledger))
                 throw new InvalidOperationException("Cannot stage stocker delivery.");
-            if (!staged.ReserveStockTransfer(jobId,ShopStaff.StockerId,claim.StorageId,claim.TankId,claim.SpecimenId).Success ||
-                !staged.CompleteStockTransfer(jobId,ShopStaff.StockerId).Success) return false;
+            if (!staged.ReserveStockTransfer(jobId,ShopStaff.StockerId,claim.StorageId,claim.TankId,claim.SpecimenId).Success) return false;
+            var stagedResult=staged.CompleteStockTransfer(jobId,ShopStaff.StockerId);
+            if (!stagedResult.Success) return false;
             ledger.RecordRestock();
-            if (!SaveStore.Write(SavePath,CaptureStaffSlot(staged,Staff,Stocking,ledger),out var error))
+            var tutorial=CopyTutorial();
+            tutorial.ObserveDisplayed(staged,stagedResult,TutorialActionOrigin.Worker);tutorial.Reconcile(staged);
+            var slot=CaptureStaffSlot(staged,Staff,Stocking,ledger);slot.tutorial=tutorial.CaptureSave();
+            if (!SaveStore.Write(SavePath,slot,out var error))
             { SaveError=error;Notify("Delivery was not saved. The creature is still safe in its rack. Retry Nori after fixing saving.");return false; }
             // Synchronous main-thread write cannot advance another transaction between staging
             // and this revalidated publication; no animation callback owns this operation.
             var result=Model.CompleteStockTransfer(jobId,ShopStaff.StockerId);
             if (!result.Success) throw new InvalidOperationException("Validated stocker delivery changed during persistence.");
-            Reports.RecordRestock();SaveError=null;saveClock=0;
+            Reports.RecordRestock();Tutorial=tutorial;SaveError=null;saveClock=0;
             World.Refresh(Model);Notify("Nori stocked "+Model.GetSpecies(result.SpeciesId).DisplayName+" / ready for customers.");
             return true;
         }
