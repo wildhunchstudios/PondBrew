@@ -9,6 +9,7 @@ namespace EvolutionShop
         public bool ComedyPreview { get; private set; }
         public ShopComedy PreviewComedy { get; private set; } = new ShopComedy();
         public bool AmbientComedyEnabled { get; set; } = true;
+        public bool AmbientComedyDeferredForTutorial => Tutorial.FirstSaleAccommodationActive;
         public int ComedyStartedCount { get; private set; }
         CustomerVisit comedyVisitor;
         CustomerActor comedyActor;
@@ -36,7 +37,7 @@ namespace EvolutionShop
                 else if(belchWait<=0 && Panel==ShopPanel.None)
                 { TryStartComedy(ComedyKind.Belch);belchWait=-1; }
             }
-            if(!AmbientComedyEnabled || Panel!=ShopPanel.None || PlacementActive || Cycle.Phase!=ShopDayPhase.Open)return;
+            if(!AmbientComedyEnabled || AmbientComedyDeferredForTutorial || Panel!=ShopPanel.None || PlacementActive || Cycle.Phase!=ShopDayPhase.Open)return;
             ambientWait-=seconds;
             if(ambientWait>0 || Comedy.Active)return;
             ambientWait=ReducedGags?45:18;
@@ -49,6 +50,8 @@ namespace EvolutionShop
         {
             if(!isActiveAndEnabled || Paused || Panel!=ShopPanel.None || PlacementActive ||
                 kind==ComedyKind.Slap || kind==ComedyKind.WorkerCelebration)return false;
+            if(AmbientComedyDeferredForTutorial &&
+                (kind==ComedyKind.Fart || kind==ComedyKind.Complaint || kind==ComedyKind.Mimic))return false;
             CustomerVisit visit=null;CustomerActor actor=null;string tank=null;
             if(kind==ComedyKind.Belch)
             {

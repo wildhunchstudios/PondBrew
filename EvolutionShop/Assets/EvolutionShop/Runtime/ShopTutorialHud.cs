@@ -314,6 +314,8 @@ namespace EvolutionShop
                     break;
                 case TutorialLesson.Serve:
                     Text("Let a customer choose a stocked creature and walk to the counter. Press E at the counter, then Serve customer before patience runs out.");
+                    if (Customers.IntroductoryArrivalsActive)
+                        Small("For your first sale, one Casual visitor arrives at a time once an accessible display is stocked. They wait up to " + ShopCustomers.IntroductoryPatienceSeconds.ToString("0") + " active seconds at checkout. Normal prices still apply; ordinary visitors resume after any successful sale.");
                     Small("A reservation is not a payment. Credits arrive only when checkout succeeds. Serve this lesson's creature yourself; Pip's sales still earn money but do not count as manual practice.");
                     Small("No buyer? Check that your shop is open and a reachable display has unreserved stock. Review its price. If a customer leaves, the unpaid creature stays available for another visit.");
                     break;

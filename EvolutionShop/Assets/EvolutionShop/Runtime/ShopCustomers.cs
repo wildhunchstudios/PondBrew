@@ -31,11 +31,15 @@ namespace EvolutionShop
         bool baseEffects, cachedBaseEffects;
         int maxVisitors = 1;
         float untilArrival;
+        bool introductoryStockUnavailable;
+        public const float IntroductoryPatienceSeconds = 90f;
+        public bool IntroductoryArrivalsActive => shop != null && shop.Tutorial.FirstSaleAccommodationActive;
+        public int EffectiveMaxVisitors => IntroductoryArrivalsActive ? 1 : MaxVisitors;
         readonly RaycastHit[] slapObstructions = new RaycastHit[24];
 
         public ShopCustomerNavigation Navigation { get; private set; }
         public bool ArrivalsEnabled { get; set; } = true;
-        public bool Ready => Navigation != null && Navigation.Ready;
+        public bool Ready => Navigation != null && Navigation.isActiveAndEnabled && Navigation.Ready;
         public string NavigationIssue { get; private set; }
         public int ActiveCount => visitors.Count;
         /// <summary>Visitors in the shop at once, bounded by the counter queue's places.</summary>
@@ -51,7 +55,11 @@ namespace EvolutionShop
         /// <summary>Copies of the customer types, for presentation; changing them changes nothing.</summary>
         public IReadOnlyList<CustomerArchetype> Archetypes
         {
-            get { RefreshReputation(); return Array.AsReadOnly(Array.ConvertAll(effectiveCatalog, a => a.Copy())); }
+            get
+            {
+                RefreshReputation();
+                return Array.AsReadOnly(IntroductoryArrivalsActive ? new[] { IntroductoryArchetype() } : Array.ConvertAll(effectiveCatalog, a => a.Copy()));
+            }
         }
         /// <summary>Validation only; normal play always applies the current shop reputation.</summary>
         public bool UseBaseReputationEffectsForValidation
@@ -70,7 +78,9 @@ namespace EvolutionShop
         {
             get
             {
-                RefreshReputation(); int total = 0, premium = 0;
+                RefreshReputation();
+                if (IntroductoryArrivalsActive) return 0;
+                int total = 0, premium = 0;
                 foreach (var type in effectiveCatalog) { total += type.Weight; if (type.Id == CustomerArchetypes.Premium) premium = type.Weight; }
                 return total > 0 ? 100f * premium / total : 0;
             }
@@ -118,11 +128,12 @@ namespace EvolutionShop
         public int BuyerTypes(PriceView tag)
         {
             RefreshReputation();
+            if (IntroductoryArrivalsActive) return Preview(tag) != PriceReaction.TooExpensive ? 1 : 0;
             int buyers = 0;
             foreach (var type in effectiveCatalog) if (type.Weight > 0 && type.Judge(tag.SpeciesId, tag.Price, tag.Standard) != PriceReaction.TooExpensive) buyers++;
             return buyers;
         }
-        public int ArrivingTypes { get { RefreshReputation(); int count = 0; foreach (var type in effectiveCatalog) if (type.Weight > 0) count++; return count; } }
+        public int ArrivingTypes { get { RefreshReputation(); if (IntroductoryArrivalsActive) return 1; int count = 0; foreach (var type in effectiveCatalog) if (type.Weight > 0) count++; return count; } }
 
         public void Tick(float seconds)
         {
@@ -132,20 +143,20 @@ namespace EvolutionShop
             StaggerCaptions();
             if (shop.Cycle.Phase != ShopDayPhase.Open) { untilArrival = rules.ArrivalDelaySeconds; return; }
             // The timer pauses while the shop is full, so a freed place fills NextArrivalSeconds later.
-            if (!ArrivalsEnabled || visitors.Count >= maxVisitors) return;
+            if (!ArrivalsEnabled || visitors.Count >= EffectiveMaxVisitors) return;
             untilArrival -= seconds;
             if (untilArrival > 0) return;
-            BeginVisit();
-            untilArrival = NextArrivalSeconds;
+            // Failed introductory admission retries at the ordinary initial gap, not every frame.
+            untilArrival = BeginVisit() ? NextArrivalSeconds : rules.ArrivalDelaySeconds;
         }
 
         /// <summary>Validation only: starts an arrival now if the shop is open and has room.</summary>
         public bool SpawnNow()
         {
-            if (!Ready || shop.Paused || shop.Cycle.Phase != ShopDayPhase.Open || visitors.Count >= maxVisitors) return false;
+            if (!Ready || shop.Paused || shop.Cycle.Phase != ShopDayPhase.Open || visitors.Count >= EffectiveMaxVisitors) return false;
             int before = visitors.Count;
-            BeginVisit();
-            untilArrival = NextArrivalSeconds;
+            // Failed introductory admission retries at the ordinary initial gap, not every frame.
+            untilArrival = BeginVisit() ? NextArrivalSeconds : rules.ArrivalDelaySeconds;
             return visitors.Count == before + 1;
         }
 
@@ -182,16 +193,26 @@ namespace EvolutionShop
             RefreshCaption(visitor);
         }
 
-        void BeginVisit()
+        bool BeginVisit()
         {
+            if (!Ready || shop.Paused || shop.Cycle.Phase != ShopDayPhase.Open || visitors.Count >= EffectiveMaxVisitors) return false;
+            bool introductory = IntroductoryArrivalsActive;
+            string[] arrivalTanks;
+            if (introductory)
+            {
+                if (!TryIntroductoryStock(out arrivalTanks))
+                { introductoryStockUnavailable = true; return false; }
+            }
+            else arrivalTanks = shop.Model.TankIds;
+            introductoryStockUnavailable = false;
             var report = shop.Reports.Current;
             var type = ChooseArchetype(report == null ? 0 : report.visitors);
             var entry = new Visitor();
-            var visit = new CustomerVisit(shop.Model, shop.Model.TankIds, rules, type, tank => Contended(tank, entry));
+            var visit = new CustomerVisit(shop.Model, arrivalTanks, rules, type, tank => Contended(tank, entry));
             if (!shop.Reports.BeginVisit(visit.Id))
             {
                 Debug.LogWarning("EVOLUTION_CUSTOMER_LEDGER the day report could not record a new visitor; arrival skipped.");
-                return;
+                return false;
             }
             entry.Visit = visit;
             entry.Actor = new GameObject("Store customer / " + type.DisplayName).AddComponent<CustomerActor>();
@@ -202,11 +223,40 @@ namespace EvolutionShop
             ApplyDestination(entry);
             RefreshCaption(entry);
             shop.SaveNow();
+            return true;
+        }
+
+        bool TryIntroductoryStock(out string[] tankIds)
+        {
+            // These are real model slots and current NavMesh paths, checked only when the
+            // bounded arrival timer expires. Refusal still happens at normal browsing time.
+            var available = new List<string>();
+            foreach (string tank in shop.Model.TankIds)
+            {
+                if (!shop.Model.GetTank(tank).HasValue || shop.Model.GetReservation(tank).HasValue) continue;
+                Vector3 browse = Navigation.BrowseSpot(tank, 0);
+                if (Navigation.CanReach(Navigation.EntryPoint, browse) &&
+                    Navigation.CanReach(browse, Navigation.QueueSpot(0)) &&
+                    Navigation.CanReach(Navigation.QueueSpot(0), Navigation.ExitPoint)) available.Add(tank);
+            }
+            tankIds = available.ToArray();
+            return tankIds.Length > 0;
+        }
+
+        CustomerArchetype IntroductoryArchetype()
+        {
+            // Find returns a copy. Prices, budgets, visuals and ordinary catalog stay intact;
+            // CustomerVisit takes its own immutable copy for the lifetime of this visit.
+            var type = CustomerArchetypes.Find(effectiveCatalog, CustomerArchetypes.Casual);
+            if (type == null) throw new InvalidOperationException("The introductory Casual customer is missing.");
+            type.PatienceSeconds = IntroductoryPatienceSeconds;
+            return type;
         }
 
         CustomerArchetype ChooseArchetype(int visitorIndex)
         {
             RefreshReputation();
+            if (IntroductoryArrivalsActive) return IntroductoryArchetype();
             string id = ScriptedArchetypes.Count > 0 ? ScriptedArchetypes.Dequeue() : ForcedArchetypeId;
             if (id != null)
                 return CustomerArchetypes.Find(effectiveCatalog, id) ?? throw new InvalidOperationException("Unknown scripted customer type " + id);
@@ -409,6 +459,7 @@ namespace EvolutionShop
             }
             visitors.Clear();
             line.Clear();
+            introductoryStockUnavailable = false;
             untilArrival = rules.ArrivalDelaySeconds;
         }
 
@@ -500,6 +551,8 @@ namespace EvolutionShop
             {
                 if (!string.IsNullOrEmpty(NavigationIssue)) return NavigationIssue;
                 if (!Ready) return "Preparing customer routes...";
+                if (visitors.Count == 0 && shop.Cycle.Phase == ShopDayPhase.Open && IntroductoryArrivalsActive && introductoryStockUnavailable)
+                    return "Your first visitor needs available stock. Fill a display and keep its route clear.";
                 if (visitors.Count == 0) return shop.Cycle.Phase == ShopDayPhase.Open ? "Waiting for the next visitor" : "Shop closed to new visitors";
                 if (visitors.Count == 1) return StatusOf(visitors[0].Visit);
                 var waiting = FirstQueued();

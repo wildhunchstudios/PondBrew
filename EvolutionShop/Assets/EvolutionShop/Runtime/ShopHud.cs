@@ -522,7 +522,9 @@ namespace EvolutionShop
             }
             else Small("No new arrivals. Unpaid creatures stay in their tanks when the night begins.");
             GUILayout.Space(8);
-            Small(ReputationLine() + " / arrival gap " + Customers.NextArrivalSeconds.ToString("0.##") + "s while space is free (max 2 visitors).");
+            if (Customers.IntroductoryArrivalsActive)
+                Small("GUIDED FIRST SALE / one Casual visitor at a time, with " + ShopCustomers.IntroductoryPatienceSeconds.ToString("0") + " seconds at checkout. Stock an accessible display to welcome them.");
+            Small(ReputationLine() + " / arrival gap " + Customers.NextArrivalSeconds.ToString("0.##") + "s while space is free (max " + Customers.EffectiveMaxVisitors + " visitors).");
             Small(ReputationPriceNote());
         }
         TradeDaySave LastReportForDisplay()
