@@ -70,7 +70,7 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath,CaptureStaffSlot(game,Staff,setting),out var error))
             { SaveError=error;Notify("Stocker change could not be saved. Money, targets and previous work are unchanged.");return false; }
             Stocker.ResetTransient();
-            if (paid) { Cashier.ResetTransient();Model=game; }
+            if (paid) { Cashier.ResetTransient();Technician.ResetTransient();Model=game; }
             Stocking=setting;SaveError=null;saveClock=0;
             Stocker.RefreshVisual();World.Refresh(Model);
             Notify(success.TrimEnd()+(Stocking.Employee.Hired && Stocking.Employee.Scheduled ? " "+StockerPaymentLine() : ""));
@@ -117,7 +117,7 @@ namespace EvolutionShop
         void DrawStockerPanel()
         {
             Heading("Nori / your stocker");
-            Small("Carries ready creatures from lab racks to your chosen displays. You still grow recipes and put the finished creatures into racks.");
+            Small("Carries ready creatures from lab racks to your chosen displays. You or Moss can prepare the creatures and fill the racks.");
             Text(ShopStaff.StockerWage+" credits per night + day / no hiring fee");
             Small("Scheduled work repeats each new night when funded. Started periods are paid in full. With limited cash, Pip's scheduled wage is paid first.");
             Space();Text(Stocker.Status);Small(StockerPaymentLine());
@@ -135,7 +135,8 @@ namespace EvolutionShop
                 StaffButton("Retry a blocked route",Stocker.Blocked,()=>RetryStocker());
                 StaffButton("Dismiss Nori / no wage refund",night,()=>DismissStocker());
             }
-            Space();Button("Back to Pip / cashier",()=>SetPanel(ShopPanel.Staff));
+            Space();Button("Moss / lab technician",()=>OpenTechnicianMenu());
+            Button("Back to Pip / cashier",()=>SetPanel(ShopPanel.Staff));
         }
         void DrawStockerTargets()
         {

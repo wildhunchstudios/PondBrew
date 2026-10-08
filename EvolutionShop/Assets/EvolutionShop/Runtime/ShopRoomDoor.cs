@@ -19,12 +19,13 @@ namespace EvolutionShop
 
         public void Tick(Vector3 playerPosition, float dt) => Tick(playerPosition, dt, null);
 
-        public void Tick(Vector3 playerPosition, float dt, Vector3? workerPosition)
+        public void Tick(Vector3 playerPosition, float dt, Vector3? workerPosition, Vector3? secondWorkerPosition = null)
         {
             if (!left || !right || dt <= 0) return;
             Vector3 local = transform.InverseTransformPoint(playerPosition);
             // Includes capsule radius, side approaches and a full movement frame of clearance.
-            bool occupied = NearSensor(local) || workerPosition.HasValue && NearSensor(transform.InverseTransformPoint(workerPosition.Value));
+            bool occupied = NearSensor(local) || workerPosition.HasValue && NearSensor(transform.InverseTransformPoint(workerPosition.Value)) ||
+                secondWorkerPosition.HasValue && NearSensor(transform.InverseTransformPoint(secondWorkerPosition.Value));
             clearDelay = occupied ? 1f : Mathf.Max(0, clearDelay - dt);
             WantsOpen = occupied || clearDelay > 0;
             float previous = OpenFraction;

@@ -74,7 +74,7 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath,CaptureStaffSlot(stagedGame,stagedStaff),out var error))
             { SaveError=error; Notify("Staff change was not saved. Your money and previous schedule are unchanged."); return false; }
             // Never replace a live daytime model: queued visitors hold its reservation authority.
-            if (cashChanged) { Stocker.ResetTransient();Model=stagedGame; }
+            if (cashChanged) { Stocker.ResetTransient();Technician.ResetTransient();Model=stagedGame; }
             Staff=stagedStaff;SaveError=null;saveClock=0;
             Cashier.ResetTransient();Cashier.RefreshVisual();
             World.Refresh(Model);
@@ -82,10 +82,10 @@ namespace EvolutionShop
             return true;
         }
 
-        SlotData CaptureStaffSlot(GameModel game,ShopStaff staff,ShopStocking stocking=null,ShopTradeLedger reports=null) => new SlotData
+        SlotData CaptureStaffSlot(GameModel game,ShopStaff staff,ShopStocking stocking=null,ShopTradeLedger reports=null,ShopLaboratory laboratory=null) => new SlotData
         {
             game=game.CaptureSave(),cycle=Cycle.CaptureSave(),trades=(reports??Reports).CaptureSave(),
-            reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),
+            reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),technician=(laboratory??Laboratory).CaptureSave(game),
             sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags
         };
 
@@ -110,6 +110,11 @@ namespace EvolutionShop
         void DrawStaffPanel()
         {
             Heading("Your shop crew");
+            GUILayout.BeginHorizontal();
+            Button("Nori / stocker",()=>OpenStockerMenu());
+            Button("Moss / lab technician",()=>OpenTechnicianMenu());
+            GUILayout.EndHorizontal();
+            Space();
             Text("Pip / cashier");
             Small("Serves queued customers while you grow and restock. You can still check out any order yourself.");
             Text(ShopStaff.CashierWage+" credits per duty period / no hiring fee");
@@ -133,8 +138,6 @@ namespace EvolutionShop
                 StaffButton("Dismiss Pip / no wage refund",night,()=>DismissCashier());
             }
             Space();
-            Button("Nori / stocker and display targets",()=>OpenStockerMenu());
-            Small("Later helper: a lab technician for known recipes.");
             Button("Back to the sales counter",()=>SetPanel(ShopPanel.Counter));
         }
         void StaffButton(string label,bool enabled,Action action)
