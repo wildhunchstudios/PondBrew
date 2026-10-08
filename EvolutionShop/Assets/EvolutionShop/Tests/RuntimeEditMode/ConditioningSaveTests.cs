@@ -35,7 +35,7 @@ namespace EvolutionShop.Tests
             var before = JsonUtility.FromJson<SlotData>(File.ReadAllText(Fixture()));
             Assert.That(before.formatVersion, Is.EqualTo(14)); Assert.That(before.game.version, Is.EqualTo(4)); Assert.That(before.layout.version, Is.EqualTo(6));
             var after = Read(out var model); AssertState(before, after, model);
-            Assert.That(after.formatVersion, Is.EqualTo(16)); Assert.That(after.game.version, Is.EqualTo(6)); Assert.That(after.layout.version, Is.EqualTo(7));
+            Assert.That(after.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion)); Assert.That(after.game.version, Is.EqualTo(6)); Assert.That(after.layout.version, Is.EqualTo(7));
             Assert.That(model.Currency, Is.EqualTo(400)); Assert.That(model.SparkResearchUnlocked, Is.True);
             Assert.That(model.IsDiscovered("lanternfin"), Is.True); Assert.That(model.CaptureSave().conditioners, Is.Empty);
             Assert.That(model.GetTank("tank-b").Value.Id, Is.EqualTo("b5f94c97652d4df8bd706c8ad5d3563b"));

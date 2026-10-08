@@ -354,7 +354,8 @@ namespace EvolutionShop.Tests
 
         static string CurrentJson(SlotData slot, string layout) => "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
             ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
-            ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) + (layout == null ? "" : ",\"layout\":" + WithCurrentLabFields(layout)) +
+            ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) + ",\"staff\":" + JsonUtility.ToJson(slot.staff) +
+            (layout == null ? "" : ",\"layout\":" + WithCurrentLabFields(layout)) +
             ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.65}";
 
         [Serializable] sealed class LabFields { public int labTier; public FacilitySave[] facilities; }

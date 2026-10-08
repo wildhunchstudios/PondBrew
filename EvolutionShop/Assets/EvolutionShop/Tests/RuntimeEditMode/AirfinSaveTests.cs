@@ -33,7 +33,7 @@ namespace EvolutionShop.Tests
         {
             byte[] original = File.ReadAllBytes(Fixture()); File.WriteAllBytes(PathFor(), original);
             Assert.That(SaveStore.Read(PathFor(), config, out var model, out var slot, out var error), Is.True, error);
-            Assert.That(slot.formatVersion, Is.EqualTo(16));
+            Assert.That(slot.formatVersion, Is.EqualTo(SaveStore.CurrentFormatVersion));
             Assert.That(slot.game.version, Is.EqualTo(6)); Assert.That(slot.layout.version, Is.EqualTo(7));
             Assert.That(model.MistResearchUnlocked, Is.False);
             Assert.That(model.Available(CultureKind.Mist), Is.Zero);
@@ -91,9 +91,12 @@ namespace EvolutionShop.Tests
         public void CurrentMistShapeRejectsMalformedFieldsWithoutChangingFile(string problem)
         {
             var model = FromFixture(out var layout);
-            var slot = JsonUtility.FromJson<SlotData>(File.ReadAllText(Fixture()));
-            slot.formatVersion = 16; slot.game = model.CaptureSave(); slot.layout = layout.CaptureSave();
-            Assert.That(SaveStore.Write(PathFor(), slot, out var error), Is.True, error);
+            // Read the legacy fixture through migration so every current field is valid,
+            // including staff; only the Mist token below is deliberately corrupted.
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out var slot, out var error), Is.True, error);
+            slot.game = model.CaptureSave(); slot.layout = layout.CaptureSave();
+            Assert.That(SaveStore.Write(PathFor(), slot, out error), Is.True, error);
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out _, out error), Is.True, error);
             string json = JsonUtility.ToJson(slot);
             if (problem == "missing-unlock") json = json.Replace("\"mistResearchUnlocked\":false,", "");
             else if (problem == "bad-amount") json = json.Replace("\"availableMist\":0", "\"availableMist\":null");

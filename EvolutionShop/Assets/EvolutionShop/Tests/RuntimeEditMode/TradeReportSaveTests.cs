@@ -241,6 +241,8 @@ namespace EvolutionShop.Tests
         {
             StockAndOpen();
             var slot = Slot();
+            File.WriteAllText(PathFor(), JsonUtility.ToJson(slot));
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out _, out var controlError), Is.True, controlError);
             switch (problem)
             {
                 case "null": slot.trades = null; break;
@@ -254,12 +256,8 @@ namespace EvolutionShop.Tests
                 case "pending-owner": slot.trades.pendingCustomerIds = new[] { " " }; slot.trades.current.visitors = 1; break;
                 case "unearned-revenue": slot.trades.current.revenue = 1; break;
             }
-            string json = problem == "missing"
-                ? "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
-                    ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) +
-                    ",\"layout\":" + JsonUtility.ToJson(slot.layout) +
-                    ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false}"
-                : JsonUtility.ToJson(slot);
+            string json = JsonUtility.ToJson(slot);
+            if (problem == "missing") json = json.Replace("\"trades\":" + JsonUtility.ToJson(slot.trades) + ",", "");
             File.WriteAllText(PathFor(), json);
             byte[] original = File.ReadAllBytes(PathFor());
             Assert.That(SaveStore.Read(PathFor(), config, out var restored, out var loaded, out var error), Is.False);

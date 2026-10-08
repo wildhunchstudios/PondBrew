@@ -15,6 +15,7 @@ namespace EvolutionShop
         public TradeLedgerSave trades = new TradeLedgerSave();
         public ReputationSave reputation = new ShopReputation().CaptureSave();
         public LayoutSave layout = new ShopLayout().CaptureSave();
+        public StaffSave staff = new ShopStaff().CaptureSave();
         public float sensitivity = 1f;
         public float volume = 0.65f;
         public string slapKey = "F";
@@ -33,16 +34,17 @@ namespace EvolutionShop
         // 13: separate specimen-rack storage (game 3, layout 6).
         // 14: Spark research and a third culture (game 4; layout remains 6).
         // 15: an owned conditioning vat and exact batch residents (game 5, layout 7).
-        // Formats 1-15 migrate in memory; historical saves never
+        // 16: Mist research (game 6). 17: first cashier employment and paid-period receipts.
+        // Formats 1-16 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 16;
+        public const int CurrentFormatVersion = 17;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format == 16 ? 6 : 0;
+            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format >= 16 && format <= 17 ? 6 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 16 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 17 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -87,6 +89,7 @@ namespace EvolutionShop
                 data.game.version != GameModel.SaveVersion || data.trades == null ||
                 data.trades.version != ShopTradeLedger.SaveVersion || !Finite(data.sensitivity) || !Finite(data.volume) ||
                 !ShopDayCycle.TryRestore(data.cycle, out _) ||
+                !ShopStaff.TryRestore(data.staff, data.cycle.dayNumber, out _) ||
                 !ShopTradeLedger.TryRestore(data.trades, data.cycle, out _) ||
                 !ShopReputation.TryRestore(data.reputation, out _) ||
                 data.layout == null || data.layout.version != ShopLayout.SaveVersion ||
@@ -95,7 +98,7 @@ namespace EvolutionShop
                 !ValidOwnedConditionerProgress(layout, game) ||
                 !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume))
             {
-                error = "Could not save: the current slot, day clock, trading report, reputation, layout, or gag settings are invalid. Original file preserved.";
+                error = "Could not save: the current slot, day clock, trading report, reputation, layout, staff, or gag settings are invalid. Original file preserved.";
                 return false;
             }
 
@@ -137,9 +140,10 @@ namespace EvolutionShop
                 // manufacture empty/default values for missing, null or incorrectly typed data.
                 bool currentStorage = header != null && header.formatVersion >= 13 && header.formatVersion <= CurrentFormatVersion;
                 if (currentStorage && !new LayoutJsonShape(json, true, true, true, true,
-                    header.formatVersion >= 14, header.formatVersion >= 15, header.formatVersion >= 16).HasExplicitItemsArray())
+                    header.formatVersion >= 14, header.formatVersion >= 15, header.formatVersion >= 16,
+                    header.formatVersion >= 17).HasExplicitItemsArray())
                 {
-                    error = "Saved layout, storage, research or conditioning shape could not be validated. Your original file is preserved.";
+                    error = "Saved layout, storage, research, conditioning or staff shape could not be validated. Your original file is preserved.";
                     return false;
                 }
                 var candidate = JsonUtility.FromJson<SlotData>(json);
@@ -191,6 +195,17 @@ namespace EvolutionShop
                 else if (!ShopDayCycle.TryRestore(candidate.cycle, out _))
                 {
                     error = "Saved day clock could not be validated. Your original file is preserved.";
+                    return false;
+                }
+
+                if (header.formatVersion < 17)
+                {
+                    // Historical saves never employed staff. Migration reads and restores no wages.
+                    candidate.staff = new ShopStaff().CaptureSave();
+                }
+                else if (!ShopStaff.TryRestore(candidate.staff, candidate.cycle.dayNumber, out _))
+                {
+                    error = "Saved staff could not be validated. Your original file is preserved.";
                     return false;
                 }
 
@@ -303,9 +318,10 @@ namespace EvolutionShop
             readonly bool requireResearch;
             readonly bool requireConditioners;
             readonly bool requireMist;
+            readonly bool requireStaff;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false, bool requireStaff = false)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; this.requireStaff = requireStaff; }
 
             public bool HasExplicitItemsArray()
             {
@@ -316,7 +332,7 @@ namespace EvolutionShop
             bool ReadObject(bool layout)
             {
                 if (!Take('{')) return false;
-                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false;
+                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false, hasStaff = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 SkipSpace();
                 if (Take('}')) return false;
@@ -332,6 +348,11 @@ namespace EvolutionShop
                     {
                         if (!ReadGame()) return false;
                         hasStorage = true;
+                    }
+                    else if (!layout && requireStaff && key == "staff")
+                    {
+                        if (!ReadStaff()) return false;
+                        hasStaff = true;
                     }
                     else if (layout && key == "items")
                     {
@@ -363,7 +384,34 @@ namespace EvolutionShop
                     else if (!SkipValue(0)) return false;
                     if (Take('}')) return required && (layout ?
                         ((!requireStoreTier || hasStoreTier) && (!requireLab || hasLabTier && hasFacilities)) :
-                        (!requireStorage || hasStorage));
+                        (!requireStorage || hasStorage) && (!requireStaff || hasStaff));
+                    if (!Take(',')) return false;
+                }
+                return false;
+            }
+
+            bool ReadStaff()
+            {
+                if (!Take('{')) return false;
+                int required = 0;
+                var keys = new HashSet<string>(StringComparer.Ordinal);
+                while (position < json.Length)
+                {
+                    if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
+                    switch (key)
+                    {
+                        case "version": if (!ReadInteger(out _)) return false; required |= 1; break;
+                        case "employeeId": if (!ReadString(true, out _)) return false; required |= 2; break;
+                        case "hired": if (!ReadBoolean()) return false; required |= 4; break;
+                        case "scheduled": if (!ReadBoolean()) return false; required |= 8; break;
+                        case "paused": if (!ReadBoolean()) return false; required |= 16; break;
+                        case "paidDay": if (!ReadInteger(out _)) return false; required |= 32; break;
+                        case "paidWage": if (!ReadInteger(out _)) return false; required |= 64; break;
+                        case "previousPaidDay": if (!ReadInteger(out _)) return false; required |= 128; break;
+                        case "previousPaidWage": if (!ReadInteger(out _)) return false; required |= 256; break;
+                        default: if (!SkipValue(0)) return false; break;
+                    }
+                    if (Take('}')) return required == 511;
                     if (!Take(',')) return false;
                 }
                 return false;

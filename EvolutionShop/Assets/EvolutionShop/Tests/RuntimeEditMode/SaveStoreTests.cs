@@ -419,14 +419,15 @@ namespace EvolutionShop.Tests
                 case "points-negative": payload = "{\"version\":1,\"points\":-1}"; break;
                 case "points-overmax": payload = "{\"version\":1,\"points\":" + (ShopReputation.MaxPoints + 1) + "}"; break;
             }
-            var slot = FreshSlot();
-            string json = "{\"formatVersion\":" + SaveStore.CurrentFormatVersion + ",\"game\":" + JsonUtility.ToJson(slot.game) +
-                ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
-                ",\"layout\":" + JsonUtility.ToJson(slot.layout) +
-                (problem == "missing" ? "" : ",\"reputation\":" + payload) + ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.5}";
+            var slot = FreshSlot(); slot.reputation.points = 31;
+            string json = JsonUtility.ToJson(slot);
+            File.WriteAllText(PathFor(), json);
+            Assert.That(SaveStore.Read(PathFor(), config, out _, out _, out var controlError), Is.True, controlError);
+            string field = "\"reputation\":" + JsonUtility.ToJson(slot.reputation);
+            json = problem == "missing" ? json.Replace(field + ",", "") : json.Replace(field, "\"reputation\":" + payload);
             File.WriteAllText(PathFor(), json);
             Assert.That(SaveStore.Read(PathFor(), config, out var model, out var loaded, out var error), Is.False);
-            Assert.That(model, Is.Null); Assert.That(loaded, Is.Null); Assert.That(error, Is.Not.Empty);
+            Assert.That(model, Is.Null); Assert.That(loaded, Is.Null); Assert.That(error, Does.Contain("reputation"));
             Assert.That(File.ReadAllText(PathFor()), Is.EqualTo(json));
             Assert.That(Directory.GetFiles(directory).Length, Is.EqualTo(1));
         }
@@ -452,11 +453,11 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void FormatSixteenRetainsExplicitHistoricalGameAndReportPairings()
+        public void FormatSeventeenRetainsExplicitHistoricalGameAndReportPairings()
         {
-            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(16));
-            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5, 6 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
-            for (int format = 1; format <= 16; format++)
+            Assert.That(SaveStore.CurrentFormatVersion, Is.EqualTo(17));
+            int[] games = { 0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5, 6, 6 }, reports = { 0, 0, 0, 1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+            for (int format = 1; format <= SaveStore.CurrentFormatVersion; format++)
             {
                 Assert.That(SaveStore.GameVersionFor(format), Is.EqualTo(games[format]));
                 Assert.That(SaveStore.ReportVersionFor(format), Is.EqualTo(reports[format]));
