@@ -18,7 +18,7 @@ namespace EvolutionShop
             limitations.Add("TUT-04/05 isolated integration route: synthetic WASD/E/Escape/mouse movement and held collection, scripted station aim, guarded application menu actions, and ordinary ten-second incubation. No native operating-system mouse clicks or human learning/pacing acceptance is claimed.");
             limitations.Add("Customer arrivals run with the ordinary two-visitor/reputation catalog only while waiting for each checkout; arrivals are disabled during controlled preparation. This is an integration test, not proof of the planned first-customer production policy. Ambient comedy is disabled only in this isolated validation session.");
             limitations.Add("Failure cases create an empty .tmp directory only beside the isolated smoke slot. Legacy help and assisted-practice help use explicitly labelled derived fixtures after the ordinary route. Focus loss is invoked through the real callback as a synthetic lifecycle event, not an operating-system focus test. Tutorial world markers, TUT-07 pacing, native input coverage and tester acceptance remain separate gates.");
-            yield return new WaitForSeconds(1);
+            yield return new WaitForSeconds(Application.isEditor ? 1 : 3);
             Check(shop.ValidationMode && ShopSession.Arg("-evolutionTutorialSmoke") != null &&
                 Path.GetFullPath(shop.SavePath) == Path.GetFullPath(Path.Combine(evidence, "smoke-save.json")),
                 "Tutorial route uses only its explicitly isolated evidence save");
@@ -106,6 +106,7 @@ namespace EvolutionShop
             Check(shop.ActiveTutorialLesson == TutorialLesson.Practice && !shop.Tutorial.FirstSaleAccommodationActive &&
                 shop.Tutorial.CaptureSave().first.saleDay == 1 && !shop.Tutorial.PracticeAssisted,
                 "Actual manual checkout records first-sale day, ends accommodation eligibility and begins unassisted practice");
+            shop.SetPanel(ShopPanel.None);
             yield return TutorialCapture("404-tutorial-practice-objective");
 
             yield return TutorialProduce(true);
@@ -136,6 +137,8 @@ namespace EvolutionShop
                 "Leaving the qualifying report in the next night records acknowledgement and offers a next plan");
             Check(shop.OpenTutorialHelp(), "Open optional next-plan help without requiring an unaffordable purchase");
             yield return TutorialCapture("406-tutorial-next-plan");
+            shop.ScrollPanel(10000);
+            yield return TutorialCapture("406-tutorial-next-plan-finish");
             Check(shop.SaveNow(), "Save final lesson before handoff fault injection");
             beforeFile = File.ReadAllText(shop.SavePath); beforeTutorial = TutorialState(); beforeModel = shop.Model;
             TutorialBlockSave();

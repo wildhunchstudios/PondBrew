@@ -236,6 +236,8 @@ namespace EvolutionShop
             Space();
             Heading(TutorialLessonTitle(lesson));
             DrawTutorialLessonCard(lesson);
+            if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.NextPlan)
+                Button("Continue running my shop", () => FinishGuidedOpening());
             Space();
             Heading("Your shop right now");
             Small("Day " + Cycle.DayNumber + " / " + (Cycle.Phase == ShopDayPhase.Night ? "untimed preparation" : Cycle.Phase == ShopDayPhase.Open ? "open for trade" : "closing") + " / " + Model.Currency + " credits");
@@ -258,8 +260,6 @@ namespace EvolutionShop
             if (Tutorial.Mode == TutorialMode.Active)
             {
                 Space();
-                if (ActiveTutorialLesson == TutorialLesson.NextPlan)
-                    Button("Continue running my shop", () => FinishGuidedOpening());
                 Button("Skip guidance / keep my shop", () => SkipTutorial());
                 Small("Skipping keeps your creatures, money and progress. These cards remain available with F1.");
             }

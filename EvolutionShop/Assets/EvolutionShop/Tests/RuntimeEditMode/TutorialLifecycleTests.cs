@@ -72,6 +72,9 @@ namespace EvolutionShop.Tests
             }
             Directory.Delete(path + ".tmp", false);
             Assert.That(ChangeMode(command), Is.True, session.SaveError);
+            Assert.That(session.SaveError, Is.Null);
+            var notice = (string)typeof(ShopSession).GetField("message", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(session);
+            Assert.That(notice ?? "", Does.Not.Contain("could not be saved"), "Successful mode retry must clear the obsolete failure notice.");
             Assert.That(session.Tutorial.Mode, Is.EqualTo(expected)); Assert.That(GameJson(), Is.EqualTo(gameplay));
             Assert.That(SaveStore.Read(path, session.Config, out var loadedGame, out var loaded, out var error), Is.True, error);
             Assert.That(JsonUtility.ToJson(loaded.tutorial), Is.EqualTo(TutorialJson()));

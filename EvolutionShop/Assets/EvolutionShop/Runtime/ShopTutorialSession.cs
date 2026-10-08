@@ -39,6 +39,7 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath, slot, out var error))
             { SaveError = error; Notify("Guidance change could not be saved. Your previous guidance mode is unchanged."); return false; }
             Tutorial = staged; SaveError = null; saveClock = 0;
+            message = null; messageUntil = 0; // A successful retry supersedes its old failure notice.
             return true;
         }
 
