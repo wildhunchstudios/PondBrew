@@ -433,6 +433,17 @@ namespace EvolutionShop
             }
             if (inc.Phase == IncubatorPhase.Ready)
             { Text(Model.GetSpecies(inc.SpeciesId).DisplayName + " is ready!"); Text("Use E at an empty front display or a lab rack to store your creature and free the incubator."); return; }
+            var starter = Model.GetSpecies("pondlet");
+            bool prioritizeRelease = TutorialRoomGuidanceActive && starter != null &&
+                Model.ReservedCultureCount >= Model.Capacity &&
+                (Model.Available(CultureKind.Bloom) + Model.Staged(CultureKind.Bloom) < starter.Bloom ||
+                 Model.Available(CultureKind.Flow) + Model.Staged(CultureKind.Flow) < starter.Flow);
+            if (prioritizeRelease)
+            {
+                Small("Release a spare carried culture. If the spare is staged, return it with - below first.");
+                DrawCultureReleaseControls();
+                GUILayout.Space(6);
+            }
             Text("Add exact integer doses. One recipe makes one specimen.");
             Heading(inc.Bloom + " BLOOM  +  " + inc.Flow + " FLOW" + (Model.SparkResearchUnlocked ? "  +  " + inc.Spark + " SPARK" : "") + (Model.MistResearchUnlocked ? "  +  " + inc.Mist + " MIST" : ""));
             GUILayout.BeginHorizontal();
@@ -450,18 +461,25 @@ namespace EvolutionShop
             Button("Begin incubation  /  " + Config.IncubationSeconds + " sec", () => BeginManualIncubation());
             Button("Return all doses safely", () => ClearCultureDoses());
             Small("Doses reserve room in your siphon until incubation begins. Unsupported mixtures never consume resources.");
-            Space(); Small("Siphon full of one culture? Return staged doses above, then release a spare carried unit. Growers replenish for free.");
+            if (!prioritizeRelease)
+            {
+                Space(); Small("Siphon full of one culture? Return staged doses above, then release a spare carried unit. Growers replenish for free.");
+                DrawCultureReleaseControls();
+            }
+            Space(); Small("LAB NOTES: A balanced pair brings a Pondlet. More Bloom makes a rounder body; more Flow makes a longer tail.");
+            if (Model.SparkResearchUnlocked) Small("SPARK CLUE: A balanced Bloom/Flow pair needs one Spark.");
+            if (Model.MistResearchUnlocked) Small("AIRFIN CLUE: A balanced Bloom/Flow pair needs one Mist.");
+            foreach (var species in Config.Species)
+                if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + RecipeText(species, true) + ")", () => PrepareKnownRecipe(species.Id));
+        }
+        void DrawCultureReleaseControls()
+        {
             GUILayout.BeginHorizontal();
             Button("Release 1 Bloom", () => ReleaseCulture(CultureKind.Bloom));
             Button("Release 1 Flow", () => ReleaseCulture(CultureKind.Flow));
             if (Model.SparkResearchUnlocked) Button("Release 1 Spark", () => ReleaseCulture(CultureKind.Spark));
             if (Model.MistResearchUnlocked) Button("Release 1 Mist", () => ReleaseCulture(CultureKind.Mist));
             GUILayout.EndHorizontal();
-            Space(); Small("LAB NOTES: A balanced pair brings a Pondlet. More Bloom makes a rounder body; more Flow makes a longer tail.");
-            if (Model.SparkResearchUnlocked) Small("SPARK CLUE: A balanced Bloom/Flow pair needs one Spark.");
-            if (Model.MistResearchUnlocked) Small("AIRFIN CLUE: A balanced Bloom/Flow pair needs one Mist.");
-            foreach (var species in Config.Species)
-                if (Model.IsDiscovered(species.Id)) Button("Prepare " + species.DisplayName + "  (" + RecipeText(species, true) + ")", () => PrepareKnownRecipe(species.Id));
         }
         void DrawCounter()
         {
