@@ -357,7 +357,8 @@ namespace EvolutionShop
                 else
                 {
                     GUILayout.BeginHorizontal();
-                    if (GUILayout.Button(dayReportPanel ? "Continue preparation  /  ESC" : "Close  /  ESC", dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38))) BackFromPanel();
+                    string backLabel = dayReportPanel ? "Continue preparation  /  ESC" : TutorialJournalReturnsToHelp ? "Back to my next goal  /  ESC" : "Close  /  ESC";
+                    if (GUILayout.Button(backLabel, dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38))) BackFromPanel();
                     if (GUILayout.Button("Help  /  F1", buttonStyle, GUILayout.MinHeight(38))) OpenTutorialHelp();
                     GUILayout.EndHorizontal();
                 }
@@ -484,6 +485,8 @@ namespace EvolutionShop
         void DrawCounter()
         {
             Heading("The sales counter");
+            if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.NextPlan)
+                Button("Choose my next goal / finish Opening Night", () => ShowTutorialHandoff());
             Button("Staff / cashier, stocker and technician",()=>OpenStaffMenu());
             if (Staff.Hired) Small(Cashier.Status);
             if (Cycle.Phase == ShopDayPhase.Night) Button("Arrange rooms / work tables", () => OpenPlacementMenu());
@@ -550,6 +553,8 @@ namespace EvolutionShop
                 return;
             }
             Heading("Day " + report.dayNumber + " results");
+            if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.CloseAndReview)
+                Small("Read your results, then choose Continue preparation below. A report containing one of your guided sales lets you choose your next goal after both manual loops.");
             if (report.partial) Small("PARTIAL DAY / recorded since save upgrade; earlier trade excluded.");
             GUILayout.Space(8);
             GUILayout.Label("Sales income: " + report.revenue + " credits", statStyle);
@@ -720,7 +725,7 @@ namespace EvolutionShop
         {
             bool primary = text.StartsWith("Enter your shop") || text.StartsWith("Start guided opening") ||
                 text.StartsWith("Continue guided opening") || text.StartsWith("Continue my shop") ||
-                text.StartsWith("Continue running my shop") || text.StartsWith("Begin incubation") ||
+                text.StartsWith("Continue running my shop") || text.StartsWith("Choose my next goal") || text.StartsWith("Begin incubation") ||
                 text.StartsWith("Serve customer") || text.StartsWith("Open for day") || text.StartsWith("Continue preparation") ||
                 text.StartsWith("Save and resume") || text.StartsWith("Start conditioning") || text.StartsWith("Research ");
             bool caution = text.StartsWith("Confirm new game") || text.StartsWith("Close today's shop") || text.StartsWith("Save and quit");

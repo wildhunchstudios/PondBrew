@@ -146,7 +146,7 @@ namespace EvolutionShop
             Check(shop.OpenForDay() && shop.ActiveTutorialLesson == TutorialLesson.Serve && shop.Model.Currency == 0,
                 "Opening uses the ordinary trading command without price changes or tutorial money");
             shop.BackFromPanel();
-            Check(!shop.TryGetTutorialGuidance(out _), "ON01-06 route ends at the separately assigned service lesson");
+            Check(shop.TryGetTutorialGuidance(out target) && target.Station.Kind == StationKind.Counter, "Completed ON01-06 route continues into the live service-counter lesson");
             Check(shop.SaveNow(), "Final guidance route saves its legitimate unsold specimen and learning receipts");
         }
     }

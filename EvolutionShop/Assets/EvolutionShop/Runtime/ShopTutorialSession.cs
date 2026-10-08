@@ -16,7 +16,7 @@ namespace EvolutionShop
             if (!ShopTutorial.TryRestore(save, Model, Cycle.DayNumber, out var tutorial))
                 throw new InvalidOperationException("Cannot restore tutorial data from the validated slot.");
             Tutorial = tutorial;
-            ClearTutorialHelpReturn();
+            ResetTutorialPresentation();
         }
 
         ShopTutorial CopyTutorial()
@@ -38,7 +38,7 @@ namespace EvolutionShop
             slot.tutorial = staged.CaptureSave();
             if (!SaveStore.Write(SavePath, slot, out var error))
             { SaveError = error; Notify("Guidance change could not be saved. Your previous guidance mode is unchanged."); return false; }
-            Tutorial = staged; SaveError = null; saveClock = 0;
+            Tutorial = staged; ResetTutorialPresentation(); SaveError = null; saveClock = 0;
             message = null; messageUntil = 0; // A successful retry supersedes its old failure notice.
             return true;
         }
@@ -70,6 +70,8 @@ namespace EvolutionShop
         {
             if (PlacementActive || Panel == ShopPanel.Reset || Panel == ShopPanel.Presentation) return false;
             if (Panel == ShopPanel.TutorialHelp) return true;
+            if (TutorialJournalReturnsToHelp)
+            { SetPanel(ShopPanel.TutorialHelp); return true; }
             tutorialReturnPanel = Panel;
             tutorialReturnTank = selectedTank; tutorialReturnRack = selectedRack; tutorialReturnConditioner = selectedConditioner;
             TutorialHelpLesson = ActiveTutorialLesson == TutorialLesson.None ? TutorialLesson.Orient : ActiveTutorialLesson;
@@ -81,7 +83,7 @@ namespace EvolutionShop
         public void SelectTutorialHelpLesson(TutorialLesson lesson)
         {
             if (Panel != ShopPanel.TutorialHelp || lesson < TutorialLesson.Orient || lesson > TutorialLesson.NextPlan) return;
-            TutorialHelpLesson = lesson; panelScroll = Vector2.zero;
+            TutorialUpgradeHelpOpen = false; TutorialHelpLesson = lesson; panelScroll = Vector2.zero;
         }
         public void CloseTutorialHelp()
         {
@@ -94,6 +96,7 @@ namespace EvolutionShop
         }
         void ClearTutorialHelpReturn()
         {
+            TutorialUpgradeHelpOpen = false; tutorialJournalReturnsToHelp = false;
             tutorialReturnPanel = ShopPanel.None;
             tutorialReturnTank = tutorialReturnRack = tutorialReturnConditioner = null;
             TutorialHelpLesson = TutorialLesson.Orient;

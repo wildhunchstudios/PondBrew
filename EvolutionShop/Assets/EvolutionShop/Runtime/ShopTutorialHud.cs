@@ -7,6 +7,31 @@ namespace EvolutionShop
         // Display-only access for runtime validation. This resolver never records learning.
         public string TutorialObjectiveForDisplay => Objective();
 
+        public string TutorialPracticeOutcomeForDisplay
+        {
+            get
+            {
+                bool completed = Tutorial.Mode == TutorialMode.Completed || Tutorial.Mode == TutorialMode.Active &&
+                    (ActiveTutorialLesson == TutorialLesson.CloseAndReview || ActiveTutorialLesson == TutorialLesson.NextPlan);
+                if (!completed) return Tutorial.PracticeAssisted ? "ASSISTED PRACTICE / still in progress" : "Practice is still in progress.";
+                return Tutorial.PracticeAssisted
+                    ? "ASSISTED PRACTICE / you completed the second loop with help."
+                    : "INDEPENDENT PRACTICE / you completed the second loop without requested help.";
+            }
+        }
+
+        public string TutorialUpgradePreviewForDisplay
+        {
+            get
+            {
+                string preview = "Siphon MK II: " + Config.UpgradeCost + " credits. Your cash: " + Model.Currency + " credits.";
+                if (Model.UpgradeOwned) return preview + " Already installed.";
+                return preview + (Model.Currency >= Config.UpgradeCost
+                    ? " You can afford it; buying is optional."
+                    : " Save " + (Config.UpgradeCost - Model.Currency) + " more, or keep growing with your current siphon.");
+            }
+        }
+
         void DrawTutorialWelcome()
         {
             Heading("Welcome to your little shop");
@@ -67,9 +92,14 @@ namespace EvolutionShop
         {
             if (Tutorial.Mode != TutorialMode.Active) return null;
             var lesson = ActiveTutorialLesson;
-            // Practice deliberately remains a goal, without unsolicited recipe/route coaching.
+            // Detailed practice coaching exists only after an explicit Show me request.
+            // Opening or drawing a card never enables world directions by itself.
             if (lesson == TutorialLesson.Practice)
-                return "Grow and sell another creature yourself. F1 opens help if you need it.";
+            {
+                if (!TutorialPracticeGuidanceRequested)
+                    return "Grow and sell another creature yourself. F1 opens help if you need it.";
+                lesson = TutorialGuidanceLesson;
+            }
             string recovery = TutorialGuidanceRecovery;
             if (recovery != null) return recovery;
             recovery = TutorialPreparationRecovery(lesson);
@@ -107,7 +137,7 @@ namespace EvolutionShop
                 case TutorialLesson.CloseAndReview:
                     return Cycle.Phase == ShopDayPhase.Night ? "Review your trading results at the front counter, then continue preparation." : "Close for the night at the front counter when ready. Review the day's results.";
                 case TutorialLesson.NextPlan:
-                    return "Ready for your next goal. Press F1 to finish the opening and continue your shop.";
+                    return "Choose your next goal at the front counter or with F1, then continue running your shop.";
                 default: return null;
             }
         }
@@ -219,6 +249,22 @@ namespace EvolutionShop
         {
             Heading("Opening Night help");
             Small("PAUSED / customers, growers, machines and staff are waiting for you.");
+            if (TutorialUpgradeHelpOpen)
+            {
+                DrawTutorialUpgradeHelp();
+                return;
+            }
+            if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.NextPlan &&
+                TutorialHelpLesson == TutorialLesson.NextPlan)
+            {
+                DrawTutorialNextPlan();
+                return;
+            }
+            if (TutorialNeedsReportRecovery && TutorialHelpLesson == TutorialLesson.CloseAndReview)
+            {
+                DrawTutorialSaleReceiptRecovery();
+                return;
+            }
             if (Tutorial.Mode != TutorialMode.Active)
                 Small("Reference cards only. Reading does not change your shop or complete a lesson.");
             else if (ActiveTutorialLesson == TutorialLesson.Practice)
@@ -239,15 +285,20 @@ namespace EvolutionShop
                 Button("Return to my current lesson", () => SelectTutorialHelpLesson(ActiveTutorialLesson));
             Space();
             Heading(TutorialLessonTitle(lesson));
-            if (TutorialRoomGuidanceActive && lesson == ActiveTutorialLesson)
+            if (CanShowTutorialTarget)
             {
+                Button(TutorialPracticeGuidanceRequested ? "Continue with directions" : "Show me where to go", () => ShowTutorialTarget());
                 string recovery = TutorialGuidanceRecovery;
-                if (string.IsNullOrEmpty(recovery)) Button("Show me where to go", () => ShowTutorialTarget());
-                else Small(recovery);
+                if (!string.IsNullOrEmpty(recovery)) Small(recovery);
             }
-            DrawTutorialLessonCard(lesson);
-            if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.NextPlan)
-                Button("Continue running my shop", () => FinishGuidedOpening());
+            if (lesson == TutorialLesson.Practice && TutorialPracticeGuidanceRequested)
+            {
+                Button("Turn off directions / keep practicing", () => StopTutorialPracticeGuidance());
+                Small("Turning directions off keeps this attempt recorded as assisted.");
+                Text(TutorialObjective());
+                DrawTutorialLessonCard(TutorialGuidanceLesson);
+            }
+            else DrawTutorialLessonCard(lesson);
             Space();
             Heading("Your shop right now");
             Small("Day " + Cycle.DayNumber + " / " + (Cycle.Phase == ShopDayPhase.Night ? "untimed preparation" : Cycle.Phase == ShopDayPhase.Open ? "open for trade" : "closing") + " / " + Model.Currency + " credits");
@@ -273,6 +324,55 @@ namespace EvolutionShop
                 Button("Skip guidance / keep my shop", () => SkipTutorial());
                 Small("Skipping keeps your creatures, money and progress. These cards remain available with F1.");
             }
+        }
+
+        void DrawTutorialSaleReceiptRecovery()
+        {
+            Space();
+            Heading("Earlier guided sales");
+            Text("A newer trading day replaced the detailed report for your guided sales. Your saved sale receipts are still here.");
+            string firstName = Model.GetSpecies(Tutorial.FirstSpeciesId)?.DisplayName ?? "First creature";
+            string practiceName = Model.GetSpecies(Tutorial.PracticeSpeciesId)?.DisplayName ?? "Practice creature";
+            Small("First loop / " + firstName + " / day " + Tutorial.FirstSaleDay + " / sold by you");
+            Small("Practice loop / " + practiceName + " / day " + Tutorial.PracticeSaleDay + " / sold by you");
+            Small("These receipts record the two creatures you grew, stocked and sold yourself. They do not recreate the old day's income or missed sales.");
+            Button("Acknowledge my guided sale receipts", () => AcknowledgeTutorialSaleReceipts());
+            Small("Reviewing these receipts lets you choose your next goal. Your money and stock stay unchanged.");
+            Space();
+            Button("Browse earlier lesson cards", () => SelectTutorialHelpLesson(TutorialLesson.Orient));
+        }
+
+        void DrawTutorialNextPlan()
+        {
+            Space();
+            Heading("10 / Choose your next goal");
+            Text("You grew, stocked and sold two creatures yourself, then reviewed your sales.");
+            Small(TutorialPracticeOutcomeForDisplay);
+            // Completion stays above the optional previews at the minimum supported size.
+            Button("Continue running my shop", () => FinishGuidedOpening());
+            Small("Keep your creatures, earnings and discoveries. No purchase is required.");
+            Space();
+            Small(TutorialUpgradePreviewForDisplay);
+            Button("Recipe journal / resumes shop time", () => OpenTutorialJournal());
+            Button("Siphon upgrade / bench help", () => OpenTutorialUpgradeHelp());
+            Small("Keep growing a favorite, discover another recipe, or save for an upgrade.");
+            Button("Browse earlier lesson cards", () => SelectTutorialHelpLesson(TutorialLesson.Orient));
+        }
+
+        void DrawTutorialUpgradeHelp()
+        {
+            Space();
+            Heading("Siphon MK II / bench help");
+            Text(TutorialUpgradePreviewForDisplay);
+            Small("Capacity: " + Config.BaseCapacity + " to " + Config.UpgradedCapacity + " culture units. Collection: " +
+                Config.BaseCollectionSeconds.ToString("0.0") + "s to " + Config.UpgradedCollectionSeconds.ToString("0.0") + "s per unit.");
+            Small(Model.UpgradeOwned
+                ? "Your larger chamber and faster collector are ready. You can keep saving for another goal."
+                : "When you want to buy it, go through the door to the back lab. Press E at the research bench and find Siphon equipment.");
+            Small("This is a preview. Reading it does not buy anything or change your cash.");
+            Space();
+            Button("Back to my next goal", () => SelectTutorialHelpLesson(TutorialLesson.NextPlan));
+            Button("Recipe journal / resumes shop time", () => OpenTutorialJournal());
         }
 
         void DrawTutorialLessonCard(TutorialLesson lesson)
@@ -322,7 +422,7 @@ namespace EvolutionShop
                 case TutorialLesson.Practice:
                     Text("After your first manual sale, start a new batch yourself, stock its creature and serve its buyer. Any valid recipe works.");
                     Small("Try the grow > display > sell loop from memory. A creature started before your first sale can sell normally, but it does not replace this new practice batch. You may use more than one trading day.");
-                    Small("Need a reminder? Browse cards 02-07. Help is always allowed; assisted practice can still complete the opening.");
+                    Small("Show me where to go enables directions for your next action. You can turn directions off in this card. Reading help records assisted practice; it can still complete the opening.");
                     break;
                 case TutorialLesson.CloseAndReview:
                     Text("At the counter, choose Close for the night when ready, then confirm. Finish accepted checkout promptly; unpaid creatures stay safe when trading ends.");
@@ -331,7 +431,7 @@ namespace EvolutionShop
                     break;
                 case TutorialLesson.NextPlan:
                     Text("Keep growing, discover a recipe, or save for your larger siphon. Your shop is yours to develop.");
-                    Small("Siphon MK II costs " + Config.UpgradeCost + " credits at the back lab bench. You have " + Model.Currency + "." + (Model.UpgradeOwned ? " Your upgrade is already installed." : " Buying it is optional; keep selling if you want to save up."));
+                    Small(TutorialUpgradePreviewForDisplay);
                     Small("After returning, TAB opens recipe notes. Press E at the lab bench for upgrade details. No purchase is required to finish your guided opening.");
                     if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson != TutorialLesson.NextPlan)
                         Small("Complete both manual sales and the night/report handoff before finishing guidance. Browsing ahead does not skip those actions.");

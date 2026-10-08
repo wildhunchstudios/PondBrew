@@ -51,6 +51,13 @@ namespace EvolutionShop
         public TutorialFacts Facts => state.facts;
         // Read-only identity for transient guidance; no DTO cloning in the HUD.
         public string FirstSpecimenId => state.first.specimenId;
+        public string PracticeSpecimenId => state.practice.specimenId;
+        public bool PracticeManuallyDisplayed => state.practice.manuallyDisplayed;
+        public int FirstSaleDay => state.first.saleDay;
+        public int PracticeSaleDay => state.practice.saleDay;
+        public string FirstSpeciesId => state.first.speciesId;
+        public string PracticeSpeciesId => state.practice.speciesId;
+        public bool ReportAcknowledged => state.reportAcknowledged;
         public bool PracticeAssisted => state.practiceAssisted;
         public bool FirstSaleAccommodationActive => Mode == TutorialMode.Active && !state.firstSaleAccommodationEnded;
 

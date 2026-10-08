@@ -18,14 +18,21 @@ namespace EvolutionShop
     {
         // Bounded scratch storage, never a saved/cached destination. Saturation hides a marker.
         readonly RaycastHit[] tutorialOcclusionHits = new RaycastHit[16];
-        bool TutorialRoomGuidanceActive => Tutorial != null && Tutorial.Mode == TutorialMode.Active &&
+        bool TutorialGuidanceAvailable => Tutorial != null && Tutorial.Mode == TutorialMode.Active &&
             Model != null && Cycle != null && World && Player && !PlacementActive &&
-            !AutosaveBlocked && string.IsNullOrEmpty(SaveError) &&
-            ActiveTutorialLesson >= TutorialLesson.Orient && ActiveTutorialLesson <= TutorialLesson.PriceAndOpen;
+            !AutosaveBlocked && string.IsNullOrEmpty(SaveError);
+        bool TutorialRoomGuidanceActive => TutorialGuidanceAvailable &&
+            (ActiveTutorialLesson >= TutorialLesson.Orient && ActiveTutorialLesson <= TutorialLesson.Serve ||
+             ActiveTutorialLesson == TutorialLesson.CloseAndReview || TutorialPracticeGuidanceRequested);
 
         public bool ShowTutorialTarget()
         {
-            if (Panel != ShopPanel.TutorialHelp || !TutorialRoomGuidanceActive || TutorialHelpLesson != ActiveTutorialLesson) return false;
+            if (!CanShowTutorialTarget) return false;
+            if (ActiveTutorialLesson == TutorialLesson.Practice)
+            {
+                if (Tutorial.MarkPracticeAssisted() && !SaveNow()) return false;
+                tutorialPracticeDirections = true;
+            }
             CloseTutorialHelp();
             SetPanel(ShopPanel.None);
             return true;
@@ -51,7 +58,12 @@ namespace EvolutionShop
         bool ResolveTutorialGuidance(out TutorialGuidanceTarget target, out string recovery)
         {
             target = default; recovery = null;
-            var lesson = ActiveTutorialLesson;
+            var lesson = TutorialGuidanceLesson;
+            if (TutorialNeedsReportRecovery)
+            {
+                recovery = "The older day report was replaced. Press F1 to review your saved guided-sale receipts and finish preparation.";
+                return false;
+            }
             Station station = null;
             string action = null;
             bool doorOnly = false;
@@ -98,10 +110,18 @@ namespace EvolutionShop
                     station = TutorialFirstStockDisplay();
                     if (!station)
                     { station = TutorialEmptyDisplay(); action = "E / restock your creature"; }
-                    else if ((Tutorial.Facts & TutorialFacts.PriceViewed) == 0)
+                    else if (!TutorialPracticeGuidanceRequested && (Tutorial.Facts & TutorialFacts.PriceViewed) == 0)
                         action = "E / inspect its price tag";
                     else
                     { station = TutorialStation(StationKind.Counter); action = "E / open for the day"; }
+                    break;
+                case TutorialLesson.Serve:
+                    station = TutorialStation(StationKind.Counter);
+                    action = Cycle.Phase == ShopDayPhase.Night ? "E / open for the day" : "E / serve accepted orders";
+                    break;
+                case TutorialLesson.CloseAndReview:
+                    station = TutorialStation(StationKind.Counter);
+                    action = Cycle.Phase == ShopDayPhase.Night ? "E / review day results" : "E / close when ready";
                     break;
             }
             if (!doorOnly && !station)
@@ -147,7 +167,7 @@ namespace EvolutionShop
         }
         Station TutorialFirstStockDisplay()
         {
-            string specimen = Tutorial.FirstSpecimenId;
+            string specimen = TutorialPracticeGuidanceRequested ? Tutorial.PracticeSpecimenId : Tutorial.FirstSpecimenId;
             if (string.IsNullOrEmpty(specimen)) return null;
             foreach (var station in World.Stations)
             {
@@ -184,7 +204,7 @@ namespace EvolutionShop
                 if (!TutorialRoomGuidanceActive || Paused) return null;
                 if (Panel == ShopPanel.Incubator)
                 {
-                    string recovery = TutorialPreparationRecovery(ActiveTutorialLesson);
+                    string recovery = TutorialPreparationRecovery(TutorialGuidanceLesson);
                     if (!string.IsNullOrEmpty(recovery)) return recovery;
                     if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Your creature waits here. Close this panel and press E at an empty front display to stock it.";
                     if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "Your batch is growing normally. It keeps growing with this panel open; F1 help pauses it.";
@@ -194,6 +214,11 @@ namespace EvolutionShop
                     return Model.GetTank(selectedTank).HasValue
                         ? "Check the price tag and buyer reactions below. Keeping the standard price is fine; open at the counter when ready."
                         : "Choose your ready or stored creature below. Stocking transfers it directly into this display.";
+                if (Panel == ShopPanel.Counter && Customers != null && Customers.NextToServe != null && Customers.NextToServe.Phase == CustomerPhase.Queued)
+                    return "Serve the waiting order below before patience runs out. Its exact creature is paid only after successful checkout.";
+                if (Panel == ShopPanel.Counter && ActiveTutorialLesson == TutorialLesson.CloseAndReview)
+                    return Cycle.Phase == ShopDayPhase.Night ? "Review your completed day results below, then choose Continue preparation." :
+                        "Use Close for the night below, then confirm. Accepted orders still follow ordinary closing rules.";
                 if (Panel == ShopPanel.Counter)
                     return Model.IsIncubatorReservedForTechnician ? "Choose Staff, then pause Moss's lab work to prepare this batch yourself." :
                         Cycle.Phase == ShopDayPhase.Night ? "Stock your displays, then use Open for day below. The trading clock starts when you open." :

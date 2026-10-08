@@ -386,6 +386,13 @@ namespace EvolutionShop
         }
         public void SetPanel(ShopPanel panel)
         {
+            // A journal opened from the final help card returns to that card. Ordinary
+            // journal entry/exit remains unchanged, and interruptions discard this link.
+            if (Panel == ShopPanel.Journal && tutorialJournalReturnsToHelp)
+            {
+                if (panel == ShopPanel.None) panel = ShopPanel.TutorialHelp;
+                if (panel != ShopPanel.Journal) tutorialJournalReturnsToHelp = false;
+            }
             bool acknowledgedReport = Panel == ShopPanel.DayReport && panel == ShopPanel.None &&
                 Tutorial.ObserveReportAcknowledged(Reports.LastDayNumber);
             if (panel==ShopPanel.Arrange) { if (Stocker) Stocker.ResetTransient();if (Technician) Technician.ResetTransient(); }
@@ -477,7 +484,7 @@ namespace EvolutionShop
             Stocker.ResetTransient();Technician.ResetTransient();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
-            Tutorial = new ShopTutorial(); ClearTutorialHelpReturn();
+            Tutorial = new ShopTutorial(); ResetTutorialPresentation();
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;
