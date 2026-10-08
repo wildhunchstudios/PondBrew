@@ -73,7 +73,7 @@ namespace EvolutionShop
             if (paid) { Cashier.ResetTransient();Model=game; }
             Stocking=setting;SaveError=null;saveClock=0;
             Stocker.RefreshVisual();World.Refresh(Model);
-            Notify(success+(Stocking.Employee.Hired && Stocking.Employee.Scheduled ? StockerPaymentLine() : ""));
+            Notify(success.TrimEnd()+(Stocking.Employee.Hired && Stocking.Employee.Scheduled ? " "+StockerPaymentLine() : ""));
             return true;
         }
 
