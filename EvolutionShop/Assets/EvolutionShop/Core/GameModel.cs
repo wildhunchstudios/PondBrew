@@ -89,6 +89,7 @@ namespace EvolutionShop
             int i = CultureIndexOrThrow(culture);
             return new GrowerView(culture, growerUnits[i], config.GrowerCapacity, growerRemaining[i]);
         }
+        public bool HasTank(string tankId) => tankId != null && tanks.ContainsKey(tankId);
         public SpecimenView? GetTank(string tankId)
         {
             return tankId != null && tanks.TryGetValue(tankId, out var value) ? value : null;

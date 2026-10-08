@@ -70,7 +70,9 @@ namespace EvolutionShop
             // Practice deliberately remains a goal, without unsolicited recipe/route coaching.
             if (lesson == TutorialLesson.Practice)
                 return "Grow and sell another creature yourself. F1 opens help if you need it.";
-            string recovery = TutorialPreparationRecovery(lesson);
+            string recovery = TutorialGuidanceRecovery;
+            if (recovery != null) return recovery;
+            recovery = TutorialPreparationRecovery(lesson);
             if (recovery != null) return recovery;
             switch (lesson)
             {
@@ -93,7 +95,9 @@ namespace EvolutionShop
                         ? "Press E at an empty front display to transfer your ready creature directly from the incubator."
                         : "Press E at an empty front display. If stock choices appear, select your ready or stored creature.";
                 case TutorialLesson.PriceAndOpen:
-                    return "Press E at a stocked display to check its price. Then open at the front counter.";
+                    return (Tutorial.Facts & TutorialFacts.PriceViewed) != 0
+                        ? "Press E at the front counter, then choose Open for day."
+                        : "Press E at a stocked display to check its price. Then open at the front counter.";
                 case TutorialLesson.Serve:
                     if (Cycle.Phase == ShopDayPhase.Night)
                         return "Open at the front counter when your display is stocked. Then serve its customer yourself.";
@@ -235,6 +239,12 @@ namespace EvolutionShop
                 Button("Return to my current lesson", () => SelectTutorialHelpLesson(ActiveTutorialLesson));
             Space();
             Heading(TutorialLessonTitle(lesson));
+            if (TutorialRoomGuidanceActive && lesson == ActiveTutorialLesson)
+            {
+                string recovery = TutorialGuidanceRecovery;
+                if (string.IsNullOrEmpty(recovery)) Button("Show me where to go", () => ShowTutorialTarget());
+                else Small(recovery);
+            }
             DrawTutorialLessonCard(lesson);
             if (Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.NextPlan)
                 Button("Continue running my shop", () => FinishGuidedOpening());

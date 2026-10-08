@@ -51,6 +51,7 @@ namespace EvolutionShop
         void DisposeHudTheme()
         {
             hudTheme?.Dispose(); hudTheme = null; titleStyle = null; hudLightControlsStyle = null;
+            tutorialMarkerTitleStyle = tutorialMarkerActionStyle = tutorialLocalCalloutStyle = null;
         }
 
         static void Box(Rect rect, Color color)
@@ -81,6 +82,7 @@ namespace EvolutionShop
             try
             {
                 if (Panel == ShopPanel.Presentation) { DrawPresentationView(); return; }
+                DrawTutorialWorldGuidance();
                 DrawCompactStatus();
                 DrawCultureStatus();
                 hudTheme.Draw(new Rect(433, 676, 548, 26), hudTheme.DarkCard);
@@ -291,6 +293,7 @@ namespace EvolutionShop
             // Content and footer anchors are deliberately retained for established input scenarios.
             GUILayout.BeginArea(new Rect(377,130,526,fixedFooter ? 423 : 477));
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
+            DrawTutorialLocalCallout();
             switch (Panel)
             {
                 case ShopPanel.Welcome: DrawTutorialWelcome(); break;

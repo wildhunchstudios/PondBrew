@@ -49,6 +49,8 @@ namespace EvolutionShop
         TutorialSave state = new TutorialSave();
         public TutorialMode Mode => state.mode;
         public TutorialFacts Facts => state.facts;
+        // Read-only identity for transient guidance; no DTO cloning in the HUD.
+        public string FirstSpecimenId => state.first.specimenId;
         public bool PracticeAssisted => state.practiceAssisted;
         public bool FirstSaleAccommodationActive => Mode == TutorialMode.Active && !state.firstSaleAccommodationEnded;
 
