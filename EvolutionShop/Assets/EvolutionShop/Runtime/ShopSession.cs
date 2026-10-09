@@ -48,7 +48,14 @@ namespace EvolutionShop
             Config = GameConfig.CreateDefault();
             ValidationMode = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionSmoke") >= 0;
             SavePath = ValidationMode ? Path.Combine(Arg("-evolutionEvidence") ?? Application.temporaryCachePath, "smoke-save.json") : SaveStore.DefaultPath;
-            if (!ValidationMode && SaveStore.Read(SavePath, Config, out var restored, out var slot, out var problem))
+            bool restartStartup = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            restartStartup = ValidateTutorialRestartStartup(ValidationMode, Arg("-evolutionTutorialRestartSmoke"), Arg("-evolutionEvidence"));
+#endif
+            // The explicit isolated restart probe uses the ordinary startup restore path.
+            // Other smoke routes intentionally retain their existing fresh-model behavior.
+            bool readStartupSlot = !ValidationMode || restartStartup;
+            if (readStartupSlot && SaveStore.Read(SavePath, Config, out var restored, out var slot, out var problem))
             {
                 Model = restored; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
                 ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
@@ -67,7 +74,7 @@ namespace EvolutionShop
                 Reports = new ShopTradeLedger();
                 Reputation = new ShopReputation();
                 Staff = new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
-                if (!ValidationMode && File.Exists(SavePath))
+                if (readStartupSlot && File.Exists(SavePath))
                 {
                     AutosaveBlocked = true;
                     SaveStore.Read(SavePath, Config, out _, out _, out var reason);
@@ -101,12 +108,34 @@ namespace EvolutionShop
             AudioListener.volume = Volume;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
             initialized = true;
-            SetPanel(ValidationMode ? ShopPanel.None : ShopPanel.Welcome);
+            SetPanel(ValidationMode && !restartStartup ? ShopPanel.None : ShopPanel.Welcome);
             Debug.Log("EVOLUTION_RUNTIME " + Application.dataPath + " save=" + SavePath);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (ValidationMode) gameObject.AddComponent<MilestoneSmoke>();
 #endif
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        static bool ValidateTutorialRestartStartup(bool validation, string stage, string directory)
+        {
+            if (!validation || stage == null) return false;
+            string[] stages = { "new", "orient", "collect", "prepare", "grow", "working", "display", "price-open", "serve",
+                "pending", "practice", "close-review", "report", "next-plan", "completed", "skip", "skipped", "legacy", "migrated" };
+            if (Array.IndexOf(stages, stage) < 0) throw new ArgumentException("Unknown isolated tutorial restart stage.");
+            if (string.IsNullOrWhiteSpace(directory) || !Path.IsPathFullyQualified(directory))
+                throw new ArgumentException("Tutorial restart requires an explicit absolute evidence directory.");
+            string root = Path.GetFullPath(directory);
+            if (root == Path.GetPathRoot(root)) throw new ArgumentException("Tutorial restart requires an evidence folder, not a filesystem root.");
+            root = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string profile = Path.GetFullPath(Path.GetDirectoryName(SaveStore.DefaultPath)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (string.Equals(root, profile, StringComparison.OrdinalIgnoreCase) ||
+                root.StartsWith(profile + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Tutorial restart evidence must not use the normal player profile.");
+            bool exists = File.Exists(Path.Combine(root, "smoke-save.json"));
+            if (stage == "new" ? exists : !exists)
+                throw new InvalidOperationException(stage == "new" ? "Fresh restart evidence already contains a slot." : "Restart continuation input is missing.");
+            return true;
+        }
+#endif
         void Update()
         {
             if (!initialized) return;
