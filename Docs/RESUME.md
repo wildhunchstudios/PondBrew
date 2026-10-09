@@ -177,3 +177,8 @@ Collector/doser one-batch helper, physical bench panel, shared resource/worker g
 Both fresh exact-project Unity probes exited198 for no valid Editor license. No new R08.1 player or screenshots exist. Restore the existing Unity Hub license, then finish focused/full tests, runtime, separate build/regressions and actual720p/1080p UI review. Preserve the R07.5 playable; do not advance R08.2. Protected files11/11 unchanged; four existing players preserved. AGENTS.md is canonical; exact evidence, controls, failures and resume commands: `Evidence/r08-1-VALIDATION.md`. Tutorial remainder remains explicitly deferred.
 
 Source checkpoint `2501b94`, tag **r08-1-source-license-blocked**. Resume validation from `Evidence/r08-1-VALIDATION.md`; no new playable claimed.
+
+
+## 2026-10-09 — R08.1 continuation recheck
+
+Fresh exact-project probe18604 still exits198: Unity access token/license unavailable. Independent domain/save/session source review completed without additional concrete defects. No gameplay edits, new tests/builds/captures or later milestone. Source matches prior standalone03;11 protected files and four existing players preserved. Evidence `Evidence/r08-1-resume-01-*`; AGENTS.md updated. Next: user signs in to Unity Hub and refreshes existing license, then resume prepared R08.1 Unity validation.
