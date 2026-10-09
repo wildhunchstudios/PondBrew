@@ -1,0 +1,4 @@
+# Preserve byte-hashed TUT-10 startup evidence across Windows checkouts.
+/Docs/Evidence/tut-10-restart-qa-final/** -text
+/Docs/Evidence/tut-10-restart-capture-retry/** -text
+/EvolutionShop/Assets/EvolutionShop/Tests/RuntimeEditMode/Fixtures/V19PaidActiveTechnician.json -text
