@@ -69,7 +69,11 @@ namespace EvolutionShop
         {
             if (!AtDisplay()) return false;
             var result = Model.TransferConditionerToTank(conditionerId, slot, selectedTank, expectedId);
-            if (result.Success) Reports.RecordRestock();
+            if (result.Success)
+            {
+                Reports.RecordRestock();
+                Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player);
+            }
             Perform(result);
             if (result.Success) Notify("Vat output stocked in this display. It is available to customers.");
             return result.Success;

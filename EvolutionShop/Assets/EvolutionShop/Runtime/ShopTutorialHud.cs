@@ -125,14 +125,18 @@ namespace EvolutionShop
                         ? "Press E at an empty front display to transfer your ready creature directly from the incubator."
                         : "Press E at an empty front display. If stock choices appear, select your ready or stored creature.";
                 case TutorialLesson.PriceAndOpen:
+                    if (!TutorialTrackedCreatureIsDisplayed() && !TutorialHasEmptyDisplay())
+                        return "Your displays are full. Open at the front counter and sell existing stock to make room for your creature.";
                     return (Tutorial.Facts & TutorialFacts.PriceViewed) != 0
                         ? "Press E at the front counter, then choose Open for day."
                         : "Press E at a stocked display to check its price. Then open at the front counter.";
                 case TutorialLesson.Serve:
+                    if (!TutorialTrackedCreatureIsDisplayed())
+                        return TutorialHasEmptyDisplay()
+                            ? "Restock your creature from its rack or output into an empty display, then return to the counter."
+                            : "Your creature is waiting off display. Open or serve at the counter to free a tank, then stock it yourself.";
                     if (Cycle.Phase == ShopDayPhase.Night)
                         return "Open at the front counter when your display is stocked. Then serve its customer yourself.";
-                    if (DisplayedStockCount() == 0)
-                        return "Your displays are empty. Stock your creature, then return to the counter.";
                     return "Let a customer choose a creature. Serve their order at the front counter yourself.";
                 case TutorialLesson.CloseAndReview:
                     return Cycle.Phase == ShopDayPhase.Night ? "Review your trading results at the front counter, then continue preparation." : "Close for the night at the front counter when ready. Review the day's results.";
@@ -223,7 +227,7 @@ namespace EvolutionShop
         string TutorialIncubatorName() => Model.GetSpecies(Model.Incubator.SpeciesId)?.DisplayName ?? "Your creature";
         bool TutorialHasEmptyDisplay()
         {
-            foreach (string id in Model.TankIds) if (!Model.GetTank(id).HasValue) return true;
+            foreach (string id in Model.TankIds) if (!Model.GetTank(id).HasValue && !Model.IsTankReservedForStocking(id)) return true;
             return false;
         }
 

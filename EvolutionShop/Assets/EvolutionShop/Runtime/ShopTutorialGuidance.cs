@@ -73,6 +73,15 @@ namespace EvolutionShop
                  Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter);
             if (urgent)
             { station = TutorialStation(StationKind.Counter); action = "E / serve at the counter"; }
+            else if (TutorialProcessingConditioner() is string processingId)
+            {
+                foreach (var item in World.Stations)
+                    if (TutorialStationLive(item) && item.ConditionerItemId == processingId) { station = item; break; }
+                action = "E / wait or cancel conditioning";
+                recovery = "Your creature is conditioning in the lab vat. Wait for it, or use E at that vat to cancel and recover the unchanged creature.";
+            }
+            else if ((recovery = TutorialStockRecovery()) != null)
+            { station = TutorialStation(StationKind.Counter); action = "E / Staff / pause the reserved work"; }
             else switch (lesson)
             {
                 case TutorialLesson.Orient:
@@ -109,13 +118,26 @@ namespace EvolutionShop
                     // Prices follow the actual manually stocked specimen, including relocated displays.
                     station = TutorialFirstStockDisplay();
                     if (!station)
-                    { station = TutorialEmptyDisplay(); action = "E / restock your creature"; }
+                    {
+                        station = TutorialEmptyDisplay(); action = "E / restock your creature";
+                        if (!station && !TutorialHasEmptyDisplay())
+                        { station = TutorialStation(StationKind.Counter); action = "E / open or serve to make room"; }
+                    }
                     else if (!TutorialPracticeGuidanceRequested && (Tutorial.Facts & TutorialFacts.PriceViewed) == 0)
                         action = "E / inspect its price tag";
                     else
                     { station = TutorialStation(StationKind.Counter); action = "E / open for the day"; }
                     break;
                 case TutorialLesson.Serve:
+                    // Prior manual display remains learned if the exact creature is stored again.
+                    // Other saleable stock must not conceal the required restock.
+                    if (!TutorialTrackedCreatureIsDisplayed())
+                    {
+                        station = TutorialEmptyDisplay(); action = "E / restock your creature";
+                        if (!station && !TutorialHasEmptyDisplay())
+                        { station = TutorialStation(StationKind.Counter); action = "E / make room through sales"; }
+                        break;
+                    }
                     station = TutorialStation(StationKind.Counter);
                     action = Cycle.Phase == ShopDayPhase.Night ? "E / open for the day" : "E / serve accepted orders";
                     break;
@@ -162,12 +184,12 @@ namespace EvolutionShop
         {
             foreach (var station in World.Stations)
                 if (TutorialStationLive(station) && Model.HasTank(station.TankId) &&
-                    !Model.GetTank(station.TankId).HasValue) return station;
+                    !Model.GetTank(station.TankId).HasValue && !Model.IsTankReservedForStocking(station.TankId)) return station;
             return null;
         }
         Station TutorialFirstStockDisplay()
         {
-            string specimen = TutorialPracticeGuidanceRequested ? Tutorial.PracticeSpecimenId : Tutorial.FirstSpecimenId;
+            string specimen = TutorialTrackedSpecimenId;
             if (string.IsNullOrEmpty(specimen)) return null;
             foreach (var station in World.Stations)
             {
@@ -175,6 +197,49 @@ namespace EvolutionShop
                 var stock = Model.GetTank(station.TankId);
                 if (stock.HasValue && stock.Value.Id == specimen) return station;
             }
+            return null;
+        }
+
+        string TutorialTrackedSpecimenId => TutorialPracticeGuidanceRequested ? Tutorial.PracticeSpecimenId : Tutorial.FirstSpecimenId;
+        bool TutorialTrackedCreatureIsDisplayed()
+        {
+            string id = TutorialTrackedSpecimenId;
+            if (string.IsNullOrEmpty(id)) return false;
+            foreach (string tank in Model.TankIds)
+                if (Model.GetTank(tank) is SpecimenView stock && stock.Id == id) return true;
+            return false;
+        }
+        string TutorialProcessingConditioner()
+        {
+            string specimen = TutorialTrackedSpecimenId;
+            if (string.IsNullOrEmpty(specimen)) return null;
+            foreach (string id in Model.ConditionerIds)
+            {
+                var vat = Model.GetConditioner(id);
+                if (vat.HasValue && vat.Value.Phase == ConditionerPhase.Processing &&
+                    (vat.Value.First is SpecimenView first && first.Id == specimen ||
+                     vat.Value.Second is SpecimenView second && second.Id == specimen)) return id;
+            }
+            return null;
+        }
+        string TutorialStockRecovery()
+        {
+            var lesson = TutorialGuidanceLesson;
+            if (lesson != TutorialLesson.Display && lesson != TutorialLesson.PriceAndOpen && lesson != TutorialLesson.Serve ||
+                TutorialTrackedCreatureIsDisplayed()) return null;
+            string id = TutorialTrackedSpecimenId;
+            if (!string.IsNullOrEmpty(id))
+            {
+                if (Model.Incubator.SpecimenId == id && Model.IsIncubatorReservedForTechnician)
+                    return "Moss reserved your ready creature. At Counter > Staff, pause lab work before stocking it yourself.";
+                foreach (string rack in Model.StorageIds)
+                    if (Model.GetStorage(rack) is SpecimenView stored && stored.Id == id && Model.IsStorageReservedForStocking(rack))
+                        return "Nori reserved your stored creature. At Counter > Staff, pause stocking before displaying it yourself.";
+            }
+            if (!TutorialHasEmptyDisplay())
+                foreach (string tank in Model.TankIds)
+                    if (!Model.GetTank(tank).HasValue && Model.IsTankReservedForStocking(tank))
+                        return "Nori reserved the empty displays. Wait for stocking, or pause stocking at Counter > Staff to free a destination.";
             return null;
         }
 
@@ -216,6 +281,7 @@ namespace EvolutionShop
                         : "Choose your ready or stored creature below. Stocking transfers it directly into this display.";
                 if (Panel == ShopPanel.Counter && Customers != null && Customers.NextToServe != null && Customers.NextToServe.Phase == CustomerPhase.Queued)
                     return "Serve the waiting order below before patience runs out. Its exact creature is paid only after successful checkout.";
+                if (Panel == ShopPanel.Counter && TutorialStockRecovery() is string stockRecovery) return stockRecovery;
                 if (Panel == ShopPanel.Counter && ActiveTutorialLesson == TutorialLesson.CloseAndReview)
                     return Cycle.Phase == ShopDayPhase.Night ? "Review your completed day results below, then choose Continue preparation." :
                         "Use Close for the night below, then confirm. Accepted orders still follow ordinary closing rules.";

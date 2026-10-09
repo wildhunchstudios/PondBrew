@@ -271,6 +271,9 @@ namespace EvolutionShop
             if (chain.saleDay > 0) return !Exists(game, chain.specimenId, null);
             if (game.Incubator.SpecimenId == chain.specimenId &&
                 (chain.manuallyDisplayed || chain.ready && game.Incubator.Phase == IncubatorPhase.Incubating)) return false;
+            // A resident outside the incubator has necessarily matured already.
+            // Reject impossible current-format receipts rather than restoring a stuck Grow lesson.
+            if (game.Incubator.SpecimenId != chain.specimenId && !chain.ready) return false;
             return mode == TutorialMode.Active && Exists(game, chain.specimenId, chain.speciesId);
         }
         static bool InDisplay(GameModel game, string id, string species)

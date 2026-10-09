@@ -112,7 +112,7 @@ namespace EvolutionShop
             if (!World || !Player) return false;
             foreach (var station in World.Stations)
             {
-                if (!station || !station.gameObject.activeInHierarchy || Vector3.Distance(Player.transform.position, station.transform.position) > 4.5f) continue;
+                if (!station || !station.isActiveAndEnabled || Vector3.Distance(Player.transform.position, station.transform.position) > 4.5f) continue;
                 if (panel == ShopPanel.Incubator && station.Kind == StationKind.Incubator ||
                     panel == ShopPanel.Tank && station.TankId == tutorialReturnTank ||
                     panel == ShopPanel.StorageRack && station.StorageItemId != null && station.StorageItemId == tutorialReturnRack ||
