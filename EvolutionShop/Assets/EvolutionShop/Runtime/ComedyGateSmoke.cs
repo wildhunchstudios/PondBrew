@@ -14,7 +14,7 @@ namespace EvolutionShop
         // expiry are explicit; economic assertions retain exact IDs and accepted prices.
         IEnumerator ComedyGateScenario()
         {
-            limitations.Add("R06.4 isolated save and original room layout. Stock preparation, pending-boundary checks and cosmetic cooldown expiry use explicit model/session commands; visitors and interruptions use real runtime frames. E/Escape/Backspace are synthetic Input System input. Menu selections use application commands. No human audio listening, GUI click pass, performance, all-layout or worker-job approval.");
+            limitations.Add("R06.4 isolated save and original room layout. Every fresh fixture explicitly skips the paused tutorial Welcome through the normal control. Stock preparation, pending-boundary checks and cosmetic cooldown expiry use explicit model/session commands; visitors and interruptions use real runtime frames. E/Escape/Backspace are synthetic Input System input. Menu selections use application commands. No human audio listening, GUI click pass, performance, all-layout or worker-job approval.");
             yield return new WaitForSeconds(1);
             Check(shop.ValidationMode && Path.GetFullPath(shop.SavePath)==Path.GetFullPath(Path.Combine(evidence,"smoke-save.json")),"Interruption gate isolates the normal save");
             previousInputSettings=InputSystem.settings;smokeInputSettings=Instantiate(previousInputSettings);
@@ -219,6 +219,8 @@ namespace EvolutionShop
         void GateFresh()
         {
             shop.enabled=true;shop.SetPanel(ShopPanel.None);shop.ConfirmNewGame();
+            // New Game now offers the paused tutorial Welcome. This older regression is explicitly unguided.
+            Check(shop.SkipTutorial() && !shop.Paused && shop.Panel==ShopPanel.None, "Unguided comedy fixture exits Welcome through the normal skip control");
             shop.Customers.ArrivalsEnabled=false;shop.AmbientComedyEnabled=false;
             shop.ReducedGags=false;shop.HumorVolume=.65f;shop.Comedy.Tick(120);
         }
