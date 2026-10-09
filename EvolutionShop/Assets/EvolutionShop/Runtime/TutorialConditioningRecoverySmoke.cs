@@ -90,7 +90,7 @@ namespace EvolutionShop
                 shop.FocusedStationHintForDisplay.Contains("1 ready / collect at a rack or display") &&
                 !shop.FocusedStationHintForDisplay.Contains("s remaining"),
                 "Canceled vat card replaces the countdown with the real unchanged output and its collection destination");
-            yield return TutorialCapture("486-conditioning-canceled-ready");
+            yield return TutorialCapture("486-conditioning-canceled-output");
             yield return SpecimenDisplayPanel("tank-a");
             int cash = shop.Model.Currency;
             Check(shop.StockDisplayFromConditioner(vat, 0, first) && shop.Model.GetTank("tank-a").Value.Id == first &&
@@ -172,3 +172,4 @@ namespace EvolutionShop
     }
 }
 #endif
+
