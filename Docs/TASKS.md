@@ -184,3 +184,10 @@ AGENTS.md remains the sole live roadmap. Evidence: `Docs/Evidence/tut-09-VALIDAT
 **TUT-10 complete:** separate Windows QA candidate and real startup continuation through all ten tutorial lessons. Source `2b0c058`, tag **tut-qa-candidate**. EditMode **1,913/1,913**; Editor tutorial **124**; exact Windows **21 separate processes / 555 checks**, capture retry **6 processes / 158 checks**, rooms **65**, three-role staff **136**; errors/exits 0. Build errors/warnings 0. Twelve actual 720p/1080p startup captures inspected; initial black 720p capture evidence retained and corrected through launch sizing on the same executable. Protected files 11/11 unchanged. **Next: TUT-11 native Windows input and presentation.** Tester packaging and novice gates remain pending; R07.5/R08 have not started.
 
 AGENTS.md remains the sole live roadmap. Details: `Docs/Evidence/tut-10-VALIDATION.md`; player `Builds/Windows-6000.3.21f1-tut-10-qa/EvolutionShop.exe`. Earlier entries are historical.
+
+
+## 2026-10-09 — TUT-11a native validation checkpoint
+
+**TUT-11 partially verified; manual input gate remains open.** Source `92724f8`, checkpoint **tut-native-input-checkpoint**. Full EditMode **1,925/1,925**; exact Windows tutorial regression **124**, errors/exit0; separate build errors/warnings0. Native mouse Start/help/back/skip/scroll and Save-and-quit verified; both main QA players exited0. Actual window focus loss/return pauses safely. Twenty native screenshots inspected across720p/1080p. W/F1/Escape automation probes did not register; the supported drag held only~17ms, with no culture collected. E/Tab, sustained movement/collection, station menu clicks and customer overlay combinations still need real input evidence. Protected files11/11 unchanged. **Next: finish TUT-11 via the isolated manual launcher/checklist; do not start TUT-12 or later stages yet.**
+
+Canonical continuation: AGENTS.md TUT.11. Evidence: `Evidence/tut-11-VALIDATION.md`; manual launch: root `Play-Tutorial-Input-Check.cmd`; input sheet: `Evidence/tut-11-PLAY.md`. No later tutorial/business milestone started.

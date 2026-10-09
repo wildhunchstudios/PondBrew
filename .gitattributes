@@ -2,3 +2,8 @@
 /Docs/Evidence/tut-10-restart-qa-final/** -text
 /Docs/Evidence/tut-10-restart-capture-retry/** -text
 /EvolutionShop/Assets/EvolutionShop/Tests/RuntimeEditMode/Fixtures/V19PaidActiveTechnician.json -text
+
+# Preserve byte-hashed TUT-11 native QA inputs/outputs.
+/Docs/Evidence/tut-11-native-fresh-01/** -text
+/Docs/Evidence/tut-11-native-working-01/** -text
+/Docs/Evidence/tut-11-manual-launcher-snapshot/** -text
