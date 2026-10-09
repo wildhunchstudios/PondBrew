@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "QA_EXE=%~dp0Builds\Windows-6000.3.21f1-tut-11-native\EvolutionShop.exe"
+set "QA_EXE=%~dp0Builds\Windows-6000.3.21f1-tut-11b-vat-card-r2\EvolutionShop.exe"
 set "QA_PROFILE=%~dp0Builds\TutorialInputCheck"
 if not exist "%QA_EXE%" (
   echo The native tutorial QA build is missing. See AGENTS.md.
