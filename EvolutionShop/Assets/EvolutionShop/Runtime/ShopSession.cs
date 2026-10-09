@@ -48,6 +48,10 @@ namespace EvolutionShop
             Config = GameConfig.CreateDefault();
             ValidationMode = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionSmoke") >= 0;
             SavePath = ValidationMode ? Path.Combine(Arg("-evolutionEvidence") ?? Application.temporaryCachePath, "smoke-save.json") : SaveStore.DefaultPath;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            string nativeQaPath = NativeTutorialProbe.ResolveSavePath(Arg("-evolutionNativeQa"), ValidationMode);
+            if (nativeQaPath != null) SavePath = nativeQaPath;
+#endif
             bool restartStartup = false;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             restartStartup = ValidateTutorialRestartStartup(ValidationMode, Arg("-evolutionTutorialRestartSmoke"), Arg("-evolutionEvidence"));
@@ -112,6 +116,7 @@ namespace EvolutionShop
             Debug.Log("EVOLUTION_RUNTIME " + Application.dataPath + " save=" + SavePath);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (ValidationMode) gameObject.AddComponent<MilestoneSmoke>();
+            if (nativeQaPath != null) gameObject.AddComponent<NativeTutorialProbe>();
 #endif
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

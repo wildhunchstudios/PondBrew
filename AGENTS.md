@@ -2099,3 +2099,10 @@ Added a development-only explicit isolated-startup opt-in, preserving the ordina
 **TUT-10 complete:** separate Windows QA candidate and real startup continuation through all ten tutorial lessons. Source `2b0c058`, tag **tut-qa-candidate**. EditMode **1,913/1,913**; Editor tutorial **124**; exact Windows **21 separate processes / 555 checks**, capture retry **6 processes / 158 checks**, rooms **65**, three-role staff **136**; errors/exits 0. Build errors/warnings 0. Twelve actual 720p/1080p startup captures inspected; initial black 720p capture evidence retained and corrected through launch sizing on the same executable. Protected files 11/11 unchanged. **Next: TUT-11 native Windows input and presentation.** Tester packaging and novice gates remain pending; R07.5/R08 have not started.
 
 Source `2b0c058`, delivery tag **tut-qa-candidate**. See `Docs/Evidence/tut-10-VALIDATION.md` for exact commands, counts, staged input/paid-legacy provenance, retained black capture evidence and native/novice limitations. No gameplay economy, schema, scene, art, package or engine change. Next bounded assignment TUT-11 only.
+
+
+### TUT-11 execution checkpoint — native Windows controls (2026-10-09)
+
+TUT-11 in progress. Fresh exact-project identity probe passed on pinned6000.3.21f1; CLI reports no connected Editor; guarded batch remains working. Supported node_repl + @oai/sky successfully listed Windows apps. Four existing players remain untouched. Lead owns this bounded assignment and all Unity execution.
+
+Add a development-only marked isolated native QA profile, preserving normal startup, arrivals, focus and input behavior (ValidationMode remains false). The observer records controls/state; explicit station poses/resolution changes are labelled fixtures. It must not inject input, manufacture stock, advance lessons, pause clocks or execute menus. Test the path guard, build a separate native QA candidate, then use supported Windows input APIs and inspect actual720p/1080p captures. Retain any unsupported hold/input gap; do not count synthetic fallback as native or advance TUT-12. No normal-save/schema/scene/art/engine/package change.
