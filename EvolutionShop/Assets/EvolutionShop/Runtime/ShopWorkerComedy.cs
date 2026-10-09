@@ -32,7 +32,7 @@ namespace EvolutionShop
                 if (!Cashier || !Cashier.isActiveAndEnabled || Staff == null ||
                     !Staff.IsOnDuty(Cycle.DayNumber) || Cashier.CurrentJobId != null ||
                     !Customers || !Customers.isActiveAndEnabled || !Customers.Ready ||
-                    !Customers.Navigation || !Customers.Navigation.isActiveAndEnabled || Customers.NextToServe != null ||
+                    !Customers.Navigation || !Customers.Navigation.isActiveAndEnabled || Customers.WaitingCount > 0 ||
                     Cycle.Phase != ShopDayPhase.Open) return false;
                 actor = Cashier.Actor;
             }
