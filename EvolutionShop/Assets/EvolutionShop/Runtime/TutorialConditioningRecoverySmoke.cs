@@ -69,7 +69,14 @@ namespace EvolutionShop
                 "Physical vat begins a real conditioning process for that exact Pondlet");
             Check(shop.Tutorial.FirstSpecimenId == first && shop.Model.GetConditioner(vat).Value.First.Value.Id == first,
                 "Processing retains the candidate identity while its Pondlet species remains unchanged");
-            shop.SetPanel(ShopPanel.None);
+            shop.SetPanel(ShopPanel.None); yield return null;
+            Check(shop.Focused && shop.Focused.ConditionerItemId == vat &&
+                shop.FocusedStationHintForDisplay.Contains("s remaining") && shop.FocusedStationHintForDisplay.Contains("E manage vat"),
+                "Focused vat interaction card exposes the live countdown and management key even when it covers the physical readout");
+            string earlierCountdown = shop.FocusedStationHintForDisplay;
+            yield return new WaitForSeconds(1.1f);
+            Check(shop.FocusedStationHintForDisplay != earlierCountdown && shop.FocusedStationHintForDisplay.Contains("s remaining"),
+                "Focused countdown updates from the live batch while gameplay runs");
             yield return TutorialCapture("485-conditioning-processing");
             Check(shop.TryGetTutorialGuidance(out var processTarget) && processTarget.Station &&
                 processTarget.Station.ConditionerItemId == vat && shop.TutorialObjectiveForDisplay.Contains("conditioning"),
@@ -78,6 +85,12 @@ namespace EvolutionShop
             Check(shop.CancelSelectedConditioning() && shop.Model.GetConditioner(vat).Value.First.Value.SpeciesId == "pondlet" &&
                 shop.Model.GetConditioner(vat).Value.First.Value.Id == first && shop.Model.Available(CultureKind.Spark) == 1,
                 "Cancel returns unchanged Pondlet identity and one reserved Spark without creating stock");
+            shop.SetPanel(ShopPanel.None); yield return null;
+            Check(shop.Focused && shop.Focused.ConditionerItemId == vat &&
+                shop.FocusedStationHintForDisplay.Contains("1 ready / collect at a rack or display") &&
+                !shop.FocusedStationHintForDisplay.Contains("s remaining"),
+                "Canceled vat card replaces the countdown with the real unchanged output and its collection destination");
+            yield return TutorialCapture("486-conditioning-canceled-ready");
             yield return SpecimenDisplayPanel("tank-a");
             int cash = shop.Model.Currency;
             Check(shop.StockDisplayFromConditioner(vat, 0, first) && shop.Model.GetTank("tank-a").Value.Id == first &&
@@ -132,6 +145,19 @@ namespace EvolutionShop
                 loadedSlot.tutorial.first.saleDay == 1 && loadedSlot.tutorial.practice.saleDay == 0 &&
                 loadedGame.GetTank("tank-a").Value.SpeciesId == "lanternfin" && loadedGame.Currency == cash + 6,
                 "Final full slot preserves recovered first sale and unqualified transformed practice stock / " + error);
+            yield return ConditioningPanel(vat);
+            shop.SetPanel(ShopPanel.None); yield return null;
+            Check(shop.Focused && shop.Focused.ConditionerItemId == vat &&
+                shop.FocusedStationHintForDisplay == "Empty / add Pondlets\nE manage vat",
+                "After transfer the focused vat card reports empty without stale countdown or output");
+            yield return TutorialCapture("487-conditioning-empty");
+            yield return ConditioningPanel(vat);
+            Check(shop.ResearchMist(), "Labelled funded fixture purchases real Mist research for the dual-use prompt check");
+            shop.SetPanel(ShopPanel.None); yield return null;
+            Check(shop.TryStationCulture(shop.Focused, out var focusCulture) && focusCulture == CultureKind.Mist &&
+                shop.FocusedStationHintForDisplay == "Empty / add Pondlets\nHold left mouse for Mist / E manage vat",
+                "Researched vat keeps the live empty state and both collection and management controls readable");
+            yield return TutorialCapture("488-conditioning-mist-controls");
         }
 
         IEnumerator TutorialConditioningManualBatch()

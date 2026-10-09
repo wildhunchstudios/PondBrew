@@ -103,6 +103,28 @@ namespace EvolutionShop
         }
 
         GUIStyle hudLightControlsStyle;
+        // The close-up interaction card can cover a machine's physical readout.
+        // Keep the focused vat's live status on that same card; no world-layout change.
+        public string FocusedStationHintForDisplay
+        {
+            get
+            {
+                if (Focused == null) return "";
+                bool culture = TryStationCulture(Focused, out var kind);
+                string hint = culture ? (kind == CultureKind.Spark ? "Hold left mouse to collect  /  E research" :
+                    kind == CultureKind.Mist ? "Hold left mouse to collect  /  E vat" : "Hold left mouse to collect") : "Use station";
+                if (Focused.Kind != StationKind.Conditioning) return hint;
+                var vat = Model.GetConditioner(Focused.ConditionerItemId);
+                if (!vat.HasValue) return hint;
+                string status = vat.Value.Phase == ConditionerPhase.Processing
+                    ? "Conditioning / " + Mathf.CeilToInt(vat.Value.SecondsRemaining) + "s remaining"
+                    : vat.Value.Phase == ConditionerPhase.Ready
+                        ? vat.Value.Count + " ready / collect at a rack or display"
+                        : "Empty / add Pondlets";
+                return status + "\n" + (culture ? "Hold left mouse for Mist / E manage vat" : "E manage vat");
+            }
+        }
+
         void DrawFocusPrompt()
         {
             hudTheme.Draw(new Rect(635, 355, 10, 10), hudTheme.Shadow);
@@ -110,8 +132,8 @@ namespace EvolutionShop
             float hintTop = 654;
             if (Focused != null)
             {
-                bool culture = TryStationCulture(Focused, out var focusCulture);
-                string hint = culture ? (focusCulture == CultureKind.Spark ? "Hold left mouse to collect  /  E research" : focusCulture == CultureKind.Mist ? "Hold left mouse to collect  /  E vat" : "Hold left mouse to collect") : "Use station";
+                bool culture = TryStationCulture(Focused, out _);
+                string hint = FocusedStationHintForDisplay;
                 float labelHeight = Mathf.Max(21, HudTextHeight(Focused.Label, hudTitleStyle, 320));
                 float hintHeight = Mathf.Max(18, HudTextHeight(hint, hudSmallStyle, 320));
                 float height = labelHeight + hintHeight + 21;
