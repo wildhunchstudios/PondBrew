@@ -50,7 +50,7 @@ namespace EvolutionShop
                         signal += noiseFilter * .04f;
                         break;
                     case ComedyKind.WorkerCelebration:
-                        // Two rubber-shoe squeaks accompany the preview's tiny happy foot shuffle.
+                        // Two rubber-shoe squeaks accompany the worker's tiny happy foot shuffle.
                         float step = p * 2f, stepTime = step - Mathf.Floor(step);
                         frequency = 690f + variation * 45f + Mathf.Sin(stepTime * Mathf.PI) * 570f;
                         phase += 2 * Mathf.PI * frequency / rate;

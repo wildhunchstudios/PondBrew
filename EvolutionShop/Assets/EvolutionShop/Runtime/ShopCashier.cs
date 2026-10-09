@@ -108,6 +108,7 @@ namespace EvolutionShop
             string committedJob = CurrentJobId;
             bool served = Eligible(expected) && shop.ServeCashier(expected);
             ClearJob();
+            if (served) shop.QueueWorkerCelebration(ShopStaff.CashierId);
             if (!served) refusedJobId = committedJob; // One attempt, then visible manual recovery.
             SetStatus(served ? "Checkout complete / ready for the next customer" :
                 "Checkout blocked / serve manually or resume the cashier", served ? "THANK YOU!" : "CHECKOUT BLOCKED");
@@ -158,6 +159,7 @@ namespace EvolutionShop
 
         void ClearJob()
         {
+            if (shop) shop.CancelWorkerCelebration(ShopStaff.CashierId);
             Target = null;
             CurrentJobId = null;
             elapsed = 0;

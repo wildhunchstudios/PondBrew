@@ -30,6 +30,7 @@ namespace EvolutionShop
                 (!comedyActor || !comedyActor.isActiveAndEnabled || Customers.ActorOf(comedyVisitor)!=comedyActor || comedyVisitor.Phase==CustomerPhase.Paid || comedyVisitor.Phase==CustomerPhase.Leaving || comedyVisitor.Phase==CustomerPhase.Finished)) CancelComedy();
             if(Comedy.Active && mimicTank!=null && !Model.GetTank(mimicTank).HasValue) CancelComedy();
             if(Comedy.Active && Comedy.Kind==ComedyKind.Belch && Model.Incubator.Phase!=IncubatorPhase.Ready) CancelComedy();
+            TickWorkerCelebration(seconds);
             if(belchWait>=0)
             {
                 belchWait=Mathf.Max(0,belchWait-seconds);belchExpiry-=seconds;
@@ -99,6 +100,7 @@ namespace EvolutionShop
         }
         void ClearComedyVisuals()
         {
+            ClearWorkerCelebration();
             if(comedyActor)comedyActor.ClearComedyPose();
             comedyActor=null;comedyVisitor=null;mimicTank=null;
             if(World)World.HideComedyBubble();
@@ -118,6 +120,12 @@ namespace EvolutionShop
         void LateUpdate()
         {
             if(!initialized || Paused || !Comedy.Active)return;
+            if(activeWorkerId!=null)
+            {
+                if(!WorkerCelebrationStillValid(activeWorkerId,activeWorkerActor) || (sound && sound.ServicePriorityActive))
+                {CancelComedy();return;}
+                activeWorkerActor.PoseComedy(ComedyKind.WorkerCelebration,Comedy.Elapsed,Comedy.Reduced);
+            }
             if(comedyActor)comedyActor.SetComedyPose(Comedy.Kind,Comedy.Elapsed,Comedy.Reduced);
             if(mimicTank!=null)World.PoseFishMimic(mimicTank,Comedy.Elapsed,Comedy.Reduced);
             if(Comedy.Kind==ComedyKind.Belch && World.TryGetLabFacility(ShopLayout.IncubatorFacilityId,out var incubator))
@@ -179,12 +187,13 @@ namespace EvolutionShop
         void DrawComedyCaption()
         {
             if(Panel!=ShopPanel.None || !Comedy.Active)return;
-            hudMeasure.text=Comedy.Caption;
+            string caption=WorkerComedyCaption+Comedy.Caption;
+            hudMeasure.text=caption;
             float width=Mathf.Clamp(centerStyle.CalcSize(hudMeasure).x+36,548,644);
             float left=686-width*0.5f;
-            float captionHeight=Mathf.Max(24,HudTextHeight(Comedy.Caption,centerStyle,width-36));
+            float captionHeight=Mathf.Max(24,HudTextHeight(caption,centerStyle,width-36));
             HudCard(new Rect(left,112,width,captionHeight+35),coral);
-            GUI.Label(new Rect(left+18,118,width-36,captionHeight),Comedy.Caption,centerStyle);
+            GUI.Label(new Rect(left+18,118,width-36,captionHeight),caption,centerStyle);
             GUI.Label(new Rect(left+18,121+captionHeight,width-36,21),"BACKSPACE: skip gag  /  service and movement stay available",controlsStyle);
         }
         void DrawComedyPreview()
@@ -199,7 +208,7 @@ namespace EvolutionShop
                 var kind=(ComedyKind)i;
                 if(GUI.Button(new Rect(44+(i%3)*397,534+(i/3)*43,384,36),ComedyTitle(kind),buttonStyle))PlayComedyPreview(kind);
             }
-            GUI.Label(new Rect(44,622,800,25),"Uses your Humor volume and Reduced gags settings. Employee is preview-only.",smallStyle);
+            GUI.Label(new Rect(44,622,800,25),"Uses your Humor volume and Reduced gags settings. Live workers celebrate completed jobs when idle.",smallStyle);
             if(GUI.Button(new Rect(44,653,280,32),"Skip / BACKSPACE",buttonStyle))StopComedyPreview();
             if(GUI.Button(new Rect(914,653,320,32),"Back to pause / ESC",buttonStyle))SetPanel(ShopPanel.Pause);
         }

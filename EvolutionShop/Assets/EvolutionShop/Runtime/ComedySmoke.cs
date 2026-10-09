@@ -87,7 +87,7 @@ namespace EvolutionShop
             Check(shop.TryStartComedy(ComedyKind.Mimic),"Stocked fish copies a safe customer beat");
             yield return new WaitForSeconds(.65f);
             Check(shop.World.ValidateTankBounds(out _),"Mimic fin poses keep all stock inside its tanks");yield return Capture("223-live-mimic");
-            Check(!shop.TryStartComedy(ComedyKind.WorkerCelebration),"Worker beat cannot start a real job or run in live play");
+            Check(!shop.TryStartComedy(ComedyKind.WorkerCelebration),"Unowned worker beat cannot start without a committed worker job");
             yield return AimForSlap(first);
             yield return MoveFor(Key.F,.05f);
             Check(first.Outcome==CustomerOutcome.Slapped && shop.Comedy.Kind==ComedyKind.Slap && shop.Comedy.Active,"Accepted deliberate slap replaces incidental comedy");

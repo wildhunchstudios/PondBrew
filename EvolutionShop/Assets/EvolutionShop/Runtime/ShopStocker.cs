@@ -143,6 +143,7 @@ namespace EvolutionShop
                     ClearJob();
                     cooldown = RetrySeconds;
                     status = "Display replenished / checking the next target";
+                    shop.QueueWorkerCelebration(ShopStaff.StockerId);
                     break;
             }
         }
@@ -332,6 +333,7 @@ namespace EvolutionShop
 
         void ClearJob()
         {
+            if (shop) shop.CancelWorkerCelebration(ShopStaff.StockerId);
             if (claimedModel != null && CurrentJobId != null)
                 claimedModel.CancelStockTransfer(CurrentJobId, ShopStaff.StockerId);
             CurrentJobId = SourceStorageId = TargetTankId = expectedSpecimenId = targetSetting = null;

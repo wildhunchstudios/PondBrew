@@ -161,6 +161,7 @@ namespace EvolutionShop
                     ClearJob();
                     cooldown = RetrySeconds;
                     status = "Creature stored / checking the next production order";
+                    shop.QueueWorkerCelebration(ShopStaff.TechnicianId);
                     break;
             }
         }
@@ -405,6 +406,7 @@ namespace EvolutionShop
 
         void ClearJob()
         {
+            if (shop) shop.CancelWorkerCelebration(ShopStaff.TechnicianId);
             if (claimedModel != null && CurrentJobId != null)
                 claimedModel.CancelTechnicianClaim(CurrentJobId, ShopStaff.TechnicianId);
             CurrentJobId = TargetStorageId = expectedSpecimenId = expectedSpeciesId = expectedSpeciesName = null;
