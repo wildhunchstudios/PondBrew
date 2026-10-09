@@ -1,6 +1,6 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
-**R08.1 active — one-batch culture collection and dosing modules.** User continuation selects this bounded assignment. Preserve the delivered R07.5 build and all implemented tutorial work; TUT-11–14 remainder stays deferred. Baseline `8bec274` was clean. Project path, installed Unity 6000.3.21f1/c02631ffc030 and Windows module match. Fresh CLI reports no connected Editor; the exact-project batch identity probe exited **198: no valid Unity Editor license**, before opening the project. Source implementation continues; fresh Unity tests/builds are currently blocked, not passed.
+**R08.1 source implemented — Unity validation blocked by licensing.** Optional collector/doser modules, physical bench controls, one-batch requests, exact resource preservation and envelope21 migration are implemented. All six project assemblies compile with the installed standalone Roslyn compiler; 30/30 new pure domain NUnit cases pass under Mono. These are not Unity test/build passes. Both fresh exact-project Editor probes exited198 before opening the project (no valid license); no R08.1 player or screenshots exist. Preserve R07.5 and deferred TUT-11–14. Next: restore the existing Unity license and finish R08.1 validation, not R08.2. See `Docs/Evidence/r08-1-VALIDATION.md`.
 
 **R07.5 delivered — worker completion humor and interruption safety.** Source `f65f82d`, tag **r07-worker-safety**. Pip, Nori and Moss can celebrate committed work with a named caption, tiny stationary dance and existing shoe squeak. New work, service feedback and interruptions take priority. EditMode **1925/1925**, Editor worker **109**, exact Windows **877 checks across six routes**, runtime errors/exits 0; build errors/warnings 0. Eight actual 720p/1080p worker captures inspected. Protected files 11/11 unchanged. Remaining TUT-11–14 work is **deferred by explicit user request**, not passed; preserve its implementation and evidence. **Next bounded R assignment: R08.1 automatic culture collection/dosing modules.** Human humor/audio and staffing pacing remain unverified.
 
@@ -383,7 +383,7 @@ Current state: TUT-00–10 complete and TUT-11 partially verified, including vat
 
 Depends on: R05 and R07. Output: one complete automatic grow-to-sale route, then bounded configuration for other known recipes.
 
-- [~] R08.1 Optional one-batch collection/dosing modules in progress; contract and owned tasks below. Unity validation currently blocked by the license probe, not an implementation pass.
+- [~] R08.1 One-batch collection/dosing source implemented; standalone compile and30 pure domain cases passed. Unity import, save/runtime/full tests, new build and visual review remain license-blocked; assignment not delivered.
 - [ ] R08.2 Connect production jobs, lab storage, stocker replenishment, customer reservations, and cashier transactions into one complete route.
 - [ ] R08.3 Add desired stock levels, recipe/destination configuration, pause controls, shortages, and a clear explanation of each blocked state.
 - [ ] R08.4 Prove normal operation plus full/empty buffers, missing staff, path failure, reorder/cancel, room edits, and interruption/reload without lost/duplicated resources.
@@ -519,7 +519,7 @@ Current limitations: procedural prototype art/UI/audio, provisional prices and b
 | Current request | Continue R08.1 automatic collection/dosing modules; tutorial remainder remains explicitly deferred. |
 | Runtime changes | Worker completion captions, local-limb dance and existing shoe squeaks now follow committed jobs; bounded request expires or cancels safely. Tutorial, approved rooms, staff transactions and save schema preserved. |
 | User feedback | User selected the guided first shift for external testers. Prior visual/gameplay approvals stand. Tutorial usability and current three-role affordability remain untested with new players. |
-| Next action | Implement and validate the bounded R08.1 module contract below. Preserve R07.5 playable; restore existing Unity license for new Editor/build evidence. Do not start R08.2. |
+| Next action | Finish R08.1 validation after existing Unity licensing is restored: focused/full EditMode, isolated automation runtime, separate Windows candidate, staff/tutorial regressions and actual captures. Source is implemented and standalone checks passed. Preserve R07.5; do not start R08.2. |
 | Human coverage | Prior visual/gameplay approvals stand. Tutorial keyboard/hold/station acceptance and novice usability remain pending. Earlier native mouse/help/focus/quit subset is source92724f8; new vat evidence is automated Windows inspection. |
 | Technical state / connection | TUT foundation: Unity6000.3.21f1/c02631ffc030 verified; CLI0 connected Editors/no callable MCP, guarded batch working. New targeted168/full1762 EditMode passes; existing technician Editor136 checks/errors0/exit0. Protected hashes11/11 unchanged; four existing players retained. No new Windows build/native tutorial input/human playtest. Reverify exact identity on continuation. |
 
@@ -2171,9 +2171,18 @@ Use `Builds/Windows-6000.3.21f1-r07-5-workers-delivery/EvolutionShop.exe` or the
 | Small assignment | Owner / state | Acceptance |
 |---|---|---|
 | R08.1a Scope and baseline | Root / complete with environment blocker | Fresh path/version/process/connection evidence; preserve initial exit198. Current user said Continue; implementation proceeds without pretending licensing is restored. |
-| R08.1b Domain and capacity | r08_1_authority / active | Own Core/ShopAutomation.cs and Tests/EditMode/AutomationTests.cs plus metas. Stable request/state, exact collection/dosing, mixed capacity, manual/worker contention, cancellation and invalid saves tested. |
-| R08.1c Save compatibility | r08_1_save / active | Own SaveStore.cs and save-specific tests. Envelope21, strict current shape, exact legacy20 backup/defaults, unsupported/corrupt saves and write failures preserve prior state. |
-| R08.1d Runtime and UI | Root / active | Own ShopSession, ShopStaffSession, new automation runtime/UI and smoke dispatcher/scenario. Physical controls, atomic persistence, clock/lifecycle integration and clear blocked reasons. |
+| R08.1b Domain and capacity | Root takeover / source implemented | Own Core/ShopAutomation.cs and Tests/EditMode/AutomationTests.cs plus metas. Stable request/state, exact collection/dosing, mixed capacity, manual/worker contention, cancellation and invalid saves tested. |
+| R08.1c Save compatibility | Root takeover / source implemented | Own SaveStore.cs and save-specific tests. Envelope21, strict current shape, exact legacy20 backup/defaults, unsupported/corrupt saves and write failures preserve prior state. |
+| R08.1d Runtime and UI | Root + r08_1_runtime_qa / source implemented | Own ShopSession, ShopStaffSession, new automation runtime/UI and smoke dispatcher/scenario. Physical controls, atomic persistence, clock/lifecycle integration and clear blocked reasons. |
 | R08.1e Validation and delivery | Root / pending; Unity license blocked | Compile, focused/full relevant tests, isolated Editor/Windows automation path and affected staff/tutorial regressions, actual captures, protected-file/process/package audit, local checkpoint and handoff. Do not label prepared tests as executed. |
 
 Six perspectives: give the player one predictable batch helper and clear cancellation; reuse the reachable bench with no floor-plan change; bound state/capacity and priority; keep pure domain rules separate from session persistence and UI; verify conservation/failed writes/reload with real evidence; stop at R08.1 before continuous automation. Domain and save agents have separate file ownership under section8. Root integrates and reviews all source before Unity validation.
+
+
+### R08.1 source checkpoint — validation blocked (2026-10-09)
+
+Root completed domain/save slices after the two assigned agents stopped on usage limits; those agents did not deliver source or validation. Root owns ShopAutomation/AutomationTests, envelope21 and AutomationSaveTests, session/UI integration and runners. r08_1_runtime_qa completed only AutomationSmoke.cs/meta and read-only review. Reviewer found new-night wage ordering and reload bypass of the failed-save latch; root fixed both and reviewer added scenario assertions.
+
+Completed small assignments: one-batch authority/resource guards; physical bench UI and save-before-live-apply; strict current schema/all-off legacy1–20 migration;30 pure domain regression cases;43 Unity-dependent save cases authored; isolated live scenario and14 intended resolution captures authored; standalone compilation and pure domain execution. Preserve failed standalone driver compile and29/30 invalid-fixture run as evidence; corrected run03 passes30/30. Runtime smoke/captures and Unity-dependent cases are **prepared, not run**. Prices36/24 are provisional.
+
+Fresh Unity attempts25436 and29320 exited198: no valid Editor license. Installed/pinned6000.3.21f1 and Windows module remain; no callable MCP/CLI Editor connection. Do not install, upgrade or replace the bridge/engine to work around licensing. Restore the existing license through Unity Hub, then use the prepared r08-1 runners. Full suite, live collection/dosing/priority/save recovery, separate Windows build and actual720p/1080p UI inspection are required before declaring R08.1 complete. Existing R07.5 remains the playable distribution. No R08.2 or deferred tutorial task started.

@@ -106,7 +106,7 @@ namespace EvolutionShop
             if (panel == ShopPanel.TutorialHelp || panel == ShopPanel.Reset || panel == ShopPanel.Presentation) return false;
             if (panel == ShopPanel.DayReport) return Reports.LastDayNumber > 0;
             bool stationPanel = panel == ShopPanel.Incubator || panel == ShopPanel.Tank || panel == ShopPanel.StorageRack ||
-                panel == ShopPanel.Conditioning || panel == ShopPanel.Upgrade || panel == ShopPanel.Counter || panel == ShopPanel.Staff ||
+                panel == ShopPanel.Conditioning || panel == ShopPanel.Automation || panel == ShopPanel.Upgrade || panel == ShopPanel.Counter || panel == ShopPanel.Staff ||
                 panel == ShopPanel.Stocker || panel == ShopPanel.StockerTargets || panel == ShopPanel.Technician || panel == ShopPanel.TechnicianOrders;
             if (!stationPanel) return true;
             if (!World || !Player) return false;
@@ -117,7 +117,7 @@ namespace EvolutionShop
                     panel == ShopPanel.Tank && station.TankId == tutorialReturnTank ||
                     panel == ShopPanel.StorageRack && station.StorageItemId != null && station.StorageItemId == tutorialReturnRack ||
                     panel == ShopPanel.Conditioning && station.ConditionerItemId != null && station.ConditionerItemId == tutorialReturnConditioner ||
-                    panel == ShopPanel.Upgrade && station.Kind == StationKind.Upgrade ||
+                    (panel == ShopPanel.Upgrade || panel == ShopPanel.Automation) && station.Kind == StationKind.Upgrade ||
                     (panel == ShopPanel.Counter || panel == ShopPanel.Staff || panel == ShopPanel.Stocker || panel == ShopPanel.StockerTargets ||
                      panel == ShopPanel.Technician || panel == ShopPanel.TechnicianOrders) && station.Kind == StationKind.Counter) return true;
             }

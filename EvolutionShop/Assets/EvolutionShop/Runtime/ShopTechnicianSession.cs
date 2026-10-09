@@ -142,7 +142,7 @@ namespace EvolutionShop
         void DrawTechnicianPanel()
         {
             Heading("Moss / your lab technician");
-            Small("Prepares discovered recipes from cultures you collected, then carries the finished creatures to a free lab rack. Grower collection, research and conditioning stay in your hands.");
+            Small("Prepares discovered recipes from your available cultures, then carries finished creatures to a free lab rack. The optional lab helper can collect cultures, but waits while Moss has paid work queued. Research and conditioning stay in your hands.");
             Text(ShopStaff.TechnicianWage+" credits per night + day / no hiring fee");
             Small("Scheduled wages repeat each new night when funded. Limited funds pay Pip, then Nori, then Moss. Started wages are not refunded.");
             Space();Text(Technician.Status);Small(TechnicianPaymentLine());

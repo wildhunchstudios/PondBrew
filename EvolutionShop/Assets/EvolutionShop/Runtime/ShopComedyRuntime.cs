@@ -133,6 +133,7 @@ namespace EvolutionShop
         }
         void OnDisable()
         {
+            ResetAutomationClock();
             if(!initialized)return;
             // Release the look-only stage and borrowed camera before this owner stops ticking.
             if(Panel==ShopPanel.Presentation && Player && World)SetPanel(ShopPanel.Pause);

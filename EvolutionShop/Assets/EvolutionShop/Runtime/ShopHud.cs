@@ -206,11 +206,12 @@ namespace EvolutionShop
             hudTheme.Icon(new Rect(1042, 145, 31, 31), ShopUiTheme.Symbol.Flask);
             GUI.Label(new Rect(1084, 144, 164, 24), machine, hudTitleStyle);
             GUI.Label(new Rect(1084, 172, 164, 18), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discoveries", hudSmallStyle);
-            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0 || Stocking.Employee.Hired || Laboratory.Employee.Hired)
+            if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0 || Stocking.Employee.Hired || Laboratory.Employee.Hired || Automation.IsPending)
             {
                 string status = Customers.Status + (Staff.Hired ? "\nPip: " + Cashier.Status : "") +
                     (Stocking.Employee.Hired ? "\nNori: " + Stocker.Status : "") +
-                    (Laboratory.Employee.Hired ? "\nMoss: " + Technician.Status : "");
+                    (Laboratory.Employee.Hired ? "\nMoss: " + Technician.Status : "") +
+                    (Automation.IsPending ? "\nLab helper: " + AutomationStatus : "");
                 float statusHeight = Mathf.Max(34, HudTextHeight(status, hudBodyStyle, 204));
                 HudCard(new Rect(1030, 209, 232, statusHeight + 38), mint);
                 GUI.Label(new Rect(1044, 219, 204, 18), "SHOP & CREW", hudSmallStyle);
@@ -311,7 +312,7 @@ namespace EvolutionShop
             hudTheme.Draw(new Rect(344,106,592,528), hudTheme.DarkCard);
             HudCard(new Rect(350,112,580,518), mint);
             hudTheme.Draw(new Rect(310,127,48,48), hudTheme.DarkCard);
-            hudTheme.Icon(new Rect(318,135,32,32), Panel == ShopPanel.Incubator || Panel == ShopPanel.Conditioning || Panel == ShopPanel.Upgrade ? ShopUiTheme.Symbol.Flask : ShopUiTheme.Symbol.Leaf);
+            hudTheme.Icon(new Rect(318,135,32,32), Panel == ShopPanel.Incubator || Panel == ShopPanel.Conditioning || Panel == ShopPanel.Upgrade || Panel == ShopPanel.Automation ? ShopUiTheme.Symbol.Flask : ShopUiTheme.Symbol.Leaf);
             // Content and footer anchors are deliberately retained for established input scenarios.
             GUILayout.BeginArea(new Rect(377,130,526,fixedFooter ? 423 : 477));
             panelScroll = GUILayout.BeginScrollView(panelScroll, GUIStyle.none, GUI.skin.verticalScrollbar);
@@ -329,6 +330,7 @@ namespace EvolutionShop
                 case ShopPanel.TechnicianOrders: DrawTechnicianOrders(); break;
                 case ShopPanel.DayReport: DrawDayReport(); break;
                 case ShopPanel.Upgrade: DrawUpgrade(); break;
+                case ShopPanel.Automation: DrawAutomationPanel(); break;
                 case ShopPanel.Journal: DrawJournal(); break;
                 case ShopPanel.Tank: DrawTank(); break;
                 case ShopPanel.Arrange: DrawArrangement(); break;
@@ -445,6 +447,11 @@ namespace EvolutionShop
         void DrawIncubator()
         {
             Heading("The incubator");
+            if (Automation.IsPending)
+            {
+                Small("Lab helper: " + AutomationStatus);
+                Button("Cancel preparation / keep cultures", () => CancelAutomationBatch());
+            }
             if (Model.IsIncubatorReservedForTechnician) Small("Moss has reserved this incubator. Pause lab work at the staff counter to use it manually.");
             var inc = Model.Incubator;
             if (inc.Phase == IncubatorPhase.Incubating)
@@ -674,6 +681,8 @@ namespace EvolutionShop
         }
         void DrawUpgrade()
         {
+            Button("Culture preparation / lab helper", () => OpenAutomationMenu());
+            Space();
             DrawSparkResearch();
             Space(); Heading("Siphon equipment");
             Text("SIPHON MK II\nA visibly larger chamber and faster collection.");

@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets, Technician, TechnicianOrders, TutorialHelp }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets, Technician, TechnicianOrders, TutorialHelp, Automation }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -66,6 +66,7 @@ namespace EvolutionShop
                 ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
                 ShopLaboratory.TryRestore(slot.technician,Model,Cycle.DayNumber,out var laboratory);Laboratory=laboratory;
                 RestoreTutorial(slot.tutorial);
+                RestoreAutomation(slot.automation);
                 ShopLayout.TryRestore(slot.layout, out var layout); Layout = layout;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
@@ -221,6 +222,7 @@ namespace EvolutionShop
                 BeginScheduledTechnicianNight();
                 ShowDayReport();
             }
+            TickAutomation(seconds);
             if (result.Matured)
             {
                 belchWait=4f;belchExpiry=8f;
@@ -440,6 +442,7 @@ namespace EvolutionShop
             bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
                 Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
             Panel = panel;
+            if (Paused || panel == ShopPanel.Arrange) ResetAutomationClock();
             if (panel != ShopPanel.Pause) WaitingForSlapKey = false;
             if (SlapGesture != null) SlapGesture.SetPaused(Paused);
             if (Customers != null) Customers.SetPaused(Paused);
@@ -491,6 +494,7 @@ namespace EvolutionShop
                 ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
                 ShopLaboratory.TryRestore(slot.technician,Model,Cycle.DayNumber,out var laboratory);Laboratory=laboratory;
                 RestoreTutorial(slot.tutorial);
+                RestoreAutomation(slot.automation);
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
@@ -519,6 +523,7 @@ namespace EvolutionShop
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
             Tutorial = new ShopTutorial(); ResetTutorialPresentation();
+            Automation = new ShopAutomation(); AutomationBlockedBySave = false; ResetAutomationClock();
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;

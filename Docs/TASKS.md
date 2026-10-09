@@ -1,5 +1,7 @@
 # Prototype tasks
 
+> Current checkpoint: R08.1 source implemented; Unity license blocks runtime/build validation. See AGENTS.md and `Evidence/r08-1-VALIDATION.md`. Earlier entries below are historical.
+
 Updated: 2026-10-03. **Milestone 01 two-room refinement implemented and verified; ready for first human playtest.** `[x]` means the stated work or execution completed, not creative approval. No later milestones started.
 
 ## 01R — agreed front store and back lab refinement
@@ -203,3 +205,10 @@ AGENTS.md remains the sole live roadmap. Evidence: `Evidence/tut-11b-VALIDATION.
 **R07.5 delivered — worker completion humor and interruption safety.** Source `f65f82d`, tag **r07-worker-safety**. Pip, Nori and Moss can celebrate committed work with a named caption, tiny stationary dance and existing shoe squeak. New work, service feedback and interruptions take priority. EditMode **1925/1925**, Editor worker **109**, exact Windows **877 checks across six routes**, runtime errors/exits 0; build errors/warnings 0. Eight actual 720p/1080p worker captures inspected. Protected files 11/11 unchanged. Remaining TUT-11–14 work is **deferred by explicit user request**, not passed; preserve its implementation and evidence. **Next bounded R assignment: R08.1 automatic culture collection/dosing modules.** Human humor/audio and staffing pacing remain unverified.
 
 Canonical plan remains AGENTS.md. Details: `Evidence/r07-5-VALIDATION.md`; playtest: `Evidence/r07-5-PLAYTEST.md`. TUT remainder deferred explicitly; R08.1 is next.
+
+
+## 2026-10-09 — R08.1 implemented source; Unity validation blocked
+
+Collector/doser one-batch helper, physical bench panel, shared resource/worker guards and envelope21 migration are implemented. Standalone compilation of all six assemblies passed;30/30 pure domain NUnit tests passed under Mono. These are not Unity test/build passes.43 new Unity save cases and the isolated automation runtime/capture route are authored and compile, but have not run. Independent runtime review found new-night wage ordering and reload-latch bypass; both fixed with scenario assertions prepared.
+
+Both fresh exact-project Unity probes exited198 for no valid Editor license. No new R08.1 player or screenshots exist. Restore the existing Unity Hub license, then finish focused/full tests, runtime, separate build/regressions and actual720p/1080p UI review. Preserve the R07.5 playable; do not advance R08.2. Protected files11/11 unchanged; four existing players preserved. AGENTS.md is canonical; exact evidence, controls, failures and resume commands: `Evidence/r08-1-VALIDATION.md`. Tutorial remainder remains explicitly deferred.
