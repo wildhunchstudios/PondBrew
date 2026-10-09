@@ -1,5 +1,7 @@
 # Evolution Shop — working instructions and complete-game roadmap
 
+**R08.1 active — one-batch culture collection and dosing modules.** User continuation selects this bounded assignment. Preserve the delivered R07.5 build and all implemented tutorial work; TUT-11–14 remainder stays deferred. Baseline `8bec274` was clean. Project path, installed Unity 6000.3.21f1/c02631ffc030 and Windows module match. Fresh CLI reports no connected Editor; the exact-project batch identity probe exited **198: no valid Unity Editor license**, before opening the project. Source implementation continues; fresh Unity tests/builds are currently blocked, not passed.
+
 **R07.5 delivered — worker completion humor and interruption safety.** Source `f65f82d`, tag **r07-worker-safety**. Pip, Nori and Moss can celebrate committed work with a named caption, tiny stationary dance and existing shoe squeak. New work, service feedback and interruptions take priority. EditMode **1925/1925**, Editor worker **109**, exact Windows **877 checks across six routes**, runtime errors/exits 0; build errors/warnings 0. Eight actual 720p/1080p worker captures inspected. Protected files 11/11 unchanged. Remaining TUT-11–14 work is **deferred by explicit user request**, not passed; preserve its implementation and evidence. **Next bounded R assignment: R08.1 automatic culture collection/dosing modules.** Human humor/audio and staffing pacing remain unverified.
 
 **R07.4 delivered:** Moss starts ordered known recipes from collected cultures and safely carries output to lab racks. Source `4a373b4`, tag **r07-lab-technician**. EditMode1594; Editor135; exact Windows459; build errors/warnings0. Staffing tuning/human playtest pending. Historical R07.4 checkpoint; R07.5 is now delivered and the remaining tutorial work is deferred by the user.
@@ -381,7 +383,7 @@ Current state: TUT-00–10 complete and TUT-11 partially verified, including vat
 
 Depends on: R05 and R07. Output: one complete automatic grow-to-sale route, then bounded configuration for other known recipes.
 
-- [ ] R08.1 Add automatic collection/dosing modules using the same validated rules as manual work, with real input/output capacity.
+- [~] R08.1 Optional one-batch collection/dosing modules in progress; contract and owned tasks below. Unity validation currently blocked by the license probe, not an implementation pass.
 - [ ] R08.2 Connect production jobs, lab storage, stocker replenishment, customer reservations, and cashier transactions into one complete route.
 - [ ] R08.3 Add desired stock levels, recipe/destination configuration, pause controls, shortages, and a clear explanation of each blocked state.
 - [ ] R08.4 Prove normal operation plus full/empty buffers, missing staff, path failure, reorder/cancel, room edits, and interruption/reload without lost/duplicated resources.
@@ -514,10 +516,10 @@ Current limitations: procedural prototype art/UI/audio, provisional prices and b
 
 | Active record | Value |
 |---|---|
-| Current request | User deferred remaining tutorial work and selected R07.5; its implementation and technical validation are delivered. |
+| Current request | Continue R08.1 automatic collection/dosing modules; tutorial remainder remains explicitly deferred. |
 | Runtime changes | Worker completion captions, local-limb dance and existing shoe squeaks now follow committed jobs; bounded request expires or cancels safely. Tutorial, approved rooms, staff transactions and save schema preserved. |
 | User feedback | User selected the guided first shift for external testers. Prior visual/gameplay approvals stand. Tutorial usability and current three-role affordability remain untested with new players. |
-| Next action | R08.1 only: automatic culture collection/dosing modules, using existing resource and production authority. Remaining tutorial tasks stay deferred until requested. |
+| Next action | Implement and validate the bounded R08.1 module contract below. Preserve R07.5 playable; restore existing Unity license for new Editor/build evidence. Do not start R08.2. |
 | Human coverage | Prior visual/gameplay approvals stand. Tutorial keyboard/hold/station acceptance and novice usability remain pending. Earlier native mouse/help/focus/quit subset is source92724f8; new vat evidence is automated Windows inspection. |
 | Technical state / connection | TUT foundation: Unity6000.3.21f1/c02631ffc030 verified; CLI0 connected Editors/no callable MCP, guarded batch working. New targeted168/full1762 EditMode passes; existing technician Editor136 checks/errors0/exit0. Protected hashes11/11 unchanged; four existing players retained. No new Windows build/native tutorial input/human playtest. Reverify exact identity on continuation. |
 
@@ -2155,3 +2157,23 @@ Production source `a73d580` passed full EditMode 1925, Editor worker 109, Window
 Assignments R07.5a–d complete. Root owned scope, production integration, all Unity execution and delivery; r07_5_review owned WorkerComedySmoke.cs/.meta and performed an independent source review. First live route failed after 89 checks because NextToServe includes a paid departing visitor; WaitingCount now correctly gates only queued demand. Original failures retained; full suite and live routes reran after the cashier fix and the later legacy comedy fixture repair. The latter explicitly skips the paused Welcome after New Game; no production or tutorial behavior changed. No gameplay reward or save schema change. The remaining tutorial gate was explicitly deferred by the user before this task, not silently passed.
 
 Use `Builds/Windows-6000.3.21f1-r07-5-workers-delivery/EvolutionShop.exe` or the separately verified **EvolutionShop-WorkerSafety-Windows.zip**. Backspace skips a gag; normal WASD/mouse, held left collection, E stations, Tab journal and Esc menus remain. Report and exact source/process/hash evidence: `Docs/Evidence/r07-5-VALIDATION.md`; controls and short role playtest: `r07-5-PLAYTEST.md`. Ordinary builds use the normal compatible save; automated fixtures were isolated. Previous players and tutorial launcher/profile remain preserved. R08.1 is next, not implemented here.
+
+### R08.1 execution contract — culture preparation modules (2026-10-09)
+
+**Player result:** optional lab-bench modules prepare one known recipe's cultures, saving mastered collection/dosing clicks. Choose a discovered recipe, enable owned modules and request one batch. Collector-only fills that recipe's missing ingredients into the existing shared siphon reservoir; doser-only waits for manually supplied ingredients. With both enabled, collection leads to one exact dose preparation. The player starts incubation. No repeat queue, desired stock, automatic start, transport or grow-to-sale integration is added; those remain R08.2 onward.
+
+**Provisional defaults:** intake collector 36 credits; recipe doser 24 credits; each bought once at the physical research bench during preparation night, after the larger siphon and first Pondlet discovery. Modules start disabled. Central domain constants hold costs; collection uses the existing per-unit collection interval. These prices are not measured campaign balance. The shared reservoir includes staged doses and conditioning return reservations, so there is no extra or invisible resource inventory.
+
+**Authority and recovery:** persist owned/enabled settings, selected known recipe ID and one nullable stable request ID. Current envelope21 adds AutomationSave version1; GameModel6 and other component versions remain. Legacy1–20 ignores injected automation fields and defaults all modules off. Each tick may commit at most one ordinary Collect, one UseKnownRecipe or request completion through staged save-before-live-apply. No culture creation, silent disposal, manual mixture replacement, automatic incubation, recipe discovery or tutorial manual credit. Pause, room editing, closing, disabled stations/session and unavailable saves stop work; no accumulated/offline catch-up. Yield a technician claim and paid active/queued Moss work. Cancel/disable/reload preserve collected cultures and staged mixtures; completed requests cannot replay. A full buffer, empty grower, busy incubator, manual mixture or staff priority has a visible reason and bounded retry. No request changes recipe without explicit cancellation.
+
+**Presentation:** reuse the approved bench and native teal/cream UI; add a dedicated automation panel and compact status. Keep relevant controls visible/scrolled access at 720p/1080p. No new room, assets, package, engine, bridge, external service or paid generation. User's normal save, tutorial launcher/profile, scenes/settings and four existing player processes stay protected. Only root launches Unity.
+
+| Small assignment | Owner / state | Acceptance |
+|---|---|---|
+| R08.1a Scope and baseline | Root / complete with environment blocker | Fresh path/version/process/connection evidence; preserve initial exit198. Current user said Continue; implementation proceeds without pretending licensing is restored. |
+| R08.1b Domain and capacity | r08_1_authority / active | Own Core/ShopAutomation.cs and Tests/EditMode/AutomationTests.cs plus metas. Stable request/state, exact collection/dosing, mixed capacity, manual/worker contention, cancellation and invalid saves tested. |
+| R08.1c Save compatibility | r08_1_save / active | Own SaveStore.cs and save-specific tests. Envelope21, strict current shape, exact legacy20 backup/defaults, unsupported/corrupt saves and write failures preserve prior state. |
+| R08.1d Runtime and UI | Root / active | Own ShopSession, ShopStaffSession, new automation runtime/UI and smoke dispatcher/scenario. Physical controls, atomic persistence, clock/lifecycle integration and clear blocked reasons. |
+| R08.1e Validation and delivery | Root / pending; Unity license blocked | Compile, focused/full relevant tests, isolated Editor/Windows automation path and affected staff/tutorial regressions, actual captures, protected-file/process/package audit, local checkpoint and handoff. Do not label prepared tests as executed. |
+
+Six perspectives: give the player one predictable batch helper and clear cancellation; reuse the reachable bench with no floor-plan change; bound state/capacity and priority; keep pure domain rules separate from session persistence and UI; verify conservation/failed writes/reload with real evidence; stop at R08.1 before continuous automation. Domain and save agents have separate file ownership under section8. Root integrates and reviews all source before Unity validation.
