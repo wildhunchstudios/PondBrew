@@ -161,7 +161,7 @@ namespace EvolutionShop
                 throw new InvalidOperationException("Cannot stage culture preparation transaction.");
             if (!change(automation, game))
             { Notify("Requires an owned module, a known recipe and no other pending request. Existing cultures are safe."); return false; }
-            if (!SaveStore.Write(SavePath, CaptureStaffSlot(game, Staff, automation: automation), out var error))
+            if (!SaveStore.Write(SavePath, CaptureStaffSlotWithAutomation(game, Staff, null, null, null, automation), out var error))
             {
                 SaveError = error;
                 AutomationBlockedBySave = true;

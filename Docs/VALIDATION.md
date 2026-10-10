@@ -315,3 +315,17 @@ Source checkpoint `2501b94`, tag **r08-1-source-license-blocked**. Resume valida
 ## 2026-10-09 — R08.1 continuation recheck
 
 Fresh exact-project probe18604 still exits198: Unity access token/license unavailable. Independent domain/save/session source review completed without additional concrete defects. No gameplay edits, new tests/builds/captures or later milestone. Source matches prior standalone03;11 protected files and four existing players preserved. Evidence `Evidence/r08-1-resume-01-*`; AGENTS.md updated. Next: user signs in to Unity Hub and refreshes existing license, then resume prepared R08.1 Unity validation.
+
+
+## 2026-10-10 — R08.1 Unity validation checkpoint
+
+
+## 2026-10-10 — R08.1 license restored; Unity validation in progress
+
+User reported license activated and authorized the missing checks. Fresh pinned Editor opened exact EvolutionShop project PID42424 after prior no-instance checks; no MCP bridge was used. Initial focused EditMode run retained actual failure evidence: 71/73, where the new save test fixture used an invalid33-character request ID (two round-trip cases). Corrected the fixture and asserted request creation; rerun **73/73 passed**.
+
+First full-suite run exposed five reflection errors because production added a sixth optional parameter to `CaptureStaffSlot`, breaking existing reflection lookup/invocation. Replaced that change with the original five-parameter API forwarding to a distinctly named automation-aware capture method. Final full EditMode: **1,998/1,998 passed, zero failed/skipped**. Exact focused/full logs, XML and receipts under `Evidence/r08-1-editmode-resume-20261010-*`; both initial failing runs retained.
+
+The actual Unity Editor `-evolutionAutomationSmoke` route passed **247 assertions**, Unity6000.3.21f1, zero captured runtime errors, elapsed39.54s. Report `Evidence/r08-1-editor-resume-20261010-automation01/smoke-result.json`; seven Editor camera exports are diagnostic only. Labelled fixture limitations include seeded300 credits/manual discovery, synthetic E/menu choices and one long-frame wage-priority boundary. No human/native-input, pricing-balance, or performance claim.
+
+Still required: separate exact Windows development candidate, automation player smoke at1280x720 and1920x1080, inspect actual player captures, run Technician/Stocker/Staff/Tutorial regressions, check build warnings/artifact/package, audit normal save/protected files/four pre-existing players, then update R08.1 delivery status. Do not start R08.2.

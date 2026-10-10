@@ -8,6 +8,7 @@ namespace EvolutionShop.Tests
     public sealed class AutomationSaveTests
     {
         const string Prefix="EvolutionShop-AutomationSaveTests-";
+        const string RequestId="78dc8d9afebd48d2a29c822e667e2736";
         string directory;
         string PathFor()=>Path.Combine(directory,"slot.json");
         static GameConfig Config=>GameConfig.CreateDefault();
@@ -26,7 +27,7 @@ namespace EvolutionShop.Tests
             Assert.That(GameModel.TryRestore(Config,state,out var game,out _),Is.True);
             var a=new ShopAutomation();Assert.That(a.Purchase(game,true)&&a.Purchase(game,false),Is.True);
             a.SetEnabled(true,true);a.SetEnabled(false,true);a.SelectRecipe(game,"pondlet");
-            if(pending)a.Request(game,"78dc8d9afebd48d2a29c822e667e2736d");
+            if(pending)Assert.That(a.Request(game,RequestId),Is.True);
             return new SlotData{game=game.CaptureSave(),cycle=new ShopDayCycle().CaptureSave(),automation=a.CaptureSave()};
         }
         [TestCase(false)] [TestCase(true)]

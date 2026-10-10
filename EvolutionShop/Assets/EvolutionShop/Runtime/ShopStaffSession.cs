@@ -82,10 +82,13 @@ namespace EvolutionShop
             return true;
         }
 
-        SlotData CaptureStaffSlot(GameModel game,ShopStaff staff,ShopStocking stocking=null,ShopTradeLedger reports=null,ShopLaboratory laboratory=null,ShopAutomation automation=null) => new SlotData
+        SlotData CaptureStaffSlot(GameModel game,ShopStaff staff,ShopStocking stocking=null,ShopTradeLedger reports=null,ShopLaboratory laboratory=null)
+            => CaptureStaffSlotWithAutomation(game,staff,stocking,reports,laboratory,Automation);
+
+        SlotData CaptureStaffSlotWithAutomation(GameModel game,ShopStaff staff,ShopStocking stocking,ShopTradeLedger reports,ShopLaboratory laboratory,ShopAutomation automation) => new SlotData
         {
             game=game.CaptureSave(),cycle=Cycle.CaptureSave(),trades=(reports??Reports).CaptureSave(),
-            reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),technician=(laboratory??Laboratory).CaptureSave(game),tutorial=Tutorial.CaptureSave(),automation=(automation??Automation).CaptureSave(),
+            reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),technician=(laboratory??Laboratory).CaptureSave(game),tutorial=Tutorial.CaptureSave(),automation=automation.CaptureSave(),
             sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags
         };
 
