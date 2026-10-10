@@ -1,6 +1,6 @@
-# Resume — Milestone 01 two-room playable
+# Resume — Evolution Shop current checkpoint
 
-> Current checkpoint: R08.1 source implemented; Unity license blocks runtime/build validation. See AGENTS.md and `Evidence/r08-1-VALIDATION.md`. Earlier entries below are historical.
+> Current checkpoint: R08.1 technical validation complete; candidate ready for the first human playtest. R08.2 remains unstarted. See AGENTS.md and Evidence/r08-1-VALIDATION.md.
 
 Workspace: `C:\dev\DumbVideoGameStudio`. Unity project: `C:\dev\DumbVideoGameStudio\EvolutionShop`. Verified2026-10-03. Independent game; Dungeon Project and PersonalAssistant were not modified or imported.
 
@@ -8,9 +8,11 @@ Workspace: `C:\dev\DumbVideoGameStudio`. Unity project: `C:\dev\DumbVideoGameStu
 
 The user explicitly confirmed two physical rooms: **front store** with the two display tanks and sales counter; **back lab** with Bloom/Flow growers, incubator, and siphon upgrade bench. A collidable partition has an open3.2m×2.8m doorway. Player starts in the store. Signs, distinct floor accents, and HUD directions explain the trip between rooms. Depth-tested world labels prevent text showing through walls. The siphon has a visible physical numeric display; incubation status is above it in the upper-right HUD.
 
-All Milestone01 gameplay remains: free growers, timed siphon, exact integer recipes, incubation/discovery, two tanks, chosen sales, currency, physical capacity/speed upgrade, one compatible local save, settings, and confirmed reset. No later milestone work started.
+This paragraph records the Milestone01 gameplay baseline. R08.1 implementation and current candidate are documented at the end; R08.2 has not started.
 
-## Verified runtime and evidence
+## Historical Milestone01 runtime and evidence
+
+These results are from the 2026-10-03 two-room checkpoint and its Unity6000.3.15f1 pin. The current R08.1 candidate and pinned6000.3.21f1 results are appended below.
 
 - Editor pin/installed executable: Unity6000.3.15f1(c1aa84e375f6); URP17.3.0, InputSystem1.19.0, TestFramework1.6.0.
 - No editor bridge was assumed. Initial recheck showed no running Unity process and zero Pipeline instances. Targeted batch invocation and the exact-project guard verified EvolutionShop in editor logs. No MCP bridge installed.
@@ -196,3 +198,13 @@ First full-suite run exposed five reflection errors because production added a s
 The actual Unity Editor `-evolutionAutomationSmoke` route passed **247 assertions**, Unity6000.3.21f1, zero captured runtime errors, elapsed39.54s. Report `Evidence/r08-1-editor-resume-20261010-automation01/smoke-result.json`; seven Editor camera exports are diagnostic only. Labelled fixture limitations include seeded300 credits/manual discovery, synthetic E/menu choices and one long-frame wage-priority boundary. No human/native-input, pricing-balance, or performance claim.
 
 Still required: separate exact Windows development candidate, automation player smoke at1280x720 and1920x1080, inspect actual player captures, run Technician/Stocker/Staff/Tutorial regressions, check build warnings/artifact/package, audit normal save/protected files/four pre-existing players, then update R08.1 delivery status. Do not start R08.2.
+
+## 2026-10-10 — R08.1 candidate validated
+
+The Unity license was reported activated; the pinned Editor ran the exact EvolutionShop project in batch mode. There was no interactive Editor/MCP connection. Source checkpoint bf29ebe is built as a separate Windows development candidate at Builds/Windows-6000.3.21f1-r08-1-automation-candidate/EvolutionShop.exe. The Unity build summary says Succeeded, zero errors/warnings, exit0; executable SHA256 C8B0D73DC40E4F2CDDBF656CFB7257FCB8273DA22E44E12A8694CD8E275C6FB2.
+
+Focused EditMode73/73 and full EditMode1,998/1,998 passed. Editor automation247 passed. Candidate automation passed247 checks at1280x720 and247 at1920x1080. Regressions passed: Technician136, Stocker133, Staff102 and Tutorial124. Each Windows route reported zero runtime errors and exited0. Exact logs, receipts, reports and player images are under Docs/Evidence/r08-1-*resume-20261010*; final audit JSON records hashes and process state. Eleven protected files, including the normal profile and backups, match baseline. Previous R07.5 executable/package and four original player processes remain.
+
+Visual note: first locked-state 720p screen image is black; subsequent captures are visible. The culture panel is scrollable and its bench-return control is below the initial viewport. Human scroll/input usability remains untested. Unity player logs include MemoryLeaks cleanup telemetry without an exception or smoke runtime error; the build log contains a Licensing::Module access-token update message despite a successful build summary.
+
+R08.1 is ready for the user's first playtest, not yet user-accepted. Use WASD, mouse, E, Tab, F1 and Esc. At the physical bench install the optional Collector36 and Doser24, choose a discovered recipe, enable modules and request one batch; incubation still starts manually at the incubator. Prices remain provisional. The normal profile will be loaded on ordinary launch, so back it up first if it must remain unchanged. TUT-11–14 is still deferred, and R08.2 has not started.

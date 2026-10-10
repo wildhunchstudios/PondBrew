@@ -1,8 +1,8 @@
 # Validation evidence
 
-> Current checkpoint: R08.1 source implemented; Unity license blocks runtime/build validation. See AGENTS.md and `Evidence/r08-1-VALIDATION.md`. Earlier entries below are historical.
+> Current checkpoint: R08.1 technical validation complete; the separate candidate awaits the first human playtest. R08.2 is not started. See AGENTS.md and Evidence/r08-1-VALIDATION.md.
 
-Updated: 2026-10-03. Milestone 01 is ready for the first human playtest. Checkpoint 00, 50 EditMode cases, 70 Editor Play-mode checks, and 73 final Windows player checks passed. Final build: zero errors and zero warnings. No known critical progression blocker was found.
+Historical Milestone01 evidence from 2026-10-03 follows. Current R08.1 candidate results are appended at the end of this file.
 
 ## Environment / Checkpoint 00
 
@@ -329,3 +329,11 @@ First full-suite run exposed five reflection errors because production added a s
 The actual Unity Editor `-evolutionAutomationSmoke` route passed **247 assertions**, Unity6000.3.21f1, zero captured runtime errors, elapsed39.54s. Report `Evidence/r08-1-editor-resume-20261010-automation01/smoke-result.json`; seven Editor camera exports are diagnostic only. Labelled fixture limitations include seeded300 credits/manual discovery, synthetic E/menu choices and one long-frame wage-priority boundary. No human/native-input, pricing-balance, or performance claim.
 
 Still required: separate exact Windows development candidate, automation player smoke at1280x720 and1920x1080, inspect actual player captures, run Technician/Stocker/Staff/Tutorial regressions, check build warnings/artifact/package, audit normal save/protected files/four pre-existing players, then update R08.1 delivery status. Do not start R08.2.
+
+## 2026-10-10 — R08.1 technical candidate validated
+
+Unity 6000.3.21f1 built source bf29ebe to Builds/Windows-6000.3.21f1-r08-1-automation-candidate/EvolutionShop.exe. Build summary: Succeeded,0 build errors,0 warnings, process exit0. Focused EditMode73/73; full EditMode1,998/1,998; Editor automation247. Exact Windows automation passed247 checks at1280x720 and247 at1920x1080. Technician136, Stocker133, Staff102 and Tutorial124 regressions passed. All player reports show runtimeErrors0 and process exits0.
+
+Capture review covers real player images at both sizes. The first locked-state 720p screen capture is black; later 720p captures render correctly. The lab panel is scrollable, with its lower bench-return action below the initial viewport. Native-input/human playability, sound, provisional module prices, and campaign balance remain unverified. Build log includes an access-token update diagnostic though the editor produced and ran the candidate; player shutdown emits Unity MemoryLeaks telemetry without a captured runtime exception. Protected11/11 hashes and normal save match baseline; prior R07.5 build/package and four original players remain.
+
+Candidate and exact evidence: Docs/Evidence/r08-1-VALIDATION.md. Await first user playtest before R08.2; tutorial remainder stays explicitly deferred.

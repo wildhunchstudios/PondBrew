@@ -1,8 +1,22 @@
 # Prototype tasks
 
-> Current checkpoint: R08.1 source implemented; Unity license blocks runtime/build validation. See AGENTS.md and `Evidence/r08-1-VALIDATION.md`. Earlier entries below are historical.
+> Current checkpoint: R08.1 technical validation complete. Separate Windows candidate is ready for the first human playtest; R08.2 has not started. See AGENTS.md and Evidence/r08-1-VALIDATION.md.
 
-Updated: 2026-10-03. **Milestone 01 two-room refinement implemented and verified; ready for first human playtest.** `[x]` means the stated work or execution completed, not creative approval. No later milestones started.
+Updated: 2026-10-10. The Milestone01 entry below is historical. Current status: R08.1 technical candidate is ready for the first human playtest; R08.2 is unstarted.
+
+## R08.1 — one-batch culture preparation modules (2026-10-10)
+
+- [x] Focused EditMode: 73/73; full EditMode: 1,998/1,998, zero failures/skips.
+- [x] Unity Editor automation: 247 assertions, zero runtime errors.
+- [x] Separate pinned Windows development candidate built with zero build errors/warnings.
+- [x] Exact standalone automation route: 247/247 at 1280x720 and 247/247 at 1920x1080.
+- [x] Regressions: Technician136, Stocker133, Staff102 and Tutorial124; all process exits0 and captured runtime errors0.
+- [x] Inspect actual UI captures at both resolutions; compare eleven protected paths; preserve R07.5 package/player and four original processes.
+- [ ] First human playtest of module purchase, one-batch collection/dosing, manual incubation, save recovery and panel scrolling.
+- [ ] Keep R08.2 unstarted until the user gives playtest feedback.
+
+Candidate: Builds/Windows-6000.3.21f1-r08-1-automation-candidate/EvolutionShop.exe. Controls: WASD move, mouse look, E interact, Tab journal, F1 help, Esc pause. At the physical lab bench, open Culture preparation, install the optional Collector (36 credits) and Recipe Doser (24 credits), choose a discovered recipe, enable owned modules and request one batch; start incubation manually at the incubator. Prices are provisional. The candidate uses the normal local save on ordinary launch; back it up before playtest if the existing profile must remain unchanged. The first 720p locked-state capture is black; subsequent captures render. The panel has a scrollable content area and its bench-return action begins below the initial viewport. Details: Evidence/r08-1-VALIDATION.md and Evidence/r08-1-final-audit-20261010.json.
+
 
 ## 01R — agreed front store and back lab refinement
 
