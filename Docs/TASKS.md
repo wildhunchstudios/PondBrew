@@ -1,5 +1,7 @@
 # Prototype tasks
 
+> Latest continuation: FX-01 cue/asset contracts complete; next is FX-02. See AGENTS.md for authoritative current scope and fx-01/validation.json for static evidence. Older active-status paragraphs below are historical.
+
 > Current selected work: FX-00 baseline/state audit is complete. FX-01 cue/asset contracts is next; all later FX assignments remain open. Canonical statuses, dependencies and gates remain in AGENTS.md FX.1–FX.9. Evidence: Evidence/fx-00-BASELINE.md.
 
 > Preserved R08.4 delivery: Normal desktop execution restored Editor licensing IPC; final full EditMode2,018, Editor613 and exact Windows1,226 checks passed. Separate candidate: Builds/Windows-6000.3.21f1-r08-4-recovery/EvolutionShop.exe. Source8406a86; delivery tag r08-recovery-validated. R08.5 remains open; FX is the current selected presentation workstream. See AGENTS.md and Docs/Evidence/r08-4-VALIDATION.md.
@@ -279,3 +281,12 @@ First full-suite run exposed five reflection errors because production added a s
 The actual Unity Editor `-evolutionAutomationSmoke` route passed **247 assertions**, Unity6000.3.21f1, zero captured runtime errors, elapsed39.54s. Report `Evidence/r08-1-editor-resume-20261010-automation01/smoke-result.json`; seven Editor camera exports are diagnostic only. Labelled fixture limitations include seeded300 credits/manual discovery, synthetic E/menu choices and one long-frame wage-priority boundary. No human/native-input, pricing-balance, or performance claim.
 
 Still required: separate exact Windows development candidate, automation player smoke at1280x720 and1920x1080, inspect actual player captures, run Technician/Stocker/Staff/Tutorial regressions, check build warnings/artifact/package, audit normal save/protected files/four pre-existing players, then update R08.1 delivery status. Do not start R08.2.
+
+
+## FX-01 contract checkpoint — 2026-10-11
+
+FX-01 delivered 41 typed cue contracts and 10 explicit attachment records for the lab/operating hands/Pondlet aquarium, numeric anticipation/action/settle poses, cancellation/identity policies, original local hand/export plan and initial emitter/particle/voice/material ceilings. These are frozen design contracts, not implemented effects or performance passes. Source/accepted CollectorKit mouth and upgraded cap bounds informed the plan; fixed hatchery frame retained. Full contract: Docs/Design/FX01_CUE_ASSET_CONTRACT.md; structured specification and original schematic: Docs/Evidence/fx-01/contracts.json and key-poses.png. Static validation and preservation evidence: fx-01/validation.json. No Unity/player build or game tests ran; runtime/asset/settings/save and preserved players unchanged. FX-02 minimal presentation integration is next; FX-06 human motion/audio sample approval remains open.
+
+Canonical next assignment is AGENTS.md FX-02; this record is historical evidence, not a competing roadmap. No new game build/tests or current live Unity/Blender connection is claimed.
+
+FX-01 final evidence: **26/26 static checks passed**, process exit0; all540 tracked source/art/settings files and13 protected files unchanged. Conservative Pondlet reference box covered26,568 sampled corners plus a continuous-angle margin; actual Unity mesh sweep remains pending. The original local key-pose diagram was visually inspected. Delivery checkpoint tag: **fx-cue-contracts**. No game tests/build were run for this documentation assignment.

@@ -14,3 +14,6 @@
 /Docs/Evidence/r08-4/** -text
 # Preserve byte-hashed FX-00 raw baseline evidence.
 /Docs/Evidence/fx-00/** -text
+
+# Preserve byte-hashed FX-01 contract evidence.
+/Docs/Evidence/fx-01/** -text whitespace=cr-at-eol
