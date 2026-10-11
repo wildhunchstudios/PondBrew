@@ -63,5 +63,32 @@ namespace EvolutionShop.Tests
             Assert.That(parent && source && mesh && material, Is.True); Assert.That(pool.OwnedCount, Is.Zero); Assert.That(pool.ActiveCount, Is.Zero);
             Assert.That(Emit(), Is.False);
         }
+        [Test] public void TravelUsesNewSlotAndMovingMouthNotAnotherFreshMote()
+        {
+            var end = new GameObject("Moving mouth"); end.transform.SetParent(parent.transform); end.transform.position=Vector3.right*2;
+            Assert.That(Emit(false),Is.True);
+            Assert.That(pool.EmitTravel(cues,token,source.transform,Vector3.zero,end.transform,Vector3.zero,material,.04f),Is.True);
+            pool.Tick(cues,.26f);
+            Assert.That(pool.Root.GetChild(24).position.x,Is.EqualTo(0).Within(.001));
+            Assert.That(pool.Root.GetChild(25).position.x,Is.EqualTo(.5f).Within(.001));
+            Assert.That(pool.Root.GetChild(25).position.y,Is.EqualTo(.12f).Within(.001));
+            end.transform.position=Vector3.right*4;pool.Tick(cues,.01f);
+            Assert.That(pool.Root.GetChild(25).position.x,Is.GreaterThan(1));
+            end.SetActive(false);pool.Tick(cues,.02f);Assert.That(pool.ActiveCount,Is.EqualTo(0));
+        }
+        [Test] public void TravelExhaustionRetainsReservedActionsAndReusesFixedObjects()
+        {
+            pool.SetLowDetail(true);var end=new GameObject("Mouth");end.transform.SetParent(parent.transform);
+            for(int i=0;i<8;i++)Assert.That(pool.EmitTravel(cues,token,source.transform,Vector3.zero,end.transform,Vector3.zero,material,.04f),Is.True);
+            Assert.That(pool.EmitTravel(cues,token,source.transform,Vector3.zero,end.transform,Vector3.zero,material,.04f),Is.False);
+            Assert.That(Emit(),Is.True);pool.CancelAll();Assert.That(pool.ActiveCount,Is.Zero);
+            Assert.That(pool.Root.childCount,Is.EqualTo(96));Assert.That(pool.EmitTravel(cues,token,source.transform,Vector3.zero,end.transform,Vector3.zero,material,.04f),Is.True);
+            pool.Tick(cues,.53f);Assert.That(pool.ActiveCount,Is.Zero);
+        }
+        [Test] public void MissingTravelEndpointCannotAllocateOrEmit()
+        {
+            Assert.That(pool.EmitTravel(cues,token,source.transform,Vector3.zero,null,Vector3.zero,material,.04f),Is.False);
+            Assert.That(pool.ActiveCount,Is.Zero);Assert.That(pool.SpawnedCount,Is.Zero);
+        }
     }
 }

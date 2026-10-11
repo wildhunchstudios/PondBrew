@@ -32,6 +32,7 @@ namespace EvolutionShop
             if (template && template.sharedMesh) fxPool = new FxEffectPool(transform, template.sharedMesh);
             BindFxOwner("tool", null, toolBody, true);
             fxPolicy = FxViewPolicy.Visible;
+            BuildLabFx();
         }
         public FxOwnerToken BindFxOwner(string key, string identity, Transform root, bool followsTool = false)
         {
@@ -71,7 +72,8 @@ namespace EvolutionShop
         public bool TryFxCue(FxCueId id, uint sequence, FxCueOrigin origin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom)
         {
             if (!fxEnabled || fxCues == null || !isActiveAndEnabled || fxPolicy == FxViewPolicy.Paused || fxPolicy == FxViewPolicy.Unfocused || fxPolicy == FxViewPolicy.Arrange) return false;
-            // FX-02 only binds the three proof cues. Other typed names remain future production work.
+            if (LabCue(id)) return TryLabCue(id, sequence, origin, culture);
+            // Other typed names remain later production work.
             if (id != FxCueId.CollectedUnit && id != FxCueId.DoseCommitted && id != FxCueId.HandRefused) return false;
             if (id == FxCueId.CollectedUnit && fxPolicy != FxViewPolicy.Visible) return false;
             // Automatic callers have no hand/tool binding. Real module/staff art is a later assignment.
@@ -81,6 +83,7 @@ namespace EvolutionShop
             int priority = id == FxCueId.HandRefused ? 5 : 4;
             float duration = id == FxCueId.HandRefused ? .18f : .28f;
             if (!fxCues.Play(token, id, sequence, origin, duration, priority)) return false;
+            if (id == FxCueId.HandRefused) { fxPool?.Cancel(token); if (fxPolicy == FxViewPolicy.Modal) ShowLabRefusal(culture); }
             Transform source = atVessel && displays.TryGetValue("incubator", out var vessel) ? vessel.Root.parent : id == FxCueId.CollectedUnit ? ToolChamber : toolBody;
             var point = atVessel ? new Vector3(0, 1.48f, -.46f) : id == FxCueId.CollectedUnit ? new Vector3(0, -.02f, -.13f) : new Vector3(.085f, -.129f, -.195f);
             Material accent = id == FxCueId.HandRefused ? gold : culture == CultureKind.Flow ? flowMat : culture == CultureKind.Spark ? sparkMat : culture == CultureKind.Mist ? mistMat : bloomMat;
@@ -88,10 +91,15 @@ namespace EvolutionShop
             fxPool?.Emit(fxCues, token, source, point, accent, duration, fxReducedMotion ? .025f : .055f);
             return true;
         }
-        public void CancelFxOwner(FxOwnerToken owner) { fxCues?.Cancel(owner); fxPool?.Cancel(owner); }
+        public void CancelFxOwner(FxOwnerToken owner)
+        {
+            if (fxCues != null && owner.Equals(fxCues.Find("incubator"))) labDoseRemaining = labHatchRemaining = 0;
+            if (fxCues != null && owner.Equals(fxCues.Find("lab-collector"))) labModuleRemaining = 0;
+            fxCues?.Cancel(owner); fxPool?.Cancel(owner);
+        }
         public void CancelFxTransient()
         {
-            fxCues?.CancelAll(); fxPool?.CancelAll();
+            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)
             { particles[i].Root.gameObject.SetActive(false); Destroy(particles[i].Root.gameObject); }

@@ -231,15 +231,18 @@ namespace EvolutionShop
                 {
                     revealedSpecies = result.SpeciesId;
                     revealUntil = Time.unscaledTime + 3.5f;
-                    sound.Discovery();
+                    if (result.SpeciesId != "pondlet") sound.Discovery();
                 }
-                else sound.Feedback(true);
+                else if (result.SpeciesId != "pondlet") sound.Feedback(true);
                 Notify("A new specimen is ready. Use an empty display or lab rack to store it.");
             }
             if (result.ConditionedCount > 0)
             { sound.Feedback(true); Notify(result.ConditionedCount + " Lanternfin ready in the conditioning vat. Collect at a rack or display."); }
-            if (phaseChanged || result.Matured || result.ConditionedCount > 0) SaveNow();
+            bool labSaved = true;
+            if (phaseChanged || result.Matured || result.ConditionedCount > 0) labSaved = SaveNow();
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+            ReconcileLabPresentation();
+            if (result.Matured && result.SpeciesId == "pondlet") PresentLabHatch(result.FirstDiscovery, labSaved);
         }
         public bool OpenForDay()
         {
@@ -378,7 +381,7 @@ namespace EvolutionShop
             if (result.Success)
             {
                 Tutorial.ObserveCollection(Model, kind, result, TutorialActionOrigin.Player);
-                World.PulseHarvest(kind); sound.Collect(); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+                World.PulseHarvest(kind); if (kind != CultureKind.Bloom && kind != CultureKind.Flow) sound.Collect(); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
                 PresentFxResult(result, SaveNow(), FxCueId.CollectedUnit, FxCueOrigin.Manual, kind);
             }
             else Notify(FailureText(result.Failure));
@@ -413,7 +416,7 @@ namespace EvolutionShop
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
         ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom)
         {
-            sound.Feedback(result.Success);
+            if (!result.Success || (fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
             if (result.Success)
             {
                 Notify("Done.", 1.3f);

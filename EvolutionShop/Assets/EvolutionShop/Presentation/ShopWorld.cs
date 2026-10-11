@@ -655,11 +655,13 @@ namespace EvolutionShop
             bool next = active && TryHarvestCulture(station, out harvestingCulture);
             if (harvesting && !next) CancelFxTransient();
             harvesting = next;
+            labHarvestSource = next && station ? station.transform : null;
         }
 
         public void PulseHarvest(CultureKind kind)
         {
             harvestKick = 1;
+            if (kind == CultureKind.Bloom || kind == CultureKind.Flow) return;
             SpawnParticle(kind);
             SpawnParticle(kind);
         }
@@ -687,11 +689,10 @@ namespace EvolutionShop
             // Font rebuild callbacks handle atlas swaps even while the game is paused.
             // This also keeps the material current across renderer/device refreshes.
             foreach (var font in fontMaterials.Keys) FontAtlasRebuilt(font);
-            AnimateCells(bloomCells, time, .37f);
-            AnimateCells(flowCells, time, 2.1f);
+            // Bloom/Flow have one pose writer in TickLabFx.
             AnimateSparkCells(time);
             AnimateConditioners(time);
-            if (incubationRing) incubationRing.localRotation = Quaternion.Euler(0, time * 24, 15);
+            // The accepted opaque hatchery frame remains fixed; use visible fluid/needle instead.
             for (int i = 0; i < reservoirCells.Count; i++)
             {
                 float angle = i * 2.399f + time * .6f;
@@ -717,7 +718,7 @@ namespace EvolutionShop
                 p.x = .72f + Mathf.Sin(time * 1.1f + i) * .025f;
                 bubbles[i].localPosition = p;
             }
-            if (harvesting)
+            if (harvesting && harvestingCulture != CultureKind.Bloom && harvestingCulture != CultureKind.Flow)
             {
                 emissionClock -= dt;
                 if (emissionClock <= 0)
@@ -741,8 +742,9 @@ namespace EvolutionShop
             if (ToolRoot)
             {
                 ToolRoot.localPosition = new Vector3(.33f, -.16f + Mathf.Sin(time * 1.6f) * .003f, .58f - harvestKick * .017f);
-                toolNozzle.localRotation = Quaternion.Euler(0, 0, harvesting ? Mathf.Sin(time * 39) * 3 : 0);
+                toolNozzle.localRotation = Quaternion.Euler(0, 0, harvesting && harvestingCulture != CultureKind.Bloom && harvestingCulture != CultureKind.Flow ? Mathf.Sin(time * 39) * 3 : 0);
             }
+            TickLabFx(time, dt);
         }
 
         static void AnimateCells(List<Transform> cells, float time, float seed)

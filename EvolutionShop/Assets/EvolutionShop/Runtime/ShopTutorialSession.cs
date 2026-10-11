@@ -161,7 +161,7 @@ namespace EvolutionShop
             return PerformWithFx(result, fxCue, FxCueOrigin.Manual, culture).Success;
         }
         public bool DoseCulture(CultureKind culture) => PrepareManually(() => Model.Dose(culture), FxCueId.DoseCommitted, culture);
-        public bool ReturnCultureDose(CultureKind culture) => PrepareManually(() => Model.ReturnDose(culture));
+        public bool ReturnCultureDose(CultureKind culture) => PrepareManually(() => Model.ReturnDose(culture), FxCueId.DoseReturned, culture);
         public bool ClearCultureDoses() => PrepareManually(() => Model.ClearDoses());
         public bool ReleaseCulture(CultureKind culture) => PrepareManually(() => Model.ReleaseCulture(culture));
         public bool PrepareKnownRecipe(string speciesId) => PrepareManually(() => Model.UseKnownRecipe(speciesId));
@@ -170,7 +170,7 @@ namespace EvolutionShop
             if (!AtTutorialIncubator()) return false;
             var result = Model.BeginIncubation();
             Tutorial.ObserveStarted(Model, result, TutorialActionOrigin.Player);
-            if (!Perform(result).Success) return false;
+            if (!PerformWithFx(result, FxCueId.IncubationStarted).Success) return false;
             SetPanel(ShopPanel.None); return true;
         }
     }

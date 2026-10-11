@@ -16,7 +16,7 @@ namespace EvolutionShop
         public float LastComedyGain { get; private set; }
         public bool ServicePlaying => source && source.isPlaying;
         public bool ComedyPlaying => comedySource && comedySource.isPlaying;
-        public int ActiveVoiceCount => (ServicePlaying ? 1 : 0) + (ComedyPlaying ? 1 : 0);
+        public int ActiveVoiceCount => (ServicePlaying ? 1 : 0) + (ComedyPlaying ? 1 : 0) + (LabPlaying ? 1 : 0);
         public bool ServicePriorityActive => Time.realtimeSinceStartupAsDouble < servicePriorityUntil;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Validation reads the exact generated clips; no duplicated synthesis or playback.
@@ -37,6 +37,7 @@ namespace EvolutionShop
             reject = Tone("soft blocked", 170, 0.14f, -30);
             discovery = Tone("new life", 520, 0.7f, 600);
             slap = MakeSlap();
+            BuildLabAudio();
             for (int kind = 1; kind <= 5; kind++)
                 for (int variation = 0; variation < 2; variation++)
                     comedyClips[(kind - 1) * 2 + variation] = MakeComedy((ComedyKind)kind, variation);
@@ -146,12 +147,13 @@ namespace EvolutionShop
         }
         void OnDisable()
         {
-            StopComedy();
+            StopComedy(); StopLabAudio();
             if (source) { source.Stop(); source.clip = null; }
             servicePriorityUntil = 0;
         }
         void OnDestroy()
         {
+            DisposeLabAudio();
             if (collect) Destroy(collect);
             if (confirm) Destroy(confirm);
             if (reject) Destroy(reject);

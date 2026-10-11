@@ -447,6 +447,7 @@ namespace EvolutionShop
         void DrawIncubator()
         {
             Heading("The incubator");
+            DrawLabDoseStrip();
             if (Automation.IsPending)
             {
                 Small("Lab helper: " + AutomationStatus);

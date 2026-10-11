@@ -318,23 +318,24 @@ namespace EvolutionShop
         void TickAutomation(float seconds)
         {
             MaintainAutomationTarget();
-            if (seconds <= 0 || float.IsNaN(seconds) || float.IsInfinity(seconds) ||
-                !Automation.IsPending || AutomationGate() != null)
+            labModuleRuntimeBlocked = false;
+            if (seconds <= 0 || float.IsNaN(seconds) || float.IsInfinity(seconds) || !Automation.IsPending)
             { ResetAutomationClock(); return; }
+            if (AutomationGate() != null) { labModuleRuntimeBlocked = true; ResetAutomationClock(); return; }
             bool priority = AutomationTechnicianPriority;
-            if (priority) { ResetAutomationClock(); return; }
+            if (priority) { labModuleRuntimeBlocked = true; ResetAutomationClock(); return; }
             bool technicianHandoff = AutomationTechnicianHandoff;
             var next = Automation.NextStep(Model, priority, technicianHandoff);
             if (next.Kind == AutomationStepKind.None ||
                 (next.Kind == AutomationStepKind.Collect && AutomationGrowersGate() != null))
-            { ResetAutomationClock(); return; }
+            { labModuleRuntimeBlocked = true; ResetAutomationClock(); return; }
             automationClock += seconds;
             if (automationClock < Model.CollectionSecondsPerUnit) return;
             // One operation at most. Discard excess time, including a large catch-up delta.
             ResetAutomationClock();
             string notice = next.Kind == AutomationStepKind.Dose ? "Doses prepared. Use E at the incubator to start growing." :
                 next.Kind == AutomationStepKind.Finish ? (technicianHandoff ? "Cultures collected. Moss will start the matching queued recipe." : "Cultures collected. Prepare them at the incubator when ready.") : null;
-            ChangeAutomation((automation, game) => automation.Step(game, priority, technicianHandoff), notice);
+            if (ChangeAutomation((automation, game) => automation.Step(game, priority, technicianHandoff), notice)) PresentLabModule(next);
         }
         bool ChangeAutomation(Func<ShopAutomation, GameModel, bool> change, string success)
         {
