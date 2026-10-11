@@ -292,7 +292,7 @@ namespace EvolutionShop
             bool physical = Panel == ShopPanel.None && Focused != null && Focused.TankId == tankId;
             return PerformWithFx(result, physical ? FxCueId.HandPlace : FxCueId.None);
         }
-        public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), FxCueId.HandUpgrade);
+        public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), Panel == ShopPanel.None ? FxCueId.HandUpgrade : FxCueId.None);
         public bool IsAtCounter
         {
             get

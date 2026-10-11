@@ -21,7 +21,7 @@ namespace EvolutionShop.Tests
         [Test] public void ActualImportedWristSocketsMatchAuthoredToolSpace()
         {
             var root=Resources.Load<GameObject>("Art/LivingShopFX/HandsPair");
-            foreach(var item in new[]{new KeyValuePair<string,Vector3>("RightWrist",new Vector3(.057f,-.245f,-.098f)),new KeyValuePair<string,Vector3>("LeftWrist",new Vector3(-.092f,-.20f,.082f))})
+            foreach(var item in new[]{new KeyValuePair<string,Vector3>("RightWrist",new Vector3(.067f,-.235f,-.098f)),new KeyValuePair<string,Vector3>("LeftWrist",new Vector3(-.092f,-.20f,.082f))})
             {Transform found=null;foreach(var t in root.GetComponentsInChildren<Transform>(true))if(t.name==item.Key)found=t;Assert.That(found,Is.Not.Null);Assert.That(Vector3.Distance(root.transform.InverseTransformPoint(found.position),item.Value),Is.LessThan(.0001f));}
         }
         [Test] public void EveryReducedActionLeavesToolAndSupportStationary()

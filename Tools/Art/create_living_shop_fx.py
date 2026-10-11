@@ -40,8 +40,13 @@ def sphere(pos,size,mat):
     o.data.materials.append(mats[mat])
     for f in o.data.polygons:f.use_smooth=True
     return o
+def seam(pos,size,mat):
+    bpy.ops.mesh.primitive_torus_add(major_segments=16,minor_segments=6,major_radius=.5,minor_radius=.04,location=u(pos))
+    o=bpy.context.object;o.dimensions=(size[0],size[2],size[1]);bpy.ops.object.transform_apply(location=False,rotation=False,scale=True);o.data.materials.append(mats[mat])
+    for f in o.data.polygons:f.use_smooth=True
+    return o
 def segment(name,pos,parent,lobes):
-    parts=[sphere(q,s,m) for q,s,m in lobes]
+    parts=[(seam if m=='RW_Coral' else sphere)(q,s,m) for q,s,m in lobes]
     bpy.ops.object.select_all(action='DESELECT')
     for ob in parts:ob.select_set(True)
     bpy.context.view_layer.objects.active=parts[0]
@@ -55,21 +60,21 @@ def segment(name,pos,parent,lobes):
     objects.append(ob);bpy.context.view_layer.update()
     records.append(dict(name=name,parent=parent.name,pivot=un(ob.matrix_world.translation),triangles=len(ob.data.polygons),materials=[m.name for m in ob.data.materials]))
     return ob
-for side,sign,palm in [('Right',1,(.035,-.19,-.08)),('Left',-1,(-.07,-.145,.10))]:
+for side,sign,palm in [('Right',1,(.045,-.18,-.08)),('Left',-1,(-.07,-.145,.10))]:
     x,y,z=palm;wpos=(x+sign*.022,y-.055,z-.018)
     wrist=pivot(side+'Wrist',wpos,root)
     # Palm and three rounded finger lobes share one rigid mesh, rather than extra renderers.
-    palm_lobes=[((x,y,z),(.076,.079,.067),'RW_Cream')]
-    for i in range(3):palm_lobes.append(((x+sign*(.011+i*.019),y+.008-i*.020,z+.033),(.030,.027,.066),'RW_Cream'))
+    palm_lobes=[((x,y,z),(.108,.088,.079),'RW_Cream')]
+    for i in range(3):palm_lobes.append(((x+sign*(.019+i*.024),y+.008-i*.020,z+.033),(.037,.031,.068),'RW_Cream'))
     segment(side+'Fingers',wpos,wrist,palm_lobes)
     tb=(x-sign*.029,y+.025,z+.010)
-    thumb=segment(side+'ThumbBase',tb,wrist,[(tb,(.036,.036,.050),'RW_Cream')])
+    thumb=segment(side+'ThumbBase',tb,wrist,[(tb,(.043,.039,.050),'RW_Cream')])
     tip=(tb[0]-sign*.012,tb[1]+.015,tb[2]+.032)
-    segment(side+'ThumbTip',tip,thumb,[(tip,(.030,.028,.041),'RW_Cream')])
+    segment(side+'ThumbTip',tip,thumb,[(tip,(.036,.032,.041),'RW_Cream')])
     ib=(x+sign*.020,y+.045,z+.020)
-    idx=segment(side+'IndexBase',ib,wrist,[(ib,(.030,.034,.051),'RW_Cream')])
+    idx=segment(side+'IndexBase',ib,wrist,[(ib,(.036,.037,.051),'RW_Cream')])
     it=(ib[0]-sign*.003,ib[1]+.008,ib[2]+.038)
-    segment(side+'IndexTip',it,idx,[(it,(.029,.028,.046),'RW_Cream')])
+    segment(side+'IndexTip',it,idx,[(it,(.034,.031,.046),'RW_Cream')])
     c=(wpos[0]+sign*.008,wpos[1]-.001,wpos[2]-.010)
     segment(side+'Cuff',c,wrist,[(c,(.083,.035,.079),'RW_Teal'),((c[0],c[1]+.015,c[2]),(.085,.008,.081),'RW_Coral')])
 assert len(records)==12 and sum(x['triangles'] for x in records)<=6000
@@ -100,7 +105,7 @@ for o in objects:
 bpy.context.view_layer.update()
 bpy.ops.export_scene.fbx(filepath=str(fbx),use_selection=True,global_scale=1,apply_unit_scale=True,apply_scale_options='FBX_SCALE_UNITS',axis_forward='-Z',axis_up='Y',use_space_transform=False,bake_space_transform=False,object_types={'MESH','EMPTY'},use_mesh_modifiers=True,mesh_smooth_type='OFF',use_tspace=False,add_leaf_bones=False,bake_anim=False)
 sha=lambda path:hashlib.sha256(path.read_bytes()).hexdigest()
-manifest=dict(asset='HandsPair',authorship='Original local parametric glove meshes authored for Evolution Shop, no external assets',blender=bpy.app.version_string,source=str(blend.relative_to(repo)),export=str(fbx.relative_to(repo)),sourceSha256=sha(blend),exportSha256=sha(fbx),generatorSha256=sha(Path(__file__)),renderers=12,rigPivots=14,triangles=sum(x['triangles'] for x in records),materials=list(mats),segments=records,restBounds=bounds,palmSockets=dict(Right=[.035,-.19,-.08],Left=[-.07,-.145,.10]),fitAdjustment=dict(Right=[0,0,0],Left=[-.01,-.015,0]),curlAxis='Unity tool-body X; derive parent-local axis from actual imported transforms',unit='metres',exportAnimation=False,paidGeneration=False,externalUploads=False)
+manifest=dict(asset='HandsPair',authorship='Original local parametric glove meshes authored for Evolution Shop, no external assets',blender=bpy.app.version_string,source=str(blend.relative_to(repo)),export=str(fbx.relative_to(repo)),sourceSha256=sha(blend),exportSha256=sha(fbx),generatorSha256=sha(Path(__file__)),renderers=12,rigPivots=14,triangles=sum(x['triangles'] for x in records),materials=list(mats),segments=records,restBounds=bounds,palmSockets=dict(Right=[.045,-.18,-.08],Left=[-.07,-.145,.10]),fitAdjustment=dict(Right=[.01,.01,0],Left=[-.01,-.015,0]),curlAxis='Unity tool-body X; derive parent-local axis from actual imported transforms',unit='metres',exportAnimation=False,paidGeneration=False,externalUploads=False)
 manifest['exportConversion']='Explicit nested-rig export copy: Blender (x,y,z) -> FBX (-x,z,-y), metadata -Z forward/Y up, exporter space bake off. Unity left-handed import yields tool-body (x,z,-y); root identity and positive scales verified in import log and runtime vertex sweep.'
 (src/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
 print('FX04_ART_READY '+json.dumps(dict(triangles=manifest['triangles'],renderers=12,restBounds=bounds)))
