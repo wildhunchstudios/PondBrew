@@ -83,7 +83,7 @@ namespace EvolutionShop
             File.WriteAllBytes(shop.SavePath,occupiedSlot);Check(shop.ReloadSaved() && shop.Model.GetTank("tank-a").Value.Id==specimen,"Restore exact actual occupied slot after labelled identity fixture");shop.SetPanel(ShopPanel.None);
             // Actual live capture cadence is recorded, not reconstructed from frozen key poses.
             yield return PondletView("fx05-live-view");var frames=new List<PondletFrame>();float origin=Time.realtimeSinceStartup;
-            for(int i=0;i<20;i++){string name="fx05-live-"+i.ToString("000");yield return GateCapture(name);frames.Add(new PondletFrame{file=name+"-screen.png",seconds=Time.realtimeSinceStartup-origin,visualAge=w.PondletAgeForValidation("tank-a")});yield return new WaitForSeconds(.15f);}
+            for(int i=0;i<20;i++){string name="fx05-live-"+i.ToString("000");yield return GateCapture(name);frames.Add(new PondletFrame{file=name+(Application.isEditor ? "-camera.png" : "-screen.png"),seconds=Time.realtimeSinceStartup-origin,visualAge=w.PondletAgeForValidation("tank-a")});yield return new WaitForSeconds(.15f);}
             File.WriteAllText(Path.Combine(evidence,"pondlet-live-motion.json"),JsonUtility.ToJson(new PondletMotionReceipt{frames=frames.ToArray()},true));
             int steadyTransforms=w.GetComponentsInChildren<Transform>(true).Length,steadyRenderers=w.GetComponentsInChildren<Renderer>(true).Length;
             yield return new WaitForSeconds(8);Check(w.GetComponentsInChildren<Transform>(true).Length==steadyTransforms && w.GetComponentsInChildren<Renderer>(true).Length==steadyRenderers && w.FxPool.OwnedCount==96,"Live aquarium reuses fixed topology/pool; no spawned habitat objects");
