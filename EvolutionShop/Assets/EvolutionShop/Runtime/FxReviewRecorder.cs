@@ -49,7 +49,7 @@ namespace EvolutionShop
                 slots[i]=new Slot {texture=new RenderTexture(width,height,0,RenderTextureFormat.ARGB32),bytes=new byte[width*height*4]};slots[i].texture.Create();
             }
             encoder=new Process {StartInfo=new ProcessStartInfo {FileName=executable,UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardError=true,
-                Arguments="-hide_banner -loglevel error -n -f rawvideo -pix_fmt rgba -video_size "+width+"x"+height+" -framerate 30 -i pipe:0 -vf vflip -an -c:v libx264 -preset ultrafast -crf 21 -pix_fmt yuv420p -movflags +faststart \""+file+"\""}};
+                Arguments="-hide_banner -loglevel error -n -f rawvideo -pix_fmt rgba -video_size "+width+"x"+height+" -framerate 30 -i pipe:0 -an -c:v libx264 -preset ultrafast -crf 21 -pix_fmt yuv420p -movflags +faststart \""+file+"\""}};
             try {encoder.Start();}catch {foreach(var s in slots){s.texture.Release();UnityEngine.Object.Destroy(s.texture);}throw;}
             stderr=encoder.StandardError.ReadToEndAsync();
             writer=new Thread(WriteFrames){IsBackground=true,Name="Evolution Shop review encoder"};writer.Start();origin=Time.realtimeSinceStartup;
