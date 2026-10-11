@@ -66,6 +66,8 @@ namespace EvolutionShop
 
         public void Animate(float time)
         {
+            if (species == "pondlet") { AnimatePondlet(time, .7f, false); return; }
+            if (MimicPoseActive) time = Mathf.Floor(mimicTime * 2f) * .25f;
             if (species == "driftwing")
             {
                 float wingWave = Mathf.Sin(time * 3.8f + .4f);
@@ -149,14 +151,19 @@ namespace EvolutionShop
             Animate(0);
         }
 
+        static void ReleaseCreatureAsset(UnityEngine.Object asset)
+        {
+            if (!asset) return;
+            if (Application.isPlaying) Destroy(asset); else DestroyImmediate(asset);
+        }
         void OnDestroy()
         {
-            if (pondletFinMesh) Destroy(pondletFinMesh);
-            if (pondletMaterials != null) foreach (var material in pondletMaterials) if (material) Destroy(material);
-            if (driftwingMaterials != null) foreach (var material in driftwingMaterials) if (material) Destroy(material);
+            if (pondletFinMesh) ReleaseCreatureAsset(pondletFinMesh);
+            if (pondletMaterials != null) foreach (var material in pondletMaterials) if (material) ReleaseCreatureAsset(material);
+            if (driftwingMaterials != null) foreach (var material in driftwingMaterials) if (material) ReleaseCreatureAsset(material);
             if (lanternMaterials == null) return;
             // Storage may already have released these private materials when retiring a resident.
-            foreach (var material in lanternMaterials) if (material) Destroy(material);
+            foreach (var material in lanternMaterials) if (material) ReleaseCreatureAsset(material);
         }
     }
 }

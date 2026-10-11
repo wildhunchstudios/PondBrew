@@ -186,6 +186,7 @@ namespace EvolutionShop
                 return;
             }
             FindFocus();
+            World.SetAquariumFocus(Panel == ShopPanel.None ? Focused : null);
             bool held = Panel == ShopPanel.None && Mouse.current != null && Mouse.current.leftButton.isPressed;
             bool grower = TryStationCulture(Focused, out var culture);
             if (held && grower)
@@ -290,7 +291,7 @@ namespace EvolutionShop
             if (result.Success)
             { Reports.RecordRestock(); Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player); }
             bool physical = Panel == ShopPanel.None && Focused != null && Focused.TankId == tankId;
-            return PerformWithFx(result, physical ? FxCueId.HandPlace : FxCueId.None);
+            return PerformWithFx(result, physical ? FxCueId.HandPlace : FxCueId.None, destination: tankId);
         }
         public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), Panel == ShopPanel.None ? FxCueId.HandUpgrade : FxCueId.None);
         public bool IsAtCounter
@@ -417,7 +418,7 @@ namespace EvolutionShop
             }
         }
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
-        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom)
+        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null)
         {
             if (!result.Success || (fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
             if (result.Success)
@@ -425,7 +426,7 @@ namespace EvolutionShop
                 Notify("Done.", 1.3f);
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
-                PresentFxResult(result, SaveNow(), fxCue, fxOrigin, culture);
+                PresentFxResult(result, SaveNow(), fxCue, fxOrigin, culture, destination);
             }
             else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin, culture); }
             return result;

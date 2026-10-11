@@ -1,3 +1,5 @@
+**FX-05 implementation checkpoint — 2026-10-11.** One bounded Pondlet/tank hero is implemented with existing geometry and aquarium resources. Full EditMode2,060/2,060 and final Editor266 checks passed, errors0. Packaged player, screenshots and timing validation remain pending; FX-05 is not complete and FX-06 has not started.
+
 **FX-04 complete — 2026-10-11.** FX-04 is technically complete: original compact cartoon gloves, fixed grip, movement-linked tool motion, held-collection trigger/recoil/release, committed placement and contextual refusal/upgrade feedback. Modal interactions retain machine/UI feedback with operating hands hidden. Source `75d3c6b`, tag **fx-hands-validated**. Separate playable `Builds/Windows-6000.3.21f1-fx04-hands-3/EvolutionShop.exe`. Final EditMode **2,054/2,054**, Editor **419**, final Windows **1,616 checks across nine runs**, runtime errors/exits 0; build errors/warnings 0. Reviewed 22 actual HUD frames; recorded 24 candidate and 24 preserved-reference timing windows. All 20 protected files and 558/564 baseline files unchanged; six intentional existing C# integrations. Core DLL is byte-identical and four existing players preserved. Evidence: Docs/Evidence/fx-04-VALIDATION.md. Native controls, listening, human motion/hand appeal and controlled night-lab GPU attribution remain open in FX-06/22. Next ready assignment is FX-05; it has not started.
 
 **FX-03 complete — 2026-10-11.** FX-03 is technically complete: Bloom/Flow refill motion and pooled intake into the real tool mouth; incubator circulation, true progress needle, growing Pondlet and first/repeat hatch accents; one collector valve/state path after saved operations; visible dose/return/refusal feedback; six original short local sounds. Source `800cdc4`, tag **fx-lab-hero-validated**. Separate playable `Builds/Windows-6000.3.21f1-fx03-lab-2/EvolutionShop.exe`. Final EditMode **2,049/2,049**, Editor **134**, candidate Windows **852 checks** (791 primary checks plus 61 repeated timing checks); runtime errors/exits 0, build errors/warnings 0. Reviewed 28 actual HUD captures; recorded 24 candidate and 24 preserved-reference timing windows, excluding focus mismatches from matched comparisons. All 16 protected files and 543/554 baseline files unchanged; 11 intentional C# integrations and 10 new C#/meta files. Core DLL is byte-identical; four existing players preserved. Evidence: Docs/Evidence/fx-03-VALIDATION.md. Native controls, listening and human motion approval remain FX-06. Historical FX-03 checkpoint; FX-04 is now delivered below.
@@ -484,7 +486,7 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
-### Next ready assignment — FX-05 Living Pondlet aquarium hero
+### Active assignment — FX-05 Living Pondlet aquarium hero
 
 FX-00–04 are technically complete. The frozen cue/asset contract remains Docs/Design/FX01_CUE_ASSET_CONTRACT.md; latest executed evidence is Docs/Evidence/fx-04-VALIDATION.md. Technical completion does not pass the human review in FX-06.
 
@@ -517,7 +519,7 @@ FX-04 executable subtasks (complete; evidence under fx-04/):
 - [x] Root / QA: inspect ordinary/upgraded camera and hand/tool bounds, crosshair/nozzle visibility and held input/lifecycle; run affected tests and a separate candidate with actual captures. Distinguish synthetic, native, listening and human evidence.
 - [x] Root / PM: save source/delivery checkpoints, update AGENTS.md and handoff; stop before FX-05/06. The creative gate remains FX-06, including controlled night-lab GPU follow-up before content expansion.
 
-FX-05 executable subtasks (next ready; unstarted):
+FX-05 executable subtasks (active; implementation/validation pending):
 
 - [ ] Root / technical artist: reverify the exact project/pinned Editor and preserve the FX-04 playable, ordinary save and existing processes; inspect Pondlet, actual container bounds and existing tank/water/comedy writers before editing.
 - [ ] Root / animator: implement coordinated bounded Pondlet swim/turn/fin/idle variation with a single visual pose owner. Preserve specimen identity, collision roots and all gameplay timing; no new species or decorative saleable fish.

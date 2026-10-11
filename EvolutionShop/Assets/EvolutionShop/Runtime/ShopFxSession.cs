@@ -10,7 +10,7 @@ namespace EvolutionShop
             if (fxSequence == 0) { World?.ResetFxPresentation(); fxSequence = 1; }
             return fxSequence;
         }
-        void PresentFxResult(ActionResult result, bool saved, FxCueId successCue, FxCueOrigin origin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom)
+        void PresentFxResult(ActionResult result, bool saved, FxCueId successCue, FxCueOrigin origin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null)
         {
             if (!World) return;
             if (result.Success && !saved) { World.CancelFxTransient(); return; }
@@ -21,7 +21,9 @@ namespace EvolutionShop
                 if (successCue == FxCueId.CollectedUnit && (culture == CultureKind.Bloom || culture == CultureKind.Flow)) sound.LabCollect();
                 else if (successCue == FxCueId.DoseCommitted || successCue == FxCueId.DoseReturned || successCue == FxCueId.IncubationStarted) sound.LabFeedback(true, successCue);
             }
-            World.TryFxCue(result.Success ? successCue : FxCueId.HandRefused, NextFxSequence(), origin, culture);
+            uint sequence = NextFxSequence();
+            World.TryFxCue(result.Success ? successCue : FxCueId.HandRefused, sequence, origin, culture);
+            if (result.Success && saved && successCue == FxCueId.HandPlace) World.PresentPondletPlacement(destination, sequence);
         }
         void ApplyFxViewPolicy()
         {

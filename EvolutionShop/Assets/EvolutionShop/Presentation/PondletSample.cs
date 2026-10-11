@@ -37,6 +37,7 @@ namespace EvolutionShop
             finRight=Petal("Right petal",new Vector3(.18f,-.06f,-.04f),fin);
             finLeft=Petal("Left petal",new Vector3(-.18f,-.06f,.15f),fin);finLeft.localRotation=Quaternion.Euler(0,180,0);
             crest=ShopWorld.Shape(transform,"Crown petal",PrimitiveType.Sphere,new Vector3(0,.202f,.07f),new Vector3(.065f,.16f,.29f),fin);
+            CapturePondletRest();
             Animate(0);
         }
         Transform Petal(string label,Vector3 position,Material material)

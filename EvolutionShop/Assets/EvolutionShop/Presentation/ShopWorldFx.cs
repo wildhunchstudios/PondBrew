@@ -104,7 +104,7 @@ namespace EvolutionShop
         }
         public void CancelFxTransient()
         {
-            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose();
+            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)
             { particles[i].Root.gameObject.SetActive(false); Destroy(particles[i].Root.gameObject); }
@@ -136,7 +136,7 @@ namespace EvolutionShop
         { fxPool?.Dispose(); fxCues?.Dispose(); fxPool = null; fxCues = null; System.Array.Clear(fxBindings, 0, fxBindings.Length); }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Isolated review/test switches only. No user settings or ordinary-save schema in FX-02.
-        public void SetFxPreviewModes(bool reducedMotion, bool lowDetail) { CancelFxTransient(); fxReducedMotion = reducedMotion; fxPool?.SetLowDetail(lowDetail); }
+        public void SetFxPreviewModes(bool reducedMotion, bool lowDetail) { CancelFxTransient(); fxReducedMotion = reducedMotion; aquariumLow = lowDetail; fxPool?.SetLowDetail(lowDetail); }
         public void SetFxEnabledForValidation(bool value) { CancelFxTransient(); fxEnabled = value; }
 #endif
     }

@@ -103,7 +103,7 @@ namespace EvolutionShop
             ClearWorkerCelebration();
             if(comedyActor)comedyActor.ClearComedyPose();
             comedyActor=null;comedyVisitor=null;mimicTank=null;
-            if(World)World.HideComedyBubble();
+            if(World) { World.HideComedyBubble(); World.ClearFishMimic(); }
             if(sound)sound.StopComedy();
         }
         void ResetComedyTransient()

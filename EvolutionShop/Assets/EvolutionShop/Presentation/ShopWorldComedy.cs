@@ -8,9 +8,10 @@ namespace EvolutionShop
         Material comedyBubbleMaterial;
         public void PoseFishMimic(string tank,float elapsed,bool reduced)
         {
-            if(reduced || !displays.TryGetValue(tank,out var display) || !display.Creature)return;
-            // Copy the visitor's held-arm beat using existing safe fin poses, never the swim root.
-            display.Creature.Animate(Mathf.Floor(elapsed*2f)*.25f);
+            if(!displays.TryGetValue(tank,out var display) || !display.Creature)return;
+            if (!fxEnabled || fxPolicy != FxViewPolicy.Visible) { display.Creature.ClearMimicPose(); return; }
+            // Queue the visitor beat; the normal detail resolver remains the only fin writer.
+            display.Creature.RequestMimicPose(elapsed,reduced);
         }
         public void AnimateComedySample(ComedyKind kind,float elapsed,bool reduced)
         {

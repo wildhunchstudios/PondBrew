@@ -30,7 +30,6 @@ namespace EvolutionShop
         readonly List<Transform> flowCells = new List<Transform>();
         readonly List<Transform> reservoirCells = new List<Transform>();
         readonly List<Particle> particles = new List<Particle>();
-        readonly List<Transform> bubbles = new List<Transform>();
         readonly Dictionary<StationKind, TextMesh> status = new Dictionary<StationKind, TextMesh>();
         readonly Dictionary<string, Display> displays = new Dictionary<string, Display>();
         readonly List<LabelFit> labels = new List<LabelFit>();
@@ -52,6 +51,10 @@ namespace EvolutionShop
             public string SpeciesId;
             public string FxSpecimenId;
             public float Seed;
+            public AquariumHabitat Habitat;
+            public float PondletClock, PondletPhase, PondletFocus, PondletCooldown;
+            public float PondletPlacedAge = -1, PondletGlanceAge = -1;
+            public uint PondletSequence;
             public bool Incubator;
             public TextMesh Status;
             public TextMesh StorageStatus;
@@ -182,7 +185,7 @@ namespace EvolutionShop
             g.transform.localScale = scale;
             g.GetComponent<Renderer>().sharedMaterial = material;
             var c = g.GetComponent<Collider>();
-            if (!collision && c) { c.enabled = false; Destroy(c); }
+            if (!collision && c) { c.enabled = false; if (Application.isPlaying) Destroy(c); else DestroyImmediate(c); }
             if (material.renderQueue >= 3000)
             {
                 g.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
@@ -428,8 +431,8 @@ namespace EvolutionShop
             for (int i = 0; i < 4; i++)
             {
                 var bubble = Shape(r, "Air bubble", PrimitiveType.Sphere, new Vector3(.72f, 1.16f + i * .21f, .29f), Vector3.one * (.025f + i * .008f), glass);
-                bubbles.Add(bubble);
             }
+            displays[id].Habitat = BuildAquariumHabitat(r, seed);
             BuildStoreSample(r, id == "tank-a");
             if (AttachRedesign(r, "DisplayCabinet", "Display cabinet", "Tank lower rim", "Inset wood cabinet door", "Raised door panel", "Cabinet pull"))
                 RedesignLabelDepth(r, -.765f, 2.22f, 1.64f);
@@ -623,8 +626,9 @@ namespace EvolutionShop
 
         void SetCreature(Display display, string species, string specimenId = null)
         {
+            bool identityChanged = display.FxSpecimenId != specimenId;
             display.FxSpecimenId = specimenId;
-            if (display.SpeciesId == species) return;
+            if (display.SpeciesId == species) { if (identityChanged) ResetPondletIdentity(display); return; }
             if (display.Creature) Destroy(display.Creature.gameObject);
             display.SpeciesId = species;
             display.Creature = null;
@@ -633,6 +637,7 @@ namespace EvolutionShop
             r.localScale = Vector3.one * (display.Incubator ? (species == "ribbonfin" ? .54f : species == "driftwing" ? .52f : .62f) : species == "driftwing" ? .59f : .69f);
             display.Creature = r.gameObject.AddComponent<CreatureVisual>();
             display.Creature.Build(species);
+            ResetPondletIdentity(display);
             if (species == "lanternfin" || species == "driftwing")
             {
                 r.localRotation = Quaternion.Euler(0, -90, 0);
@@ -706,6 +711,7 @@ namespace EvolutionShop
             foreach (var display in displays.Values)
             {
                 if (!display.Creature) continue;
+                if (display.SpeciesId == "pondlet" && display.Habitat != null) { TickPondlet(display, dt); continue; }
                 float t = time * (display.SpeciesId == "bubblebelly" ? .6f : .78f) + display.Seed;
                 // The longest tail stays mostly broadside; its small orbit reserves tail clearance.
                 float x = display.Incubator ? Mathf.Sin(t) * .04f : Mathf.Sin(t) * (display.SpeciesId == "ribbonfin" ? .10f : .42f);
@@ -715,13 +721,7 @@ namespace EvolutionShop
                 display.Creature.transform.localRotation = Quaternion.Euler(0, -90 + Mathf.Cos(t) * turn, Mathf.Sin(t * 1.6f) * 5);
                 display.Creature.Animate(time + display.Seed);
             }
-            for (int i = 0; i < bubbles.Count; i++)
-            {
-                var p = bubbles[i].localPosition;
-                p.y = 1.1f + Mathf.Repeat(time * .17f + i * .21f, .91f);
-                p.x = .72f + Mathf.Sin(time * 1.1f + i) * .025f;
-                bubbles[i].localPosition = p;
-            }
+            TickAquariumHabitat(dt);
             if (harvesting && harvestingCulture != CultureKind.Bloom && harvestingCulture != CultureKind.Flow)
             {
                 emissionClock -= dt;
