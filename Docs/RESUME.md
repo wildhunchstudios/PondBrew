@@ -1,3 +1,5 @@
+> Current FX-06 review preparation: source2fa5efc, tag fx-review-prepared. Technical passes:2,060 EditMode,266 Editor,365 exact Windows;18 actual videos. Native controls/listening, human acceptance and controlled GPU review remain open; no FX-07. Canonical status: [AGENTS.md](../AGENTS.md). Evidence: [FX-06 validation](Evidence/fx-06-VALIDATION.md). Older records below are historical.
+
 # Resume — Evolution Shop current checkpoint
 
 > Latest FX-03 checkpoint: source 800cdc4, tag fx-lab-hero-validated. Canonical status/nextFX-04: ../AGENTS.md. Evidence: Evidence/fx-03-VALIDATION.md; prior records below are historical.
@@ -286,3 +288,16 @@ FX-03 is technically complete: Bloom/Flow refill motion and pooled intake into t
 Primary candidate frame interval p95 8.51–8.57 ms; GPU p95 2.68–4.01 ms; whole-game GC p95 6400–15724 bytes. Fresh-reference matched frame change -0.10% to +0.46%. Four indicator renderers, eight transforms and one short module voice added over FX-02; total attributable FX topology is 100 renderers/105 transforms, with three audio sources total and no loaded mesh/material/Animator delta. The initial allowance has 12 renderers/75 transforms remaining. Repeated GPU values and their limitations are detailed below. This capped development workload does not establish minimum-spec or whole-game zero-GC performance.
 
 Performance threshold review completed with 16 fresh matched-context pairs and eight repeated candidate windows against the earlier focused 1080p reference. The extra reversed-order reference lost focus and is excluded from matched comparison. Candidate frame interval p95 is 8.51–8.57 ms, change -0.12% to +0.46%; whole-game allocation p95 matches the reference in every pair. GPU p95 is 2.68–4.17 ms with mixed changes -21.6% to +24.2%. The 1080p ordinary-night lab increase repeats at +14.7%/+24.2% (+0.49/+0.81 ms); it is a measured cost/uncertainty, not a zero-regression pass. Archived recordings and the extra reversed-order reference were unfocused while the accepted fresh comparisons are focused, so their GPU percentages are confounded. Source/resource review finds four borrowed-mesh indicators, eight transforms, one short audio source, no added mesh/material/Animator/shader and no recurring collection allocations in the new steady-state loops. The recorded capped workload meets the initial 60 FPS aim; the GPU contribution is not isolated from the four preserved players. Recheck the lab with controlled single-instance profiling at FX-06/22 before multiplying the hero content.
+
+
+## FX-06 prepared review — 2026-10-11
+
+**FX-06 prepared for review — 2026-10-11.** Technical preparation is saved at source `2fa5efc`, tag **fx-review-prepared**; separate playable `Builds/Windows-6000.3.21f1-fx06-review-2/EvolutionShop.exe`. Actual final EditMode **2,060/2,060**, Editor **266**, exact Windows **365** assertions across three routes; successful errors/exits0, build0 errors/0 warnings. Eighteen real720p/1080p videos contain2,490 decoded frames at29.92–30.18FPS/missed0; six original raw sound previews and local native review launchers are provided in `Docs/Evidence/fx-06/human-review/index.html`. All36 protected files and586/587 baseline source/art/settings files unchanged; one intentional diagnostic dispatcher,5 code/meta payload, Core DLL byte-identical and four original players preserved. Capture inversion was fixed and rerun; initial media is retained/excluded. Ordinary-input isolated candidate/reference startup verified, but hidden windows required task-owned cleanup; no native controls/listening/user approval or controlled GPU pass is claimed. Evidence: `Docs/Evidence/fx-06-VALIDATION.md`. **FX-06 remains active; FX-B/FX-07 gated pending review and isolated night-lab GPU attribution.**
+
+- [x] Exact Unity/project guard, protected baseline and diagnostic source checkpoint.
+- [x] Exact final candidate, regression tests,18 actual motion clips,6 raw sound previews, ordinary-input startup and isolated human launchers.
+- [x] Saved local review package, immutable evidence receipts and updated guide.
+- [ ] Actual native keyboard/held collection/stations, heard game mix and user lab/hands/tank assessment.
+- [ ] Controlled foreground single-instance night-lab GPU attribution; existing four players need explicit close authorization.
+
+Continue within FX-06; do not multiply content or mark FX-B approved. Normal controls: WASD/mouse, hold LMB, E, Tab, F1, Escape.

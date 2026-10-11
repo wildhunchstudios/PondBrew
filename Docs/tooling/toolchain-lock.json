@@ -151,6 +151,26 @@
           "sha256": "7d37583dbe79665cd61de80adfd287362a3b713d99cca7cc936f60e05d4a93de"
         }
       ]
+    },
+    {
+      "name": "FX-06 local media encoder",
+      "checkedDate": "2026-10-11",
+      "version": "imageio-ffmpeg0.6.0 / FFmpeg7.1",
+      "path": "C:\\dev\\DumbVideoGameStudio\\.tooling\\fx06-media\\imageio_ffmpeg\\binaries\\ffmpeg-win-x86_64-v7.1.exe",
+      "status": "installed project-local and working: 18 actual Unity videos encoded, fully decoded, and loaded at720p/1080p in IAB",
+      "purpose": "Concrete FX-06 motion review only; not a Unity bridge or package",
+      "source": "https://pypi.org/project/imageio-ffmpeg/0.6.0/",
+      "wheelSha256": "02fa47c83703c37df6bfe4896aab339013f62bf02c5ebf2dce6da56af04ffc0a",
+      "binarySha256": "2ce797a0f88d7f067180338fb227f7b1928ea727bd9a4d7a1d022f7c52af71a3",
+      "evidence": [
+        "../Evidence/fx-06/media-tool.json",
+        "../Evidence/fx-06/media-validation.json",
+        "../Evidence/fx-06/browser-review.json"
+      ],
+      "apiAccess": false,
+      "externalUploads": false,
+      "paidGeneration": false,
+      "rollback": "Remove only the ignored .tooling/fx06-media folder after preserving any desired binary/license; no global PATH, pip, Unity package or engine changes."
     }
   ],
   "existingBlenderAddon": {
@@ -176,5 +196,16 @@
     "GameDevelopmentStudio": "Skills already installed; game-dev CLI unavailable on PATH, adapter/provider workflows unverified.",
     "Build3DGameRooms": "Installed skill retained; paid Meshy dependency not activated.",
     "BrowserGameStudio": "Existing browser skills retained but not used to replace Unity."
-  }
+  },
+  "sessionVerifications": [
+    {
+      "date": "2026-10-11",
+      "task": "FX-06",
+      "unity": "6000.3.21f1 exact EvolutionShop project: guarded batch Editor probe, full tests and build exit0; existing Unity CLI remains; live Editor/MCP connection absent, no duplicate bridge installed",
+      "blender": "skipped: no production asset changes needed",
+      "context7": "skipped this session; historical connection evidence preserved",
+      "figma": "pending historical authentication; not needed for unchanged production UI",
+      "evidence": "../Evidence/fx-06/editor-probe/process.json"
+    }
+  ]
 }

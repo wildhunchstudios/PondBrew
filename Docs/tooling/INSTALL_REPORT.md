@@ -66,3 +66,10 @@ Evidence: `Docs/Evidence/toolkit-2026-10-05/`. Machine-readable selection, versi
 - [MCP for Blender source](https://github.com/ahujasid/mcp-for-blender/tree/46a9bf467a2470bad8f10391dd271af9872db551) and [PyPI 2.1.6](https://pypi.org/project/mcp-for-blender/2.1.6/).
 - [Context7](https://github.com/upstash/context7), [Figma MCP](https://developers.figma.com/docs/figma-mcp-server/), [official Figma plugin source](https://github.com/openai/plugins/tree/5fd93af4cd0c623e020d0cc7e9ce178b4ac1f70f/plugins/figma).
 - [Codex MCP configuration](https://developers.openai.com/codex/mcp/), [repository-local skills](https://developers.openai.com/codex/skills/), [Superpowers source](https://github.com/obra/superpowers/tree/8ca22dba9a94f28898bbce59f2537ff4d87c747d).
+
+
+## FX-06 concrete media tooling — 2026-10-11
+
+Installed only the pinned imageio-ffmpeg0.6.0 Windows binary under ignored `.tooling/fx06-media`; FFmpeg7.1 version and wheel/binary SHA256 verified. It encoded18 original local Unity motion videos; all18 fully decoded with2,490 frames, correct resolution and upright HUD, then loaded successfully in the local IAB review page. Receipts: `../Evidence/fx-06/media-tool.json`, `media-validation.json`, `browser-review.json`. No global pip/PATH, Unity package, engine upgrade, bridge, paid generation or external upload.
+
+The exact pinned Unity project was freshly connected through the guarded batch Editor probe, then2,060 EditMode tests,266 Editor runtime assertions and a separate build succeeded. There is no active live Editor/MCP connection; installed Unity control was preserved. Blender/Context7 and optional providers were skipped for this diagnostic-only assignment; Figma authentication remains historical/pending, not freshly verified. Raw sound decoding/browser playback availability does not establish actual listening or heard in-game mix.
