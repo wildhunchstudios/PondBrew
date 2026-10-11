@@ -1,6 +1,6 @@
 # Prototype tasks
 
-> Current selected work: FX effects/animation planning is complete. FX-00 baseline/state audit is the next assignment; implementation has not started. All25 tasks, roles, dependencies and acceptance gates are in AGENTS.md FX.1–FX.9. This is the sole live FX plan.
+> Current selected work: FX-00 baseline/state audit is complete. FX-01 cue/asset contracts is next; all later FX assignments remain open. Canonical statuses, dependencies and gates remain in AGENTS.md FX.1–FX.9. Evidence: Evidence/fx-00-BASELINE.md.
 
 > Preserved R08.4 delivery: Normal desktop execution restored Editor licensing IPC; final full EditMode2,018, Editor613 and exact Windows1,226 checks passed. Separate candidate: Builds/Windows-6000.3.21f1-r08-4-recovery/EvolutionShop.exe. Source8406a86; delivery tag r08-recovery-validated. R08.5 remains open; FX is the current selected presentation workstream. See AGENTS.md and Docs/Evidence/r08-4-VALIDATION.md.
 

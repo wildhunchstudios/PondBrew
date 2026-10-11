@@ -12,3 +12,5 @@
 /Docs/Evidence/r08-2/** -text
 /Docs/Evidence/r08-3/** -text
 /Docs/Evidence/r08-4/** -text
+# Preserve byte-hashed FX-00 raw baseline evidence.
+/Docs/Evidence/fx-00/** -text
