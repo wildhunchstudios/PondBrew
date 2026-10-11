@@ -1,14 +1,16 @@
 # Resume — Evolution Shop current checkpoint
 
-> Current checkpoint: R08.1 technical validation complete; candidate ready for the first human playtest. R08.2 remains unstarted. See AGENTS.md and Evidence/r08-1-VALIDATION.md.
+> Current assignment: R08.4 automation recovery proof is active. R08.3 desired-stock technical validation is complete and its human playtest remains open; R08.2 human acceptance was not recorded before the user directed work to proceed. See AGENTS.md, Docs/TASKS.md and Docs/Evidence/r08-3-VALIDATION.md.
 
-Workspace: `C:\dev\DumbVideoGameStudio`. Unity project: `C:\dev\DumbVideoGameStudio\EvolutionShop`. Verified2026-10-03. Independent game; Dungeon Project and PersonalAssistant were not modified or imported.
+Older dated checkpoints are historical. The R08.4 active assignment at the end of this file is the continuation point.
+
+Workspace: `C:\dev\DumbVideoGameStudio`. Unity project: `C:\dev\DumbVideoGameStudio\EvolutionShop`. Verified again2026-10-10. Independent game; Dungeon Project and PersonalAssistant were not modified or imported.
 
 ## Current design and implementation
 
 The user explicitly confirmed two physical rooms: **front store** with the two display tanks and sales counter; **back lab** with Bloom/Flow growers, incubator, and siphon upgrade bench. A collidable partition has an open3.2m×2.8m doorway. Player starts in the store. Signs, distinct floor accents, and HUD directions explain the trip between rooms. Depth-tested world labels prevent text showing through walls. The siphon has a visible physical numeric display; incubation status is above it in the upper-right HUD.
 
-This paragraph records the Milestone01 gameplay baseline. R08.1 implementation and current candidate are documented at the end; R08.2 has not started.
+This paragraph records the Milestone01 gameplay baseline. R08.1 implementation and current candidate are documented below. R08.2's matching collector handoff passed technical validation on 2026-10-10. R08.3 adds persistent desired-stock configuration and status feedback; see the current continuation note at the end for its candidate and remaining playtest.
 
 ## Historical Milestone01 runtime and evidence
 
@@ -207,4 +209,31 @@ Focused EditMode73/73 and full EditMode1,998/1,998 passed. Editor automation247 
 
 Visual note: first locked-state 720p screen image is black; subsequent captures are visible. The culture panel is scrollable and its bench-return control is below the initial viewport. Human scroll/input usability remains untested. Unity player logs include MemoryLeaks cleanup telemetry without an exception or smoke runtime error; the build log contains a Licensing::Module access-token update message despite a successful build summary.
 
-R08.1 is ready for the user's first playtest, not yet user-accepted. Use WASD, mouse, E, Tab, F1 and Esc. At the physical bench install the optional Collector36 and Doser24, choose a discovered recipe, enable modules and request one batch; incubation still starts manually at the incubator. Prices remain provisional. The normal profile will be loaded on ordinary launch, so back it up first if it must remain unchanged. TUT-11–14 is still deferred, and R08.2 has not started.
+R08.1 passed its first human playtest on 2026-10-10; feedback was "playtested looks great for now." Its controls were WASD, mouse, E, Tab, F1 and Esc. R08.2 candidate: `Builds/Windows-6000.3.21f1-r08-2-automation-route/EvolutionShop.exe` plus `_Data`. At night, install and enable Collector36 and Doser24 at the lab bench, select discovered Pondlet, queue the same recipe first for Moss, ensure he is on duty, and request one batch. Check exact rack storage, Nori's configured display, then day service and Pip's agreed-price sale. The isolated Editor and Windows routes each passed145 checks; full EditMode passed1,999/1,999; build errors/warnings0. See `Docs/Evidence/r08-2-VALIDATION.md`. R08.2 human playtest is the next action; do not start R08.3 yet. The user profile was already written before these validation runs and was left untouched. TUT-11–14 remains explicitly deferred.
+
+## Current continuation — R08.3 desired-stock policy (2026-10-10)
+
+The playable candidate is Builds/Windows-6000.3.21f1-r08-3-target-policy-final3/EvolutionShop.exe with its adjacent _Data folder. Controls: WASD move, mouse look, E interact, Tab journal, F1 help, Esc pause. At the research bench, use Culture preparation to select a known recipe and destination, set desired stock from 1 to 9, and enable Maintain. Pause/Resume retains helper work; Stop new automatic refills preserves work already queued or started. Counts include matching specimens in displays, racks, incubator and Moss's queued starts, so this is an in-pipeline target rather than a sale-ready count. Moss and Nori duties continue while the culture helper is paused.
+
+Technical status: focused EditMode37/37; full EditMode2,018/2,018; Editor integration280 checks; final Windows player270 checks each at1280×720 and1920×1080; runtime errors/exits0. Build succeeded on Unity6000.3.21f1. Exact validation details and UI screenshots are in Docs/Evidence/r08-3-VALIDATION.md and Docs/Evidence/r08-3/. The normal user save was not used by smoke routes; each has a labelled evidence save.
+
+Remaining: human playtest the R08.3 target controls. R08.4 is active under the user's continue instruction; the current implementation and Unity IPC blocker are recorded below.
+## Current continuation — R08.4 automation recovery proof (2026-10-10)
+
+R08.4 is active. The isolated AutomationSmoke route now covers missing/off-duty Moss, higher-priority two-recipe queue reorder, canceling/re-adding both the unrelated and target-matching starts, exact pending-request identity, and unchanged cash/owned stock/cultures while the helper is held. Paused target/order/request state is also asserted across save/reload. A temporary labelled Bubblebelly production/sale creates a second known recipe for the queue-order probe. These assertions are source changes only; they have not passed a Unity runtime yet.
+
+Fallback compile: dotnet build EvolutionShop.Runtime.csproj -nologo -t:Rebuild -p:RestoreIgnoreFailedSources=true -p:RunAnalyzers=false, exit 0, 0 C# errors, 102 analyzer/source-generator load warnings caused by unavailable Microsoft.CodeAnalysis assemblies in the standalone dotnet host. It does not substitute for Unity compilation or test execution.
+
+The prior pinned Unity 6000.3.21f1 focused AutomationTests attempt failed to initialize LicenseClient-retai IPC, timed out, and ended before the TestRunner produced any XML. No full EditMode suite, updated Editor automation, fresh Windows candidate, or updated 1280x720 / 1920x1080 player route is available. The older R08.3 final3 candidate and its validation are preserved and are not evidence for these latest smoke assertions. Detailed status and exact evidence paths are in Docs/Evidence/r08-4-VALIDATION.md.
+
+Post-compile preservation: the ordinary save SHA256 still matches the captured baseline; the four pre-existing player processes 18420, 29528, 39396 and 47552 remain. Unity stays pinned at 6000.3.21f1. No active Editor or callable Unity MCP bridge is available. Next: restore the existing License Client IPC, run focused/full EditMode, execute the updated Editor route, build a separate validation candidate and run automation plus technician/stocker recoveries at both player sizes. Do not advance R08.5 or deferred TUT-11–14 until this technical gate has evidence. R08.2 and R08.3 human playtest acceptance remain unrecorded.
+
+## 2026-10-10 — R08.4 recheck after license activation
+
+The user confirmed the Unity license is on. Verified Unity 6000.3.21f1 remains pinned, the local Unity entitlement file is present, and the Licensing Client responds and parsed an entitlement. A new focused AutomationTests launch still failed at Unity Editor IPC (LicenseClient-retai refused); the Editor briefly initialized licensing, lost the client, then remained stuck through the 180-second limit. It never started TestRunner and produced no result XML. We stopped only the Editor PID launched for this attempt. No build was attempted. This is an Editor/client-channel problem, not a claim that the Unity license is absent.
+
+The ordinary save hash is unchanged at 08D2230570E091E9E97891AB5BB236509A19A646E8A153B95ACE5B4EA8DDF85E. Existing player PIDs 18420, 29528, 39396 and 47552 remain. The preserved R08.3 candidate hash is unchanged. No live Editor or callable Unity MCP connection is available. Attempt log/receipt: Docs/Evidence/r08-4/focused-license-on/; preservation/connection receipt: Docs/Evidence/r08-4/post-license-recheck-preservation.json. R08.4 remains the current task: finish focused/full tests, current-source Editor smoke, fresh Windows candidate and both resolution routes only after a working Editor IPC channel is available. Do not start R08.5 or tutorial tasks.
+
+## 2026-10-11 — R08.4 validation resumed
+
+Approved normal desktop execution connected immediately to the same Licensing Client. Focused37/37 and final full2,018/2,018 passed. Editor automation passed335 with zero runtime errors after correcting the new probe's assumption about saved queue planning while Moss is unavailable: one order is retained, and execution/resources wait. The original failed route is preserved. Worker Editor routes and the separate r08-4-recovery build are in progress; normal launch remains pinned at6000.3.21f1. Consult retry-20261011-* receipts under Docs/Evidence/r08-4 before continuing. Earlier IPC-blocked notes are historical; do not repeat activation or change license files.

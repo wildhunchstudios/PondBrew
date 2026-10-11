@@ -29,7 +29,7 @@ namespace EvolutionShop
             shop.Customers.ArrivalsEnabled=false;shop.AmbientComedyEnabled=false;
             if(ShopSession.Arg("-evolutionTechnicianReload")!=null)
             { yield return TechnicianRestartScenario();yield break; }
-            limitations.Add("R07.4 isolated technician route uses a labelled 300-credit construction/wage fixture, accelerated manual discovery preparation and direct fixture sales of those two discovery specimens, selected customer arrivals and fixture camera/player positions. Incubator culture collection calls the normal inventory commands using existing grower units. Rack/counter interactions and placement use synthetic input; staff menu actions call guarded HUD session commands. All technician travel, service, incubation, output delivery, stocker travel, cashier service and next-night wages run on ordinary frames. A temporary world-child barrier and isolated .tmp-directory obstruction inject route/save failures. This does not establish native mouse-menu usability, ordinary economy balance, every layout, audio acceptance or performance.");
+            limitations.Add("R07.4 isolated technician route uses a labelled 300-credit construction/wage fixture, accelerated manual discovery preparation and direct fixture sales of those two discovery specimens, selected customer arrivals and fixture camera/player positions. The first producer baseline uses normal inventory commands; the second Pondlet is fed by the R08.2 helper from free growers. The enabled Doser yields to Moss for that matching route. Rack/counter interactions and placement use synthetic input; staff menu actions call guarded HUD session commands. All technician travel, service, incubation, output delivery, stocker travel, cashier service and next-night wages run on ordinary frames. A temporary world-child barrier and isolated .tmp-directory obstruction inject route/save failures. This does not establish native mouse-menu usability, ordinary economy balance, every layout, audio acceptance or performance.");
             Check(shop.Laboratory!=null && shop.Technician && !shop.Laboratory.Employee.Hired && shop.Model.Currency==0,
                 "Fresh shop has no technician employment, money or assigned work");
             yield return TechnicianEnter();
@@ -177,10 +177,30 @@ namespace EvolutionShop
             yield return TechnicianWait(()=>shop.Model.Incubator.Phase==IncubatorPhase.Ready,15,"unattended machine completes dismissed assignment");
             yield return SpecimenRackPanel(rack);Check(shop.StoreReadyInRack(slots[0]) && shop.Model.GetStorage(slots[0]).Value.Id==firstId,
                 "Player manually collects the dismissed assignment as the same exact creature");
-            yield return TechnicianEnter();Check(shop.QueueTechnicianRecipe("pondlet"),"Queue second batch for output delivery fault proof");
-            TechnicianCollect("pondlet");Check(shop.SetTechnicianPaused(false),"Resume paid technician for another exact recipe");StockerParkPlayer();
-            yield return TechnicianWait(()=>shop.Laboratory.ActiveSpecimenId!=null,30,"second actual production start");
+            yield return TechnicianEnter();Check(shop.QueueTechnicianRecipe("pondlet"),"Queue the R08.2 helper-fed batch for output delivery and sale proof");
+            Check(shop.SetTechnicianPaused(false),"Resume paid Moss for the matching helper handoff");StockerParkPlayer();
+            yield return TechnicianWait(()=>shop.Technician.CurrentJobId==null && shop.Technician.Status.Contains("cultures"),8,"Moss waiting on the matching helper-fed cultures");
+            AutomationReleaseFixture();
+            Check(shop.Model.Available(CultureKind.Bloom)==0 && shop.Model.Available(CultureKind.Flow)==0 &&
+                shop.Model.Staged(CultureKind.Bloom)==0 && shop.Model.Staged(CultureKind.Flow)==0,
+                "End-to-end handoff begins with an empty shared reservoir and no manual doses");
+            yield return AutomationEnter();
+            Check(shop.PurchaseAutomationModule(true) && shop.PurchaseAutomationModule(false) &&
+                shop.SetAutomationEnabled(true,true) && shop.SetAutomationEnabled(false,true) &&
+                shop.SelectAutomationRecipe("pondlet") && shop.RequestAutomationBatch(),
+                "Install both helper modules and request the same recipe Moss has queued");
+            string helperRequest=shop.Automation.RequestId;
+            yield return AutomationWait(()=>!shop.Automation.IsPending,20,"grower collection and safe matching Moss handoff");
+            Check(!string.IsNullOrEmpty(helperRequest) && shop.Automation.RequestId==null &&
+                shop.Model.Staged(CultureKind.Bloom)==0 && shop.Model.Staged(CultureKind.Flow)==0 &&
+                shop.Model.Staged(CultureKind.Spark)==0 && shop.Model.Staged(CultureKind.Mist)==0,
+                "The matching request completes without the enabled Doser staging over Moss's recipe");
+            money=shop.Model.Currency;
+            yield return TechnicianWait(()=>shop.Laboratory.ActiveSpecimenId!=null,30,"second helper-fed production start");
             string producedId=shop.Laboratory.ActiveSpecimenId;
+            Check(shop.Model.Incubator.SpecimenId==producedId && shop.Model.Incubator.SpeciesId=="pondlet" &&
+                shop.Model.Incubator.Phase==IncubatorPhase.Incubating && shop.Laboratory.Queue.Length==0,
+                "Moss starts the exact helper-fed recipe and owns its production ticket");
             GateAim(new Vector3(0,.2f,3),shop.Technician.Actor.transform.position+Vector3.up*1.1f);
             yield return GateCapture("311-technician-active");StockerParkPlayer();
             yield return TechnicianWait(()=>shop.Technician.Carrying,35,"technician collects ready output and carries parcel");

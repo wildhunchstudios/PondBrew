@@ -259,6 +259,11 @@ namespace EvolutionShop
                     status = "First order is not a known recipe / review the laboratory queue";
                     return;
                 }
+                if (shop.Automation != null && shop.Automation.IsPending && shop.Automation.RecipeId == speciesId)
+                {
+                    status = "Waiting for the matching culture request to finish";
+                    return;
+                }
                 if (shop.Model.Available(CultureKind.Bloom) < recipe.Bloom ||
                     shop.Model.Available(CultureKind.Flow) < recipe.Flow ||
                     shop.Model.Available(CultureKind.Spark) < recipe.Spark ||

@@ -27,7 +27,7 @@ namespace EvolutionShop
             cycleMouse = InputSystem.AddDevice<Mouse>("EvolutionAutomationMouse");
             syntheticKeyboard.MakeCurrent(); cycleMouse.MakeCurrent();
             shop.Customers.ArrivalsEnabled = false; shop.AmbientComedyEnabled = false;
-            limitations.Add("R08.1 uses an isolated labelled 300-credit fixture and one accelerated manual Pondlet discovery retained in its display. Bench/counter/incubator access uses synthetic E and scripted player positions; menu choices call guarded production session commands. Deliberately filled/released culture and replenished grower fixtures below isolate capacity and contention; they are labelled and are not economy evidence. Automatic collection, dosing, waits, incubation and technician claiming run on ordinary frames. Temporary disabled station/session components and an isolated .tmp-directory inject recovery conditions. Actual standalone captures explicitly switch between 1280x720 and 1920x1080; Editor camera exports are diagnostic only. No native input, human usability/audio, campaign balance, performance, continuous automation or offline progress is claimed.");
+            limitations.Add("R08 automation uses an isolated labelled 300-credit fixture, accelerated manual Pondlet discovery and a temporary Bubblebelly discovery/sale used only for the two-recipe queue-priority probe. Bench/counter/incubator access uses synthetic E and scripted player positions; menu choices call guarded production session commands. Deliberately filled/released culture and replenished grower fixtures isolate capacity and contention; they are labelled and are not economy evidence. Collection, dosing, target planning, Moss handoff, incubation and technician travel run on ordinary frames. Temporary disabled station/session components and an isolated .tmp-directory inject recovery conditions. Actual standalone captures explicitly switch between 1280x720 and 1920x1080; Editor camera exports are diagnostic only. No native input, human usability/audio, campaign balance, performance, or offline progress is claimed.");
             Check(shop.SkipTutorial(), "Skip guidance only in the isolated automation fixture");
             Check(shop.Automation != null && !shop.Automation.CollectorOwned && !shop.Automation.DoserOwned &&
                 !shop.Automation.CollectorEnabled && !shop.Automation.DoserEnabled && !shop.Automation.IsPending,
@@ -228,7 +228,190 @@ namespace EvolutionShop
                 shop.Model.GetTank("tank-b").Value.Id == produced && !shop.Automation.IsPending,
                 "Final isolated save retains both exact specimens, paid modules and no outstanding request");
             File.Copy(shop.SavePath, Path.Combine(evidence, "automation-progress.json"), true);
+            yield return AutomationTargetPolicy();
         }
+
+        IEnumerator AutomationTargetPolicy()
+        {
+            yield return TechnicianEnter();
+            if (shop.Laboratory.Employee.Hired)
+                Check(shop.DismissTechnician() && !shop.Laboratory.Employee.Hired && shop.Laboratory.Queue.Length == 0,
+                    "Dismiss Moss before configuring the labelled no-staff target probe");
+            Check(!shop.Laboratory.Employee.Hired && shop.Laboratory.Queue.Length == 0,
+                "Target-policy missing-staff fixture has no worker or queued order");
+            yield return AutomationEnter();
+
+            // Queue-priority recovery needs a second known recipe. Keep it in this isolated fixture:
+            // free one display, discover Bubblebelly through a normal model recipe, then sell that fixture fish.
+            if (!shop.Model.IsDiscovered("bubblebelly"))
+            {
+                Check(shop.Model.GetTank("tank-b").HasValue, "The labelled Pondlet fixture occupies the second display before the queue probe");
+                if (shop.Model.GetTank("tank-b").HasValue)
+                    Ok(shop.Model.SellFromTank("tank-b"), "Clear the labelled Pondlet fixture display for a second known recipe");
+                SpecimenProduce("bubblebelly"); string bubble = shop.Model.Incubator.SpecimenId;
+                Check(shop.Model.Incubator.Phase == IncubatorPhase.Ready && shop.Model.Incubator.SpeciesId == "bubblebelly",
+                    "Produce a labelled Bubblebelly solely to exercise strict Moss queue ordering");
+                Ok(shop.Model.TransferToTank("tank-b"), "Move the queue-priority Bubblebelly fixture to the freed display");
+                Ok(shop.Model.SellFromTank("tank-b"), "Clear the queue-priority fixture while retaining its discovery");
+                Check(!string.IsNullOrEmpty(bubble) && shop.Model.IsDiscovered("bubblebelly") &&
+                    !shop.Model.GetTank("tank-b").HasValue,
+                    "Queue-priority fixture leaves Bubblebelly known and the second display empty");
+            }
+
+            int before = AutomationStockCount("pondlet");
+            Check(before < ShopAutomation.MaximumDesiredStockCount, "Target-policy fixture has room below the bounded stock cap");
+            int goal = before + 1;
+            int waitingCredits = shop.Model.Currency;
+            string waitingIngredients = TechnicianIngredients();
+            Check(shop.SetAutomationDestination("tank-a") && shop.Stocking.GetTarget("tank-a") == "pondlet",
+                "Destination selection saves the matching Nori display target without replacing the current creature");
+            Check(shop.SetAutomationDesiredStock(goal), "Set a stock target one specimen above current owned inventory");
+            Check(shop.SetAutomationMaintainEnabled(true) && shop.Automation.MaintainEnabled,
+                "Enable the saved recipe, destination and desired-stock policy at the physical bench with Moss absent");
+            yield return TutorialCapture("610-automation-stock-target");
+            yield return new WaitForSeconds(.8f);
+            string missingMossStatus = shop.AutomationStatus;
+            Check(!shop.Laboratory.Employee.Hired && shop.Laboratory.Queue.Length == 1 &&
+                AutomationQueuedStarts("pondlet") == 1 && !shop.Automation.IsPending &&
+                AutomationStockCount("pondlet") == before && shop.Model.Currency == waitingCredits &&
+                TechnicianIngredients() == waitingIngredients &&
+                missingMossStatus.IndexOf("not hired", StringComparison.OrdinalIgnoreCase) >= 0,
+                "Missing Moss retains one saved target order with a clear hire message, no active request and unchanged stock, cash and cultures");
+
+            yield return TechnicianEnter();
+            Check(shop.HireTechnician() && !shop.Laboratory.Employee.Scheduled,
+                "Hire Moss off schedule while retaining the desired stock target");
+            yield return AutomationEnter();
+            yield return new WaitForSeconds(.6f);
+            string offDutyStatus = shop.AutomationStatus;
+            Check(shop.Laboratory.Employee.Hired && !shop.Laboratory.Employee.IsOnDuty(shop.Cycle.DayNumber) &&
+                shop.Laboratory.Queue.Length == 1 && AutomationQueuedStarts("pondlet") == 1 && !shop.Automation.IsPending &&
+                AutomationStockCount("pondlet") == before && shop.Model.Currency == waitingCredits &&
+                TechnicianIngredients() == waitingIngredients &&
+                offDutyStatus.IndexOf("off duty", StringComparison.OrdinalIgnoreCase) >= 0,
+                "Off-duty Moss is explained; the single waiting target order cannot start, duplicate or consume stock, cash or cultures");
+
+            Check(shop.SetAutomationPaused(true) && shop.Automation.Paused,
+                "Hold the target helper while Moss's funded schedule is changed");
+            yield return TechnicianEnter();
+            Check(shop.SetTechnicianScheduled(true) && shop.Laboratory.Employee.IsOnDuty(shop.Cycle.DayNumber),
+                "Fund Moss before allowing the target policy to queue work");
+
+            var technician = shop.Technician;
+            bool technicianWasEnabled = technician && technician.enabled;
+            if (technician) technician.enabled = false;
+            try
+            {
+                yield return AutomationEnter();
+                Check(shop.SetAutomationPaused(false), "Resume the target helper with scheduled Moss and its preserved single target order");
+                yield return AutomationWait(() => shop.Automation.IsPending && AutomationQueuedStarts("pondlet") == 1, 8,
+                    "one target-queued Pondlet and its stable policy request");
+                string request = shop.Automation.RequestId;
+                Check(!string.IsNullOrEmpty(request) && shop.Automation.MaintainEnabled &&
+                    shop.Automation.PolicyHandoffWaiting && AutomationQueuedStarts("pondlet") == 1,
+                    "Target deficit creates one matching Moss start and one durable helper request");
+                Check(shop.SetAutomationPaused(true) && shop.Automation.Paused,
+                    "Freeze the helper request while testing player queue edits");
+
+                string held = TechnicianIngredients();
+                int heldStock = AutomationStockCount("pondlet");
+                int heldCredits = shop.Model.Currency;
+                yield return TechnicianEnter();
+                Check(shop.QueueTechnicianRecipe("bubblebelly") && shop.MoveTechnicianPriority("bubblebelly", -1) &&
+                    shop.Laboratory.Queue.Length == 2 && shop.Laboratory.Queue[0].speciesId == "bubblebelly" &&
+                    shop.Laboratory.Queue[0].count == 1 && shop.Laboratory.Queue[1].speciesId == "pondlet" &&
+                    shop.Laboratory.Queue[1].count == 1,
+                    "Reorder an unrelated known recipe ahead of the one target-owned Moss start");
+                yield return AutomationEnter();
+                Check(shop.SetAutomationPaused(false), "Briefly inspect target status against the reordered queue");
+                string priorityStatus = shop.AutomationStatus;
+                Check(priorityStatus.IndexOf(shop.Model.GetSpecies("bubblebelly").DisplayName,
+                        StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    shop.Automation.RequestId == request && shop.Automation.PolicyHandoffWaiting,
+                    "The active target explains higher-priority Moss work without replacing its request");
+                Check(shop.SetAutomationPaused(true), "Re-freeze the helper before queue recovery checks");
+
+                yield return TechnicianEnter();
+                Check(shop.RemoveTechnicianRecipe("bubblebelly") && shop.Laboratory.Queue.Length == 1 &&
+                    shop.Laboratory.Queue[0].speciesId == "pondlet" && AutomationQueuedStarts("pondlet") == 1,
+                    "Cancel the unrelated higher-priority recipe and retain exactly one target-owned start");
+                Check(shop.RemoveTechnicianRecipe("pondlet") && shop.Laboratory.Queue.Length == 0 &&
+                    shop.Automation.IsPending && shop.Automation.RequestId == request,
+                    "Cancel the matching target order without silently replacing or losing its in-flight request");
+                yield return AutomationEnter();
+                yield return new WaitForSeconds(.8f);
+                Check(shop.Automation.MaintainEnabled && shop.Automation.Paused && shop.Automation.IsPending &&
+                    shop.Automation.RequestId == request && shop.Laboratory.Queue.Length == 0 &&
+                    AutomationStockCount("pondlet") == heldStock && shop.Model.Currency == heldCredits &&
+                    TechnicianIngredients() == held,
+                    "A canceled target stays queued nowhere while paused; request, stock, cash and every culture remain exact");
+
+                yield return TechnicianEnter();
+                Check(shop.QueueTechnicianRecipe("pondlet") && shop.Laboratory.Queue.Length == 1 &&
+                    shop.Laboratory.Queue[0].speciesId == "pondlet" && AutomationQueuedStarts("pondlet") == 1,
+                    "Restore exactly one matching start after the explicit queue cancellation");
+                yield return AutomationEnter();
+                yield return new WaitForSeconds(.8f);
+                Check(shop.Automation.RequestId == request && shop.Automation.PolicyHandoffWaiting &&
+                    shop.Laboratory.Queue.Length == 1 && AutomationQueuedStarts("pondlet") == 1 &&
+                    AutomationStockCount("pondlet") == heldStock && shop.Model.Currency == heldCredits &&
+                    TechnicianIngredients() == held,
+                    "Target recovery does not duplicate a restored request/order or mutate its blocked resources");
+
+                shop.SetPanel(ShopPanel.Pause);
+                Check(shop.SaveNow() && shop.ReloadSaved() && shop.Automation.MaintainEnabled && shop.Automation.Paused &&
+                    shop.Automation.DesiredStockCount == goal && shop.Automation.DestinationTankId == "tank-a" &&
+                    shop.Automation.RequestId == request && shop.Automation.PolicyHandoffWaiting &&
+                    shop.Laboratory.Queue.Length == 1 && AutomationQueuedStarts("pondlet") == 1,
+                    "Save/reload retains the paused target, exact request identity and exactly one matching Moss start");
+                yield return AutomationEnter();
+                yield return new WaitForSeconds(.8f);
+                string pausedStatus = shop.AutomationStatus;
+                Check(shop.Laboratory.Queue.Length == 1 && shop.Automation.RequestId == request &&
+                    TechnicianIngredients() == held && AutomationStockCount("pondlet") == heldStock &&
+                    shop.Model.Currency == heldCredits &&
+                    pausedStatus.IndexOf("paus", StringComparison.OrdinalIgnoreCase) >= 0,
+                    "Paused reload preserves queue, request, inventory and clear hold status without dosing or duplicate work");
+
+                if (technician) technician.enabled = technicianWasEnabled;
+                Check(shop.SetAutomationPaused(false), "Resume the saved target request after queue recovery");
+                yield return AutomationWait(() => shop.Model.Incubator.Phase == IncubatorPhase.Incubating &&
+                    shop.Model.Incubator.SpeciesId == "pondlet" && !shop.Automation.PolicyHandoffWaiting, 30,
+                    "Moss accepts and starts the exact queued Pondlet once");
+                Check(AutomationStockCount("pondlet") == goal,
+                    "Incubating output counts toward the exact desired level as soon as Moss starts it");
+                yield return new WaitForSeconds(1.2f);
+                Check(shop.Laboratory.Queue.Length == 0 && !shop.Automation.IsPending &&
+                    AutomationStockCount("pondlet") == goal && shop.AutomationStatus.Contains("Target met"),
+                    "A satisfied target does not enqueue a duplicate specimen while the incubator is occupied");
+                Check(shop.SetAutomationMaintainEnabled(false) && !shop.Automation.MaintainEnabled,
+                    "Stopping refills preserves the already started specimen and prevents future target orders");
+            }
+            finally
+            {
+                if (technician) technician.enabled = technicianWasEnabled;
+            }
+        }
+        int AutomationStockCount(string speciesId)
+        {
+            int count = 0;
+            foreach (string id in shop.Model.TankIds)
+            { var item = shop.Model.GetTank(id); if (item.HasValue && item.Value.SpeciesId == speciesId) count++; }
+            foreach (string id in shop.Model.StorageIds)
+            { var item = shop.Model.GetStorage(id); if (item.HasValue && item.Value.SpeciesId == speciesId) count++; }
+            var incubator = shop.Model.Incubator;
+            if ((incubator.Phase == IncubatorPhase.Incubating || incubator.Phase == IncubatorPhase.Ready) && incubator.SpeciesId == speciesId) count++;
+            return count;
+        }
+        int AutomationQueuedStarts(string speciesId)
+        {
+            int count = 0;
+            foreach (var order in shop.Laboratory.Queue)
+                if (order.speciesId == speciesId) count += order.count;
+            return count;
+        }
+        bool PolicySpecimenStarted(int goal) => shop.Model.Incubator.Phase == IncubatorPhase.Incubating &&
+            shop.Model.Incubator.SpeciesId == "pondlet" && AutomationStockCount("pondlet") == goal;
 
         IEnumerator AutomationSaveRecovery()
         {
@@ -282,16 +465,14 @@ namespace EvolutionShop
                 shop.Laboratory.Employee.IsOnDuty(shop.Cycle.DayNumber) && shop.Model.Currency == money - 36,
                 "Buy one thirty-two-credit rack and pay Moss four credits for an ordinary queued known recipe");
             yield return AutomationEnter(); Check(shop.RequestAutomationBatch(), "Request automation while paid Moss owns queued work");
-            string ingredients = TechnicianIngredients(), request = shop.Automation.RequestId;
-            yield return new WaitForSeconds(ShopTechnician.RetrySeconds + .3f);
-            Check(shop.Automation.RequestId == request && TechnicianIngredients() == ingredients &&
-                shop.Laboratory.Queue.Length == 1 && !string.IsNullOrEmpty(shop.AutomationStatus),
-                "Paid queued Moss work has priority even while the technician waits for manual input cultures");
-            TechnicianCollect("pondlet");
+            string request = shop.Automation.RequestId;
+            Check(!string.IsNullOrEmpty(request) && shop.Laboratory.Queue.Length == 1 && !shop.Model.TechnicianClaim.HasValue,
+                "Moss leaves the matching queued start unclaimed while the durable helper request owns the handoff");
+            yield return AutomationWait(() => !shop.Automation.IsPending, 10, "collector-fed matching Moss handoff");
             yield return TechnicianWait(() => shop.Technician.CurrentJobId != null, 8, "real technician claim ahead of automation");
-            Check(shop.Model.TechnicianClaim.HasValue && shop.Automation.RequestId == request &&
+            Check(shop.Model.TechnicianClaim.HasValue && !shop.Automation.IsPending &&
                 shop.Model.Staged(CultureKind.Bloom) == 0 && shop.Model.Staged(CultureKind.Flow) == 0,
-                "Actual technician claim retains the exact culture budget and automation cannot dose its machine");
+                "Actual technician claim consumes the helper-fed cultures once, while the helper neither stages nor duplicates Moss's mixture");
             var incubator = StationOf(StationKind.Incubator); incubator.enabled = false;
             try
             {
@@ -300,9 +481,9 @@ namespace EvolutionShop
                 Check(!shop.Model.TechnicianClaim.HasValue && shop.Model.Incubator.Phase == IncubatorPhase.Dosing,
                     "Releasing the claim leaves the player-owned incubator unstarted");
                 yield return AutomationEnter();
-                ingredients = TechnicianIngredients();
-                Check(shop.CancelAutomationBatch() && TechnicianIngredients() == ingredients,
-                    "Cancel waiting automation after worker release without taking its manually collected cultures");
+                string ingredients = TechnicianIngredients();
+                Check(!shop.Automation.IsPending && TechnicianIngredients() == ingredients,
+                    "The completed matching handoff stays complete after worker release without changing its remaining cultures");
             }
             finally { if (incubator) incubator.enabled = true; }
             AutomationReleaseFixture();

@@ -30,6 +30,17 @@ namespace EvolutionShop.Tests
             if(pending)Assert.That(a.Request(game,RequestId),Is.True);
             return new SlotData{game=game.CaptureSave(),cycle=new ShopDayCycle().CaptureSave(),automation=a.CaptureSave()};
         }
+        static SlotData ConfiguredFixture()
+        {
+            var slot=Fixture(false);Assert.That(GameModel.TryRestore(Config,slot.game,out var game,out _),Is.True);
+            Assert.That(ShopAutomation.TryRestore(slot.automation,game,out var automation),Is.True);
+            Assert.That(automation.SetDestination(game,"tank-a"),Is.True);
+            Assert.That(automation.SetDesiredStockCount(3),Is.True);
+            Assert.That(automation.SetMaintainEnabled(true),Is.True);
+            Assert.That(automation.SetPaused(true),Is.True);
+            Assert.That(automation.RequestForPolicy(game,RequestId,2),Is.True);
+            slot.automation=automation.CaptureSave();return slot;
+        }
         [TestCase(false)] [TestCase(true)]
         public void RoundTripRetainsPartialCollectionPendingIdentityAndDisabledSettings(bool disabled)
         {
@@ -45,6 +56,25 @@ namespace EvolutionShop.Tests
                 Assert.That(JsonUtility.ToJson(loaded.automation),Is.EqualTo(JsonUtility.ToJson(slot.automation)));
                 Assert.That(File.ReadAllBytes(PathFor()),Is.EqualTo(original));Assert.That(loaded.formatVersion,Is.EqualTo(21));
             }
+        }
+        [Test]
+        public void VersionOneAutomationSubdocumentRemainsReadableWithSafePolicyDefaults()
+        {
+            var slot=Fixture(false);slot.automation.version=1;
+            string automation=JsonUtility.ToJson(slot.automation);
+            foreach(string field in new[]{"maintainEnabled","paused","desiredStockCount","destinationTankId","policyHandoffWaiting","policyQueueCountAtRequest"})
+            {
+                string pair="\""+field+"\":"+(field=="desiredStockCount"?"1":field=="destinationTankId"?"null":field=="policyQueueCountAtRequest"?"0":"false");
+                automation=automation.Replace(","+pair,"");
+            }
+            automation=automation.Replace("\"version\":1","\"version\":1");
+            string json=JsonUtility.ToJson(slot).Replace(JsonUtility.ToJson(slot.automation),automation);
+            File.WriteAllText(PathFor(),json);
+            Assert.That(SaveStore.Read(PathFor(),Config,out var game,out var loaded,out var error),Is.True,error);
+            Assert.That(loaded.automation.version,Is.EqualTo(1));
+            Assert.That(ShopAutomation.TryRestore(loaded.automation,game,out var restored),Is.True);
+            Assert.That(restored.MaintainEnabled,Is.False);Assert.That(restored.Paused,Is.False);
+            Assert.That(restored.DesiredStockCount,Is.EqualTo(1));Assert.That(restored.DestinationTankId,Is.Null);
         }
         [TestCase(1)] [TestCase(2)] [TestCase(3)] [TestCase(4)] [TestCase(5)] [TestCase(6)] [TestCase(7)]
         [TestCase(8)] [TestCase(9)] [TestCase(10)] [TestCase(11)] [TestCase(12)] [TestCase(13)] [TestCase(14)]
@@ -69,10 +99,13 @@ namespace EvolutionShop.Tests
         }
         [TestCase("version")] [TestCase("collectorOwned")] [TestCase("collectorEnabled")] [TestCase("doserOwned")]
         [TestCase("doserEnabled")] [TestCase("recipeId")] [TestCase("requestId")]
+        [TestCase("maintainEnabled")] [TestCase("paused")] [TestCase("desiredStockCount")]
+        [TestCase("destinationTankId")] [TestCase("policyHandoffWaiting")] [TestCase("policyQueueCountAtRequest")]
         public void CurrentRequiresEachExplicitModuleField(string field)
         {
-            var slot=Fixture();string automation=JsonUtility.ToJson(slot.automation);
-            string value=field=="version"?"1":field=="recipeId"?"\"pondlet\"":field=="requestId"?"\""+slot.automation.requestId+"\"":"true";
+            var slot=ConfiguredFixture();string automation=JsonUtility.ToJson(slot.automation);
+            string value=field=="version"?"2":field=="recipeId"?"\"pondlet\"":field=="requestId"?"\""+slot.automation.requestId+"\"":
+                field=="destinationTankId"?"\"tank-a\"":field=="desiredStockCount"?"3":field=="policyQueueCountAtRequest"?"2":"true";
             string pair="\""+field+"\":"+value;
             string changed=automation.Contains(pair+",")?automation.Replace(pair+",",""):automation.Replace(","+pair,"");
             Assert.That(changed,Is.Not.EqualTo(automation));Reject(JsonUtility.ToJson(slot).Replace(automation,changed));
@@ -83,10 +116,15 @@ namespace EvolutionShop.Tests
         { var slot=Fixture();Reject(JsonUtility.ToJson(slot).Replace(JsonUtility.ToJson(slot.automation),replacement)); }
         [TestCase("collectorOwned","1")] [TestCase("collectorEnabled","null")] [TestCase("doserOwned","\"true\"")]
         [TestCase("doserEnabled","{}")] [TestCase("version","1.5")] [TestCase("recipeId","7")] [TestCase("requestId","false")]
+        [TestCase("maintainEnabled","1")] [TestCase("paused","null")] [TestCase("desiredStockCount","1.5")]
+        [TestCase("destinationTankId","false")] [TestCase("policyHandoffWaiting","0")]
+        [TestCase("policyQueueCountAtRequest","\"2\"")]
         public void CurrentRejectsIncorrectPrimitiveTypes(string field,string bad)
         {
-            var slot=Fixture();string a=JsonUtility.ToJson(slot.automation);
-            string value=field=="version"?"1":field=="recipeId"?"\"pondlet\"":field=="requestId"?"\""+slot.automation.requestId+"\"":"true";
+            var slot=ConfiguredFixture();string a=JsonUtility.ToJson(slot.automation);
+            string value=field=="version"?"2":field=="recipeId"?"\"pondlet\"":field=="requestId"?"\""+slot.automation.requestId+"\"":
+                field=="destinationTankId"?"\"tank-a\"":field=="desiredStockCount"?"3":field=="policyQueueCountAtRequest"?"2":
+                field=="maintainEnabled"||field=="paused"||field=="policyHandoffWaiting"?"true":"true";
             string changed=a.Replace("\""+field+"\":"+value,"\""+field+"\":"+bad);Assert.That(changed,Is.Not.EqualTo(a));Reject(JsonUtility.ToJson(slot).Replace(a,changed));
         }
         [Test]
@@ -95,7 +133,7 @@ namespace EvolutionShop.Tests
             var slot=Fixture();string json=JsonUtility.ToJson(slot),a=JsonUtility.ToJson(slot.automation);
             Reject(json.Replace(",\"automation\":"+a,""));
             Reject(json.Replace("\"automation\":"+a,"\"automation\":"+a+",\"automation\":"+a));
-            Reject(json.Replace(a,a.Replace("\"version\":1","\"version\":1,\"version\":1")));
+            Reject(json.Replace(a,a.Replace("\"version\":2","\"version\":2,\"version\":2")));
             slot.automation.collectorOwned=false;Reject(JsonUtility.ToJson(slot));
         }
         [Test]

@@ -139,6 +139,42 @@ namespace EvolutionShop.Tests
             Ok(g.ReserveTechnicianStart("job","moss","pondlet","rack","planned"));var totals=Totals(g);
             Assert.That(a.Step(g,false),Is.False);Assert.That(Totals(g),Is.EqualTo(totals));Assert.That(g.TechnicianClaim.Value.JobId,Is.EqualTo("job"));
         }
+        [Test]
+        public void MatchingTechnicianHandoffCollectsButLeavesDosingAndProductionToMoss()
+        {
+            var save = Fixture().CaptureSave();
+            save.availableBloom = save.availableFlow = save.availableSpark = save.availableMist = 0;
+            save.incubator.stagedBloom = save.incubator.stagedFlow =
+                save.incubator.stagedSpark = save.incubator.stagedMist = 0;
+            var g = Restore(save);
+            var a = Modules(g, true, true);
+            Request(a, g);
+            int[] totals = Totals(g); int money = g.Currency;
+            int steps = 0;
+            while (a.IsPending && steps++ < 8)
+            {
+                var next = a.NextStep(g, false, true);
+                if (next.Kind == AutomationStepKind.Finish)
+                    Assert.That(a.NextStep(g, false).Kind, Is.EqualTo(AutomationStepKind.Dose),
+                        "The existing manual-preparation route keeps its default behavior.");
+                Assert.That(next.Kind == AutomationStepKind.Collect || next.Kind == AutomationStepKind.Finish, Is.True);
+                Assert.That(a.Step(g, false, true), Is.True);
+                Assert.That(Totals(g), Is.EqualTo(totals), "Collection moves each culture without creating or deleting it.");
+            }
+            var recipe = g.GetSpecies("pondlet");
+            Assert.That(a.IsPending, Is.False);
+            Assert.That(g.Available(CultureKind.Bloom), Is.GreaterThanOrEqualTo(recipe.Bloom));
+            Assert.That(g.Available(CultureKind.Flow), Is.GreaterThanOrEqualTo(recipe.Flow));
+            Assert.That(g.Staged(CultureKind.Bloom) + g.Staged(CultureKind.Flow) +
+                g.Staged(CultureKind.Spark) + g.Staged(CultureKind.Mist), Is.Zero,
+                "The installed Doser must not stage a mixture over Moss's matching queue entry.");
+            Ok(g.ReserveTechnicianStart("moss-job", "moss", "pondlet", "rack", "route-specimen"));
+            Ok(g.CompleteTechnicianStart("moss-job", "moss"));
+            Assert.That(g.Incubator.Phase, Is.EqualTo(IncubatorPhase.Incubating));
+            Assert.That(g.Incubator.SpecimenId, Is.EqualTo("route-specimen"));
+            Assert.That(g.Currency, Is.EqualTo(money), "The production handoff does not charge again.");
+        }
+
         [TestCase("version")] [TestCase("collector-enabled-unowned")] [TestCase("doser-enabled-unowned")]
         [TestCase("unknown")] [TestCase("unknown-request")] [TestCase("no-owned-request")] [TestCase("bad-id")]
         [TestCase("empty-guid")] [TestCase("guid-dashes")] [TestCase("whitespace-id")] [TestCase("whitespace-recipe")]
@@ -168,6 +204,63 @@ namespace EvolutionShop.Tests
             Assert.That(a.CollectorOwned||a.DoserOwned||a.IsPending,Is.False);Assert.That(a.SetEnabled(true,true)||a.Request(g,RequestId),Is.False);
             g=Fixture();a=Modules(g);Request(a,g);a.SetEnabled(true,false);a.SetEnabled(false,false);
             Assert.That(ShopAutomation.TryRestore(a.CaptureSave(),g,out var b),Is.True);Assert.That(b.RequestId,Is.EqualTo(RequestId));
+        }
+
+        [Test]
+        public void StockPolicyNeedsRecipeAndDestinationAndRoundTripsPauseAndDesiredLevel()
+        {
+            var g=Fixture();var a=Modules(g);
+            Assert.That(a.SetMaintainEnabled(true),Is.False);
+            Assert.That(a.SetDesiredStockCount(3),Is.True);
+            Assert.That(a.SetDestination(g,"tank-a"),Is.True);
+            Assert.That(a.SetMaintainEnabled(true),Is.True);
+            Assert.That(a.SetPaused(true),Is.True);
+            var saved=a.CaptureSave();
+            Assert.That(ShopAutomation.TryRestore(saved,g,out var restored),Is.True);
+            Assert.That(restored.MaintainEnabled,Is.True);Assert.That(restored.Paused,Is.True);
+            Assert.That(restored.DesiredStockCount,Is.EqualTo(3));Assert.That(restored.DestinationTankId,Is.EqualTo("tank-a"));
+            Assert.That(restored.SetPaused(false),Is.True);Assert.That(restored.SetMaintainEnabled(false),Is.True);
+            Assert.That(restored.MaintainEnabled,Is.False);
+        }
+
+        [Test]
+        public void PolicyRequestWaitsForItsMatchingMossQueueStartAfterHelperFinishes()
+        {
+            var g=Fixture();var a=Modules(g);a.SetDestination(g,"tank-a");a.SetMaintainEnabled(true);
+            Assert.That(a.RequestForPolicy(g,RequestId,2),Is.True);
+            Assert.That(ShopAutomation.TryRestore(a.CaptureSave(),g,out var restored),Is.True);
+            Assert.That(restored.PolicyHandoffWaiting,Is.True);Assert.That(restored.PolicyQueueCountAtRequest,Is.EqualTo(2));
+            Assert.That(restored.ClearPolicyHandoffWait(),Is.True);
+            Assert.That(restored.PolicyHandoffWaiting,Is.False);Assert.That(restored.PolicyQueueCountAtRequest,Is.Zero);
+        }
+
+        [Test]
+        public void VersionOneAutomationSaveMigratesToDisabledOneSpecimenPolicy()
+        {
+            var g=Fixture();var save=Modules(g).CaptureSave();save.version=1;
+            save.maintainEnabled=true;save.paused=true;save.desiredStockCount=6;save.destinationTankId="tank-a";
+            save.policyHandoffWaiting=true;save.policyQueueCountAtRequest=3;
+            Assert.That(ShopAutomation.TryRestore(save,g,out var restored),Is.True);
+            Assert.That(restored.MaintainEnabled,Is.False);Assert.That(restored.Paused,Is.False);
+            Assert.That(restored.DesiredStockCount,Is.EqualTo(1));Assert.That(restored.DestinationTankId,Is.Null);
+            Assert.That(restored.PolicyHandoffWaiting,Is.False);
+        }
+
+        [TestCase(0)] [TestCase(10)]
+        public void InvalidDesiredStockCountIsRejected(int count)
+        {
+            var g=Fixture();var save=Modules(g).CaptureSave();save.desiredStockCount=count;
+            Assert.That(ShopAutomation.TryRestore(save,g,out _),Is.False);
+        }
+
+        [Test]
+        public void MissingDestinationAfterRoomEditLoadsAndCanBeRepaired()
+        {
+            var g=Fixture();var a=Modules(g);a.SetDestination(g,"tank-a");a.SetMaintainEnabled(true);
+            var save=a.CaptureSave();save.destinationTankId="retired-display-slot";
+            Assert.That(ShopAutomation.TryRestore(save,g,out var restored),Is.True);
+            Assert.That(restored.MaintainEnabled,Is.True);
+            Assert.That(restored.SetDestination(g,"tank-b"),Is.True);
         }
     }
 }

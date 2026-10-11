@@ -1,8 +1,38 @@
 # Prototype tasks
 
-> Current checkpoint: R08.1 technical validation complete. Separate Windows candidate is ready for the first human playtest; R08.2 has not started. See AGENTS.md and Evidence/r08-1-VALIDATION.md.
+> Current assignment: R08.4 recovery validation is running again. Approved normal desktop launches connect to Unity licensing; focused37/full2,018 and Editor automation335 passed. Worker regressions and a fresh Windows candidate are in progress. See AGENTS.md and Docs/Evidence/r08-4-VALIDATION.md.
 
-Updated: 2026-10-10. The Milestone01 entry below is historical. Current status: R08.1 technical candidate is ready for the first human playtest; R08.2 is unstarted.
+Updated: 2026-10-11. Earlier IPC refusal is historical; the working launch context is recorded in AGENTS.md.
+
+## R08.4 — automation recovery and ownership proof (active)
+
+- [x] R08.4a Map existing runtime/test coverage to the acceptance criteria: buffers, save retry, pause/reload, room edits, queue operations and blocked technician recovery.
+- [x] R08.4b Missing/off-duty staff, reordered queue, cancel/re-add and save/reload passed in the Editor and exact Windows automation route. A single saved target order waits without an active helper request or resource use while Moss is unavailable.
+- [~] R08.4c Focused37/full2,018 and Editor automation335/technician145/stocker133 passed. Separate Windows build succeeded with zero errors/warnings; automation335 passed at both resolutions. Windows worker routes remain in progress.
+- [~] R08.4d Current candidate and readable 720p/1080p target-panel captures are available. Final worker results and preservation audit remain.
+- Existing R08.3 results are historical input to this combined R08.4 proof; do not relabel them as newly run. R08.3 human playtest remains open.
+
+## R08.3 — desired-stock configuration and status (technical complete; playtest pending)
+
+- [x] Save desired count (1–9), recipe, destination and helper pause; load legacy v1 automation records with defaults and validate v2 types.
+- [x] Maintain same-species target across displays, racks, incubator and queued Moss starts; request only deficits and preserve single-flight handoff/inventory identity.
+- [x] Add recipe/destination configuration, refill enable/stop, pause/resume and goal controls.
+- [x] Explain shortage, capacity, staff/module/station, worker-priority, destination and in-flight blockers; clarify helper pause leaves staff duties running.
+- [x] Focused EditMode37/37; full EditMode2,018/2,018; Editor route280 checks; Windows candidate built successfully; final player route270 checks each at1280×720 and1920×1080, runtime errors/exits0.
+- [x] Review actual final target-panel captures at both player resolutions.
+- [ ] Human playtest desired-stock setup, refill through sale, pause/resume, a blocked state and reload; record controls/usability feedback.
+- Candidate: Builds/Windows-6000.3.21f1-r08-3-target-policy-final3/EvolutionShop.exe. Evidence: Docs/Evidence/r08-3-VALIDATION.md and Docs/Evidence/r08-3/.
+- Limits: automated route uses isolated labelled fixtures, scripted positions and synthetic station E/menu commands. The controls appear in a scrollable bench panel; recipe/destination are below the first viewport. No human usability, campaign balance, native audio, performance or offline progress was assessed.
+
+## R08.2 — matching production handoff to sale (technical complete; playtest pending)
+
+- [x] R08.2a Audit existing ownership and identify the matching-queue wait cycle between the helper and Moss.
+- [x] R08.2b Let the collector satisfy a matching queued recipe; Moss retains dose/start/incubator/output authority and the Doser must not stage over Moss's job.
+- [x] R08.2c Prove one exact Pondlet from free growers through the lab rack, Nori's configured display, customer reservation, Pip's agreed-price payment and daily ledger.
+- [x] R08.2d Run focused/full EditMode, exact Editor route, exact Windows routes at1280x720 and1920x1080, worker regressions, build and preservation checks; record exact evidence and limits.
+- [ ] R08.2e Human acceptance is not recorded. The user directed the project to proceed to the next R task; this advances implementation only and does not pass the playtest gate.
+- Scope: one known recipe and one configured display route. R08.3 now owns the separately implemented desired-stock policy and configuration. Preserve manual production and exact production ownership.
+- R08.1 player playtest cleared 2026-10-10: user said "playtested looks great for now." R08.2 is a new candidate and still needs its own playtest; this is not detailed balance/audio feedback.
 
 ## R08.1 — one-batch culture preparation modules (2026-10-10)
 

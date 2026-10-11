@@ -485,22 +485,29 @@ namespace EvolutionShop
             {
                 if (!Take('{')) return false;
                 int required = 0;
+                int version = 0, extended = 0;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 while (position < json.Length)
                 {
                     if (!ReadString(true, out string key) || !keys.Add(key) || !Take(':')) return false;
                     switch (key)
                     {
-                        case "version": if (!ReadInteger(out _)) return false; required |= 1; break;
+                        case "version": if (!ReadInteger(out version)) return false; required |= 1; break;
                         case "collectorOwned": if (!ReadBoolean()) return false; required |= 2; break;
                         case "collectorEnabled": if (!ReadBoolean()) return false; required |= 4; break;
                         case "doserOwned": if (!ReadBoolean()) return false; required |= 8; break;
                         case "doserEnabled": if (!ReadBoolean()) return false; required |= 16; break;
                         case "recipeId": if (!ReadNullableString()) return false; required |= 32; break;
                         case "requestId": if (!ReadNullableString()) return false; required |= 64; break;
+                        case "maintainEnabled": if (!ReadBoolean()) return false; extended |= 1; break;
+                        case "paused": if (!ReadBoolean()) return false; extended |= 2; break;
+                        case "desiredStockCount": if (!ReadInteger(out _)) return false; extended |= 4; break;
+                        case "destinationTankId": if (!ReadNullableString()) return false; extended |= 8; break;
+                        case "policyHandoffWaiting": if (!ReadBoolean()) return false; extended |= 16; break;
+                        case "policyQueueCountAtRequest": if (!ReadInteger(out _)) return false; extended |= 32; break;
                         default: if (!SkipValue(0)) return false; break;
                     }
-                    if (Take('}')) return required == 127;
+                    if (Take('}')) return required == 127 && (version == 1 || version == 2 && extended == 63);
                     if (!Take(',')) return false;
                 }
                 return false;
