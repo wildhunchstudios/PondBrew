@@ -43,7 +43,7 @@ namespace EvolutionShop
             Check(shop.ValidationMode && !Application.isEditor &&
                 Path.GetFullPath(shop.SavePath) == Path.GetFullPath(Path.Combine(evidence, "smoke-save.json")),
                 "FX baseline requires an isolated standalone development slot");
-            limitations.Add("FX-00 diagnostic-only adapter: seeded credits/research/stock and direct validated layout commits are labelled workloads, not progression/economy evidence. Measurements include development-player, IMGUI, recorder and coroutine overhead; four pre-existing user players remain open. Eight-second static camera windows are not a minimum-PC, campaign, native-input or audio-listening pass. No effects, assets or gameplay rules changed.");
+            limitations.Add("FX-00 diagnostic-only adapter: seeded credits/research/stock and direct validated layout commits are labelled workloads, not progression/economy evidence. Measurements include development-player, IMGUI, recorder and coroutine overhead; four pre-existing user players remain open. Eight-second static camera windows are not a minimum-PC, campaign, native-input or audio-listening pass. This diagnostic adapter changes no gameplay authority, production rules or admitted assets; candidate presentation changes are identified by its source/build checkpoint.");
             yield return new WaitForSeconds(1);
             previousInputSettings = InputSystem.settings; smokeInputSettings = Instantiate(previousInputSettings);
             smokeInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;

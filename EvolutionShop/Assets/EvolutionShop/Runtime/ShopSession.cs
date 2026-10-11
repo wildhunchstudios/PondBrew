@@ -146,6 +146,7 @@ namespace EvolutionShop
         {
             if (!initialized) return;
             var keyboard = Keyboard.current;
+            ApplyFxViewPolicy();
             bool placementAtFrameStart = PlacementActive;
             bool gameplayAtFrameStart = Panel == ShopPanel.None && !placementAtFrameStart;
             if (placementAtFrameStart) HandlePlacementInput(keyboard);
@@ -377,7 +378,8 @@ namespace EvolutionShop
             if (result.Success)
             {
                 Tutorial.ObserveCollection(Model, kind, result, TutorialActionOrigin.Player);
-                World.PulseHarvest(kind); sound.Collect(); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); SaveNow();
+                World.PulseHarvest(kind); sound.Collect(); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+                PresentFxResult(result, SaveNow(), FxCueId.CollectedUnit, FxCueOrigin.Manual, kind);
             }
             else Notify(FailureText(result.Failure));
         }
@@ -408,16 +410,18 @@ namespace EvolutionShop
                 case StationKind.Upgrade: SetPanel(ShopPanel.Upgrade); break;
             }
         }
-        public ActionResult Perform(ActionResult result)
+        public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
+        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual)
         {
             sound.Feedback(result.Success);
             if (result.Success)
             {
                 Notify("Done.", 1.3f);
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
-                World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); SaveNow();
+                World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+                PresentFxResult(result, SaveNow(), fxCue, fxOrigin);
             }
-            else Notify(FailureText(result.Failure));
+            else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin); }
             return result;
         }
         public void SetPanel(ShopPanel panel)
@@ -442,6 +446,7 @@ namespace EvolutionShop
             bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
                 Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
             Panel = panel;
+            ApplyFxViewPolicy();
             if (Paused || panel == ShopPanel.Arrange) ResetAutomationClock();
             if (panel != ShopPanel.Pause) WaitingForSlapKey = false;
             if (SlapGesture != null) SlapGesture.SetPaused(Paused);
@@ -489,6 +494,7 @@ namespace EvolutionShop
             pendingFurnitureSaleId = null; selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             AdoptLayout(restoredLayout);
             Stocker.ResetTransient();Technician.ResetTransient();
+            ResetSessionFx();
             Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
                 ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
@@ -520,6 +526,7 @@ namespace EvolutionShop
             ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             Stocker.ResetTransient();Technician.ResetTransient();
+            ResetSessionFx();
             Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
             Tutorial = new ShopTutorial(); ResetTutorialPresentation();
@@ -532,8 +539,13 @@ namespace EvolutionShop
             Player.Teleport(spawn, Quaternion.identity);
             SetPanel(ShopPanel.Welcome); Notify("Preparation night 1. Choose your opening and grow your first stock.");
         }
-        void OnApplicationFocus(bool focus) { if (!focus && initialized && !ValidationMode && !Paused) SetPanel(ShopPanel.Pause); }
-        void OnApplicationQuit() { if (initialized && !quitRequested) SaveNow(); }
+        void OnApplicationFocus(bool focus)
+        {
+            // Hidden automated players retain their explicit fixture focus; native focus always cancels.
+            if (!ValidationMode) { fxHasFocus = focus; ApplyFxViewPolicy(); }
+            if (!focus && initialized && !ValidationMode && !Paused) SetPanel(ShopPanel.Pause);
+        }
+        void OnApplicationQuit() { World?.CancelFxTransient(); if (initialized && !quitRequested) SaveNow(); }
         void OnDestroy() { if (Player) Player.ControlledMotion -= ObserveTutorialMotion; DisposeHudTheme(); Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         void Quit()
         {

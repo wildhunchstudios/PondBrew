@@ -50,6 +50,7 @@ namespace EvolutionShop
             public Transform Root;
             public CreatureVisual Creature;
             public string SpeciesId;
+            public string FxSpecimenId;
             public float Seed;
             public bool Incubator;
             public TextMesh Status;
@@ -74,9 +75,10 @@ namespace EvolutionShop
         }
 
         void OnEnable() { Font.textureRebuilt += FontAtlasRebuilt; }
-        void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; }
+        void OnDisable() { Font.textureRebuilt -= FontAtlasRebuilt; CancelFxTransient(); }
         void OnDestroy()
         {
+            DisposeFxPresentation();
             DisposeRedesign();
             DisposeSamplePresentation();
             DisposeRoomArt();
@@ -137,6 +139,7 @@ namespace EvolutionShop
             playerCamera.backgroundColor = new Color(0.08f, 0.19f, 0.22f);
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
             playerCamera.nearClipPlane = 0.04f;
+            BuildFxPresentation();
         }
 
         public static Material MakeMaterial(string name, Color color, float metallic = 0, float smoothness = 0.45f)
@@ -573,7 +576,7 @@ namespace EvolutionShop
             RefreshSparkModule(model);
             var incubation = model.Incubator;
             status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW" + (model.SparkResearchUnlocked ? "  +  " + incubation.Spark + " SPARK" : "") + (model.MistResearchUnlocked ? "  +  " + incubation.Mist + " MIST" : "");
-            SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId);
+            SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId, incubation.SpecimenId);
             RefreshHatcheryLamp(incubation.Phase);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
@@ -597,6 +600,7 @@ namespace EvolutionShop
                 }
                 cell.gameObject.SetActive(active);
             }
+            ReconcileFxState(model);
         }
 
         void RefreshGrower(GameModel model, CultureKind culture, StationKind station, List<Transform> cells)
@@ -609,7 +613,7 @@ namespace EvolutionShop
         void RefreshTank(GameModel model, string id, StationKind kind)
         {
             var tank = model.GetTank(id);
-            SetCreature(displays[id], tank.HasValue ? tank.Value.SpeciesId : null);
+            SetCreature(displays[id], tank.HasValue ? tank.Value.SpeciesId : null, tank.HasValue ? tank.Value.Id : null);
             // The world label is the visible price tag; a reserved order keeps its agreed price instead.
             status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() +
                 (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  " + model.GetPrice(tank.Value.SpeciesId).Value.Price + " CREDITS");
@@ -617,8 +621,9 @@ namespace EvolutionShop
 
         static string SpeciesName(string id) => id == "pondlet" ? "Pondlet" : id == "bubblebelly" ? "Bubblebelly" : id == "ribbonfin" ? "Ribbonfin" : id == "lanternfin" ? "Lanternfin" : id == "driftwing" ? "Driftwing" : "Unknown";
 
-        void SetCreature(Display display, string species)
+        void SetCreature(Display display, string species, string specimenId = null)
         {
+            display.FxSpecimenId = specimenId;
             if (display.SpeciesId == species) return;
             if (display.Creature) Destroy(display.Creature.gameObject);
             display.SpeciesId = species;
@@ -647,7 +652,9 @@ namespace EvolutionShop
 
         public void SetHarvesting(bool active, Station station)
         {
-            harvesting = active && TryHarvestCulture(station, out harvestingCulture);
+            bool next = active && TryHarvestCulture(station, out harvestingCulture);
+            if (harvesting && !next) CancelFxTransient();
+            harvesting = next;
         }
 
         public void PulseHarvest(CultureKind kind)
@@ -674,6 +681,7 @@ namespace EvolutionShop
         public void Animate(float time, float dt)
         {
             lastTime = time;
+            TickFxPresentation(dt);
             // Repeat fitting after TextMesh has generated its mesh and after dynamic status changes.
             foreach (var label in labels) FitLabel(label);
             // Font rebuild callbacks handle atlas swaps even while the game is paused.

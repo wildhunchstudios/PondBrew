@@ -30,6 +30,7 @@ namespace EvolutionShop
         public void ApplyLayout(ShopLayout layout)
         {
             if (layout == null) throw new ArgumentNullException(nameof(layout));
+            CancelFxTransient();
             if (!cream) throw new InvalidOperationException("Build the shop world before applying furniture.");
             ApplyStoreExpansion(layout.StoreTier);
             ApplyLabExpansion(layout.LabTier);

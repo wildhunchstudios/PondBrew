@@ -152,15 +152,15 @@ namespace EvolutionShop
             }
             Notify("Use E at the lab incubator in person to prepare cultures."); return false;
         }
-        bool PrepareManually(Func<ActionResult> action)
+        bool PrepareManually(Func<ActionResult> action, FxCueId fxCue = FxCueId.None)
         {
             if (!AtTutorialIncubator()) return false;
             var result = action();
             if (result.Success)
                 foreach (var species in Config.Species) Tutorial.ObservePrepared(Model, species.Id, TutorialActionOrigin.Player);
-            return Perform(result).Success;
+            return PerformWithFx(result, fxCue).Success;
         }
-        public bool DoseCulture(CultureKind culture) => PrepareManually(() => Model.Dose(culture));
+        public bool DoseCulture(CultureKind culture) => PrepareManually(() => Model.Dose(culture), FxCueId.DoseCommitted);
         public bool ReturnCultureDose(CultureKind culture) => PrepareManually(() => Model.ReturnDose(culture));
         public bool ClearCultureDoses() => PrepareManually(() => Model.ClearDoses());
         public bool ReleaseCulture(CultureKind culture) => PrepareManually(() => Model.ReleaseCulture(culture));

@@ -84,6 +84,7 @@ namespace EvolutionShop
                 var display = pair.Value;
                 if (!display.StorageStatus) continue;
                 var resident = model.GetStorage(pair.Key);
+                display.FxSpecimenId = resident.HasValue ? resident.Value.Id : null;
                 string species = resident.HasValue ? resident.Value.SpeciesId : null;
                 if (display.SpeciesId != species)
                 {
