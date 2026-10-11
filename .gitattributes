@@ -20,3 +20,8 @@
 
 # Preserve byte-hashed FX-02 runtime validation evidence.
 /Docs/Evidence/fx-02/** -text whitespace=cr-at-eol
+
+# Preserve byte-hashed FX-03 runtime validation evidence.
+/Docs/Evidence/fx-03/** -text whitespace=cr-at-eol
+# Raw Unity logs keep engine-emitted trailing spaces and CR bytes.
+/Docs/Evidence/fx-03/**/*.log -text -whitespace
