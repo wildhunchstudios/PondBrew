@@ -691,7 +691,7 @@ namespace EvolutionShop
             Text("Collection time: " + Config.BaseCollectionSeconds.ToString("0.0") + "s to " + Config.UpgradedCollectionSeconds.ToString("0.0") + "s per unit.");
             Space();
             if (Model.UpgradeOwned) Text("Installed. Your upgraded siphon is ready.");
-            else Button("Buy siphon MK II  /  " + Config.UpgradeCost + " credits", () => Perform(Model.BuyUpgrade()));
+            else Button("Buy siphon MK II  /  " + Config.UpgradeCost + " credits", () => BuySiphonUpgrade());
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (Model.UpgradeOwned) {Space(); Button(BaselinePreview ? "DEV: restore upgraded siphon" : "DEV: compare original siphon", () => SetBaselinePreview(!BaselinePreview)); Small("F8 toggles comparison. Empty down to four cultures first. Ownership and save data remain unchanged.");}
 #endif

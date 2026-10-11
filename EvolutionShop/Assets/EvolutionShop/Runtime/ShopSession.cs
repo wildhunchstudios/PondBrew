@@ -165,6 +165,7 @@ namespace EvolutionShop
             ComedyInput(keyboard,gameplayAtFrameStart);
             Player.Sensitivity = Sensitivity;
             Player.InputEnabled = Panel == ShopPanel.None && (!ValidationMode || AllowValidationInput);
+            World.SetHandContext(Player.transform.position, Player.InputEnabled, SlapGesture && SlapGesture.IsPlaying);
             if (!Paused)
             {
                 Advance(Time.deltaTime);
@@ -288,8 +289,10 @@ namespace EvolutionShop
             var result = Model.TransferToTank(tankId);
             if (result.Success)
             { Reports.RecordRestock(); Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player); }
-            return Perform(result);
+            bool physical = Panel == ShopPanel.None && Focused != null && Focused.TankId == tankId;
+            return PerformWithFx(result, physical ? FxCueId.HandPlace : FxCueId.None);
         }
+        public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), FxCueId.HandUpgrade);
         public bool IsAtCounter
         {
             get

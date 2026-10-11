@@ -653,9 +653,13 @@ namespace EvolutionShop
         public void SetHarvesting(bool active, Station station)
         {
             bool next = active && TryHarvestCulture(station, out harvestingCulture);
-            if (harvesting && !next) CancelFxTransient();
+            bool previous = harvesting;
+            float releasedCurl = FxHandPose.Resolve(handAction, handAge, previous, handReleaseCurl, fxReducedMotion).RightCurl;
+            if (previous && !next) CancelFxTransient();
             harvesting = next;
             labHarvestSource = next && station ? station.transform : null;
+            if (previous && !next) handReleaseCurl = releasedCurl;
+            HandCollectEdge(next, previous);
         }
 
         public void PulseHarvest(CultureKind kind)
@@ -739,11 +743,7 @@ namespace EvolutionShop
                 if (f >= 1) { Destroy(p.Root.gameObject); particles.RemoveAt(i); }
             }
             harvestKick = Mathf.MoveTowards(harvestKick, 0, dt * 5);
-            if (ToolRoot)
-            {
-                ToolRoot.localPosition = new Vector3(.33f, -.16f + Mathf.Sin(time * 1.6f) * .003f, .58f - harvestKick * .017f);
-                toolNozzle.localRotation = Quaternion.Euler(0, 0, harvesting && harvestingCulture != CultureKind.Bloom && harvestingCulture != CultureKind.Flow ? Mathf.Sin(time * 39) * 3 : 0);
-            }
+            TickHandsPose(dt);
             TickLabFx(time, dt);
         }
 

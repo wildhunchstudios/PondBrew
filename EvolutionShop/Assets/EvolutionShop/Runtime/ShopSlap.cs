@@ -76,6 +76,7 @@ namespace EvolutionShop
             slapCooldown.TryStart();
             SlapTarget = null;
             SlapGesture.Play(ReducedGags);
+            World.SetHandContext(Player.transform.position, false, SlapGesture.IsPlaying);
             StartSlapComedy();
             sound.Slap(HumorVolume);
             Notify("HEY! MY DIGNITY!  The customer leaves. Reputation -1; unpaid stock stays.", 4);

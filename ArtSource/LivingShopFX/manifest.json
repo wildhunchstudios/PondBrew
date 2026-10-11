@@ -1,0 +1,220 @@
+{
+  "asset": "HandsPair",
+  "authorship": "Original local parametric glove meshes authored for Evolution Shop, no external assets",
+  "blender": "5.0.1",
+  "source": "ArtSource\\LivingShopFX\\EvolutionShop_LivingShopFX.blend",
+  "export": "EvolutionShop\\Assets\\EvolutionShop\\Resources\\Art\\LivingShopFX\\HandsPair.fbx",
+  "sourceSha256": "f4ce80a6f74a4b4d42bf7ff5414fcaf761a7f79d5e963a9bb06ba1ae68b14143",
+  "exportSha256": "b941e295c7e836baade71826d3b5928ca7934a077355ed581983120cdb2d93c1",
+  "generatorSha256": "04b6d555404376a1fdda711e2a4201c2552832a0a67d719bb44c202bd5e953e1",
+  "renderers": 12,
+  "rigPivots": 14,
+  "triangles": 4480,
+  "materials": [
+    "RW_Cream",
+    "RW_Teal",
+    "RW_Coral"
+  ],
+  "segments": [
+    {
+      "name": "RightFingers",
+      "parent": "RightWrist",
+      "pivot": [
+        0.057,
+        -0.245,
+        -0.098
+      ],
+      "triangles": 896,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "RightThumbBase",
+      "parent": "RightWrist",
+      "pivot": [
+        0.006,
+        -0.165,
+        -0.07
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "RightThumbTip",
+      "parent": "RightThumbBase",
+      "pivot": [
+        -0.006,
+        -0.15,
+        -0.038
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "RightIndexBase",
+      "parent": "RightWrist",
+      "pivot": [
+        0.055,
+        -0.145,
+        -0.06
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "RightIndexTip",
+      "parent": "RightIndexBase",
+      "pivot": [
+        0.052,
+        -0.137,
+        -0.022
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "RightCuff",
+      "parent": "RightWrist",
+      "pivot": [
+        0.065,
+        -0.246,
+        -0.108
+      ],
+      "triangles": 448,
+      "materials": [
+        "RW_Teal",
+        "RW_Coral"
+      ]
+    },
+    {
+      "name": "LeftFingers",
+      "parent": "LeftWrist",
+      "pivot": [
+        -0.092,
+        -0.2,
+        0.082
+      ],
+      "triangles": 896,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "LeftThumbBase",
+      "parent": "LeftWrist",
+      "pivot": [
+        -0.041,
+        -0.12,
+        0.11
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "LeftThumbTip",
+      "parent": "LeftThumbBase",
+      "pivot": [
+        -0.029,
+        -0.105,
+        0.142
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "LeftIndexBase",
+      "parent": "LeftWrist",
+      "pivot": [
+        -0.09,
+        -0.1,
+        0.12
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "LeftIndexTip",
+      "parent": "LeftIndexBase",
+      "pivot": [
+        -0.087,
+        -0.092,
+        0.158
+      ],
+      "triangles": 224,
+      "materials": [
+        "RW_Cream"
+      ]
+    },
+    {
+      "name": "LeftCuff",
+      "parent": "LeftWrist",
+      "pivot": [
+        -0.1,
+        -0.201,
+        0.072
+      ],
+      "triangles": 448,
+      "materials": [
+        "RW_Teal",
+        "RW_Coral"
+      ]
+    }
+  ],
+  "restBounds": {
+    "min": [
+      -0.1425,
+      -0.2635,
+      -0.1485
+    ],
+    "max": [
+      0.1075,
+      -0.078,
+      0.181
+    ]
+  },
+  "palmSockets": {
+    "Right": [
+      0.035,
+      -0.19,
+      -0.08
+    ],
+    "Left": [
+      -0.07,
+      -0.145,
+      0.1
+    ]
+  },
+  "fitAdjustment": {
+    "Right": [
+      0,
+      0,
+      0
+    ],
+    "Left": [
+      -0.01,
+      -0.015,
+      0
+    ]
+  },
+  "curlAxis": "Unity tool-body X; derive parent-local axis from actual imported transforms",
+  "unit": "metres",
+  "exportAnimation": false,
+  "paidGeneration": false,
+  "externalUploads": false,
+  "exportConversion": "Explicit nested-rig export copy: Blender (x,y,z) -> FBX (-x,z,-y), metadata -Z forward/Y up, exporter space bake off. Unity left-handed import yields tool-body (x,z,-y); root identity and positive scales verified in import log and runtime vertex sweep."
+}
