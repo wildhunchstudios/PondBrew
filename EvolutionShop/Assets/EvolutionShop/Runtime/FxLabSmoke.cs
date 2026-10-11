@@ -126,10 +126,14 @@ namespace EvolutionShop
             Check(shop.SetAutomationPaused(true) && shop.RequestAutomationBatch(),"Pending helper can remain explicitly paused");yield return null;
             Check(world.LabModuleState==LabModuleVisualState.Blocked,"Paused pending helper exposes calm blocked state");int module=world.LabModuleCueCount;string request=shop.Automation.RequestId;
             yield return new WaitForSeconds(.7f);Check(world.LabModuleCueCount==module,"Blocked helper never pulses on retries");yield return GateCapture("fx03-module-blocked");
-            Check(shop.SetAutomationPaused(false),"Resume same collector request");yield return AutomationWait(()=>world.LabModuleCueCount>module,3,"durable module collection");
-            Check(world.LabModuleCueCount==module+1 && shop.Automation.RequestId==request && shop.Model.Available(CultureKind.Bloom)==1,"One saved collection unit gives one module valve cue on same request");yield return GateCapture("fx03-module-collected");
+            Check(shop.SetAutomationPaused(false),"Resume same collector request");shop.SetPanel(ShopPanel.None);yield return AutomationWait(()=>world.LabModuleCueCount>module,3,"durable module collection");
+            Check(world.LabModuleCueCount==module+1 && shop.Automation.RequestId==request && shop.Model.Available(CultureKind.Bloom)==1,"One saved collection unit gives one module valve cue on same request");Transform valve=null;foreach(var t in StationOf(StationKind.Upgrade).GetComponentsInChildren<Transform>(true))if(t.name=="FX / Collector module valve")valve=t;
+            Check(valve && Mathf.Abs(Mathf.DeltaAngle(0,valve.localEulerAngles.z))>.01f && Mathf.Abs(Mathf.DeltaAngle(0,valve.localEulerAngles.z))<=6.01f && valve.gameObject.activeInHierarchy,"Real module valve remains bounded in clear world view");
+            File.WriteAllText(Path.Combine(evidence,"module-attachment.txt"),"Source="+valve.localPosition+"\nangle="+Mathf.DeltaAngle(0,valve.localEulerAngles.z)+"\nrequest="+request+"\n");
+            yield return GateCapture("fx03-module-collected");
             yield return AutomationWait(()=>!shop.Automation.IsPending,4,"collector-only request completion");
             Check(shop.Model.Available(CultureKind.Bloom)==1 && shop.Model.Available(CultureKind.Flow)==1 && shop.Model.Staged(CultureKind.Bloom)==0,"Collector has no pretend player dose or hand");
+            yield return AutomationEnter();
             Check(shop.CancelAutomationBatch()==false,"Completed request cannot be canceled twice");AutomationReleaseFixture();world.Refresh(shop.Model);
             Check(shop.RequestAutomationBatch(),"New collector request has new identity");var oldOwner=world.FxCues.Find("lab-collector");yield return null;Check(!world.FxCues.IsValid(oldOwner),"Request replacement retires prior module owner");
             byte[] durable=File.ReadAllBytes(shop.SavePath);module=world.LabModuleCueCount;string ingredients=TechnicianIngredients();TutorialBlockSave();

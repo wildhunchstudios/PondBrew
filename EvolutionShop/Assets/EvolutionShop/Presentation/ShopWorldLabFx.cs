@@ -7,6 +7,7 @@ namespace EvolutionShop
     {
         readonly Transform[] labNeedles = new Transform[4];
         Transform labFluid, labHarvestSource;
+        MeshRenderer labModuleIndicator;
         Vector3 labFluidRest;
         float labStreamClock, labBubbleClock, labDoseRemaining, labHatchRemaining, labModuleRemaining;
         float labHatchDuration;
@@ -29,17 +30,17 @@ namespace EvolutionShop
         void BuildLabFx()
         {
             // Four tiny moving indicators borrow the current palette and primitive mesh.
-            labNeedles[0] = LabNeedle(bloomRoot, "Bloom refill needle", new Vector3(-.37f, .475f, -.674f));
-            labNeedles[1] = LabNeedle(flowRoot, "Flow refill needle", new Vector3(-.37f, .475f, -.674f));
+            labNeedles[0] = LabNeedle(bloomRoot, "Bloom refill needle", new Vector3(.37f, .475f, -.674f));
+            labNeedles[1] = LabNeedle(flowRoot, "Flow refill needle", new Vector3(.37f, .475f, -.674f));
             if (displays.TryGetValue("incubator", out var display))
             {
                 var station = display.Root.parent;
-                labNeedles[2] = LabNeedle(station, "Hatchery progress needle", new Vector3(-.532f, .632f, -.718f));
+                labNeedles[2] = LabNeedle(station, "Hatchery progress needle", new Vector3(.532f, .632f, -.718f));
                 labFluid = station.Find("Incubator fluid");
                 if (labFluid) labFluidRest = labFluid.localScale;
             }
-            labNeedles[3] = LabNeedle(upgradeRoot, "Collector module valve", new Vector3(.48f, .88f, -.635f));
-            if (labNeedles[3]) labNeedles[3].gameObject.SetActive(false);
+            labNeedles[3] = LabNeedle(upgradeRoot, "Collector module valve", new Vector3(-.48f, .88f, -.615f));
+            if (labNeedles[3]) { labModuleIndicator = labNeedles[3].GetComponentInChildren<MeshRenderer>(); labNeedles[3].gameObject.SetActive(false); }
         }
         Transform LabNeedle(Transform station, string name, Vector3 point)
         {
@@ -55,6 +56,7 @@ namespace EvolutionShop
             bool changed = state != labModuleState || requestChanged;
             labModuleState = state; labModuleRequest = request;
             labNeedles[3].gameObject.SetActive(state != LabModuleVisualState.Absent);
+            if (changed && labModuleIndicator) labModuleIndicator.sharedMaterial = state == LabModuleVisualState.Off ? trim : state == LabModuleVisualState.Blocked ? bloomMat : gold;
             var owner = BindFxOwner("lab-collector", request, upgradeRoot);
             if (changed && (requestChanged || state != LabModuleVisualState.Waiting)) { CancelFxOwner(owner); labModuleRemaining = 0; }
             fxCues.SetState(owner, state == LabModuleVisualState.Blocked ? FxSteadyState.Reserved : FxSteadyState.Empty);
