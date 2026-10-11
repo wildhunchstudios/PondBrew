@@ -1,6 +1,6 @@
 # Resume — Evolution Shop current checkpoint
 
-> Latest continuation: FX-01 cue/asset contracts complete; next is FX-02. See AGENTS.md for authoritative current scope and fx-01/validation.json for static evidence. Older active-status paragraphs below are historical.
+> Latest continuation: FX-02 and FX-A complete; source ee005f2, tag fx-foundation-validated. Next is FX-03 only, defined in AGENTS.md. Separate playable Builds\Windows-6000.3.21f1-fx02-foundation-2/EvolutionShop.exe. Evidence: fx-02-VALIDATION.md; older active-status paragraphs below are historical.
 
 > Current assignment: R08.4 automation recovery proof is active. R08.3 desired-stock technical validation is complete and its human playtest remains open; R08.2 human acceptance was not recorded before the user directed work to proceed. See AGENTS.md, Docs/TASKS.md and Docs/Evidence/r08-3-VALIDATION.md.
 
@@ -271,3 +271,10 @@ FX-01 delivered 41 typed cue contracts and 10 explicit attachment records for th
 Canonical next assignment is AGENTS.md FX-02; this record is historical evidence, not a competing roadmap. No new game build/tests or current live Unity/Blender connection is claimed.
 
 FX-01 final evidence: **26/26 static checks passed**, process exit0; all540 tracked source/art/settings files and13 protected files unchanged. Conservative Pondlet reference box covered26,568 sampled corners plus a continuous-angle margin; actual Unity mesh sweep remains pending. The original local key-pose diagram was visually inspected. Delivery checkpoint tag: **fx-cue-contracts**. No game tests/build were run for this documentation assignment.
+
+
+## FX-02 continuation — 2026-10-11
+
+FX-02 delivered: bounded cue/state/lifetime/priority ownership and a fixed96 borrowed-mesh pool, with24 action-reserved slots and a32 Low cap. Accepted collection/dose and explicit dose refusal bind three small proof pulses after the real result; new success FX is suppressed after a failed write. Focus/pause/modal/arrange/disable/move/remove/reset cancel transient presentation; reload reconstructs steady state without replay. Final source ee005f2, tag fx-foundation-validated; separate player Builds\Windows-6000.3.21f1-fx02-foundation-2/EvolutionShop.exe. Final EditMode2,040/2,040, Editor63, exact Windows585 checks across five runs (64+64 FX,335 automation,61+61 baseline), runtime errors/exits0, build errors/warnings0. Eight actual changed-surface HUD captures reviewed and16 measured8s baseline/candidate windows recorded. All13 protected files and531/540 existing source/art/settings files unchanged;9 intentional C# integrations and14 new C#/meta files; Core assembly byte-identical. Four pre-existing players preserved. Full evidence: Docs/Evidence/fx-02-VALIDATION.md and fx-02/audit.json. FX-A foundation complete; next bounded assignment FX-03 working lab hero. Human motion/audio approval remains FX-06; R08.5, wider human gates and deferred tutorial are unchanged.
+
+Read AGENTS.md first. Reverify current project/Editor, saves and processes. Unity CLI normal desktop execution is working with the pinned Editor; no new bridge or licensing reinstall. Start the six FX-03 subtasks only after the next continuation request. Incubator modal occlusion is an explicit FX-03 follow-up; native input/listening and human motion appeal are still open.

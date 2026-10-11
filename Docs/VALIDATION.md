@@ -1,6 +1,6 @@
 # Validation evidence
 
-> Current checkpoint: R08.1 technical validation complete; the separate candidate awaits the first human playtest. R08.2 is not started. See AGENTS.md and Evidence/r08-1-VALIDATION.md.
+> Current checkpoint: FX-02 presentation foundation technically validated; source ee005f2, tag fx-foundation-validated. Exact evidence: Evidence/fx-02-VALIDATION.md. Earlier checkpoint paragraphs below are historical.
 
 Historical Milestone01 evidence from 2026-10-03 follows. Current R08.1 candidate results are appended at the end of this file.
 
@@ -353,3 +353,10 @@ FX-01 delivered 41 typed cue contracts and 10 explicit attachment records for th
 Canonical next assignment is AGENTS.md FX-02; this record is historical evidence, not a competing roadmap. No new game build/tests or current live Unity/Blender connection is claimed.
 
 FX-01 final evidence: **26/26 static checks passed**, process exit0; all540 tracked source/art/settings files and13 protected files unchanged. Conservative Pondlet reference box covered26,568 sampled corners plus a continuous-angle margin; actual Unity mesh sweep remains pending. The original local key-pose diagram was visually inspected. Delivery checkpoint tag: **fx-cue-contracts**. No game tests/build were run for this documentation assignment.
+
+
+## FX-02 final evidence — 2026-10-11
+
+FX-02 delivered: bounded cue/state/lifetime/priority ownership and a fixed96 borrowed-mesh pool, with24 action-reserved slots and a32 Low cap. Accepted collection/dose and explicit dose refusal bind three small proof pulses after the real result; new success FX is suppressed after a failed write. Focus/pause/modal/arrange/disable/move/remove/reset cancel transient presentation; reload reconstructs steady state without replay. Final source ee005f2, tag fx-foundation-validated; separate player Builds\Windows-6000.3.21f1-fx02-foundation-2/EvolutionShop.exe. Final EditMode2,040/2,040, Editor63, exact Windows585 checks across five runs (64+64 FX,335 automation,61+61 baseline), runtime errors/exits0, build errors/warnings0. Eight actual changed-surface HUD captures reviewed and16 measured8s baseline/candidate windows recorded. All13 protected files and531/540 existing source/art/settings files unchanged;9 intentional C# integrations and14 new C#/meta files; Core assembly byte-identical. Four pre-existing players preserved. Full evidence: Docs/Evidence/fx-02-VALIDATION.md and fx-02/audit.json. FX-A foundation complete; next bounded assignment FX-03 working lab hero. Human motion/audio approval remains FX-06; R08.5, wider human gates and deferred tutorial are unchanged.
+
+The current source compiled and full2,040 EditMode cases passed, skipped0. Final Windows FX64+64, automation335 and baseline61+61 passed from the rebuilt culture-corrected executable. Human FX approval, native input and audio listening were not run. See the separate report for preserved failed attempts, measured comparisons, modality limitations and byte hashes.
