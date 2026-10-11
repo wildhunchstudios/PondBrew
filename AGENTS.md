@@ -1,3 +1,5 @@
+**FX-06 active — 2026-10-11.** Root is preparing the bounded lab/hand/tank motion and sound review. FX-05/source d4e55ef and its build/save/evidence are preserved. Creative approval, native controls/listening and controlled single-instance GPU attribution remain pending; no later FX content is authorized by this review.
+
 **FX-05 complete — 2026-10-11.** One existing Pondlet/tank hero is technically delivered: bounded swim/holds, rest-relative fins/tail, focus glance, saved-placement settle and reused water/bubble/plant motion. Source `d4e55ef`, tag **fx-pondlet-validated**; playable `Builds/Windows-6000.3.21f1-fx05-pondlet-2/EvolutionShop.exe`. Full EditMode **2,060/2,060**, Editor **266**, exact Windows **1,887 checks across 11 runs**, runtime errors/exits0; build errors/warnings0. Sixteen HUD and20 live sampled frames reviewed; 32+32 timing windows recorded. All28 protected files and570/579 baseline files unchanged; nine intentional existing C# integrations,17 code/meta payload files, Core DLL byte-identical and four existing players preserved. FX resource topology remains112 renderers/120 transforms. Evidence: Docs/Evidence/fx-05-VALIDATION.md. Native controls, listening, human lab/hand/tank review and isolated night-lab GPU attribution remain FX-06/22. **Next assignment: FX-06 sample review; no later FX work started.**
 
 **FX-04 complete — 2026-10-11.** FX-04 is technically complete: original compact cartoon gloves, fixed grip, movement-linked tool motion, held-collection trigger/recoil/release, committed placement and contextual refusal/upgrade feedback. Modal interactions retain machine/UI feedback with operating hands hidden. Source `75d3c6b`, tag **fx-hands-validated**. Separate playable `Builds/Windows-6000.3.21f1-fx04-hands-3/EvolutionShop.exe`. Final EditMode **2,054/2,054**, Editor **419**, final Windows **1,616 checks across nine runs**, runtime errors/exits 0; build errors/warnings 0. Reviewed 22 actual HUD frames; recorded 24 candidate and 24 preserved-reference timing windows. All 20 protected files and 558/564 baseline files unchanged; six intentional existing C# integrations. Core DLL is byte-identical and four existing players preserved. Evidence: Docs/Evidence/fx-04-VALIDATION.md. Native controls, listening, human motion/hand appeal and controlled night-lab GPU attribution remain open in FX-06/22. Historical FX-04 handoff; FX-05 has subsequently been delivered and FX-06 is the next review boundary.
@@ -486,7 +488,7 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
-### Next ready assignment — FX-06 First playable motion/sound review
+### Active assignment — FX-06 First playable motion/sound review
 
 FX-00–05 and FX-A are technically complete. The frozen cue/asset contract remains Docs/Design/FX01_CUE_ASSET_CONTRACT.md; latest executed evidence is Docs/Evidence/fx-05-VALIDATION.md. Technical completion does not pass human motion/sound review.
 
@@ -528,7 +530,7 @@ FX-05 executable subtasks (complete; final evidence under fx-05/):
 - [x] Root / QA: run affected tests, hand/lab/automation regressions and a separate exact Windows candidate; inspect ordinary/busy day/night at720p/1080p and actual animated mesh bounds. Distinguish synthetic controls, static captures, motion footage, native input and listening.
 - [x] Root / PM: save source/delivery checkpoints, update this guide and evidence, and stop at the FX-06 hero review. Controlled single-instance night-lab GPU profiling and human lab/hand/tank/audio approval are required before multiplying hero content.
 
-FX-06 executable subtasks (ready; review pending):
+FX-06 executable subtasks (active; review pending):
 
 - [ ] Root / QA: reverify the exact pinned project/candidate, ordinary save and existing processes; preserve FX-05 and compare against the protected FX-04 player.
 - [ ] Root / designer + animator: prepare concrete playable lab/hand/tank review views and actual short motion samples at720p/1080p; include day/night, hatch/collection/dose/swim and reduced behavior. Existing sampled Pondlet GIF is not native-frame-rate video.
