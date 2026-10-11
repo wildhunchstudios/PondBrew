@@ -1,15 +1,15 @@
 # Prototype tasks
 
-> Current assignment: R08.4 recovery validation is running again. Approved normal desktop launches connect to Unity licensing; focused37/full2,018 and Editor automation335 passed. Worker regressions and a fresh Windows candidate are in progress. See AGENTS.md and Docs/Evidence/r08-4-VALIDATION.md.
+> R08.4 is complete. Normal desktop execution restored Editor licensing IPC; final full EditMode2,018, Editor613 and exact Windows1,226 checks passed. Separate candidate: Builds/Windows-6000.3.21f1-r08-4-recovery/EvolutionShop.exe. Source8406a86; delivery tag r08-recovery-validated. Next bounded assignment is R08.5; not started. See AGENTS.md and Docs/Evidence/r08-4-VALIDATION.md.
 
 Updated: 2026-10-11. Earlier IPC refusal is historical; the working launch context is recorded in AGENTS.md.
 
-## R08.4 — automation recovery and ownership proof (active)
+## R08.4 — automation recovery and ownership proof (complete 2026-10-11)
 
 - [x] R08.4a Map existing runtime/test coverage to the acceptance criteria: buffers, save retry, pause/reload, room edits, queue operations and blocked technician recovery.
 - [x] R08.4b Missing/off-duty staff, reordered queue, cancel/re-add and save/reload passed in the Editor and exact Windows automation route. A single saved target order waits without an active helper request or resource use while Moss is unavailable.
-- [~] R08.4c Focused37/full2,018 and Editor automation335/technician145/stocker133 passed. Separate Windows build succeeded with zero errors/warnings; automation335 passed at both resolutions. Windows worker routes remain in progress.
-- [~] R08.4d Current candidate and readable 720p/1080p target-panel captures are available. Final worker results and preservation audit remain.
+- [x] R08.4c Focused37/full2,018 and Editor automation335/technician145/stocker133 passed. Build errors/warnings0. Exact Windows automation335/technician145/stocker133 at each resolution:1,226 checks, runtime errors/exits0.
+- [x] R08.4d Two actual target-panel captures reviewed at720p/1080p; black hidden-worker frames excluded. Final audit:10/10 protected files unchanged, four original players preserved. Candidate/source hashes, exact commands and failed attempts retained under r08-4/.
 - Existing R08.3 results are historical input to this combined R08.4 proof; do not relabel them as newly run. R08.3 human playtest remains open.
 
 ## R08.3 — desired-stock configuration and status (technical complete; playtest pending)
@@ -42,8 +42,8 @@ Updated: 2026-10-11. Earlier IPC refusal is historical; the working launch conte
 - [x] Exact standalone automation route: 247/247 at 1280x720 and 247/247 at 1920x1080.
 - [x] Regressions: Technician136, Stocker133, Staff102 and Tutorial124; all process exits0 and captured runtime errors0.
 - [x] Inspect actual UI captures at both resolutions; compare eleven protected paths; preserve R07.5 package/player and four original processes.
-- [ ] First human playtest of module purchase, one-batch collection/dosing, manual incubation, save recovery and panel scrolling.
-- [ ] Keep R08.2 unstarted until the user gives playtest feedback.
+- [x] First human R08.1 playtest accepted 2026-10-10: "playtested looks great for now." This is general acceptance, not detailed input/audio/balance evidence.
+- [x] R08.2 started after that feedback; its separate human acceptance remains open as recorded above.
 
 Candidate: Builds/Windows-6000.3.21f1-r08-1-automation-candidate/EvolutionShop.exe. Controls: WASD move, mouse look, E interact, Tab journal, F1 help, Esc pause. At the physical lab bench, open Culture preparation, install the optional Collector (36 credits) and Recipe Doser (24 credits), choose a discovered recipe, enable owned modules and request one batch; start incubation manually at the incubator. Prices are provisional. The candidate uses the normal local save on ordinary launch; back it up before playtest if the existing profile must remain unchanged. The first 720p locked-state capture is black; subsequent captures render. The panel has a scrollable content area and its bench-return action begins below the initial viewport. Details: Evidence/r08-1-VALIDATION.md and Evidence/r08-1-final-audit-20261010.json.
 
