@@ -55,6 +55,8 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.Incubator);
             accepted = cues.AcceptedCount;
             Check(shop.DoseCulture(CultureKind.Flow) && cues.AcceptedCount == accepted + 1 && pool.ActiveCount == 1, "Reach-guarded menu dose gives small vessel cue after accepted delta");
+            var activeMotes = pool.Root.GetComponentsInChildren<MeshRenderer>();
+            Check(activeMotes.Length == 1 && activeMotes[0].sharedMaterial.name == "Flow turquoise", "Flow dose retains its accepted culture palette");
             yield return GateCapture("fx02-accepted-dose");
             yield return new WaitForSeconds(.12f);
             unchanged = FxAuthority(); accepted = cues.AcceptedCount;

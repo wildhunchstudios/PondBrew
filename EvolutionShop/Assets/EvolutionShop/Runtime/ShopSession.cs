@@ -411,7 +411,7 @@ namespace EvolutionShop
             }
         }
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
-        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual)
+        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom)
         {
             sound.Feedback(result.Success);
             if (result.Success)
@@ -419,9 +419,9 @@ namespace EvolutionShop
                 Notify("Done.", 1.3f);
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
-                PresentFxResult(result, SaveNow(), fxCue, fxOrigin);
+                PresentFxResult(result, SaveNow(), fxCue, fxOrigin, culture);
             }
-            else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin); }
+            else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin, culture); }
             return result;
         }
         public void SetPanel(ShopPanel panel)
