@@ -88,6 +88,9 @@ namespace EvolutionShop
             int priority = id == FxCueId.HandRefused ? 5 : 4;
             float duration = id == FxCueId.HandRefused ? .18f : .28f;
             if (!fxCues.Play(token, id, sequence, origin, duration, priority)) return false;
+            if (id == FxCueId.CollectedUnit && (culture == CultureKind.Bloom || culture == CultureKind.Flow)) {
+                AcceptCollectionUnit(token, sequence, culture); AcceptHandPose(id, duration); return true;
+            }
             if (id == FxCueId.HandRefused) { fxPool?.Cancel(token); if (fxPolicy == FxViewPolicy.Modal) ShowLabRefusal(culture); }
             Transform source = atVessel && displays.TryGetValue("incubator", out var vessel) ? vessel.Root.parent : id == FxCueId.CollectedUnit ? ToolChamber : toolBody;
             var point = atVessel ? new Vector3(0, 1.48f, -.46f) : id == FxCueId.CollectedUnit ? new Vector3(0, -.02f, -.13f) : new Vector3(.085f, -.129f, -.195f);
@@ -99,6 +102,9 @@ namespace EvolutionShop
         }
         public void CancelFxOwner(FxOwnerToken owner)
         {
+            if (owner.IsDefined && owner.Equals(collectionOwner)) {
+                ResetCollectionFx(); harvesting = false; labHarvestSource = null; CancelHandsPose();
+            }
             if (fxCues != null && owner.Equals(fxCues.Find("incubator"))) CancelLabFx();
             if (fxCues != null && owner.Equals(fxCues.Find("lab-collector"))) labModuleRemaining = 0;
             fxCues?.Cancel(owner); fxPool?.Cancel(owner);
@@ -117,6 +123,7 @@ namespace EvolutionShop
         { if (fxPolicy == value) return; fxPolicy = value; CancelFxTransient(); }
         public void ResetFxPresentation()
         {
+            collectionSaveBlocked = false;
             CancelFxTransient(); fxCues?.Reset(); System.Array.Clear(fxBindings, 0, fxBindings.Length);
             if (lastModel != null) ReconcileFxState(lastModel);
         }

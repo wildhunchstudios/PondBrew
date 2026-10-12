@@ -658,12 +658,27 @@ namespace EvolutionShop
 
         public void SetHarvesting(bool active, Station station)
         {
-            bool next = active && TryHarvestCulture(station, out harvestingCulture);
+            if (!active) collectionSaveBlocked = false;
+            CultureKind culture = default;
+            bool next = active && TryHarvestCulture(station, out culture);
+            if (next) next = !collectionSaveBlocked && fxEnabled && fxPolicy == FxViewPolicy.Visible &&
+                lastModel != null && lastModel.ReservedCultureCount < lastModel.Capacity && lastModel.GetGrower(culture).Units > 0;
             bool previous = harvesting;
             float releasedCurl = FxHandPose.Resolve(handAction, handAge, previous, handReleaseCurl, fxReducedMotion).RightCurl;
-            if (previous && !next) CancelFxTransient();
+            bool changedSource = next && labHarvestSource != station.transform;
+            if (!next || changedSource) CancelCollectionIntake();
+            // Releasing intake must not cancel unrelated working-lab motion or a committed unit's settle.
+            if (previous && !next) {
+                for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root) {
+                    particles[i].Root.gameObject.SetActive(false); Destroy(particles[i].Root.gameObject);
+                }
+                particles.Clear(); emissionClock = 0; harvestKick = 0;
+            }
             harvesting = next;
+            if (next) harvestingCulture = culture;
             labHarvestSource = next && station ? station.transform : null;
+            if (next && (harvestingCulture == CultureKind.Bloom || harvestingCulture == CultureKind.Flow) &&
+                (!previous || changedSource || !fxCues.IsValid(collectionOwner))) BeginCollectionIntake(labHarvestSource);
             if (previous && !next) handReleaseCurl = releasedCurl;
             HandCollectEdge(next, previous);
         }
@@ -693,7 +708,6 @@ namespace EvolutionShop
         public void Animate(float time, float dt)
         {
             lastTime = time;
-            TickFxPresentation(dt);
             // Repeat fitting after TextMesh has generated its mesh and after dynamic status changes.
             foreach (var label in labels) FitLabel(label);
             // Font rebuild callbacks handle atlas swaps even while the game is paused.
@@ -705,9 +719,9 @@ namespace EvolutionShop
             // The accepted opaque hatchery frame remains fixed; use visible fluid/needle instead.
             for (int i = 0; i < reservoirCells.Count; i++)
             {
-                float angle = i * 2.399f + time * .6f;
-                reservoirCells[i].localPosition = new Vector3(Mathf.Cos(angle) * .052f, -.062f + (i % 4) * .037f + Mathf.Sin(time * 2 + i) * .008f, Mathf.Sin(angle) * .052f);
-                reservoirCells[i].localRotation = Quaternion.Euler(Mathf.Sin(time + i) * 15, time * 31 + i * 52, Mathf.Cos(time * 1.3f + i) * 17);
+                FxCollectionMotion.ReservoirPose(i, time, CollectionResponse, fxReducedMotion, out var position, out var rotation);
+                reservoirCells[i].localPosition = position;
+                reservoirCells[i].localRotation = rotation;
             }
             foreach (var display in displays.Values)
             {
@@ -746,6 +760,8 @@ namespace EvolutionShop
             }
             harvestKick = Mathf.MoveTowards(harvestKick, 0, dt * 5);
             TickHandsPose(dt);
+            // Resolve moving destination poses before ticking their attached pooled trajectories.
+            TickFxPresentation(dt);
             TickLabFx(time, dt);
         }
 

@@ -164,6 +164,24 @@ namespace EvolutionShop
         public void Cancel(FxOwnerToken owner) { if (!disposed) for (int i = 0; i < motes.Length; i++) if (motes[i].Owner.Equals(owner)) Release(motes[i]); }
         public void CancelAmbient(FxOwnerToken owner) { if (!disposed) for (int i = 0; i < motes.Length; i++) if (!motes[i].Action && motes[i].Owner.Equals(owner)) Release(motes[i]); }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public int ParticleCountForValidation(FxOwnerToken owner) {
+            int count = 0;
+            if (!disposed && owner.IsDefined) foreach (var m in motes) if (m.Active && m.Owner.Equals(owner)) count++;
+            return count;
+        }
+        public bool TryGetParticleForValidation(FxOwnerToken owner, int ordinal, out Vector3 start,
+            out Vector3 end, out Vector3 position, out float age, out float lifetime) {
+            start = end = position = Vector3.zero; age = lifetime = 0;
+            if (disposed || !owner.IsDefined || ordinal < 0) return false;
+            foreach (var m in motes) {
+                if (!m.Active || !m.Rich || !m.Owner.Equals(owner) || !m.Source) continue;
+                if (ordinal-- != 0) continue;
+                start = m.Source.TransformPoint(m.Local);
+                end = m.Destination ? m.Destination.TransformPoint(m.Particle.End) : m.Source.TransformPoint(m.Local + m.Particle.End);
+                position = m.Root.position; age = m.Age; lifetime = m.Lifetime; return true;
+            }
+            return false;
+        }
         public int AmbientCount(FxOwnerToken owner) {
             int count = 0;
             if (!disposed) for (int i = 0; i < motes.Length; i++) if (motes[i].Active && !motes[i].Action && motes[i].Owner.Equals(owner)) count++;

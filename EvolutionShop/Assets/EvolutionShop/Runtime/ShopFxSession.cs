@@ -28,7 +28,11 @@ namespace EvolutionShop
         void PresentFxResult(ActionResult result, bool saved, FxCueId successCue, FxCueOrigin origin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null)
         {
             if (!World) return;
-            if (result.Success && !saved) { World.CancelFxTransient(); return; }
+            if (result.Success && !saved) {
+                World.CancelFxTransient();
+                if (successCue == FxCueId.CollectedUnit) World.BlockCollectionUntilRelease();
+                return;
+            }
             // Only opted-in manual actions bind the hero proof cues; ordinary worker feedback is preserved.
             if (successCue == FxCueId.None) return;
             if (result.Success && saved)

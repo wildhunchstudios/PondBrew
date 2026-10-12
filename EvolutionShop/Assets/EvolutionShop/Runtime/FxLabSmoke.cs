@@ -62,7 +62,7 @@ namespace EvolutionShop
             }
             InputSystem.QueueStateEvent(cycleMouse,new MouseState());yield return null;yield return null;
             Check(shop.Model.Available(kind)==before+1 && shop.World.FxPool.SpawnedCount>spawned,"Ordinary0.6s held collection commits one unit and pooled intake / "+kind);
-            Check(shop.World.FxPool.ActiveCount==0,"Release clears intake immediately / "+kind);
+            Check(!shop.World.CollectionActive && shop.World.CollectionParticleCountForValidation==0,"Release clears owned intake immediately; committed chamber settle and grower ambience remain / "+kind);
         }
         IEnumerator FxLabPrepare(bool capture)
         {

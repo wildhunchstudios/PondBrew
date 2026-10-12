@@ -9,7 +9,7 @@ namespace EvolutionShop
         Transform labFluid, labHarvestSource;
         MeshRenderer labModuleIndicator;
         Vector3 labFluidRest;
-        float labStreamClock, labDoseRemaining, labHatchRemaining, labModuleRemaining;
+        float labDoseRemaining, labHatchRemaining, labModuleRemaining;
         float labHatchDuration;
         uint labHatchSeed;
         ulong labHatchEmitted;
@@ -144,7 +144,8 @@ namespace EvolutionShop
         void CancelLabFx()
         {
             labHatchEmitted = 0; labHatchOwner = default; labHatchSeed = 0;
-            labHarvestSource = null; labStreamClock = labDoseRemaining = labHatchRemaining = labModuleRemaining = 0;
+            labHarvestSource = null; labDoseRemaining = labHatchRemaining = labModuleRemaining = 0;
+            ResetCollectionFx();
             ResetDoseFx(); ResetGrowthFx();
             foreach (var needle in labNeedles) if (needle) needle.localRotation = Quaternion.identity;
             if (labFluid) labFluid.localScale = labFluidRest;
@@ -158,16 +159,7 @@ namespace EvolutionShop
             labModuleRemaining = Mathf.Max(0, labModuleRemaining - dt);
             TickHatchRelease(); TickDoseFx(); RefreshDoseMixture();
             TickGrowthFx(time, dt);
-            if (harvesting && labHarvestSource && (harvestingCulture == CultureKind.Bloom || harvestingCulture == CultureKind.Flow) && fxPolicy == FxViewPolicy.Visible)
-            {
-                labStreamClock -= dt;
-                if (labStreamClock <= 0 && toolBody)
-                {
-                    labStreamClock = 1f / 6;
-                    fxPool?.EmitTravel(fxCues, fxCues.Find(harvestingCulture == CultureKind.Bloom ? "bloom" : "flow"), labHarvestSource,
-                        new Vector3(.36f, 1f, -.76f), toolBody, new Vector3(0, .05f, .489f), harvestingCulture == CultureKind.Flow ? flowMat : bloomMat, fxReducedMotion ? .025f : .04f);
-                }
-            }
+            TickCollectionFx(dt);
             var inc = lastModel.Incubator;
             float fraction = inc.Phase == IncubatorPhase.Incubating ? Mathf.Clamp01(1f - inc.SecondsRemaining / labIncubationSeconds) : inc.Phase == IncubatorPhase.Ready ? 1 : 0;
             if (labNeedles[2]) labNeedles[2].localRotation = Quaternion.Euler(0, 0, -12 * fraction);
