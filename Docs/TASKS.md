@@ -1,4 +1,4 @@
-> Current FX-06 review preparation: source2fa5efc, tag fx-review-prepared. Technical passes:2,060 EditMode,266 Editor,365 exact Windows;18 actual videos. Native controls/listening, human acceptance and controlled GPU review remain open; no FX-07. Canonical status: [AGENTS.md](../AGENTS.md). Evidence: [FX-06 validation](Evidence/fx-06-VALIDATION.md). Older records below are historical.
+> FX-06 profiling follow-up2026-10-12:488 new runtime checks (183 current),64 windows/40 pairs; Wallpaper Engine restored. Night-lab increase did not repeat; tank GPU cost/measurement limits, human controls/listening and creative acceptance stay open. Canonical status: [AGENTS.md](../AGENTS.md). Evidence: [dated profiling report](Evidence/fx-06/authorized-isolation-20261012/REPORT.md). No FX-07. Older records below are historical.
 
 # Prototype tasks
 
@@ -320,6 +320,9 @@ Performance threshold review completed with 16 fresh matched-context pairs and e
 - [x] Exact final candidate, regression tests,18 actual motion clips,6 raw sound previews, ordinary-input startup and isolated human launchers.
 - [x] Saved local review package, immutable evidence receipts and updated guide.
 - [ ] Actual native keyboard/held collection/stations, heard game mix and user lab/hands/tank assessment.
-- [ ] Controlled foreground single-instance night-lab GPU attribution; existing four players need explicit close authorization.
+- [ ] GPU attribution acceptance:2026-10-12 authorized comparisons are recorded; the night-lab increase did not repeat, while tank GPU deltas and measurement limits remain. Old-PID closure was authorized and denied by Windows; apparent inactivity is evidenced. No repeated permission request is needed.
 
 Continue within FX-06; do not multiply content or mark FX-B approved. Normal controls: WASD/mouse, hold LMB, E, Tab, F1, Escape.
+
+
+2026-10-12: The authorized FX-06 comparison is checkpointed separately from the unchanged playable/review package. Eight successful routes,64 end-focused windows and40 matched pairs; user has not played the sample. Windows denied old-PID closure, but execution/GPU evidence shows apparent inactivity. Preserve the completed evidence and finish only the pending FX-06 review/attribution gates before FX-07. See the canonical guide and dated report above.
