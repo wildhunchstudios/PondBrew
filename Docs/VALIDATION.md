@@ -381,3 +381,8 @@ User rejected rows/icon-like effects. Source d75a46d, tag fx-organic-hatch-corre
 ## 2026-10-12 — FX-06R-02 hatch/discovery complete
 
 Source7db5cc7, tagfx-hatch-hero-validated; separate fx06r02-hatch-1 player. Approved organic bubbles now coordinate with1.4s first/.85s repeat Pondlet wake/settle and two original sounds; immediate collection stays available. Actual2,095 EditMode,116 Editor,668 Windows checks passed; build errors/warnings0. Ten videos/838 decoded frames, raw sound previews, actual864-pose20-mesh sweeps. All36 protected files/prior candidate preserved. Evidence Docs/Evidence/fx-06r-02-VALIDATION.md; gallery8789. Native controls/listening/new visual acceptance/integrated GPU remain open. AGENTS.md is canonical; **next FX-06R-03 dose/mixing**, no later work started.
+
+
+## 2026-10-12 — FX-06R-03 delivered
+
+Final source d5af465, tag fx-dose-mixing-validated, separate fx06r03-dose-2 player. World/panel dose streams, actual composition/fill, return/clear/known recipes; journal cancellation and faint UI masks corrected. Actual 2,101 EditMode, 87 Editor, 767 final Windows checks; build 0 errors/0 warnings; 12 final videos/1176 decoded frames. All 36 protected files/previous hatch candidate preserved. Evidence Docs/Evidence/fx-06r-03-VALIDATION.md; gallery 8790. AGENTS.md is canonical; next FX-06R-04 only. Native/listening/creative/GPU gates stay open.

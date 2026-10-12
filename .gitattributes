@@ -31,3 +31,6 @@
 
 # Preserve byte-hashed hatch choreography evidence and raw engine whitespace.
 /Docs/Evidence/fx-06r-02/** -text -whitespace
+
+# Preserve byte-hashed dose/mixing evidence and raw engine whitespace.
+/Docs/Evidence/fx-06r-03/** -text -whitespace
