@@ -46,10 +46,11 @@ namespace EvolutionShop
             ReconcileLabPresentation();
             World.SetFxViewPolicy(!fxHasFocus ? FxViewPolicy.Unfocused : PlacementActive || Panel == ShopPanel.Arrange ? FxViewPolicy.Arrange :
                 Paused ? FxViewPolicy.Paused : Panel != ShopPanel.None ? FxViewPolicy.Modal : FxViewPolicy.Visible);
+            if (World.LabDoseRemaining <= 0 || !fxHasFocus || Paused || PlacementActive || (Panel != ShopPanel.None && Panel != ShopPanel.Incubator)) sound?.StopDoseAudio();
             if (World.LabHatchRemaining <= 0 || !fxHasFocus || Paused || PlacementActive || Panel != ShopPanel.None) sound?.StopHatchAudio();
         }
-        void ResetSessionFx() { fxSequence = 0; World?.ResetFxPresentation(); sound?.StopHatchAudio(); }
-        void DisableSessionFx() { if (World) { World.SetFxViewPolicy(FxViewPolicy.Unfocused); World.CancelFxTransient(); sound?.StopLabAudio(); sound?.StopHatchAudio(); } }
+        void ResetSessionFx() { fxSequence = 0; World?.ResetFxPresentation(); sound?.StopHatchAudio(); sound?.StopDoseAudio(); }
+        void DisableSessionFx() { if (World) { World.SetFxViewPolicy(FxViewPolicy.Unfocused); World.CancelFxTransient(); sound?.StopLabAudio(); sound?.StopHatchAudio(); sound?.StopDoseAudio(); } }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public uint FxActionSequenceForValidation => fxSequence;
         public void SetFxFocusForValidation(bool value) { fxHasFocus = value; ApplyFxViewPolicy(); }

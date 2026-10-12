@@ -16,6 +16,7 @@ namespace EvolutionShop
         internal static readonly Color Honey = new Color(.98f, .78f, .37f);
         internal readonly GUISkin Skin;
         internal readonly GUIStyle Card, DarkCard, Shadow, Inset, Accent, Button, PrimaryButton, DangerButton;
+        internal readonly Texture2D FxDisc, FxRing;
         readonly List<Texture2D> textures = new List<Texture2D>();
         readonly Dictionary<Symbol, Texture2D> icons = new Dictionary<Symbol, Texture2D>();
         readonly Dictionary<GUIStyle, GUIStyle> compactSurfaces = new Dictionary<GUIStyle, GUIStyle>();
@@ -54,8 +55,23 @@ namespace EvolutionShop
             Skin.verticalScrollbarUpButton = ScrollArrow(source.verticalScrollbarUpButton, true);
             Skin.verticalScrollbarDownButton = ScrollArrow(source.verticalScrollbarDownButton, false);
             foreach (Symbol symbol in Enum.GetValues(typeof(Symbol))) icons.Add(symbol, MakeIcon(symbol));
+            FxDisc=MakeFxMask(false);FxRing=MakeFxMask(true);
         }
 
+        Texture2D MakeFxMask(bool ring)
+        {
+            const int size=48;var texture=Own(new Texture2D(size,size,TextureFormat.RGBA32,false));
+            texture.name=ring ? "Original dose ripple mask" : "Original dose bead mask";
+            var pixels=new Color[size*size];
+            for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+            {
+                float radius=new Vector2((x+.5f)/size*2-1,(y+.5f)/size*2-1).magnitude;
+                float alpha=1-Mathf.SmoothStep(.8f,1,radius);
+                if(ring)alpha*=Mathf.SmoothStep(.55f,.72f,radius);
+                pixels[y*size+x]=new Color(1,1,1,alpha);
+            }
+            texture.SetPixels(pixels);texture.Apply(false,true);return texture;
+        }
         GUIStyle ScrollArrow(GUIStyle source, bool up)
         {
             var style = new GUIStyle(source);

@@ -66,6 +66,11 @@ namespace EvolutionShop
             if (!source || (source.clip != labClips[3] && source.clip != labClips[4])) return;
             source.Stop();source.clip=null;servicePriorityUntil=0;
         }
+        public void StopDoseAudio()
+        {
+            if (!source || source.clip != labClips[1]) return;
+            source.Stop(); source.clip=null; servicePriorityUntil=0;
+        }
         public void LabCollect() { PlayService(labClips[0], .25f); LabPlaybackCount++; }
         public void LabFeedback(bool accepted, FxCueId cue)
         {

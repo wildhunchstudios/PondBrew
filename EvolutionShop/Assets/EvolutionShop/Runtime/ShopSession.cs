@@ -452,6 +452,7 @@ namespace EvolutionShop
             if (Panel != panel) panelScroll = Vector2.zero;
             bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
                 Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
+            if (Panel == ShopPanel.Incubator && panel != Panel) { World?.CancelFxTransient(); sound?.StopDoseAudio(); }
             Panel = panel;
             ApplyFxViewPolicy();
             if (Paused || panel == ShopPanel.Arrange) ResetAutomationClock();

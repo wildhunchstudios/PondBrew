@@ -55,6 +55,7 @@ namespace EvolutionShop
         void ReconcileFxState(GameModel model)
         {
             if (fxCues == null || model == null) return;
+            RefreshDoseMixture();
             BindFxOwner("tool", null, toolBody, true);
             BindHandsOwner();
             ReconcileFxGrower("bloom", bloomRoot, model.GetGrower(CultureKind.Bloom).Units, model.GetGrower(CultureKind.Bloom).Capacity);

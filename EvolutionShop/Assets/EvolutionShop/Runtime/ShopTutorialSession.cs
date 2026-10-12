@@ -152,19 +152,25 @@ namespace EvolutionShop
             }
             Notify("Use E at the lab incubator in person to prepare cultures."); return false;
         }
-        bool PrepareManually(Func<ActionResult> action, FxCueId fxCue = FxCueId.None, CultureKind culture = CultureKind.Bloom)
+        bool PrepareManually(Func<ActionResult> action, FxCueId fxCue = FxCueId.None, CultureKind culture = CultureKind.Bloom, bool batch = false)
         {
             if (!AtTutorialIncubator()) return false;
+            var before = FxDoseMix.Read(Model);
             var result = action();
+            var after = FxDoseMix.Read(Model);
+            if (result.Success && before.Same(after) && (fxCue == FxCueId.DoseCommitted || fxCue == FxCueId.DoseReturned)) fxCue = FxCueId.None;
             if (result.Success)
                 foreach (var species in Config.Species) Tutorial.ObservePrepared(Model, species.Id, TutorialActionOrigin.Player);
-            return PerformWithFx(result, fxCue, FxCueOrigin.Manual, culture).Success;
+            bool success=PerformWithFx(result, fxCue, FxCueOrigin.Manual, culture).Success;
+            if(success && SaveError==null && (fxCue==FxCueId.DoseCommitted || fxCue==FxCueId.DoseReturned))
+                World.ConfigureDoseContext(before,after,fxCue==FxCueId.DoseReturned ? (batch ? FxDoseMode.Clear : FxDoseMode.Return) : (batch ? FxDoseMode.Recipe : FxDoseMode.Pour));
+            return success;
         }
         public bool DoseCulture(CultureKind culture) => PrepareManually(() => Model.Dose(culture), FxCueId.DoseCommitted, culture);
         public bool ReturnCultureDose(CultureKind culture) => PrepareManually(() => Model.ReturnDose(culture), FxCueId.DoseReturned, culture);
-        public bool ClearCultureDoses() => PrepareManually(() => Model.ClearDoses());
+        public bool ClearCultureDoses() => PrepareManually(() => Model.ClearDoses(), FxCueId.DoseReturned, batch:true);
         public bool ReleaseCulture(CultureKind culture) => PrepareManually(() => Model.ReleaseCulture(culture));
-        public bool PrepareKnownRecipe(string speciesId) => PrepareManually(() => Model.UseKnownRecipe(speciesId));
+        public bool PrepareKnownRecipe(string speciesId) => PrepareManually(() => Model.UseKnownRecipe(speciesId), FxCueId.DoseCommitted, batch:true);
         public bool BeginManualIncubation()
         {
             if (!AtTutorialIncubator()) return false;

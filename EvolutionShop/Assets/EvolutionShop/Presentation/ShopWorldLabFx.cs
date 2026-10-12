@@ -31,7 +31,7 @@ namespace EvolutionShop
         public LabModuleVisualState LabModuleState => labModuleState;
         public bool LabFxEnabled => fxEnabled;
         public void ConfigureLabTiming(float seconds) { if (seconds > 0 && !float.IsInfinity(seconds)) labIncubationSeconds = seconds; }
-        void ShowLabRefusal(CultureKind culture) { labDoseRemaining = .18f; labDoseCulture = culture; labDoseId = FxCueId.HandRefused; }
+        void ShowLabRefusal(CultureKind culture) { ResetDoseFx(); labDoseMode=FxDoseMode.Refused; labDoseRemaining = .18f; labDoseCulture = culture; labDoseId = FxCueId.HandRefused; }
 
         void BuildLabFx()
         {
@@ -44,6 +44,7 @@ namespace EvolutionShop
                 labNeedles[2] = LabNeedle(station, "Hatchery progress needle", new Vector3(.532f, .632f, -.718f));
                 labFluid = station.Find("Incubator fluid");
                 if (labFluid) labFluidRest = labFluid.localScale;
+                BuildDoseFx();
             }
             labNeedles[3] = LabNeedle(upgradeRoot, "Collector module valve", new Vector3(-.48f, .88f, -.615f));
             if (labNeedles[3]) { labModuleIndicator = labNeedles[3].GetComponentInChildren<MeshRenderer>(); labNeedles[3].gameObject.SetActive(false); }
@@ -76,15 +77,13 @@ namespace EvolutionShop
             bool module = id == FxCueId.ModuleCollected || id == FxCueId.ModuleDosed;
             if (module ? origin != FxCueOrigin.Module || (labModuleState != LabModuleVisualState.Waiting && labModuleState != LabModuleVisualState.Blocked) : origin != FxCueOrigin.Manual) return false;
             var token = fxCues.Find(module ? "lab-collector" : "incubator");
-            float duration = id == FxCueId.HatchFirst ? FxHatchChoreography.FirstDuration : id == FxCueId.HatchRepeat ? FxHatchChoreography.RepeatDuration : .4f;
+            float duration = id == FxCueId.HatchFirst ? FxHatchChoreography.FirstDuration : id == FxCueId.HatchRepeat ? FxHatchChoreography.RepeatDuration : FxDosePour.Duration;
             if (!fxCues.Play(token, id, sequence, origin, duration, 4)) return false;
             fxPool?.Cancel(token);
             if (module) { labModuleRemaining = .3f; LabModuleCueCount++; return true; }
             if (id == FxCueId.DoseCommitted || id == FxCueId.DoseReturned)
             {
-                labDoseRemaining = .4f; labDoseId = id; labDoseCulture = culture;
-                // The normal panel has its own visible measured strip; no pretend hand through the modal.
-                EmitLabMote(token, culture == CultureKind.Flow ? flowMat : bloomMat, new Vector3(0, 1.65f, -.35f), .4f);
+                BeginDoseFx(token,sequence,id,culture);
             }
             if (id == FxCueId.HatchFirst || id == FxCueId.HatchRepeat)
             {
@@ -141,6 +140,7 @@ namespace EvolutionShop
         {
             labHatchEmitted = 0; labHatchOwner = default; labHatchSeed = 0;
             labHarvestSource = null; labStreamClock = labBubbleClock = labDoseRemaining = labHatchRemaining = labModuleRemaining = 0;
+            ResetDoseFx();
             foreach (var needle in labNeedles) if (needle) needle.localRotation = Quaternion.identity;
             if (labFluid) labFluid.localScale = labFluidRest;
             if (displays.TryGetValue("incubator", out var resident) && resident.Creature && resident.SpeciesId == "pondlet")
@@ -151,7 +151,7 @@ namespace EvolutionShop
             if (!fxEnabled || lastModel == null || fxPolicy == FxViewPolicy.Paused || fxPolicy == FxViewPolicy.Unfocused || fxPolicy == FxViewPolicy.Arrange) return;
             labDoseRemaining = Mathf.Max(0, labDoseRemaining - dt); labHatchRemaining = Mathf.Max(0, labHatchRemaining - dt);
             labModuleRemaining = Mathf.Max(0, labModuleRemaining - dt);
-            TickHatchRelease();
+            TickHatchRelease(); TickDoseFx(); RefreshDoseMixture();
             for (int i = 0; i < 2; i++)
             {
                 var grower = lastModel.GetGrower((CultureKind)i);
@@ -181,7 +181,7 @@ namespace EvolutionShop
             float fraction = inc.Phase == IncubatorPhase.Incubating ? Mathf.Clamp01(1f - inc.SecondsRemaining / labIncubationSeconds) : inc.Phase == IncubatorPhase.Ready ? 1 : 0;
             if (labNeedles[2]) labNeedles[2].localRotation = Quaternion.Euler(0, 0, -12 * fraction);
             if (labNeedles[3]) labNeedles[3].localRotation = Quaternion.Euler(0, 0, fxReducedMotion ? 0 : 6 * Mathf.Sin(Mathf.Clamp01(labModuleRemaining / .3f) * Mathf.PI));
-            if (labFluid) labFluid.localScale = labFluidRest * (1f + (fxReducedMotion ? 0 : (inc.Phase == IncubatorPhase.Incubating ? Mathf.Sin(time * 5) * .009f : labDoseRemaining > 0 ? Mathf.Sin(labDoseRemaining / .4f * Mathf.PI) * .018f : 0)));
+            if (labFluid) labFluid.localScale = labFluidRest * (1f + (fxReducedMotion ? 0 : (inc.Phase == IncubatorPhase.Incubating ? Mathf.Sin(time * 5) * .009f : labDoseRemaining > 0 && labDoseId != FxCueId.HandRefused ? -Mathf.Sin(labDoseRemaining / FxDosePour.Duration * Mathf.PI) * .025f : 0)));
             if (inc.Phase == IncubatorPhase.Incubating)
             {
                 labBubbleClock -= dt;
