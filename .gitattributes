@@ -34,3 +34,6 @@
 
 # Preserve byte-hashed dose/mixing evidence and raw engine whitespace.
 /Docs/Evidence/fx-06r-03/** -text -whitespace
+
+# Preserve byte-hashed growth evidence and raw engine whitespace.
+/Docs/Evidence/fx-06r-04/** -text -whitespace

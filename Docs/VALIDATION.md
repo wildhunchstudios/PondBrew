@@ -386,3 +386,8 @@ Source7db5cc7, tagfx-hatch-hero-validated; separate fx06r02-hatch-1 player. Appr
 ## 2026-10-12 — FX-06R-03 delivered
 
 Final source d5af465, tag fx-dose-mixing-validated, separate fx06r03-dose-2 player. World/panel dose streams, actual composition/fill, return/clear/known recipes; journal cancellation and faint UI masks corrected. Actual 2,101 EditMode, 87 Editor, 767 final Windows checks; build 0 errors/0 warnings; 12 final videos/1176 decoded frames. All 36 protected files/previous hatch candidate preserved. Evidence Docs/Evidence/fx-06r-03-VALIDATION.md; gallery 8790. AGENTS.md is canonical; next FX-06R-04 only. Native/listening/creative/GPU gates stay open.
+
+
+## 2026-10-12 — FX-06R-04 delivered
+
+Source b8a60c6, tag fx-growth-lab-validated, separate fx06r04-growth-1 player. State-derived maturation, chamber circulation and true grower refill/full/depleted. Actual 2,108 EditMode, 81 Editor and 440 Windows checks; build 0 errors/0 warnings; 12 videos/1,781 decoded frames and actual 176-pose mesh fit. All 36 protected files and previous dosing player preserved. Simple support used GPT-6.1 Sol; advanced implementation/validation used GPT-6 Astra, persisted policy in AGENTS section 8. Evidence Docs/Evidence/fx-06r-04-VALIDATION.md; gallery 8791. Next R-05 only. Native/listening/creative/GPU gates stay open.
