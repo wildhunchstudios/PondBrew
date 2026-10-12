@@ -37,3 +37,6 @@
 
 # Preserve byte-hashed growth evidence and raw engine whitespace.
 /Docs/Evidence/fx-06r-04/** -text -whitespace
+
+# Preserve byte-hashed collection evidence and raw engine whitespace.
+/Docs/Evidence/fx-06r-05/** -text -whitespace

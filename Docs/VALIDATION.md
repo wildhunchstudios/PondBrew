@@ -391,3 +391,8 @@ Final source d5af465, tag fx-dose-mixing-validated, separate fx06r03-dose-2 play
 ## 2026-10-12 — FX-06R-04 delivered
 
 Source b8a60c6, tag fx-growth-lab-validated, separate fx06r04-growth-1 player. State-derived maturation, chamber circulation and true grower refill/full/depleted. Actual 2,108 EditMode, 81 Editor and 440 Windows checks; build 0 errors/0 warnings; 12 videos/1,781 decoded frames and actual 176-pose mesh fit. All 36 protected files and previous dosing player preserved. Simple support used GPT-6.1 Sol; advanced implementation/validation used GPT-6 Astra, persisted policy in AGENTS section 8. Evidence Docs/Evidence/fx-06r-04-VALIDATION.md; gallery 8791. Next R-05 only. Native/listening/creative/GPU gates stay open.
+
+
+## 2026-10-12 — FX-06R-05 delivered
+
+Source f0b7e4e, tag fx-collection-swirl-validated, separate fx06r05-collection-2 player. Irregular actual-outlet→moving-mouth collection, accepted-unit chamber response; original capacities/cadence. Actual 2,115 EditMode, 163 final Editor, 991 Windows checks; build 0 errors / 0 warnings; 12 videos / 1,380 decoded frames. All 36 protected files / prior growth player preserved; Core DLL identical. Sol simple support/Astra advanced policy retained. Evidence Docs/Evidence/fx-06r-05-VALIDATION.md, gallery 8792. Native/listening/creative/GPU gates open. Next R-06 only.
