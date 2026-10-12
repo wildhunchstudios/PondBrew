@@ -162,6 +162,14 @@ namespace EvolutionShop
             m.Active = false; ActiveCount--;
         }
         public void Cancel(FxOwnerToken owner) { if (!disposed) for (int i = 0; i < motes.Length; i++) if (motes[i].Owner.Equals(owner)) Release(motes[i]); }
+        public void CancelAmbient(FxOwnerToken owner) { if (!disposed) for (int i = 0; i < motes.Length; i++) if (!motes[i].Action && motes[i].Owner.Equals(owner)) Release(motes[i]); }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public int AmbientCount(FxOwnerToken owner) {
+            int count = 0;
+            if (!disposed) for (int i = 0; i < motes.Length; i++) if (motes[i].Active && !motes[i].Action && motes[i].Owner.Equals(owner)) count++;
+            return count;
+        }
+#endif
         public void CancelAll() { if (!disposed) for (int i = 0; i < motes.Length; i++) Release(motes[i]); }
         public void Dispose()
         {

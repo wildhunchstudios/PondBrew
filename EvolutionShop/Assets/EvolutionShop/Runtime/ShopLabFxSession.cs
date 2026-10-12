@@ -8,7 +8,7 @@ namespace EvolutionShop
         void ReconcileLabPresentation()
         {
             if (!World || Model == null || Config == null) return;
-            World.ConfigureLabTiming(Config.IncubationSeconds);
+            World.ConfigureLabTiming(Config.IncubationSeconds, Config.GrowerRefillSeconds);
             bool blocked = labModuleRuntimeBlocked || AutomationBlockedBySave || AutosaveBlocked || Automation.Paused || Paused || PlacementActive ||
                 Model.ReservedCultureCount >= Model.Capacity || Model.Incubator.Phase != IncubatorPhase.Dosing || Model.IsIncubatorReservedForTechnician;
             var state = !Automation.CollectorOwned ? LabModuleVisualState.Absent : !Automation.CollectorEnabled ? LabModuleVisualState.Off :

@@ -69,6 +69,7 @@ namespace EvolutionShop
                     display.Creature ? model.GetReservation(pair.Key).HasValue ? FxSteadyState.Reserved : FxSteadyState.Occupied : FxSteadyState.Empty;
                 fxCues.SetState(owner, state);
             }
+            ReconcileGrowthFx();
         }
         void ReconcileFxGrower(string key, Transform root, int units, int capacity)
         { var owner = BindFxOwner(key, null, root); fxCues.SetState(owner, units == 0 ? FxSteadyState.Empty : units >= capacity ? FxSteadyState.Full : FxSteadyState.Refilling); }

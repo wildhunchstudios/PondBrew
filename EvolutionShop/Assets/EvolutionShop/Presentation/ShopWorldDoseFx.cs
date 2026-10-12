@@ -56,7 +56,7 @@ namespace EvolutionShop
         {
             if(lastModel==null || !labDoseFluidRenderer)return;
             var mix=FxDoseMix.Read(lastModel);
-            Color target=lastModel.Incubator.Phase==IncubatorPhase.Dosing && mix.Total>0 ? Color.Lerp(labDoseFluidBase,mix.Tint,.60f) : labDoseFluidBase;
+            Color target=lastModel.Incubator.Phase==IncubatorPhase.Dosing && mix.Total>0 ? Color.Lerp(labDoseFluidBase,mix.Tint,.60f) : GrowthFluidTint(labDoseFluidBase);
             target.a=labDoseFluidBase.a;if(LabMixtureTint==target)return;
             LabMixtureTint=target;labDoseFluidProperties.SetColor(DoseFluidColor,target);labDoseFluidRenderer.SetPropertyBlock(labDoseFluidProperties);
         }
