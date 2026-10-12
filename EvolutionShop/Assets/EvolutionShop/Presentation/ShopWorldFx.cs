@@ -136,7 +136,7 @@ namespace EvolutionShop
         { fxPool?.Dispose(); fxCues?.Dispose(); fxPool = null; fxCues = null; System.Array.Clear(fxBindings, 0, fxBindings.Length); }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Isolated review/test switches only. No user settings or ordinary-save schema in FX-02.
-        public void SetFxPreviewModes(bool reducedMotion, bool lowDetail) { CancelFxTransient(); fxReducedMotion = reducedMotion; aquariumLow = lowDetail; fxPool?.SetLowDetail(lowDetail); }
+        public void SetFxPreviewModes(bool reducedMotion, bool lowDetail) { CancelFxTransient(); fxReducedMotion = reducedMotion; aquariumLow = lowDetail; fxPool?.SetLowDetail(lowDetail); fxPool?.SetReducedMotion(reducedMotion); }
         public void SetFxEnabledForValidation(bool value) { CancelFxTransient(); fxEnabled = value; }
 #endif
     }

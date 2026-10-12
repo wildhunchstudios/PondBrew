@@ -143,6 +143,7 @@ namespace EvolutionShop
             playerCamera.clearFlags = CameraClearFlags.SolidColor;
             playerCamera.nearClipPlane = 0.04f;
             BuildFxPresentation();
+            fxPool.SetViewCamera(playerCamera);
         }
 
         public static Material MakeMaterial(string name, Color color, float metallic = 0, float smoothness = 0.45f)
