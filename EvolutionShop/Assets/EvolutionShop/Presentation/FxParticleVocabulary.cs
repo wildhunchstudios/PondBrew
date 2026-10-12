@@ -46,50 +46,20 @@ namespace EvolutionShop
         public Mesh Mesh(FxParticleShape shape) => meshes[(int)shape];
         static Mesh Make(FxParticleShape shape)
         {
-            const int n = 32;
-            var vertices = new List<Vector3>(); var colors = new List<Color>(); var triangles = new List<int>();
-            if (shape == FxParticleShape.Bubble || shape == FxParticleShape.Ring)
+            // Shared circular carrier; original analytic masks carry soft edges, shading and highlights.
+            const int n = 40;
+            var vertices = new List<Vector3> { Vector3.zero };
+            var uv = new List<Vector3> { new Vector3(0, 0, (int)shape) };
+            var triangles = new List<int>(n * 3);
+            for (int j = 0; j < n; j++)
             {
-                // Hollow center and feathered outer/inner edge; no texture or paid mask.
-                float inner = shape == FxParticleShape.Bubble ? .32f : .40f;
-                float[] radii = { inner - .025f, inner, .475f, .5f };
-                float[] alpha = { 0, .72f, 1, 0 };
-                for (int band = 0; band < 4; band++)
-                    for (int j = 0; j < n; j++)
-                    {
-                        float angle = j * Mathf.PI * 2 / n;
-                        vertices.Add(new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * radii[band]);
-                        float shine = shape == FxParticleShape.Bubble ? .58f + .42f * Mathf.Max(0, Mathf.Sin(angle)) : 1;
-                        colors.Add(new Color(1, 1, 1, alpha[band] * shine));
-                    }
-                for (int band = 0; band < 3; band++) for (int j = 0; j < n; j++)
-                {
-                    int a = band * n + j, b = band * n + (j + 1) % n, c = a + n, d = b + n;
-                    triangles.AddRange(new[] { a, c, b, b, c, d });
-                }
-            }
-            else
-            {
-                vertices.Add(Vector3.zero); colors.Add(Color.white);
-                for (int band = 0; band < 2; band++) for (int j = 0; j < n; j++)
-                {
-                    float angle = j * Mathf.PI * 2 / n, radius = .5f;
-                    if (shape == FxParticleShape.Spark) radius *= .25f + .75f * Mathf.Pow(Mathf.Abs(Mathf.Cos(angle * 2)), 5);
-                    if (shape == FxParticleShape.Puff) radius *= .82f + .18f * Mathf.Cos(angle * 5);
-                    Vector3 point = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * radius;
-                    if (shape == FxParticleShape.Droplet)
-                    { point.x *= .68f * (1 - .6f * Mathf.Max(0, Mathf.Sin(angle))); point.y = .5f * Mathf.Sin(angle); }
-                    vertices.Add(point * (band == 0 ? .78f : 1));
-                    colors.Add(new Color(1, 1, 1, band == 0 ? .85f : 0));
-                }
-                for (int j = 0; j < n; j++)
-                {
-                    int a = 1 + j, b = 1 + (j + 1) % n;
-                    triangles.AddRange(new[] { 0, a, b, a, a + n, b, b, a + n, b + n });
-                }
+                float angle = j * Mathf.PI * 2 / n;
+                var point = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
+                vertices.Add(point * .5f); uv.Add(new Vector3(point.x, point.y, (int)shape));
+                triangles.Add(0); triangles.Add(1 + j); triangles.Add(1 + (j + 1) % n);
             }
             var mesh = new Mesh { name = "FX original " + shape };
-            mesh.SetVertices(vertices); mesh.SetColors(colors); mesh.SetTriangles(triangles, 0); mesh.RecalculateBounds();
+            mesh.SetVertices(vertices); mesh.SetUVs(0, uv); mesh.SetTriangles(triangles, 0); mesh.RecalculateBounds();
             mesh.UploadMeshData(false); return mesh;
         }
         static void Release(UnityEngine.Object value)

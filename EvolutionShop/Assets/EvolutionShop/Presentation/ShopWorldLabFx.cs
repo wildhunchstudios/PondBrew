@@ -11,6 +11,10 @@ namespace EvolutionShop
         Vector3 labFluidRest;
         float labStreamClock, labBubbleClock, labDoseRemaining, labHatchRemaining, labModuleRemaining;
         float labHatchDuration;
+        uint labHatchSeed;
+        ulong labHatchEmitted;
+        bool labHatchFirst;
+        FxOwnerToken labHatchOwner;
         float labIncubationSeconds = 10;
         CultureKind labDoseCulture;
         FxCueId labDoseId;
@@ -81,10 +85,29 @@ namespace EvolutionShop
             if (id == FxCueId.HatchFirst || id == FxCueId.HatchRepeat)
             {
                 labHatchRemaining = labHatchDuration = duration; LabHatchCount++;
-                int count = fxReducedMotion ? 1 : id == FxCueId.HatchFirst ? 4 : 2;
-                for (int i = 0; i < count; i++) EmitLabMote(token, cream, new Vector3((i - (count - 1) * .5f) * .11f, 1.65f, -.25f), duration, .03f);
+                labHatchFirst = id == FxCueId.HatchFirst; labHatchSeed = sequence;
+                labHatchOwner = token; labHatchEmitted = 0;
+                TickHatchRelease();
             }
             return true;
+        }
+        void TickHatchRelease()
+        {
+            if (labHatchRemaining <= 0 || fxPool == null || !fxCues.IsValid(labHatchOwner) ||
+                !displays.TryGetValue("incubator", out var display)) return;
+            float age = labHatchDuration - labHatchRemaining;
+            int count = FxHatchRelease.Count(labHatchFirst, fxPool.ActionLimit < 64, fxReducedMotion);
+            for (int i = 0; i < count; i++)
+            {
+                ulong bit = 1UL << i;
+                if ((labHatchEmitted & bit) != 0) continue;
+                FxHatchRelease.Sample(i, labHatchSeed, labHatchFirst, fxReducedMotion, out float delay, out var origin, out var request);
+                if (age < delay) continue;
+                // Never queue an old burst after a stalled frame, canceled owner, or busy pool.
+                labHatchEmitted |= bit;
+                request.Lifetime = Mathf.Min(request.Lifetime, labHatchRemaining);
+                fxPool.EmitParticle(fxCues, labHatchOwner, display.Root.parent, origin, request);
+            }
         }
         void EmitLabMote(FxOwnerToken token, Material material, Vector3 point, float duration, float size = .035f, bool action = true)
         {
@@ -93,6 +116,7 @@ namespace EvolutionShop
         }
         void CancelLabFx()
         {
+            labHatchEmitted = 0; labHatchOwner = default; labHatchSeed = 0;
             labHarvestSource = null; labStreamClock = labBubbleClock = labDoseRemaining = labHatchRemaining = labModuleRemaining = 0;
             foreach (var needle in labNeedles) if (needle) needle.localRotation = Quaternion.identity;
             if (labFluid) labFluid.localScale = labFluidRest;
@@ -103,6 +127,7 @@ namespace EvolutionShop
             if (!fxEnabled || lastModel == null || fxPolicy == FxViewPolicy.Paused || fxPolicy == FxViewPolicy.Unfocused || fxPolicy == FxViewPolicy.Arrange) return;
             labDoseRemaining = Mathf.Max(0, labDoseRemaining - dt); labHatchRemaining = Mathf.Max(0, labHatchRemaining - dt);
             labModuleRemaining = Mathf.Max(0, labModuleRemaining - dt);
+            TickHatchRelease();
             for (int i = 0; i < 2; i++)
             {
                 var grower = lastModel.GetGrower((CultureKind)i);

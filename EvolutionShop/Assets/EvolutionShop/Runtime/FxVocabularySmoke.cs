@@ -69,7 +69,7 @@ namespace EvolutionShop
                 for (int i = 0; i < 5; i++)
                 {
                     VocabularyPaths(pool, cues, incOwner, inc); pool.Tick(cues, .08f + i * .23f);
-                    vocabularyCaption = "Path/fade samples / normalized age " + (.08f + i * .23f).ToString("F2", CultureInfo.InvariantCulture);
+                    vocabularyCaption = "Technical path sample / elapsed seconds " + (.08f + i * .23f).ToString("F2", CultureInfo.InvariantCulture);
                     yield return GateCapture("r01-path-phase-" + i); pool.CancelAll();
                 }
                 VocabularyPressure(pool, cues, incOwner, inc);
