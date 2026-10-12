@@ -51,7 +51,7 @@ namespace EvolutionShop
             Check(pool.VocabularyReady && pool.OwnedMeshCount == 5 && pool.OwnedMaterialCount == 1, "Five original shared meshes and one supported shared URP material");
             Check(pool.Root.childCount == 96 && pool.Root.GetComponentsInChildren<Renderer>(true).Length == 96 && pool.Root.GetComponentsInChildren<Collider>(true).Length == 0, "96 fixed renderers and no collision objects");
             int transforms = world.GetComponentsInChildren<Transform>(true).Length, renderers = world.GetComponentsInChildren<Renderer>(true).Length;
-            shop.enabled = false; shop.Player.InputEnabled = false; // Explicit frozen fixture; no time/progress/save mutation.
+            shop.FreezeFxVocabularyForValidation = true; shop.Player.InputEnabled = false; // Freeze simulation only; keep actual HUD/focus queries alive.
             string authority = FxAuthority(); byte[] saved = File.ReadAllBytes(shop.SavePath);
             var inc = StationOf(StationKind.Incubator).transform;
             var tank = StationOf(StationKind.TankA).transform;
@@ -91,7 +91,7 @@ namespace EvolutionShop
                 GateAim(new Vector3(-1.4f, .05f, -4.65f), new Vector3(4.9f, 1.55f, -.7f));
                 VocabularyPressure(pool, cues, tankOwner, tank); pool.Tick(cues, .2f); vocabularyCaption = "Store aisle / particle stress with real HUD";
                 yield return GateCapture("r01-aisle-pressure"); VocabularyRasterAudit("aisle-pressure"); pool.CancelAll();
-                GateAim(new Vector3(1f, .05f, 1.28f), new Vector3(-1.5f, 1.5f, 4.45f));
+                GateAim(new Vector3(0, .05f, 1.28f), new Vector3(1f, 1.55f, 3.85f));
                 VocabularyPressure(pool, cues, incOwner, inc); pool.Tick(cues, .2f); vocabularyCaption = "Lab overview / particle stress with real HUD";
                 yield return GateCapture("r01-overview-pressure"); VocabularyRasterAudit("overview-pressure"); pool.CancelAll();
                 // Shared world owners exercise the existing interruption path with rich particles.
@@ -115,7 +115,7 @@ namespace EvolutionShop
                 else limitations.Add("Editor route records lifecycle only; standalone provides target HUD, raster and timing results.");
                 Check(FxAuthority() == authority, "Timing stress changes no gameplay authority");
             }
-            finally { pool.CancelAll(); world.SetFxPreviewModes(false, false); vocabularyCaption = null; shop.enabled = true; }
+            finally { pool.CancelAll(); world.SetFxPreviewModes(false, false); vocabularyCaption = null; shop.FreezeFxVocabularyForValidation = false; }
             world.ResetFxPresentation(); Check(pool.ActiveCount == 0 && shop.SaveNow() && shop.ReloadSaved(), "Reset/save/reload reconstructs quiet state without rich replay");
             shop.SetPanel(ShopPanel.None); Check(shop.World.FxPool.ActiveCount == 0 && shop.World.FxPool.OwnedCount == 96, "Rebuilt pool stays quiet after reload");
         }
@@ -173,7 +173,8 @@ namespace EvolutionShop
                 File.WriteAllText(Path.Combine(evidence, view + "-raster.json"), JsonUtility.ToJson(result, true));
                 // Heat map: 1 layer=cyan,4=yellow,8+=coral; diagnostic pixels, not a game render.
                 var heat = read.GetPixels(); for (int i = 0; i < heat.Length; i++) heat[i] = heat[i].r <= 0 ? Color.black : Color.Lerp(Color.cyan, Color.red, Mathf.Clamp01((heat[i].r - 1) / 7));
-                var image = new Texture2D(width, height, TextureFormat.RGB24, false); image.SetPixels(heat); image.Apply();
+                var upright = new Color[heat.Length]; for (int y = 0; y < height; y++) Array.Copy(heat, y * width, upright, (height - 1 - y) * width, width);
+                var image = new Texture2D(width, height, TextureFormat.RGB24, false); image.SetPixels(upright); image.Apply();
                 File.WriteAllBytes(Path.Combine(evidence, view + "-particle-overlap.png"), image.EncodeToPNG()); Destroy(image);
                 Check(pixels > 0 && result.averageFullScreenLayers < .15 && peak <= 32, "Measured raster within R01 conservative stress envelope / " + view + " coverage=" + result.coveragePercent.ToString("F3") + "% peak=" + peak);
             }

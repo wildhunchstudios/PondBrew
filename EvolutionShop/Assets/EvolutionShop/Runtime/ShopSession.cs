@@ -166,7 +166,7 @@ namespace EvolutionShop
             Player.Sensitivity = Sensitivity;
             Player.InputEnabled = Panel == ShopPanel.None && (!ValidationMode || AllowValidationInput);
             World.SetHandContext(Player.transform.position, Player.InputEnabled, SlapGesture && SlapGesture.IsPlaying);
-            if (!Paused)
+            if (!Paused && !FxVocabularyFrozen)
             {
                 Advance(Time.deltaTime);
                 visualClock += Time.deltaTime;

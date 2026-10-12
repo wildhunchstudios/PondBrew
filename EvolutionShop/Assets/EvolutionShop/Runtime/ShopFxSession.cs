@@ -2,6 +2,21 @@ namespace EvolutionShop
 {
     public sealed partial class ShopSession
     {
+        // Development-only frozen particle fixture. Ordinary play and every other diagnostic keep normal simulation.
+        bool FxVocabularyFrozen
+        {
+            get
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                return ValidationMode && FreezeFxVocabularyForValidation;
+#else
+                return false;
+#endif
+            }
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public bool FreezeFxVocabularyForValidation { get; set; }
+#endif
         uint fxSequence;
         bool fxHasFocus = true;
         uint NextFxSequence()
