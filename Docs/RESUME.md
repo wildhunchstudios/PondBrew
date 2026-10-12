@@ -310,3 +310,8 @@ Continue within FX-06; do not multiply content or mark FX-B approved. Normal con
 
 
 2026-10-12 FX-06R-01 delivery: reusable five-shape motion/fade vocabulary, fixed96 pool with64/32 Standard and24/8 Low split, separate candidate54126ec / fx06r01-vocabulary-2. Actual2,080 EditMode /29 Editor /1,270 Windows checks; final build errors/warnings0.32 actual HUD views,32 conservative raster audits and16 continuous-focus cost windows; GPU attribution remains provisional. Protected save/assets/three prior builds preserved. AGENTS.md remains the live roadmap; next R-02 hatch/discovery. See Evidence/fx-06r-01-VALIDATION.md, fx-06r-01/audit.json and the local gallery. No FX-B acceptance or later FX expansion.
+
+
+## 2026-10-12 — FX-06R-01 organic correction
+
+User rejected rows/icon-like effects. Source d75a46d, tag fx-organic-hatch-correction, separate fx06r01-organic-1 player: original shaded bubbles/round vapor and staggered real first/repeat hatch. Actual2,086 EditMode,51 Editor,271 Windows checks; build0 errors/0 warnings. Ten actual videos/838 decoded frames; all36 protected files and prior candidate unchanged. One initial reduced-recipe test failure retained then corrected. Visual acceptance/native controls/listening/GPU attribution remain open. Canonical status and next action in AGENTS.md; evidence Docs/Evidence/fx-06r-01-organic-VALIDATION.md.

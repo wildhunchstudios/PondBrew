@@ -25,3 +25,6 @@
 /Docs/Evidence/fx-03/** -text whitespace=cr-at-eol
 # Raw Unity logs keep engine-emitted trailing spaces and CR bytes.
 /Docs/Evidence/fx-03/**/*.log -text -whitespace
+
+# Preserve byte-hashed organic VFX evidence, including engine-emitted whitespace.
+/Docs/Evidence/fx-06r-01-organic/** -text -whitespace
