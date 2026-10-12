@@ -28,3 +28,6 @@
 
 # Preserve byte-hashed organic VFX evidence, including engine-emitted whitespace.
 /Docs/Evidence/fx-06r-01-organic/** -text -whitespace
+
+# Preserve byte-hashed hatch choreography evidence and raw engine whitespace.
+/Docs/Evidence/fx-06r-02/** -text -whitespace
