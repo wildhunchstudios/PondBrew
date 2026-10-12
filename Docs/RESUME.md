@@ -1,4 +1,4 @@
-> FX-06 profiling follow-up2026-10-12:488 new runtime checks (183 current),64 windows/40 pairs; Wallpaper Engine restored. Night-lab increase did not repeat; tank GPU cost/measurement limits, human controls/listening and creative acceptance stay open. Canonical status: [AGENTS.md](../AGENTS.md). Evidence: [dated profiling report](Evidence/fx-06/authorized-isolation-20261012/REPORT.md). No FX-07. Older records below are historical.
+>2026-10-12 stronger-effects brief: FX-06R-00 specification complete; next FX-06R-01 particle vocabulary, then hatch/dose/growth. Current playable is unchanged; no new Unity tests/build or effects implementation. Revised review/native/listening and GPU acceptance remain open. Canonical plan: [AGENTS.md](../AGENTS.md), FX.10. Older records below are historical.
 
 # Resume — Evolution Shop current checkpoint
 
@@ -304,3 +304,6 @@ Continue within FX-06; do not multiply content or mark FX-B approved. Normal con
 
 
 2026-10-12: The authorized FX-06 comparison is checkpointed separately from the unchanged playable/review package. Eight successful routes,64 end-focused windows and40 matched pairs; user has not played the sample. Windows denied old-PID closure, but execution/GPU evidence shows apparent inactivity. Preserve the completed evidence and finish only the pending FX-06 review/attribution gates before FX-07. See the canonical guide and dated report above.
+
+
+2026-10-12: User requests stronger combined liquid/bubble, glowing-science and cartoon-puff effects. Priority hatching, dosing, growth; all living ambient details. Canonical FX.10 includes eight bounded implementation/review assignments and updates every remaining FX-06–24 row. Planning only: FX-06R-00 complete; next R-01. No revised runtime/creative pass.
