@@ -329,3 +329,6 @@ Continue within FX-06; do not multiply content or mark FX-B approved. Normal con
 
 
 2026-10-12: User requests stronger combined liquid/bubble, glowing-science and cartoon-puff effects. Priority hatching, dosing, growth; all living ambient details. Canonical FX.10 includes eight bounded implementation/review assignments and updates every remaining FX-06–24 row. Planning only: FX-06R-00 complete; next R-01. No revised runtime/creative pass.
+
+
+2026-10-12 FX-06R-01 delivery: reusable five-shape motion/fade vocabulary, fixed96 pool with64/32 Standard and24/8 Low split, separate candidate54126ec / fx06r01-vocabulary-2. Actual2,080 EditMode /29 Editor /1,270 Windows checks; final build errors/warnings0.32 actual HUD views,32 conservative raster audits and16 continuous-focus cost windows; GPU attribution remains provisional. Protected save/assets/three prior builds preserved. AGENTS.md remains the live roadmap; next R-02 hatch/discovery. See Evidence/fx-06r-01-VALIDATION.md, fx-06r-01/audit.json and the local gallery. No FX-B acceptance or later FX expansion.
