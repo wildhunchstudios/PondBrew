@@ -66,8 +66,8 @@ namespace EvolutionShop
             for(int y=0;y<size;y++)for(int x=0;x<size;x++)
             {
                 float radius=new Vector2((x+.5f)/size*2-1,(y+.5f)/size*2-1).magnitude;
-                float alpha=1-Mathf.SmoothStep(.8f,1,radius);
-                if(ring)alpha*=Mathf.SmoothStep(.55f,.72f,radius);
+                float alpha=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(.8f,1,radius));
+                if(ring)alpha*=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.55f,.72f,radius));
                 pixels[y*size+x]=new Color(1,1,1,alpha);
             }
             texture.SetPixels(pixels);texture.Apply(false,true);return texture;
