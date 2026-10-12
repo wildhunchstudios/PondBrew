@@ -77,7 +77,8 @@ namespace EvolutionShop.Tests
                 source.transform.SetPositionAndRotation(new Vector3(2,0,1),Quaternion.Euler(0,35,0));mouth.transform.SetPositionAndRotation(new Vector3(1.2f,1.3f,-.2f),Quaternion.Euler(-8,10,-5));mouth.transform.localScale=Vector3.one*.62f;
                 FxCollectionMotion.Sample(7,culture,false,false,out _,out var local,out var recipe);
                 Assert.That(pool.EmitParticle(cues,token,source.transform,local,recipe,true,mouth.transform),Is.True);
-                float step=recipe.Lifetime*.98f/40;
+                var particle=pool.Root.GetChild(0);var vertices=particle.GetComponent<MeshFilter>().sharedMesh.vertices;
+                float step=recipe.Lifetime*.999f/40;
                 for(int frame=0;frame<40;frame++)
                 {
                     mouth.transform.position+=new Vector3(.002f,.001f,.001f);mouth.transform.Rotate(0,.1f,0);pool.Tick(cues,step);
@@ -85,8 +86,10 @@ namespace EvolutionShop.Tests
                     Assert.That(Vector3.Distance(start,source.transform.TransformPoint(FxCollectionMotion.OutletLocal)),Is.LessThan(.00001f));
                     Assert.That(Vector3.Distance(end,mouth.transform.TransformPoint(FxCollectionMotion.MouthLocal)),Is.LessThan(.00001f));
                     var axis=end-start;float f=Vector3.Dot(position-start,axis)/axis.sqrMagnitude;var projected=start+axis*Mathf.Clamp01(f);
-                    Assert.That(Vector3.Distance(position,projected),Is.LessThan(.20f),"Entire actual pooled path fits the collision envelope");
-                    if(frame==39)Assert.That(Vector3.Distance(position,end),Is.LessThan(.06f),"Late bead converges at the current moving mouth");
+                    float radius=0;foreach(var vertex in vertices)radius=Mathf.Max(radius,Vector3.Distance(particle.TransformPoint(vertex),position));
+                    Assert.That(Vector3.Distance(position,projected)+radius,Is.LessThanOrEqualTo(FxCollectionMotion.PathClearance),
+                        "Actual rendered particle extent, not only its center, fits the production obstruction envelope");
+                    if(frame==39)Assert.That(Vector3.Distance(position,end),Is.LessThan(.005f),"Terminal bead converges at the current moving mouth");
                 }
                 pool.Tick(cues,recipe.Lifetime);Assert.That(pool.ParticleCountForValidation(token),Is.Zero);
             }

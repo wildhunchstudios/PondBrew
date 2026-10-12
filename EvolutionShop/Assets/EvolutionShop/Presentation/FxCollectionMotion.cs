@@ -8,8 +8,8 @@ namespace EvolutionShop
         public static readonly Vector3 OutletLocal = new Vector3(.36f, .93f, -.745f);
         public static readonly Vector3 MouthLocal = new Vector3(0, .05f, .489f);
         public const float ResponseDuration = .34f;
-        // Max bend length .0925 + spiral radius .092 + particle half-size .060 < .25m.
-        public const float PathClearance = .25f;
+        // Max bend length .2729 + spiral radius .092 + particle half-size .060 < .43m.
+        public const float PathClearance = .43f;
         static float Noise(uint index, uint salt)
         {
             uint n = unchecked(index * 747796405u + salt * 2891336453u + 277803737u);
@@ -30,7 +30,9 @@ namespace EvolutionShop
             request.Lifetime = reduced ? .22f : (flow ? .48f : .56f) + c * .18f;
             request.Size = reduced ? .052f : .063f + b * .057f;
             request.EndSize = reduced ? request.Size : .026f + c * .013f;
-            request.Bend = reduced ? Vector3.zero : new Vector3((b-.5f)*.05f, -.025f-a*.03f, -.035f-c*.035f);
+            // Carry the middle into the clear space left/above the outlet. A downward arc
+            // disappears behind the first-person chassis and its collection prompt.
+            request.Bend = reduced ? Vector3.zero : new Vector3(-.16f-b*.04f, .14f+a*.04f, -.025f-c*.02f);
             request.Radius = reduced ? 0 : (flow ? .044f : .064f) + b * .028f;
             request.Turns = reduced ? 0 : (flow ? -1 : 1) * (.65f + a * .8f);
             request.Spin = reduced ? 0 : (b-.5f)*140;
