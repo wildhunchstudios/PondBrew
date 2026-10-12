@@ -20,14 +20,14 @@ namespace EvolutionShop
             Color water = b < .2f ? new Color(1, .62f, .57f, .9f) : b > .87f ? new Color(.73f, .96f, .64f, .9f) : new Color(.3f, .89f, .91f, .95f);
             p = FxParticleRequest.Create(vapor ? FxParticleShape.Puff : glint ? FxParticleShape.Spark : FxParticleShape.Bubble,
                 vapor ? new Color(.78f, .98f, .95f, .48f) : glint ? new Color(1, .93f, .66f, .9f) : water);
-            float duration = first ? 1.2f : .5f;
+            float duration = FxHatchChoreography.Duration(first) - FxHatchChoreography.Release(first);
             delay = index < 4 || reduced ? 0 : (first ? .28f : .10f) * a;
             origin = new Vector3((c - .5f) * .18f, 1.43f + (d - .5f) * .12f, -.56f - b * .07f);
             float side = Mathf.Cos(a * Mathf.PI * 2), spread = .28f + c * .34f;
             p.Motion = FxParticleMotion.Curve;
             p.End = new Vector3(side * spread, .18f + b * (first ? .63f : .4f), -.035f - d * .24f);
             p.Bend = new Vector3(side * .13f, .045f + c * .045f, (a - .5f) * .08f);
-            p.Lifetime = Mathf.Min(duration - delay, (first ? .7f : .32f) + d * (first ? .42f : .15f));
+            p.Lifetime = Mathf.Min(duration - delay, (first ? .7f : .48f) + d * (first ? .42f : .18f));
             p.Size = glint ? .055f + c * .025f : .065f + c * c * .15f;
             p.EndSize = p.Size * (.8f + b * .24f);
             p.Spin = glint ? (a - .5f) * 120 : (a - .5f) * 24;
@@ -38,7 +38,7 @@ namespace EvolutionShop
                 p.End = new Vector3(sign * (.24f + b * .15f), .13f + d * .19f, -.05f);
                 p.Bend = new Vector3(sign * .1f, .06f, 0);
                 p.Size = .16f + c * .05f; p.EndSize = .29f;
-                p.Lifetime = first ? .7f + a * .15f : .42f;
+                p.Lifetime = first ? .7f + a * .15f : .6f;
             }
             if (reduced)
             {

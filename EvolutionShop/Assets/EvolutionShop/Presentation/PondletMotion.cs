@@ -60,17 +60,19 @@ namespace EvolutionShop
         public void RequestMimicPose(float elapsed, bool reduced) { mimicTime = elapsed; mimicFrame = Time.frameCount; mimicReduced = reduced; }
         public void ClearMimicPose() { mimicFrame = -10; }
         public bool MimicPoseActive => Time.frameCount - mimicFrame <= 1 && !mimicReduced;
-        public void AnimatePondlet(float time, float effort, bool reduced, float glanceAge = -1)
+        public void AnimatePondlet(float time, float effort, bool reduced, float glanceAge = -1, float hatchAge = -1, bool firstHatch = false)
         {
             float wave = Mathf.Sin(time * 3.8f + pondletIdentityPhase);
             if (MimicPoseActive && !reduced) wave = Mathf.Sin(Mathf.Floor(mimicTime * 2) * 1.7f);
             float flick = glanceAge >= 0 && glanceAge < .6f && !reduced ? Mathf.Sin(glanceAge / .6f * Mathf.PI) * 3 : 0;
-            float tailAngle = reduced ? 0 : wave * Mathf.Lerp(5, 14, effort);
-            float finAngle = reduced ? 0 : Mathf.Clamp(wave * Mathf.Lerp(4, 9, effort) + flick, -12, 12);
+            var wake = FxHatchChoreography.Resolve(hatchAge, firstHatch, reduced);
+            float tailAngle = reduced ? 0 : Mathf.Clamp(wave * Mathf.Lerp(5,14,effort)*wake.IdleWeight + wake.Tail,-24,24);
+            float finAngle = reduced ? 0 : Mathf.Clamp(wave * Mathf.Lerp(4,9,effort)*wake.IdleWeight + flick + wake.Fin,-28,28);
+            if (hatchAge < 0) finAngle = Mathf.Clamp(finAngle,-12,12);
             if (tail) tail.localRotation = pondletTailRest * Quaternion.Euler(0, tailAngle, 0);
             if (finLeft) finLeft.localRotation = pondletLeftRest * Quaternion.Euler(0, 0, -finAngle);
             if (finRight) finRight.localRotation = pondletRightRest * Quaternion.Euler(0, 0, finAngle);
-            if (crest) crest.localRotation = pondletCrestRest * Quaternion.Euler(0, 0, reduced ? 0 : wave * 4);
+            if (crest) crest.localRotation = pondletCrestRest * Quaternion.Euler(0, 0, reduced ? 0 : wave * 4 * wake.IdleWeight + wake.Crest);
         }
     }
 }

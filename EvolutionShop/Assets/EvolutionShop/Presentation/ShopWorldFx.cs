@@ -97,7 +97,7 @@ namespace EvolutionShop
         }
         public void CancelFxOwner(FxOwnerToken owner)
         {
-            if (fxCues != null && owner.Equals(fxCues.Find("incubator"))) labDoseRemaining = labHatchRemaining = 0;
+            if (fxCues != null && owner.Equals(fxCues.Find("incubator"))) CancelLabFx();
             if (fxCues != null && owner.Equals(fxCues.Find("lab-collector"))) labModuleRemaining = 0;
             fxCues?.Cancel(owner); fxPool?.Cancel(owner);
             if (fxCues != null && owner.Equals(fxCues.Find("hands"))) CancelHandsPose();

@@ -17,7 +17,7 @@ namespace EvolutionShop.Tests
                 {
                     FxHatchRelease.Sample(i, seed, first, reduced, out var delay, out var origin, out var p);
                     Assert.That(p.IsValid, Is.True);
-                    Assert.That(delay + p.Lifetime, Is.LessThanOrEqualTo((first ? 1.2f : .5f) + .0001f));
+                    Assert.That(delay + p.Lifetime, Is.LessThanOrEqualTo(FxHatchChoreography.Duration(first) - FxHatchChoreography.Release(first) + .0001f));
                     Assert.That(Mathf.Abs(origin.x), Is.LessThan(.3f));
                     Assert.That(origin.y, Is.InRange(1.3f, 1.66f));
                     Assert.That(origin.z, Is.InRange(-.64f, -.55f));

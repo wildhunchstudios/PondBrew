@@ -713,6 +713,7 @@ namespace EvolutionShop
             {
                 if (!display.Creature) continue;
                 if (display.SpeciesId == "pondlet" && display.Habitat != null) { TickPondlet(display, dt); continue; }
+                if (display.Incubator && display.SpeciesId == "pondlet") { PoseLabPondlet(display,time,LabHatchAge,labHatchFirst); continue; }
                 float t = time * (display.SpeciesId == "bubblebelly" ? .6f : .78f) + display.Seed;
                 // The longest tail stays mostly broadside; its small orbit reserves tail clearance.
                 float x = display.Incubator ? Mathf.Sin(t) * .04f : Mathf.Sin(t) * (display.SpeciesId == "ribbonfin" ? .10f : .42f);

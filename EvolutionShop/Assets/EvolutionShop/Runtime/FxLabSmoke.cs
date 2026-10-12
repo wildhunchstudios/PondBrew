@@ -108,7 +108,7 @@ namespace EvolutionShop
             Check(Mathf.Approximately(shop.Model.Incubator.SecondsRemaining,remaining) && pool.ActiveCount==0 && world.LabHatchRemaining==0,"Actual pause freezes countdown and clears transient presentation");shop.SetPanel(ShopPanel.None);
             shop.SetFxFocusForValidation(false);Check(pool.ActiveCount==0 && !world.TryFxCue(FxCueId.HatchFirst,100),"Focus loss rejects late hatch cue");shop.SetFxFocusForValidation(true);
             yield return AutomationWait(()=>shop.Model.Incubator.Phase==IncubatorPhase.Ready,12,"real first hatch");
-            Check(world.LabHatchCount==hatch+1 && world.LabHatchRemaining>1 && shop.Model.IsDiscovered("pondlet") && shop.Model.Incubator.SpecimenId==specimen,"First genuine Pondlet maturation has one1.2s accent and stable ID");
+            Check(world.LabHatchCount==hatch+1 && world.LabHatchRemaining>1 && shop.Model.IsDiscovered("pondlet") && shop.Model.Incubator.SpecimenId==specimen,"First genuine Pondlet maturation has one bounded first-hatch accent and stable ID");
             LabRecord("fx03-first-hatch");yield return GateCapture("fx03-first-hatch");yield return new WaitForSeconds(1.25f);
             Check(world.LabHatchRemaining==0 && pool.ActiveCount==0,"Hatch action expires without looping");
             Check(shop.SaveNow(),"Save ready specimen");hatch=world.LabHatchCount;playedReady=audio.LabPlaybackCount;
@@ -116,7 +116,7 @@ namespace EvolutionShop
             yield return LabTransferReady("tank-a",specimen);
             yield return FxLabPrepare(false);hatch=world.LabHatchCount;
             yield return AutomationWait(()=>shop.Model.Incubator.Phase==IncubatorPhase.Ready,12,"real repeated hatch");
-            Check(world.LabHatchCount==hatch+1 && world.LabHatchRemaining>0 && world.LabHatchRemaining<=.5f,"Second natural Pondlet uses ordinary half-second accent");yield return GateCapture("fx03-repeat-hatch");specimen=shop.Model.Incubator.SpecimenId;yield return LabTransferReady("tank-b",specimen);
+            Check(world.LabHatchCount==hatch+1 && world.LabHatchRemaining>0 && world.LabHatchRemaining<=FxHatchChoreography.RepeatDuration,"Second natural Pondlet uses ordinary repeat-hatch accent");yield return GateCapture("fx03-repeat-hatch");specimen=shop.Model.Incubator.SpecimenId;yield return LabTransferReady("tank-b",specimen);
             yield return FxLabPrepare(false);yield return AutomationWait(()=>shop.Model.Incubator.Phase==IncubatorPhase.Ready,12,"full-display hatch");
             specimen=shop.Model.Incubator.SpecimenId;Check(!shop.TransferToDisplay("tank-a").Success && shop.Model.Incubator.SpecimenId==specimen && shop.DisplayedStockCount()==2,"Full displays retain exact ready output without duplicate fish");yield return GateCapture("fx03-output-held");
             Ok(shop.Model.SellFromTank("tank-b"),"Labelled core-only release fixture, not a customer sale");Ok(shop.Model.TransferToTank("tank-b"),"Move protected output for collector fixture");world.Refresh(shop.Model);Check(shop.SaveNow(),"Save prepared collector fixture");

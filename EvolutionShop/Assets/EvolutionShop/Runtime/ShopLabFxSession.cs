@@ -17,9 +17,8 @@ namespace EvolutionShop
         }
         void PresentLabHatch(bool first, bool saved)
         {
-            if (!saved) { World.CancelFxTransient(); sound.StopLabAudio(); return; }
-            sound.LabHatch(first);
-            World.TryFxCue(first ? FxCueId.HatchFirst : FxCueId.HatchRepeat, NextFxSequence());
+            if (!saved) { World.CancelFxTransient(); sound.StopLabAudio(); sound.StopHatchAudio(); return; }
+            if (World.TryFxCue(first ? FxCueId.HatchFirst : FxCueId.HatchRepeat, NextFxSequence())) sound.LabHatch(first);
         }
         void PresentLabModule(AutomationStep step)
         {

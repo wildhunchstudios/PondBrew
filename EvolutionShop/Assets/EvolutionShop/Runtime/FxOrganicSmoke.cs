@@ -41,6 +41,7 @@ namespace EvolutionShop
             yield return OrganicClip(name, 3);
             Check(shop.Model.Incubator.Phase == IncubatorPhase.Ready && shop.World.LabHatchCount == before + 1 &&
                 shop.Model.Incubator.SpecimenId == specimen && shop.Model.IsDiscovered("pondlet"), "Saved natural hatch has exactly one same-ID specimen / " + name);
+            if (ShopSession.Arg("-evolutionFxHatchSmoke") != null) HatchMeshSweep(name);
             int count = shop.World.LabHatchCount, sounds = shop.GetComponent<ShopAudio>().LabPlaybackCount;
             Check(shop.SaveNow() && shop.ReloadSaved(), "Save/reload exact ready batch / " + name); shop.SetPanel(ShopPanel.None);
             yield return new WaitForSeconds(.4f);
@@ -93,11 +94,11 @@ namespace EvolutionShop
                 }
                 world.SetFxPreviewModes(false, false); world.ResetFxPresentation();
                 Check(world.TryFxCue(FxCueId.HatchFirst, 1), "Start bounded interruption fixture");
-                world.Animate(Time.time,.08f); Check(pool.ActiveCount > 0, "Staggered emission has begun");
+                world.Animate(Time.time,.18f); world.Animate(Time.time,.01f); Check(pool.ActiveCount > 0, "Staggered emission has begun");
                 shop.SetPanel(ShopPanel.Pause); world.Animate(Time.time,.2f);
                 Check(pool.ActiveCount == 0 && world.LabHatchRemaining == 0, "Pause cancels both live motes and unspawned tail"); shop.SetPanel(ShopPanel.None);
                 world.Animate(Time.time,.6f); Check(pool.ActiveCount == 0, "Canceled staggered release never resumes");
-                world.ResetFxPresentation(); world.TryFxCue(FxCueId.HatchFirst, 1); world.Animate(Time.time,.18f);
+                world.ResetFxPresentation(); world.TryFxCue(FxCueId.HatchFirst, 1); world.Animate(Time.time,.18f); world.Animate(Time.time,.06f);
                 VocabularyRasterAudit("organic-actual-mask");
                 world.CancelFxTransient(); Check(FxAuthority() == authority, "All revision fixtures remain presentation-only");
             }

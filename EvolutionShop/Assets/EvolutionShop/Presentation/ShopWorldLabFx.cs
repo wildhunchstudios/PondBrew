@@ -26,6 +26,8 @@ namespace EvolutionShop
         public CultureKind LabDoseCulture => labDoseCulture;
         public FxCueId LabDoseId => labDoseId;
         public float LabHatchRemaining => labHatchRemaining;
+        public float LabHatchAge => labHatchRemaining > 0 ? labHatchDuration - labHatchRemaining : -1;
+        public bool LabHatchFirst => labHatchFirst;
         public LabModuleVisualState LabModuleState => labModuleState;
         public bool LabFxEnabled => fxEnabled;
         public void ConfigureLabTiming(float seconds) { if (seconds > 0 && !float.IsInfinity(seconds)) labIncubationSeconds = seconds; }
@@ -69,10 +71,12 @@ namespace EvolutionShop
             id == FxCueId.HatchFirst || id == FxCueId.HatchRepeat || id == FxCueId.ModuleCollected || id == FxCueId.ModuleDosed;
         bool TryLabCue(FxCueId id, uint sequence, FxCueOrigin origin, CultureKind culture)
         {
+            bool hatch = id == FxCueId.HatchFirst || id == FxCueId.HatchRepeat;
+            if (hatch && fxPolicy != FxViewPolicy.Visible) return false;
             bool module = id == FxCueId.ModuleCollected || id == FxCueId.ModuleDosed;
             if (module ? origin != FxCueOrigin.Module || (labModuleState != LabModuleVisualState.Waiting && labModuleState != LabModuleVisualState.Blocked) : origin != FxCueOrigin.Manual) return false;
             var token = fxCues.Find(module ? "lab-collector" : "incubator");
-            float duration = id == FxCueId.HatchFirst ? 1.2f : id == FxCueId.HatchRepeat ? .5f : .4f;
+            float duration = id == FxCueId.HatchFirst ? FxHatchChoreography.FirstDuration : id == FxCueId.HatchRepeat ? FxHatchChoreography.RepeatDuration : .4f;
             if (!fxCues.Play(token, id, sequence, origin, duration, 4)) return false;
             fxPool?.Cancel(token);
             if (module) { labModuleRemaining = .3f; LabModuleCueCount++; return true; }
@@ -95,7 +99,8 @@ namespace EvolutionShop
         {
             if (labHatchRemaining <= 0 || fxPool == null || !fxCues.IsValid(labHatchOwner) ||
                 !displays.TryGetValue("incubator", out var display)) return;
-            float age = labHatchDuration - labHatchRemaining;
+            float age = LabHatchAge - FxHatchChoreography.Release(labHatchFirst);
+            if (age < 0) return;
             int count = FxHatchRelease.Count(labHatchFirst, fxPool.ActionLimit < 64, fxReducedMotion);
             for (int i = 0; i < count; i++)
             {
@@ -109,6 +114,24 @@ namespace EvolutionShop
                 fxPool.EmitParticle(fxCues, labHatchOwner, display.Root.parent, origin, request);
             }
         }
+        void PoseLabPondlet(Display display, float time, float age, bool first)
+        {
+            var pose = FxHatchChoreography.Resolve(age, first, fxReducedMotion);
+            float t = time * .78f + display.Seed, calm = pose.IdleWeight;
+            var root = display.Creature.transform;
+            root.localPosition = fxReducedMotion ? Vector3.zero : new Vector3(Mathf.Sin(t)*.04f*calm, Mathf.Sin(t*1.8f)*.085f*calm + pose.Lift, 0);
+            root.localRotation = fxReducedMotion ? Quaternion.Euler(0,-90,0) : Quaternion.Euler(0,-90 + Mathf.Cos(t)*20*calm, Mathf.Sin(t*1.6f)*5*calm + pose.Roll);
+            var inc = lastModel.Incubator;
+            float fraction = inc.Phase == IncubatorPhase.Incubating ? Mathf.Clamp01(1 - inc.SecondsRemaining/labIncubationSeconds) : 1;
+            float size = inc.Phase == IncubatorPhase.Incubating ? Mathf.Lerp(.32f,1,fraction) : 1;
+            root.localScale = pose.Scale * (.62f*size);
+            display.Creature.AnimatePondlet(time+display.Seed,.7f,fxReducedMotion,-1,age,first);
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public Transform HatchCreatureForValidation => displays.TryGetValue("incubator",out var d) && d.Creature ? d.Creature.transform : null;
+        public void SampleHatchPoseForValidation(float age, bool first, float time)
+        { if (displays.TryGetValue("incubator",out var d) && d.Creature && d.SpeciesId == "pondlet") PoseLabPondlet(d,time,age,first); }
+#endif
         void EmitLabMote(FxOwnerToken token, Material material, Vector3 point, float duration, float size = .035f, bool action = true)
         {
             if (displays.TryGetValue("incubator", out var display))
@@ -120,7 +143,8 @@ namespace EvolutionShop
             labHarvestSource = null; labStreamClock = labBubbleClock = labDoseRemaining = labHatchRemaining = labModuleRemaining = 0;
             foreach (var needle in labNeedles) if (needle) needle.localRotation = Quaternion.identity;
             if (labFluid) labFluid.localScale = labFluidRest;
-            if (displays.TryGetValue("incubator", out var resident) && resident.Creature) resident.Creature.transform.localScale = Vector3.one * .62f;
+            if (displays.TryGetValue("incubator", out var resident) && resident.Creature && resident.SpeciesId == "pondlet")
+                PoseLabPondlet(resident, lastTime, -1, false);
         }
         void TickLabFx(float time, float dt)
         {
@@ -163,12 +187,7 @@ namespace EvolutionShop
                 labBubbleClock -= dt;
                 if (labBubbleClock <= 0) { labBubbleClock = fxReducedMotion ? 1.2f : .65f; EmitLabMote(fxCues.Find("incubator"), flowMat, new Vector3(Mathf.Sin(time) * .30f, 1.36f, -.18f), .8f, .025f, false); }
             }
-            if (displays.TryGetValue("incubator", out var resident) && resident.Creature && resident.SpeciesId == "pondlet")
-            {
-                float size = inc.Phase == IncubatorPhase.Incubating ? Mathf.Lerp(.32f, 1, fraction) : 1;
-                if (labHatchRemaining > 0 && !fxReducedMotion) size *= 1 + Mathf.Sin((1 - labHatchRemaining / labHatchDuration) * Mathf.PI) * .02f;
-                resident.Creature.transform.localScale = Vector3.one * (.62f * size);
-            }
+            if (labFluid && labHatchRemaining > 0) labFluid.localScale = labFluidRest * FxHatchChoreography.Resolve(LabHatchAge,labHatchFirst,fxReducedMotion).FluidScale;
         }
     }
 }
