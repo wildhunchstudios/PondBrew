@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 namespace EvolutionShop
 {
@@ -34,17 +35,25 @@ namespace EvolutionShop
             public int frame, mouseDevice, keyboardDevice;
             public bool mouseHeld, fixtureMouseHeld;
         }
+        [Serializable] sealed class GrowerInputSuppressionReceipt
+        {
+            public int deviceId, count;
+            public string eventType;
+        }
         [Serializable] sealed class GrowerInputReceipt
         {
             public string scope = "Diagnostic player's Unity InputSystem frontend only; no OS device disabling; no raw keyboard contents recorded";
             public int processId, fixtureMouseDevice, fixtureKeyboardDevice, updateSamples, foreignCurrentSamples, otherEnabledSamples, droppedTransitions;
             public bool restored;
+            public int suppressedStateEvents, suppressedDeltaEvents, suppressedPreviouslyHandledEvents;
+            public GrowerInputSuppressionReceipt[] suppressedEvents;
             public GrowerInputDeviceReceipt[] devices;
             public GrowerInputStateReceipt[] transitions;
         }
         readonly List<InputDevice> growerDisabledInputs = new List<InputDevice>();
         readonly List<GrowerInputDeviceReceipt> growerInputDevices = new List<GrowerInputDeviceReceipt>();
         readonly List<GrowerInputStateReceipt> growerInputTransitions = new List<GrowerInputStateReceipt>();
+        readonly List<GrowerInputSuppressionReceipt> growerSuppressedInputs = new List<GrowerInputSuppressionReceipt>();
         GrowerInputReceipt growerInputReceipt;
         string growerInputReceiptFile;
         bool growerIsolatingInputs, growerChangingInput;
@@ -75,6 +84,27 @@ namespace EvolutionShop
             if (change == InputDeviceChange.Added || change == InputDeviceChange.Reconnected || change == InputDeviceChange.Enabled)
                 GrowerDisableForeignInput(device);
         }
+        void GrowerInputEvent(UnityEngine.InputSystem.LowLevel.InputEventPtr inputEvent, InputDevice device)
+        {
+            if (!growerIsolatingInputs || device == null || !(device is Mouse) && !(device is Keyboard) ||
+                device == cycleMouse || device == syntheticKeyboard) return;
+            bool state = inputEvent.type == StateEvent.Type, delta = inputEvent.type == DeltaStateEvent.Type;
+            if (!state && !delta) return; // Device configuration/removal and other event kinds retain their normal lifecycle.
+            // In the pinned package, frontend-only disabling still permits state updates and MakeCurrent.
+            // onEvent precedes both; its default SuppressStateUpdates policy discards handled state events.
+            // Keep strict after-update provenance checks: unexpected policy/current changes must still fail.
+            if (inputEvent.handled) growerInputReceipt.suppressedPreviouslyHandledEvents++;
+            inputEvent.handled = true;
+            if (state) growerInputReceipt.suppressedStateEvents++; else growerInputReceipt.suppressedDeltaEvents++;
+            string type = state ? "StateEvent" : "DeltaStateEvent";
+            for (int i = 0; i < growerSuppressedInputs.Count; i++) {
+                var record = growerSuppressedInputs[i];
+                if (record.deviceId == device.deviceId && record.eventType == type) { record.count++; return; }
+            }
+            if (growerSuppressedInputs.Count >= 256) { growerInputReceipt.droppedTransitions++; return; }
+            // Metadata only: no keyboard payload, key values, pointer coordinates or event-state bytes.
+            growerSuppressedInputs.Add(new GrowerInputSuppressionReceipt { deviceId = device.deviceId, eventType = type, count = 1 });
+        }
         void GrowerInputAfterUpdate()
         {
             if (!growerIsolatingInputs) return;
@@ -97,6 +127,7 @@ namespace EvolutionShop
             growerInputReceipt = new GrowerInputReceipt { processId = System.Diagnostics.Process.GetCurrentProcess().Id,
                 fixtureMouseDevice = cycleMouse.deviceId, fixtureKeyboardDevice = syntheticKeyboard.deviceId };
             growerIsolatingInputs = true;
+            InputSystem.onEvent += GrowerInputEvent;
             InputSystem.onDeviceChange += GrowerInputDeviceChanged;
             foreach (var device in InputSystem.devices) {
                 if (!(device is Mouse) && !(device is Keyboard)) continue;
@@ -110,6 +141,7 @@ namespace EvolutionShop
         {
             if (!growerIsolatingInputs) return;
             growerIsolatingInputs = false;
+            InputSystem.onEvent -= GrowerInputEvent;
             InputSystem.onAfterUpdate -= GrowerInputAfterUpdate;
             InputSystem.onDeviceChange -= GrowerInputDeviceChanged;
             bool restored = true;
@@ -123,6 +155,7 @@ namespace EvolutionShop
             growerDisabledInputs.Clear(); growerInputReceipt.restored = restored;
             if (growerInputReceipt.foreignCurrentSamples != 0 || growerInputReceipt.otherEnabledSamples != 0 || growerInputReceipt.droppedTransitions != 0)
                 errors.Add("Synthetic input isolation provenance failed; inspect " + growerInputReceiptFile);
+            growerInputReceipt.suppressedEvents = growerSuppressedInputs.ToArray();
             growerInputReceipt.devices = growerInputDevices.ToArray(); growerInputReceipt.transitions = growerInputTransitions.ToArray();
             File.WriteAllText(Path.Combine(evidence, growerInputReceiptFile), JsonUtility.ToJson(growerInputReceipt, true));
         }
