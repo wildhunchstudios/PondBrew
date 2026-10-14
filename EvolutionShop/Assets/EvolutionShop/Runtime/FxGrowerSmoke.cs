@@ -18,6 +18,113 @@ namespace EvolutionShop
             public string stock, interaction, statusText;
             public Vector3 root, outlet, mouth;
             public Quaternion rotation;
+            public int currentMouseDevice, currentKeyboardDevice, fixtureMouseDevice;
+            public bool currentMouseHeld, fixtureMouseHeld;
+        }
+        [Serializable] sealed class GrowerInputDeviceReceipt
+        {
+            public float seconds;
+            public int deviceId;
+            public string change, name, layout, interfaceName;
+            public bool native, enabled, fixture;
+        }
+        [Serializable] sealed class GrowerInputStateReceipt
+        {
+            public float seconds;
+            public int frame, mouseDevice, keyboardDevice;
+            public bool mouseHeld, fixtureMouseHeld;
+        }
+        [Serializable] sealed class GrowerInputReceipt
+        {
+            public string scope = "Diagnostic player's Unity InputSystem frontend only; no OS device disabling; no raw keyboard contents recorded";
+            public int processId, fixtureMouseDevice, fixtureKeyboardDevice, updateSamples, foreignCurrentSamples, otherEnabledSamples, droppedTransitions;
+            public bool restored;
+            public GrowerInputDeviceReceipt[] devices;
+            public GrowerInputStateReceipt[] transitions;
+        }
+        readonly List<InputDevice> growerDisabledInputs = new List<InputDevice>();
+        readonly List<GrowerInputDeviceReceipt> growerInputDevices = new List<GrowerInputDeviceReceipt>();
+        readonly List<GrowerInputStateReceipt> growerInputTransitions = new List<GrowerInputStateReceipt>();
+        GrowerInputReceipt growerInputReceipt;
+        string growerInputReceiptFile;
+        bool growerIsolatingInputs, growerChangingInput;
+        void GrowerInputDeviceRecord(InputDevice device, string change)
+        {
+            if (growerInputDevices.Count >= 4096) { growerInputReceipt.droppedTransitions++; return; }
+            growerInputDevices.Add(new GrowerInputDeviceReceipt { seconds = Time.realtimeSinceStartup - start,
+                deviceId = device.deviceId, change = change, name = device.name, layout = device.layout,
+                interfaceName = device.description.interfaceName, native = device.native, enabled = device.enabled,
+                fixture = device == cycleMouse || device == syntheticKeyboard });
+        }
+        void GrowerDisableForeignInput(InputDevice device)
+        {
+            if (!(device is Mouse) && !(device is Keyboard) || device == cycleMouse || device == syntheticKeyboard || !device.added || !device.enabled) return;
+            if (!growerDisabledInputs.Contains(device)) growerDisabledInputs.Add(device);
+            growerChangingInput = true;
+            try {
+                // Frontend-only: do not send a runtime/OS DisableDeviceCommand.
+                InputSystem.DisableDevice(device, keepSendingEvents: true);
+                GrowerInputDeviceRecord(device, "disabled-in-player-frontend");
+            }
+            finally { growerChangingInput = false; }
+        }
+        void GrowerInputDeviceChanged(InputDevice device, InputDeviceChange change)
+        {
+            if (!growerIsolatingInputs || growerChangingInput || !(device is Mouse) && !(device is Keyboard)) return;
+            GrowerInputDeviceRecord(device, change.ToString());
+            if (change == InputDeviceChange.Added || change == InputDeviceChange.Reconnected || change == InputDeviceChange.Enabled)
+                GrowerDisableForeignInput(device);
+        }
+        void GrowerInputAfterUpdate()
+        {
+            if (!growerIsolatingInputs) return;
+            growerInputReceipt.updateSamples++;
+            if (Mouse.current != cycleMouse || Keyboard.current != syntheticKeyboard) growerInputReceipt.foreignCurrentSamples++;
+            foreach (var device in InputSystem.devices)
+                if ((device is Mouse || device is Keyboard) && device != cycleMouse && device != syntheticKeyboard && device.enabled)
+                    growerInputReceipt.otherEnabledSamples++;
+            int mouseId = Mouse.current != null ? Mouse.current.deviceId : -1, keyboardId = Keyboard.current != null ? Keyboard.current.deviceId : -1;
+            bool held = Mouse.current != null && Mouse.current.leftButton.isPressed, fixtureHeld = cycleMouse != null && cycleMouse.leftButton.isPressed;
+            var previous = growerInputTransitions.Count > 0 ? growerInputTransitions[growerInputTransitions.Count - 1] : null;
+            if (previous != null && previous.mouseDevice == mouseId && previous.keyboardDevice == keyboardId && previous.mouseHeld == held && previous.fixtureMouseHeld == fixtureHeld) return;
+            if (growerInputTransitions.Count >= 4096) { growerInputReceipt.droppedTransitions++; return; }
+            growerInputTransitions.Add(new GrowerInputStateReceipt { seconds = Time.realtimeSinceStartup - start, frame = Time.frameCount,
+                mouseDevice = mouseId, keyboardDevice = keyboardId, mouseHeld = held, fixtureMouseHeld = fixtureHeld });
+        }
+        void GrowerIsolateInputs(string receiptFile = "grower-input-provenance.json")
+        {
+            growerInputReceiptFile = receiptFile;
+            growerInputReceipt = new GrowerInputReceipt { processId = System.Diagnostics.Process.GetCurrentProcess().Id,
+                fixtureMouseDevice = cycleMouse.deviceId, fixtureKeyboardDevice = syntheticKeyboard.deviceId };
+            growerIsolatingInputs = true;
+            InputSystem.onDeviceChange += GrowerInputDeviceChanged;
+            foreach (var device in InputSystem.devices) {
+                if (!(device is Mouse) && !(device is Keyboard)) continue;
+                GrowerInputDeviceRecord(device, "initial"); GrowerDisableForeignInput(device);
+            }
+            syntheticKeyboard.MakeCurrent(); cycleMouse.MakeCurrent();
+            InputSystem.onAfterUpdate += GrowerInputAfterUpdate;
+            GrowerInputAfterUpdate();
+        }
+        void RestoreGrowerInputIsolation()
+        {
+            if (!growerIsolatingInputs) return;
+            growerIsolatingInputs = false;
+            InputSystem.onAfterUpdate -= GrowerInputAfterUpdate;
+            InputSystem.onDeviceChange -= GrowerInputDeviceChanged;
+            bool restored = true;
+            foreach (var device in growerDisabledInputs) {
+                try {
+                    if (device.added) { InputSystem.EnableDevice(device); GrowerInputDeviceRecord(device, "restored-enabled"); }
+                    else GrowerInputDeviceRecord(device, "removed-before-restore");
+                }
+                catch (Exception error) { restored = false; errors.Add("Grower input restore: " + error); }
+            }
+            growerDisabledInputs.Clear(); growerInputReceipt.restored = restored;
+            if (growerInputReceipt.foreignCurrentSamples != 0 || growerInputReceipt.otherEnabledSamples != 0 || growerInputReceipt.droppedTransitions != 0)
+                errors.Add("Synthetic input isolation provenance failed; inspect " + growerInputReceiptFile);
+            growerInputReceipt.devices = growerInputDevices.ToArray(); growerInputReceipt.transitions = growerInputTransitions.ToArray();
+            File.WriteAllText(Path.Combine(evidence, growerInputReceiptFile), JsonUtility.ToJson(growerInputReceipt, true));
         }
         [Serializable] sealed class GrowerTrace
         {
@@ -51,6 +158,8 @@ namespace EvolutionShop
         }
         GrowerFrame GrowerSample(CultureKind culture, float seconds)
         {
+            if (growerIsolatingInputs && (growerInputReceipt.foreignCurrentSamples != 0 || growerInputReceipt.otherEnabledSamples != 0))
+                throw new InvalidOperationException("FX07 isolated input provenance changed; inspect grower-input-provenance.json");
             var world = shop.World; var pool = world.FxPool; var root = GrowerRoot(culture);
             var view = shop.Model.GetGrower(culture); var stock = world.GrowthGrowerForValidation(culture);
             var outlet = root.Find("Outlet opening"); var mouth = world.ToolRoot.Find("Siphon chassis/Collection nozzle/Nozzle light");
@@ -107,7 +216,11 @@ namespace EvolutionShop
                 circulation = world.GrowerCirculationCountForValidation(culture), refillEdges = world.GrowerRefillCountForValidation(culture),
                 accepted = GrowerAccepted(culture), blockedEntries = world.GrowerBlockedTransitionCountForValidation(culture),
                 particles = particles, ambient = ambient, total = pool.ActiveCount, root = root.position, rotation = root.rotation,
-                outlet = outlet.position, mouth = mouth.position, sourceError = sourceError, mouthError = mouthError };
+                outlet = outlet.position, mouth = mouth.position, sourceError = sourceError, mouthError = mouthError,
+                currentMouseDevice = Mouse.current != null ? Mouse.current.deviceId : -1,
+                currentKeyboardDevice = Keyboard.current != null ? Keyboard.current.deviceId : -1,
+                fixtureMouseDevice = cycleMouse.deviceId, currentMouseHeld = Mouse.current != null && Mouse.current.leftButton.isPressed,
+                fixtureMouseHeld = cycleMouse.leftButton.isPressed };
         }
         IEnumerator GrowerClip(string name, CultureKind culture, float duration, Action<float> action = null, bool low = false, bool reduced = false)
         {
@@ -372,6 +485,8 @@ namespace EvolutionShop
             smokeInputSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
 #endif
             InputSystem.settings = smokeInputSettings; syntheticKeyboard = InputSystem.AddDevice<Keyboard>("EvolutionGrowerKeyboard"); cycleMouse = InputSystem.AddDevice<Mouse>("EvolutionGrowerMouse"); syntheticKeyboard.MakeCurrent(); cycleMouse.MakeCurrent();
+            GrowerIsolateInputs();
+            limitations.Add("Only the diagnostic player's Unity InputSystem frontend disables other Mouse/Keyboard devices, restoring previously enabled devices during cleanup. Device/current-input provenance is retained; this does not establish what caused any earlier run's unexplained input.");
             if (!Application.isEditor) {
                 int width = int.Parse(ShopSession.Arg("-screen-width")), height = int.Parse(ShopSession.Arg("-screen-height"));
                 Screen.SetResolution(width == 1280 ? 1920 : 1280, height == 720 ? 1080 : 720, FullScreenMode.Windowed); yield return new WaitForSeconds(.3f);
@@ -404,6 +519,8 @@ namespace EvolutionShop
             }
             finally { shop.FreezeFxVocabularyForValidation = false; shop.World.SetFxPreviewModes(false, false); CollectionMouse(false); }
             Check(shop.SkipTutorial(), "Explicitly leave reset tutorial Welcome in diagnostic slot"); shop.SetPanel(ShopPanel.Pause);
+            Check(growerInputReceipt.updateSamples > 0 && growerInputReceipt.foreignCurrentSamples == 0 && growerInputReceipt.otherEnabledSamples == 0 && growerInputReceipt.droppedTransitions == 0,
+                "All observed input updates retain only fixture Mouse/Keyboard provenance; device restore receipt follows cleanup");
         }
     }
 }

@@ -106,6 +106,7 @@ namespace EvolutionShop
             }
             stack.Push(fxGrower ? FxGrowerScenario() : fxAquarium ? FxAquariumScenario() : fxCollection ? FxCollectionScenario() : fxGrowth ? FxGrowthScenario() : fxDose ? FxDoseScenario() : fxHatch ? FxHatchScenario() : fxOrganic ? FxOrganicScenario() : fxVocabulary ? FxVocabularyScenario() : fxReview ? FxReviewScenario() : fxPondlet ? FxPondletScenario() : fxHands ? FxHandsScenario() : fxLab ? FxLabScenario() : fxCue ? FxCueScenario() : fxBaseline ? FxBaselineScenario() : automation ? AutomationScenario() : workerComedy ? WorkerComedyScenario() : tutorialRestart ? TutorialRestartScenario() : tutorialConditioningRecovery ? TutorialConditioningRecoveryScenario() : tutorialRecovery ? TutorialRecoveryScenario() : tutorialHandoff ? TutorialHandoffScenario() : tutorialCustomer ? TutorialCustomerScenario() : guidance ? TutorialGuidanceScenario() : tutorial ? TutorialScenario() : technician ? TechnicianScenario() : stocker ? StockerScenario() : staff ? StaffScenario() : rooms ? RoomsScenario() : comedyGate ? ComedyGateScenario() : comedy ? ComedyScenario() : presentation ? PresentationScenario() : labGate ? LabGateScenario() : airfin ? AirfinScenario() : conditioning ? ConditioningScenario() : research ? ResearchScenario() : specimens ? SpecimenStorageScenario() : lab ? LabScenario() : editedLayout ? EditedLayoutScenario() : storage ? FurnitureStorageScenario() : decor ? DecorScenario() : expansion ? ExpansionScenario() : placement ? PlacementScenario() : trading ? TradingShiftScenario() : nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
                 customerTypes ? CustomerTypesScenario() : reputation ? ReputationScenario() : slap ? SlapScenario() : Scenario());
+            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (continuous || fxGrowth || fxCollection);
             bool failed = false;
             while (stack.Count > 0)
             {
@@ -113,6 +114,10 @@ namespace EvolutionShop
                 try
                 {
                     if (!stack.Peek().MoveNext()) { stack.Pop(); continue; }
+                    if (isolateSelectedInputs && !growerIsolatingInputs && syntheticKeyboard != null && cycleMouse != null) {
+                        GrowerIsolateInputs("synthetic-input-provenance.json");
+                        limitations.Add("Explicit diagnostic-only synthetic input isolation: other Mouse/Keyboard devices are disabled only in this player InputSystem frontend and restored during cleanup; see synthetic-input-provenance.json.");
+                    }
                     yielded = stack.Peek().Current;
                     if (yielded is IEnumerator nested) { stack.Push(nested); continue; }
                 }
@@ -152,6 +157,8 @@ namespace EvolutionShop
         }
         void RestoreInput()
         {
+            try { RestoreGrowerInputIsolation(); }
+            catch (Exception cleanup) { errors.Add("Grower input cleanup: " + cleanup); }
             RestoreCycleMouse();
             if (syntheticKeyboard != null && syntheticKeyboard.added) InputSystem.RemoveDevice(syntheticKeyboard);
             syntheticKeyboard = null;
