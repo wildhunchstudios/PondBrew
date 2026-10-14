@@ -40,3 +40,6 @@
 
 # Preserve byte-hashed collection evidence and raw engine whitespace.
 /Docs/Evidence/fx-06r-05/** -text -whitespace
+
+# Preserve byte-hashed aquarium evidence and raw engine whitespace.
+/Docs/Evidence/fx-06r-06/** -text -whitespace

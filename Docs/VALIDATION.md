@@ -396,3 +396,8 @@ Source b8a60c6, tag fx-growth-lab-validated, separate fx06r04-growth-1 player. S
 ## 2026-10-12 — FX-06R-05 delivered
 
 Source f0b7e4e, tag fx-collection-swirl-validated, separate fx06r05-collection-2 player. Irregular actual-outlet→moving-mouth collection, accepted-unit chamber response; original capacities/cadence. Actual 2,115 EditMode, 163 final Editor, 991 Windows checks; build 0 errors / 0 warnings; 12 videos / 1,380 decoded frames. All 36 protected files / prior growth player preserved; Core DLL identical. Sol simple support/Astra advanced policy retained. Evidence Docs/Evidence/fx-06r-05-VALIDATION.md, gallery 8792. Native/listening/creative/GPU gates open. Next R-06 only.
+
+
+## 2026-10-14 — FX-06R-06 delivered
+
+Source 11df5a8, tag fx-aquarium-validated, separate fx06r06-aquarium-2 player. The current fixed tank-a reuses water, plants and irregular existing bubbles, adds a contained motion-linked Pondlet trail and a saved-placement surface ripple, and clears the specimen trail after sale. The existing fish pose owner and fixed FX pool are reused. Actual 2,121 passed EditMode tests, 297 Editor checks and 1139 exact Windows checks; build 0 errors / 0 warnings. 16 actual silent 720p/1080p videos decode 1,408 frames. All 36 protected files and the prior 291-file collection-2 player are preserved; the retained initial aquarium candidate has 291 unchanged files. 873/878 baseline files are unchanged. Core DLL is identical. Evidence Docs/Evidence/fx-06r-06-VALIDATION.md; gallery http://127.0.0.1:8793/index.html. Native controls, in-game listening, user creative acceptance and integrated CPU/GPU attribution remain pending in R-07/08. FX-06/FX-B stay open; FX-07 expansion waits for R-08 acceptance. Next R-07 only.
