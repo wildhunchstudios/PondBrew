@@ -24,6 +24,8 @@ namespace EvolutionShop
             public float TrailClock;
             public uint TrailSequence, PlacementMask;
             public bool FishPositionKnown, TrailActive;
+            public Transform FishBoundsRoot;
+            public Renderer[] FishRenderers;
         }
         static readonly int AquariumColorId = Shader.PropertyToID("_BaseColor");
         bool aquariumLow;
@@ -158,6 +160,21 @@ namespace EvolutionShop
         bool AquariumHeroVisible(Display d) => fxEnabled && isActiveAndEnabled && fxPolicy==FxViewPolicy.Visible &&
             d.Root && d.Root.gameObject.activeInHierarchy && d.Habitat.Water && d.Habitat.Water.gameObject.activeInHierarchy &&
             fxCues!=null && fxCues.IsValid(fxCues.Find(d.Habitat.TankId));
+        Bounds AquariumFishBounds(Display d)
+        {
+            var h=d.Habitat; var creature=d.Creature.transform; var station=d.Root.parent;
+            if(h.FishBoundsRoot!=creature) {
+                h.FishBoundsRoot=creature; h.FishRenderers=creature.GetComponentsInChildren<Renderer>();
+            }
+            var result=new Bounds(station.InverseTransformPoint(creature.position),Vector3.zero);
+            // Convert all corners of current world renderer bounds: conservative under tank rotation.
+            foreach(var renderer in h.FishRenderers) if(renderer && renderer.enabled && renderer.gameObject.activeInHierarchy) {
+                var bounds=renderer.bounds; var min=bounds.min; var max=bounds.max;
+                for(int i=0;i<8;i++) result.Encapsulate(station.InverseTransformPoint(new Vector3(
+                    (i&1)==0 ? min.x : max.x,(i&2)==0 ? min.y : max.y,(i&4)==0 ? min.z : max.z)));
+            }
+            return result;
+        }
         void TickAquariumHero(Display d,float dt)
         {
             var h=d.Habitat;
@@ -190,13 +207,18 @@ namespace EvolutionShop
             var station=d.Root.parent;
             Vector3 fish=station.InverseTransformPoint(d.Creature.transform.position);
             Vector3 velocity=h.FishPositionKnown && dt>0 && dt<.25f ? (fish-h.LastFishPosition)/dt : Vector3.zero;
+            velocity.y=0;
             h.LastFishPosition=fish; h.FishPositionKnown=true;
             h.TrailActive=!fxReducedMotion && velocity.sqrMagnitude>=.000625f;
             if(h.TrailActive) {
                 h.TrailClock-=dt;
-                if(h.TrailClock<=0 && FxAquariumMotion.Trail(++h.TrailSequence,fish,velocity,h.InnerWater,aquariumLow,fxReducedMotion,
-                    out h.TrailClock,out var local,out var request) && fxPool!=null &&
-                    fxPool.EmitParticle(fxCues,fxCues.Find(h.TankId),station,local,request,true)) AquariumTrailEmissionCount++;
+                if(h.TrailClock<=0) {
+                    h.TrailClock=.05f;
+                    if(FxAquariumMotion.WakeAnchor(AquariumFishBounds(d),velocity,h.InnerWater,out var origin) &&
+                        FxAquariumMotion.Trail(++h.TrailSequence,origin,velocity,h.InnerWater,aquariumLow,fxReducedMotion,
+                        out h.TrailClock,out var local,out var request) && fxPool!=null &&
+                        fxPool.EmitParticle(fxCues,fxCues.Find(h.TankId),station,local,request,true)) AquariumTrailEmissionCount++;
+                }
             }
             else h.TrailClock=.05f;
             EmitAquariumPlacement(d);
@@ -207,10 +229,12 @@ namespace EvolutionShop
             if(h==null || h.TankId!="tank-a" || !AquariumHeroVisible(d) || d.PondletPlacedAge<0 ||
                 d.SpeciesId!="pondlet" || !d.Creature || fxPool==null) return;
             int count=FxAquariumMotion.PlacementCount(aquariumLow,fxReducedMotion);
-            Vector3 center=d.Root.parent.InverseTransformPoint(d.Creature.transform.position);
+            uint complete=(1u<<count)-1;
+            if((h.PlacementMask&complete)==complete) return;
+            Bounds fishBounds=AquariumFishBounds(d);
             for(int i=0;i<count;i++) {
                 uint bit=1u<<i; if((h.PlacementMask&bit)!=0) continue;
-                FxAquariumMotion.Placement(i,center,h.InnerWater,fxReducedMotion,out float delay,out var local,out var request);
+                FxAquariumMotion.Placement(i,fishBounds,h.InnerWater,fxReducedMotion,out float delay,out var local,out var request);
                 if(d.PondletPlacedAge<delay) continue;
                 h.PlacementMask|=bit;
                 request.Lifetime=Mathf.Min(request.Lifetime,.52f-d.PondletPlacedAge);

@@ -28,7 +28,7 @@ namespace EvolutionShop.Tests
             var active=FxAquariumMotion.Habitat(2,.1f,true,false,.26f);Assert.That(active.WaterScale,Is.LessThan(rest.WaterScale));
             Assert.That(FxAquariumMotion.PlacementCount(true,false),Is.LessThan(FxAquariumMotion.PlacementCount(false,false)));
             Assert.That(FxAquariumMotion.PlacementCount(false,true),Is.EqualTo(1));
-            for(int i=0;i<6;i++){FxAquariumMotion.Placement(i,Water.center,Water,false,out float delay,out _,out var p);Assert.That(p.IsValid,Is.True);Assert.That(delay,Is.GreaterThanOrEqualTo(0));Assert.That(delay+p.Lifetime,Is.LessThanOrEqualTo(.52f));}
+            for(int i=0;i<6;i++){FxAquariumMotion.Placement(i,new Bounds(Water.center,Vector3.one*.3f),Water,false,out float delay,out _,out var p);Assert.That(p.IsValid,Is.True);Assert.That(delay,Is.GreaterThanOrEqualTo(0));Assert.That(delay+p.Lifetime,Is.LessThanOrEqualTo(.52f));}
         }
         [Test] public void HabitatBubblesHaveContainedExtentAndHideWrapDiscontinuity()
         {
@@ -49,9 +49,37 @@ namespace EvolutionShop.Tests
                 Assert.That(FxAquariumMotion.Trail(index,Water.center,Vector3.right,Water,false,true,out _,out _,out _),Is.False);
                 Assert.That(FxAquariumMotion.Trail(index,Water.center,Vector3.right,Water,false,false,out float standard,out var local,out var request),Is.True);
                 Assert.That(FxAquariumMotion.Trail(index,Water.center,Vector3.right,Water,true,false,out float low,out var same,out var duplicate),Is.True);
-                Assert.That(low,Is.GreaterThan(standard));Assert.That(local.x,Is.LessThan(Water.center.x));Assert.That(same,Is.EqualTo(local));Assert.That(duplicate,Is.EqualTo(request));Assert.That(request.IsValid,Is.True);intervals.Add(standard);
+                Assert.That(low,Is.GreaterThan(standard));Assert.That(same,Is.EqualTo(local));Assert.That(duplicate,Is.EqualTo(request));Assert.That(request.IsValid,Is.True);intervals.Add(standard);
             }
             Assert.That(intervals.Count,Is.GreaterThan(24));Assert.That(Random.state,Is.EqualTo(random));
+        }
+        [Test] public void WakeStartsFullyOutsideActualMovingPondletMeshAndRefusesInsufficientWaterClearance()
+        {
+            var root=new GameObject("Actual Pondlet wake clearance");int samples=0;
+            try
+            {
+                var creature=root.AddComponent<CreatureVisual>();creature.Build("pondlet");root.transform.localScale=Vector3.one*.69f;
+                var filters=root.GetComponentsInChildren<MeshFilter>();var vertices=new Vector3[filters.Length][];for(int i=0;i<filters.Length;i++)vertices[i]=filters[i].sharedMesh.vertices;
+                for(int phase=0;phase<96;phase++)
+                {
+                    float time=phase*PondletMotion.Period/96;var pose=PondletMotion.Resolve(time,.37f,false);
+                    root.transform.position=new Vector3(0,1.56f,0)+pose.Position;root.transform.rotation=Quaternion.Euler(pose.Angles);creature.AnimatePondlet(time,pose.Effort,false);
+                    var velocity=(pose.Position-PondletMotion.Resolve(time-.01f,.37f,false).Position)/.01f;velocity.y=0;
+                    if(velocity.sqrMagnitude<.001f)continue;
+                    Vector3 min=Vector3.one*100,max=Vector3.one*-100;var behind=-velocity.normalized;float support=float.NegativeInfinity;
+                    for(int m=0;m<filters.Length;m++)foreach(var vertex in vertices[m])
+                    {var actual=filters[m].transform.TransformPoint(vertex);min=Vector3.Min(min,actual);max=Vector3.Max(max,actual);support=Mathf.Max(support,Vector3.Dot(actual,behind));}
+                    Assert.That(FxAquariumMotion.WakeAnchor(new Bounds((min+max)*.5f,max-min),velocity,Water,out var anchor),Is.True,"Actual admitted cruise leaves room for wake at phase "+phase);
+                    Assert.That(FxAquariumMotion.Trail((uint)phase,anchor,velocity,Water,false,false,out _,out var local,out var particle),Is.True);
+                    float radius=Mathf.Max(particle.Size,particle.EndSize)*.5f;
+                    Assert.That(Vector3.Dot(local,behind)-support,Is.GreaterThan(radius),"Full initial carrier clears all actual body, tail and petal vertices");
+                    Assert.That(Water.Contains(local+Vector3.one*radius) && Water.Contains(local-Vector3.one*radius),Is.True);samples++;
+                }
+                Assert.That(samples,Is.GreaterThan(32));
+                Assert.That(FxAquariumMotion.WakeAnchor(Water,Vector3.right,Water,out _),Is.False,"No clamping an impossible wake back inside the fish");
+                Assert.That(FxAquariumMotion.WakeAnchor(new Bounds(Water.center,Vector3.one*.3f),Vector3.up,Water,out _),Is.False,"Vertical breathing alone is not horizontal swimming wake");
+            }
+            finally {Object.DestroyImmediate(root);}
         }
         [Test] public void ActualParticleMeshesStayInsideWaterIncludingSurfacePlaneAndCameraDefaults()
         {
@@ -65,7 +93,7 @@ namespace EvolutionShop.Tests
                 for(int recipe=0;recipe<22;recipe++)
                 {
                     FxParticleRequest request;Vector3 local;
-                    if(recipe<6)FxAquariumMotion.Placement(recipe,Water.max,Water,false,out _,out local,out request);
+                    if(recipe<6)FxAquariumMotion.Placement(recipe,new Bounds(Water.max,Vector3.one*.2f),Water,false,out _,out local,out request);
                     else Assert.That(FxAquariumMotion.Trail((uint)recipe,recipe%2==0?Water.min:Water.max,new Vector3(1,.2f,-.3f),Water,false,false,out _,out local,out request),Is.True);
                     pool.CancelAll();Assert.That(pool.EmitParticle(cues,owner,source.transform,local,request),Is.True);
                     var visual=pool.ParticleVisualForValidation(owner,0);var vertices=visual.GetComponent<MeshFilter>().sharedMesh.vertices;

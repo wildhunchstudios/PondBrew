@@ -14,12 +14,12 @@ namespace EvolutionShop
         {
             public float seconds,fishAge,placementAge;
             public bool occupied,reserved,trail;
-            public int particles,habitatBubbles,placementEmissions,trailEmissions;
+            public int particles,habitatBubbles,placementEmissions,trailEmissions,projectedClear;
         }
         [Serializable] sealed class AquariumClipReceipt
         {
             public string source="Actual live Unity HUD; synthetic operator view and real simulation. Comfort policies are diagnostic only.";
-            public string name;public int peak,meshSamples;public AquariumFrame[] frames;
+            public string name;public int peak,meshSamples,projectionSamples,exposedSamples,maxExposed;public AquariumFrame[] frames;
         }
         [Serializable] sealed class AquariumPlantRest
         {public Vector3 position,scale;public Quaternion rotation;public float minY,rotationDisplacement;}
@@ -77,21 +77,46 @@ namespace EvolutionShop
         }
         IEnumerator AquariumClip(string name,float seconds,bool occupied,bool reduced=false,int bubbleCount=4,Action<float> action=null)
         {
-            var world=shop.World;var report=new AquariumClipReceipt{name=name};var frames=new List<AquariumFrame>();int index=0;
+            var world=shop.World;var report=new AquariumClipReceipt{name=name};var frames=new List<AquariumFrame>();int index=0;PondletMesh[] fishMeshes=null;
             Action<float> sample=age=>
             {
                 action?.Invoke(age);int count=AquariumParticles();report.peak=Mathf.Max(report.peak,count);
-                if(index++%5==0)report.meshSamples+=AquariumRenderedBounds();
+                int projectedClear=-1;
+                if(index++%5==0)
+                {
+                    report.meshSamples+=AquariumRenderedBounds();var fish=world.PondletVisualForValidation("tank-a");
+                    if(fish && count>0)
+                    {
+                        if(fishMeshes==null){var filters=fish.GetComponentsInChildren<MeshFilter>();fishMeshes=new PondletMesh[filters.Length];for(int m=0;m<filters.Length;m++)fishMeshes[m]=new PondletMesh{Root=filters[m].transform,Vertices=filters[m].sharedMesh.vertices};}
+                        projectedClear=AquariumProjectedClear(fishMeshes);report.projectionSamples++;if(projectedClear>0)report.exposedSamples++;report.maxExposed=Mathf.Max(report.maxExposed,projectedClear);
+                    }
+                }
                 frames.Add(new AquariumFrame{seconds=age,fishAge=world.PondletAgeForValidation("tank-a"),placementAge=world.AquariumPlacementAgeForValidation("tank-a"),
                     occupied=shop.Model.GetTank("tank-a").HasValue,reserved=shop.Model.GetReservation("tank-a").HasValue,trail=world.AquariumTrailActiveForValidation("tank-a"),particles=count,
-                    habitatBubbles=AquariumBubbles(),placementEmissions=world.AquariumPlacementEmissionCount,trailEmissions=world.AquariumTrailEmissionCount});
+                    habitatBubbles=AquariumBubbles(),placementEmissions=world.AquariumPlacementEmissionCount,trailEmissions=world.AquariumTrailEmissionCount,projectedClear=projectedClear});
             };
             if(Application.isEditor){float began=Time.realtimeSinceStartup;while(Time.realtimeSinceStartup-began<seconds){sample(Time.realtimeSinceStartup-began);yield return null;}}
             else yield return ReviewClip(name,seconds,sample);
             report.frames=frames.ToArray();File.WriteAllText(Path.Combine(evidence,name+"-motion.json"),JsonUtility.ToJson(report,true));
             Check(report.meshSamples>0 && report.peak<=(bubbleCount==1?8:16),"Actual bubbles/particles stay in animated water; planted fronds retain derived buried-base envelope / "+name);
             Check(shop.Model.GetTank("tank-a").HasValue==occupied && AquariumBubbles()==(reduced?0:bubbleCount),"Exact occupant and comfort habitat count / "+name);
+            if(occupied && !reduced)Check(report.exposedSamples>0,"Actual ordinary-camera particle carrier clears full fish mesh envelope in sampled frames; alpha/readability still requires media review / "+name);
             if(!occupied || reduced)Check(AquariumParticles()==0 && !world.AquariumTrailActiveForValidation("tank-a"),"No specimen wake in empty/reduced habitat / "+name);
+        }
+        int AquariumProjectedClear(PondletMesh[] fish)
+        {
+            var camera=shop.Player.View;Vector2 fishMin=Vector2.one*100,fishMax=Vector2.one*-100;
+            foreach(var mesh in fish)foreach(var vertex in mesh.Vertices)
+            {Vector2 point=camera.WorldToViewportPoint(mesh.Root.TransformPoint(vertex));fishMin=Vector2.Min(fishMin,point);fishMax=Vector2.Max(fishMax,point);}
+            int clear=0;var world=shop.World;var owner=world.AquariumOwnerForValidation("tank-a");
+            for(int i=0;i<AquariumParticles();i++)
+            {
+                var visual=world.FxPool.ParticleVisualForValidation(owner,i);Vector2 min=Vector2.one*100,max=Vector2.one*-100;
+                foreach(var vertex in visual.GetComponent<MeshFilter>().sharedMesh.vertices)
+                {Vector2 point=camera.WorldToViewportPoint(visual.TransformPoint(vertex));min=Vector2.Min(min,point);max=Vector2.Max(max,point);}
+                if(max.x<fishMin.x || min.x>fishMax.x || max.y<fishMin.y || min.y>fishMax.y)clear++;
+            }
+            return clear;
         }
         IEnumerator AquariumLifecycle(string specimen)
         {
