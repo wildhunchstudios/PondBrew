@@ -52,3 +52,6 @@
 
 # Preserve byte-hashed FX08 advanced lab evidence.
 /Docs/Evidence/fx-08/** -text -whitespace
+
+# Preserve byte-hashed FX09 incubation evidence.
+/Docs/Evidence/fx-09/** -text -whitespace
