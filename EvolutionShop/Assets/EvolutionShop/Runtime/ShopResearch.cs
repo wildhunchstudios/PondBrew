@@ -27,7 +27,7 @@ namespace EvolutionShop
                 foreach (var station in World.Stations)
                     if (station.Kind == StationKind.Upgrade && AtStockStation(station)) atBench = true;
             if (!atBench) { Notify("Use E at the lab research bench in person."); return false; }
-            var result = Perform(Model.BuySparkResearch());
+            var result = PerformAdvancedLab(Model.BuySparkResearch(), FxAdvancedLabEvent.SparkUnlocked);
             if (result.Success) Notify("Spark unlocked! Hold left mouse at this bench to collect. The journal has a new clue.", 6);
             return result.Success;
         }
@@ -37,7 +37,7 @@ namespace EvolutionShop
             if (Cycle.Phase != ShopDayPhase.Night)
             { Notify("Research Mist during preparation night. It keeps growing during active days."); return false; }
             if (!AtConditioner()) return false;
-            var result = Perform(Model.BuyMistResearch());
+            var result = PerformAdvancedLab(Model.BuyMistResearch(), FxAdvancedLabEvent.MistUnlocked, selectedConditioner);
             if (result.Success) Notify("Mist unlocked! Close this panel and hold left mouse at the vat. The journal has an Airfin clue.", 6);
             return result.Success;
         }

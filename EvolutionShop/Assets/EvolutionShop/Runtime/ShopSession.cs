@@ -214,6 +214,7 @@ namespace EvolutionShop
                 World.SetDayPhase(Cycle.Phase);
                 Notify(Cycle.Phase == ShopDayPhase.Night ? "Night preparation. Your unsold stock is safe. Prepare for day " + Cycle.DayNumber + "." : "Closing time. The next preparation night begins shortly.");
             }
+            World.CaptureConditionerStep(Model);
             var result = Model.Tick(seconds);
             Tutorial.Reconcile(Model);
             Customers.Tick(seconds);
@@ -243,11 +244,13 @@ namespace EvolutionShop
                 Notify("A new specimen is ready. Use an empty display or lab rack to store it.");
             }
             if (result.ConditionedCount > 0)
-            { sound.Feedback(true); Notify(result.ConditionedCount + " Lanternfin ready in the conditioning vat. Collect at a rack or display."); }
+            { Notify(result.ConditionedCount + " Lanternfin ready in the conditioning vat. Collect at a rack or display."); }
             bool labSaved = true;
             if (phaseChanged || result.Matured || result.ConditionedCount > 0) labSaved = SaveNow();
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
             ReconcileLabPresentation();
+            World.PresentConditionerStep(labSaved, result.ConditionedCount);
+            if (result.ConditionedCount > 0 && labSaved) sound.Feedback(true);
             if (result.Matured && result.SpeciesId == "pondlet") PresentLabHatch(result.FirstDiscovery, labSaved);
         }
         public bool OpenForDay()
@@ -389,8 +392,10 @@ namespace EvolutionShop
             if (result.Success)
             {
                 Tutorial.ObserveCollection(Model, kind, result, TutorialActionOrigin.Player);
-                World.PulseHarvest(kind); if (kind != CultureKind.Bloom && kind != CultureKind.Flow) sound.Collect(); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
-                PresentFxResult(result, SaveNow(), FxCueId.CollectedUnit, FxCueOrigin.Manual, kind);
+                World.PulseHarvest(kind); World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+                bool saved = SaveNow();
+                PresentFxResult(result, saved, FxCueId.CollectedUnit, FxCueOrigin.Manual, kind);
+                if (saved && FxAdvancedLabMotion.IsAdvanced(kind)) sound.Collect();
             }
             else Notify(FailureText(result.Failure));
         }
@@ -422,15 +427,21 @@ namespace EvolutionShop
             }
         }
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
-        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null)
+        ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null,
+            FxAdvancedLabEvent advancedEvent = FxAdvancedLabEvent.None, string advancedOwner = null)
         {
-            if (!result.Success || (fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
+            if (!result.Success || (advancedEvent == FxAdvancedLabEvent.None && fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
             if (result.Success)
             {
                 Notify("Done.", 1.3f);
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
-                PresentFxResult(result, SaveNow(), fxCue, fxOrigin, culture, destination);
+                bool saved = SaveNow();
+                PresentFxResult(result, saved, fxCue, fxOrigin, culture, destination);
+                if (advancedEvent != FxAdvancedLabEvent.None) {
+                    World.PresentAdvancedLabResult(advancedEvent, advancedOwner, result.Success, saved);
+                    if (saved) sound.Feedback(true);
+                }
             }
             else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin, culture); }
             return result;

@@ -44,7 +44,7 @@ namespace EvolutionShop
             if (!AtConditioner()) return false;
             var sources = new List<string>(conditioningInputs.Keys);
             var expected = new List<string>(); foreach (string source in sources) expected.Add(conditioningInputs[source]);
-            var result = Perform(Model.BeginConditioning(selectedConditioner, sources.ToArray(), expected.ToArray()));
+            var result = PerformAdvancedLab(Model.BeginConditioning(selectedConditioner, sources.ToArray(), expected.ToArray()), FxAdvancedLabEvent.ConditioningStarted, selectedConditioner);
             if (result.Success) { conditioningInputs.Clear(); Notify("Glow bath started. One Spark is reserved until completion; cancel to recover it and your Pondlets."); }
             return result.Success;
         }
@@ -52,7 +52,7 @@ namespace EvolutionShop
         public bool CancelSelectedConditioning()
         {
             if (!AtConditioner()) return false;
-            var result = Perform(Model.CancelConditioning(selectedConditioner));
+            var result = PerformAdvancedLab(Model.CancelConditioning(selectedConditioner), FxAdvancedLabEvent.ConditioningCancelled, selectedConditioner);
             if (result.Success) Notify("Batch canceled. Spark refunded; collect the unchanged Pondlets at a rack or display.");
             return result.Success;
         }
@@ -60,7 +60,7 @@ namespace EvolutionShop
         public bool StoreConditionerInRack(string conditionerId, int slot, string storageId, string expectedId)
         {
             if (!AtRackSlot(storageId)) return false;
-            var result = Perform(Model.TransferConditionerToStorage(conditionerId, slot, storageId, expectedId));
+            var result = PerformAdvancedLab(Model.TransferConditionerToStorage(conditionerId, slot, storageId, expectedId), FxAdvancedLabEvent.ConditioningOutput, conditionerId);
             if (result.Success) Notify("Vat output moved safely into this rack.");
             return result.Success;
         }
@@ -74,7 +74,7 @@ namespace EvolutionShop
                 Reports.RecordRestock();
                 Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player);
             }
-            Perform(result);
+            PerformAdvancedLab(result, FxAdvancedLabEvent.ConditioningOutput, conditionerId);
             if (result.Success) Notify("Vat output stocked in this display. It is available to customers.");
             return result.Success;
         }

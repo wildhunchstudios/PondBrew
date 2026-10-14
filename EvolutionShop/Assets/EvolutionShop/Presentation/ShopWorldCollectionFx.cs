@@ -16,7 +16,8 @@ namespace EvolutionShop
         public bool CollectionActive => harvesting && labHarvestSource && labHarvestSource.gameObject.activeInHierarchy &&
             toolBody && toolBody.gameObject.activeInHierarchy && fxEnabled && isActiveAndEnabled &&
             fxPolicy == FxViewPolicy.Visible && !collectionSaveBlocked && lastModel != null &&
-            (harvestingCulture == CultureKind.Bloom || harvestingCulture == CultureKind.Flow) &&
+            (harvestingCulture == CultureKind.Bloom || harvestingCulture == CultureKind.Flow ||
+                (FxAdvancedLabMotion.IsAdvanced(harvestingCulture) && AdvancedSourceRoot(harvestingCulture) == labHarvestSource)) &&
             lastModel.ReservedCultureCount < lastModel.Capacity && lastModel.GetGrower(harvestingCulture).Units > 0 &&
             fxCues != null && fxCues.IsValid(collectionOwner);
 
@@ -43,6 +44,7 @@ namespace EvolutionShop
             collectionResponseRemaining = FxCollectionMotion.ResponseDuration;
             CollectionAcceptedCount++;
             AcceptGrowerCollection(culture);
+            AcceptAdvancedCollection(culture, false);
             if (!ToolChamber || fxPool == null) return;
             int count = fxReducedMotion ? 1 : fxPool.ActionLimit < 64 ? 2 : 4;
             for (int i = 0; i < count; i++)
@@ -50,6 +52,7 @@ namespace EvolutionShop
                 float phase = i * 2.399f + (sequence % 17) * .37f;
                 var local = new Vector3(Mathf.Cos(phase)*.046f, -.064f + i*.018f, Mathf.Sin(phase)*.046f);
                 var request = FxParticleRequest.Create(FxParticleShape.Bubble,
+                    FxAdvancedLabMotion.IsAdvanced(culture) ? FxAdvancedLabMotion.CultureColor(culture) :
                     culture == CultureKind.Flow ? new Color(.44f,.9f,1,.9f) : new Color(1,.64f,.74f,.9f));
                 request.Motion = FxParticleMotion.Curve; request.Lifetime = .26f+i*.025f;
                 request.Size = .044f + (i%2)*.014f; request.EndSize = .018f;
@@ -66,15 +69,20 @@ namespace EvolutionShop
             if (!pathClear) { CancelCollectionIntake(); return; }
             collectionClock -= dt;
             if (collectionClock > 0 || fxPool == null) return;
-            FxCollectionMotion.Sample(++collectionSequence, harvestingCulture, fxPool.ActionLimit < 64,
-                fxReducedMotion, out collectionClock, out var local, out var request);
+            Vector3 local; FxParticleRequest request;
+            if (FxAdvancedLabMotion.IsAdvanced(harvestingCulture))
+                FxAdvancedLabMotion.SampleIntake(harvestingCulture, ++collectionSequence, fxPool.ActionLimit < 64,
+                    fxReducedMotion, out collectionClock, out local, out request);
+            else FxCollectionMotion.Sample(++collectionSequence, harvestingCulture, fxPool.ActionLimit < 64,
+                fxReducedMotion, out collectionClock, out local, out request);
             // At most one emission after a slow frame; never catch up into a straight bead row.
             if (fxPool.EmitParticle(fxCues, collectionOwner, labHarvestSource, local, request, true, toolBody))
                 CollectionEmissionCount++;
         }
+        Vector3 CollectionSourceLocal => FxAdvancedLabMotion.IsAdvanced(harvestingCulture) ? FxAdvancedLabMotion.SourcePoint(harvestingCulture) : FxCollectionMotion.OutletLocal;
         bool CollectionPathClear()
         {
-            var start = labHarvestSource.TransformPoint(FxCollectionMotion.OutletLocal);
+            var start = labHarvestSource.TransformPoint(CollectionSourceLocal);
             var end = toolBody.TransformPoint(FxCollectionMotion.MouthLocal);
             var direction = end - start;
             // The focus ray owns gameplay reach. This narrower local presentation check prevents
@@ -96,7 +104,7 @@ namespace EvolutionShop
             !(ToolRoot && ToolRoot.IsChildOf(hit));
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public FxOwnerToken CollectionOwnerForValidation => collectionOwner;
-        public Vector3 CollectionSourceForValidation => labHarvestSource ? labHarvestSource.TransformPoint(FxCollectionMotion.OutletLocal) : Vector3.zero;
+        public Vector3 CollectionSourceForValidation => labHarvestSource ? labHarvestSource.TransformPoint(CollectionSourceLocal) : Vector3.zero;
         public Vector3 CollectionMouthForValidation => toolBody ? toolBody.TransformPoint(FxCollectionMotion.MouthLocal) : Vector3.zero;
         public int CollectionParticleCountForValidation => fxPool == null ? 0 : fxPool.ParticleCountForValidation(collectionOwner);
 #endif

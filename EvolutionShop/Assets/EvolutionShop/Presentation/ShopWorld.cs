@@ -40,7 +40,7 @@ namespace EvolutionShop
         Transform bloomRoot, flowRoot, incubationRing, toolNozzle, toolBody, toolUpgradeBand;
         TextMesh toolReadout;
         bool upgraded, harvesting;
-        float emissionClock, lastTime, harvestKick;
+        float lastTime, harvestKick;
         int bloomCount, flowCount;
         GameModel lastModel;
 
@@ -570,7 +570,7 @@ namespace EvolutionShop
         public void Refresh(GameModel model)
         {
             // Reload adopts a different authority snapshot; its restored units are not new refill events.
-            if (!ReferenceEquals(lastModel, model)) AdoptGrowerModel();
+            if (!ReferenceEquals(lastModel, model)) { AdoptGrowerModel(); ResetAdvancedLabFx(); }
             lastModel = model;
             bloomCount = model.Available(CultureKind.Bloom);
             flowCount = model.Available(CultureKind.Flow);
@@ -674,12 +674,12 @@ namespace EvolutionShop
                 for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root) {
                     particles[i].Root.gameObject.SetActive(false); Destroy(particles[i].Root.gameObject);
                 }
-                particles.Clear(); emissionClock = 0; harvestKick = 0;
+                particles.Clear(); harvestKick = 0;
             }
             harvesting = next;
             if (next) harvestingCulture = culture;
             labHarvestSource = next && station ? station.transform : null;
-            if (next && (harvestingCulture == CultureKind.Bloom || harvestingCulture == CultureKind.Flow) &&
+            if (next &&
                 (!previous || changedSource || !fxCues.IsValid(collectionOwner))) BeginCollectionIntake(labHarvestSource);
             if (previous && !next) handReleaseCurl = releasedCurl;
             HandCollectEdge(next, previous);
@@ -688,23 +688,7 @@ namespace EvolutionShop
         public void PulseHarvest(CultureKind kind)
         {
             harvestKick = 1;
-            if (kind == CultureKind.Bloom || kind == CultureKind.Flow) return;
-            SpawnParticle(kind);
-            SpawnParticle(kind);
-        }
-
-        void SpawnParticle(CultureKind kind)
-        {
-            if (!ToolChamber) return;
-            var source = kind == CultureKind.Bloom ? bloomRoot : kind == CultureKind.Flow ? flowRoot :
-                kind == CultureKind.Spark && lastModel != null && lastModel.SparkResearchUnlocked ? upgradeRoot :
-                kind == CultureKind.Mist && lastModel != null && lastModel.MistResearchUnlocked && lastModel.ConditionerIds.Length > 0 &&
-                TryGetConditioner(lastModel.ConditionerIds[0], out var vatRoot) ? vatRoot : null;
-            if (!source) return;
-            var p = CultureOrganism(transform, kind, .095f);
-            Vector3 from = source.TransformPoint(kind == CultureKind.Spark ? new Vector3(0, 1.5f, -.27f) : kind == CultureKind.Mist ? new Vector3(0, .85f, -.53f) : new Vector3(.36f, 1.0f, -.76f));
-            p.position = from;
-            particles.Add(new Particle { Root = p, Start = from, Seed = particles.Count * 1.73f });
+            // All four intake recipes now use the fixed pool; the saved result owns unit accents.
         }
 
         public void Animate(float time, float dt)
@@ -715,9 +699,7 @@ namespace EvolutionShop
             // Font rebuild callbacks handle atlas swaps even while the game is paused.
             // This also keeps the material current across renderer/device refreshes.
             foreach (var font in fontMaterials.Keys) FontAtlasRebuilt(font);
-            // Bloom/Flow have one pose writer in TickLabFx.
-            AnimateSparkCells(time);
-            AnimateConditioners(time);
+            // Culture cells each have one pose writer in their bounded presentation tick.
             // The accepted opaque hatchery frame remains fixed; use visible fluid/needle instead.
             for (int i = 0; i < reservoirCells.Count; i++)
             {
@@ -740,15 +722,6 @@ namespace EvolutionShop
                 display.Creature.Animate(time + display.Seed);
             }
             TickAquariumHabitat(dt);
-            if (harvesting && harvestingCulture != CultureKind.Bloom && harvestingCulture != CultureKind.Flow)
-            {
-                emissionClock -= dt;
-                if (emissionClock <= 0)
-                {
-                    emissionClock = .12f;
-                    SpawnParticle(harvestingCulture);
-                }
-            }
             for (int i = particles.Count - 1; i >= 0; i--)
             {
                 var p = particles[i];
@@ -765,6 +738,7 @@ namespace EvolutionShop
             // Resolve moving destination poses before ticking their attached pooled trajectories.
             TickFxPresentation(dt);
             TickLabFx(time, dt);
+            TickAdvancedLabFx(time, dt);
         }
 
         static void AnimateCells(List<Transform> cells, float time, float seed)

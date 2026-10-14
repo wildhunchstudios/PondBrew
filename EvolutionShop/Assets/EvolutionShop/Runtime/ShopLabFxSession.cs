@@ -9,6 +9,7 @@ namespace EvolutionShop
         {
             if (!World || Model == null || Config == null) return;
             World.ConfigureLabTiming(Config.IncubationSeconds, Config.GrowerRefillSeconds);
+            World.ConfigureAdvancedLabTiming(Config.ConditioningSeconds);
             bool blocked = labModuleRuntimeBlocked || AutomationBlockedBySave || AutosaveBlocked || Automation.Paused || Paused || PlacementActive ||
                 Model.ReservedCultureCount >= Model.Capacity || Model.Incubator.Phase != IncubatorPhase.Dosing || Model.IsIncubatorReservedForTechnician;
             var state = !Automation.CollectorOwned ? LabModuleVisualState.Absent : !Automation.CollectorEnabled ? LabModuleVisualState.Off :
@@ -26,6 +27,7 @@ namespace EvolutionShop
             if (step.Kind != AutomationStepKind.Collect && step.Kind != AutomationStepKind.Dose) return;
             // FX-03 collector hero only; the doser retains its existing state/feedback.
             if (step.Kind != AutomationStepKind.Collect) return;
+            World.PresentAdvancedModuleCollection(step.Culture);
             if (World.TryFxCue(FxCueId.ModuleCollected, NextFxSequence(), FxCueOrigin.Module, step.Culture)) sound.LabModule();
         }
     }

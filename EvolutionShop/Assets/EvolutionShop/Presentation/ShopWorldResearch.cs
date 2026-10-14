@@ -51,7 +51,8 @@ namespace EvolutionShop
                 "RESEARCH READY / E" : "DISCOVER 3 SPECIES";
             if (!unlocked) return;
             var grower = model.GetGrower(CultureKind.Spark);
-            sparkStatus.text = "SPARK " + grower.Units + " / " + grower.Capacity;
+            sparkStatus.text = "SPARK " + grower.Units + "/" + grower.Capacity +
+                (grower.Units <= 0 ? " / REFILL" : grower.Units >= grower.Capacity ? " / FULL" : " / REFILL");
             for (int i = 0; i < sparkCells.Count; i++) sparkCells[i].gameObject.SetActive(i < grower.Units);
         }
 
@@ -59,10 +60,10 @@ namespace EvolutionShop
         {
             for (int i = 0; i < sparkCells.Count; i++)
             {
-                float angle = i * 2.399f + time * .42f;
-                sparkCells[i].localPosition = new Vector3(Mathf.Cos(angle) * .13f,
-                    1.27f + i % 3 * .20f + Mathf.Sin(time * 1.7f + i) * .024f, Mathf.Sin(angle) * .13f);
-                sparkCells[i].localRotation = Quaternion.Euler(time * 16 + i * 33, time * 30 + i * 41, Mathf.Sin(time + i) * 18);
+                bool quiet = fxReducedMotion || !AdvancedVisible;
+                sparkCells[i].localPosition = FxAdvancedLabMotion.SourceCell(CultureKind.Spark, i, time, quiet);
+                sparkCells[i].localRotation = Quaternion.Euler(quiet ? 0 : Mathf.Sin(time + i * 2.399f) * 12,
+                    i * 41 + (quiet ? 0 : time * 14), quiet ? 0 : Mathf.Cos(time * .7f + i) * 9);
             }
         }
 

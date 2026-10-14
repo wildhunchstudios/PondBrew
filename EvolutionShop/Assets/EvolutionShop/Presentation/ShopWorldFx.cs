@@ -70,6 +70,7 @@ namespace EvolutionShop
                 fxCues.SetState(owner, state);
             }
             ReconcileGrowthFx();
+            ReconcileAdvancedLabFx();
         }
         void ReconcileFxGrower(string key, Transform root, int units, int capacity)
         { var owner = BindFxOwner(key, null, root); fxCues.SetState(owner, units == 0 ? FxSteadyState.Empty : units >= capacity ? FxSteadyState.Full : FxSteadyState.Refilling); }
@@ -88,7 +89,7 @@ namespace EvolutionShop
             int priority = id == FxCueId.HandRefused ? 5 : 4;
             float duration = id == FxCueId.HandRefused ? .18f : .28f;
             if (!fxCues.Play(token, id, sequence, origin, duration, priority)) return false;
-            if (id == FxCueId.CollectedUnit && (culture == CultureKind.Bloom || culture == CultureKind.Flow)) {
+            if (id == FxCueId.CollectedUnit) {
                 AcceptCollectionUnit(token, sequence, culture); AcceptHandPose(id, duration); return true;
             }
             if (id == FxCueId.HandRefused) { fxPool?.Cancel(token); if (fxPolicy == FxViewPolicy.Modal) ShowLabRefusal(culture); }
@@ -113,11 +114,11 @@ namespace EvolutionShop
         }
         public void CancelFxTransient()
         {
-            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient();
+            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)
             { particles[i].Root.gameObject.SetActive(false); Destroy(particles[i].Root.gameObject); }
-            particles.Clear(); harvesting = false; emissionClock = 0; harvestKick = 0;
+            particles.Clear(); harvesting = false; harvestKick = 0;
             if (toolNozzle) toolNozzle.localRotation = Quaternion.identity;
         }
         public void SetFxViewPolicy(FxViewPolicy value)

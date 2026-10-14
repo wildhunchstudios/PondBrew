@@ -14,11 +14,15 @@ namespace EvolutionShop
             public TextMesh MistStatus;
             public readonly List<Transform> MistCells = new List<Transform>();
             public bool Processing;
+            public readonly ConditioningFx Fx = new ConditioningFx();
         }
 
         sealed class ConditioningResident
         {
             public Display Display;
+            public MeshRenderer WaterRenderer;
+            public MaterialPropertyBlock WaterProperties;
+            public Color WaterColor;
             public TextMesh Status;
             public readonly HashSet<Material> Materials = new HashSet<Material>();
         }
@@ -67,6 +71,7 @@ namespace EvolutionShop
                 vat = new ConditionerVisual { Root = root, Paddle = paddle,
                     Status = Text(root, "0 / 2  /  EMPTY", new Vector3(0, .53f, -.519f), .047f, new Color(1f, .88f, .53f), 1.76f) };
                 Text(root, "E / LOAD, CONDITION, COLLECT", new Vector3(0, .20f, -.519f), .033f, cream.color, 1.76f);
+                vat.Fx.Key = "conditioning-fx:" + itemId;
                 conditioners.Add(itemId, vat);
                 TablePart(root, "Mist culture plaque", new Vector3(0, 1.04f, -.51f), new Vector3(1.48f, .18f, .05f), dark, false);
                 vat.MistStatus = Text(root, "MIST RESEARCH", new Vector3(0, 1.04f, -.538f), .038f, new Color(.70f, 1f, .96f), 1.39f);
@@ -93,7 +98,9 @@ namespace EvolutionShop
                     Interior = new Bounds(Vector3.zero, new Vector3(.82f, .72f, .82f)) };
                 // These internal visual keys are not tank/storage IDs and register no customer inventory.
                 displays[itemId + "-conditioning-visual-" + i] = display;
-                vat.Residents[i] = new ConditioningResident { Display = display,
+                var waterRenderer = chamber.Find("Conditioning water").GetComponent<MeshRenderer>();
+                vat.Residents[i] = new ConditioningResident { Display = display, WaterRenderer = waterRenderer,
+                    WaterProperties = new MaterialPropertyBlock(), WaterColor = waterRenderer.sharedMaterial.GetColor(DoseFluidColor),
                     Status = Text(chamber, (i + 1) + " / EMPTY", new Vector3(0, -.43f, -.493f), .030f, dark.color, .80f) };
             }
         }
@@ -117,8 +124,9 @@ namespace EvolutionShop
                 var view = model.GetConditioner(pair.Key);
                 vat.Processing = view.HasValue && view.Value.Phase == ConditionerPhase.Processing;
                 var mist = model.GetGrower(CultureKind.Mist);
-                vat.MistStatus.text = model.MistResearchUnlocked ? "MIST " + mist.Units + " / " + mist.Capacity : "MIST RESEARCH / E";
-                for (int i = 0; i < vat.MistCells.Count; i++) vat.MistCells[i].gameObject.SetActive(model.MistResearchUnlocked && i < mist.Units);
+                vat.MistStatus.text = !view.HasValue ? "SUPPLY UNAVAILABLE" : model.MistResearchUnlocked ? "MIST " + mist.Units + "/" + mist.Capacity +
+                    (mist.Units <= 0 ? " / REFILL" : mist.Units >= mist.Capacity ? " / FULL" : " / REFILL") : "MIST RESEARCH / E";
+                for (int i = 0; i < vat.MistCells.Count; i++) vat.MistCells[i].gameObject.SetActive(view.HasValue && model.MistResearchUnlocked && i < mist.Units);
                 int count = view.HasValue ? view.Value.Count : 0;
                 vat.Status.text = count + " / 2  /  " + (vat.Processing ? Mathf.CeilToInt(view.Value.SecondsRemaining) + "s REMAINING" :
                     view.HasValue && view.Value.Phase == ConditionerPhase.Ready ? "READY / COLLECT" : "EMPTY / ADD PONDLETS");
@@ -148,9 +156,10 @@ namespace EvolutionShop
         {
             foreach (var vat in conditioners.Values)
             {
-                if (vat.Paddle) vat.Paddle.localRotation = Quaternion.Euler(0, 0, vat.Processing ? time * 65f : 45f);
-                for (int i = 0; i < vat.MistCells.Count; i++)
-                    vat.MistCells[i].localPosition = new Vector3((i - 2.5f) * .23f, .85f + Mathf.Sin(time * 2f + i) * .025f, -.53f);
+                for (int i = 0; i < vat.MistCells.Count; i++) {
+                    vat.MistCells[i].localPosition = FxAdvancedLabMotion.SourceCell(CultureKind.Mist, i, time, fxReducedMotion || !AdvancedVisible);
+                    vat.MistCells[i].localRotation = Quaternion.Euler(0, 0, fxReducedMotion || !AdvancedVisible ? 0 : Mathf.Sin(time * .8f + i * 2.399f) * 8);
+                }
             }
         }
 
@@ -158,6 +167,8 @@ namespace EvolutionShop
         {
             var owned = root.GetComponent<PlacedWorkTable>();
             if (!owned || !conditioners.TryGetValue(owned.Id, out var vat) || vat.Root != root) return;
+            RetireConditionerFx(vat);
+            if (advancedSources[1].Root == vat.Root) RetireAdvancedSource(1);
             foreach (var resident in vat.Residents) ReleaseConditioningResident(resident);
             conditioners.Remove(owned.Id);
         }
