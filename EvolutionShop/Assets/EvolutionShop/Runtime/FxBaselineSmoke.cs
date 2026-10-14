@@ -104,6 +104,7 @@ namespace EvolutionShop
             yield return EnterCounter(); Check(shop.OpenForDay(), "Busy fixture opens through counter");
             Spawn(CustomerArchetypes.Casual); Spawn(CustomerArchetypes.Collector);
             yield return FxViews("busy", "day");
+            if (ShopSession.Arg("-evolutionFxIntegratedProfile") != null) yield return FxIntegratedHeroes();
         }
         IEnumerator FxPlace(string definition, int x, int z, Vector3 player)
         {
@@ -124,6 +125,7 @@ namespace EvolutionShop
         }
         IEnumerator FxViews(string fixture, string phase)
         {
+            if (ShopSession.Arg("-evolutionFxIntegratedProfile") != null) { yield return FxIntegratedViews(fixture, phase); yield break; }
             int width = int.TryParse(ShopSession.Arg("-screen-width"), out int w) ? w : Screen.width;
             int height = int.TryParse(ShopSession.Arg("-screen-height"), out int h) ? h : Screen.height;
             // Restoring a different resolution forces a real swapchain even after hidden startup.

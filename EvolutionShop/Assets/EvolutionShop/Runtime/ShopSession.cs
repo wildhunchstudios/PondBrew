@@ -187,6 +187,9 @@ namespace EvolutionShop
             }
             FindFocus();
             World.SetAquariumFocus(Panel == ShopPanel.None ? Focused : null);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (ValidationMode && FreezeFxVocabularyForValidation && FxIntegratedProfileForValidation) return;
+#endif
             bool held = Panel == ShopPanel.None && Mouse.current != null && Mouse.current.leftButton.isPressed;
             bool grower = TryStationCulture(Focused, out var culture);
             if (held && grower)

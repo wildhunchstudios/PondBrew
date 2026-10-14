@@ -43,6 +43,32 @@ namespace EvolutionShop
         ContinuousMetrics cycleMetrics;
         float cycleStarted;
 
+        [Serializable] sealed class CycleFxRecord
+        {
+            public string stage, specimen, authority;
+            public int hatches, placements, accepted, active, owned, meshes, materials, voices;
+        }
+        [Serializable] sealed class CycleFxRecords
+        {
+            public System.Collections.Generic.List<CycleFxRecord> checkpoints = new System.Collections.Generic.List<CycleFxRecord>();
+        }
+        CycleFxRecords cycleFx;
+        string cycleLastSpecimen;
+
+        void CycleFxCheckpoint(string stage)
+        {
+            var world = shop.World; var pool = world.FxPool;
+            Check(pool.OwnedCount == 96 && pool.OwnedMeshCount == 5 && pool.OwnedMaterialCount == 1 &&
+                pool.Root.GetComponentsInChildren<Renderer>(true).Length == 96 &&
+                pool.Root.GetComponentsInChildren<Collider>(true).Length == 0 && shop.GetComponents<AudioSource>().Length == 3,
+                "Repeated real batches retain fixed FX ownership / " + stage);
+            cycleFx.checkpoints.Add(new CycleFxRecord { stage = stage, specimen = shop.Model.Incubator.SpecimenId,
+                authority = FxAuthority(), hatches = world.LabHatchCount, placements = world.PondletPlacementCount,
+                accepted = world.FxCues.AcceptedCount, active = pool.ActiveCount, owned = pool.OwnedCount,
+                meshes = pool.OwnedMeshCount, materials = pool.OwnedMaterialCount, voices = shop.GetComponent<ShopAudio>().ActiveVoiceCount });
+            File.WriteAllText(Path.Combine(evidence, "cycle-fx-checkpoints.json"), JsonUtility.ToJson(cycleFx, true));
+        }
+
         // Root's shared smoke runner calls this on both success and failure, with RestoreInput.
         void RestoreCycleMouse()
         {
@@ -54,8 +80,10 @@ namespace EvolutionShop
         {
             cycleStarted = Time.realtimeSinceStartup;
             cycleMetrics = new ContinuousMetrics();
+            cycleFx = new CycleFxRecords(); cycleLastSpecimen = null;
             limitations.Add("Continuous route uses synthetic keyboard/held mouse input and scripted camera aim. Recipe, open, serve, close, save and reload use application commands; native GUI clicks are a separate probe.");
             limitations.Add("Both trading days close early after the specified transactions. Natural production/customer timing here does not establish eight-minute-shift balance, human enjoyment, workload or audio approval.");
+            limitations.Add("R07 uses guarded manual dose/start commands and observes actual FX across three natural batches. Tutorial is explicitly skipped only in this isolated regression. The final save-obstruction/reset probe restores the completed paid checkpoint; it is a labeled lifecycle fixture, not additional progression. FX ownership snapshots are not whole-game memory or performance measurements.");
             Check(shop.ValidationMode && ShopSession.Arg("-evolutionCycleSmoke") != null,
                 "Continuous route requires isolated evolutionSmoke and evolutionCycleSmoke flags");
             Check(Path.GetFullPath(shop.SavePath) == Path.GetFullPath(Path.Combine(evidence, "smoke-save.json")),
@@ -67,6 +95,8 @@ namespace EvolutionShop
                 Mathf.Approximately(shop.Model.CollectionSecondsPerUnit, 0.6f),
                 "Continuous route uses ordinary ten-second incubation and 0.6-second harvesting");
             Check(shop.ScriptedHarvest == null, "Continuous harvesting starts without a scripted harvest override");
+            Check(shop.SkipTutorial(), "Explicit isolated regression skip exits tutorial Welcome without seeding economy");
+            CycleFxCheckpoint("fresh-skipped");
             previousInputSettings = InputSystem.settings;
             smokeInputSettings = Instantiate(previousInputSettings);
             smokeInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
@@ -131,6 +161,7 @@ namespace EvolutionShop
                 "Continuous day-one report reconciles two sales, twelve income, one restock and one carried specimen");
             yield return Capture("43-cycle-day-one-report");
             Check(shop.SaveNow(), "Save the first completed continuous day");
+            int hatchesBeforeReload = shop.World.LabHatchCount, placementsBeforeReload = shop.World.PondletPlacementCount;
             File.Copy(shop.SavePath, Path.Combine(evidence, "cycle-night-two.json"), true);
             yield return CycleTap(Key.Escape);
             Check(shop.Panel == ShopPanel.None, "Real Escape dismisses the completed day-one report");
@@ -138,6 +169,10 @@ namespace EvolutionShop
                 shop.Model.Currency == 12 && shop.Model.GetTank("tank-a").Value.Id == carried &&
                 shop.Reports.Last.sales == 2 && shop.Reports.Last.revenue == 12,
                 "Next preparation night reload retains the earned money, report and exact carried specimen");
+            Check(shop.World.LabHatchCount == hatchesBeforeReload && shop.World.PondletPlacementCount == placementsBeforeReload &&
+                shop.World.LabHatchRemaining == 0 && shop.World.LabDoseRemaining == 0,
+                "Paid-night reload reconstructs saved stock without replaying hatch, dose or placement");
+            CycleFxCheckpoint("paid-night-reloaded");
             CycleStage("Preparation night 2: retain existing stock and open a second day");
             yield return CycleCounter();
             Check(shop.OpenForDay() && !shop.OpenForDay() && shop.Reports.Current.stockedAtOpen == 1,
@@ -191,6 +226,7 @@ namespace EvolutionShop
                 cycleMetrics.doorwayCrossings >= 6 && cycleMetrics.walkingMetres > 30f,
                 "Continuous route includes three naturally timed productions, three E transfers and repeated real doorway walks");
             Check(shop.ScriptedHarvest == null, "Continuous route finished without a scripted harvest override");
+            yield return CycleFxFinalLifecycle();
             cycleMetrics.completed = true;
             CycleStage("Completed two continuous technical cycles; human pacing acceptance remains separate");
             shop.Customers.ArrivalsEnabled = false;
@@ -203,18 +239,77 @@ namespace EvolutionShop
             yield return CycleGoStation(StationKind.Incubator);
             yield return CycleTap(Key.E);
             Check(shop.Panel == ShopPanel.Incubator, "Real E opens the incubator after physically collecting both cultures");
-            Ok(shop.Perform(shop.Model.Dose(CultureKind.Bloom)), "Incubator command doses one collected Bloom");
-            Ok(shop.Perform(shop.Model.Dose(CultureKind.Flow)), "Incubator command doses one collected Flow");
+            var world = shop.World;
+            int accepted = world.FxCues.AcceptedCount, hatches = world.LabHatchCount;
+            bool first = !shop.Model.IsDiscovered("pondlet");
+            Check(shop.DoseCulture(CultureKind.Bloom) && shop.SaveError == null &&
+                world.LabDoseRemaining > 0 && world.LabDoseCulture == CultureKind.Bloom &&
+                world.FxCues.AcceptedCount == accepted + 1,
+                "Guarded saved Bloom dose presents exactly one accepted manual cue");
+            Check(shop.DoseCulture(CultureKind.Flow) && shop.SaveError == null &&
+                world.LabDoseRemaining > 0 && world.LabDoseCulture == CultureKind.Flow &&
+                world.LabDoseMixture.Total == 2 && world.FxCues.AcceptedCount == accepted + 2 &&
+                shop.Model.Available(CultureKind.Bloom) == 0 && shop.Model.Available(CultureKind.Flow) == 0 &&
+                shop.Model.Staged(CultureKind.Bloom) == 1 && shop.Model.Staged(CultureKind.Flow) == 1,
+                "Guarded saved Flow dose presents the actual conserved two-culture mixture");
             float began = Time.realtimeSinceStartup;
-            Ok(shop.Perform(shop.Model.BeginIncubation()), "Incubator command starts ordinary Pondlet production");
-            yield return CycleTap(Key.Escape);
+            Check(shop.BeginManualIncubation() && shop.SaveError == null && shop.Panel == ShopPanel.None && !shop.Paused,
+                "Guarded manual start commits and closes its own panel without an extra Escape");
+            string specimen = shop.Model.Incubator.SpecimenId;
+            Check(!string.IsNullOrEmpty(specimen) && specimen != cycleLastSpecimen,
+                "Each real repeated batch creates a distinct specimen identity");
             yield return CycleUntil(() => shop.Model.Incubator.Phase == IncubatorPhase.Ready, 16f, "natural incubation", false);
             float elapsed = Time.realtimeSinceStartup - began;
             cycleMetrics.incubationWaitSeconds += elapsed;
             Check(elapsed >= 9.5f && shop.Model.Incubator.SpeciesId == "pondlet",
                 "Pondlet matures after ordinary simulation time without an accelerated model delta");
+            Check(shop.Model.Incubator.SpecimenId == specimen && world.LabHatchCount == hatches + 1 &&
+                world.LabHatchRemaining > 0 && world.LabHatchFirst == first && shop.Model.IsDiscovered("pondlet"),
+                "Actual ready transition emits one correctly classified first/repeat hatch for the same specimen");
+            cycleLastSpecimen = specimen;
+            CycleFxCheckpoint("natural-hatch-" + (cycleMetrics.naturalProductions + 1));
             cycleMetrics.naturalProductions++;
             CycleStage("Naturally produced Pondlet " + cycleMetrics.naturalProductions);
+        }
+
+        IEnumerator CycleFxFinalLifecycle()
+        {
+            shop.Customers.ArrivalsEnabled = false;
+            shop.SetPanel(ShopPanel.Pause);
+            Check(shop.SaveNow(), "Save completed real progression before isolated lifecycle probe");
+            byte[] durable = File.ReadAllBytes(shop.SavePath);
+            string authority = FxAuthority(); var model = shop.Model;
+            int hatches = shop.World.LabHatchCount, placements = shop.World.PondletPlacementCount;
+            Check(shop.World.FxPool.ActiveCount == 0 && shop.World.FxCues.ActiveCount == 0 &&
+                shop.World.LabHatchRemaining == 0 && shop.World.LabDoseRemaining == 0,
+                "Pause after repeated batches retires all transient presentation");
+            TutorialBlockSave();
+            try
+            {
+                shop.ConfirmNewGame();
+                Check(ReferenceEquals(shop.Model, model) && shop.SaveError != null && FxAuthority() == authority &&
+                    Convert.ToBase64String(File.ReadAllBytes(shop.SavePath)) == Convert.ToBase64String(durable) &&
+                    shop.World.LabHatchCount == hatches && shop.World.PondletPlacementCount == placements,
+                    "Failed real reset preserves earned authority, durable bytes and presentation counts");
+            }
+            finally { TutorialUnblockSave(); }
+            Check(shop.SaveNow(), "Saving recovers after isolated reset obstruction");
+            var oldOwner = shop.World.FxCues.Find("tank-a");
+            shop.ConfirmNewGame();
+            Check(shop.Model.Currency == 0 && shop.DisplayedStockCount() == 0 &&
+                !shop.World.FxCues.IsValid(oldOwner) && shop.World.FxPool.ActiveCount == 0 &&
+                shop.World.LabHatchRemaining == 0 && shop.World.LabDoseRemaining == 0,
+                "Successful real reset retires the previous specimen owner and transients");
+            CycleFxCheckpoint("explicit-reset-fixture");
+            File.WriteAllBytes(shop.SavePath, durable);
+            Check(shop.ReloadSaved() && shop.Model.Currency == 12 && shop.Cycle.DayNumber == 3 &&
+                shop.Model.GetTank("tank-a").Value.Id == cycleLastSpecimen && !shop.Model.GetTank("tank-b").HasValue &&
+                shop.World.LabHatchCount == hatches && shop.World.PondletPlacementCount == placements &&
+                shop.World.LabHatchRemaining == 0 && shop.World.LabDoseRemaining == 0,
+                "Labeled lifecycle restore returns exact paid progression without replaying presentation");
+            shop.SetPanel(ShopPanel.Pause);
+            yield return null;
+            CycleFxCheckpoint("paid-progress-restored");
         }
 
         IEnumerator CycleHarvest(CultureKind kind)
@@ -245,11 +340,15 @@ namespace EvolutionShop
             Check(shop.Model.Incubator.Phase == IncubatorPhase.Ready && !shop.Model.GetTank(tank).HasValue,
                 "Naturally grown output and an empty display are available for transfer");
             yield return CycleGoStation(station);
+            int placements = shop.World.PondletPlacementCount;
             yield return CycleTap(Key.E);
             Check(shop.Model.GetTank(tank).HasValue && shop.Model.GetTank(tank).Value.Id == specimen &&
                 shop.Model.Incubator.Phase != IncubatorPhase.Ready,
                 "Real E transfers the exact naturally grown specimen to " + tank);
+            if (tank == "tank-a") Check(shop.World.PondletPlacementCount == placements + 1,
+                "Actual tank-a transfer presents one saved placement response across repeated batches");
             cycleMetrics.inputDisplayTransfers++;
+            CycleFxCheckpoint("saved-transfer-" + cycleMetrics.inputDisplayTransfers);
             CycleStage("Physically stocked " + tank);
         }
 
