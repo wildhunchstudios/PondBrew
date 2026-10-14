@@ -129,7 +129,8 @@ namespace EvolutionShop
                 }
             }
             m.Root.position = position;
-            m.Root.rotation = (viewCamera ? viewCamera.transform.rotation : m.Source.rotation) * Quaternion.AngleAxis(p.Spin * m.Age, Vector3.forward);
+            m.Root.rotation = (p.SurfaceAligned ? m.Source.rotation * Quaternion.Euler(90,0,0) :
+                viewCamera ? viewCamera.transform.rotation : m.Source.rotation) * Quaternion.AngleAxis(p.Spin * m.Age, Vector3.forward);
             m.Root.localScale = Vector3.one * Mathf.Lerp(p.Size, p.EndSize, f * f * (3 - 2 * f));
             Color tint = p.Color; tint.a *= Mathf.Min(1, f / .06f) * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.35f, 1, f)));
             if (lowDetail) tint.a *= .8f;
@@ -164,6 +165,14 @@ namespace EvolutionShop
         public void Cancel(FxOwnerToken owner) { if (!disposed) for (int i = 0; i < motes.Length; i++) if (motes[i].Owner.Equals(owner)) Release(motes[i]); }
         public void CancelAmbient(FxOwnerToken owner) { if (!disposed) for (int i = 0; i < motes.Length; i++) if (!motes[i].Action && motes[i].Owner.Equals(owner)) Release(motes[i]); }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public Transform ParticleVisualForValidation(FxOwnerToken owner, int ordinal) {
+            if (disposed || !owner.IsDefined || ordinal < 0) return null;
+            foreach (var m in motes) {
+                if (!m.Active || !m.Rich || !m.Owner.Equals(owner)) continue;
+                if (ordinal-- == 0) return m.Root;
+            }
+            return null;
+        }
         public int ParticleCountForValidation(FxOwnerToken owner) {
             int count = 0;
             if (!disposed && owner.IsDefined) foreach (var m in motes) if (m.Active && m.Owner.Equals(owner)) count++;

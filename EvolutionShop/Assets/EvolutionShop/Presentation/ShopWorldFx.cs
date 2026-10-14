@@ -102,6 +102,7 @@ namespace EvolutionShop
         }
         public void CancelFxOwner(FxOwnerToken owner)
         {
+            CancelAquariumOwner(owner);
             if (owner.IsDefined && owner.Equals(collectionOwner)) {
                 ResetCollectionFx(); harvesting = false; labHarvestSource = null; CancelHandsPose();
             }

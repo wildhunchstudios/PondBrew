@@ -12,6 +12,7 @@ namespace EvolutionShop
     {
         public FxParticleShape Shape;
         public FxParticleMotion Motion;
+        public bool SurfaceAligned;
         public Color Color;
         public Vector3 End, Bend, Velocity;
         public float Lifetime, Size, EndSize, Radius, Turns, Spin;
