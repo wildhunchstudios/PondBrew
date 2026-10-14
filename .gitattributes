@@ -46,3 +46,6 @@
 
 # Preserve byte-hashed integrated FX audit evidence and raw engine whitespace.
 /Docs/Evidence/fx-06r-07/** -text -whitespace
+
+# Preserve byte-hashed FX07 grower evidence.
+/Docs/Evidence/fx-07/** -text -whitespace
