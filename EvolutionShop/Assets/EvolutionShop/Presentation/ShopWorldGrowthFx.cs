@@ -55,7 +55,9 @@ namespace EvolutionShop
                 }
                 growthPreviousStates[i] = state.State;
                 PoseGrowthMedium(i, state);
+                ReconcileGrowerPresentation(i, state);
             }
+            UpdateGrowerInteractions();
             growthStateKnown = true;
         }
         void PoseGrowthMedium(int i, FxGrowerPose state)
@@ -89,6 +91,7 @@ namespace EvolutionShop
         }
         void ResetGrowthFx()
         {
+            ResetGrowerPresentation();
             // Restart with separated delays, never an accumulated catch-up burst.
             growthBubbleClocks[0] = .28f; growthBubbleClocks[1] = .51f; growthBubbleClocks[2] = .14f;
             for (int i = 0; i < 2; i++) {
@@ -102,16 +105,14 @@ namespace EvolutionShop
         }
         void TickGrowthFx(float time, float dt)
         {
-            bool reduced = fxReducedMotion, visible = fxPolicy == FxViewPolicy.Visible;
+            bool reduced = fxReducedMotion;
             // The incubator gets first admission to the existing ambient partition.
             if (LabGrowthActive && labHatchRemaining <= 0 && labDoseRemaining <= 0)
                 TickGrowthBubbles(2, time, dt, LabGrowthProgress, false, 0, reduced);
             for (int i = 0; i < 2; i++) {
                 var state = ReadGrowthGrower(i);
                 bool working = state.State != FxGrowerVisualState.Full;
-                float needle = working ? Mathf.Lerp(10, -10, state.Refill) : -10;
-                if (working && !reduced) needle += Mathf.Sin(time * 2.4f + i) * 3;
-                if (labNeedles[i]) labNeedles[i].localRotation = Quaternion.Euler(0, 0, needle);
+                TickGrowerPresentation(i, state, time, dt);
                 var cells = i == 0 ? bloomCells : flowCells;
                 for (int c = 0; c < cells.Count; c++) {
                     cells[c].localPosition = FxGrowthMotion.Cell(c, i, time, state, reduced);
@@ -119,11 +120,7 @@ namespace EvolutionShop
                     cells[c].localRotation = Quaternion.Euler(reduced ? 0 : Mathf.Sin(time * .8f + phase) * 9,
                         phase * Mathf.Rad2Deg + (reduced ? 0 : Mathf.Sin(time + c) * (working ? 18 : 4)), 0);
                 }
-                // Empty chambers cool quietly. Only actual units drift; no prospective culture is drawn.
-                if (!visible || !working) continue;
-                // Low supports two ambient emitters; share its second emitter over time while incubating.
-                if (LabDoseLow && LabGrowthActive && (int)(time / 2f) % 2 != i) continue;
-                TickGrowthBubbles(i, time, dt, state.Refill, true, i, reduced);
+                // Grower circulation/accents reuse this owner; actual unit drift remains here.
             }
         }
         void TickGrowthBubbles(int lane, float time, float dt, float progress, bool grower, int culture, bool reduced)

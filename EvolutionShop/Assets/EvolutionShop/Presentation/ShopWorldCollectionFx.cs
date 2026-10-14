@@ -42,6 +42,7 @@ namespace EvolutionShop
         {
             collectionResponseRemaining = FxCollectionMotion.ResponseDuration;
             CollectionAcceptedCount++;
+            AcceptGrowerCollection(culture);
             if (!ToolChamber || fxPool == null) return;
             int count = fxReducedMotion ? 1 : fxPool.ActionLimit < 64 ? 2 : 4;
             for (int i = 0; i < count; i++)
@@ -61,7 +62,8 @@ namespace EvolutionShop
         {
             collectionResponseRemaining = Mathf.Max(0, collectionResponseRemaining - dt);
             if (!CollectionActive) { CancelCollectionIntake(); return; }
-            if (!CollectionPathClear()) { CancelCollectionIntake(); return; }
+            bool pathClear = CollectionPathClear(); ObserveGrowerPath(pathClear);
+            if (!pathClear) { CancelCollectionIntake(); return; }
             collectionClock -= dt;
             if (collectionClock > 0 || fxPool == null) return;
             FxCollectionMotion.Sample(++collectionSequence, harvestingCulture, fxPool.ActionLimit < 64,

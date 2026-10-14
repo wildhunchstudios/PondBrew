@@ -569,6 +569,8 @@ namespace EvolutionShop
 
         public void Refresh(GameModel model)
         {
+            // Reload adopts a different authority snapshot; its restored units are not new refill events.
+            if (!ReferenceEquals(lastModel, model)) AdoptGrowerModel();
             lastModel = model;
             bloomCount = model.Available(CultureKind.Bloom);
             flowCount = model.Available(CultureKind.Flow);
@@ -610,7 +612,7 @@ namespace EvolutionShop
         void RefreshGrower(GameModel model, CultureKind culture, StationKind station, List<Transform> cells)
         {
             var grower = model.GetGrower(culture);
-            status[station].text = grower.Units + " / " + grower.Capacity + (grower.Units >= grower.Capacity ? "  |  FULL" : "  |  GROWING");
+            UpdateGrowerStatus((int)culture);
             for (int i = 0; i < cells.Count; i++) cells[i].gameObject.SetActive(i < grower.Units);
         }
 
@@ -658,7 +660,7 @@ namespace EvolutionShop
 
         public void SetHarvesting(bool active, Station station)
         {
-            if (!active) collectionSaveBlocked = false;
+            if (!active && !growerInputHeld) collectionSaveBlocked = false;
             CultureKind culture = default;
             bool next = active && TryHarvestCulture(station, out culture);
             if (next) next = !collectionSaveBlocked && fxEnabled && fxPolicy == FxViewPolicy.Visible &&

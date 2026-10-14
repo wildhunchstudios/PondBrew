@@ -195,6 +195,7 @@ namespace EvolutionShop
             if (held && grower)
                 Harvest(culture, Time.deltaTime);
             else StopHarvest();
+            World.SetGrowerCollectionIntent(Mouse.current != null && Mouse.current.leftButton.isPressed, Focused, SaveError != null);
             World.SetHarvesting(held && grower && HarvestProgress > 0, Focused);
             if (Panel == ShopPanel.None && keyboard != null && keyboard.eKey.wasPressedThisFrame && Focused != null)
                 Interact(Focused);
