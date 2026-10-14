@@ -14,27 +14,33 @@ namespace EvolutionShop
         [Serializable] sealed class GrowthFrame
         {
             public float seconds, remaining, progress, bloomFill, flowFill;
-            public int active, hatches, bloomUnits, flowUnits, incubatorAmbient, bloomAmbient, flowAmbient;
+            public int active, ambient, hatches, bloomUnits, flowUnits, incubatorAmbient, bloomAmbient, flowAmbient;
             public Color bloomTint, flowTint;
             public Vector3 scale;
             public string phase;
         }
-        [Serializable] sealed class GrowthMotionReport { public string name; public int peak; public GrowthFrame[] frames; }
+        [Serializable] sealed class GrowthMotionReport { public string name; public int peak, ambientPeak, totalCap, ambientCap; public GrowthFrame[] frames; }
         [Serializable] sealed class GrowthFitReport
         { public string specimen; public int samples, meshes, vertices; public float maxEllipsoid; public Vector3 min, max; }
-        IEnumerator GrowthClip(string name, float seconds, Action<float> action = null, int cap = 96)
+        IEnumerator GrowthClip(string name, float seconds, Action<float> action = null, int cap = 96, int ambientCap = 32)
         {
-            var rows = new List<GrowthFrame>(); int peak = 0; var properties = new MaterialPropertyBlock();
+            var rows = new List<GrowthFrame>(); int peak = 0, ambientPeak = 0; var properties = new MaterialPropertyBlock();
             Action<float> sample = age =>
             {
                 action?.Invoke(age);
                 var world = shop.World; var inc = shop.Model.Incubator; var creature = world.GrowthCreatureForValidation;
                 peak = Mathf.Max(peak, world.FxPool.ActiveCount);
+                // Inspect actual ambient-partition carriers, independently of the existing per-owner counters.
+                // Occupied aquarium wake uses action slots and must still obey the separate total limit.
+                int ambient = 0;
+                for (int slot = FxEffectPool.ActionReserved; slot < FxEffectPool.Capacity; slot++)
+                    if (world.FxPool.Root.GetChild(slot).gameObject.activeSelf) ambient++;
+                ambientPeak = Mathf.Max(ambientPeak, ambient);
                 var bloom = world.GrowerMediumForValidation(CultureKind.Bloom);var flow = world.GrowerMediumForValidation(CultureKind.Flow);
                 bloom.GetComponent<MeshRenderer>().GetPropertyBlock(properties);Color bloomTint=properties.GetColor("_BaseColor");
                 flow.GetComponent<MeshRenderer>().GetPropertyBlock(properties);Color flowTint=properties.GetColor("_BaseColor");
                 rows.Add(new GrowthFrame { seconds = age, remaining = inc.SecondsRemaining, progress = world.LabGrowthProgress,
-                    active = world.FxPool.ActiveCount, hatches = world.LabHatchCount, phase = inc.Phase.ToString(),
+                    active = world.FxPool.ActiveCount, ambient = ambient, hatches = world.LabHatchCount, phase = inc.Phase.ToString(),
                     bloomUnits = shop.Model.GetGrower(CultureKind.Bloom).Units, flowUnits = shop.Model.GetGrower(CultureKind.Flow).Units,
                     bloomFill=bloom.localScale.y,flowFill=flow.localScale.y,bloomTint=bloomTint,flowTint=flowTint,
                     incubatorAmbient=world.GrowthIncubatorAmbientCount,bloomAmbient=world.GrowthGrowerAmbientCount(CultureKind.Bloom),flowAmbient=world.GrowthGrowerAmbientCount(CultureKind.Flow),
@@ -46,8 +52,10 @@ namespace EvolutionShop
                 while (Time.realtimeSinceStartup - start < seconds) { sample(Time.realtimeSinceStartup - start); yield return null; }
             }
             else yield return ReviewClip(name, seconds, sample);
-            File.WriteAllText(Path.Combine(evidence, name + "-motion.json"), JsonUtility.ToJson(new GrowthMotionReport { name = name, peak = peak, frames = rows.ToArray() }, true));
-            Check(rows.Count > 1 && peak <= cap, "Actual live state trace stays within current pool cap / " + name + " peak=" + peak);
+            File.WriteAllText(Path.Combine(evidence, name + "-motion.json"), JsonUtility.ToJson(new GrowthMotionReport {
+                name = name, peak = peak, ambientPeak = ambientPeak, totalCap = cap, ambientCap = ambientCap, frames = rows.ToArray() }, true));
+            Check(rows.Count > 1 && peak <= cap && ambientPeak <= ambientCap,
+                "Actual live state trace respects total and ambient-partition caps / " + name + " total=" + peak + "/" + cap + " ambient=" + ambientPeak + "/" + ambientCap);
         }
         IEnumerator GrowthHarvest(CultureKind kind)
         {
@@ -183,7 +191,7 @@ namespace EvolutionShop
                 for(int mode=1;mode<=2;mode++)
                 {
                     world.SetFxPreviewModes(mode==2,mode==1);world.ResetFxPresentation();
-                    yield return GrowthClip(mode==1?"growth-low-cosmetic":"growth-reduced-cosmetic",3,age=>world.Animate(Time.time,Time.deltaTime),mode==1?8:32);
+                    yield return GrowthClip(mode==1?"growth-low-cosmetic":"growth-reduced-cosmetic",3,age=>world.Animate(Time.time,Time.deltaTime),32,mode==1?8:32);
                     Check(FxAuthority()==authority && world.LabHatchCount==hatches,"Frozen comfort sample preserves countdown/output/stock and no hatch");
                 }
                 world.SetFxPreviewModes(false,false);world.ResetFxPresentation();world.Animate(Time.time,.3f);
