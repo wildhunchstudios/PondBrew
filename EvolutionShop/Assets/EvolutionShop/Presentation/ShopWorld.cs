@@ -570,7 +570,10 @@ namespace EvolutionShop
         public void Refresh(GameModel model)
         {
             // Reload adopts a different authority snapshot; its restored units are not new refill events.
-            if (!ReferenceEquals(lastModel, model)) { AdoptGrowerModel(); ResetAdvancedLabFx(); }
+            if (!ReferenceEquals(lastModel, model)) {
+                if (fxCues != null) CancelFxOwner(fxCues.Find("incubator"));
+                AdoptGrowerModel(); ResetAdvancedLabFx();
+            }
             lastModel = model;
             bloomCount = model.Available(CultureKind.Bloom);
             flowCount = model.Available(CultureKind.Flow);
@@ -631,17 +634,22 @@ namespace EvolutionShop
         {
             bool identityChanged = display.FxSpecimenId != specimenId;
             display.FxSpecimenId = specimenId;
-            if (display.SpeciesId == species) { if (identityChanged) ResetPondletIdentity(display); return; }
-            if (display.Creature) Destroy(display.Creature.gameObject);
+            if (display.SpeciesId == species) {
+                if (identityChanged) ResetPondletIdentity(display);
+                if (display.Incubator && display.Creature) PoseLabCreature(display, lastTime, LabHatchAge, labHatchFirst);
+                return;
+            }
+            if (display.Creature) { display.Creature.gameObject.SetActive(false); Destroy(display.Creature.gameObject); }
             display.SpeciesId = species;
             display.Creature = null;
             if (string.IsNullOrEmpty(species)) return;
             var r = Group(species, display.Root, Vector3.zero);
-            r.localScale = Vector3.one * (display.Incubator ? (species == "ribbonfin" ? .54f : species == "driftwing" ? .52f : .62f) : species == "driftwing" ? .59f : .69f);
+            r.localScale = Vector3.one * (display.Incubator ? CreatureVisual.IncubationScale(species) : species == "driftwing" ? .59f : .69f);
             display.Creature = r.gameObject.AddComponent<CreatureVisual>();
             display.Creature.Build(species);
             ResetPondletIdentity(display);
-            if (species == "lanternfin" || species == "driftwing")
+            if (display.Incubator) PoseLabCreature(display, lastTime, -1, false);
+            else if (species == "lanternfin" || species == "driftwing")
             {
                 r.localRotation = Quaternion.Euler(0, -90, 0);
                 display.Creature.Animate(lastTime + display.Seed);
@@ -711,7 +719,7 @@ namespace EvolutionShop
             {
                 if (!display.Creature) continue;
                 if (display.SpeciesId == "pondlet" && display.Habitat != null) { TickPondlet(display, dt); continue; }
-                if (display.Incubator && display.SpeciesId == "pondlet") { PoseLabPondlet(display,time,LabHatchAge,labHatchFirst); continue; }
+                if (display.Incubator) { PoseLabCreature(display,time,LabHatchAge,labHatchFirst); continue; }
                 float t = time * (display.SpeciesId == "bubblebelly" ? .6f : .78f) + display.Seed;
                 // The longest tail stays mostly broadside; its small orbit reserves tail clearance.
                 float x = display.Incubator ? Mathf.Sin(t) * .04f : Mathf.Sin(t) * (display.SpeciesId == "ribbonfin" ? .10f : .42f);

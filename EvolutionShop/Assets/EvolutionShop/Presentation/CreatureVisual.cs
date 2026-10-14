@@ -14,6 +14,7 @@ namespace EvolutionShop
         Transform lanternBulb;
         Material[] lanternMaterials;
         Material[] driftwingMaterials;
+        Material[] commonMaterials;
 
         public void Build(string speciesId)
         {
@@ -29,6 +30,7 @@ namespace EvolutionShop
             var fin = ShopWorld.MakeMaterial("Soft fins " + speciesId, Color.Lerp(bodyColor, Color.white, 0.38f), 0.03f, 0.45f);
             var cream = ShopWorld.MakeMaterial("Warm creature belly", new Color(1f, 0.96f, 0.82f), 0, 0.35f);
             var dark = ShopWorld.MakeMaterial("Creature pupils", new Color(0.013f, 0.055f, 0.075f), 0, 0.8f);
+            commonMaterials = new[] { body, fin, cream, dark };
             Vector3 bodyScale = round ? new Vector3(0.74f, 0.7f, 0.77f) : ribbon ? new Vector3(0.31f, 0.3f, 1.1f) : new Vector3(0.48f, 0.41f, 0.74f);
             ShopWorld.Shape(transform, "Silky body", PrimitiveType.Sphere, Vector3.zero, bodyScale, body);
             ShopWorld.Shape(transform, "Cream belly", PrimitiveType.Sphere, new Vector3(0, -bodyScale.y * 0.16f, -0.045f), Vector3.Scale(bodyScale, new Vector3(0.86f, 0.78f, 0.87f)), cream);
@@ -158,6 +160,7 @@ namespace EvolutionShop
         }
         void OnDestroy()
         {
+            if (commonMaterials != null) foreach (var material in commonMaterials) if (material) ReleaseCreatureAsset(material);
             if (pondletFinMesh) ReleaseCreatureAsset(pondletFinMesh);
             if (pondletMaterials != null) foreach (var material in pondletMaterials) if (material) ReleaseCreatureAsset(material);
             if (driftwingMaterials != null) foreach (var material in driftwingMaterials) if (material) ReleaseCreatureAsset(material);

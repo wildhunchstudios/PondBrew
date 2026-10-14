@@ -29,6 +29,10 @@ namespace EvolutionShop
         public bool AllowValidationInput;
         public bool AutosaveBlocked { get; private set; }
         public string SaveError { get; private set; }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public string RevealedSpeciesForValidation => revealedSpecies;
+        public bool DiscoveryRevealActiveForValidation => Time.unscaledTime < revealUntil && !string.IsNullOrEmpty(revealedSpecies);
+#endif
         ShopAudio sound;
         string message;
         float messageUntil, revealUntil, saveClock, visualClock;
@@ -233,14 +237,6 @@ namespace EvolutionShop
             TickAutomation(seconds);
             if (result.Matured)
             {
-                belchWait=4f;belchExpiry=8f;
-                if (result.FirstDiscovery)
-                {
-                    revealedSpecies = result.SpeciesId;
-                    revealUntil = Time.unscaledTime + 3.5f;
-                    if (result.SpeciesId != "pondlet") sound.Discovery();
-                }
-                else if (result.SpeciesId != "pondlet") sound.Feedback(true);
                 Notify("A new specimen is ready. Use an empty display or lab rack to store it.");
             }
             if (result.ConditionedCount > 0)
@@ -251,7 +247,19 @@ namespace EvolutionShop
             ReconcileLabPresentation();
             World.PresentConditionerStep(labSaved, result.ConditionedCount);
             if (result.ConditionedCount > 0 && labSaved) sound.Feedback(true);
-            if (result.Matured && result.SpeciesId == "pondlet") PresentLabHatch(result.FirstDiscovery, labSaved);
+            if (result.Matured)
+            {
+                if (labSaved)
+                {
+                    belchWait=4f;belchExpiry=8f;
+                    if (result.FirstDiscovery)
+                    {
+                        revealedSpecies = result.SpeciesId;
+                        revealUntil = Time.unscaledTime + 3.5f;
+                    }
+                }
+                PresentLabHatch(result.FirstDiscovery, labSaved);
+            }
         }
         public bool OpenForDay()
         {

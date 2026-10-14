@@ -117,24 +117,41 @@ namespace EvolutionShop
                 fxPool.EmitParticle(fxCues, labHatchOwner, display.Root.parent, origin, request);
             }
         }
-        void PoseLabPondlet(Display display, float time, float age, bool first)
+        bool IncubationQuiet => fxReducedMotion || !isActiveAndEnabled || fxPolicy == FxViewPolicy.Paused || fxPolicy == FxViewPolicy.Unfocused || fxPolicy == FxViewPolicy.Arrange;
+        void PoseIncubationProgress()
         {
-            if (lastModel.Incubator.Phase == IncubatorPhase.Incubating) { PoseGrowingPondlet(display, LabGrowthProgress, time); return; }
-            var pose = FxHatchChoreography.Resolve(age, first, fxReducedMotion);
+            if (labNeedles[2]) labNeedles[2].localRotation = Quaternion.Euler(0, 0, -12 * LabGrowthProgress);
+        }
+        void PoseLabCreature(Display display, float time, float age, bool first)
+        {
+            if (lastModel.Incubator.Phase == IncubatorPhase.Incubating) { PoseGrowingCreature(display, LabGrowthProgress, time); return; }
+            bool quiet = IncubationQuiet;
+            var pose = FxHatchChoreography.Resolve(age, first, quiet);
             float t = time * .78f + display.Seed, calm = pose.IdleWeight;
             var root = display.Creature.transform;
-            root.localPosition = fxReducedMotion ? Vector3.zero : new Vector3(Mathf.Sin(t)*.04f*calm, Mathf.Sin(t*1.8f)*.085f*calm + pose.Lift, 0);
-            root.localRotation = fxReducedMotion ? Quaternion.Euler(0,-90,0) : Quaternion.Euler(0,-90 + Mathf.Cos(t)*20*calm, Mathf.Sin(t*1.6f)*5*calm + pose.Roll);
-            var inc = lastModel.Incubator;
-            float fraction = inc.Phase == IncubatorPhase.Incubating ? Mathf.Clamp01(1 - inc.SecondsRemaining/labIncubationSeconds) : 1;
-            float size = inc.Phase == IncubatorPhase.Incubating ? Mathf.Lerp(.32f,1,fraction) : 1;
-            root.localScale = pose.Scale * (.62f*size);
-            display.Creature.AnimatePondlet(time+display.Seed,.7f,fxReducedMotion,-1,age,first);
+            root.localPosition = quiet ? Vector3.zero : new Vector3(Mathf.Sin(t)*.04f*calm, Mathf.Sin(t*1.8f)*.085f*calm + pose.Lift, 0);
+            root.localRotation = quiet ? Quaternion.Euler(0,-90,0) : Quaternion.Euler(0,-90 + Mathf.Cos(t)*20*calm, Mathf.Sin(t*1.6f)*5*calm + pose.Roll);
+            root.localScale = pose.Scale * CreatureVisual.IncubationScale(display.SpeciesId);
+            display.Creature.AnimateIncubation(time+display.Seed,.7f,quiet,age,first);
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public Transform HatchCreatureForValidation => displays.TryGetValue("incubator",out var d) && d.Creature ? d.Creature.transform : null;
+        public Transform IncubationFluidForValidation => labFluid;
+        public Transform IncubationStationForValidation => displays.TryGetValue("incubator", out var d) ? d.Root.parent : null;
+        public string IncubationSpeciesForValidation => displays.TryGetValue("incubator", out var d) ? d.SpeciesId : null;
+        public string IncubationSpecimenForValidation => displays.TryGetValue("incubator", out var d) ? d.FxSpecimenId : null;
         public void SampleHatchPoseForValidation(float age, bool first, float time)
-        { if (displays.TryGetValue("incubator",out var d) && d.Creature && d.SpeciesId == "pondlet") PoseLabPondlet(d,time,age,first); }
+        {
+            if (displays.TryGetValue("incubator",out var d) && d.Creature) PoseLabCreature(d,time,age,first);
+            if (labFluid) labFluid.localScale = labFluidRest * FxHatchChoreography.Resolve(age,first,IncubationQuiet).FluidScale;
+        }
+        public Transform RebuildIncubationResidentForValidation()
+        {
+            if (lastModel == null || !displays.TryGetValue("incubator", out var d)) return null;
+            if (fxCues != null) CancelFxOwner(fxCues.Find("incubator"));
+            SetCreature(d, null); Refresh(lastModel);
+            return HatchCreatureForValidation;
+        }
 #endif
         void EmitLabMote(FxOwnerToken token, Material material, Vector3 point, float duration, float size = .035f, bool action = true)
         {
@@ -149,8 +166,9 @@ namespace EvolutionShop
             ResetDoseFx(); ResetGrowthFx();
             foreach (var needle in labNeedles) if (needle) needle.localRotation = Quaternion.identity;
             if (labFluid) labFluid.localScale = labFluidRest;
-            if (displays.TryGetValue("incubator", out var resident) && resident.Creature && resident.SpeciesId == "pondlet")
-                PoseLabPondlet(resident, lastTime, -1, false);
+            PoseIncubationProgress();
+            if (displays.TryGetValue("incubator", out var resident) && resident.Creature)
+                PoseLabCreature(resident, lastTime, -1, false);
         }
         void TickLabFx(float time, float dt)
         {
@@ -161,8 +179,7 @@ namespace EvolutionShop
             TickGrowthFx(time, dt);
             TickCollectionFx(dt);
             var inc = lastModel.Incubator;
-            float fraction = inc.Phase == IncubatorPhase.Incubating ? Mathf.Clamp01(1f - inc.SecondsRemaining / labIncubationSeconds) : inc.Phase == IncubatorPhase.Ready ? 1 : 0;
-            if (labNeedles[2]) labNeedles[2].localRotation = Quaternion.Euler(0, 0, -12 * fraction);
+            PoseIncubationProgress();
             if (labNeedles[3]) labNeedles[3].localRotation = Quaternion.Euler(0, 0, fxReducedMotion ? 0 : 6 * Mathf.Sin(Mathf.Clamp01(labModuleRemaining / .3f) * Mathf.PI));
             if (labFluid) labFluid.localScale = labFluidRest * (1f + (fxReducedMotion ? 0 : (inc.Phase == IncubatorPhase.Incubating ? Mathf.Sin(time * 2.2f) * .016f : labDoseRemaining > 0 && labDoseId != FxCueId.HandRefused ? -Mathf.Sin(labDoseRemaining / FxDosePour.Duration * Mathf.PI) * .025f : 0)));
             if (labFluid && labHatchRemaining > 0) labFluid.localScale = labFluidRest * FxHatchChoreography.Resolve(LabHatchAge,labHatchFirst,fxReducedMotion).FluidScale;

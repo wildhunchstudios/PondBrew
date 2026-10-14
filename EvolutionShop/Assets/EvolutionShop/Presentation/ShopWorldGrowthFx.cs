@@ -48,6 +48,7 @@ namespace EvolutionShop
                 fxPool?.CancelAmbient(fxCues.Find("incubator")); growthBubbleClocks[2] = .14f;
             }
             growthPreviousPhase = phase;
+            PoseIncubationProgress();
             for (int i = 0; i < 2; i++) {
                 var state = ReadGrowthGrower(i);
                 if (growthStateKnown && state.State != growthPreviousStates[i]) {
@@ -81,13 +82,14 @@ namespace EvolutionShop
             Color tint = Color.Lerp(original, life, .22f + p * .16f + breath); tint.a = original.a;
             return tint;
         }
-        void PoseGrowingPondlet(Display display, float progress, float time)
+        void PoseGrowingCreature(Display display, float progress, float time)
         {
-            bool quiet = fxReducedMotion || fxPolicy == FxViewPolicy.Paused || fxPolicy == FxViewPolicy.Unfocused || fxPolicy == FxViewPolicy.Arrange;
+            bool quiet = IncubationQuiet;
             var pose = FxGrowthMotion.Resolve(progress, time, display.Seed, quiet);
             var root = display.Creature.transform;
-            root.localPosition = pose.Position; root.localRotation = Quaternion.Euler(pose.Angles); root.localScale = pose.Scale;
-            display.Creature.AnimatePondlet(time + display.Seed, pose.Effort, quiet);
+            root.localPosition = pose.Position; root.localRotation = Quaternion.Euler(pose.Angles);
+            root.localScale = pose.Scale * (CreatureVisual.IncubationScale(display.SpeciesId) / .62f);
+            display.Creature.AnimateIncubation(time + display.Seed, pose.Effort, quiet);
         }
         void ResetGrowthFx()
         {
@@ -150,7 +152,10 @@ namespace EvolutionShop
         public int GrowthIncubatorAmbientCount => fxPool != null && fxCues != null ? fxPool.AmbientCount(fxCues.Find("incubator")) : 0;
         public int GrowthGrowerAmbientCount(CultureKind culture) => fxPool != null && fxCues != null && (culture == CultureKind.Bloom || culture == CultureKind.Flow) ? fxPool.AmbientCount(fxCues.Find(culture == CultureKind.Bloom ? "bloom" : "flow")) : 0;
         public void SampleGrowthPoseForValidation(float progress, float time)
-        { if (displays.TryGetValue("incubator", out var d) && d.Creature && d.SpeciesId == "pondlet") PoseGrowingPondlet(d, progress, time); }
+        {
+            if (displays.TryGetValue("incubator", out var d) && d.Creature) PoseGrowingCreature(d, progress, time);
+            if (labFluid) labFluid.localScale = labFluidRest * (1 + (IncubationQuiet ? 0 : Mathf.Sin(time * 2.2f) * .016f));
+        }
 #endif
     }
 }
