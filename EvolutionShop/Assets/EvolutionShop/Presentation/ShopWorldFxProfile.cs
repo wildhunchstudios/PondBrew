@@ -3,6 +3,25 @@ namespace EvolutionShop
 {
     public sealed partial class ShopWorld
     {
+        public bool FxProfileResidentsMatchForValidation(GameModel model)
+        {
+            if (model == null) return false;
+            foreach (string id in model.TankIds)
+            {
+                var specimen=model.GetTank(id);
+                if (!displays.TryGetValue(id,out var display) ||
+                    (specimen.HasValue ? !display.Creature || display.FxSpecimenId!=specimen.Value.Id || display.SpeciesId!=specimen.Value.SpeciesId : display.Creature!=null)) return false;
+            }
+            foreach (string id in model.StorageIds)
+            {
+                var specimen=model.GetStorage(id);
+                if (!displays.TryGetValue(id,out var display) ||
+                    (specimen.HasValue ? !display.Creature || display.FxSpecimenId!=specimen.Value.Id || display.SpeciesId!=specimen.Value.SpeciesId : display.Creature!=null)) return false;
+            }
+            if (!displays.TryGetValue("incubator",out var incubator)) return false;
+            return model.Incubator.Phase==IncubatorPhase.Dosing ? !incubator.Creature :
+                incubator.Creature && incubator.FxSpecimenId==model.Incubator.SpecimenId && incubator.SpeciesId==model.Incubator.SpeciesId;
+        }
         // Diagnostic replay boundary only. The caller freezes the session and never changes authority.
         public void ResetFxProfileForValidation(bool enabled, bool low)
         {

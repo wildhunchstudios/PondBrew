@@ -32,8 +32,8 @@ namespace EvolutionShop
             public double incubationSecondsRemaining;
             public string unity, gpu, cpu, graphicsApi, pipeline, quality;
             public int width, height, cycle, window, frames, warmFrames, focusedFrames, freshGpuFrames, peakParticles;
-            public int spawnedParticles, droppedParticles, ownedParticles, ownedParticleMeshes, ownedParticleMaterials, targetFrameRate, vsync, heroActivityCount;
-            public bool continuouslyFocused, frameTimingEnabled, authorityUnchanged, saveUnchanged, resourcesStable, crossWindowResourcesStable;
+            public int spawnedParticles, droppedParticles, ownedParticles, ownedParticleMeshes, ownedParticleMaterials, targetFrameRate, vsync, heroActivityCount, aquariumTrailEmissions, growthAmbientEmissions;
+            public bool continuouslyFocused, frameTimingEnabled, authorityUnchanged, saveUnchanged, resourcesStable, crossWindowResourcesStable, visualResidentsMatch;
             public double presentationSeconds, wallSeconds;
             public FxInventory before, after;
             public FxMetric[] metrics;
@@ -66,6 +66,9 @@ namespace EvolutionShop
             int width = int.TryParse(ShopSession.Arg("-screen-width"), out int w) ? w : Screen.width;
             int height = int.TryParse(ShopSession.Arg("-screen-height"), out int h) ? h : Screen.height;
             shop.SetPanel(ShopPanel.None); shop.AllowValidationInput = false;
+            // Baseline fixture uses a direct model transfer; refresh its real visual owners before freezing Advance.
+            shop.World.Refresh(shop.Model);
+            Check(shop.World.FxProfileResidentsMatchForValidation(shop.Model), "Frozen scene visual residents match actual model IDs / "+fixture+"-"+phase);
             shop.FreezeFxVocabularyForValidation = true;
             shop.FxIntegratedProfileForValidation = true;
             try
@@ -166,7 +169,7 @@ namespace EvolutionShop
         {
             // No commands, authority mutations or recorder work in this presentation replay.
             if(integratedHero == "collection") world.SetHarvesting(true,integratedCollectionStation);
-            else if(integratedHero == "dose" && frame%90==0 && world.TryFxCue(FxCueId.DoseCommitted,(uint)(frame/90+1),FxCueOrigin.Manual,CultureKind.Bloom))
+            else if(integratedHero == "dose" && frame%90==0 && world.TryFxCue(FxCueId.DoseCommitted,(uint)(frame/90+1),FxCueOrigin.Manual,CultureKind.Flow))
             { world.ConfigureDoseContext(integratedDoseMix,integratedDoseMix,FxDoseMode.Pour); integratedAcceptedHeroCues++; }
             else if(integratedHero == "hatch" && frame%240==0) world.TryFxCue(frame%480==0 ? FxCueId.HatchFirst : FxCueId.HatchRepeat,(uint)(frame/240+1));
             world.Animate((frame+1)*IntegratedStep,IntegratedStep);
@@ -206,6 +209,7 @@ namespace EvolutionShop
                 yield return null; yield return null;
                 int focused = 0, peak = 0, freshGpu = 0, initialSpawn = pool.SpawnedCount, initialDrop = pool.DroppedCount;
                 int initialActivity=IntegratedHeroActivity(world);
+                int initialAquarium=world.AquariumTrailEmissionCount, initialGrowth=world.GrowthAmbientEmissionCount;
                 ulong previousGpuTimestamp = 0;
                 if (FrameTimingManager.GetLatestTimings(1, timings) > 0) previousGpuTimestamp = timings[0].frameStartTimestamp;
                 string startedUtc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture);
@@ -248,6 +252,8 @@ namespace EvolutionShop
                     authoritySha256 = IntegratedHash(Encoding.UTF8.GetBytes(authority)), authorityUnchanged = authority == FxAuthority(),
                     heroReplay = integratedHero ?? "none", incubationPhase = shop.Model.Incubator.Phase.ToString(), incubationSecondsRemaining = shop.Model.Incubator.SecondsRemaining,
                     heroActivityCount = IntegratedHeroActivity(world)-initialActivity,
+                    aquariumTrailEmissions = world.AquariumTrailEmissionCount-initialAquarium, growthAmbientEmissions=world.GrowthAmbientEmissionCount-initialGrowth,
+                    visualResidentsMatch = world.FxProfileResidentsMatchForValidation(shop.Model),
                     saveUnchanged = IntegratedHash(saved) == IntegratedHash(File.ReadAllBytes(shop.SavePath)), before = before, after = FxCount(),
                     metrics = new[] {
                         IntegratedStats(rows,"frameInterval","ms",r=>r.interval), IntegratedStats(rows,"mainThreadIncludingWaits","ms",r=>r.main),
@@ -272,6 +278,7 @@ namespace EvolutionShop
                 }
                 File.WriteAllText(Path.Combine(evidence, name + "-integrated-frames.csv"), csv.ToString());
                 Check(report.authorityUnchanged && report.saveUnchanged, "Frozen integrated window preserves authority and disk / " + name);
+                Check(report.visualResidentsMatch, "Rendered tank/rack/incubator IDs match frozen authority / "+name);
                 Check(report.resourcesStable && report.crossWindowResourcesStable && report.ownedParticles == 96 && report.ownedParticleMeshes == 5 && report.ownedParticleMaterials == 1,
                     "Integrated window retains exact warmed resources / " + name);
                 Check(peak <= (mode.StartsWith("off", StringComparison.Ordinal) ? 0 : mode == "low" ? 32 : 96) && report.after.renderedFrames - report.before.renderedFrames >= rows.Length,
@@ -279,6 +286,13 @@ namespace EvolutionShop
                 if(integratedHero!=null) Check(mode.StartsWith("off",StringComparison.Ordinal) ? report.heroActivityCount==0 : report.heroActivityCount>0 && peak>0 &&
                     (integratedHero!="dose" || world.LabDoseMixture.Total==integratedDoseMix.Total && integratedDoseMix.Total>0),
                     "Actual owned hero presentation activity (or disabled absence) / "+name+" count="+report.heroActivityCount);
+                if(mode.StartsWith("off",StringComparison.Ordinal)) Check(report.aquariumTrailEmissions==0 && report.growthAmbientEmissions==0,"Disabled replay has no revised ambient/trail births / "+name);
+                else
+                {
+                    var tank=shop.Model.GetTank("tank-a");
+                    if(world.FxPolicy==FxViewPolicy.Visible && tank.HasValue && tank.Value.SpeciesId=="pondlet") Check(report.aquariumTrailEmissions>0,"Actual occupied Pondlet emits revised trail during replay / "+name);
+                    if(shop.Model.Incubator.Phase==IncubatorPhase.Incubating) Check(report.growthAmbientEmissions>0,"Actual working lab emits growth ambience during replay / "+name);
+                }
             }
         }
         static bool IntegratedSameInventory(FxInventory a,FxInventory b) => a.worldRenderers==b.worldRenderers && a.worldTransforms==b.worldTransforms &&
