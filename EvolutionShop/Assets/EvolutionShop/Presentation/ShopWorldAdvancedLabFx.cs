@@ -174,9 +174,16 @@ namespace EvolutionShop
             if (fxPool == null || fxCues == null || !fxCues.IsValid(vat.Fx.Owner)) return;
             for (int i = 0; i < 2; i++) {
                 if (!vat.Residents[i].Display.Creature) continue;
-                FxAdvancedLabMotion.SampleConditioner(i, completed ? 1 : 0, ++vat.Fx.Sequence, LabDoseLow, fxReducedMotion, out _, out var local, out var request);
-                if (completed && !fxReducedMotion) { request.Shape = FxParticleShape.Ring; request.Size = .08f; request.EndSize = .16f; }
-                fxPool.EmitParticle(fxCues, vat.Fx.Owner, vat.Root, local, request, true);
+                int count = completed && !LabDoseLow && !fxReducedMotion ? 2 : 1;
+                for (int accent = 0; accent < count; accent++) {
+                    FxAdvancedLabMotion.SampleConditioner(i, completed ? 1 : 0, ++vat.Fx.Sequence, LabDoseLow, fxReducedMotion, out _, out var local, out var request);
+                    if (completed && !fxReducedMotion) {
+                        request.Shape = accent == 0 ? FxParticleShape.Ring : FxParticleShape.Spark;
+                        request.Size = accent == 0 ? .10f : .075f;
+                        request.EndSize = accent == 0 ? .18f : .025f;
+                    }
+                    fxPool.EmitParticle(fxCues, vat.Fx.Owner, vat.Root, local, request, true);
+                }
             }
         }
         void TickAdvancedLabFx(float time, float dt)
@@ -206,6 +213,7 @@ namespace EvolutionShop
                 fx.Clock -= dt; if (fx.Clock > 0) continue;
                 int slot = state.Value.First.HasValue && state.Value.Second.HasValue ? (int)(fx.Sequence % 2) : state.Value.First.HasValue ? 0 : 1;
                 FxAdvancedLabMotion.SampleConditioner(slot, progress, ++fx.Sequence, LabDoseLow, fxReducedMotion, out fx.Clock, out var local, out var request);
+                if (state.Value.Count == 1) fx.Clock *= 2;
                 fx.WorkingRequests++;
                 if (fxPool.EmitParticle(fxCues, fx.Owner, vat.Root, local, request, false)) fx.WorkingAdmitted++;
             }

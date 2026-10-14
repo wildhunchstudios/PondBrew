@@ -88,15 +88,18 @@ namespace EvolutionShop
             float a = Noise(index, 9), b = Noise(index, 10), c = Noise(index, 11);
             if (!FxParticleRequest.Finite(progress)) progress = 0;
             float center = slot == 0 ? -.49f : .49f;
-            interval = (reduced ? 1.15f : low ? .55f : .29f) + a * .19f;
-            local = new Vector3(center + (a - .5f) * .39f, .94f + b * .11f, (c - .5f) * .34f);
+            // Keep the live flow in the open upper window above the front supply plaque.
+            // Independent seeds vary the birth heights, bends and cadence rather than making bead rails.
+            interval = reduced ? 1.15f + a * .19f : low ? .40f + a * .14f : .18f + a * .07f;
+            local = new Vector3(center + (a - .5f) * .38f, 1.20f + b * .09f, -.24f + c * .16f);
             request = FxParticleRequest.Create(!reduced && index % 5 == 0 ? FxParticleShape.Spark : FxParticleShape.Bubble,
-                Color.Lerp(new Color(.62f, .87f, .99f, .65f), new Color(1, .85f, .48f, .75f), Mathf.Clamp01(progress)));
+                Color.Lerp(new Color(.65f, .90f, 1, .84f), new Color(1, .86f, .48f, .92f), Mathf.Clamp01(progress)));
             request.Motion = FxParticleMotion.Curve;
-            request.End = new Vector3(center - (local.x - center) * .38f, reduced ? local.y + .025f : 1.32f + b * .075f, -local.z * .35f) - local;
-            request.Bend = reduced ? Vector3.zero : new Vector3((c - .5f) * .08f, .015f, (a - .5f) * .07f);
-            request.Lifetime = reduced ? .46f : .8f + c * .25f;
-            request.Size = .048f + b * .028f; request.EndSize = .02f;
+            request.End = new Vector3(center - (local.x - center) * .48f, reduced ? local.y + .025f : 1.34f + b * .06f, -.11f + a * .10f) - local;
+            request.Bend = reduced ? Vector3.zero : new Vector3((c - .5f) * .12f, .012f, (a - .5f) * .08f);
+            request.Lifetime = reduced ? .46f : 1.03f + c * .18f;
+            request.Size = reduced ? .048f + b * .02f : .075f + b * .035f;
+            request.EndSize = reduced ? .02f : .038f;
         }
     }
 }
