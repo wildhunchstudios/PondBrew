@@ -387,3 +387,17 @@ AGENTS.md is canonical. Known limits:
 - The purchase modal obscures much of the short world research accent. The fixed panel strip is the primary normal-view confirmation; separate1600x900 world-camera PNGs are diagnostic evidence only.
 - All videos are silent. Technical audio ownership/playback checks passed, but no listening or sound-mix acceptance is claimed. No GPU profiling, minimum-spec or causal performance pass was performed; FX06R08 stays open.
 - The failed first candidate recording is retained:17.6071FPS and26missed samples. Moving diagnostic PNG encoding outside the clip produced successful revised runs, without proving a sole cause of the initial stall. No recording thresholds were weakened.
+
+
+## 2026-10-15 — FX-11 player interactions delivered provisionally
+
+**FX-11 technically complete — 2026-10-15; hands-on review deferred.** Existing siphon movement now has restrained sway; saved placement, rack and return actions have local accents and correct station refusals. Current panel borders confirm results while held collection cancels cleanly around panels, lost focus and slaps. This uses the existing siphon with its two capacities and the existing intentional slap. No carrying chore, new tool-switch system or stock ownership is introduced. Source **d720eba**, separate playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx11-player-1\EvolutionShop.exe`, intended delivery tag **fx-player-interactions-validated**. Actual **2174 passed EditMode tests**, **2240 final Windows checks**, build 0 errors / 0 warnings. 26 silent Windows videos decode 1525 frames. All 48 protected files and 1746 prior-build files are preserved; Core DLL is identical. Evidence `Docs/Evidence/fx-11-VALIDATION.md`; gallery `http://127.0.0.1:8799/index.html`; controls `Docs/Evidence/fx-11/PLAY.md`. **Next: FX-12 only on continuation; not started here.** Hands-on controls, actual listening, creative acceptance and the prior FX-06R-08 GPU decision remain deferred/open, as do earlier human gates. Technical completion does not imply native-input, human, minimum-spec or causal GPU acceptance.
+
+AGENTS.md is canonical. Known limits:
+
+- Native controls, actual sound listening, creative acceptance and FX06R08 GPU/minimum-spec decisions remain deferred. Silent synthetic-input clips and sampled frames do not close those gates.
+- Fixtures use scripted camera/positions, bounded upgrade/rack credits and accelerated Pondlet preparation. The dedicated upgrade panel is opened by the fixture; ordinary station reach is separately exercised for stock transfers.
+- World particles can be hidden by a station panel; the existing notice/panel border supplies visible modal feedback. The current lower prompt and large tool still obscure portions of nearby outlets; wider HUD/tool framing remains later FX18/22 work.
+- Conditioner regression covers both output transfer commands and exact identity; conditioner-specific new cue counters and failed-output-save injection are not separate assertions. Shared rack/display adapter and failed-save behavior are exercised by the dedicated route.
+- Existing failed-save behavior can leave a changed in-memory model until reload. Durable bytes remain unchanged and saved-success cues/audio are suppressed; this assignment does not rewrite transaction rollback.
+- Only the existing siphon base/upgraded variants and slap are supported. No carry inventory or tool-switch system is introduced; F8 remains a diagnostic comparison.
