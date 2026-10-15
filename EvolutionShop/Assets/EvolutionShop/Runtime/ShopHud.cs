@@ -682,6 +682,7 @@ namespace EvolutionShop
         }
         void DrawUpgrade()
         {
+            DrawResearchUpgradeStrip();
             Button("Culture preparation / lab helper", () => OpenAutomationMenu());
             Space();
             DrawSparkResearch();

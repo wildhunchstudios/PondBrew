@@ -308,7 +308,7 @@ namespace EvolutionShop
             bool physical = Panel == ShopPanel.None && Focused != null && Focused.TankId == tankId;
             return PerformWithFx(result, physical ? FxCueId.HandPlace : FxCueId.None, destination: tankId);
         }
-        public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), Panel == ShopPanel.None ? FxCueId.HandUpgrade : FxCueId.None);
+        public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), Panel == ShopPanel.None ? FxCueId.HandUpgrade : FxCueId.None, researchUpgrade: FxResearchUpgrade.Siphon);
         public bool IsAtCounter
         {
             get
@@ -436,19 +436,28 @@ namespace EvolutionShop
         }
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
         ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null,
-            FxAdvancedLabEvent advancedEvent = FxAdvancedLabEvent.None, string advancedOwner = null)
+            FxAdvancedLabEvent advancedEvent = FxAdvancedLabEvent.None, string advancedOwner = null, FxResearchUpgrade researchUpgrade = FxResearchUpgrade.None)
         {
-            if (!result.Success || (advancedEvent == FxAdvancedLabEvent.None && fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
+            if (!result.Success || (researchUpgrade == FxResearchUpgrade.None && advancedEvent == FxAdvancedLabEvent.None && fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
             if (result.Success)
             {
                 Notify("Done.", 1.3f);
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
                 bool saved = SaveNow();
+                if (!saved) sound.StopResearchAudio();
                 PresentFxResult(result, saved, fxCue, fxOrigin, culture, destination);
+                if (saved && researchUpgrade != FxResearchUpgrade.None) {
+                    World.PresentResearchUpgrade(researchUpgrade, NextFxSequence()); sound.ResearchConfirmation();
+                }
                 if (advancedEvent != FxAdvancedLabEvent.None) {
                     World.PresentAdvancedLabResult(advancedEvent, advancedOwner, result.Success, saved);
-                    if (saved) sound.Feedback(true);
+                    if (saved) {
+                        if (advancedEvent == FxAdvancedLabEvent.SparkUnlocked || advancedEvent == FxAdvancedLabEvent.MistUnlocked) {
+                            World.PresentResearchUpgrade(advancedEvent == FxAdvancedLabEvent.SparkUnlocked ? FxResearchUpgrade.Spark : FxResearchUpgrade.Mist, NextFxSequence(), advancedOwner);
+                            sound.ResearchConfirmation();
+                        } else sound.Feedback(true);
+                    }
                 }
             }
             else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin, culture); }
@@ -476,6 +485,7 @@ namespace EvolutionShop
             bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
                 Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
             if (Panel == ShopPanel.Incubator && panel != Panel) { World?.CancelFxTransient(); sound?.StopDoseAudio(); }
+            if (Panel != panel) World?.CancelResearchUpgrade();
             Panel = panel;
             ApplyFxViewPolicy();
             if (Paused || panel == ShopPanel.Arrange) ResetAutomationClock();

@@ -44,6 +44,7 @@ namespace EvolutionShop
 
         void DrawMistResearch()
         {
+            DrawResearchUpgradeStrip();
             Space(); Heading("Mist culture / Airfin research");
             if (Model.MistResearchUnlocked)
             {

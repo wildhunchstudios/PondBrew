@@ -60,8 +60,14 @@ namespace EvolutionShop
             if (!AutomationControlsAvailable()) return false;
             if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount != 0)
             { Notify("Buy lab modules during a clear preparation night."); return false; }
-            return ChangeAutomation((automation, game) => automation.Purchase(game, collector),
+            bool purchased = ChangeAutomation((automation, game) => automation.Purchase(game, collector),
                 collector ? "Collector installed, switched off. Choose a recipe and enable it." : "Doser installed, switched off. Choose a recipe and enable it.");
+            if (purchased) {
+                ReconcileLabPresentation();
+                World.PresentResearchUpgrade(collector ? FxResearchUpgrade.Collector : FxResearchUpgrade.Doser, NextFxSequence());
+                sound.ResearchConfirmation();
+            }
+            return purchased;
         }
         public bool SetAutomationEnabled(bool collector, bool enabled) => AutomationControlsAvailable() &&
             ChangeAutomation((automation, game) => automation.SetEnabled(collector, enabled),
@@ -308,6 +314,7 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath, CaptureStaffSlotWithAutomation(game, Staff, null, null, lab, Automation), out var error))
             {
                 SaveError = error; AutomationBlockedBySave = true; ResetAutomationClock();
+                World.CancelFxTransient(); sound.StopLabAudio(); sound.StopResearchAudio(); ReconcileLabPresentation();
                 Notify("Target refill could not save. No Moss orders changed; retry saving at the lab bench.");
                 return false;
             }
@@ -318,11 +325,12 @@ namespace EvolutionShop
         void TickAutomation(float seconds)
         {
             MaintainAutomationTarget();
-            labModuleRuntimeBlocked = false;
+            labModuleRuntimeBlocked = false; labModuleStaffPriority = false;
             if (seconds <= 0 || float.IsNaN(seconds) || float.IsInfinity(seconds) || !Automation.IsPending)
             { ResetAutomationClock(); return; }
             if (AutomationGate() != null) { labModuleRuntimeBlocked = true; ResetAutomationClock(); return; }
             bool priority = AutomationTechnicianPriority;
+            labModuleStaffPriority = priority;
             if (priority) { labModuleRuntimeBlocked = true; ResetAutomationClock(); return; }
             bool technicianHandoff = AutomationTechnicianHandoff;
             var next = Automation.NextStep(Model, priority, technicianHandoff);
@@ -349,6 +357,7 @@ namespace EvolutionShop
             {
                 SaveError = error;
                 AutomationBlockedBySave = true;
+                World.CancelFxTransient(); sound.StopLabAudio(); sound.StopResearchAudio(); ReconcileLabPresentation();
                 ResetAutomationClock();
                 Notify("Lab helper could not save. Nothing changed. Retry at the lab bench after restoring saving.");
                 return false;
@@ -361,6 +370,7 @@ namespace EvolutionShop
             saveClock = 0;
             ResetAutomationClock();
             World.Refresh(Model);
+            ReconcileLabPresentation();
             if (success != null) Notify(success);
             return true;
         }
@@ -376,12 +386,14 @@ namespace EvolutionShop
             if (!SaveStore.Write(SavePath, CaptureStaffSlotWithAutomation(game, Staff, stocking, null, null, automation), out var error))
             {
                 SaveError = error; AutomationBlockedBySave = true; ResetAutomationClock();
+                World.CancelFxTransient(); sound.StopLabAudio(); sound.StopResearchAudio(); ReconcileLabPresentation();
                 Notify("Culture preparation settings could not save. Previous settings and specimens remain unchanged."); return false;
             }
             bool stockerTargetsChanged = StockerTargetsDiffer(Stocking, stocking, game);
             Automation = automation; Stocking = stocking; SaveError = null; saveClock = 0; ResetAutomationClock();
             if (stockerTargetsChanged) Stocker.ResetTransient();
             World.Refresh(Model);
+            ReconcileLabPresentation();
             if (success != null) Notify(success);
             return true;
         }

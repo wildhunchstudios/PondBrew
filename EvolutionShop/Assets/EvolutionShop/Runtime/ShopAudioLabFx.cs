@@ -8,6 +8,24 @@ namespace EvolutionShop
         readonly AudioClip[] labClips = new AudioClip[6];
         public int LabPlaybackCount { get; private set; }
         public bool LabPlaying => labSource && labSource.isPlaying;
+        bool researchConfirmationOwned;
+        public int ResearchPlaybackCount { get; private set; }
+        public bool ResearchAudioOwned => researchConfirmationOwned;
+        public bool ResearchAudioActive => researchConfirmationOwned && source && source.clip == confirm && source.isPlaying;
+        public void ResearchConfirmation()
+        {
+            if (!isActiveAndEnabled || !source || !source.isActiveAndEnabled || !confirm) return;
+            PlayService(confirm, .25f);
+            researchConfirmationOwned = true; ResearchPlaybackCount++;
+        }
+        public void StopResearchAudio()
+        {
+            if (!researchConfirmationOwned) return;
+            researchConfirmationOwned = false;
+            if (!source || source.clip != confirm) return;
+            source.Stop(); source.clip = null;
+            // A preceding discovery may still own a longer protected service window.
+        }
         void BuildLabAudio()
         {
             labSource = CreateVoice();

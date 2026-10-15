@@ -6,6 +6,7 @@ namespace EvolutionShop
     {
         void DrawAutomationPanel()
         {
+            DrawResearchUpgradeStrip();
             Heading("Culture preparation");
             Text(AutomationStatus);
             Small(Automation.MaintainEnabled ?

@@ -124,7 +124,7 @@ namespace EvolutionShop
             Check(world.LabModuleState==LabModuleVisualState.Off,"Purchased collector has still off state");yield return GateCapture("fx03-module-off");
             Check(shop.SetAutomationEnabled(true,true) && shop.SelectAutomationRecipe("pondlet"),"Enable collector for discovered recipe");
             Check(shop.SetAutomationPaused(true) && shop.RequestAutomationBatch(),"Pending helper can remain explicitly paused");yield return null;
-            Check(world.LabModuleState==LabModuleVisualState.Blocked,"Paused pending helper exposes calm blocked state");int module=world.LabModuleCueCount;string request=shop.Automation.RequestId;
+            Check(world.LabModuleState==LabModuleVisualState.Paused,"Paused pending helper exposes calm explicit paused state");int module=world.LabModuleCueCount;string request=shop.Automation.RequestId;
             yield return new WaitForSeconds(.7f);Check(world.LabModuleCueCount==module,"Blocked helper never pulses on retries");yield return GateCapture("fx03-module-blocked");
             Check(shop.SetAutomationPaused(false),"Resume same collector request");shop.SetPanel(ShopPanel.None);yield return AutomationWait(()=>world.LabModuleCueCount>module,3,"durable module collection");
             Check(world.LabModuleCueCount==module+1 && shop.Automation.RequestId==request && shop.Model.Available(CultureKind.Bloom)==1,"One saved collection unit gives one module valve cue on same request");Transform valve=null;foreach(var t in StationOf(StationKind.Upgrade).GetComponentsInChildren<Transform>(true))if(t.name=="FX / Collector module valve")valve=t;

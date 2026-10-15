@@ -572,7 +572,7 @@ namespace EvolutionShop
             // Reload adopts a different authority snapshot; its restored units are not new refill events.
             if (!ReferenceEquals(lastModel, model)) {
                 if (fxCues != null) CancelFxOwner(fxCues.Find("incubator"));
-                AdoptGrowerModel(); ResetAdvancedLabFx();
+                AdoptGrowerModel(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             }
             lastModel = model;
             bloomCount = model.Available(CultureKind.Bloom);

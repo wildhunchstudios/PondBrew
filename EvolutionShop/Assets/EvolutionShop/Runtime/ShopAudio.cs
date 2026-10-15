@@ -70,6 +70,7 @@ namespace EvolutionShop
         void PlayService(AudioClip clip, float protection)
         {
             if (!isActiveAndEnabled || !source || !source.isActiveAndEnabled || !clip) return;
+            researchConfirmationOwned = false;
             StopComedy();
             // Replace a service cue instead of stacking unbounded one-shots. Protect a preceding
             // discovery's full window even if another valid service request arrives during it.
@@ -147,6 +148,7 @@ namespace EvolutionShop
         }
         void OnDisable()
         {
+            StopResearchAudio();
             StopComedy(); StopLabAudio();
             if (source) { source.Stop(); source.clip = null; }
             servicePriorityUntil = 0;

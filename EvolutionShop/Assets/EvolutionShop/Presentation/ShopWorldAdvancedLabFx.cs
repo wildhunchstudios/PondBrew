@@ -115,7 +115,7 @@ namespace EvolutionShop
             var source = advancedSources[AdvancedIndex(culture)];
             if (!source.Root || fxCues == null || !fxCues.IsValid(source.Owner)) return;
             if (module) source.ModuleCount++; else source.ManualCount++;
-            EmitAdvancedAccent(culture, true);
+            if (!module) EmitAdvancedAccent(culture, true); // Module source pulses belong to FX-10.
         }
         public void PresentAdvancedModuleCollection(CultureKind culture) => AcceptAdvancedCollection(culture, true);
 
@@ -123,7 +123,7 @@ namespace EvolutionShop
         {
             if (!success || !saved) return;
             if (kind == FxAdvancedLabEvent.SparkUnlocked || kind == FxAdvancedLabEvent.MistUnlocked) {
-                if (AdvancedCommandVisible) EmitAdvancedAccent(kind == FxAdvancedLabEvent.SparkUnlocked ? CultureKind.Spark : CultureKind.Mist, true);
+                // FX-10 owns the one saved research confirmation; source ambience remains independent.
                 return;
             }
             if (conditionerId == null || !conditioners.TryGetValue(conditionerId, out var vat) || lastModel == null || !lastModel.GetConditioner(conditionerId).HasValue) return;

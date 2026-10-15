@@ -104,6 +104,7 @@ namespace EvolutionShop
         public void CancelFxOwner(FxOwnerToken owner)
         {
             CancelAquariumOwner(owner);
+            CancelResearchAutomationOwner(owner);
             if (owner.IsDefined && owner.Equals(collectionOwner)) {
                 ResetCollectionFx(); harvesting = false; labHarvestSource = null; CancelHandsPose();
             }
@@ -114,7 +115,7 @@ namespace EvolutionShop
         }
         public void CancelFxTransient()
         {
-            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx();
+            fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)
             { particles[i].Root.gameObject.SetActive(false); Destroy(particles[i].Root.gameObject); }
