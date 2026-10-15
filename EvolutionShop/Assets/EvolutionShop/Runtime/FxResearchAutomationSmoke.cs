@@ -54,17 +54,70 @@ namespace EvolutionShop
             File.WriteAllText(Path.Combine(evidence,name+"-motion.json"),JsonUtility.ToJson(new ResearchAutomationTrace{context="Actual saved commands and ordinary simulation time; scripted operator, isolated labeled setup; no native-input, audio listening or performance claim",frames=frames.ToArray()},true));
             Check(frames.Count>2,"Actual research/module frames / "+name);
         }
+        // One diagnostic camera readback, separate from the normal-HUD recorder. CPU PNG work
+        // occurs only after the measured clip ends; the captured image is still the real saved cue.
+        sealed class ResearchWorldCapture : IDisposable
+        {
+            const int Width=1600,Height=900;
+            RenderTexture target;
+            UnityEngine.Rendering.AsyncGPUReadbackRequest request;
+            readonly byte[] bytes=new byte[Width*Height*4];
+            bool disposed;
+            public bool Requested {get;private set;}
+            public bool Complete {get;private set;}
+            public string Failure {get;private set;}
+            public ResearchWorldCapture()
+            {
+                if(!SystemInfo.supportsAsyncGPUReadback)throw new InvalidOperationException("Research camera diagnostic requires asynchronous GPU readback.");
+                target=new RenderTexture(Width,Height,24,RenderTextureFormat.ARGB32);target.Create();
+            }
+            public void Request(Camera camera)
+            {
+                if(Requested||disposed)throw new InvalidOperationException("Only one actual research camera sample is allowed.");
+                UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera,new UnityEngine.Rendering.RenderPipeline.StandardRequest{destination=target});
+                request=UnityEngine.Rendering.AsyncGPUReadback.Request(target,0,TextureFormat.RGBA32,result=>{
+                    try {if(result.hasError)Failure="Actual research camera readback failed.";else if(!disposed)result.GetData<byte>().CopyTo(bytes);}
+                    catch(Exception ex){Failure=ex.ToString();}
+                    finally {Complete=true;ReleaseTarget();}
+                });
+                Requested=true;
+            }
+            public void Save(string path)
+            {
+                if(!Complete||Failure!=null||disposed)throw new InvalidOperationException(Failure??"Actual research camera readback is incomplete.");
+                var image=new Texture2D(Width,Height,TextureFormat.RGBA32,false);
+                try {image.LoadRawTextureData(bytes);image.Apply();File.WriteAllBytes(path,image.EncodeToPNG());}
+                finally {UnityEngine.Object.Destroy(image);}
+            }
+            void ReleaseTarget(){if(target){target.Release();UnityEngine.Object.Destroy(target);target=null;}}
+            public void Dispose()
+            {
+                disposed=true;
+                // On a failed/canceled clip, retire this request before releasing its GPU resource.
+                try {if(Requested&&!Complete)request.WaitForCompletion();}
+                finally {ReleaseTarget();}
+            }
+        }
         IEnumerator ResearchAutomationPurchase(string name,FxResearchUpgrade kind,Func<bool> purchase,Func<bool> duplicate)
         {
-            var before=shop.World.ResearchAutomationForValidation;var audio=shop.GetComponent<ShopAudio>();int cash=shop.Model.Currency,sounds=audio.ResearchPlaybackCount;bool accepted=false;
-            yield return ResearchAutomationClip(name,2.1f,age=>{
-                if(accepted){if(age>=1.1f)shop.SetPanel(ShopPanel.None);return;}if(age<.35f)return;accepted=true;Check(purchase()&&shop.SaveError==null,"Recorded actual durable purchase / "+kind);
-                var after=shop.World.ResearchAutomationForValidation;
-                Check(after.ResearchCount==before.ResearchCount+1&&after.LastResearch==kind,"Exactly one correct research accent / "+kind);
-                Check(after.ResearchParticles>0,"Accepted purchase admits visible pooled research effect / "+kind);
-                Check(audio.ResearchPlaybackCount==sounds+1&&audio.ResearchAudioActive,"Actual saved purchase owns exactly one active research confirmation request / "+kind);
-                StartCoroutine(Capture(name+"-actual-saved-world"));
-            });
+            var before=shop.World.ResearchAutomationForValidation;var audio=shop.GetComponent<ShopAudio>();int cash=shop.Model.Currency,sounds=audio.ResearchPlaybackCount;bool accepted=false;float purchaseAge=0;
+            using(var diagnostic=new ResearchWorldCapture()){
+                yield return ResearchAutomationClip(name,2.1f,age=>{
+                    if(accepted){
+                        if(!diagnostic.Requested&&age>=purchaseAge+.05f)diagnostic.Request(shop.Player.View);
+                        if(age>=1.1f)shop.SetPanel(ShopPanel.None);return;
+                    }
+                    if(age<.35f)return;accepted=true;purchaseAge=age;Check(purchase()&&shop.SaveError==null,"Recorded actual durable purchase / "+kind);
+                    var after=shop.World.ResearchAutomationForValidation;
+                    Check(after.ResearchCount==before.ResearchCount+1&&after.LastResearch==kind,"Exactly one correct research accent / "+kind);
+                    Check(after.ResearchParticles>0,"Accepted purchase admits visible pooled research effect / "+kind);
+                    Check(audio.ResearchPlaybackCount==sounds+1&&audio.ResearchAudioActive,"Actual saved purchase owns exactly one active research confirmation request / "+kind);
+                });
+                Check(diagnostic.Requested,"Actual saved research camera diagnostic requested / "+kind);
+                float deadline=Time.realtimeSinceStartup+3;
+                while(!diagnostic.Complete){if(Time.realtimeSinceStartup>deadline)throw new TimeoutException("Drain actual research camera readback.");yield return null;}
+                diagnostic.Save(Path.Combine(evidence,name+"-actual-saved-world-camera.png"));
+            }
             Check(accepted&&shop.Model.Currency<cash,"Actual purchase spends existing credits / "+kind);
             int count=shop.World.ResearchAutomationForValidation.ResearchCount;
             if(kind==FxResearchUpgrade.Mist)yield return ConditioningPanel(advancedVat);
