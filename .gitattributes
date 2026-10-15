@@ -55,3 +55,6 @@
 
 # Preserve byte-hashed FX09 incubation evidence.
 /Docs/Evidence/fx-09/** -text -whitespace
+
+# Preserve byte-hashed FX10 research and automation evidence.
+/Docs/Evidence/fx-10/** -text -whitespace
