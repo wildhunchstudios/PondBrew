@@ -65,7 +65,9 @@ namespace EvolutionShop
             return clip;
         }
         public void Collect() => PlayService(collect, .25f);
-        public void Feedback(bool success) => PlayService(success ? confirm : reject, .25f);
+        // Counts requests, not audible output; muted/missing playback remains presentation only.
+        public int FeedbackSuccessCount { get; private set; }
+        public void Feedback(bool success) { if (success) FeedbackSuccessCount++; PlayService(success ? confirm : reject, .25f); }
         public void Discovery() => PlayService(discovery, .8f);
         void PlayService(AudioClip clip, float protection)
         {

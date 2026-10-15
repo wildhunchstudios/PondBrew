@@ -71,6 +71,7 @@ namespace EvolutionShop
             }
             ReconcileGrowthFx();
             ReconcileAdvancedLabFx();
+            ReconcilePlayerInteraction();
         }
         void ReconcileFxGrower(string key, Transform root, int units, int capacity)
         { var owner = BindFxOwner(key, null, root); fxCues.SetState(owner, units == 0 ? FxSteadyState.Empty : units >= capacity ? FxSteadyState.Full : FxSteadyState.Refilling); }
@@ -103,6 +104,7 @@ namespace EvolutionShop
         }
         public void CancelFxOwner(FxOwnerToken owner)
         {
+            if (owner.IsDefined && owner.Equals(playerInteractionOwner)) CancelPlayerInteraction();
             CancelAquariumOwner(owner);
             CancelResearchAutomationOwner(owner);
             if (owner.IsDefined && owner.Equals(collectionOwner)) {
@@ -115,6 +117,7 @@ namespace EvolutionShop
         }
         public void CancelFxTransient()
         {
+            CancelPlayerInteraction();
             fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)
@@ -142,6 +145,7 @@ namespace EvolutionShop
                     Quaternion.Angle(binding.Root.rotation, binding.Rotation) > .01f || (binding.Root.lossyScale - binding.Scale).sqrMagnitude > .000001f))
                 { CancelFxOwner(binding.Token); fxCues.Unregister(binding.Token); fxBindings[i] = default; }
             }
+            TickPlayerInteraction(dt);
             fxCues.Tick(dt); fxPool?.Tick(fxCues, dt);
         }
         void DisposeFxPresentation()

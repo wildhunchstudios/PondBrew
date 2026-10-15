@@ -44,6 +44,39 @@ namespace EvolutionShop
             World.TryFxCue(result.Success ? successCue : FxCueId.HandRefused, sequence, origin, culture);
             if (result.Success && saved && successCue == FxCueId.HandPlace) World.PresentPondletPlacement(destination, sequence);
         }
+        Station PlayerResultStation(FxPlayerInteraction kind, string destination)
+        {
+            if (!World || !fxHasFocus || Paused || PlacementActive || string.IsNullOrEmpty(destination)) return null;
+            foreach (var station in World.Stations) {
+                bool matches = kind == FxPlayerInteraction.Transfer ? station.TankId == selectedTank :
+                    kind == FxPlayerInteraction.Rack ? station.StorageItemId == selectedRack : station.TankId == destination;
+                if (matches && AtStockStation(station)) return station;
+            }
+            return null;
+        }
+        void PresentPlayerResult(ActionResult result, bool saved, FxPlayerInteraction kind, string destination)
+        {
+            if (!World || kind == FxPlayerInteraction.None) return;
+            if (result.Success && !saved) { World.CancelFxTransient(); return; }
+            var station = PlayerResultStation(kind, destination);
+            if (!station) return;
+            uint sequence = NextFxSequence();
+            World.PresentPlayerInteraction(result.Success ? kind : FxPlayerInteraction.Refused, station, destination, sequence);
+            if (result.Success && saved && kind == FxPlayerInteraction.Place) World.PresentPondletPlacement(destination, sequence);
+        }
+        void PresentPlayerUpgradeRefusal()
+        {
+            if (!World || !fxHasFocus || Panel != ShopPanel.Upgrade) return;
+            foreach (var station in World.Stations)
+                if (station.Kind == StationKind.Upgrade && AtStockStation(station)) {
+                    World.PresentPlayerInteraction(FxPlayerInteraction.Refused, station, null, NextFxSequence()); return;
+                }
+        }
+        void PresentPlayerInteract(Station station)
+        {
+            if (World && fxHasFocus && AtStockStation(station))
+                World.PresentPlayerInteraction(FxPlayerInteraction.Interact, station, null, NextFxSequence());
+        }
         void ApplyFxViewPolicy()
         {
             if (!World) return;

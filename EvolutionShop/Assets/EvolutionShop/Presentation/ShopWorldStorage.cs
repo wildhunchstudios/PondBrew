@@ -89,7 +89,7 @@ namespace EvolutionShop
                 if (display.SpeciesId != species)
                 {
                     ReleaseStorageCreature(display);
-                    SetCreature(display, species);
+                    SetCreature(display, species, resident.HasValue ? resident.Value.Id : null);
                     if (display.Creature)
                     {
                         // New residents can render before the next world animation update (including reload).

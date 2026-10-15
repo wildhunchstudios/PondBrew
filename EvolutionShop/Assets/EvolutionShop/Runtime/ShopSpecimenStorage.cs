@@ -40,8 +40,8 @@ namespace EvolutionShop
         public bool StoreReadyInRack(string storageId)
         {
             if (!AtRackSlot(storageId)) return false;
-            var result = Perform(Model.StoreReadyOutput(storageId));
-            if (result.Success) Notify("Creature stored. The incubator is free for the next recipe.");
+            var result = PerformWithFx(Model.StoreReadyOutput(storageId), FxCueId.None, destination: storageId, playerInteraction: FxPlayerInteraction.Rack);
+            if (result.Success && SaveError == null) Notify("Creature stored. The incubator is free for the next recipe.");
             return result.Success;
         }
 
@@ -51,16 +51,17 @@ namespace EvolutionShop
             var result = Model.TransferStorageToTank(storageId, selectedTank, expectedSpecimenId);
             if (result.Success)
             { Reports.RecordRestock(); Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player); }
-            Perform(result);
-            if (result.Success) Notify("Stored creature moved into this display. It is available to customers.");
+            PerformWithFx(result, FxCueId.None, destination: selectedTank, playerInteraction: FxPlayerInteraction.Place);
+            if (result.Success && SaveError == null) Notify("Stored creature moved into this display. It is available to customers.");
             return result.Success;
         }
 
         public bool ReturnDisplayToStorage(string storageId, string expectedSpecimenId)
         {
             if (!AtDisplay()) return false;
-            var result = Perform(Model.ReturnTankToStorage(selectedTank, storageId, expectedSpecimenId));
-            if (result.Success) Notify("Creature returned to the lab rack. It is no longer for sale.");
+            var result = PerformWithFx(Model.ReturnTankToStorage(selectedTank, storageId, expectedSpecimenId), FxCueId.None,
+                destination: storageId, playerInteraction: FxPlayerInteraction.Transfer);
+            if (result.Success && SaveError == null) Notify("Creature returned to the lab rack. It is no longer for sale.");
             return result.Success;
         }
 

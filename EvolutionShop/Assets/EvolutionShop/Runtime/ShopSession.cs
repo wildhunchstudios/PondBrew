@@ -37,7 +37,7 @@ namespace EvolutionShop
         string message;
         float messageUntil, revealUntil, saveClock, visualClock;
         string revealedSpecies, selectedTank = "tank-a";
-        bool initialized, quitRequested;
+        bool initialized, quitRequested, collectionNeedsRelease;
         CultureKind? harvesting;
         float harvestClock;
         public static string Arg(string key)
@@ -194,14 +194,18 @@ namespace EvolutionShop
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (ValidationMode && FreezeFxVocabularyForValidation && FxIntegratedProfileForValidation) return;
 #endif
-            bool held = Panel == ShopPanel.None && Mouse.current != null && Mouse.current.leftButton.isPressed;
+            bool pointerHeld = Mouse.current != null && Mouse.current.leftButton.isPressed;
+            if (!pointerHeld) collectionNeedsRelease = false;
+            else if (!fxHasFocus || (SlapGesture && SlapGesture.IsPlaying)) collectionNeedsRelease = true;
+            bool held = gameplayAtFrameStart && Panel == ShopPanel.None && fxHasFocus && !collectionNeedsRelease &&
+                !(SlapGesture && SlapGesture.IsPlaying) && pointerHeld;
             bool grower = TryStationCulture(Focused, out var culture);
             if (held && grower)
                 Harvest(culture, Time.deltaTime);
             else StopHarvest();
             World.SetGrowerCollectionIntent(Mouse.current != null && Mouse.current.leftButton.isPressed, Focused, SaveError != null);
             World.SetHarvesting(held && grower && HarvestProgress > 0, Focused);
-            if (Panel == ShopPanel.None && keyboard != null && keyboard.eKey.wasPressedThisFrame && Focused != null)
+            if (gameplayAtFrameStart && Panel == ShopPanel.None && fxHasFocus && keyboard != null && keyboard.eKey.wasPressedThisFrame && Focused != null)
                 Interact(Focused);
             UpdateSlapInput(keyboard, gameplayAtFrameStart);
         }
@@ -305,8 +309,7 @@ namespace EvolutionShop
             var result = Model.TransferToTank(tankId);
             if (result.Success)
             { Reports.RecordRestock(); Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player); }
-            bool physical = Panel == ShopPanel.None && Focused != null && Focused.TankId == tankId;
-            return PerformWithFx(result, physical ? FxCueId.HandPlace : FxCueId.None, destination: tankId);
+            return PerformWithFx(result, FxCueId.None, destination: tankId, playerInteraction: FxPlayerInteraction.Place);
         }
         public ActionResult BuySiphonUpgrade() => PerformWithFx(Model.BuyUpgrade(), Panel == ShopPanel.None ? FxCueId.HandUpgrade : FxCueId.None, researchUpgrade: FxResearchUpgrade.Siphon);
         public bool IsAtCounter
@@ -414,6 +417,7 @@ namespace EvolutionShop
             if (Player && World && station.transform.position.z > .5f &&
                 Vector3.Distance(Player.transform.position, station.transform.position) < 4.5f &&
                 Tutorial.ObserveOrientation(false, false, true)) SaveNow();
+            var previousPanel = Panel;
             switch (station.Kind)
             {
                 case StationKind.Bloom: case StationKind.Flow:
@@ -433,12 +437,17 @@ namespace EvolutionShop
                 case StationKind.Counter: SetPanel(ShopPanel.Counter); break;
                 case StationKind.Upgrade: SetPanel(ShopPanel.Upgrade); break;
             }
+            if (Panel != previousPanel || station.Kind == StationKind.Bloom || station.Kind == StationKind.Flow)
+                PresentPlayerInteract(station);
         }
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
         ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null,
-            FxAdvancedLabEvent advancedEvent = FxAdvancedLabEvent.None, string advancedOwner = null, FxResearchUpgrade researchUpgrade = FxResearchUpgrade.None)
+            FxAdvancedLabEvent advancedEvent = FxAdvancedLabEvent.None, string advancedOwner = null, FxResearchUpgrade researchUpgrade = FxResearchUpgrade.None,
+            FxPlayerInteraction playerInteraction = FxPlayerInteraction.None)
         {
-            if (!result.Success || (researchUpgrade == FxResearchUpgrade.None && advancedEvent == FxAdvancedLabEvent.None && fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted)) sound.Feedback(result.Success);
+            bool genericFeedback = researchUpgrade == FxResearchUpgrade.None && advancedEvent == FxAdvancedLabEvent.None &&
+                fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted;
+            if (!result.Success) sound.Feedback(false);
             if (result.Success)
             {
                 Notify("Done.", 1.3f);
@@ -446,7 +455,9 @@ namespace EvolutionShop
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
                 bool saved = SaveNow();
                 if (!saved) sound.StopResearchAudio();
+                else if (genericFeedback) sound.Feedback(true);
                 PresentFxResult(result, saved, fxCue, fxOrigin, culture, destination);
+                PresentPlayerResult(result, saved, playerInteraction, destination);
                 if (saved && researchUpgrade != FxResearchUpgrade.None) {
                     World.PresentResearchUpgrade(researchUpgrade, NextFxSequence()); sound.ResearchConfirmation();
                 }
@@ -460,7 +471,9 @@ namespace EvolutionShop
                     }
                 }
             }
-            else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin, culture); }
+            else { Notify(FailureText(result.Failure)); PresentFxResult(result, false, fxCue, fxOrigin, culture);
+                PresentPlayerResult(result, false, playerInteraction, destination);
+                if (researchUpgrade == FxResearchUpgrade.Siphon) PresentPlayerUpgradeRefusal(); }
             return result;
         }
         public void SetPanel(ShopPanel panel)
@@ -485,7 +498,10 @@ namespace EvolutionShop
             bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
                 Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
             if (Panel == ShopPanel.Incubator && panel != Panel) { World?.CancelFxTransient(); sound?.StopDoseAudio(); }
-            if (Panel != panel) World?.CancelResearchUpgrade();
+            if (Panel != panel) {
+                collectionNeedsRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
+                World?.CancelResearchUpgrade(); World?.CancelPlayerInteraction();
+            }
             Panel = panel;
             ApplyFxViewPolicy();
             if (Paused || panel == ShopPanel.Arrange) ResetAutomationClock();
@@ -502,6 +518,10 @@ namespace EvolutionShop
         {
             if (enabled && (!Model.UpgradeOwned || Model.ReservedCultureCount > Config.BaseCapacity))
             { Notify("Comparison needs an owned upgrade and at most four cultures."); return false; }
+            if (BaselinePreview != enabled) {
+                collectionNeedsRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
+                StopHarvest(); World.SetHarvesting(false, null); World.CancelToolInteraction();
+            }
             BaselinePreview = enabled;
             World.SetToolUpgrade(Model.UpgradeOwned && !enabled);
             Notify(enabled ? "DEV comparison: original 4-unit chamber / slower collection." : "Upgraded chamber restored.");

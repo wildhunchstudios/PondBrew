@@ -60,8 +60,9 @@ namespace EvolutionShop
         public bool StoreConditionerInRack(string conditionerId, int slot, string storageId, string expectedId)
         {
             if (!AtRackSlot(storageId)) return false;
-            var result = PerformAdvancedLab(Model.TransferConditionerToStorage(conditionerId, slot, storageId, expectedId), FxAdvancedLabEvent.ConditioningOutput, conditionerId);
-            if (result.Success) Notify("Vat output moved safely into this rack.");
+            var result = PerformWithFx(Model.TransferConditionerToStorage(conditionerId, slot, storageId, expectedId), FxCueId.None,
+                destination: storageId, advancedEvent: FxAdvancedLabEvent.ConditioningOutput, advancedOwner: conditionerId, playerInteraction: FxPlayerInteraction.Rack);
+            if (result.Success && SaveError == null) Notify("Vat output moved safely into this rack.");
             return result.Success;
         }
 
@@ -74,8 +75,9 @@ namespace EvolutionShop
                 Reports.RecordRestock();
                 Tutorial.ObserveDisplayed(Model, result, TutorialActionOrigin.Player);
             }
-            PerformAdvancedLab(result, FxAdvancedLabEvent.ConditioningOutput, conditionerId);
-            if (result.Success) Notify("Vat output stocked in this display. It is available to customers.");
+            PerformWithFx(result, FxCueId.None, destination: selectedTank, advancedEvent: FxAdvancedLabEvent.ConditioningOutput,
+                advancedOwner: conditionerId, playerInteraction: FxPlayerInteraction.Place);
+            if (result.Success && SaveError == null) Notify("Vat output stocked in this display. It is available to customers.");
             return result.Success;
         }
 

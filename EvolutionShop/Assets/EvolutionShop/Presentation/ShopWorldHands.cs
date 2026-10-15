@@ -9,6 +9,15 @@ namespace EvolutionShop
         public float RightCurl, LeftCurl, LeftRoll, RightRoll;
         static float Smooth(float value) { value = Mathf.Clamp01(value); return value * value * (3 - 2 * value); }
         static float Pulse(float time, float peak, float end) => time < peak ? Smooth(time / peak) : 1 - Smooth((time - peak) / (end - peak));
+        public static FxHandPose Move(float phase, float weight, bool reduced)
+        {
+            if (reduced || !FxParticleRequest.Finite(phase) || !FxParticleRequest.Finite(weight)) return default;
+            weight = Mathf.Clamp01(weight);
+            return new FxHandPose {
+                ToolOffset = new Vector3(Mathf.Sin(phase * .5f) * .006f, Mathf.Sin(phase) * .006f, 0) * weight,
+                ToolAngles = new Vector3(0, 0, Mathf.Sin(phase * .5f) * 1.5f * weight)
+            };
+        }
         public static FxHandPose Resolve(FxCueId action, float age, bool collecting, float releaseCurl, bool reduced)
         {
             var pose = new FxHandPose();
@@ -81,8 +90,11 @@ namespace EvolutionShop
         public void SetHandContext(Vector3 playerPosition, bool canMove, bool slapPlaying)
         {
             Vector3 delta = handPositionKnown ? playerPosition - handPlayerPosition : Vector3.zero;
-            handPlayerPosition = playerPosition; handPositionKnown = true; delta.y = 0;
-            handTravel = canMove && delta.sqrMagnitude < .25f ? delta.magnitude : 0;
+            bool validPosition = FxParticleRequest.Finite(playerPosition);
+            handPlayerPosition = playerPosition; handPositionKnown = validPosition; delta.y = 0;
+            bool continuous = validPosition && FxParticleRequest.Finite(delta) && delta.sqrMagnitude < .25f;
+            handTravel = canMove && continuous ? delta.magnitude : 0;
+            if (!canMove || !continuous) handMovePhase = handMoveWeight = 0;
             if (handSlap != slapPlaying) { handSlap = slapPlaying; CancelHandsPose(); }
         }
         void HandCollectEdge(bool next, bool previous)
@@ -117,10 +129,17 @@ namespace EvolutionShop
             fxCues.Cancel(fxCues.Find("hands"));
             handAction = id; handAge = 0; handDuration = duration; handPriority = id == FxCueId.HandRefused ? 5 : 4; handPreviewFrozen = false; HandCueCount++;
         }
+        public void CancelToolInteraction()
+        {
+            ResetCollectionFx(); harvesting = false; labHarvestSource = null; CancelHandsPose();
+            if (fxCues == null) return;
+            var owner = fxCues.Find("tool"); fxCues.Cancel(owner); fxPool?.Cancel(owner);
+            fxCues.Cancel(fxCues.Find("hand-command"));
+        }
         void CancelHandsPose()
         {
             handAction = FxCueId.None; handAge = handDuration = handReleaseCurl = handTravel = handMovePhase = handMoveWeight = 0;
-            handPriority = 0; handPreviewFrozen = handPreviewCollecting = false;
+            handPriority = 0; handPositionKnown = false; handPreviewFrozen = handPreviewCollecting = false;
             if (fxCues != null) fxCues.Cancel(fxCues.Find("hands"));
             RestoreHandRest();
             if (ToolRoot) { ToolRoot.localPosition = new Vector3(.33f, -.16f, .58f); ToolRoot.localRotation = Quaternion.Euler(-5, -7, -5); }
@@ -139,13 +158,15 @@ namespace EvolutionShop
             if (handAction != FxCueId.None && !handPreviewFrozen) { handAge += Mathf.Max(0, dt); if (handAge >= handDuration) handAction = FxCueId.None; }
             if (handsRigValid) for (int i = 0; i < handPivots.Length; i++) if (!handPivots[i]) { handsRigValid = false; RestoreHandRest(); break; }
             var pose = FxHandPose.Resolve(handAction, handAge, handPreviewFrozen ? handPreviewCollecting : harvesting, handReleaseCurl, fxReducedMotion);
-            bool moving = handTravel > .0001f;
-            handMoveWeight = Mathf.MoveTowards(handMoveWeight, moving ? 1 : 0, Mathf.Max(0,dt) / (moving ? .20f : .16f));
-            if (!fxReducedMotion && handAction == FxCueId.None && !harvesting && handMoveWeight > 0)
-            {
-                handMovePhase += handTravel * 22;
-                pose.ToolOffset.y = Mathf.Sin(handMovePhase) * .006f * handMoveWeight;
-                pose.ToolAngles.z = Mathf.Sin(handMovePhase * .5f) * 1.5f * handMoveWeight;
+            float travel = handTravel; handTravel = 0; // One sample cannot drive several presentation ticks.
+            bool moving = travel > .0001f;
+            bool actionOwnsPose = handAction != FxCueId.None || harvesting || handPreviewFrozen;
+            if (actionOwnsPose || fxReducedMotion) handMoveWeight = handMovePhase = 0;
+            else {
+                handMoveWeight = Mathf.MoveTowards(handMoveWeight, moving ? 1 : 0, Mathf.Max(0,dt) / (moving ? .20f : .16f));
+                handMovePhase = Mathf.Repeat(handMovePhase + travel * 22, Mathf.PI * 4);
+                var move = FxHandPose.Move(handMovePhase, handMoveWeight, fxReducedMotion);
+                pose.ToolOffset += move.ToolOffset; pose.ToolAngles += move.ToolAngles;
             }
             var rotation = Quaternion.Euler(-5, -7, -5);
             ToolRoot.localPosition = new Vector3(.33f, -.16f, .58f) + rotation * pose.ToolOffset * .62f;

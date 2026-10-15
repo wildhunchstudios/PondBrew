@@ -75,6 +75,8 @@ namespace EvolutionShop
             if (target == null || !Customers.Slap(target)) return false;
             slapCooldown.TryStart();
             SlapTarget = null;
+            collectionNeedsRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
+            StopHarvest(); World.SetHarvesting(false, null);
             SlapGesture.Play(ReducedGags);
             World.SetHandContext(Player.transform.position, false, SlapGesture.IsPlaying);
             StartSlapComedy();

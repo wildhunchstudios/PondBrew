@@ -253,8 +253,21 @@ namespace EvolutionShop
             float height = Mathf.Max(38, HudTextHeight(notice, centerStyle, width - 32) + 18);
             float top = Panel != ShopPanel.None ? 35 : Comedy.Active ? 208 : 82;
             float left = (1280 - width) / 2;
-            HudCard(new Rect(left, top, width, height), string.IsNullOrEmpty(SaveError) ? mint : coral);
+            var noticeRect = new Rect(left, top, width, height);
+            HudCard(noticeRect, string.IsNullOrEmpty(SaveError) ? mint : coral);
+            if (string.IsNullOrEmpty(SaveError)) DrawPlayerInteractionAccent(noticeRect);
             GUI.Label(new Rect(left + 16, top + 9, width - 32, height - 18), notice, centerStyle);
+        }
+        void DrawPlayerInteractionAccent(Rect card)
+        {
+            if (!World || World.PlayerInteractionRemaining <= 0 || Event.current.type != EventType.Repaint) return;
+            bool refused = World.LastPlayerInteraction == FxPlayerInteraction.Refused;
+            float duration = refused ? .18f : World.LastPlayerInteraction == FxPlayerInteraction.Interact ? .24f : .52f;
+            float strength = Mathf.Clamp01(World.PlayerInteractionRemaining / duration);
+            Color tint = refused ? new Color(1, .74f, .35f, .9f) : mint;
+            tint.a *= .45f + strength * .45f;
+            // Fixed card border: no new control, scroll height, displaced text or modal hands.
+            hudTheme.Draw(new Rect(card.x + 10, card.yMax - 5, card.width - 20, 3), hudTheme.Accent, tint);
         }
         void DrawDiscoveryCard()
         {
@@ -311,6 +324,8 @@ namespace EvolutionShop
             hudTheme.Draw(new Rect(342,112,596,528), hudTheme.Shadow);
             hudTheme.Draw(new Rect(344,106,592,528), hudTheme.DarkCard);
             HudCard(new Rect(350,112,580,518), mint);
+            if (Panel == ShopPanel.Tank || Panel == ShopPanel.StorageRack || Panel == ShopPanel.Conditioning)
+                DrawPlayerInteractionAccent(new Rect(350, 112, 580, 15));
             hudTheme.Draw(new Rect(310,127,48,48), hudTheme.DarkCard);
             hudTheme.Icon(new Rect(318,135,32,32), Panel == ShopPanel.Incubator || Panel == ShopPanel.Conditioning || Panel == ShopPanel.Upgrade || Panel == ShopPanel.Automation ? ShopUiTheme.Symbol.Flask : ShopUiTheme.Symbol.Leaf);
             // Content and footer anchors are deliberately retained for established input scenarios.
