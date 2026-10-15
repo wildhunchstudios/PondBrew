@@ -16,7 +16,7 @@ namespace EvolutionShop
 
             // Sample each species' existing stroke, then attenuate it as the young fish uncurls.
             // Re-sampling first prevents accumulated rotations on refresh, reset or a reused resident.
-            Animate(time);
+            AnimateSpecies(time, .7f, reduced);
             var wake = FxHatchChoreography.Resolve(hatchAge, firstHatch, reduced);
             float motion = reduced ? 0 : Mathf.Clamp01(effort / .7f) * wake.IdleWeight;
             bool wing = species == "driftwing", lantern = species == "lanternfin", ribbon = species == "ribbonfin";

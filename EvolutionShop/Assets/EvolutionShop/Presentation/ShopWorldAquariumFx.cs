@@ -70,7 +70,7 @@ namespace EvolutionShop
         }
         void ResetPondletIdentity(Display display)
         {
-            display.PondletClock = 0; display.PondletPhase = PondletMotion.IdentityPhase(display.FxSpecimenId);
+            display.PondletClock = 0; display.PondletPhase = CreatureMotion.IdentityPhase(display.FxSpecimenId);
             display.PondletFocus = display.PondletCooldown = 0; display.PondletPlacedAge = display.PondletGlanceAge = -1;
             display.PondletSequence = 0; if (display.Creature) display.Creature.SetPondletIdentity(display.FxSpecimenId);
             ResetAquariumHero(display.Habitat);
@@ -92,12 +92,28 @@ namespace EvolutionShop
             display.PondletPlacedAge = 0; display.Habitat.PlacementMask = 0; PondletPlacementCount++;
             EmitAquariumPlacement(display); return true;
         }
+        void PoseResident(Display display, float time, bool reduced)
+        {
+            var pose = CreatureMotion.Resolve(display.SpeciesId, time, display.PondletPhase, reduced);
+            display.Creature.transform.localPosition = pose.Position;
+            display.Creature.transform.localRotation = Quaternion.Euler(pose.Angles);
+            display.Creature.AnimateSpecies(time, pose.Effort, reduced);
+        }
+
+        void TickResident(Display display, float dt)
+        {
+            if (display.SpeciesId == "pondlet" && display.Habitat != null) { TickPondlet(display, dt); return; }
+            if (fxEnabled && fxPolicy == FxViewPolicy.Visible && !fxReducedMotion && display.Root.gameObject.activeInHierarchy)
+                display.PondletClock += Mathf.Max(0, dt);
+            PoseResident(display, display.PondletClock, fxReducedMotion || !fxEnabled);
+        }
+
         void TickPondlet(Display display, float dt)
         {
-            bool visible = fxEnabled && fxPolicy == FxViewPolicy.Visible;
+            bool visible = fxEnabled && fxPolicy == FxViewPolicy.Visible && display.Root.gameObject.activeInHierarchy;
             if (visible)
             {
-                display.PondletClock += dt;
+                if (!fxReducedMotion) display.PondletClock += Mathf.Max(0, dt);
                 display.PondletCooldown = Mathf.Max(0, display.PondletCooldown - dt);
                 if (display.PondletPlacedAge >= 0) { display.PondletPlacedAge += dt; if (display.PondletPlacedAge >= .52f) display.PondletPlacedAge = -1; }
                 if (display.PondletGlanceAge >= 0) { display.PondletGlanceAge += dt; if (display.PondletGlanceAge >= .6f) display.PondletGlanceAge = -1; }
@@ -182,7 +198,7 @@ namespace EvolutionShop
                 if(h.FishPositionKnown || d.PondletPlacedAge>=0) fxPool?.Cancel(fxCues==null ? default : fxCues.Find(h.TankId));
                 d.PondletPlacedAge=-1; ResetAquariumHero(h); return;
             }
-            bool occupied=d.SpeciesId=="pondlet" && d.Creature && !string.IsNullOrEmpty(d.FxSpecimenId);
+            bool occupied=d.Creature && !string.IsNullOrEmpty(d.FxSpecimenId);
             if(!fxReducedMotion) h.Clock+=Mathf.Max(0,dt);
             var pose=FxAquariumMotion.Habitat(h.Clock,h.Seed,occupied,fxReducedMotion,d.PondletPlacedAge);
             h.Water.localScale=new Vector3(h.WaterRest.x,h.WaterRest.y*pose.WaterScale,h.WaterRest.z);
@@ -242,6 +258,22 @@ namespace EvolutionShop
             }
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public float CreatureAgeForValidation(string id) => displays.TryGetValue(id, out var d) ? d.PondletClock : -1;
+        public float CreaturePhaseForValidation(string id) => displays.TryGetValue(id, out var d) ? d.PondletPhase : -1;
+        public bool TryGetCreatureForValidation(string id, out Transform interiorSpace, out Bounds interior,
+            out CreatureVisual creature, out string speciesId, out string specimenId)
+        {
+            interiorSpace = null; interior = default; creature = null; speciesId = specimenId = null;
+            if (!displays.TryGetValue(id, out var d) || d.Incubator || !d.Root) return false;
+            interiorSpace = d.Root.parent; interior = d.Interior; creature = d.Creature;
+            speciesId = d.SpeciesId; specimenId = d.FxSpecimenId; return true;
+        }
+        public void PreviewCreatureForValidation(string id, float time, bool reduced)
+        {
+            if (displays.TryGetValue(id, out var d) && d.Creature && !d.Incubator) PoseResident(d, time, reduced);
+        }
+
+
         public Bounds AquariumWaterBoundsForValidation(string id) => displays.TryGetValue(id,out var d) && d.Habitat!=null ? d.Habitat.InnerWater : default;
         public FxOwnerToken AquariumOwnerForValidation(string id) => fxCues==null ? default : fxCues.Find(id);
         public bool AquariumTrailActiveForValidation(string id) => displays.TryGetValue(id,out var d) && d.Habitat!=null && d.Habitat.TrailActive;

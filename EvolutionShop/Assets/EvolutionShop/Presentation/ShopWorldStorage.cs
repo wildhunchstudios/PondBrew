@@ -84,7 +84,7 @@ namespace EvolutionShop
                 var display = pair.Value;
                 if (!display.StorageStatus) continue;
                 var resident = model.GetStorage(pair.Key);
-                display.FxSpecimenId = resident.HasValue ? resident.Value.Id : null;
+
                 string species = resident.HasValue ? resident.Value.SpeciesId : null;
                 if (display.SpeciesId != species)
                 {
@@ -94,12 +94,12 @@ namespace EvolutionShop
                     {
                         // New residents can render before the next world animation update (including reload).
                         // Start broadside so a long tail cannot briefly point through the shallow rack glass.
-                        display.Creature.transform.localRotation = Quaternion.Euler(0, -90, 0);
-                        display.Creature.Animate(lastTime + display.Seed);
+                        PoseResident(display, 0, fxReducedMotion || !fxEnabled);
                         foreach (var renderer in display.Creature.GetComponentsInChildren<Renderer>(true))
                             foreach (var material in renderer.sharedMaterials) if (material) display.StorageMaterials.Add(material);
                     }
                 }
+                else SetCreature(display, species, resident.HasValue ? resident.Value.Id : null);
                 string number = pair.Key.EndsWith("-1", StringComparison.Ordinal) ? "1" : "2";
                 display.StorageStatus.text = number + " / " + (resident.HasValue ? SpeciesName(species).ToUpperInvariant() : "EMPTY");
             }

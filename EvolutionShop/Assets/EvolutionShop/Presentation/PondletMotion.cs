@@ -62,12 +62,16 @@ namespace EvolutionShop
         public bool MimicPoseActive => Time.frameCount - mimicFrame <= 1 && !mimicReduced;
         public void AnimatePondlet(float time, float effort, bool reduced, float glanceAge = -1, float hatchAge = -1, bool firstHatch = false)
         {
-            float wave = Mathf.Sin(time * 3.8f + pondletIdentityPhase);
-            if (MimicPoseActive && !reduced) wave = Mathf.Sin(Mathf.Floor(mimicTime * 2) * 1.7f);
+            if (!FxParticleRequest.Finite(time)) time = 0;
+            effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
+            AnimateExpression(time, reduced);
+            float stroke = (time + pondletIdentityPhase) * 3.8f;
+            float wave = Mathf.Sin(stroke), petal = Mathf.Sin(stroke - .55f);
+            if (MimicPoseActive && !reduced) wave = petal = Mathf.Sin(Mathf.Floor(mimicTime * 2) * 1.7f);
             float flick = glanceAge >= 0 && glanceAge < .6f && !reduced ? Mathf.Sin(glanceAge / .6f * Mathf.PI) * 3 : 0;
             var wake = FxHatchChoreography.Resolve(hatchAge, firstHatch, reduced);
             float tailAngle = reduced ? 0 : Mathf.Clamp(wave * Mathf.Lerp(5,14,effort)*wake.IdleWeight + wake.Tail,-24,24);
-            float finAngle = reduced ? 0 : Mathf.Clamp(wave * Mathf.Lerp(4,9,effort)*wake.IdleWeight + flick + wake.Fin,-28,28);
+            float finAngle = reduced ? 0 : Mathf.Clamp(petal * Mathf.Lerp(4,9,effort)*wake.IdleWeight + flick + wake.Fin,-28,28);
             if (hatchAge < 0) finAngle = Mathf.Clamp(finAngle,-12,12);
             if (tail) tail.localRotation = pondletTailRest * Quaternion.Euler(0, tailAngle, 0);
             if (finLeft) finLeft.localRotation = pondletLeftRest * Quaternion.Euler(0, 0, -finAngle);

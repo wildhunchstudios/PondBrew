@@ -138,15 +138,15 @@ namespace EvolutionShop
                     if (resident.Display.SpeciesId != species)
                     {
                         ReleaseConditioningResident(resident);
-                        SetCreature(resident.Display, species);
+                        SetCreature(resident.Display, species, specimen.HasValue ? specimen.Value.Id : null);
                         if (resident.Display.Creature)
                         {
-                            resident.Display.Creature.transform.localRotation = Quaternion.Euler(0, -90, 0);
-                            resident.Display.Creature.Animate(lastTime + resident.Display.Seed);
+                            PoseResident(resident.Display, 0, fxReducedMotion || !fxEnabled);
                             foreach (var renderer in resident.Display.Creature.GetComponentsInChildren<Renderer>(true))
                                 foreach (var material in renderer.sharedMaterials) if (material) resident.Materials.Add(material);
                         }
                     }
+                    else SetCreature(resident.Display, species, specimen.HasValue ? specimen.Value.Id : null);
                     resident.Status.text = (i + 1) + " / " + (species == null ? "EMPTY" : SpeciesName(species).ToUpperInvariant());
                 }
             }

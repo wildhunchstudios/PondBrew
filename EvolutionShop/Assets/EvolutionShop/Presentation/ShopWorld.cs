@@ -635,7 +635,10 @@ namespace EvolutionShop
             bool identityChanged = display.FxSpecimenId != specimenId;
             display.FxSpecimenId = specimenId;
             if (display.SpeciesId == species) {
-                if (identityChanged) ResetPondletIdentity(display);
+                if (identityChanged) {
+                    ResetPondletIdentity(display);
+                    if (!display.Incubator && display.Creature) PoseResident(display, 0, fxReducedMotion || !fxEnabled);
+                }
                 if (display.Incubator && display.Creature) PoseLabCreature(display, lastTime, LabHatchAge, labHatchFirst);
                 return;
             }
@@ -649,11 +652,7 @@ namespace EvolutionShop
             display.Creature.Build(species);
             ResetPondletIdentity(display);
             if (display.Incubator) PoseLabCreature(display, lastTime, -1, false);
-            else if (species == "lanternfin" || species == "driftwing")
-            {
-                r.localRotation = Quaternion.Euler(0, -90, 0);
-                display.Creature.Animate(lastTime + display.Seed);
-            }
+            else PoseResident(display, 0, fxReducedMotion || !fxEnabled);
         }
 
         public void SetToolUpgrade(bool value)
@@ -718,16 +717,8 @@ namespace EvolutionShop
             foreach (var display in displays.Values)
             {
                 if (!display.Creature) continue;
-                if (display.SpeciesId == "pondlet" && display.Habitat != null) { TickPondlet(display, dt); continue; }
                 if (display.Incubator) { PoseLabCreature(display,time,LabHatchAge,labHatchFirst); continue; }
-                float t = time * (display.SpeciesId == "bubblebelly" ? .6f : .78f) + display.Seed;
-                // The longest tail stays mostly broadside; its small orbit reserves tail clearance.
-                float x = display.Incubator ? Mathf.Sin(t) * .04f : Mathf.Sin(t) * (display.SpeciesId == "ribbonfin" ? .10f : .42f);
-                float z = display.Incubator ? 0 : Mathf.Sin(t * .63f) * .07f;
-                display.Creature.transform.localPosition = new Vector3(x, Mathf.Sin(t * 1.8f) * .085f, z);
-                float turn = display.Incubator ? 20 : display.SpeciesId == "ribbonfin" ? 18 : 28;
-                display.Creature.transform.localRotation = Quaternion.Euler(0, -90 + Mathf.Cos(t) * turn, Mathf.Sin(t * 1.6f) * 5);
-                display.Creature.Animate(time + display.Seed);
+                TickResident(display, dt);
             }
             TickAquariumHabitat(dt);
             for (int i = particles.Count - 1; i >= 0; i--)

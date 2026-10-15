@@ -10,7 +10,7 @@ namespace EvolutionShop
         Transform finRight;
         Transform crest;
         string species;
-        float phase;
+
         Transform lanternBulb;
         Material[] lanternMaterials;
         Material[] driftwingMaterials;
@@ -19,10 +19,10 @@ namespace EvolutionShop
         public void Build(string speciesId)
         {
             species = speciesId;
-            if (speciesId == "pondlet") { BuildPondlet(); return; }
-            if (speciesId == "lanternfin") { BuildLanternfin(); return; }
-            if (speciesId == "driftwing") { BuildDriftwing(); return; }
-            phase = speciesId == "pondlet" ? 0 : speciesId == "bubblebelly" ? 1.7f : 3.5f;
+            if (speciesId == "pondlet") { BuildPondlet(); CaptureExpressions(); Animate(0); return; }
+            if (speciesId == "lanternfin") { BuildLanternfin(); CaptureExpressions(); Animate(0); return; }
+            if (speciesId == "driftwing") { BuildDriftwing(); CaptureExpressions(); Animate(0); return; }
+
             bool round = speciesId == "bubblebelly";
             bool ribbon = speciesId == "ribbonfin";
             var bodyColor = round ? new Color(1f, 0.72f, 0.24f) : ribbon ? new Color(0.19f, 0.81f, 0.83f) : new Color(1f, 0.47f, 0.38f);
@@ -64,37 +64,90 @@ namespace EvolutionShop
                 for (int i = 0; i < 3; i++)
                     ShopWorld.Shape(transform, "Belly freckles", PrimitiveType.Sphere, new Vector3((i - 1) * 0.095f, -0.1f, -0.352f), new Vector3(0.043f, 0.047f, 0.014f), body);
             }
+            CaptureExpressions(); Animate(0);
         }
 
-        public void Animate(float time)
+        Transform[] expressionEyes;
+        Vector3[] expressionEyeScales, expressionEyePositions;
+        float[] expressionEyeCenters;
+
+        void CaptureExpressions()
         {
-            if (species == "pondlet") { AnimatePondlet(time, .7f, false); return; }
-            if (MimicPoseActive) time = Mathf.Floor(mimicTime * 2f) * .25f;
+            // Existing eyes only: no new geometry, material or per-frame hierarchy search.
+            var eyes = new System.Collections.Generic.List<Transform>();
+            foreach (Transform child in transform)
+                if (child.name.IndexOf("eye", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    child.name.IndexOf("pupil", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    child.name == "Eye glint") eyes.Add(child);
+            expressionEyes = eyes.ToArray(); expressionEyeScales = new Vector3[expressionEyes.Length];
+            expressionEyePositions = new Vector3[expressionEyes.Length]; expressionEyeCenters = new float[expressionEyes.Length];
+            for (int i = 0; i < expressionEyes.Length; i++) {
+                expressionEyeScales[i] = expressionEyes[i].localScale;
+                expressionEyePositions[i] = expressionEyes[i].localPosition;
+                float nearest = float.MaxValue;
+                foreach (var eye in expressionEyes) {
+                    if (eye.name != "Raised eye" && eye.name != "Bright eye" &&
+                        eye.name != "Lanternfin bright eye" && eye.name != "Driftwing eye") continue;
+                    float distance = Mathf.Abs(eye.localPosition.x - expressionEyePositions[i].x);
+                    if (distance >= nearest) continue;
+                    nearest = distance; expressionEyeCenters[i] = eye.localPosition.y;
+                }
+            }
+        }
+
+        void AnimateExpression(float time, bool reduced)
+        {
+            if (expressionEyes == null) return;
+            float opening = CreatureMotion.Blink(time, pondletIdentityPhase, reduced);
+            for (int i = 0; i < expressionEyes.Length; i++) if (expressionEyes[i]) {
+                var scale = expressionEyeScales[i]; scale.y *= opening; expressionEyes[i].localScale = scale;
+                // Squint the pupil/glint around its eye centre too, so the highlight cannot float above a closed eye.
+                var position = expressionEyePositions[i];
+                position.y = expressionEyeCenters[i] + (position.y - expressionEyeCenters[i]) * opening;
+                expressionEyes[i].localPosition = position;
+            }
+        }
+
+        public void Animate(float time) => AnimateSpecies(time, .7f, false);
+
+        /// <summary>Absolute local detail pose; the container alone moves the creature root.</summary>
+        public void AnimateSpecies(float time, float effort, bool reduced)
+        {
+            if (!FxParticleRequest.Finite(time)) time = 0;
+            effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
+            if (species == "pondlet") { AnimatePondlet(time, effort, reduced); return; }
+            if (MimicPoseActive && !reduced) time = Mathf.Floor(mimicTime * 2f) * .25f;
+            AnimateExpression(time, reduced);
+            float t = time + pondletIdentityPhase;
+            float drive = reduced ? 0 : Mathf.Lerp(.28f, 1, effort);
             if (species == "driftwing")
             {
-                float wingWave = Mathf.Sin(time * 3.8f + .4f);
-                if (finLeft) finLeft.localRotation = Quaternion.Euler(wingWave * 14, -12, -18 + wingWave * 17);
-                if (finRight) finRight.localRotation = Quaternion.Euler(-wingWave * 14, 12, 18 - wingWave * 17);
-                if (tail) tail.localRotation = Quaternion.Euler(0, wingWave * 13, wingWave * 5);
-                if (crest) crest.localRotation = Quaternion.Euler(0, 0, wingWave * 6);
+                // A brief soft downstroke gives way to a long open-sail glide.
+                float stroke = reduced ? 0 : CreatureMotion.WingStroke(t) * drive;
+                float follow = reduced ? 0 : CreatureMotion.WingStroke(t - .22f) * drive;
+                if (finLeft) finLeft.localRotation = Quaternion.Euler(stroke * 12, -12, -18 + stroke * 17);
+                if (finRight) finRight.localRotation = Quaternion.Euler(-stroke * 12, 12, 18 - stroke * 17);
+                if (tail) tail.localRotation = Quaternion.Euler(0, Mathf.Sin(t * 2.1f - .6f) * 10 * drive, follow * 4);
+                if (crest) crest.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(t * 2.1f - 1) * 5 * drive);
                 return;
             }
             if (species == "lanternfin")
             {
-                float flutter = Mathf.Sin(time * 4.6f + 1.1f);
-                if (tail) tail.localRotation = Quaternion.Euler(0, flutter * 16, 0);
-                if (finLeft) finLeft.localRotation = Quaternion.Euler(flutter * 7, -12, -16 + flutter * 14);
-                if (finRight) finRight.localRotation = Quaternion.Euler(-flutter * 7, 12, 16 - flutter * 14);
-                if (crest) crest.localRotation = Quaternion.Euler(0, 0, flutter * 5);
-                if (lanternBulb) lanternBulb.localScale = Vector3.one * (.20f + Mathf.Sin(time * 2.2f) * .012f);
+                float flutter = Mathf.Sin(t * 4.6f), opposite = Mathf.Sin(t * 4.6f - .5f);
+                if (tail) tail.localRotation = Quaternion.Euler(0, Mathf.Sin(t * 4.6f - .8f) * 15 * drive, 0);
+                if (finLeft) finLeft.localRotation = Quaternion.Euler(flutter * 7 * drive, -12, -16 + flutter * 13 * drive);
+                if (finRight) finRight.localRotation = Quaternion.Euler(-opposite * 7 * drive, 12, 16 - opposite * 13 * drive);
+                if (crest) crest.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(t * 4.6f - 1.2f) * 4 * drive);
+                if (lanternBulb) lanternBulb.localScale = Vector3.one * (.20f + (reduced ? 0 : Mathf.Sin(t * 2.2f) * .010f));
                 return;
             }
-            float frequency = species == "bubblebelly" ? 4.1f : species == "ribbonfin" ? 3.5f : 6.8f;
-            float wave = Mathf.Sin(time * frequency + phase);
-            if (tail) tail.localRotation = Quaternion.Euler(0, wave * (species == "ribbonfin" ? 26 : 19), 0);
-            if (finLeft) finLeft.localRotation = Quaternion.Euler(wave * 12, species == "pondlet" ? 162 : -18, -20 + wave * 22);
-            if (finRight) finRight.localRotation = Quaternion.Euler(wave * -12, 18, 20 - wave * 22);
-            if (crest) crest.localRotation = Quaternion.Euler(0, 0, wave * 7);
+            bool ribbon = species == "ribbonfin";
+            float wave = Mathf.Sin(t * (ribbon ? 2.7f : 3.6f));
+            float delayed = Mathf.Sin(t * (ribbon ? 2.7f : 3.6f) - (ribbon ? .9f : .65f));
+            if (tail) tail.localRotation = Quaternion.Euler(0, delayed * (ribbon ? 23 : 17) * drive, 0);
+            if (finLeft) finLeft.localRotation = Quaternion.Euler(wave * 10 * drive, -18, -20 + wave * 19 * drive);
+            if (finRight) finRight.localRotation = Quaternion.Euler(-delayed * 10 * drive, 18, 20 - delayed * 19 * drive);
+            if (crest) crest.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(t * (ribbon ? 2.7f : 3.6f) - 1.4f) * 6 * drive);
         }
 
         void BuildLanternfin()
