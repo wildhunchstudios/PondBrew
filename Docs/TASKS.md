@@ -420,3 +420,17 @@ AGENTS.md is canonical. Known limits:
 - Conditioner regression covers both output transfer commands and exact identity; conditioner-specific new cue counters and failed-output-save injection are not separate assertions. Shared rack/display adapter and failed-save behavior are exercised by the dedicated route.
 - Existing failed-save behavior can leave a changed in-memory model until reload. Durable bytes remain unchanged and saved-success cues/audio are suppressed; this assignment does not rewrite transaction rollback.
 - Only the existing siphon base/upgraded variants and slap are supported. No carry inventory or tool-switch system is introduced; F8 remains a diagnostic comparison.
+
+
+## 2026-10-15 — FX-12 five-species animation delivered provisionally
+
+**FX-12 technically complete — 2026-10-15; hands-on review deferred.** All five existing species now have distinct deterministic swimming, coordinated fins and tails, and brief blinks using their approved shapes. This covers the five existing species: Pondlet, Bubblebelly, Ribbonfin, Lanternfin and Driftwing. FX-13 habitat work remains unstarted; existing specimen and gameplay authority is preserved. Source **96910d1**, separate playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx12-species-1\EvolutionShop.exe`, intended delivery tag **fx-species-animation-validated**. Actual **2188 passed EditMode tests**, **3814 final Windows checks**, build 0 errors / 0 warnings. 40 silent Windows videos decode 7540 frames. All 52 protected files and 2037 prior-build files are preserved; Core DLL is identical. Evidence `Docs/Evidence/fx-12-VALIDATION.md`; gallery `http://127.0.0.1:8800/index.html`; controls `Docs/Evidence/fx-12/PLAY.md`. **Next: FX-13 only on continuation; not started here.** Hands-on controls, actual listening, creative acceptance and the prior FX-06R-08 GPU decision remain deferred/open, as do earlier human gates. Technical completion does not imply native-input, human, minimum-spec or causal GPU acceptance.
+
+AGENTS.md is canonical. Known limits:
+
+- Human native controls, listening, creative approval and FX-06R-08 GPU decision remain deferred. Videos are silent. Capture cadence is not a minimum-spec or causal GPU result.
+- Review uses six sampled frames per clip plus selected native frames and full automated video decode; it is not every-frame perceptual inspection. Actual motion traces and vertex sweeps provide separate continuity/containment evidence.
+- The existing large siphon obscures part of the right-hand glass and the lower prompt overlaps some station text. Rack/conditioner residents appear small and dimmer; the upper EMPTY shelf label dominates the close rack angle. These are presentation limits for later container/UI work, not changed here.
+- Turns deliberately stay broadside in the current shallow containers. New motion-linked wakes are admitted only to the existing fixed tank-a habitat; FX13 covers other containers. Dedicated five-species runtime footage here covers fixed display, rack, incubator and supported conditioning; movable small/large compatibility also has a source-level scaling review, not new per-layout footage.
+- Existing legacy zero-delta animation sweep labels do not prove the new resident-clock travel. The new explicit 292-pose mesh sweeps are the relevant geometry evidence.
+- Earlier normal failed-save behavior can change transient in-memory state until reload while durable bytes stay unchanged; FX11 regression covers refusal/success-cue suppression. No transaction redesign is included.
