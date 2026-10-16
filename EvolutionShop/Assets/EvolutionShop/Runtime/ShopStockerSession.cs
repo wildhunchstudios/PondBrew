@@ -111,7 +111,7 @@ namespace EvolutionShop
             var result=Model.CompleteStockTransfer(jobId,ShopStaff.StockerId);
             if (!result.Success) throw new InvalidOperationException("Validated stocker delivery changed during persistence.");
             Reports.RecordRestock();Tutorial=tutorial;SaveError=null;saveClock=0;
-            World.Refresh(Model);Notify("Nori stocked "+Model.GetSpecies(result.SpeciesId).DisplayName+" / ready for customers.");
+            World.CaptureHabitatTransfers();World.Refresh(Model);World.PresentHabitatTransfers(true,NextFxSequence(),FxCueOrigin.Worker);Notify("Nori stocked "+Model.GetSpecies(result.SpeciesId).DisplayName+" / ready for customers.");
             return true;
         }
         string StockerPaymentLine() => Stocking.Employee.PaidDay==Cycle.DayNumber ?

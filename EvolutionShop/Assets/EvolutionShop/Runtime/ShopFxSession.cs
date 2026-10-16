@@ -42,7 +42,7 @@ namespace EvolutionShop
             }
             uint sequence = NextFxSequence();
             World.TryFxCue(result.Success ? successCue : FxCueId.HandRefused, sequence, origin, culture);
-            if (result.Success && saved && successCue == FxCueId.HandPlace) World.PresentPondletPlacement(destination, sequence);
+            // Saved habitat transfers are presented once by the publication adapter.
         }
         Station PlayerResultStation(FxPlayerInteraction kind, string destination)
         {
@@ -62,7 +62,7 @@ namespace EvolutionShop
             if (!station) return;
             uint sequence = NextFxSequence();
             World.PresentPlayerInteraction(result.Success ? kind : FxPlayerInteraction.Refused, station, destination, sequence);
-            if (result.Success && saved && kind == FxPlayerInteraction.Place) World.PresentPondletPlacement(destination, sequence);
+            // Habitat response uses the exact source/destination snapshot in PerformWithFx.
         }
         void PresentPlayerUpgradeRefusal()
         {

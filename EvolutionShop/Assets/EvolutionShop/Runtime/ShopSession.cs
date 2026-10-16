@@ -452,12 +452,14 @@ namespace EvolutionShop
             {
                 Notify("Done.", 1.3f);
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
+                World.CaptureHabitatTransfers();
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
                 bool saved = SaveNow();
                 if (!saved) sound.StopResearchAudio();
                 else if (genericFeedback) sound.Feedback(true);
                 PresentFxResult(result, saved, fxCue, fxOrigin, culture, destination);
                 PresentPlayerResult(result, saved, playerInteraction, destination);
+                World.PresentHabitatTransfers(saved,NextFxSequence(),fxOrigin);
                 if (saved && researchUpgrade != FxResearchUpgrade.None) {
                     World.PresentResearchUpgrade(researchUpgrade, NextFxSequence()); sound.ResearchConfirmation();
                 }

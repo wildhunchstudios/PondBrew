@@ -399,7 +399,8 @@ namespace EvolutionShop
             if (!hatchery && AttachRedesign(r, "IncubatorBase", "Incubator pedestal", "Rounded worktop", "Incubator enamel finish"))
                 RedesignLabelDepth(r, -.738f, .72f, 1.38f);
             var display = Group("Incubator creature", r, new Vector3(0, 1.48f, 0));
-            displays["incubator"] = new Display { Root = display, Incubator = true, Seed = 3.5f };
+            displays["incubator"] = new Display { Root = display, Incubator = true, Seed = 3.5f,
+                Habitat = BuildContainerHabitat(r,"incubator",3.5f,"Incubator fluid",null,false,false,false) };
             for (int i = 0; !hatchery && i < 2; i++)
             {
                 var color = i == 0 ? bloomMat : flowMat;

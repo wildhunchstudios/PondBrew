@@ -130,7 +130,7 @@ namespace EvolutionShop
             ActionResult result=start ? Model.CompleteTechnicianStart(jobId,ShopStaff.TechnicianId) : Model.CompleteTechnicianOutput(jobId,ShopStaff.TechnicianId);
             if (!result.Success || result.SpecimenId!=claim.SpecimenId)
                 throw new InvalidOperationException("Validated technician transaction changed during persistence.");
-            Laboratory=lab;Tutorial=tutorial;SaveError=null;saveClock=0;World.Refresh(Model);
+            Laboratory=lab;Tutorial=tutorial;SaveError=null;saveClock=0;World.CaptureHabitatTransfers();World.Refresh(Model);World.PresentHabitatTransfers(true,NextFxSequence(),FxCueOrigin.Worker);
             Notify(start ? "Moss started "+Model.GetSpecies(claim.SpeciesId).DisplayName+". The incubator is processing." :
                 "Moss stored "+Model.GetSpecies(claim.SpeciesId).DisplayName+" in the lab rack.");
             return true;

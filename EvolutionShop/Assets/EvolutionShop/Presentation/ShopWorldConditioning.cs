@@ -95,7 +95,9 @@ namespace EvolutionShop
                 var residentRoot = Group("Conditioning resident", chamber, Vector3.zero);
                 residentRoot.localScale = Vector3.one * .34f;
                 var display = new Display { Root = residentRoot, Seed = i + displays.Count * .61f,
-                    Interior = new Bounds(Vector3.zero, new Vector3(.82f, .72f, .82f)) };
+                    Interior = new Bounds(Vector3.zero, new Vector3(.82f, .72f, .82f)),
+                    Habitat = BuildContainerHabitat(chamber,itemId+"-conditioning-visual-"+i,i+displays.Count*.61f,
+                        "Conditioning water","Conditioning sand",false,false,false) };
                 // These internal visual keys are not tank/storage IDs and register no customer inventory.
                 displays[itemId + "-conditioning-visual-" + i] = display;
                 var waterRenderer = chamber.Find("Conditioning water").GetComponent<MeshRenderer>();

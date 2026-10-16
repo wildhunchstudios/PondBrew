@@ -110,7 +110,8 @@ namespace EvolutionShop
                 // Scale the established contained swim envelope as a unit, retaining each species' silhouette.
                 resident.localScale = Vector3.one * (slotCount == 1 ? .62f : .51f);
                 displays[id] = new Display { Root = resident, Seed = i + slotNames.Count * .61f, Status = label,
-                    Interior = new Bounds(new Vector3(0, 1.19f, 0), new Vector3(slotWidth - .12f, .72f, depth - .16f)) };
+                    Interior = new Bounds(new Vector3(0, 1.19f, 0), new Vector3(slotWidth - .12f, .72f, depth - .16f)),
+                    Habitat = BuildContainerHabitat(slot,id,i+slotNames.Count*.61f,"Aquatic tint","Compartment sand",true,true,true) };
             }
         }
 

@@ -9,6 +9,39 @@ namespace EvolutionShop
     /// <summary>Cosmetic recipes inside the existing water prism. No specimen or sale authority.</summary>
     public static class FxAquariumMotion
     {
+        // Map the admitted fixed-tank recipes uniformly into each actual water prism.
+        // Uniform sizing keeps rings round and smaller residents visually primary.
+        public static float ContainerScale(Bounds water) => Mathf.Clamp(Mathf.Min(water.size.x / 1.85f,
+            water.size.y / .895f, water.size.z / 1.15f), .15f, 1f);
+        static Bounds ScaledBounds(Bounds value, Vector3 center, float scale) => new Bounds((value.center-center)/scale,value.size/scale);
+        static void ScaleParticle(float scale, ref FxParticleRequest request)
+        { request.Size*=scale; request.EndSize*=scale; request.End*=scale; request.Bend*=scale; request.Velocity*=scale; request.Radius*=scale; }
+        public static void ScaledBubble(int index,float time,float seed,Bounds water,bool occupied,out Vector3 position,out float size)
+        {
+            float scale=ContainerScale(water);
+            Bubble(index,time,seed,new Bounds(Vector3.zero,water.size/scale),occupied,out position,out size);
+            position=water.center+position*scale; size*=scale;
+        }
+        public static bool ScaledWakeAnchor(Bounds fish,Vector3 velocity,Bounds water,out Vector3 origin)
+        {
+            float scale=ContainerScale(water);
+            bool result=WakeAnchor(ScaledBounds(fish,water.center,scale),velocity/scale,new Bounds(Vector3.zero,water.size/scale),out origin);
+            origin=water.center+origin*scale; return result;
+        }
+        public static bool ScaledTrail(uint index,Vector3 origin,Vector3 velocity,Bounds water,bool low,bool reduced,
+            out float interval,out Vector3 local,out FxParticleRequest request)
+        {
+            float scale=ContainerScale(water);
+            bool result=Trail(index,(origin-water.center)/scale,velocity/scale,new Bounds(Vector3.zero,water.size/scale),low,reduced,out interval,out local,out request);
+            local=water.center+local*scale; ScaleParticle(scale,ref request); return result;
+        }
+        public static void ScaledPlacement(int index,Bounds fish,Bounds water,bool reduced,
+            out float delay,out Vector3 local,out FxParticleRequest request)
+        {
+            float scale=ContainerScale(water);
+            Placement(index,ScaledBounds(fish,water.center,scale),new Bounds(Vector3.zero,water.size/scale),reduced,out delay,out local,out request);
+            local=water.center+local*scale; ScaleParticle(scale,ref request);
+        }
         public const float TrailRadius = .08f;
         public const float WakeGap = .025f;
         static float Noise(uint n, uint salt)

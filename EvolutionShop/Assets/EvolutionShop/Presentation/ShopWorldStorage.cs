@@ -62,7 +62,8 @@ namespace EvolutionShop
                 resident.localScale = Vector3.one * .54f;
                 displays[slots[i]] = new Display { Root = resident, Seed = i + displays.Count * .61f,
                     StorageStatus = label, StorageMaterials = new HashSet<Material>(),
-                    Interior = new Bounds(Vector3.zero, new Vector3(1.30f, .70f, .82f)) };
+                    Interior = new Bounds(Vector3.zero, new Vector3(1.30f, .70f, .82f)),
+                    Habitat = BuildContainerHabitat(compartment,slots[i],i+displays.Count*.61f,"Storage water","Storage sand",true,false,true) };
             }
         }
 

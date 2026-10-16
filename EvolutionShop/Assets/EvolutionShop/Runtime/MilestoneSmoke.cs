@@ -53,6 +53,7 @@ namespace EvolutionShop
             bool comedyGate = ShopSession.Arg("-evolutionComedyGateSmoke") != null;
             bool comedy = ShopSession.Arg("-evolutionComedySmoke") != null;
             bool rooms = ShopSession.Arg("-evolutionRoomsSmoke") != null;
+            bool fxContainer = ShopSession.Arg("-evolutionFxContainerSmoke") != null;
             bool fxSpecies = ShopSession.Arg("-evolutionFxSpeciesSmoke") != null;
             bool fxPlayerInteraction = ShopSession.Arg("-evolutionFxPlayerInteractionSmoke") != null;
             bool fxResearchAutomation = ShopSession.Arg("-evolutionFxResearchAutomationSmoke") != null;
@@ -111,7 +112,8 @@ namespace EvolutionShop
             }
             stack.Push(fxSpecies ? FxSpeciesScenario() : fxPlayerInteraction ? FxPlayerInteractionScenario() : fxResearchAutomation ? FxResearchAutomationScenario() : fxIncubation ? FxIncubationScenario() : fxAdvancedLab ? FxAdvancedLabScenario() : fxGrower ? FxGrowerScenario() : fxAquarium ? FxAquariumScenario() : fxCollection ? FxCollectionScenario() : fxGrowth ? FxGrowthScenario() : fxDose ? FxDoseScenario() : fxHatch ? FxHatchScenario() : fxOrganic ? FxOrganicScenario() : fxVocabulary ? FxVocabularyScenario() : fxReview ? FxReviewScenario() : fxPondlet ? FxPondletScenario() : fxHands ? FxHandsScenario() : fxLab ? FxLabScenario() : fxCue ? FxCueScenario() : fxBaseline ? FxBaselineScenario() : automation ? AutomationScenario() : workerComedy ? WorkerComedyScenario() : tutorialRestart ? TutorialRestartScenario() : tutorialConditioningRecovery ? TutorialConditioningRecoveryScenario() : tutorialRecovery ? TutorialRecoveryScenario() : tutorialHandoff ? TutorialHandoffScenario() : tutorialCustomer ? TutorialCustomerScenario() : guidance ? TutorialGuidanceScenario() : tutorial ? TutorialScenario() : technician ? TechnicianScenario() : stocker ? StockerScenario() : staff ? StaffScenario() : rooms ? RoomsScenario() : comedyGate ? ComedyGateScenario() : comedy ? ComedyScenario() : presentation ? PresentationScenario() : labGate ? LabGateScenario() : airfin ? AirfinScenario() : conditioning ? ConditioningScenario() : research ? ResearchScenario() : specimens ? SpecimenStorageScenario() : lab ? LabScenario() : editedLayout ? EditedLayoutScenario() : storage ? FurnitureStorageScenario() : decor ? DecorScenario() : expansion ? ExpansionScenario() : placement ? PlacementScenario() : trading ? TradingShiftScenario() : nativeUi ? UiClickScenario() : continuous ? ContinuousScenario() : pricing ? PricingScenario() :
                 customerTypes ? CustomerTypesScenario() : reputation ? ReputationScenario() : slap ? SlapScenario() : Scenario());
-            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (continuous || fxGrowth || fxCollection || fxPlayerInteraction || fxSpecies);
+            if (fxContainer) { stack.Clear(); stack.Push(FxContainerScenario()); }
+            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (continuous || fxGrowth || fxCollection || fxPlayerInteraction || fxSpecies || fxContainer);
             bool failed = false;
             while (stack.Count > 0)
             {
