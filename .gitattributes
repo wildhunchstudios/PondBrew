@@ -64,3 +64,6 @@
 
 # Preserve byte-hashed FX12 species animation evidence.
 /Docs/Evidence/fx-12/** -text -whitespace
+
+# Preserve byte-hashed FX13 container habitat evidence.
+/Docs/Evidence/fx-13/** -text -whitespace
