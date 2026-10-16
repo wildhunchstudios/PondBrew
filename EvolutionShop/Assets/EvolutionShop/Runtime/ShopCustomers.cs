@@ -185,9 +185,12 @@ namespace EvolutionShop
             {
                 visitor.HeardRejections = visit.PriceRejections;
                 shop.PriceRefused(visit);
+                shop.PresentCustomerPrice(visitor.Actor,FxCustomerReaction.Refused);
             }
             RecordOutcome(visitor);
 
+            if(visit.Phase==CustomerPhase.ToCounter && previous!=CustomerPhase.ToCounter)
+                shop.PresentCustomerPrice(visitor.Actor,FxCustomerReaction.Accepted);
             if (visit.Phase == CustomerPhase.Finished) { EndVisit(visitor); return; }
             if (visit.Phase != previous || visit.TargetTankId != previousTarget) ApplyDestination(visitor);
             RefreshCaption(visitor);
@@ -217,6 +220,7 @@ namespace EvolutionShop
             entry.Visit = visit;
             entry.Actor = new GameObject("Store customer / " + type.DisplayName).AddComponent<CustomerActor>();
             entry.Actor.Initialize(Navigation, type.PresentationId);
+            entry.Actor.BindCustomerPresentation(shop.World,visit.Id);
             entry.Actor.SetPaused(shop.Paused);
             visitors.Add(entry);
             shop.Notify("A " + type.DisplayName.ToLowerInvariant() + " arrived. They will browse your front displays.");
@@ -501,7 +505,7 @@ namespace EvolutionShop
         {
             if (visitor.Visit == null || !visitor.Actor) return;
             string caption = CaptionOf(visitor.Visit);
-            if (caption == visitor.LastCaption) return;
+            if (caption == visitor.LastCaption && visitor.Actor.Phase == visitor.Visit.Phase) return;
             visitor.LastCaption = caption;
             var visit = visitor.Visit;
             bool upset = visit.Outcome == CustomerOutcome.TooExpensive ||

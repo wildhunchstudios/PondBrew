@@ -12,14 +12,64 @@ namespace EvolutionShop
             public string Identity;
             public Vector3 Position, Scale;
             public Quaternion Rotation;
-            public bool FollowsTool;
+            public bool FollowsTool; public CustomerActor Customer;
         }
         FxCueRuntime fxCues;
         FxEffectPool fxPool;
         readonly FxBinding[] fxBindings = new FxBinding[FxCueRuntime.OwnerLimit];
         FxViewPolicy fxPolicy;
         bool fxEnabled = true, fxReducedMotion;
+        public bool CustomerReducedMotion => fxReducedMotion;
+        public int CustomerPriceAccentCount { get; private set; }
+        public int CustomerCheckoutAccentCount { get; private set; }
         public FxCueRuntime FxCues => fxCues;
+        public FxOwnerToken BindCustomerPresentation(CustomerActor actor,string visitId)
+        {
+            if(!actor || string.IsNullOrEmpty(visitId))return default;
+            var owner=BindFxOwner("customer:"+visitId,visitId,actor.transform,true);
+            if(fxCues!=null && fxCues.IsValid(owner))fxBindings[owner.Slot].Customer=actor;
+            return owner;
+        }
+        public void ReleaseCustomerPresentation(FxOwnerToken owner)
+        {
+            if(fxCues==null || !fxCues.IsValid(owner))return;
+            CancelFxOwner(owner); fxCues.Unregister(owner); fxBindings[owner.Slot]=default;
+        }
+        /// <summary>One bounded accent at the actual visitor. No queue loop or extra pool.</summary>
+        public bool PresentCustomerReaction(CustomerActor actor,FxCustomerReaction reaction,uint sequence,FxCueOrigin origin=FxCueOrigin.Manual)
+        {
+            bool checkout=reaction==FxCustomerReaction.Checkout;
+            if(!fxEnabled || fxCues==null || !isActiveAndEnabled || !actor || !actor.isActiveAndEnabled ||
+                actor.IsSlapReacting || reaction<=FxCustomerReaction.None || reaction>FxCustomerReaction.Checkout ||
+                (fxPolicy!=FxViewPolicy.Visible && !(checkout && fxPolicy==FxViewPolicy.Modal)))return false;
+            var owner=actor.CustomerFxOwner;
+            if(!fxCues.IsValid(owner) || fxBindings[owner.Slot].Customer!=actor)return false;
+            var cue=checkout?FxCueId.SaleCommitted:reaction==FxCustomerReaction.Refused?FxCueId.CustomerPriceRefused:FxCueId.CustomerPriceAccepted;
+            float duration=FxCustomerMotion.ReactionDuration(reaction);
+            if(!fxCues.Play(owner,cue,sequence,origin,duration,checkout?4:3))return false;
+            fxPool?.Cancel(owner);
+            if(!actor.PlayCustomerReaction(reaction)){fxCues.Cancel(owner);return false;}
+            if(checkout)CustomerCheckoutAccentCount++;else CustomerPriceAccentCount++;
+            bool refused=reaction==FxCustomerReaction.Refused;
+            Color color=checkout?new Color(1,.80f,.35f,.88f):refused?new Color(1,.59f,.45f,.78f):new Color(.55f,.94f,.82f,.82f);
+            // Chest-side accents stay below the price/caption sign and within the visitor.
+            Vector3 point=new Vector3(.23f,1.24f,.24f);
+            var ring=FxParticleRequest.Create(FxParticleShape.Ring,color);
+            ring.Lifetime=checkout? .65f:.45f; ring.Size=.075f; ring.EndSize=fxReducedMotion? .075f:checkout? .20f:.14f;
+            fxPool?.EmitParticle(fxCues,owner,actor.transform,point,ring);
+            if(fxReducedMotion || fxPool==null)return true;
+            int count=fxPool.ActionLimit<64?2:checkout?5:refused?3:2;
+            for(int i=0;i<count;i++){
+                float phase=i*2.399963f+(sequence%13)*.31f;
+                var particle=FxParticleRequest.Create(checkout?FxParticleShape.Spark:refused?FxParticleShape.Puff:FxParticleShape.Bubble,color);
+                particle.Motion=FxParticleMotion.Curve; particle.Lifetime=.35f+i*.035f;
+                particle.Size=checkout? .042f:refused? .052f:.035f;particle.EndSize=.012f;
+                particle.End=new Vector3(Mathf.Cos(phase)*.10f,.08f+(i%3)*.025f,Mathf.Sin(phase)*.06f);
+                particle.Bend=new Vector3(Mathf.Sin(phase)*.035f,.03f,0);
+                fxPool.EmitParticle(fxCues,owner,actor.transform,point+new Vector3(0,i*.012f,0),particle);
+            }
+            return true;
+        }
         public FxEffectPool FxPool => fxPool;
         public FxViewPolicy FxPolicy => fxPolicy;
 
@@ -104,6 +154,8 @@ namespace EvolutionShop
         }
         public void CancelFxOwner(FxOwnerToken owner)
         {
+            if(fxCues!=null && fxCues.IsValid(owner) && fxBindings[owner.Slot].Customer)
+                fxBindings[owner.Slot].Customer.CancelCustomerPresentation();
             if (owner.IsDefined && owner.Equals(playerInteractionOwner)) CancelPlayerInteraction();
             CancelAquariumOwner(owner);
             CancelResearchAutomationOwner(owner);
@@ -117,6 +169,7 @@ namespace EvolutionShop
         }
         public void CancelFxTransient()
         {
+            for(int i=0;i<fxBindings.Length;i++)if(fxBindings[i].Customer)fxBindings[i].Customer.CancelCustomerPresentation();
             CancelPlayerInteraction();
             fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.

@@ -330,11 +330,12 @@ namespace EvolutionShop
         {
             if (Paused || Panel != ShopPanel.Counter || !IsAtCounter)
             { Notify("Use the front counter in person to serve the waiting customer."); return false; }
-            int agreed = Customers.NextToServe == null ? 0 : Customers.NextToServe.Price;
+            var customer = Customers.NextToServe;
+            int agreed = customer == null ? 0 : customer.Price;
             var result = Customers.Serve();
             if (!result.HasValue) { Notify("No customer is waiting to check out yet."); return false; }
             Tutorial.ObserveSale(Model, result.Value, TutorialActionOrigin.Player, Cycle.DayNumber);
-            bool success = Perform(result.Value).Success;
+            bool success = Perform(result.Value, customer).Success;
             if (success) Notify("Sold for the agreed " + agreed + " credits! Your customer is taking their new creature home.");
             return success;
         }
@@ -441,9 +442,11 @@ namespace EvolutionShop
                 PresentPlayerInteract(station);
         }
         public ActionResult Perform(ActionResult result) => PerformWithFx(result, FxCueId.None);
+        public ActionResult Perform(ActionResult result, CustomerVisit checkout, FxCueOrigin origin = FxCueOrigin.Manual)
+            => PerformWithFx(result, FxCueId.None, origin, checkout: checkout);
         ActionResult PerformWithFx(ActionResult result, FxCueId fxCue, FxCueOrigin fxOrigin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null,
             FxAdvancedLabEvent advancedEvent = FxAdvancedLabEvent.None, string advancedOwner = null, FxResearchUpgrade researchUpgrade = FxResearchUpgrade.None,
-            FxPlayerInteraction playerInteraction = FxPlayerInteraction.None)
+            FxPlayerInteraction playerInteraction = FxPlayerInteraction.None, CustomerVisit checkout = null)
         {
             bool genericFeedback = researchUpgrade == FxResearchUpgrade.None && advancedEvent == FxAdvancedLabEvent.None &&
                 fxCue != FxCueId.DoseCommitted && fxCue != FxCueId.DoseReturned && fxCue != FxCueId.IncubationStarted;
@@ -458,6 +461,7 @@ namespace EvolutionShop
                 if (!saved) sound.StopResearchAudio();
                 else if (genericFeedback) sound.Feedback(true);
                 PresentFxResult(result, saved, fxCue, fxOrigin, culture, destination);
+                PresentCustomerCheckout(checkout, saved, fxOrigin);
                 PresentPlayerResult(result, saved, playerInteraction, destination);
                 World.PresentHabitatTransfers(saved,NextFxSequence(),fxOrigin);
                 if (saved && researchUpgrade != FxResearchUpgrade.None) {

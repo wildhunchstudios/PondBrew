@@ -43,12 +43,42 @@ namespace EvolutionShop
         Vector3 bodyBaseScale = Vector3.one;
         bool initialized, hasDestination, pathFailed, paused, hasPresentation;
         bool reducedSlap;
-        float animationTime, paidTime, captionBase = 2.03f, captionLift, captionLiftTarget;
+        float animationTime, captionBase = 2.03f, captionLift, captionLiftTarget;
+        Transform upperBody;
+        ShopWorld customerWorld;
+        string customerVisitId;
+        FxOwnerToken customerFxOwner;
+        Vector3 motionPosition, leftLegRest, rightLegRest;
+        Quaternion motionRotation;
+        Vector3[] leftSolePoints, rightSolePoints;
+        float leftFloor, rightFloor, gaitPhase, travelDistance, measuredSpeed, movingBlend, turnBlend, reactionAge;
+        int reactionCount, motionSamples; bool checkoutPresented;
+        FxCustomerReaction customerReaction;
+        public FxCustomerSnapshot MotionSnapshot => new FxCustomerSnapshot(gaitPhase,travelDistance,measuredSpeed,movingBlend,
+            reactionAge,turnBlend,reactionCount,motionSamples,customerReaction,paused,customerWorld && customerWorld.CustomerReducedMotion);
+        public FxOwnerToken CustomerFxOwner => customerFxOwner;
+        public void BindCustomerPresentation(ShopWorld world,string visitId)
+        { customerWorld=world; customerVisitId=visitId; customerFxOwner=world?world.BindCustomerPresentation(this,visitId):default; }
+        public bool PlayCustomerReaction(FxCustomerReaction reaction)
+        {
+            if(!initialized || !isActiveAndEnabled || paused || IsSlapReacting ||
+                reaction<=FxCustomerReaction.None || reaction>FxCustomerReaction.Checkout || (reaction==FxCustomerReaction.Checkout && checkoutPresented))return false;
+            customerReaction=reaction; reactionAge=0; reactionCount++; if(reaction==FxCustomerReaction.Checkout)checkoutPresented=true; return true;
+        }
+        public void CancelCustomerPresentation()
+        {
+            customerReaction=FxCustomerReaction.None; reactionAge=0;
+            if(upperBody)upperBody.localRotation=Quaternion.identity;
+            if(leftArm)leftArm.localRotation=Quaternion.Euler(0,0,-7);
+            if(rightArm)rightArm.localRotation=Quaternion.Euler(0,0,7);
+        }
         float slapRemaining, slapDuration;
 
         void OnEnable()
         {
             Font.textureRebuilt += FontAtlasRebuilt;
+            motionPosition=transform.position; motionRotation=transform.rotation;
+            if(customerWorld && !string.IsNullOrEmpty(customerVisitId))customerFxOwner=customerWorld.BindCustomerPresentation(this,customerVisitId);
             if (agent && agent.isOnNavMesh) agent.isStopped = paused || pathFailed;
         }
         void OnDisable()
@@ -56,6 +86,8 @@ namespace EvolutionShop
             Font.textureRebuilt -= FontAtlasRebuilt;
             if (agent && agent.isOnNavMesh) agent.isStopped = true;
             ClearSlapReaction();
+            CancelCustomerPresentation();
+            if(customerWorld)customerWorld.ReleaseCustomerPresentation(customerFxOwner);
         }
 
         public void Initialize(ShopCustomerNavigation nav, string presentationId = "casual")
@@ -86,6 +118,8 @@ namespace EvolutionShop
             agent.obstacleAvoidanceType = ObstacleAvoidanceType.MedQualityObstacleAvoidance;
             if (!agent.Warp(entry)) { Fail("Customer could not enter the store navigation surface."); return; }
             BuildAppearance();
+            BuildCustomerJoints();
+            motionPosition=transform.position; motionRotation=transform.rotation;
             playerCamera = Camera.main;
             initialized = true;
             Present(CustomerPhase.Arriving, "WELCOME IN");
@@ -117,6 +151,11 @@ namespace EvolutionShop
         public void SetPaused(bool value)
         {
             paused = value;
+            motionPosition=transform.position; motionRotation=transform.rotation;
+            if(paused) {
+                CancelCustomerPresentation(); movingBlend=measuredSpeed=turnBlend=0;
+                ApplyCustomerPose(FxCustomerMotion.Sample(PresentationId,Phase,gaitPhase,0,animationTime,FxCustomerReaction.None,0,0,true));
+            }
             if (!agent || !agent.isOnNavMesh) return;
             agent.isStopped = paused || pathFailed;
             // isStopped retains residual crowd velocity while braking. Pause must stop
@@ -129,6 +168,8 @@ namespace EvolutionShop
         {
             if (!initialized || !isActiveAndEnabled || paused || !body || Phase == CustomerPhase.Finished || IsSlapReacting)
                 return false;
+            CancelCustomerPresentation();
+            if(customerWorld)customerWorld.CancelFxOwner(customerFxOwner);
             reducedSlap = reduced;
             slapDuration = reduced ? .32f : .75f;
             slapRemaining = slapDuration;
@@ -180,7 +221,7 @@ namespace EvolutionShop
 
         public void Present(CustomerPhase phase, string label, bool upset = false)
         {
-            if ((!hasPresentation || Phase != phase) && phase == CustomerPhase.Paid) paidTime = 0;
+            if (!hasPresentation || Phase != phase) animationTime = 0;
             Phase = phase;
             hasPresentation = true;
             if (!caption) return;
@@ -193,6 +234,8 @@ namespace EvolutionShop
         void Fail(string reason)
         {
             ClearSlapReaction();
+            CancelCustomerPresentation();
+            if(customerWorld)customerWorld.CancelFxOwner(customerFxOwner);
             pathFailed = true;
             hasDestination = false;
             LastError = reason;
@@ -218,29 +261,83 @@ namespace EvolutionShop
             if (hasDestination && !Arrived && !agent.pathPending && agent.pathStatus != NavMeshPathStatus.PathComplete)
                 Fail("Customer path became incomplete.");
 
-            float dt = Time.deltaTime;
-            float walking = Mathf.Clamp01(agent.velocity.magnitude / agent.speed);
-            animationTime += dt * Mathf.Lerp(1.4f, 8f, walking);
-            float stride = Mathf.Sin(animationTime) * walking;
-            leftLeg.localRotation = Quaternion.Euler(stride * 23, 0, 0);
-            rightLeg.localRotation = Quaternion.Euler(-stride * 23, 0, 0);
-            leftArm.localRotation = Quaternion.Euler(-stride * 18, 0, -7);
-            rightArm.localRotation = Quaternion.Euler(stride * 18, 0, 7);
-            float lift = Mathf.Abs(Mathf.Sin(animationTime)) * walking * .025f;
-            float happyTilt = 0;
-            if (Phase == CustomerPhase.Paid)
-            {
-                paidTime += dt;
-                lift += Mathf.Max(0, Mathf.Sin(paidTime * 7)) * .055f * Mathf.Clamp01(1 - paidTime / 1.5f);
-                happyTilt = Mathf.Sin(paidTime * 6) * 5 * Mathf.Clamp01(1 - paidTime / 1.5f);
+            float dt=Time.deltaTime;
+            Vector3 delta=transform.position-motionPosition; delta.y=0;
+            float distance=delta.magnitude;
+            // Actual NavMesh displacement advances the gait. Ignore discontinuities and
+            // retained crowd velocity when the actor itself did not move.
+            bool valid=dt>0 && dt<=.25f && distance<=Mathf.Max(.08f,agent.speed*dt*2.5f);
+            measuredSpeed=valid?distance/dt:0;
+            bool moving=measuredSpeed>.015f;
+            if(moving) {
+                travelDistance+=distance;
+                gaitPhase+=distance*(Mathf.PI*2f/FxCustomerMotion.StrideLength(PresentationId));
             }
+            movingBlend=moving?Mathf.MoveTowards(movingBlend,Mathf.Clamp01(measuredSpeed/.6f),dt*9f):0;
+            float turn=valid?Mathf.DeltaAngle(motionRotation.eulerAngles.y,transform.eulerAngles.y)/Mathf.Max(.001f,dt)/180f:0;
+            turnBlend=Mathf.MoveTowards(turnBlend,Mathf.Clamp(turn,-1,1),Mathf.Max(0,dt)*5f);
+            motionPosition=transform.position; motionRotation=transform.rotation;
+            animationTime+=Mathf.Max(0,dt); motionSamples++;
+            if(customerReaction!=FxCustomerReaction.None) {
+                reactionAge+=Mathf.Max(0,dt);
+                if(reactionAge>=FxCustomerMotion.ReactionDuration(customerReaction)){customerReaction=FxCustomerReaction.None;reactionAge=0;}
+            }
+            bool reduced=customerWorld && customerWorld.CustomerReducedMotion;
+            bool quiet=customerWorld && customerWorld.FxPolicy!=FxViewPolicy.Visible;
+            ApplyCustomerPose(FxCustomerMotion.Sample(PresentationId,Phase,gaitPhase,movingBlend,animationTime,
+                customerReaction,reactionAge,turnBlend,reduced||(quiet&&customerReaction==FxCustomerReaction.None)));
             if (IsSlapReacting)
             {
                 slapRemaining = Mathf.Max(0f, slapRemaining - dt);
                 if (!IsSlapReacting && slapStars) slapStars.gameObject.SetActive(false);
             }
-            ApplyBodyPose(lift, happyTilt);
+            ApplyBodyPose(0, 0);
         }
+
+        void BuildCustomerJoints()
+        {
+            // Reparent existing art once; shared employee/sample pose APIs remain intact.
+            upperBody=Group("Customer upper body",body,new Vector3(0,.76f,0));
+            for(int i=body.childCount-1;i>=0;i--) {
+                var child=body.GetChild(i);
+                if(child!=upperBody && child!=leftLeg && child!=rightLeg && child!=slapStars)child.SetParent(upperBody,true);
+            }
+            leftLegRest=leftLeg.localPosition; rightLegRest=rightLeg.localPosition;
+            leftSolePoints=CacheLegVertices(leftLeg); rightSolePoints=CacheLegVertices(rightLeg);
+            leftFloor=Mathf.Max(0,LegMinimum(leftSolePoints,0)+leftLegRest.y); rightFloor=Mathf.Max(0,LegMinimum(rightSolePoints,0)+rightLegRest.y);
+            ApplyCustomerPose(FxCustomerMotion.Sample(PresentationId,Phase,0,0,0,FxCustomerReaction.None,0,0,true));
+        }
+        static Vector3[] CacheLegVertices(Transform leg)
+        {
+            var points=new List<Vector3>();
+            foreach(var filter in leg.GetComponentsInChildren<MeshFilter>()) {
+                if(!filter.sharedMesh)continue;
+                var matrix=leg.worldToLocalMatrix*filter.transform.localToWorldMatrix;
+                foreach(var vertex in filter.sharedMesh.vertices)points.Add(matrix.MultiplyPoint3x4(vertex));
+            }
+            return points.ToArray();
+        }
+        static float LegMinimum(Vector3[] points,float angle)
+        {
+            if(points==null||points.Length==0)return 0;
+            float radians=angle*Mathf.Deg2Rad,sin=Mathf.Sin(radians),cos=Mathf.Cos(radians),low=float.MaxValue;
+            for(int i=0;i<points.Length;i++)low=Mathf.Min(low,points[i].y*cos-points[i].z*sin);
+            return low;
+        }
+        void ApplyCustomerPose(FxCustomerPose pose)
+        {
+            if(!upperBody)return;
+            leftLeg.localRotation=Quaternion.Euler(pose.LeftLegEuler); rightLeg.localRotation=Quaternion.Euler(pose.RightLegEuler);
+            leftLeg.localPosition=leftLegRest+Vector3.up*(leftFloor-leftLegRest.y-LegMinimum(leftSolePoints,pose.LeftLegEuler.x));
+            rightLeg.localPosition=rightLegRest+Vector3.up*(rightFloor-rightLegRest.y-LegMinimum(rightSolePoints,pose.RightLegEuler.x));
+            leftArm.localRotation=Quaternion.Euler(pose.LeftArmEuler); rightArm.localRotation=Quaternion.Euler(pose.RightArmEuler);
+            upperBody.localRotation=Quaternion.Euler(pose.UpperEuler);
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void PreviewMotionForValidation(CustomerPhase phase,float gaitPhase,float moving,float idleTime,
+            FxCustomerReaction reaction,float reactionAge,float turn,bool reduced)
+        { ApplyCustomerPose(FxCustomerMotion.Sample(PresentationId,phase,gaitPhase,moving,idleTime,reaction,reactionAge,turn,reduced)); }
+#endif
 
         void LateUpdate()
         {

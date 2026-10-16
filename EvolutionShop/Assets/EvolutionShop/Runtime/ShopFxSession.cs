@@ -17,6 +17,20 @@ namespace EvolutionShop
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public bool FreezeFxVocabularyForValidation { get; set; }
 #endif
+        public void PresentCustomerPrice(CustomerActor actor,FxCustomerReaction reaction)
+        {
+            if(World && fxHasFocus && !Paused && !PlacementActive && Panel==ShopPanel.None)
+                World.PresentCustomerReaction(actor,reaction,NextFxSequence());
+        }
+        void PresentCustomerCheckout(CustomerVisit visit,bool saved,FxCueOrigin origin)
+        {
+            if(!World || visit==null)return;
+            var actor=Customers.ActorOf(visit);
+            if(!saved){if(actor)World.CancelFxOwner(actor.CustomerFxOwner);return;}
+            if(visit.Phase==CustomerPhase.Paid && visit.Outcome==CustomerOutcome.Sold &&
+                fxHasFocus && !Paused && !PlacementActive && (Panel==ShopPanel.None || Panel==ShopPanel.Counter))
+                World.PresentCustomerReaction(actor,FxCustomerReaction.Checkout,NextFxSequence(),origin);
+        }
         uint fxSequence;
         bool fxHasFocus = true;
         uint NextFxSequence()

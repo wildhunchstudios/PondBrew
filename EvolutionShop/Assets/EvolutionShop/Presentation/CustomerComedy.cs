@@ -19,12 +19,12 @@ namespace EvolutionShop
             }
             else if(kind==ComedyKind.Mimic)
                 rightArm.localRotation=Quaternion.Euler(-18,0,112+wave*10);
-            body.localRotation*=Quaternion.Euler(0,0,wave*3);
+            if(upperBody)upperBody.localRotation*=Quaternion.Euler(0,0,wave*3);
         }
         public void ClearComedyPose()
         {
             if(!body || IsSlapReacting)return;
-            body.localRotation=Quaternion.identity;
+            if(upperBody)upperBody.localRotation=Quaternion.identity;
             if(leftArm)leftArm.localRotation=Quaternion.Euler(0,0,-7);
             if(rightArm)rightArm.localRotation=Quaternion.Euler(0,0,7);
         }
