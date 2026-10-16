@@ -44,6 +44,7 @@ namespace EvolutionShop
         }
         CustomerMotionTrack customerMotionTrack;
         readonly Dictionary<Mesh,Vector3[]> customerParticleVertices=new Dictionary<Mesh,Vector3[]>();
+        static bool CustomerMotionFinite(float value)=>!float.IsNaN(value)&&!float.IsInfinity(value);
 
         CustomerMotionTrack CustomerMotionBegin(CustomerVisit visit)
         {
@@ -95,7 +96,13 @@ namespace EvolutionShop
             var position=actor.transform.position;
             if(actor.PathFailed||!shop.Customers.Navigation.IsInStore(position))throw new InvalidOperationException("Customer navigation regression / "+actor.LastError);
             float traveled=Flat(t.previous,position),reported=s.TravelDistance-t.previousDistance;
-            if(reported<-.00001f||reported>.5f)throw new InvalidOperationException("Invalid distance sample "+reported);
+            // Recording drain/still capture can span several real actor updates. This
+            // observer measures their accumulated displacement, not one Update's step.
+            // Keep monotonic/finite travel and the independent gait/total-root checks.
+            if(s.SampleCount<t.previousSample||reported<-.00001f||!CustomerMotionFinite(reported)||!CustomerMotionFinite(traveled)||
+                !CustomerMotionFinite(s.TravelDistance)||!CustomerMotionFinite(s.GaitPhase)||!CustomerMotionFinite(s.Speed)||
+                !CustomerMotionFinite(s.MovingBlend)||!CustomerMotionFinite(s.ReactionAge)||!CustomerMotionFinite(s.Turn))
+                throw new InvalidOperationException("Invalid accumulated customer motion sample "+reported);
             float phase=s.GaitPhase-t.previousGait;
             // Wrapped gait phases are compared modulo one complete cycle.
             float expected=reported*Mathf.PI*2/t.receipt.stride;
