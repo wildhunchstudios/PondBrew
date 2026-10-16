@@ -67,3 +67,6 @@
 
 # Preserve byte-hashed FX13 container habitat evidence.
 /Docs/Evidence/fx-13/** -text -whitespace
+
+# Preserve byte-hashed FX14 customer presentation evidence.
+/Docs/Evidence/fx-14/** -text -whitespace
