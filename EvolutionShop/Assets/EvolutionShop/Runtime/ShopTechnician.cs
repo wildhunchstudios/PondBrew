@@ -18,6 +18,7 @@ namespace EvolutionShop
         public string TargetStorageId { get; private set; }
         public string Status => shop && shop.Paused ? "Game paused / technician time frozen" : status;
         public ShopCharacterVisual Actor { get; private set; }
+        public Transform WorkerServiceTarget => phase == WorkPhase.StartRecipe || phase == WorkPhase.Pickup ? sourceServiceTarget : phase == WorkPhase.Deliver ? destinationServiceTarget : null;
         public float ServiceProgress=>Mathf.Clamp01(serviceTime/ServiceSeconds);
         public FxWorkerActivity WorkerActivity=>phase==WorkPhase.ToIncubatorForStart||phase==WorkPhase.ToIncubatorForOutput?FxWorkerActivity.Walk:
             phase==WorkPhase.StartRecipe?(ServiceProgress<.333333f?FxWorkerActivity.Measure:ServiceProgress<.666667f?FxWorkerActivity.Dose:FxWorkerActivity.Start):
@@ -43,6 +44,7 @@ namespace EvolutionShop
         ShopLaboratory claimedLaboratory;
         string expectedSpecimenId, expectedSpeciesId, expectedSpeciesName, status = "No technician hired";
         WorkPhase phase;
+        Transform sourceServiceTarget, destinationServiceTarget;
         WorkerPathPoint[] route, deliveryRoute;
         int routeIndex;
         long nextJobNumber;
@@ -100,8 +102,23 @@ namespace EvolutionShop
         public void Tick(float seconds)
         {
             TickCore(seconds);
+            FaceWorkerService(seconds);
             if(shop&&Actor)Actor.PoseWorker(WorkerActivity,ServiceProgress,seconds,Carrying,CurrentJobId,expectedSpecimenId,shop.Paused);
         }
+        // Presentation yaw only: service timing, path and exact stock ownership stay with TickCore.
+        void FaceWorkerService(float seconds)
+        {
+            if (!shop || shop.Paused || !isActiveAndEnabled || !Actor || !Actor.isActiveAndEnabled ||
+                seconds <= 0 || float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
+            Transform target = WorkerServiceTarget;
+            if (!target) return;
+            Vector3 direction = target.position - Actor.transform.position;
+            direction.y = 0;
+            if (direction.sqrMagnitude <= .000001f) return;
+            Actor.transform.rotation = Quaternion.RotateTowards(Actor.transform.rotation,
+                Quaternion.LookRotation(direction, Vector3.up), 720f * Mathf.Min(seconds, .5f));
+        }
+
         void TickCore(float seconds)
         {
             if (!shop || shop.Paused || !isActiveAndEnabled || seconds <= 0 ||
@@ -317,6 +334,13 @@ namespace EvolutionShop
                     expectedSpeciesId = speciesId;
                     expectedSpeciesName = shop.Model.GetSpecies(speciesId)?.DisplayName ?? "the creature";
                     startsRecipe = start;
+                    sourceServiceTarget = destinationServiceTarget = null;
+                    if (shop.World)
+                    {
+                        shop.World.TryGetLabFacility(ShopLayout.IncubatorFacilityId, out sourceServiceTarget);
+                        foreach (var station in shop.World.Stations)
+                            if (station && station.StorageItemId == rack.Id) destinationServiceTarget = station.transform;
+                    }
                     Vector3 origin = Actor.transform.position;
                     if (!shop.Layout.TryGetFacilityAccessPoint(ShopLayout.IncubatorFacilityId, out float ix, out float iz) ||
                         !shop.Layout.TryGetStorageAccessPoint(rack.Id, out float tx, out float tz) ||
@@ -431,6 +455,7 @@ namespace EvolutionShop
             claimedLayout = null;
             claimedLaboratory = null;
             route = deliveryRoute = null;
+            sourceServiceTarget = destinationServiceTarget = null;
             phase = WorkPhase.None;
             startsRecipe = false;
             routeIndex = 0;

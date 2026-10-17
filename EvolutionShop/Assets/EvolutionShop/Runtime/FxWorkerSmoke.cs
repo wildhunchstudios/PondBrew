@@ -14,6 +14,7 @@ namespace EvolutionShop
   readonly List<WorkerFrame> workerFrames=new List<WorkerFrame>();
   readonly Dictionary<ShopCharacterVisual,WorkerFrame> workerPrevious=new Dictionary<ShopCharacterVisual,WorkerFrame>();
   readonly Dictionary<ShopCharacterVisual,float> workerHeight=new Dictionary<ShopCharacterVisual,float>();readonly List<string> workerNeutral=new List<string>();
+  readonly HashSet<string> workerFacingChecks=new HashSet<string>();
   float workerStarted;Vector3 workerMin=Vector3.one*100,workerMax=Vector3.one*-100;int workerGeometry;
   void WorkerObserve()
   {
@@ -26,6 +27,10 @@ namespace EvolutionShop
      if(Mathf.Abs(Mathf.DeltaAngle((s.GaitPhase-old.gait)*Mathf.Rad2Deg,distance*360/FxWorkerMotion.StrideLength))>.2f)throw new InvalidOperationException("Worker gait disagrees with accumulated movement / "+s.WorkerId);
      if(Flat(a.transform.position,old.position)>distance+.04f)throw new InvalidOperationException("Worker reported travel shorter than observed displacement / "+s.WorkerId);
     }
+    Transform service=a==shop.Stocker.Actor?shop.Stocker.WorkerServiceTarget:a==shop.Technician.Actor?shop.Technician.WorkerServiceTarget:null;
+    if(a!=shop.Cashier.Actor&&(s.Activity==FxWorkerActivity.Pickup||s.Activity==FxWorkerActivity.Place||s.Activity==FxWorkerActivity.Measure||s.Activity==FxWorkerActivity.Dose||s.Activity==FxWorkerActivity.Start)&&!service)throw new InvalidOperationException("Worker service lacks actual physical target / "+s.WorkerId);
+    if(service&&s.Progress>=.35f&&!shop.Paused){Vector3 direction=service.position-a.transform.position;direction.y=0;if(Vector3.Angle(a.transform.forward,direction)>3)throw new InvalidOperationException("Worker service faces away from actual station / "+s.WorkerId+" / "+s.Activity);if(old!=null&&old.job==s.JobId&&old.activity==s.Activity.ToString()&&Flat(a.transform.position,old.position)>.001f)throw new InvalidOperationException("Station service changed worker root position");string key=s.WorkerId+" / "+s.Activity;if(workerFacingChecks.Add(key))Check(true,"Actual stationary service faces physical station / "+key);}
+    if(a==shop.Cashier.Actor&&s.Activity==FxWorkerActivity.Checkout&&s.EventKind==FxWorkerEvent.None&&!shop.Paused){float minimum=100;int hands=0;foreach(var filter in a.GetComponentsInChildren<MeshFilter>())if(filter.name=="Mitten hand"&&filter.sharedMesh){hands++;foreach(var vertex in filter.sharedMesh.vertices)minimum=Mathf.Min(minimum,filter.transform.TransformPoint(vertex).y);}if(hands!=2||minimum<1.145f)throw new InvalidOperationException("Pip service hands hidden below countertop / "+minimum);if(workerFacingChecks.Add("Pip hand clearance"))Check(true,"Actual Pip mitten mesh clears authored countertop during checkout");}
     int particles=shop.World.FxPool.ParticleCountForValidation(a.WorkerFxOwner);if(particles>4)throw new InvalidOperationException("Worker accent exceeds bounded local budget");
     if(s.ProxyVisible&&(!s.Carrying||string.IsNullOrEmpty(s.ProxyIdentity)))throw new InvalidOperationException("Visible carry proxy lacks authoritative carrying identity");
     var f=new WorkerFrame{seconds=Time.realtimeSinceStartup-workerStarted,worker=s.WorkerId,job=s.JobId,activity=s.Activity.ToString(),eventKind=s.EventKind.ToString(),eventJob=s.EventJobId,proxyIdentity=s.ProxyIdentity,position=a.transform.position,proxyPosition=a.WorkerProxy?a.WorkerProxy.position:Vector3.zero,distance=s.TravelDistance,gait=s.GaitPhase,speed=s.Speed,progress=s.Progress,eventAge=s.EventAge,sample=s.SampleCount,events=s.EventCount,proxies=s.ProxyCount,particles=particles,carrying=s.Carrying,paused=s.Paused,reduced=s.Reduced};workerFrames.Add(f);workerPrevious[a]=f;
@@ -36,7 +41,23 @@ namespace EvolutionShop
   IEnumerator WorkerClip(string stem,float seconds,Action<float> action=null)
   {Action<float> tick=age=>{action?.Invoke(age);WorkerObserve();};if(Application.isEditor){float start=Time.realtimeSinceStartup;while(Time.realtimeSinceStartup-start<seconds){tick(Time.realtimeSinceStartup-start);yield return null;}}else yield return ReviewClip(stem,seconds,tick);}
   void WorkerAim(ShopCharacterVisual actor,bool lab=false)
-  {shop.SetPanel(ShopPanel.None);shop.AllowValidationInput=false;GateAim(lab?new Vector3(-1.7f,.2f,2.5f):new Vector3(-3.5f,.2f,-3.1f),actor.transform.position+Vector3.up*1.05f);}
+  {
+   shop.SetPanel(ShopPanel.None);shop.AllowValidationInput=false;
+   // Side/front views stay off the visitor queue and show both service station and hands.
+   Vector3 camera;
+   if(actor==shop.Cashier.Actor)camera=new Vector3(-4.0f,.2f,-4.5f);
+   else if(actor==shop.Technician.Actor&&actor.transform.position.z>2.2f&&actor.transform.position.x<3)camera=new Vector3(4.3f,.2f,3.0f);
+   else if(actor.transform.position.z>1.5f&&actor.transform.position.x>3.5f)camera=new Vector3(2.3f,.2f,1.5f);
+   else if(actor.transform.position.z<-.5f)camera=new Vector3(4.0f,.2f,-3.6f);
+   else {camera=actor.transform.position+actor.transform.forward*2.8f+actor.transform.right*1.8f;camera.y=.2f;}
+   GateAim(camera,actor.transform.position+Vector3.up*1.0f);
+  }
+  void WorkerAimHeld(ShopCharacterVisual actor)
+  {
+   WorkerAim(actor);
+   // The real pause panel occupies the middle; keep the held worker in the exposed left strip.
+   shop.Player.View.transform.rotation*=Quaternion.Euler(0,33,0);
+  }
   void WorkerGeometry(ShopCharacterVisual actor)
   {
    foreach(var filter in actor.GetComponentsInChildren<MeshFilter>()) {
@@ -99,7 +120,7 @@ namespace EvolutionShop
    yield return WorkerWait(()=>shop.Stocker.CurrentJobId!=null,8,"Nori active reservation before reload");
    string beforeReload=shop.Stocker.CurrentJobId;var oldModel=shop.Model;int beforeMoney=shop.Model.Currency;
    Check(shop.SaveNow()&&shop.ReloadSaved()&&!oldModel.GetStockTransfer(beforeReload).HasValue&&shop.Model.GetStorage(slot).Value.Id==specimen&&shop.Model.Currency==beforeMoney,"Active reservation reload releases old claim while retaining exact goods and wages");yield return null;workerPrevious.Clear();
-   var barrier=GameObject.CreatePrimitive(PrimitiveType.Cube);barrier.name="FX15 diagnostic doorway barrier";barrier.transform.SetParent(shop.World.transform,false);barrier.transform.localPosition=new Vector3(0,1.2f,.8f);barrier.transform.localScale=new Vector3(3.3f,2.4f,.45f);Physics.SyncTransforms();
+   var barrier=GameObject.CreatePrimitive(PrimitiveType.Cube);barrier.name="FX15 diagnostic doorway barrier";barrier.transform.SetParent(shop.World.transform,false);barrier.transform.localPosition=new Vector3(0,1.2f,.8f);barrier.transform.localScale=new Vector3(3.3f,2.4f,.45f);barrier.GetComponent<Renderer>().enabled=false;Physics.SyncTransforms();
    try{StockerParkPlayer();yield return WorkerWait(()=>shop.Stocker.Blocked,35,"real worker route blocked by diagnostic barrier");WorkerAim(shop.Stocker.Actor,true);yield return WorkerClip("worker-nori-blocked-route",.7f);Check(shop.Model.GetStorage(slot).Value.Id==specimen&&!shop.Model.GetTank("tank-a").HasValue&&shop.Stocker.Actor.WorkerSnapshot.ProxyCount==0,"Blocked route releases proxy and preserves source");}finally{Destroy(barrier);}yield return null;Physics.SyncTransforms();
    yield return StockerEnter();Check(shop.RetryStocker(),"Retry physical route after diagnostic barrier removal");StockerParkPlayer();
    yield return WorkerWait(()=>shop.Stocker.WorkerActivity==FxWorkerActivity.Pickup,25,"Nori at real source");WorkerAim(shop.Stocker.Actor,true);
@@ -107,9 +128,9 @@ namespace EvolutionShop
    yield return WorkerClip("worker-nori-pickup-focus-cancel",1.6f,age=>{var snap=shop.Stocker.Actor.WorkerSnapshot;if(!activeCanceled&&snap.EventKind==FxWorkerEvent.Pickup&&shop.World.FxPool.ParticleCountForValidation(shop.Stocker.Actor.WorkerFxOwner)>0){pickupEvents=snap.EventCount;shop.SetFxFocusForValidation(false);activeCanceled=true;cancelAge=age;Check(shop.Stocker.Actor.WorkerSnapshot.EventKind==FxWorkerEvent.None&&shop.World.FxPool.ParticleCountForValidation(shop.Stocker.Actor.WorkerFxOwner)==0,"Cancel an actually active pickup event and particles");}if(activeCanceled&&age-cancelAge>.3f)shop.SetFxFocusForValidation(true);});
    shop.SetFxFocusForValidation(true);Check(activeCanceled&&shop.Stocker.Actor.WorkerSnapshot.EventCount==pickupEvents,"Held focus interruption and recovery do not replay pickup");
    Check(shop.Stocker.Carrying&&shop.Model.GetStorage(slot).Value.Id==specimen&&!shop.Model.GetTank("tank-a").HasValue,"Carry proxy has no inventory ownership");
-   string job=shop.Stocker.CurrentJobId;var actor=shop.Stocker.Actor;var position=actor.transform.position;float distance=shop.Stocker.TravelDistance;
-   shop.SetPanel(ShopPanel.Pause);yield return WorkerClip("worker-nori-pause-held",.7f);
-   Check(shop.Stocker.CurrentJobId==job&&shop.Stocker.TravelDistance==distance&&actor.transform.position==position&&shop.Model.GetStorage(slot).Value.Id==specimen,"Held pause freezes actual job/root and keeps one safe source");
+   string job=shop.Stocker.CurrentJobId;var actor=shop.Stocker.Actor;var position=actor.transform.position;var rotation=actor.transform.rotation;float distance=shop.Stocker.TravelDistance;
+   WorkerAimHeld(actor);shop.SetPanel(ShopPanel.Pause);yield return WorkerClip("worker-nori-pause-held",.7f);
+   Check(shop.Stocker.CurrentJobId==job&&shop.Stocker.TravelDistance==distance&&actor.transform.position==position&&actor.transform.rotation==rotation&&shop.Model.GetStorage(slot).Value.Id==specimen,"Held pause freezes actual job/root and keeps one safe source");
    // Keep the existing global pause while checking view policy so recorder drain cannot advance a delivery.
 
    shop.SetFxFocusForValidation(false);yield return WorkerClip("worker-nori-focus-held",.4f);Check(actor.WorkerSnapshot.EventKind==FxWorkerEvent.None&&shop.World.FxPool.ParticleCountForValidation(actor.WorkerFxOwner)==0,"Focus policy cancels transient accents without inventing goods");shop.SetFxFocusForValidation(true);

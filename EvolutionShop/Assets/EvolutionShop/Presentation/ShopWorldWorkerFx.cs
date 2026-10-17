@@ -41,6 +41,8 @@ namespace EvolutionShop
                 case FxWorkerEvent.Refused:WorkerRefusalAccentCount++;break;
             }
             Transform source=actor.transform;Vector3 point=new Vector3(.20f,1.04f,.37f);
+            if(actor.WorkerSnapshot.WorkerId==ShopStaff.CashierId &&
+                (kind==FxWorkerEvent.Checkout||kind==FxWorkerEvent.Refused))point.y=1.28f;
             if(kind==FxWorkerEvent.Dose && displays.TryGetValue("incubator",out var incubator)&&incubator.Root){
                 source=incubator.Root.parent;point=new Vector3(0,1.48f,-.46f);
             }

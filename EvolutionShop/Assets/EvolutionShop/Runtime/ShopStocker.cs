@@ -19,6 +19,7 @@ namespace EvolutionShop
         public string TargetTankId { get; private set; }
         public string Status => shop && shop.Paused ? "Game paused / stocker time frozen" : status;
         public ShopCharacterVisual Actor { get; private set; }
+        public Transform WorkerServiceTarget => phase == WorkPhase.Pickup ? sourceServiceTarget : phase == WorkPhase.Deliver ? destinationServiceTarget : null;
         public float ServiceProgress=>Mathf.Clamp01(serviceTime/ServiceSeconds);
         public FxWorkerActivity WorkerActivity=>phase==WorkPhase.ToRack?FxWorkerActivity.Walk:
             phase==WorkPhase.Pickup?FxWorkerActivity.Pickup:phase==WorkPhase.ToDisplay?FxWorkerActivity.Carry:
@@ -41,6 +42,7 @@ namespace EvolutionShop
         ShopStocking claimedStocking;
         string expectedSpecimenId, targetSetting, status = "No stocker hired";
         WorkPhase phase;
+        Transform sourceServiceTarget, destinationServiceTarget;
         WorkerPathPoint[] route, deliveryRoute;
         int routeIndex;
         long nextJobNumber;
@@ -96,8 +98,23 @@ namespace EvolutionShop
         public void Tick(float seconds)
         {
             TickCore(seconds);
+            FaceWorkerService(seconds);
             if(shop&&Actor)Actor.PoseWorker(WorkerActivity,ServiceProgress,seconds,Carrying,CurrentJobId,expectedSpecimenId,shop.Paused);
         }
+        // Presentation yaw only: service timing, path and exact stock ownership stay with TickCore.
+        void FaceWorkerService(float seconds)
+        {
+            if (!shop || shop.Paused || !isActiveAndEnabled || !Actor || !Actor.isActiveAndEnabled ||
+                seconds <= 0 || float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
+            Transform target = WorkerServiceTarget;
+            if (!target) return;
+            Vector3 direction = target.position - Actor.transform.position;
+            direction.y = 0;
+            if (direction.sqrMagnitude <= .000001f) return;
+            Actor.transform.rotation = Quaternion.RotateTowards(Actor.transform.rotation,
+                Quaternion.LookRotation(direction, Vector3.up), 720f * Mathf.Min(seconds, .5f));
+        }
+
         void TickCore(float seconds)
         {
             if (!shop || shop.Paused || !isActiveAndEnabled || seconds <= 0 ||
@@ -236,6 +253,14 @@ namespace EvolutionShop
                         TargetTankId = tankId;
                         expectedSpecimenId = source.Value.Id;
                         targetSetting = setting;
+                        sourceServiceTarget = destinationServiceTarget = null;
+                        if (shop.World)
+                            foreach (var station in shop.World.Stations)
+                            {
+                                if (!station) continue;
+                                if (station.StorageItemId == rack.Id) sourceServiceTarget = station.transform;
+                                if (station.TankId == tankId) destinationServiceTarget = station.transform;
+                            }
                         Vector3 origin = Actor.transform.position;
                         if (!shop.Layout.TryGetStorageAccessPoint(rack.Id, out float sx, out float sz) ||
                             !shop.Layout.TryGetBrowsePoint(tankId, 0, out float tx, out float tz) ||
@@ -352,6 +377,7 @@ namespace EvolutionShop
             claimedLayout = null;
             claimedStocking = null;
             route = deliveryRoute = null;
+            sourceServiceTarget = destinationServiceTarget = null;
             phase = WorkPhase.None;
             routeIndex = 0;
             serviceTime = doorWait = 0;

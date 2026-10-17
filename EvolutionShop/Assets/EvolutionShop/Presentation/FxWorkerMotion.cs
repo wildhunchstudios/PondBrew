@@ -41,8 +41,9 @@ namespace EvolutionShop
             var parcel=new Vector3(0,.91f,.38f);
             float comfort=reduced? .35f:1f,beat=Mathf.Sin(progress*Mathf.PI);
             if(activity==FxWorkerActivity.Checkout){
-                leftArm=new Vector3(-30*comfort,0,-7);
-                rightArm=new Vector3(-(26+Mathf.Sin(progress*Mathf.PI*4)*9)*comfort,0,9);
+                // Keep the service baseline above the counter; comfort reduces only the small hand beat.
+                leftArm=new Vector3(-98,0,-7);
+                rightArm=new Vector3(-(101+Mathf.Sin(progress*Mathf.PI*4)*3*comfort),0,9);
                 head.x=(3+beat*5)*comfort;
             }else if(activity==FxWorkerActivity.Pickup){
                 float reach=Mathf.SmoothStep(0,1,progress);
@@ -67,9 +68,10 @@ namespace EvolutionShop
             float age=Mathf.Max(0,Finite(eventAge)),duration=EventDuration(eventKind);
             float envelope=duration>0&&age<duration?Mathf.Sin(age/duration*Mathf.PI)*comfort:0;
             // Work/grip wins over a finishing accent. Existing comedy remains the later overlay.
-            if(!carrying){
+            if(!carrying && activity!=FxWorkerActivity.Checkout){
                 if(eventKind==FxWorkerEvent.Refused){head.y+=Mathf.Sin(age*14)*5*envelope;rightArm.x-=20*envelope;}
-                else if(eventKind==FxWorkerEvent.Checkout||eventKind==FxWorkerEvent.Place){head.x+=6*envelope;rightArm.x-=34*envelope;}
+                else if(eventKind==FxWorkerEvent.Checkout){head.x+=6*envelope;if(envelope>0)rightArm.x=-98-8*envelope;}
+                else if(eventKind==FxWorkerEvent.Place){head.x+=6*envelope;rightArm.x-=34*envelope;}
                 else if(eventKind==FxWorkerEvent.Dose){head.x+=4*envelope;rightArm.x-=25*envelope;}
             }
             return new FxWorkerPose(leftLeg,rightLeg,leftArm,rightArm,head,parcel,carrying);
