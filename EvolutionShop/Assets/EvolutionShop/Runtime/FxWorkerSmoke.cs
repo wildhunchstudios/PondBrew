@@ -46,7 +46,7 @@ namespace EvolutionShop
    // Side/front views stay off the visitor queue and show both service station and hands.
    Vector3 camera;
    if(actor==shop.Cashier.Actor)camera=new Vector3(-4.0f,.2f,-4.5f);
-   else if(actor==shop.Technician.Actor&&actor.transform.position.z>2.2f&&actor.transform.position.x<3)camera=new Vector3(4.3f,.2f,3.0f);
+   else if(actor==shop.Technician.Actor&&actor.transform.position.z>2.2f&&actor.transform.position.x<3)camera=new Vector3(-1.7f,.2f,2.5f);
    else if(actor.transform.position.z>1.5f&&actor.transform.position.x>3.5f)camera=new Vector3(2.3f,.2f,1.5f);
    else if(actor.transform.position.z<-.5f)camera=new Vector3(4.0f,.2f,-3.6f);
    else {camera=actor.transform.position+actor.transform.forward*2.8f+actor.transform.right*1.8f;camera.y=.2f;}
@@ -54,9 +54,11 @@ namespace EvolutionShop
   }
   void WorkerAimHeld(ShopCharacterVisual actor)
   {
-   WorkerAim(actor);
-   // The real pause panel occupies the middle; keep the held worker in the exposed left strip.
-   shop.Player.View.transform.rotation*=Quaternion.Euler(0,33,0);
+   shop.SetPanel(ShopPanel.None);shop.AllowValidationInput=false;
+   // Fixed clear aisle: actor-relative front offsets can land inside incubator equipment.
+   GateAim(new Vector3(0,.2f,1.2f),actor.transform.position+Vector3.up*1.0f);
+   // The real pause panel occupies the middle; keep both mittens in the exposed left strip.
+   shop.Player.View.transform.rotation*=Quaternion.Euler(0,38,0);
   }
   void WorkerGeometry(ShopCharacterVisual actor)
   {
