@@ -70,3 +70,6 @@
 
 # Preserve byte-hashed FX14 customer presentation evidence.
 /Docs/Evidence/fx-14/** -text -whitespace
+
+# Preserve byte-hashed FX15 worker presentation evidence.
+/Docs/Evidence/fx-15/** -text -whitespace
