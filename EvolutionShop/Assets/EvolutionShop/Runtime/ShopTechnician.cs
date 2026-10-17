@@ -18,6 +18,11 @@ namespace EvolutionShop
         public string TargetStorageId { get; private set; }
         public string Status => shop && shop.Paused ? "Game paused / technician time frozen" : status;
         public ShopCharacterVisual Actor { get; private set; }
+        public float ServiceProgress=>Mathf.Clamp01(serviceTime/ServiceSeconds);
+        public FxWorkerActivity WorkerActivity=>phase==WorkPhase.ToIncubatorForStart||phase==WorkPhase.ToIncubatorForOutput?FxWorkerActivity.Walk:
+            phase==WorkPhase.StartRecipe?(ServiceProgress<.333333f?FxWorkerActivity.Measure:ServiceProgress<.666667f?FxWorkerActivity.Dose:FxWorkerActivity.Start):
+            phase==WorkPhase.Pickup?FxWorkerActivity.Pickup:phase==WorkPhase.ToRack?FxWorkerActivity.Carry:
+            phase==WorkPhase.Deliver?FxWorkerActivity.Place:shop&&shop.Laboratory.ActiveSpecimenId!=null?FxWorkerActivity.Check:FxWorkerActivity.Idle;
         public bool Blocked { get; private set; }
         public bool Carrying => phase == WorkPhase.ToRack || phase == WorkPhase.Deliver;
         public string Phase => phase == WorkPhase.ToIncubatorForStart || phase == WorkPhase.ToIncubatorForOutput ? "Walking to incubator" :
@@ -78,6 +83,7 @@ namespace EvolutionShop
         /// <summary>Releases the original model's claim without consuming cultures or moving output.</summary>
         public void ResetTransient()
         {
+            if(Actor&&shop&&shop.World)shop.World.CancelFxOwner(Actor.WorkerFxOwner);
             ClearJob();
             Blocked = false;
             cooldown = 0;
@@ -92,6 +98,11 @@ namespace EvolutionShop
         }
 
         public void Tick(float seconds)
+        {
+            TickCore(seconds);
+            if(shop&&Actor)Actor.PoseWorker(WorkerActivity,ServiceProgress,seconds,Carrying,CurrentJobId,expectedSpecimenId,shop.Paused);
+        }
+        void TickCore(float seconds)
         {
             if (!shop || shop.Paused || !isActiveAndEnabled || seconds <= 0 ||
                 float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
@@ -145,6 +156,7 @@ namespace EvolutionShop
                     phase = WorkPhase.ToRack;
                     serviceTime = 0;
                     status = "Carrying " + expectedSpeciesName + " to the reserved lab rack";
+                    shop.PresentWorkerHandling(Actor,CurrentJobId);
                     break;
                 case WorkPhase.Deliver:
                     // The parcel never owns stock. Until the saved delivery commits, the creature
@@ -423,12 +435,14 @@ namespace EvolutionShop
             startsRecipe = false;
             routeIndex = 0;
             serviceTime = doorWait = 0;
-            if (Actor) Actor.Pose(CharacterSamplePose.Idle, 0);
+            if (Actor) { Actor.Pose(CharacterSamplePose.Idle, 0); Actor.ClearWorkerJobPresentation(); }
         }
 
         void Fail(string explanation)
         {
+            string failedJob=CurrentJobId;
             ClearJob();
+            if(shop)shop.PresentWorkerResult(Actor,FxWorkerEvent.Refused,failedJob,true);
             Blocked = true;
             cooldown = RetrySeconds;
             status = explanation;
@@ -450,6 +464,7 @@ namespace EvolutionShop
             root.position = new Vector3(0, 0, 4.4f);
             Actor = root.gameObject.AddComponent<ShopCharacterVisual>();
             Actor.Build(true);
+            Actor.ConfigureWorker(shop.World,ShopStaff.TechnicianId);
             var label = new GameObject("Moss / depth-tested name").transform;
             label.SetParent(root, false);
             label.localPosition = new Vector3(0, 1.98f, .02f);

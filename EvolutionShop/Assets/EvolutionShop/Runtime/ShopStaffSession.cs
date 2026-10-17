@@ -102,7 +102,10 @@ namespace EvolutionShop
             var result=Customers.ServeExpected(expected);
             if (!result.HasValue) return false;
             Tutorial.ObserveSale(Model,result.Value,TutorialActionOrigin.Worker,Cycle.DayNumber);
-            bool success=Perform(result.Value,expected,FxCueOrigin.Worker).Success;
+            // Perform retains the existing live transaction before SaveNow. A failed
+            // durable write must not report a saved worker completion or queue its gag.
+            bool success=Perform(result.Value,expected,FxCueOrigin.Worker).Success && SaveError==null;
+            PresentWorkerResult(Cashier.Actor,FxWorkerEvent.Checkout,Cashier.CurrentJobId,success);
             if (success) Notify("Pip served a customer / "+agreed+" credits received.");
             return success;
         }

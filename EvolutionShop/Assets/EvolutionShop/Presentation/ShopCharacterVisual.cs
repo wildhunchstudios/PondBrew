@@ -17,6 +17,128 @@ namespace EvolutionShop
         readonly List<Material> materials = new List<Material>();
         bool built;
 
+        // Opt-in only for employed actors. Customer and presentation-sample callers
+        // retain the original Pose/PoseComedy API and geometry.
+        ShopWorld workerWorld;
+        string workerId,workerJob,workerProxyIdentity,workerEventJob;
+        FxOwnerToken workerOwner;
+        FxWorkerActivity workerActivity;
+        FxWorkerEvent workerEvent;
+        float workerProgress,workerGait,workerDistance,workerSpeed,workerMoving,workerAge,workerTime;
+        int workerEventCount,workerSamples;
+        bool workerCarrying,workerPaused;
+        Vector3 workerPrevious,leftWorkerRest,rightWorkerRest;
+        Vector3[] leftWorkerPoints,rightWorkerPoints;
+        float leftWorkerFloor,rightWorkerFloor;
+        string workerEventMaskJob;
+        int workerEventMask;
+        public Transform WorkerProxy => parcel;
+        public FxOwnerToken WorkerFxOwner => workerOwner;
+        public FxWorkerSnapshot WorkerSnapshot => new FxWorkerSnapshot(workerId,workerJob,workerProxyIdentity,workerEventJob,
+            workerActivity,workerEvent,workerProgress,workerGait,workerDistance,workerSpeed,workerMoving,workerAge,workerEventCount,
+            workerSamples,workerCarrying,parcel&&parcel.gameObject.activeSelf,workerPaused||(workerWorld&&workerWorld.FxPolicy==FxViewPolicy.Paused),workerWorld&&workerWorld.WorkerReducedMotion);
+        public void ConfigureWorker(ShopWorld world,string id)
+        {
+            if(!built || string.IsNullOrEmpty(id))return;
+            workerWorld=world;workerId=id;workerPrevious=transform.position;
+            if(leftWorkerPoints==null){
+                leftWorkerRest=LeftLeg.localPosition;rightWorkerRest=RightLeg.localPosition;
+                leftWorkerPoints=WorkerLegPoints(LeftLeg);rightWorkerPoints=WorkerLegPoints(RightLeg);
+                leftWorkerFloor=Mathf.Max(0,leftWorkerRest.y+WorkerLegMinimum(leftWorkerPoints,0));
+                rightWorkerFloor=Mathf.Max(0,rightWorkerRest.y+WorkerLegMinimum(rightWorkerPoints,0));
+            }
+            workerOwner=world?world.BindWorkerPresentation(this,id):default;
+            ApplyWorkerPose(FxWorkerMotion.Sample(FxWorkerActivity.Idle,0,0,0,0,FxWorkerEvent.None,0,false,true));
+        }
+        public void PoseWorker(FxWorkerActivity activity,float progress,float seconds,bool carrying,string jobId,string proxyIdentity,bool paused)
+        {
+            if(workerId==null || !built || !isActiveAndEnabled)return;
+            if(workerWorld && workerWorld.FxCues!=null && !workerWorld.FxCues.IsValid(workerOwner))workerOwner=workerWorld.BindWorkerPresentation(this,workerId);
+            if(jobId!=workerJob && (jobId!=null || workerEvent==FxWorkerEvent.Pickup))CancelWorkerPresentation();
+            workerJob=jobId;workerActivity=activity;workerProgress=Mathf.Clamp01(progress);workerCarrying=carrying;
+            workerProxyIdentity=carrying?proxyIdentity:null;workerPaused=paused;
+            float dt=float.IsNaN(seconds)||float.IsInfinity(seconds)?0:Mathf.Max(0,seconds);
+            Vector3 delta=transform.position-workerPrevious;delta.y=0;float distance=delta.magnitude;
+            bool valid=!paused&&dt>0&&dt<=.5f&&distance<=Mathf.Max(.08f,dt*4.5f);
+            workerSpeed=valid?distance/dt:0;
+            bool moving=workerSpeed>.015f;
+            if(moving){workerDistance+=distance;workerGait+=distance*(Mathf.PI*2/FxWorkerMotion.StrideLength);}
+            workerMoving=moving?Mathf.MoveTowards(workerMoving,Mathf.Clamp01(workerSpeed/.6f),dt*9):0;
+            workerPrevious=transform.position;workerSamples++;
+            if(!paused){workerTime+=dt;if(workerEvent!=FxWorkerEvent.None){
+                workerAge+=dt;if(workerAge>=FxWorkerMotion.EventDuration(workerEvent)){workerEvent=FxWorkerEvent.None;workerAge=0;}
+            }}
+            bool reduced=workerWorld&&workerWorld.WorkerReducedMotion;
+            bool quiet=workerWorld&&workerWorld.FxPolicy!=FxViewPolicy.Visible;
+            ApplyWorkerPose(FxWorkerMotion.Sample(activity,progress,workerGait,workerMoving,workerTime,workerEvent,workerAge,carrying,
+                reduced || (quiet&&workerEvent==FxWorkerEvent.None)));
+        }
+        public bool PlayWorkerEvent(FxWorkerEvent kind,string jobId)
+        {
+            if(workerId==null || !isActiveAndEnabled || workerPaused || string.IsNullOrEmpty(jobId) ||
+                kind<=FxWorkerEvent.None || kind>FxWorkerEvent.Refused)return false;
+            if(workerEventMaskJob!=jobId){workerEventMaskJob=jobId;workerEventMask=0;}
+            int mask=1<<(int)kind;if((workerEventMask&mask)!=0)return false;
+            workerEventMask|=mask;workerEvent=kind;workerEventJob=jobId;workerAge=0;workerEventCount++;return true;
+        }
+        public void ClearWorkerJobPresentation()
+        {
+            workerJob=workerProxyIdentity=null;workerCarrying=false;workerActivity=FxWorkerActivity.Idle;workerProgress=0;
+            if(parcel)parcel.gameObject.SetActive(false);
+            if(workerEvent==FxWorkerEvent.Pickup){
+                CancelWorkerPresentation();
+                if(workerWorld)workerWorld.CancelFxOwner(workerOwner);
+            }
+        }
+        public void CancelWorkerPresentation()
+        {
+            workerEvent=FxWorkerEvent.None;workerAge=0;workerSpeed=workerMoving=0;workerPrevious=transform.position;
+            if(workerId!=null && built)ApplyWorkerPose(FxWorkerMotion.Sample(FxWorkerActivity.Idle,0,workerGait,0,0,FxWorkerEvent.None,0,workerCarrying,true));
+        }
+        static Vector3[] WorkerLegPoints(Transform leg)
+        {
+            var points=new List<Vector3>();
+            foreach(var filter in leg.GetComponentsInChildren<MeshFilter>()){
+                if(!filter.sharedMesh)continue;var matrix=leg.worldToLocalMatrix*filter.transform.localToWorldMatrix;
+                foreach(var vertex in filter.sharedMesh.vertices)points.Add(matrix.MultiplyPoint3x4(vertex));
+            }
+            return points.ToArray();
+        }
+        static float WorkerLegMinimum(Vector3[] points,float angle)
+        {
+            if(points==null||points.Length==0)return 0;
+            float a=angle*Mathf.Deg2Rad,sin=Mathf.Sin(a),cos=Mathf.Cos(a),low=float.MaxValue;
+            for(int i=0;i<points.Length;i++)low=Mathf.Min(low,points[i].y*cos-points[i].z*sin);
+            return low;
+        }
+        void ApplyWorkerPose(FxWorkerPose pose)
+        {
+            if(!built || leftWorkerPoints==null)return;
+            LeftLeg.localRotation=Quaternion.Euler(pose.LeftLegEuler);RightLeg.localRotation=Quaternion.Euler(pose.RightLegEuler);
+            LeftLeg.localPosition=leftWorkerRest+Vector3.up*(leftWorkerFloor-leftWorkerRest.y-WorkerLegMinimum(leftWorkerPoints,pose.LeftLegEuler.x));
+            RightLeg.localPosition=rightWorkerRest+Vector3.up*(rightWorkerFloor-rightWorkerRest.y-WorkerLegMinimum(rightWorkerPoints,pose.RightLegEuler.x));
+            LeftArm.localRotation=Quaternion.Euler(pose.LeftArmEuler);RightArm.localRotation=Quaternion.Euler(pose.RightArmEuler);
+            head.localRotation=Quaternion.Euler(pose.HeadEuler);parcel.localPosition=pose.ParcelPosition;parcel.localRotation=Quaternion.identity;
+            parcel.gameObject.SetActive(pose.ProxyVisible);
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void PreviewWorkerMotionForValidation(FxWorkerActivity activity,float progress,float gaitPhase,float moving,float idleTime,
+            FxWorkerEvent eventKind,float eventAge,bool carrying,bool reduced)
+        {ApplyWorkerPose(FxWorkerMotion.Sample(activity,progress,gaitPhase,moving,idleTime,eventKind,eventAge,carrying,reduced));}
+#endif
+        void OnEnable()
+        {
+            workerPrevious=transform.position;
+            if(workerWorld&&workerId!=null)workerOwner=workerWorld.BindWorkerPresentation(this,workerId);
+        }
+        void OnDisable()
+        {
+            if(workerId==null)return;
+            CancelWorkerPresentation();workerCarrying=false;workerProxyIdentity=null;workerMoving=workerSpeed=0;
+            if(parcel)parcel.gameObject.SetActive(false);
+            if(workerWorld)workerWorld.ReleaseWorkerPresentation(workerOwner);
+        }
+
         Material Mat(string name, Color color)
         {
             var m = ShopWorld.MakeMaterial("Sample / " + name, color, 0, .32f);
@@ -97,6 +219,7 @@ namespace EvolutionShop
         public void Pose(CharacterSamplePose pose,float time)
         {
             if(!built) return;
+            if(workerId!=null){LeftLeg.localPosition=leftWorkerRest;RightLeg.localPosition=rightWorkerRest;parcel.localPosition=new Vector3(0,.91f,.38f);}
             bool walking=pose==CharacterSamplePose.Walk || pose==CharacterSamplePose.Carry;
             float stride=walking?Mathf.Sin(time*7f):0;
             LeftLeg.localRotation=Quaternion.Euler(stride*23,0,0);

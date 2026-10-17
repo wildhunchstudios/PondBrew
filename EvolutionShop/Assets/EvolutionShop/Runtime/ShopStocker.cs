@@ -19,6 +19,10 @@ namespace EvolutionShop
         public string TargetTankId { get; private set; }
         public string Status => shop && shop.Paused ? "Game paused / stocker time frozen" : status;
         public ShopCharacterVisual Actor { get; private set; }
+        public float ServiceProgress=>Mathf.Clamp01(serviceTime/ServiceSeconds);
+        public FxWorkerActivity WorkerActivity=>phase==WorkPhase.ToRack?FxWorkerActivity.Walk:
+            phase==WorkPhase.Pickup?FxWorkerActivity.Pickup:phase==WorkPhase.ToDisplay?FxWorkerActivity.Carry:
+            phase==WorkPhase.Deliver?FxWorkerActivity.Place:FxWorkerActivity.Idle;
         public bool Blocked { get; private set; }
         public bool Carrying => phase == WorkPhase.ToDisplay || phase == WorkPhase.Deliver;
         public string Phase => phase == WorkPhase.ToRack ? "Walking to rack" : phase == WorkPhase.Pickup ? "Picking up" :
@@ -75,6 +79,7 @@ namespace EvolutionShop
         /// <summary>Cancellation releases both claims while the original specimen remains in the rack.</summary>
         public void ResetTransient()
         {
+            if(Actor&&shop&&shop.World)shop.World.CancelFxOwner(Actor.WorkerFxOwner);
             ClearJob();
             Blocked = false;
             cooldown = 0;
@@ -89,6 +94,11 @@ namespace EvolutionShop
         }
 
         public void Tick(float seconds)
+        {
+            TickCore(seconds);
+            if(shop&&Actor)Actor.PoseWorker(WorkerActivity,ServiceProgress,seconds,Carrying,CurrentJobId,expectedSpecimenId,shop.Paused);
+        }
+        void TickCore(float seconds)
         {
             if (!shop || shop.Paused || !isActiveAndEnabled || seconds <= 0 ||
                 float.IsNaN(seconds) || float.IsInfinity(seconds)) return;
@@ -127,6 +137,7 @@ namespace EvolutionShop
                     phase = WorkPhase.ToDisplay;
                     serviceTime = 0;
                     status = "Carrying a reserved creature to " + TargetTankId;
+                    shop.PresentWorkerHandling(Actor,CurrentJobId);
                     break;
                 case WorkPhase.Deliver:
                     // The parcel is presentation only. It never owns a second copy of the creature.
@@ -344,12 +355,14 @@ namespace EvolutionShop
             phase = WorkPhase.None;
             routeIndex = 0;
             serviceTime = doorWait = 0;
-            if (Actor) Actor.Pose(CharacterSamplePose.Idle, 0);
+            if (Actor) { Actor.Pose(CharacterSamplePose.Idle, 0); Actor.ClearWorkerJobPresentation(); }
         }
 
         void Fail(string explanation)
         {
+            string failedJob=CurrentJobId;
             ClearJob();
+            if(shop)shop.PresentWorkerResult(Actor,FxWorkerEvent.Refused,failedJob,true);
             Blocked = true;
             cooldown = RetrySeconds;
             status = explanation;
@@ -369,6 +382,7 @@ namespace EvolutionShop
             root.position = new Vector3(0, 0, 3.2f);
             Actor = root.gameObject.AddComponent<ShopCharacterVisual>();
             Actor.Build(true);
+            Actor.ConfigureWorker(shop.World,ShopStaff.StockerId);
             var label = new GameObject("Nori / depth-tested name").transform;
             label.SetParent(root, false);
             label.localPosition = new Vector3(0, 1.98f, .02f);

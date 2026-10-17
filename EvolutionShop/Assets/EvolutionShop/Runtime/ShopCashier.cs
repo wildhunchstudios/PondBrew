@@ -15,6 +15,8 @@ namespace EvolutionShop
         public float Progress => Mathf.Clamp01(elapsed / ServiceSeconds);
         public string Status => shop && shop.Paused ? "Game paused / cashier time frozen" : status;
         public ShopCharacterVisual Actor { get; private set; }
+        public FxWorkerActivity WorkerActivity=>CurrentJobId!=null?FxWorkerActivity.Checkout:FxWorkerActivity.Idle;
+        public float ServiceProgress=>Progress;
 
         ShopSession shop;
         Station counter;
@@ -59,6 +61,11 @@ namespace EvolutionShop
         }
 
         public void Tick(float seconds)
+        {
+            TickCore(seconds);
+            if(shop&&Actor)Actor.PoseWorker(WorkerActivity,ServiceProgress,seconds,false,CurrentJobId,null,shop.Paused);
+        }
+        void TickCore(float seconds)
         {
             if (!shop || shop.Paused || !isActiveAndEnabled ||
                 float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0) return;
@@ -109,6 +116,7 @@ namespace EvolutionShop
             bool served = Eligible(expected) && shop.ServeCashier(expected);
             ClearJob();
             if (served) shop.QueueWorkerCelebration(ShopStaff.CashierId);
+            if(!served)shop.PresentWorkerResult(Actor,FxWorkerEvent.Refused,committedJob,true);
             if (!served) refusedJobId = committedJob; // One attempt, then visible manual recovery.
             SetStatus(served ? "Checkout complete / ready for the next customer" :
                 "Checkout blocked / serve manually or resume the cashier", served ? "THANK YOU!" : "CHECKOUT BLOCKED");
@@ -151,6 +159,7 @@ namespace EvolutionShop
         /// <summary>Jobs are transient; releasing this timer never cancels a visitor's valid order.</summary>
         public void ResetTransient()
         {
+            if(Actor&&shop&&shop.World)shop.World.CancelFxOwner(Actor.WorkerFxOwner);
             ClearJob();
             refusedJobId = null;
             poseTime = 0;
@@ -163,7 +172,7 @@ namespace EvolutionShop
             Target = null;
             CurrentJobId = null;
             elapsed = 0;
-            if (Actor) Actor.Pose(CharacterSamplePose.Idle, 0);
+            if (Actor) { Actor.Pose(CharacterSamplePose.Idle, 0); Actor.ClearWorkerJobPresentation(); }
         }
 
         void Animate(CharacterSamplePose pose, float seconds)
@@ -192,6 +201,7 @@ namespace EvolutionShop
             actorRoot.rotation = counter.transform.rotation * Quaternion.Euler(0, 180, 0);
             Actor = actorRoot.gameObject.AddComponent<ShopCharacterVisual>();
             Actor.Build(true);
+            Actor.ConfigureWorker(shop.World,ShopStaff.CashierId);
 
             var sign = new GameObject("Cashier duty sign").transform;
             sign.SetParent(actorRoot, false);

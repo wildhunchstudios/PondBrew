@@ -105,12 +105,13 @@ namespace EvolutionShop
             tutorial.ObserveDisplayed(staged,stagedResult,TutorialActionOrigin.Worker);tutorial.Reconcile(staged);
             var slot=CaptureStaffSlot(staged,Staff,Stocking,ledger);slot.tutorial=tutorial.CaptureSave();
             if (!SaveStore.Write(SavePath,slot,out var error))
-            { SaveError=error;Notify("Delivery was not saved. The creature is still safe in its rack. Retry Nori after fixing saving.");return false; }
+            { SaveError=error;PresentWorkerResult(Stocker.Actor,FxWorkerEvent.Place,jobId,false);Notify("Delivery was not saved. The creature is still safe in its rack. Retry Nori after fixing saving.");return false; }
             // Synchronous main-thread write cannot advance another transaction between staging
             // and this revalidated publication; no animation callback owns this operation.
             var result=Model.CompleteStockTransfer(jobId,ShopStaff.StockerId);
             if (!result.Success) throw new InvalidOperationException("Validated stocker delivery changed during persistence.");
             Reports.RecordRestock();Tutorial=tutorial;SaveError=null;saveClock=0;
+            PresentWorkerResult(Stocker.Actor,FxWorkerEvent.Place,jobId,true);
             World.CaptureHabitatTransfers();World.Refresh(Model);World.PresentHabitatTransfers(true,NextFxSequence(),FxCueOrigin.Worker);Notify("Nori stocked "+Model.GetSpecies(result.SpeciesId).DisplayName+" / ready for customers.");
             return true;
         }

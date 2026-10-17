@@ -12,7 +12,7 @@ namespace EvolutionShop
             public string Identity;
             public Vector3 Position, Scale;
             public Quaternion Rotation;
-            public bool FollowsTool; public CustomerActor Customer;
+            public bool FollowsTool; public CustomerActor Customer; public ShopCharacterVisual Worker;
         }
         FxCueRuntime fxCues;
         FxEffectPool fxPool;
@@ -156,6 +156,8 @@ namespace EvolutionShop
         {
             if(fxCues!=null && fxCues.IsValid(owner) && fxBindings[owner.Slot].Customer)
                 fxBindings[owner.Slot].Customer.CancelCustomerPresentation();
+            if(fxCues!=null && fxCues.IsValid(owner) && fxBindings[owner.Slot].Worker)
+                fxBindings[owner.Slot].Worker.CancelWorkerPresentation();
             if (owner.IsDefined && owner.Equals(playerInteractionOwner)) CancelPlayerInteraction();
             CancelAquariumOwner(owner);
             CancelResearchAutomationOwner(owner);
@@ -169,7 +171,10 @@ namespace EvolutionShop
         }
         public void CancelFxTransient()
         {
-            for(int i=0;i<fxBindings.Length;i++)if(fxBindings[i].Customer)fxBindings[i].Customer.CancelCustomerPresentation();
+            for(int i=0;i<fxBindings.Length;i++){
+                if(fxBindings[i].Customer)fxBindings[i].Customer.CancelCustomerPresentation();
+                if(fxBindings[i].Worker)fxBindings[i].Worker.CancelWorkerPresentation();
+            }
             CancelPlayerInteraction();
             fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.

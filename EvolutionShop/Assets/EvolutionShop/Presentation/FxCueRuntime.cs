@@ -11,7 +11,7 @@ namespace EvolutionShop
         OutputRemoved, ModuleOff, ModuleWaiting, ModuleBlocked, ModuleCollected, ModuleDosed,
         HandIdle, HandMove, HandCollectStart, HandCollectHold, HandCollectEnd, HandDose, HandPlace,
         HandRefused, HandUpgrade, HandSlap, TankEmpty, TankOccupied, TankReserved, TankHabitat,
-        PondletCruise, PondletPause, PondletGlance, PondletPlaced, SaleCommitted, CustomerPriceAccepted, CustomerPriceRefused
+        PondletCruise, PondletPause, PondletGlance, PondletPlaced, SaleCommitted, CustomerPriceAccepted, CustomerPriceRefused, WorkerPickup, WorkerDose, WorkerPlace, WorkerCheckout, WorkerRefused
     }
     public enum FxCueOrigin { Manual, Worker, Module }
     public enum FxSteadyState { Empty, Full, Refilling, Dosing, Working, Ready, Occupied, Reserved }
@@ -84,7 +84,7 @@ namespace EvolutionShop
         { state = IsValid(owner) ? owners[owner.Slot].State : default; return IsValid(owner); }
         public bool Play(FxOwnerToken owner, FxCueId id, uint sequence, FxCueOrigin origin, float seconds, int priority)
         {
-            if (!IsValid(owner) || id <= FxCueId.None || id > FxCueId.CustomerPriceRefused || sequence == 0 ||
+            if (!IsValid(owner) || id <= FxCueId.None || id > FxCueId.WorkerRefused || sequence == 0 ||
                 seconds <= 0 || seconds > 1.5f || float.IsNaN(seconds) || priority < 0 || priority > 5 ||
                 origin < FxCueOrigin.Manual || origin > FxCueOrigin.Module) return false;
             ref Owner record = ref owners[owner.Slot];

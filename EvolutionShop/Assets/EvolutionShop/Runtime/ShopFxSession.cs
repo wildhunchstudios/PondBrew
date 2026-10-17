@@ -31,6 +31,15 @@ namespace EvolutionShop
                 fxHasFocus && !Paused && !PlacementActive && (Panel==ShopPanel.None || Panel==ShopPanel.Counter))
                 World.PresentCustomerReaction(actor,FxCustomerReaction.Checkout,NextFxSequence(),origin);
         }
+        internal void PresentWorkerHandling(ShopCharacterVisual actor,string jobId)
+        {PresentWorkerResult(actor,FxWorkerEvent.Pickup,jobId,true);}
+        internal void PresentWorkerResult(ShopCharacterVisual actor,FxWorkerEvent kind,string jobId,bool saved)
+        {
+            if(!World||!actor)return;
+            if(!saved){World.CancelFxOwner(actor.WorkerFxOwner);return;}
+            if(fxHasFocus&&!Paused&&!PlacementActive&&Panel!=ShopPanel.Arrange)
+                World.PresentWorkerEvent(actor,kind,jobId,NextFxSequence());
+        }
         uint fxSequence;
         bool fxHasFocus = true;
         uint NextFxSequence()
