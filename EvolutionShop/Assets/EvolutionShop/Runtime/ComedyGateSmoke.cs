@@ -151,14 +151,19 @@ namespace EvolutionShop
             GateAim(incubator.TransformPoint(new Vector3(0,.2f,-2.6f)),incubator.TransformPoint(new Vector3(0,1.7f,0)));
             yield return WaitFor(()=>shop.Comedy.Active && shop.Comedy.Kind==ComedyKind.Belch,6,"natural delayed belch after completion");
             yield return new WaitForSeconds(.6f);
-            var bubble=GateBubble();
-            Check(bubble && bubble.gameObject.activeSelf && bubble.GetComponent<Collider>()==null,"Live incubator bubble is visible and nonphysical");
+            int belchParticles=shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner);
+            bool nonphysical=true;
+            for(int i=0;i<belchParticles;i++) {
+                var particle=shop.World.FxPool.ParticleVisualForValidation(shop.World.ComedyFxOwner,i);
+                nonphysical &= particle && particle.gameObject.activeInHierarchy && particle.GetComponentsInChildren<Collider>(true).Length==0;
+            }
+            Check(shop.World.ComedyFxSnapshot.Active && shop.World.ComedyFxSnapshot.BeatEmitted && belchParticles>0 && belchParticles<=6 && nonphysical,"Live incubator pooled puff is visible, bounded and nonphysical");
             yield return GateCapture("232-live-incubator-belch");
             Check(shop.Model.Incubator.Phase==IncubatorPhase.Ready,"Readiness stays available during belch");
             string readySpecimen=shop.Model.Incubator.SpecimenId;
             Ok(shop.TransferToDisplay("tank-a"),"Collect while belch is active");string collected=shop.Model.GetTank("tank-a").Value.Id;
             yield return null;yield return null;
-            Check(!shop.Comedy.Active && !bubble.gameObject.activeSelf && !sound.ComedyPlaying,"Collection clears active belch caption, bubble and voice");
+            Check(!shop.Comedy.Active && !shop.World.ComedyFxSnapshot.Active && shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner)==0 && !sound.ComedyPlaying,"Collection clears active belch caption, pooled puff and voice");
             Check(!shop.TransferToDisplay("tank-b").Success && collected==readySpecimen && shop.Model.GetTank("tank-a").Value.Id==collected,"Repeated collection cannot duplicate the ready specimen");
 
             foreach(var interruption in new[]{"pause","reload","reset","disable"})
@@ -169,7 +174,7 @@ namespace EvolutionShop
                 if(interruption=="reset")shop.ConfirmNewGame();
                 if(interruption=="disable")shop.enabled=false;
                 yield return null;yield return null;
-                Check(!shop.Comedy.Active && !bubble.gameObject.activeSelf && !sound.ComedyPlaying,"Active belch cleanup / "+interruption);
+                Check(!shop.Comedy.Active && !shop.World.ComedyFxSnapshot.Active && shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner)==0 && !sound.ComedyPlaying,"Active belch cleanup / "+interruption);
                 Check(shop.Model.Currency==0 && shop.Model.Incubator.Phase==(interruption=="reset"?IncubatorPhase.Dosing:IncubatorPhase.Ready) && (interruption=="reset" || shop.Model.Incubator.SpecimenId==activeId),"Belch interruption keeps economic authority / "+interruption);
                 shop.enabled=true;shop.SetPanel(ShopPanel.None);int activeCount=shop.ComedyStartedCount;shop.Advance(4.2f);yield return null;
                 Check(!shop.Comedy.Active && shop.ComedyStartedCount==activeCount,"Active belch interruption leaves no delayed replay / "+interruption);
@@ -191,8 +196,7 @@ namespace EvolutionShop
             }
             GateFresh();GateMature();shop.ReducedGags=true;shop.HumorVolume=0;
             yield return WaitFor(()=>shop.Comedy.Active,6,"muted reduced belch");yield return new WaitForSeconds(.2f);
-            bubble=GateBubble();
-            Check(shop.Comedy.Reduced && shop.Comedy.Caption.Length>0 && (!bubble || !bubble.gameObject.activeSelf) && sound.LastComedyGain==0 && sound.ActiveVoiceCount<=1,"Reduced muted readiness retains caption without bubble and with zero comedy gain");
+            Check(shop.Comedy.Reduced && shop.Comedy.Caption.Length>0 && shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner)==0 && sound.LastComedyGain==0 && sound.ActiveVoiceCount<=1,"Reduced muted readiness retains pre-beat caption without particles and with zero comedy gain");
             shop.SetPanel(ShopPanel.Pause);Check(shop.SaveNow() && shop.ReloadSaved() && !shop.Comedy.Active,"Final paused save/reload retains no incident");
         }
 
