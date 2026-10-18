@@ -104,6 +104,8 @@ namespace EvolutionShop
         {
             if (!World) return;
             ReconcileLabPresentation();
+            if((!fxHasFocus || Paused || PlacementActive || Panel!=ShopPanel.None) &&
+                (Comedy.Active || SlapGesture && SlapGesture.IsPlaying))SkipComedy();
             World.SetFxViewPolicy(!fxHasFocus ? FxViewPolicy.Unfocused : PlacementActive || Panel == ShopPanel.Arrange ? FxViewPolicy.Arrange :
                 Paused ? FxViewPolicy.Paused : Panel != ShopPanel.None ? FxViewPolicy.Modal : FxViewPolicy.Visible);
             if (!fxHasFocus || Paused || PlacementActive || Panel == ShopPanel.Arrange) sound?.StopLabAudio();

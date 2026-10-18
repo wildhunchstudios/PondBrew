@@ -14,12 +14,12 @@ namespace EvolutionShop
     // Three owned readback/byte slots bound memory; a worker encodes, never Unity's main thread.
     sealed class FxReviewRecorder : IDisposable
     {
-        [Serializable] public sealed class Frame { public int index, renderFrame; public float seconds, latency; }
+        [Serializable] public sealed class Frame { public int index, renderFrame; public float seconds, latency, realtime; }
         [Serializable] public sealed class Receipt
         {
             public string file, source = "Actual standalone HUD / scripted camera and input / silent video";
             public int width, height, targetFPS = 30, missedSamples;
-            public float wallSeconds, achievedFPS;
+            public float wallSeconds, achievedFPS, originRealtime;
             public Frame[] frames;
         }
         sealed class Slot { public RenderTexture texture; public byte[] bytes; public bool busy; }
@@ -75,7 +75,7 @@ namespace EvolutionShop
             int index=-1;
             lock(mutex)for(int i=0;i<slots.Length;i++)if(!slots[i].busy){slots[i].busy=true;index=i;break;}
             if(index<0){missed++;return;}
-            int selected=index;float issue=Age;int renderFrame=Time.frameCount;pending++;
+            int selected=index;float absolute=Time.realtimeSinceStartup;float issue=absolute-origin;int renderFrame=Time.frameCount;pending++;
             ScreenCapture.CaptureScreenshotIntoRenderTexture(slots[index].texture);
             AsyncGPUReadback.Request(slots[index].texture,0,TextureFormat.RGBA32,request=>
             {
@@ -84,7 +84,7 @@ namespace EvolutionShop
                 try
                 {
                     request.GetData<byte>().CopyTo(slots[selected].bytes);
-                    frames.Add(new Frame {index=frames.Count,renderFrame=renderFrame,seconds=issue,latency=Age-issue});queue.Add(selected);
+                    frames.Add(new Frame {index=frames.Count,renderFrame=renderFrame,seconds=issue,latency=Age-issue,realtime=absolute});queue.Add(selected);
                 }
                 catch(Exception ex){failure=ex.ToString();lock(mutex)slots[selected].busy=false;}
             });
@@ -98,7 +98,7 @@ namespace EvolutionShop
             string error=stderr.GetAwaiter().GetResult();
             if(failure!=null || encoder.ExitCode!=0)throw new InvalidOperationException(failure??error);
             float span=frames.Count>1?frames[frames.Count-1].seconds-frames[0].seconds:0;
-            return new Receipt {file=Path.GetFileName(output),width=width,height=height,missedSamples=missed,wallSeconds=Age,achievedFPS=span>0?(frames.Count-1)/span:0,frames=frames.ToArray()};
+            return new Receipt {file=Path.GetFileName(output),width=width,height=height,missedSamples=missed,wallSeconds=Age,originRealtime=origin,achievedFPS=span>0?(frames.Count-1)/span:0,frames=frames.ToArray()};
         }
         public void Dispose()
         {

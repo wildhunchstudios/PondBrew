@@ -170,10 +170,10 @@ namespace EvolutionShop
                 return false;
             CancelCustomerPresentation();
             if(customerWorld)customerWorld.CancelFxOwner(customerFxOwner);
-            reducedSlap = reduced;
-            slapDuration = reduced ? .32f : .75f;
+            reduced = reduced || customerWorld && customerWorld.CustomerReducedMotion; reducedSlap = reduced;
+            slapDuration = FxComedyMotion.SlapDuration(reduced);
             slapRemaining = slapDuration;
-            if (slapStars) slapStars.gameObject.SetActive(!reduced);
+            if (slapStars) slapStars.gameObject.SetActive(false);
             ApplyBodyPose(body.localPosition.y, 0f);
             return true;
         }
@@ -181,6 +181,7 @@ namespace EvolutionShop
         void ClearSlapReaction()
         {
             slapRemaining = 0f;
+            if(upperBody)upperBody.localRotation=Quaternion.identity;
             if (slapStars) slapStars.gameObject.SetActive(false);
             if (!body) return;
             body.localScale = bodyBaseScale;
@@ -190,35 +191,25 @@ namespace EvolutionShop
 
         void ApplyBodyPose(float lift, float happyTilt)
         {
-            float tilt = 0f;
-            body.localScale = bodyBaseScale;
-            if (IsSlapReacting)
-            {
-                float elapsed = slapDuration - slapRemaining;
-                float progress = elapsed / slapDuration;
-                float envelope = 1f - progress;
-                if (reducedSlap)
-                    tilt = Mathf.Sin(progress * Mathf.PI) * 3.5f;
-                else
-                {
-                    tilt = Mathf.Sin(elapsed * 24f + .8f) * 16f * envelope * envelope;
-                    float squash = .09f * Mathf.Exp(-elapsed * 18f) * envelope;
-                    body.localScale = Vector3.Scale(bodyBaseScale, new Vector3(1f + squash * .6f, 1f - squash, 1f + squash * .3f));
-                    for (int i = 0; i < slapStarNodes.Length; i++)
-                    {
-                        float angle = elapsed * 7f + i * Mathf.PI * 2f / slapStarNodes.Length;
-                        var star = slapStarNodes[i];
-                        star.localPosition = new Vector3(Mathf.Cos(angle) * .30f, Mathf.Sin(angle * 2f) * .035f, Mathf.Sin(angle) * .22f);
-                        star.localRotation = Quaternion.Euler(0, elapsed * 80f + i * 25f, elapsed * 160f + i * 65f);
-                        star.localScale = Vector3.one * Mathf.Min(1f, envelope * 5f);
-                    }
-                }
+            body.localScale=bodyBaseScale;
+            // The displacement-driven legs keep their floor compensation during the recoil.
+            body.localPosition=Vector3.up*lift;body.localRotation=Quaternion.Euler(0,0,happyTilt);
+            if(!IsSlapReacting)return;
+            float elapsed=slapDuration-slapRemaining;
+            var pose=FxComedyMotion.Sample(ComedyKind.Slap,elapsed,reducedSlap,0);
+            if(upperBody)upperBody.localRotation=Quaternion.Euler(pose.UpperEuler+pose.HeadEuler*.35f);
+            bool stars=!reducedSlap && elapsed>=FxComedyMotion.SlapContactSeconds(false);
+            if(slapStars)slapStars.gameObject.SetActive(stars);
+            if(!stars)return;
+            float age=elapsed-FxComedyMotion.SlapContactSeconds(false);
+            for(int i=0;i<slapStarNodes.Length;i++){
+                float angle=age*5.5f+i*Mathf.PI*2f/slapStarNodes.Length;
+                var star=slapStarNodes[i];
+                star.localPosition=new Vector3(Mathf.Cos(angle)*.27f,Mathf.Sin(angle*2)*.025f,Mathf.Sin(angle)*.20f);
+                star.localRotation=Quaternion.Euler(0,age*65+i*25,age*110+i*65);
+                star.localScale=Vector3.one*Mathf.Min(1,pose.Envelope*4);
             }
-            // Never alter the NavMeshAgent root, path, or destination for a visual gag.
-            body.localPosition = Vector3.up * lift;
-            body.localRotation = Quaternion.Euler(0, 0, happyTilt + tilt);
         }
-
         public void Present(CustomerPhase phase, string label, bool upset = false)
         {
             if (!hasPresentation || Phase != phase) animationTime = 0;

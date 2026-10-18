@@ -19,6 +19,13 @@ namespace EvolutionShop
         {
             SlapGesture = gameObject.AddComponent<SlapHand>();
             SlapGesture.Initialize(Player.View);
+            SlapGesture.ContactReached += PlaySlapContactSound;
+        }
+
+        void PlaySlapContactSound()
+        {
+            if(isActiveAndEnabled && fxHasFocus && !Paused && Panel==ShopPanel.None && !PlacementActive)
+                sound.Slap(HumorVolume);
         }
 
         public void BeginSlapRebind()
@@ -72,15 +79,17 @@ namespace EvolutionShop
                 (Cycle.Phase != ShopDayPhase.Open && Cycle.Phase != ShopDayPhase.Closing)) return false;
             // Resolve again at action time: a visible prompt is not authority over a stale visitor.
             var target = Customers.FindSlapTarget(Player.View);
-            if (target == null || !Customers.Slap(target)) return false;
+            if (target == null) { SlapGesture?.PlayWhiff(ReducedGags || World.CustomerReducedMotion); return false; }
+            var actor=Customers.ActorOf(target);
+            if (!Customers.Slap(target)) return false;
             slapCooldown.TryStart();
             SlapTarget = null;
             collectionNeedsRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
             StopHarvest(); World.SetHarvesting(false, null);
-            SlapGesture.Play(ReducedGags);
+            if(SlapGesture.IsWhiff)SlapGesture.Cancel();
+            SlapGesture.Play(ReducedGags || World.CustomerReducedMotion);
             World.SetHandContext(Player.transform.position, false, SlapGesture.IsPlaying);
-            StartSlapComedy();
-            sound.Slap(HumorVolume);
+            StartSlapComedy(actor);
             Notify("HEY! MY DIGNITY!  The customer leaves. Reputation -1; unpaid stock stays.", 4);
             return true;
         }

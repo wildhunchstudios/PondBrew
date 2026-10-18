@@ -31,6 +31,7 @@ namespace EvolutionShop
             if(Comedy.Active && mimicTank!=null && !Model.GetTank(mimicTank).HasValue) CancelComedy();
             if(Comedy.Active && Comedy.Kind==ComedyKind.Belch && Model.Incubator.Phase!=IncubatorPhase.Ready) CancelComedy();
             TickWorkerCelebration(seconds);
+            if(Comedy.Active && World)World.TickComedyFx(Comedy.Elapsed);
             if(belchWait>=0)
             {
                 belchWait=Mathf.Max(0,belchWait-seconds);belchExpiry-=seconds;
@@ -77,15 +78,25 @@ namespace EvolutionShop
             }
             if(!Comedy.TryStart(kind,comedyVariant++,ReducedGags))return false;
             comedyVisitor=visit;comedyActor=actor;mimicTank=tank;ComedyStartedCount++;
+            Transform source=actor?actor.transform:null;
+            if(kind==ComedyKind.Belch && World)World.TryGetLabFacility(ShopLayout.IncubatorFacilityId,out source);
+            if(kind==ComedyKind.Mimic && World)source=World.ComedyMimicSource(tank);
+            BeginComedyPresentation(source);
             sound.PlayComedy(kind,Comedy.Variant,HumorVolume);
             return true;
         }
 
-        void StartSlapComedy()
+        void StartSlapComedy(CustomerActor target)
         {
             ClearComedyVisuals();
             Comedy.StartSlap(comedyVariant++,ReducedGags);ComedyStartedCount++;
+            BeginComedyPresentation(target?target.transform:null);
             // The existing accepted slap action owns its sound and body reaction.
+        }
+        void BeginComedyPresentation(Transform source)
+        {
+            if(World && fxHasFocus && !Paused && Panel==ShopPanel.None && !PlacementActive)
+                World.BeginComedyFx(Comedy.Kind,Comedy.Variant,source,NextFxSequence(),ReducedGags);
         }
         public void CancelComedy()
         {
@@ -103,12 +114,12 @@ namespace EvolutionShop
             ClearWorkerCelebration();
             if(comedyActor)comedyActor.ClearComedyPose();
             comedyActor=null;comedyVisitor=null;mimicTank=null;
-            if(World) { World.HideComedyBubble(); World.ClearFishMimic(); }
+            if(World) { World.CancelComedyFx(); World.HideComedyBubble(); World.ClearFishMimic(); }
             if(sound)sound.StopComedy();
         }
         void ResetComedyTransient()
         {
-            CancelComedy();StopComedyPreview();belchWait=-1;ambientWait=18;
+            SkipComedy();StopComedyPreview();belchWait=-1;ambientWait=18;
         }
         void ComedyInput(Keyboard keyboard,bool gameplayAtFrameStart)
         {
@@ -124,12 +135,11 @@ namespace EvolutionShop
             {
                 if(!WorkerCelebrationStillValid(activeWorkerId,activeWorkerActor) || (sound && sound.ServicePriorityActive))
                 {CancelComedy();return;}
-                activeWorkerActor.PoseComedy(ComedyKind.WorkerCelebration,Comedy.Elapsed,Comedy.Reduced);
+                activeWorkerActor.PoseComedy(ComedyKind.WorkerCelebration,Comedy.Elapsed,Comedy.Reduced || World.CustomerReducedMotion,Comedy.Variant);
             }
-            if(comedyActor)comedyActor.SetComedyPose(Comedy.Kind,Comedy.Elapsed,Comedy.Reduced);
+            if(comedyActor)comedyActor.SetComedyPose(Comedy.Kind,Comedy.Elapsed,Comedy.Reduced || World.CustomerReducedMotion,Comedy.Variant);
             if(mimicTank!=null)World.PoseFishMimic(mimicTank,Comedy.Elapsed,Comedy.Reduced);
-            if(Comedy.Kind==ComedyKind.Belch && World.TryGetLabFacility(ShopLayout.IncubatorFacilityId,out var incubator))
-                World.ShowComedyBubble(incubator.TransformPoint(new Vector3(0,2.0f,0)),Comedy.Elapsed,Comedy.Reduced);
+
         }
         void OnDisable()
         {

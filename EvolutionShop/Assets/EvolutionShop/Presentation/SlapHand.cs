@@ -8,6 +8,13 @@ namespace EvolutionShop
     {
         public bool IsPlaying => remaining > 0f;
         public float Remaining => remaining;
+        public float Elapsed => duration-remaining;
+        public bool IsWhiff { get; private set; }
+        public event System.Action ContactReached;
+        public int ContactCount { get; private set; }
+        public int ContactFrameCount { get; private set; }
+        public float ContactRealtime { get; private set; }
+        bool contactPlayed;
 
         Transform glove;
         Material gloveMaterial, cuffMaterial;
@@ -44,10 +51,12 @@ namespace EvolutionShop
             return part;
         }
 
-        public bool Play(bool reduced = false)
+        public bool Play(bool reduced = false) => Begin(reduced,false);
+        public bool PlayWhiff(bool reduced = false) => Begin(reduced,true);
+        bool Begin(bool reduced,bool whiff)
         {
             if (!initialized || !isActiveAndEnabled || paused || !glove || IsPlaying) return false;
-            this.reduced = reduced;
+            this.reduced = reduced;IsWhiff=whiff;contactPlayed=false;
             duration = reduced ? .18f : .30f;
             remaining = duration;
             glove.gameObject.SetActive(true);
@@ -62,23 +71,27 @@ namespace EvolutionShop
         {
             if (paused || !IsPlaying || !glove) return;
             remaining = Mathf.Max(0f, remaining - Time.deltaTime);
+            if(!IsWhiff && !contactPlayed && Elapsed>=FxComedyMotion.SlapContactSeconds(reduced)){
+                contactPlayed=true;ContactCount++;ContactFrameCount=Time.frameCount;ContactRealtime=Time.realtimeSinceStartup;
+                ContactReached?.Invoke();
+            }
             if (!IsPlaying) { Hide(); return; }
             ApplyPose();
         }
 
         void ApplyPose()
         {
-            float progress = 1f - remaining / duration;
-            float sweep = Mathf.Sin(progress * Mathf.PI);
-            Vector3 start = reduced ? new Vector3(.38f, -.26f, .52f) : new Vector3(.58f, -.24f, .58f);
-            Vector3 contact = reduced ? new Vector3(.30f, -.20f, .55f) : new Vector3(.10f, -.02f, .60f);
-            glove.localPosition = Vector3.Lerp(start, contact, sweep);
-            glove.localRotation = reduced
-                ? Quaternion.Euler(0, -12f, -15f + sweep * 8f)
-                : Quaternion.Euler(10f * (1f - sweep), Mathf.Lerp(-35f, 12f, sweep), Mathf.Lerp(-55f, 25f, sweep));
-            glove.localScale = Vector3.one * (reduced ? .60f : .70f);
+            FxComedyMotion.SampleSlapHand(Elapsed,reduced,IsWhiff,out var position,out var rotation,out var scale);
+            glove.localPosition=position;glove.localRotation=rotation;glove.localScale=scale;
         }
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void PreviewSlapForValidation(float elapsed,bool reduced,bool whiff)
+        {
+            if(!glove)return;
+            FxComedyMotion.SampleSlapHand(elapsed,reduced,whiff,out var position,out var rotation,out var scale);
+            glove.localPosition=position;glove.localRotation=rotation;glove.localScale=scale;
+        }
+#endif
         void Hide()
         {
             remaining = 0f;

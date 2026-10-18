@@ -82,6 +82,7 @@ namespace EvolutionShop
             activeWorkerId = workerId;
             activeWorkerActor = actor;
             ComedyStartedCount++;
+            BeginComedyPresentation(actor.transform);
             if (sound) sound.PlayComedy(ComedyKind.WorkerCelebration, Comedy.Variant, HumorVolume);
         }
 

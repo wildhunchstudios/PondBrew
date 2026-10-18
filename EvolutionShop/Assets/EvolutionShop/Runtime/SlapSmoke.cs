@@ -117,6 +117,7 @@ namespace EvolutionShop
             Check(shop.Reputation.Points == 4 && shop.Reports.Current.slapped == 1 && shop.Reports.IsPending(second.Id) &&
                 shop.Model.GetReservation(second.TargetTankId).Value.CustomerId == second.Id,
                 "One reputation point and one slap report; the other order keeps its reservation");
+            yield return WaitFor(() => sound.SlapPlaybackCount == 1, .4f, "accepted slap reaches actual contact sound");
             Check(actor.IsSlapReacting && actor.StatusLabel == "HEY! MY DIGNITY!" && shop.SlapGesture.IsPlaying &&
                 sound.SlapPlaybackCount == 1 && Mathf.Abs(sound.LastSlapGain - .4f) < .001f, "One glove gesture, customer reaction, caption and humor-gain sound request");
             if (!Application.isBatchMode) { ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "72-slap-impact-screen.png")); yield return null; }
@@ -153,6 +154,8 @@ namespace EvolutionShop
             var reduced = Spawn(CustomerArchetypes.Premium);
             yield return AimForSlap(reduced);
             yield return MoveFor(Key.R, .04f);
+            Check(reduced.Outcome == CustomerOutcome.Slapped && shop.Reputation.Points == 7, "Reduced slap outcome commits immediately before timed sound");
+            yield return WaitFor(() => sound.SlapPlaybackCount == 2, .25f, "reduced slap reaches actual contact sound");
             Check(reduced.Outcome == CustomerOutcome.Slapped && sound.SlapPlaybackCount == 2 && sound.LastSlapGain == 0 &&
                 customers.ActorOf(reduced) != null && customers.ActorOf(reduced).IsSlapReacting &&
                 customers.ActorOf(reduced).SlapReactionRemaining < .33f && shop.Reputation.Points == 7,

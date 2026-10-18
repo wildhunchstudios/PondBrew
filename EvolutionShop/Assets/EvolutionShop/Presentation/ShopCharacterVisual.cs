@@ -236,27 +236,25 @@ namespace EvolutionShop
             parcel.gameObject.SetActive(pose==CharacterSamplePose.Carry);
         }
         public void PoseComedy(ComedyKind kind,float elapsed,bool reduced)
+            =>PoseComedy(kind,elapsed,reduced,0);
+        public void PoseComedy(ComedyKind kind,float elapsed,bool reduced,int variant)
         {
+            if(!built)return;
+            // Scheduling still belongs to the session; an active work pose always wins.
+            if(workerId!=null && workerJob!=null)return;
             Pose(CharacterSamplePose.Idle,0);
-            if(!built || reduced || (kind!=ComedyKind.WorkerCelebration && kind!=ComedyKind.Slap && elapsed<ShopComedy.ReactionDelaySeconds))return;
-            float wave=Mathf.Sin(elapsed*6);
-            if(kind==ComedyKind.WorkerCelebration)
-            {
-                LeftLeg.localRotation=Quaternion.Euler(wave*12,0,0);
-                RightLeg.localRotation=Quaternion.Euler(-wave*12,0,0);
-                LeftArm.localRotation=Quaternion.Euler(-20,0,-100-wave*12);
-                RightArm.localRotation=Quaternion.Euler(-20,0,100+wave*12);
-                head.localRotation=Quaternion.Euler(0,0,wave*5);
-            }
-            else if(kind==ComedyKind.Complaint)
-            {
-                LeftArm.localRotation=Quaternion.Euler(-25,0,-50-wave*8);
-                RightArm.localRotation=Quaternion.Euler(-25,0,50+wave*8);
-            }
-            else if(kind==ComedyKind.Fart)RightArm.localRotation=Quaternion.Euler(-112,0,-20);
-            else if(kind==ComedyKind.Slap)head.localRotation=Quaternion.Euler(0,0,wave*12*Mathf.Clamp01(1-elapsed/2.6f));
-            else Pose(CharacterSamplePose.Greet,elapsed);
+            ApplyComedyPose(FxComedyMotion.Sample(kind,elapsed,reduced,variant));
         }
+        void ApplyComedyPose(FxComedyPose pose)
+        {
+            LeftArm.localRotation=Quaternion.Euler(pose.LeftArmEuler);
+            RightArm.localRotation=Quaternion.Euler(pose.RightArmEuler);
+            head.localRotation=Quaternion.Euler(pose.HeadEuler+pose.UpperEuler);
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void PreviewComedyForValidation(ComedyKind kind,float elapsed,bool reduced,int variant)
+        {if(built)ApplyComedyPose(FxComedyMotion.Sample(kind,elapsed,reduced,variant));}
+#endif
         void OnDestroy() { foreach(var material in materials) if(material) Destroy(material); }
     }
 }

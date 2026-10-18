@@ -7,20 +7,22 @@ namespace EvolutionShop
         // Applied by the session after navigation and ordinary gait. Never touches the actor root,
         // destination, caption, patience or transaction. Normal gait restores the base each frame.
         public void SetComedyPose(ComedyKind kind,float elapsed,bool reduced)
+            =>SetComedyPose(kind,elapsed,reduced,0);
+        public void SetComedyPose(ComedyKind kind,float elapsed,bool reduced,int variant)
         {
-            if(!isActiveAndEnabled || !initialized || paused || !body || IsSlapReacting || reduced || elapsed<ShopComedy.ReactionDelaySeconds)return;
-            float wave=Mathf.Sin(elapsed*6f);
-            if(kind==ComedyKind.Fart)
-                rightArm.localRotation=Quaternion.Euler(-112,0,-20);
-            else if(kind==ComedyKind.Complaint)
-            {
-                leftArm.localRotation=Quaternion.Euler(-25,0,-50-wave*8);
-                rightArm.localRotation=Quaternion.Euler(-25,0,50+wave*8);
-            }
-            else if(kind==ComedyKind.Mimic)
-                rightArm.localRotation=Quaternion.Euler(-18,0,112+wave*10);
-            if(upperBody)upperBody.localRotation*=Quaternion.Euler(0,0,wave*3);
+            if(!isActiveAndEnabled || !initialized || paused || !body || IsSlapReacting || customerReaction!=FxCustomerReaction.None)return;
+            ApplyComedyPose(FxComedyMotion.Sample(kind,elapsed,reduced,variant));
         }
+        void ApplyComedyPose(FxComedyPose pose)
+        {
+            if(leftArm)leftArm.localRotation=Quaternion.Euler(pose.LeftArmEuler);
+            if(rightArm)rightArm.localRotation=Quaternion.Euler(pose.RightArmEuler);
+            if(upperBody)upperBody.localRotation=Quaternion.Euler(pose.UpperEuler+pose.HeadEuler*.35f);
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public void PreviewComedyForValidation(ComedyKind kind,float elapsed,bool reduced,int variant)
+        { ApplyComedyPose(FxComedyMotion.Sample(kind,elapsed,reduced,variant)); }
+#endif
         public void ClearComedyPose()
         {
             if(!body || IsSlapReacting)return;
