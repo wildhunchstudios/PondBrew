@@ -97,22 +97,22 @@ namespace EvolutionShop
   {
    var station=StationOf(StationKind.Incubator).transform;Transform frame=null;foreach(Transform child in station)if(child.name=="Redesign / IncubatorFrame")frame=child;
    Check(frame,"Actual authored IncubatorFrame exists for live belch clearance");
-   // The FBX joins authored parts; derive the highest live vertex plane, including its crown vents.
+   // The approved FBX is not CPU-readable. Use its conservative live rendered AABB, including crown vents.
    bool found=false;Bounds vent=new Bounds();
-   foreach(var mesh in frame.GetComponentsInChildren<MeshFilter>()) {
-    if(!mesh.sharedMesh||!mesh.gameObject.activeInHierarchy)continue;
-    foreach(var vertex in mesh.sharedMesh.vertices){var point=mesh.transform.TransformPoint(vertex);if(!found){vent=new Bounds(point,Vector3.zero);found=true;}else vent.Encapsulate(point);}
+   foreach(var renderer in frame.GetComponentsInChildren<Renderer>()) {
+    if(!renderer.enabled||!renderer.gameObject.activeInHierarchy)continue;
+    if(!found){vent=renderer.bounds;found=true;}else vent.Encapsulate(renderer.bounds);
    }
-   Check(found,"Actual authored frame mesh supplies crown clearance plane");
+   Check(found,"Actual authored frame rendered bounds supply crown clearance plane");
    var snapshot=shop.World.ComedyFxSnapshot;var source=snapshot.SourcePosition;int count=shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner);float lowest=float.PositiveInfinity;
    Check(snapshot.Active&&snapshot.BeatEmitted&&count>0&&count<=(reduced?1:6),"Live belch clearance samples bounded active particles / reduced="+reduced);
    for(int i=0;i<count;i++) {
     var particle=shop.World.FxPool.ParticleVisualForValidation(shop.World.ComedyFxOwner,i);bool meshFound=false;
-    if(particle)foreach(var mesh in particle.GetComponentsInChildren<MeshFilter>())if(mesh.sharedMesh&&mesh.gameObject.activeInHierarchy)foreach(var vertex in mesh.sharedMesh.vertices){lowest=Mathf.Min(lowest,mesh.transform.TransformPoint(vertex).y);meshFound=true;}
-    Check(meshFound,"Live belch particle has actual rendered mesh / reduced="+reduced+" / "+i);
+    if(particle)foreach(var renderer in particle.GetComponentsInChildren<Renderer>())if(renderer.enabled&&renderer.gameObject.activeInHierarchy){lowest=Mathf.Min(lowest,renderer.bounds.min.y);meshFound=true;}
+    Check(meshFound,"Live belch particle has actual enabled renderer bounds / reduced="+reduced+" / "+i);
    }
    Check(source.x>=vent.min.x&&source.x<=vent.max.x&&source.z>=vent.min.z&&source.z<=vent.max.z&&source.y>vent.max.y&&lowest>vent.max.y,
-    "Actual belch source and puff clear authored vent / reduced="+reduced+" / ventTop="+vent.max.y+" / sourceY="+source.y+" / puffMin="+lowest);
+    "Actual belch source and puff rendered AABB clear authored frame / reduced="+reduced+" / ventTop="+vent.max.y+" / sourceY="+source.y+" / puffMin="+lowest);
   }
   IEnumerator FxComedyWorker()
   {
