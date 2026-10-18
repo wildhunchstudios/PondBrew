@@ -27,7 +27,8 @@ namespace EvolutionShop
             comedyFxSource=source;comedyFxKind=kind;comedyFxVariant=variant&1;comedyFxSequence=sequence;
             comedyFxReduced=reduced||fxReducedMotion;comedyFxElapsed=0;comedyFxEmitted=false;comedyFxActive=true;
             comedyFxBeatFrame=-1;comedyFxBeatRealtime=-1;
-            comedyFxPoint=kind==ComedyKind.Belch?new Vector3(0,1.80f,-.12f):
+            // Belch escapes the existing crown vent, clear of the glass and opaque surround.
+            comedyFxPoint=kind==ComedyKind.Belch?new Vector3(0,2.32f,.027f):
                 kind==ComedyKind.Mimic?new Vector3(.15f,.12f,0):
                 kind==ComedyKind.Fart?new Vector3(.22f,.82f,-.10f):
                 kind==ComedyKind.WorkerCelebration?new Vector3(.23f,1.35f,.32f):new Vector3(.18f,1.48f,.23f);

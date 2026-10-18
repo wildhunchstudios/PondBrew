@@ -91,7 +91,28 @@ namespace EvolutionShop
   IEnumerator FxComedyBelch()
   {
    GateFresh();comedyBursts.Clear();GateMature();shop.SetPanel(ShopPanel.Journal);shop.SetPanel(ShopPanel.None);GateAim(new Vector3(-1.7f,.2f,2.5f),new Vector3(2,1.4f,3.85f));
-   foreach(bool reduced in new[]{false,true}){shop.ReducedGags=reduced;yield return FxComedyStart(ComedyKind.Belch);string specimen=shop.Model.Incubator.SpecimenId;yield return FxComedyClip(reduced?"comedy-belch-reduced":"comedy-belch-live",3);Check(shop.Model.Incubator.SpecimenId==specimen&&shop.Model.Incubator.Phase==IncubatorPhase.Ready,"Belch preserves ready specimen / reduced="+reduced);FxComedyClean("belch recovery");}yield return FxComedyStart(ComedyKind.Belch);yield return new WaitForSeconds(.65f);Check(shop.SaveNow()&&shop.ReloadSaved(),"Mid-action belch reload cancels presentation");yield return null;FxComedyClean("active reload");shop.ReducedGags=false;
+   foreach(bool reduced in new[]{false,true}){shop.ReducedGags=reduced;yield return FxComedyStart(ComedyKind.Belch);string specimen=shop.Model.Incubator.SpecimenId;bool clearance=false;yield return FxComedyClip(reduced?"comedy-belch-reduced":"comedy-belch-live",3,age=>{var snapshot=shop.World.ComedyFxSnapshot;if(!clearance&&snapshot.BeatEmitted&&snapshot.Elapsed>=ShopComedy.ReactionDelaySeconds+.12f){FxComedyBelchClearance(reduced);clearance=true;}});Check(clearance,"Observed actual belch puff clearance window / reduced="+reduced);Check(shop.Model.Incubator.SpecimenId==specimen&&shop.Model.Incubator.Phase==IncubatorPhase.Ready,"Belch preserves ready specimen / reduced="+reduced);FxComedyClean("belch recovery");}yield return FxComedyStart(ComedyKind.Belch);yield return new WaitForSeconds(.65f);Check(shop.SaveNow()&&shop.ReloadSaved(),"Mid-action belch reload cancels presentation");yield return null;FxComedyClean("active reload");shop.ReducedGags=false;
+  }
+  void FxComedyBelchClearance(bool reduced)
+  {
+   var station=StationOf(StationKind.Incubator).transform;Transform frame=null;foreach(Transform child in station)if(child.name=="Redesign / IncubatorFrame")frame=child;
+   Check(frame,"Actual authored IncubatorFrame exists for live belch clearance");
+   // The FBX joins authored parts; derive the highest live vertex plane, including its crown vents.
+   bool found=false;Bounds vent=new Bounds();
+   foreach(var mesh in frame.GetComponentsInChildren<MeshFilter>()) {
+    if(!mesh.sharedMesh||!mesh.gameObject.activeInHierarchy)continue;
+    foreach(var vertex in mesh.sharedMesh.vertices){var point=mesh.transform.TransformPoint(vertex);if(!found){vent=new Bounds(point,Vector3.zero);found=true;}else vent.Encapsulate(point);}
+   }
+   Check(found,"Actual authored frame mesh supplies crown clearance plane");
+   var snapshot=shop.World.ComedyFxSnapshot;var source=snapshot.SourcePosition;int count=shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner);float lowest=float.PositiveInfinity;
+   Check(snapshot.Active&&snapshot.BeatEmitted&&count>0&&count<=(reduced?1:6),"Live belch clearance samples bounded active particles / reduced="+reduced);
+   for(int i=0;i<count;i++) {
+    var particle=shop.World.FxPool.ParticleVisualForValidation(shop.World.ComedyFxOwner,i);bool meshFound=false;
+    if(particle)foreach(var mesh in particle.GetComponentsInChildren<MeshFilter>())if(mesh.sharedMesh&&mesh.gameObject.activeInHierarchy)foreach(var vertex in mesh.sharedMesh.vertices){lowest=Mathf.Min(lowest,mesh.transform.TransformPoint(vertex).y);meshFound=true;}
+    Check(meshFound,"Live belch particle has actual rendered mesh / reduced="+reduced+" / "+i);
+   }
+   Check(source.x>=vent.min.x&&source.x<=vent.max.x&&source.z>=vent.min.z&&source.z<=vent.max.z&&source.y>vent.max.y&&lowest>vent.max.y,
+    "Actual belch source and puff clear authored vent / reduced="+reduced+" / ventTop="+vent.max.y+" / sourceY="+source.y+" / puffMin="+lowest);
   }
   IEnumerator FxComedyWorker()
   {
