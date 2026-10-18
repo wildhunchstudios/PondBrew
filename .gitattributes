@@ -73,3 +73,6 @@
 
 # Preserve byte-hashed FX15 worker presentation evidence.
 /Docs/Evidence/fx-15/** -text -whitespace
+
+# Preserve byte-hashed FX16 comedy presentation evidence.
+/Docs/Evidence/fx-16/** -text -whitespace
