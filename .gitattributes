@@ -76,3 +76,6 @@
 
 # Preserve byte-hashed FX16 comedy presentation evidence.
 /Docs/Evidence/fx-16/** -text -whitespace
+
+# Preserve byte-hashed FX17 room atmosphere evidence.
+/Docs/Evidence/fx-17/** -text -whitespace
