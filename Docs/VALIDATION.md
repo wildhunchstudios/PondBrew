@@ -599,3 +599,9 @@ The existing action cues remain intact. Two original four-second loops use five 
 
 The new Pause slider is **Machine / ambience volume**, default 50%. Master and humor controls remain independent. Runtime save envelope 22 stores the setting, rejects malformed current values and preserves explicit zero. Older saves receive 50% in memory without being rewritten during reading. Core gameplay code and its built assembly are unchanged.
 [Current evidence](Evidence/fx-19-VALIDATION.md). Source `76fe2979473a60c7702ace314ca05ecfe208dd2f`; playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx19-audio-4\EvolutionShop.exe`. Human/listening/creative/GPU gates remain deferred/open; next FX-20 is unstarted.
+
+
+## FX20 delivery  -  2026-10-19
+
+**FX-20 technically complete  -  2026-10-19; hands-on comfort review deferred.** Pause has a saved Visual comfort section: Reduced visual motion Off/On and Effects detail Standard/Low, applied through the existing presentation policy and fixed effect pool. Essential prompts, prices, readiness, shortage text and accepted-action accents stay visible; master, ambience and humor volumes and Reduced gags stay independent. Save envelope 23; older saves default to Off/Standard without rewriting; malformed current values are rejected; a failed write keeps the previous setting.
+[Current evidence](Evidence/fx-20-VALIDATION.md). Source `fda2521f12d041ecb966cb5764821e3d69547014`; playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx20-comfort-7\EvolutionShop.exe`. Actual 2320 EditMode and 3905 final Windows checks; build 0/0. Human controls/comfort/creative/GPU gates remain deferred/open; next FX-21 is unstarted.
