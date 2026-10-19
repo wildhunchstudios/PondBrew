@@ -143,7 +143,10 @@ namespace EvolutionShop
                 float scale=Mathf.Min(Screen.width/1280f,Screen.height/720f), top=(Screen.height-720*scale)/2;
                 bool footerLabel=label=="Close  /  ESC"||label=="Help  /  F1"||label=="Continue preparation  /  ESC"||label=="Back to my next goal  /  ESC"||label=="Back to my shop  /  ESC or F1";
                 bool footer=footerLabel&&nativeUiRect.yMin>=top+568*scale&&nativeUiRect.yMax<=top+620*scale;
-                if(footer||(nativeUiRect.yMin>=top+130*scale&&nativeUiRect.yMax<=top+553*scale))yield break;
+                // DrawPanel's scroll content is 423 high above a fixed footer, else 477 (Welcome, Pause, Reset).
+                // A track click pages about 429, so the shorter window for every panel could step over a control.
+                bool fixedFooter=shop.Panel!=ShopPanel.Welcome&&shop.Panel!=ShopPanel.Pause&&shop.Panel!=ShopPanel.Reset;
+                if(footer||(nativeUiRect.yMin>=top+130*scale&&nativeUiRect.yMax<=top+(fixedFooter?553:607)*scale))yield break;
                 yield return NativeUiScrollbar(nativeUiRect.yMin>=top+130*scale);
                 yield return null;
                 Check(shop.TryGetNativeUiButtonForValidation(label,out nativeUiRect,out nativeUiEnabled),"Control retained after actual scroll / "+label);
