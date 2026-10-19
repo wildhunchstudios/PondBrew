@@ -227,7 +227,7 @@ namespace EvolutionShop
         }
         IEnumerator NativeUiBoundsAndCancel(string label)
         {
-            yield return NativeUiFind(label);Rect original=nativeUiRect;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount;
+            yield return NativeUiFind(label);int navigationBefore=shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount;Rect original=nativeUiRect;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount;
             yield return NativeUiEvent(EventType.MouseMove,original.center,target:label);yield return new WaitForSeconds(.15f);
             Check(shop.NativeUiFxSnapshot.HoverAmount>0,"Actual IMGUI hover accent observed");
             yield return NativeUiFind(label);Check(nativeUiRect==original,"Hover does not move native hit bounds");
@@ -237,14 +237,14 @@ namespace EvolutionShop
             yield return NativeUiEvent(EventType.MouseMove,outside,target:label);yield return NativeUiEvent(EventType.MouseUp,outside,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted,"Drag-out release cancels native action");
             yield return NativeUiEvent(EventType.MouseDown,outside,target:label);yield return NativeUiEvent(EventType.MouseUp,original.center,target:label);
-            Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted,"Outside-down inside-up cannot activate native button");
+            Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted,"Outside-down inside-up cannot activate native button");Check(shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount==navigationBefore,"Canceled native control emits no navigation tick");
         }
         IEnumerator NativeUiStagedPurchase()
         {
             GateFresh();StaffCreditFixture(100,"FX18 explicitly seeded staged wage purchase");yield return StaffEnter();yield return NativeUiClick("Hire Pip / initially off schedule");
             int cash=shop.Model.Currency;uint sequence=shop.NativeUiFxSnapshot.MoneySequence;string disk=File.ReadAllText(shop.SavePath);string label="Schedule Pip / pay "+ShopStaff.CashierWage+" credits";
-            TutorialBlockSave();
-            try{yield return NativeUiClip("ui-staged-write-failure",1.5f,NativeUiClick(label));Check(shop.SaveError!=null&&shop.Model.Currency==cash&&!shop.Staff.Scheduled&&File.ReadAllText(shop.SavePath)==disk&&shop.NativeUiFxSnapshot.MoneySequence==sequence,"Failed staged GUI purchase preserves live/disk cash and suppresses spend");}
+            int navigationBefore=shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount;TutorialBlockSave();
+            try{yield return NativeUiClip("ui-staged-write-failure",1.5f,NativeUiClick(label));Check(shop.SaveError!=null&&shop.Model.Currency==cash&&!shop.Staff.Scheduled&&File.ReadAllText(shop.SavePath)==disk&&shop.NativeUiFxSnapshot.MoneySequence==sequence,"Failed staged GUI purchase preserves live/disk cash and suppresses spend");Check(shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount==navigationBefore,"Failed saved native purchase emits no navigation tick");}
             finally{TutorialUnblockSave();}
             Check(shop.SaveNow()&&shop.NativeUiFxSnapshot.MoneySequence==sequence,"Unchanged save after failed staged purchase cannot invent spend");
             yield return NativeUiClip("ui-staged-purchase-retry",1.4f,NativeUiClick(label));
@@ -262,12 +262,13 @@ namespace EvolutionShop
                 Check(shop.Model.Currency==int.MaxValue&&shop.Reports.Current.sales==0&&shop.Model.GetTank("tank-a").HasValue&&shop.NativeUiFxSnapshot.MoneySequence==sequence,"Actual GUI overflow rejection preserves exact money/specimen and emits no wrapped success");
                 yield break;
             }
-            if(failure)TutorialBlockSave();
+            int navigationBefore=shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount;if(failure)TutorialBlockSave();
             try{yield return NativeUiClip(failure?"ui-live-sale-write-failure":"ui-saved-sale",1.4f,NativeUiClick(label));
                 Check(visit.Outcome==CustomerOutcome.Sold&&shop.Model.Currency==cash+visit.Price&&shop.Reports.Current.sales==1,"GUI checkout authoritative live sale occurs exactly once");
                 if(failure)Check(shop.SaveError!=null&&File.ReadAllText(shop.SavePath)==disk&&shop.NativeUiFxSnapshot.MoneySequence==sequence,"Failed live sale leaves old durable bytes and no success cue");
                 else Check(shop.NativeUiFxSnapshot.MoneySequence==sequence+1&&shop.NativeUiFxSnapshot.MoneyDelta==visit.Price,"Saved GUI sale emits exact positive delta once");}
             finally{if(failure)TutorialUnblockSave();}
+            Check(shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount==navigationBefore,"Same-panel native sale emits no navigation tick including failed write");
             if(failure){Check(shop.SaveNow()&&shop.NativeUiFxSnapshot.MoneySequence==sequence,"Later successful save cannot replay discarded failed-live-sale delta");}
             int paid=shop.Model.Currency;uint finalSequence=shop.NativeUiFxSnapshot.MoneySequence;
             Check(!shop.ServeCustomer()&&shop.Model.Currency==paid&&shop.NativeUiFxSnapshot.MoneySequence==finalSequence,"Duplicate service rejection cannot repay or replay");
@@ -302,9 +303,9 @@ namespace EvolutionShop
         {
             int price=shop.Model.GetPrice("pondlet").Value.Standard;string label="Use standard price  /  "+price+" credits";
             yield return NativeUiFind(label);Check(!nativeUiEnabled,"Actual standard-price native button is disabled");
-            Rect rect=nativeUiRect;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount,sequence=shop.NativeUiFxSnapshot.MoneySequence;
+            int navigationBefore=shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount;Rect rect=nativeUiRect;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount,sequence=shop.NativeUiFxSnapshot.MoneySequence;
             yield return NativeUiEvent(EventType.MouseDown,rect.center,target:label);yield return NativeUiEvent(EventType.MouseUp,rect.center,target:label);
-            Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted&&shop.NativeUiFxSnapshot.MoneySequence==sequence&&shop.Model.GetPrice("pondlet").Value.Price==price,"Disabled actual native control cannot accept or mutate price/money");
+            Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted&&shop.NativeUiFxSnapshot.MoneySequence==sequence&&shop.Model.GetPrice("pondlet").Value.Price==price,"Disabled actual native control cannot accept or mutate price/money");Check(shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount==navigationBefore,"Disabled native control emits no navigation tick");
         }
         IEnumerator NativeUiScrollbar(bool down)
         {
@@ -325,8 +326,9 @@ namespace EvolutionShop
             yield return NativeUiFind("Close  /  ESC");Rect footer=nativeUiRect;Vector2 before=shop.NativeUiFxSnapshot.PanelScroll;
             yield return NativeUiScrollbar(true);
             yield return NativeUiFind("Close  /  ESC");Check(nativeUiRect==footer&&shop.NativeUiFxSnapshot.PanelScroll.y>before.y,"Native scrollbar scrolls content while fixed footer hit bounds stay fixed");
-            yield return NativeUiClick("Help  /  F1");Check(shop.Panel==ShopPanel.TutorialHelp,"Direct GUILayout footer Help responds through actual GUI");
-            yield return NativeUiClick("Back to my shop  /  ESC or F1");
+            yield return new WaitForSecondsRealtime(.9f);int navigationBefore=shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount;
+            yield return NativeUiClick("Help  /  F1");Check(shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount==navigationBefore+1,"Real native Help transition emits exactly one navigation tick");Check(shop.Panel==ShopPanel.TutorialHelp,"Direct GUILayout footer Help responds through actual GUI");
+            yield return new WaitForSecondsRealtime(.15f);yield return NativeUiClick("Back to my shop  /  ESC or F1");Check(shop.GetComponent<ShopAudio>().MixSnapshot.UiPlaybackCount==navigationBefore+2,"Real native Back transition emits exactly one navigation tick");
         }
     }
 }

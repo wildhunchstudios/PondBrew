@@ -280,6 +280,7 @@ namespace EvolutionShop.Tests
             (slot.formatVersion == SaveStore.CurrentFormatVersion ? ",\"staff\":" + JsonUtility.ToJson(slot.staff) + ",\"stocker\":" + JsonUtility.ToJson(slot.stocker) + ",\"technician\":" + JsonUtility.ToJson(slot.technician) + ",\"tutorial\":" + JsonUtility.ToJson(slot.tutorial) + ",\"automation\":" + JsonUtility.ToJson(slot.automation) : "") +
             ",\"layout\":" + (slot.formatVersion == SaveStore.CurrentFormatVersion ? WithCurrentLabFields(layout) : layout) + ",\"sensitivity\":" + slot.sensitivity.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"volume\":" + slot.volume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+            (slot.formatVersion == SaveStore.CurrentFormatVersion ? ",\"ambienceVolume\":" + slot.ambienceVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) : "") +
             ",\"slapKey\":\"" + slot.slapKey + "\",\"humorVolume\":" + slot.humorVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"reducedGags\":" + (slot.reducedGags ? "true" : "false") + "}";
 

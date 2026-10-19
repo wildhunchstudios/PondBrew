@@ -222,7 +222,7 @@ namespace EvolutionShop
             yield return CollectionLive(CultureKind.Bloom,"collection-bloom-upgraded-live");yield return CollectionLive(CultureKind.Flow,"collection-flow-upgraded-live");
             yield return CollectionLive(CultureKind.Bloom,"collection-low-live",true,false);yield return CollectionLive(CultureKind.Flow,"collection-reduced-live",false,true);
             yield return CollectionEdges();var pool=shop.World.FxPool;
-            Check(pool.OwnedCount==96 && pool.OwnedMeshCount==5 && pool.OwnedMaterialCount==1 && pool.Root.GetComponentsInChildren<Collider>(true).Length==0 && shop.GetComponents<AudioSource>().Length==3,"Collection retains fixed96-slot topology and original mesh/material/voice budgets");
+            Check(pool.OwnedCount==96 && pool.OwnedMeshCount==5 && pool.OwnedMaterialCount==1 && pool.Root.GetComponentsInChildren<Collider>(true).Length==0 && shop.GetComponents<AudioSource>().Length==5,"Collection retains fixed96-slot topology and mesh/material and fixed five-voice budgets (3 short +2 loops)");
             Check(shop.SaveNow(),"Final isolated collection state saves");shop.SetPanel(ShopPanel.Pause);
         }
     }

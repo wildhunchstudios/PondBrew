@@ -184,8 +184,8 @@ namespace EvolutionShop
         {
             var pool = shop.World.FxPool;
             Check(pool.OwnedCount == 96 && pool.OwnedMeshCount == 5 && pool.OwnedMaterialCount == 1 &&
-                pool.Root.GetComponentsInChildren<Collider>(true).Length == 0 && shop.GetComponents<AudioSource>().Length == 3,
-                "Fixed pool, shared assets, no particle colliders or new audio sources / " + context);
+                pool.Root.GetComponentsInChildren<Collider>(true).Length == 0 && shop.GetComponents<AudioSource>().Length == 5,
+                "Fixed pool, shared assets, no particle colliders and five bounded voices (3 short +2 loops) / " + context);
             foreach (var culture in new[] { CultureKind.Bloom, CultureKind.Flow })
                 Check(GrowerInventory(culture) == growerInventories[(int)culture], "Original grower transforms/meshes/materials/colliders remain identical / " + context + " / " + culture);
         }

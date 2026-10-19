@@ -314,7 +314,7 @@ namespace EvolutionShop
             yield return ConditioningPanel(advancedVat);cash=shop.Model.Currency;Check(shop.ResearchMist()&&shop.Model.Currency==cash-shop.Config.MistResearchCost,"Paid Mist research follows actual Lanternfin discovery and installed vat");shop.SetPanel(ShopPanel.None);
             yield return IncubationBatch("driftwing",true);yield return IncubationBatch("driftwing",false);
             yield return IncubationFailureAndImmediate();
-            var pool=shop.World.FxPool;Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==3,"Repeated five-species work retains fixed pool/resources/voices");
+            var pool=shop.World.FxPool;Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==5,"Repeated five-species work retains fixed pool/resources/voices");
             Check(growerInputReceipt.foreignCurrentSamples==0&&growerInputReceipt.otherEnabledSamples==0&&growerInputReceipt.droppedTransitions==0,"Incubation synthetic input provenance stays exact");
             Check(shop.SaveNow(),"Save final isolated incubation state");File.Copy(shop.SavePath,Path.Combine(evidence,"incubation-final-save.json"),true);shop.SetPanel(ShopPanel.Pause);
         }

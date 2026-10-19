@@ -42,7 +42,7 @@ namespace EvolutionShop
             float servicePeak=0,comedyPeak=0;var previous=audio.ValidationClips();
             for(int c=0;c<previous.Length;c++){var data=new float[previous[c].samples];previous[c].GetData(data,0);foreach(float v in data){if(c<4)servicePeak=Mathf.Max(servicePeak,Math.Abs(v));else comedyPeak=Mathf.Max(comedyPeak,Math.Abs(v));}}
             report.conservativeConcurrentPeak=Mathf.Max(servicePeak,.20f)+comedyPeak+.30f*.20f;
-            Check(report.conservativeConcurrentPeak<1 && shop.GetComponents<AudioSource>().Length==3,"Worst-case additive short-voice peak remains below1, three nonlooping sources total / "+report.conservativeConcurrentPeak);
+            Check(report.conservativeConcurrentPeak<1 && shop.GetComponents<AudioSource>().Length==5,"Worst-case additive short-voice peak remains below1, five bounded voices (3 short + 2 loops) / "+report.conservativeConcurrentPeak);
             File.WriteAllText(Path.Combine(evidence,"lab-audio.json"),JsonUtility.ToJson(report,true));
         }
         IEnumerator FxLabHarvest(CultureKind kind, bool capture)

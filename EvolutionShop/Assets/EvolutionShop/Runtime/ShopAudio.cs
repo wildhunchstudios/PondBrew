@@ -16,7 +16,8 @@ namespace EvolutionShop
         public float LastComedyGain { get; private set; }
         public bool ServicePlaying => source && source.isPlaying;
         public bool ComedyPlaying => comedySource && comedySource.isPlaying;
-        public int ActiveVoiceCount => (ServicePlaying ? 1 : 0) + (ComedyPlaying ? 1 : 0) + (LabPlaying ? 1 : 0);
+        public int ActiveVoiceCount => (ServicePlaying ? 1 : 0) + (ComedyPlaying ? 1 : 0) + (LabPlaying ? 1 : 0) +
+            (waterVoice && waterVoice.isPlaying ? 1 : 0) + (machineVoice && machineVoice.isPlaying ? 1 : 0);
         public bool ServicePriorityActive => Time.realtimeSinceStartupAsDouble < servicePriorityUntil;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Validation reads the exact generated clips; no duplicated synthesis or playback.
@@ -38,6 +39,7 @@ namespace EvolutionShop
             discovery = Tone("new life", 520, 0.7f, 600);
             slap = MakeSlap();
             BuildLabAudio();
+            BuildMixAudio();
             for (int kind = 1; kind <= 5; kind++)
                 for (int variation = 0; variation < 2; variation++)
                     comedyClips[(kind - 1) * 2 + variation] = MakeComedy((ComedyKind)kind, variation);
@@ -72,12 +74,14 @@ namespace EvolutionShop
         void PlayService(AudioClip clip, float protection)
         {
             if (!isActiveAndEnabled || !source || !source.isActiveAndEnabled || !clip) return;
+            ServiceRequestSequence++;
             researchConfirmationOwned = false;
             StopComedy();
             // Replace a service cue instead of stacking unbounded one-shots. Protect a preceding
             // discovery's full window even if another valid service request arrives during it.
             double until = Time.realtimeSinceStartupAsDouble + protection;
             if (until > servicePriorityUntil) servicePriorityUntil = until;
+            DuckMixForService();
             source.Stop();
             source.clip = clip;
             source.volume = 1f;
@@ -150,6 +154,7 @@ namespace EvolutionShop
         }
         void OnDisable()
         {
+            StopMixAudio();
             StopResearchAudio();
             StopComedy(); StopLabAudio();
             if (source) { source.Stop(); source.clip = null; }
@@ -157,6 +162,7 @@ namespace EvolutionShop
         }
         void OnDestroy()
         {
+            DisposeMixAudio();
             DisposeLabAudio();
             if (collect) Destroy(collect);
             if (confirm) Destroy(confirm);

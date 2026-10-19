@@ -296,7 +296,7 @@ namespace EvolutionShop
             foreach(string type in new[]{"casual","bargain","collector","premium"})yield return CustomerMotionRoute(type,type=="casual");
             yield return CustomerMotionActiveInterruptions();
             yield return CustomerMotionRefusalAndSaveFailure();
-            Check(shop.World.FxPool.OwnedCount==96&&shop.World.FxPool.OwnedMeshCount==5&&shop.World.FxPool.OwnedMaterialCount==1&&shop.GetComponents<AudioSource>().Length==3,"Retained bounded pool and audio ownership");
+            Check(shop.World.FxPool.OwnedCount==96&&shop.World.FxPool.OwnedMeshCount==5&&shop.World.FxPool.OwnedMaterialCount==1&&shop.GetComponents<AudioSource>().Length==5,"Retained bounded pool and audio ownership");
             Check(shop.SaveNow(),"Final isolated customer save");File.Copy(shop.SavePath,Path.Combine(evidence,"customer-final-save.json"),true);shop.SetPanel(ShopPanel.Pause);
         }
     }

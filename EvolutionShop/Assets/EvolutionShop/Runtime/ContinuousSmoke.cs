@@ -60,7 +60,7 @@ namespace EvolutionShop
             var world = shop.World; var pool = world.FxPool;
             Check(pool.OwnedCount == 96 && pool.OwnedMeshCount == 5 && pool.OwnedMaterialCount == 1 &&
                 pool.Root.GetComponentsInChildren<Renderer>(true).Length == 96 &&
-                pool.Root.GetComponentsInChildren<Collider>(true).Length == 0 && shop.GetComponents<AudioSource>().Length == 3,
+                pool.Root.GetComponentsInChildren<Collider>(true).Length == 0 && shop.GetComponents<AudioSource>().Length == 5,
                 "Repeated real batches retain fixed FX ownership / " + stage);
             cycleFx.checkpoints.Add(new CycleFxRecord { stage = stage, specimen = shop.Model.Incubator.SpecimenId,
                 authority = FxAuthority(), hatches = world.LabHatchCount, placements = world.PondletPlacementCount,

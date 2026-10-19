@@ -104,10 +104,15 @@ namespace EvolutionShop
         }
         void Update()
         {
-            if (labSource) labSource.volume = Mathf.MoveTowards(labSource.volume, ServicePriorityActive ? .03f : .30f,
-                Time.unscaledDeltaTime * (.27f / (ServicePriorityActive ? .03f : .20f)));
+            TickMixAudio(Time.unscaledDeltaTime);
+            float normalGain = labSource && (labSource.clip == doorCue || labSource.clip == uiCue) ? quietCueGain : .30f;
+            if (labSource) labSource.volume = Mathf.MoveTowards(labSource.volume, ServicePriorityActive ? normalGain * .1f : normalGain,
+                Time.unscaledDeltaTime * (normalGain * .9f / (ServicePriorityActive ? .03f : .20f)));
         }
-        public void StopLabAudio() { if (labSource) { labSource.Stop(); labSource.clip = null; } }
+        public void StopLabAudio(bool preserveNavigation = false)
+        {
+            if (labSource && !(preserveNavigation && labSource.clip == uiCue)) { labSource.Stop(); labSource.clip = null; }
+        }
         void DisposeLabAudio() { StopLabAudio(); foreach (var clip in labClips) if (clip) Destroy(clip); }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         internal AudioClip[] LabValidationClips() => labClips;

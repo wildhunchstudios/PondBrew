@@ -98,7 +98,7 @@ namespace EvolutionShop
                 if(eventIndex==4 && age>=3.5f){Check(FxDoseMix.Read(shop.Model).Total==4 && shop.Model.ReservedCultureCount==4 && !shop.BeginManualIncubation() && shop.Model.Incubator.Phase==IncubatorPhase.Dosing,"Unsupported four-culture mixture does not invent a recipe");Check(shop.ClearCultureDoses(),"Return full mixed siphon losslessly");eventIndex++;}
             });
             Check(eventIndex==5 && FxDoseMix.Read(shop.Model).Total==0 && shop.Model.ReservedCultureCount==4,"All four input cultures returned without overflow");
-            Check(pool.OwnedCount==96 && pool.OwnedMeshCount==5 && pool.OwnedMaterialCount==1 && shop.GetComponents<AudioSource>().Length==3,"Dose adds no pool mesh/material/voice ownership");
+            Check(pool.OwnedCount==96 && pool.OwnedMeshCount==5 && pool.OwnedMaterialCount==1 && shop.GetComponents<AudioSource>().Length==5,"Dose adds no pool mesh/material/voice ownership");
             Check(shop.SaveNow(),"Final isolated dose state saves");shop.SetPanel(ShopPanel.Pause);
         }
     }

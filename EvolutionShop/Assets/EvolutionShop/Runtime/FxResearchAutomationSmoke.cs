@@ -304,7 +304,7 @@ namespace EvolutionShop
             Check(!audio.ResearchAudioOwned&&audio.ServicePlaying&&audio.ServicePriorityActive,"Stale research cancellation preserves newer actual discovery playback and service priority");
             audio.ResearchConfirmation();audio.StopResearchAudio();
             Check(!audio.ServicePlaying&&audio.ServicePriorityActive,"Canceling owned research keeps the preceding discovery protection window");
-            Check(FxAuthority()==authority&&shop.GetComponents<AudioSource>().Length==3,"Audio-only cancellation probes do not alter exact game authority or voice topology");
+            Check(FxAuthority()==authority&&shop.GetComponents<AudioSource>().Length==5,"Audio-only cancellation probes do not alter exact game authority or voice topology");
             yield return null;
         }
         IEnumerator FxResearchAutomationScenario()
@@ -339,7 +339,7 @@ namespace EvolutionShop
             yield return ResearchAutomationBatch("lanternfin","modules-low-live",true);yield return ResearchAutomationBatch("driftwing","modules-reduced-live",false,true);yield return AdvancedClear();
             yield return ResearchAutomationMoss();
             yield return ResearchAutomationAudioOwnership();
-            var pool=shop.World.FxPool;Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==3,"Research/modules retain fixed96 carriers,5 meshes,1 material,no particle collider and3 voices");
+            var pool=shop.World.FxPool;Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==5,"Research/modules retain fixed96 carriers,5 meshes,1 material,no particle collider and5 bounded voices (3 short +2 loops)");
             Check(growerInputReceipt.foreignCurrentSamples==0&&growerInputReceipt.otherEnabledSamples==0&&growerInputReceipt.droppedTransitions==0,"Research/module synthetic input provenance stays isolated");Check(shop.SaveNow(),"Save final isolated FX10 state");File.Copy(shop.SavePath,Path.Combine(evidence,"research-automation-final-save.json"),true);shop.SetPanel(ShopPanel.Pause);
         }
     }

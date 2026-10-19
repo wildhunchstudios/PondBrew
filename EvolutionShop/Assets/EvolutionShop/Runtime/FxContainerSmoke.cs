@@ -503,7 +503,7 @@ namespace EvolutionShop
             }
             yield return ContainerFailedSave();yield return ContainerStocker();yield return ContainerConditioning();yield return ContainerBusyAndRemoval();
             Check(growerInputReceipt.foreignCurrentSamples==0&&growerInputReceipt.otherEnabledSamples==0&&growerInputReceipt.droppedTransitions==0,"FX13 synthetic input provenance stays isolated");
-            Check(shop.World.FxPool.OwnedCount==96&&shop.World.FxPool.OwnedMeshCount==5&&shop.World.FxPool.OwnedMaterialCount==1&&shop.GetComponents<AudioSource>().Length==3,"FX13 retains exact shared pool and original audio topology");
+            Check(shop.World.FxPool.OwnedCount==96&&shop.World.FxPool.OwnedMeshCount==5&&shop.World.FxPool.OwnedMaterialCount==1&&shop.GetComponents<AudioSource>().Length==5,"FX13 retains exact shared pool and bounded audio topology (3 short +2 loops)");
             Check(shop.SaveNow(),"Final FX13 durable save");File.Copy(shop.SavePath,Path.Combine(evidence,"container-final-save.json"),true);shop.SetPanel(ShopPanel.Pause);
         }
     }

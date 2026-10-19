@@ -209,7 +209,7 @@ namespace EvolutionShop
                 Check(world.LabModuleCueCount==module,"Explicit blocked-module presentation fixture has no retry success accent");
             }
             finally {shop.FreezeFxVocabularyForValidation=false;world.SetFxPreviewModes(false,false);world.SetFxEnabledForValidation(true);world.ResetFxPresentation();shop.SetPanel(ShopPanel.None);}
-            Check(pool.OwnedCount==96 && pool.OwnedMeshCount==5 && pool.OwnedMaterialCount==1 && pool.Root.GetComponentsInChildren<Collider>(true).Length==0 && shop.GetComponents<AudioSource>().Length==3,"Growth retains fixed pool/mesh/material/collider/audio budgets");
+            Check(pool.OwnedCount==96 && pool.OwnedMeshCount==5 && pool.OwnedMaterialCount==1 && pool.Root.GetComponentsInChildren<Collider>(true).Length==0 && shop.GetComponents<AudioSource>().Length==5,"Growth retains fixed pool/mesh/material/collider/audio budgets");
             Check(shop.SaveNow(),"Final isolated working state saves");shop.SetPanel(ShopPanel.Pause);
         }
     }

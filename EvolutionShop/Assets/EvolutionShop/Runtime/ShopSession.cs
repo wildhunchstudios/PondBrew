@@ -74,7 +74,7 @@ namespace EvolutionShop
                 ShopLayout.TryRestore(slot.layout, out var layout); Layout = layout;
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
-                Sensitivity = slot.sensitivity; Volume = slot.volume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
+                Sensitivity = slot.sensitivity; Volume = slot.volume; AmbienceVolume = slot.ambienceVolume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
             }
             else
             {
@@ -181,6 +181,7 @@ namespace EvolutionShop
                 saveClock += Time.deltaTime;
                 if (saveClock >= 5) SaveNow();
             }
+            TickSessionAudio();
             if (placementAtFrameStart)
             {
                 Focused = null; SlapTarget = null; StopHarvest(); World.SetHarvesting(false, null);
@@ -576,7 +577,7 @@ namespace EvolutionShop
             ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
             World.SetDayPhase(Cycle.Phase);
-            Sensitivity = slot.sensitivity; Volume = slot.volume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
+            Sensitivity = slot.sensitivity; Volume = slot.volume; AmbienceVolume = slot.ambienceVolume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
             AudioListener.volume = Volume;
             BaselinePreview = false;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned);
@@ -592,7 +593,7 @@ namespace EvolutionShop
             var freshReputation = new ShopReputation();
             var freshLayout = new ShopLayout();
             if (!TryApplyLayoutGeometry(freshLayout)) return;
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,ambienceVolume=AmbienceVolume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
             { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
             ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
@@ -667,6 +668,3 @@ namespace EvolutionShop
         }
     }
 }
-
-
-

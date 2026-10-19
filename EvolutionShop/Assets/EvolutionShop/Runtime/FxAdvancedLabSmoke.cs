@@ -88,8 +88,8 @@ namespace EvolutionShop
         void AdvancedResources(string context)
         {
             var pool=shop.World.FxPool;
-            Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==3,
-                "Advanced lab retains96 carriers/5 meshes/1 material/no particle colliders/original3 voices / "+context);
+            Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==5,
+                "Advanced lab retains96 carriers/5 meshes/1 material/no particle colliders/five bounded voices (3 short +2 loops) / "+context);
         }
         IEnumerator AdvancedClip(string name,float duration,Action<float> action=null)
         {

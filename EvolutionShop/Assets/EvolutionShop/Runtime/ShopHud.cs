@@ -365,6 +365,8 @@ namespace EvolutionShop
                     Sensitivity = GUILayout.HorizontalSlider(Sensitivity, 0.25f, 2.5f);
                     Space(); Text("Sound volume: " + Mathf.RoundToInt(Volume * 100) + "%");
                     Volume = GUILayout.HorizontalSlider(Volume, 0, 1); AudioListener.volume = Volume;
+                    Text("Machine / ambience volume: " + Mathf.RoundToInt(AmbienceVolume * 100) + "%");
+                    AmbienceVolume = GUILayout.HorizontalSlider(AmbienceVolume, 0, 1);
                     Space(); Heading("Cartoon slap");
                     Small("Close panels, aim at a nearby unpaid customer and tap " + SlapKey + ". They leave; -1 reputation. Three-second cooldown.");
                     Button(WaitingForSlapKey ? "Press a letter / Escape cancels" : "Change slap key / " + SlapKey, BeginSlapRebind);
@@ -405,11 +407,11 @@ namespace EvolutionShop
                     int backCaptureBefore = NativeUiButtonCaptureBefore();
                     bool backPressed = GUILayout.Button(backLabel, dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38));
                     ObserveNativeUiButton(backLabel, backPressed, backCaptureBefore);
-                    if (backPressed) BackFromPanel();
+                    if (backPressed) { uint audioSequence = NativeUiAudioSequence(); ShopPanel audioPanel = Panel; BackFromPanel(); NativeUiNavigationAudio(audioSequence, audioPanel); }
                     int helpCaptureBefore = NativeUiButtonCaptureBefore();
                     bool helpPressed = GUILayout.Button("Help  /  F1", buttonStyle, GUILayout.MinHeight(38));
                     ObserveNativeUiButton("Help  /  F1", helpPressed, helpCaptureBefore);
-                    if (helpPressed) OpenTutorialHelp();
+                    if (helpPressed) { uint audioSequence = NativeUiAudioSequence(); ShopPanel audioPanel = Panel; OpenTutorialHelp(); NativeUiNavigationAudio(audioSequence, audioPanel); }
                     GUILayout.EndHorizontal();
                 }
                 GUILayout.EndArea();
@@ -792,7 +794,7 @@ namespace EvolutionShop
             int captureBefore = NativeUiButtonCaptureBefore();
             bool pressed = GUILayout.Button(text, style, GUILayout.MinHeight(38));
             ObserveNativeUiButton(text, pressed, captureBefore);
-            if (pressed) action();
+            if (pressed) { uint audioSequence = NativeUiAudioSequence(); ShopPanel audioPanel = Panel; action(); NativeUiNavigationAudio(audioSequence, audioPanel); }
         }
     }
 }

@@ -263,8 +263,8 @@ namespace EvolutionShop
             yield return CollectionEdges();
             // Reused actual edge route covers release/full/empty/reach/LOS/side-path/pause/panel/focus/reload/failed-save.
             yield return PlayerTransfers();yield return PlayerPlacementInterruptions();yield return PlayerLifecycleAndSlap();
-            Check(w.FxPool.OwnedCount==96&&w.FxPool.OwnedMeshCount==5&&w.FxPool.OwnedMaterialCount==1&&shop.GetComponents<AudioSource>().Length==3,
-                "FX11 retains fixed96-slot five-mesh one-material three-voice ownership");
+            Check(w.FxPool.OwnedCount==96&&w.FxPool.OwnedMeshCount==5&&w.FxPool.OwnedMaterialCount==1&&shop.GetComponents<AudioSource>().Length==5,
+                "FX11 retains fixed96-slot five-mesh one-material five-voice ownership (3 short +2 loops)");
             Check(w.HandsVisual.GetComponentsInChildren<Renderer>(true).Length==12,"Existing imported hands retain twelve renderers");
             Check(shop.SaveNow(),"Final isolated FX11 state saves");shop.SetPanel(ShopPanel.Pause);
         }

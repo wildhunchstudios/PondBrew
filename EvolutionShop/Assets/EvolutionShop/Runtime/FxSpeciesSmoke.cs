@@ -260,7 +260,7 @@ namespace EvolutionShop
             yield return EditedPlace(null,ShopLayout.ConditionerDefinitionId,vatX,vatZ,0,new Vector3(vatX*ShopLayout.GridSize,.2f,vatZ*ShopLayout.GridSize-1.9f));advancedVat=shop.Model.ConditionerIds[0];
             yield return ConditioningPanel(advancedVat);Check(shop.ResearchMist(),"Actual Mist research after Lanternfin discovery");shop.SetPanel(ShopPanel.None);
             yield return SpeciesBatch("driftwing");yield return SpeciesConditioner();
-            var pool=shop.World.FxPool;Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==3,"Five species retain exact pool and audio ownership");
+            var pool=shop.World.FxPool;Check(pool.OwnedCount==96&&pool.OwnedMeshCount==5&&pool.OwnedMaterialCount==1&&pool.Root.GetComponentsInChildren<Collider>(true).Length==0&&shop.GetComponents<AudioSource>().Length==5,"Five species retain exact pool and audio ownership");
             Check(growerInputReceipt.foreignCurrentSamples==0&&growerInputReceipt.otherEnabledSamples==0&&growerInputReceipt.droppedTransitions==0,"Species route actual synthetic input provenance stays isolated");
             Check(shop.SaveNow(),"Save final real species state");File.Copy(shop.SavePath,Path.Combine(evidence,"species-final-save.json"),true);shop.SetPanel(ShopPanel.Pause);
         }
