@@ -316,12 +316,13 @@ namespace EvolutionShop
             nativeUiDiagnosticPointer = true;
             nativeUiDiagnosticOriginal = nativeUiOriginalEvent.type;
             nativeUiDiagnosticEvent.type = nativeUiQueuedType;
-            nativeUiDiagnosticEvent.mousePosition = GUIUtility.ScreenToGUIPoint(nativeUiQueuedPoint);
             nativeUiDiagnosticEvent.button = nativeUiQueuedButton;
             nativeUiDiagnosticEvent.delta = nativeUiQueuedDelta;
             nativeUiDiagnosticEvent.clickCount = 1;
             nativeUiDiagnosticEvent.modifiers = EventModifiers.None;
             Event.current = nativeUiDiagnosticEvent;
+            // Set the pointer on the active native event so nested GUI clips inherit it.
+            Event.current.mousePosition = GUIUtility.ScreenToGUIPoint(nativeUiQueuedPoint);
             nativeUiDiagnosticApplied = nativeUiQueuedType; nativeUiDiagnosticPoint = nativeUiQueuedPoint;
             nativeUiDiagnosticFrame = Time.frameCount; nativeUiDiagnosticCount++;
         }

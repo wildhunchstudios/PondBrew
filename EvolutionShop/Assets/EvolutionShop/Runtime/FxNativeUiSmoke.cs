@@ -133,7 +133,9 @@ namespace EvolutionShop
                 row.controlAccepted=control.Accepted;row.controlFrame=control.FrameCount;row.controlRectFromRepaint=control.RectFromRepaint;
             }
             nativeUiActions.Add(row);
-            NativeUiFlush(); yield return null;
+            NativeUiFlush();
+            if(row.controlFound)Check(Vector2.Distance(row.controlScreenPoint,point)<.25f,"Actual native control pointer roundtrip matches queued screen point / "+target);
+            yield return null;
         }
         IEnumerator NativeUiClick(string label)
         {
@@ -141,6 +143,7 @@ namespace EvolutionShop
             Check(enabled,"Enabled native action / "+label);
             yield return NativeUiEvent(EventType.MouseMove,rect.center,target:label);
             yield return NativeUiEvent(EventType.MouseDown,rect.center,target:label);
+            Check(shop.TryGetNativeUiControlForValidation(label,out var pressedControl)&&pressedControl.LocalRect.Contains(pressedControl.LocalPoint),"Inside click reaches actual nested native control rectangle / "+label);
             yield return NativeUiEvent(EventType.MouseUp,rect.center,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted+1,"Exactly one GUILayout button accepted / "+label);
             nativeUiActions.Add(new NativeUiAction{label=label,type="completed native GUILayout click",bounds=rect,enabled=enabled,frame=Time.frameCount,realtime=Time.realtimeSinceStartup,acceptedBefore=accepted,acceptedAfter=shop.NativeUiFxSnapshot.AcceptedButtonCount});
