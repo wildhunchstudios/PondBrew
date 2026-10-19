@@ -2,6 +2,24 @@ using UnityEngine;
 
 namespace EvolutionShop
 {
+    public readonly struct NativeUiHostEventSnapshot
+    {
+        public readonly EventType Type, RawType;
+        public readonly Vector2 LocalPoint, ScreenPoint;
+        public readonly bool HasCommand, TokenMatches;
+        public readonly int FrameCount, QueuedEventCount;
+        public readonly float Realtime;
+        internal NativeUiHostEventSnapshot(string token)
+        {
+            var current = Event.current;
+            Type = current.type; RawType = current.rawType;
+            LocalPoint = current.mousePosition; ScreenPoint = GUIUtility.GUIToScreenPoint(LocalPoint);
+            string command = current.commandName;
+            HasCommand = !string.IsNullOrEmpty(command); TokenMatches = command == token;
+            FrameCount = Time.frameCount; QueuedEventCount = Event.GetEventCount(); Realtime = Time.realtimeSinceStartup;
+        }
+    }
+
     public readonly struct NativeUiControlSnapshot
     {
         public readonly string Label;
@@ -269,6 +287,16 @@ namespace EvolutionShop
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        readonly NativeUiHostEventSnapshot[] nativeUiHostEvents = new NativeUiHostEventSnapshot[64];
+        int nativeUiHostEventCount;
+        public int NativeUiHostEventCountForValidation => nativeUiHostEventCount;
+        public int NativeUiQueueCountBeforeForValidation { get; private set; }
+        public int NativeUiQueueCountAfterForValidation { get; private set; }
+        public bool TryGetNativeUiHostEventForValidation(int index, out NativeUiHostEventSnapshot snapshot)
+        {
+            if (index >= 0 && index < nativeUiHostEventCount) { snapshot = nativeUiHostEvents[index]; return true; }
+            snapshot = default; return false;
+        }
         readonly NativeUiControlSnapshot[] nativeUiDiagnosticControls = new NativeUiControlSnapshot[64];
         int nativeUiDiagnosticControlCount;
         public bool TryGetNativeUiControlForValidation(string label, out NativeUiControlSnapshot snapshot)
@@ -308,6 +336,7 @@ namespace EvolutionShop
             nativeUiQueued = true; nativeUiQueuedCancelled = false;
             nativeUiQueuedType = type; nativeUiQueuedPoint = screenPoint;
             nativeUiQueuedButton = button; nativeUiQueuedDelta = delta;
+            nativeUiHostEventCount = 0;
             nativeUiQueuedToken = "EvolutionShop.FX18." + System.Guid.NewGuid().ToString("N");
             nativeUiDiagnosticEvent.type = type;
             nativeUiDiagnosticEvent.commandName = nativeUiQueuedToken;
@@ -316,7 +345,13 @@ namespace EvolutionShop
             nativeUiDiagnosticEvent.delta = delta;
             nativeUiDiagnosticEvent.clickCount = 1;
             nativeUiDiagnosticEvent.modifiers = EventModifiers.None;
-            try { nativeUiEngineQueue(nativeUiDiagnosticEvent); return true; }
+            try
+            {
+                NativeUiQueueCountBeforeForValidation = Event.GetEventCount();
+                nativeUiEngineQueue(nativeUiDiagnosticEvent);
+                NativeUiQueueCountAfterForValidation = Event.GetEventCount();
+                return true;
+            }
             catch (System.Exception error)
             {
                 nativeUiQueued = false;
@@ -348,6 +383,9 @@ namespace EvolutionShop
         }
         void ObserveNativeUiDispatchedEvent()
         {
+            // Bounded host-pass evidence distinguishes non-dispatch from lost tags or coordinates.
+            if (nativeUiQueued && nativeUiHostEventCount < nativeUiHostEvents.Length)
+                nativeUiHostEvents[nativeUiHostEventCount++] = new NativeUiHostEventSnapshot(nativeUiQueuedToken);
             // Unity dispatch establishes the absolute GUIClip pointer before OnGUI.
             // Observe only our one pending event; never replace a pass or reset Ignore/ownership.
             if (!nativeUiQueued || Event.current.commandName != nativeUiQueuedToken ||

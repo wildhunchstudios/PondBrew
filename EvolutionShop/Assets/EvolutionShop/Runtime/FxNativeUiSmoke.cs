@@ -30,12 +30,23 @@ namespace EvolutionShop
             public uint diagnosticBefore, diagnosticAfter, acceptedBefore, acceptedAfter;
             public bool enabled, controlFound, controlEnabled, controlAccepted, controlRectFromRepaint;
         }
+        [Serializable] sealed class NativeUiHost
+        {
+            public string type, rawType;
+            public Vector2 localPoint, screenPoint;
+            public bool hasCommand, tokenMatches;
+            public int frame, queuedEventCount;
+            public float realtime;
+        }
         [Serializable] sealed class NativeUiReceipt
         {
             public string input = "Explicit development-only diagnostic IMGUI Event injection through actual OnGUI/GUILayout controls. Not OS-native clicks. InputSystem keyboard used only for Escape.";
             public string clock = "EndOfFrame immediately before recorder.Sample; event application frame is independently recorded, not assumed equal.";
             public NativeUiFrame[] frames;
             public NativeUiAction[] actions;
+            public NativeUiHost[] latestQueuedHostEvents;
+            public int latestQueueCountBefore, latestQueueCountAfter;
+            public string diagnosticError;
         }
         readonly List<NativeUiFrame> nativeUiFrames = new List<NativeUiFrame>();
         readonly List<NativeUiAction> nativeUiActions = new List<NativeUiAction>();
@@ -56,7 +67,13 @@ namespace EvolutionShop
                 point=s.DiagnosticScreenPoint, originalEvent=s.DiagnosticOriginalType.ToString(), appliedEvent=s.DiagnosticAppliedType.ToString(),
                 appliedFrame=s.DiagnosticAppliedFrame, consumedFrame=s.DiagnosticConsumedFrame, paused=shop.Paused, reduced=s.Reduced, low=s.Low });
         }
-        void NativeUiFlush() => File.WriteAllText(Path.Combine(evidence,"native-ui.json"), JsonUtility.ToJson(new NativeUiReceipt { frames=nativeUiFrames.ToArray(), actions=nativeUiActions.ToArray() }, true));
+        void NativeUiFlush()
+        {
+            var host=new List<NativeUiHost>();
+            for(int i=0;i<shop.NativeUiHostEventCountForValidation;i++)
+                if(shop.TryGetNativeUiHostEventForValidation(i,out var sample))host.Add(new NativeUiHost{type=sample.Type.ToString(),rawType=sample.RawType.ToString(),localPoint=sample.LocalPoint,screenPoint=sample.ScreenPoint,hasCommand=sample.HasCommand,tokenMatches=sample.TokenMatches,frame=sample.FrameCount,queuedEventCount=sample.QueuedEventCount,realtime=sample.Realtime});
+            File.WriteAllText(Path.Combine(evidence,"native-ui.json"),JsonUtility.ToJson(new NativeUiReceipt{frames=nativeUiFrames.ToArray(),actions=nativeUiActions.ToArray(),latestQueuedHostEvents=host.ToArray(),latestQueueCountBefore=shop.NativeUiQueueCountBeforeForValidation,latestQueueCountAfter=shop.NativeUiQueueCountAfterForValidation,diagnosticError=shop.NativeUiDiagnosticErrorForValidation},true));
+        }
         IEnumerator NativeUiRunAction(IEnumerator action)
         {
             // Manually flatten nested enumerators so an assertion remains observable by the recording owner.
@@ -74,6 +91,8 @@ namespace EvolutionShop
         }
         IEnumerator NativeUiClip(string name,float seconds,IEnumerator action=null)
         {
+            try
+            {
             nativeUiActionDone=action==null; nativeUiActionFailure=null;
             if(action!=null) StartCoroutine(NativeUiRunAction(action));
             if(Application.isEditor)
@@ -101,6 +120,8 @@ namespace EvolutionShop
                 Check(receipt.frames.Length>=seconds*25 && receipt.achievedFPS>=25 && receipt.missedSamples<=receipt.wallSeconds*5,"Actual ordinary HUD native UI video / "+name);
             }
             NativeUiFlush(); if(nativeUiActionFailure!=null)throw nativeUiActionFailure;
+            }
+            finally { NativeUiFlush(); }
         }
         IEnumerator NativeUiFind(string label)
         {
