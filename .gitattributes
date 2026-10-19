@@ -82,3 +82,6 @@
 
 # Preserve byte-hashed FX18 native UI evidence.
 /Docs/Evidence/fx-18/** -text -whitespace
+
+# Preserve byte-hashed FX19 audio evidence.
+/Docs/Evidence/fx-19/** -text -whitespace
