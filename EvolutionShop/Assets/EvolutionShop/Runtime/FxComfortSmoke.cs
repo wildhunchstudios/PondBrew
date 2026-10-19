@@ -112,7 +112,7 @@ namespace EvolutionShop
    Check(shop.SaveNow()&&shop.ReloadSaved(),"Comfort normal save/reload after failure");ComfortPolicy(reduced,detail==FxEffectDetail.Low);comfortRenderers=shop.World.GetComponentsInChildren<Renderer>(true);
    shop.ReducedGags=true;Check(shop.SaveNow()&&shop.ReloadSaved()&&shop.ReducedGags&&shop.ReducedVisualMotion==reduced&&shop.EffectsDetail==detail,"Reduced gag remains independently saved");shop.ReducedGags=false;
    foreach(string boundary in new[]{"pause","focus","arrange","disable"}){
-    shop.SetPanel(ShopPanel.None);shop.World.TryFxCue(FxCueId.HatchRepeat,1);yield return null;Check(shop.World.FxPool.ActiveCount>0,"Actual active cue before comfort lifecycle / "+boundary);
+    shop.SetPanel(ShopPanel.None);shop.World.ResetFxPresentation();Check(shop.World.TryFxCue(FxCueId.HatchRepeat,1),"Labelled lifecycle cue fixture after presentation reset / "+boundary);yield return null;Check(shop.World.FxPool.ActiveCount>0,"Actual active cue before comfort lifecycle / "+boundary);
     if(boundary=="pause")shop.SetPanel(ShopPanel.Pause);else if(boundary=="focus")shop.SetFxFocusForValidation(false);else if(boundary=="arrange")Check(shop.OpenPlacementMenu(),"Actual Arrange cancellation");else shop.enabled=false;
     Check(shop.World.FxPool.ActiveCount==0,"Immediate pool cleanup / "+boundary);yield return new WaitForSeconds(.35f);Check(shop.World.FxPool.ActiveCount==0&&ComfortStock()==stock,"Held boundary does not replay cue or mutate stock / "+boundary);shop.enabled=true;shop.SetFxFocusForValidation(true);shop.SetPanel(ShopPanel.None);yield return null;
    }
