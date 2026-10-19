@@ -16,7 +16,7 @@ namespace EvolutionShop
         public FxOwnerToken RoomAtmosphereOwner => roomAtmosphereOwner;
         public Transform RoomAtmosphereSource => roomAtmosphereSource;
         public FxRoomAtmosphereSnapshot RoomAtmosphereSnapshot => new FxRoomAtmosphereSnapshot(roomCurrentPhase, roomTargetPhase,
-            FxRoomAtmosphereMotion.LightBlend(roomLightAge), roomClock, roomWorking, roomEmissionCount, fxPolicy, roomFrame, roomRealtime);
+            FxRoomAtmosphereMotion.LightBlend(roomLightAge), roomClock, roomWorking, roomEmissionCount, fxPolicy, roomFrame, roomRealtime, roomWorking && fxPool != null && fxPool.ActionLimit < 64);
 
         void CheckRoomPhase(ShopDayPhase phase)
         {
@@ -94,11 +94,12 @@ namespace EvolutionShop
                 fxCues.SetState(roomAtmosphereOwner, FxSteadyState.Working);
             }
             roomClock += Mathf.Min(dt, .5f);
+            // Low keeps the two existing machine ambient owners; this decorative layer yields entirely.
+            if (fxPool.ActionLimit < 64) return;
             roomVaporWait -= Mathf.Min(dt, .5f);
             if (roomVaporWait > 0) return;
-            bool low = fxPool.ActionLimit < 64;
-            roomVaporWait = fxReducedMotion ? 2.6f : low ? 2.1f : 1.3f;
-            int count = fxReducedMotion || low ? 1 : 2;
+            roomVaporWait = fxReducedMotion ? 2.6f : 1.3f;
+            int count = fxReducedMotion ? 1 : 2;
             for (int i = 0; i < count; i++)
             {
                 // Reuse the authored crown vent proven by FX16; never emit inside the glass cavity.

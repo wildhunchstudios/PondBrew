@@ -14,13 +14,13 @@ namespace EvolutionShop
     {
         public readonly ShopDayPhase CurrentPhase, TargetPhase;
         public readonly float Blend, Clock, Realtime;
-        public readonly bool Working;
+        public readonly bool Working, DecorativeVaporSuppressed;
         public readonly int EmissionCount, FrameCount;
         public readonly FxViewPolicy Policy;
         public FxRoomAtmosphereSnapshot(ShopDayPhase current, ShopDayPhase target, float blend, float clock,
-            bool working, int emissions, FxViewPolicy policy, int frame, float realtime)
+            bool working, int emissions, FxViewPolicy policy, int frame, float realtime, bool decorativeVaporSuppressed)
         { CurrentPhase = current; TargetPhase = target; Blend = blend; Clock = clock; Working = working;
-            EmissionCount = emissions; Policy = policy; FrameCount = frame; Realtime = realtime; }
+            EmissionCount = emissions; Policy = policy; FrameCount = frame; Realtime = realtime; DecorativeVaporSuppressed = decorativeVaporSuppressed; }
     }
 
     public static class FxRoomAtmosphereMotion
