@@ -69,7 +69,7 @@ namespace EvolutionShop
             bool paid=game.Currency!=Model.Currency;
             if (paid && (Cycle.Phase!=ShopDayPhase.Night || Customers.ActiveCount!=0))
             { Notify("Wages start during clear preparation nights. No charge was made.");return false; }
-            if (!SaveStore.Write(SavePath,CaptureStaffSlot(game,Staff,null,null,lab),out var error))
+            if (!WriteUiObservedSlot(CaptureStaffSlot(game,Staff,null,null,lab),out var error))
             { SaveError=error;Notify("Technician change was not saved. Previous money, work and queue are unchanged.");return false; }
             Technician.ResetTransient();
             if (paid) { Cashier.ResetTransient();Stocker.ResetTransient();Model=game; }
@@ -123,7 +123,7 @@ namespace EvolutionShop
             if (start) tutorial.ObserveStarted(staged,stagedResult,TutorialActionOrigin.Worker);
             tutorial.Reconcile(staged);
             var slot=CaptureStaffSlot(staged,Staff,null,null,lab);slot.tutorial=tutorial.CaptureSave();
-            if (!SaveStore.Write(SavePath,slot,out var error))
+            if (!WriteUiObservedSlot(slot,out var error))
             { SaveError=error;PresentWorkerResult(Technician.Actor,start?FxWorkerEvent.Dose:FxWorkerEvent.Place,jobId,false);Notify("Moss could not save this action. All cultures and creatures remain at their original station. Retry after saving is available.");return false; }
             // Synchronous main-thread persistence cannot advance another transaction. Keep
             // the actual model so customer and stocker reservations retain their owner.

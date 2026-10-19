@@ -81,6 +81,7 @@ namespace EvolutionShop
             GUI.skin = hudTheme.Skin;
             try
             {
+                BeginNativeUiGui();
                 if (Panel == ShopPanel.Presentation) { DrawPresentationView(); return; }
                 DrawTutorialWorldGuidance();
                 DrawCompactStatus();
@@ -99,7 +100,7 @@ namespace EvolutionShop
                     GUI.Label(new Rect(441, 648, 540, 20), "DEVELOPMENT COMPARISON: BASE SIPHON (F8 TO RESTORE)", hudSmallStyle);
                 }
             }
-            finally { GUI.skin = previousSkin; GUI.matrix = previousMatrix; }
+            finally { EndNativeUiGui(); GUI.skin = previousSkin; GUI.matrix = previousMatrix; }
         }
 
         GUIStyle hudLightControlsStyle;
@@ -195,7 +196,8 @@ namespace EvolutionShop
             HudCard(new Rect(1030, 18, 232, 54), ShopUiTheme.Honey);
             hudTheme.Icon(new Rect(1042, 27, 36, 36), ShopUiTheme.Symbol.Coin);
             GUI.Label(new Rect(1086, 22, 162, 30), Model.Currency.ToString("N0"), Model.Currency > 9999999 ? hudLargeCurrencyStyle : hudCurrencyStyle);
-            GUI.Label(new Rect(1088, 49, 160, 18), "SHOP CREDITS", hudSmallStyle);
+            GUI.Label(new Rect(1088, 49, 160, 18), nativeUiMoney != FxNativeUiCue.None && NativeUiVisible ? nativeUiMoneyLabel : "SHOP CREDITS", hudSmallStyle);
+            DrawNativeUiMoney();
             HudCard(new Rect(1030, 82, 232, 41), mint);
             hudTheme.Icon(new Rect(1041, 91, 23, 23), ShopUiTheme.Symbol.Star);
             GUI.Label(new Rect(1071, 94, 178, 22), "Rep " + Reputation.Points + "/100   |   Appeal " + Appeal.Points + "/30", hudSmallStyle);
@@ -206,6 +208,7 @@ namespace EvolutionShop
             hudTheme.Icon(new Rect(1042, 145, 31, 31), ShopUiTheme.Symbol.Flask);
             GUI.Label(new Rect(1084, 144, 164, 24), machine, hudTitleStyle);
             GUI.Label(new Rect(1084, 172, 164, 18), Model.DiscoveredSpeciesIds.Count + " / " + Config.Species.Length + " discoveries", hudSmallStyle);
+            DrawNativeUiMachine();
             if (Cycle.Phase != ShopDayPhase.Night || Customers.ActiveCount > 0 || Stocking.Employee.Hired || Laboratory.Employee.Hired || Automation.IsPending)
             {
                 string status = Customers.Status + (Staff.Hired ? "\nPip: " + Cashier.Status : "") +
@@ -278,6 +281,7 @@ namespace EvolutionShop
             float nameHeight = Mathf.Max(24, HudTextHeight(species.DisplayName, hudTitleStyle, 246));
             float top = 98 + HudObjectiveHeight();
             HudCard(new Rect(18, top, 278, 40 + nameHeight + recipeHeight), coral);
+            DrawNativeUiDiscovery(new Rect(18, top, 278, 40 + nameHeight + recipeHeight));
             GUI.Label(new Rect(32, top + 11, 246, 18), "NEW DISCOVERY / JOURNAL UPDATED", hudSmallStyle);
             GUI.Label(new Rect(32, top + 31, 246, nameHeight), species.DisplayName, hudTitleStyle);
             GUI.Label(new Rect(32, top + 31 + nameHeight, 246, recipeHeight), recipe, hudBodyStyle);
@@ -324,6 +328,7 @@ namespace EvolutionShop
             hudTheme.Draw(new Rect(342,112,596,528), hudTheme.Shadow);
             hudTheme.Draw(new Rect(344,106,592,528), hudTheme.DarkCard);
             HudCard(new Rect(350,112,580,518), mint);
+            DrawNativeUiPanel();
             if (Panel == ShopPanel.Tank || Panel == ShopPanel.StorageRack || Panel == ShopPanel.Conditioning)
                 DrawPlayerInteractionAccent(new Rect(350, 112, 580, 15));
             hudTheme.Draw(new Rect(310,127,48,48), hudTheme.DarkCard);
@@ -397,8 +402,12 @@ namespace EvolutionShop
                 {
                     GUILayout.BeginHorizontal();
                     string backLabel = dayReportPanel ? "Continue preparation  /  ESC" : TutorialJournalReturnsToHelp ? "Back to my next goal  /  ESC" : "Close  /  ESC";
-                    if (GUILayout.Button(backLabel, dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38))) BackFromPanel();
-                    if (GUILayout.Button("Help  /  F1", buttonStyle, GUILayout.MinHeight(38))) OpenTutorialHelp();
+                    bool backPressed = GUILayout.Button(backLabel, dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38));
+                    ObserveNativeUiButton(backLabel, backPressed);
+                    if (backPressed) BackFromPanel();
+                    bool helpPressed = GUILayout.Button("Help  /  F1", buttonStyle, GUILayout.MinHeight(38));
+                    ObserveNativeUiButton("Help  /  F1", helpPressed);
+                    if (helpPressed) OpenTutorialHelp();
                     GUILayout.EndHorizontal();
                 }
                 GUILayout.EndArea();
@@ -778,7 +787,9 @@ namespace EvolutionShop
                 text.StartsWith("Save and resume") || text.StartsWith("Start conditioning") || text.StartsWith("Research ");
             bool caution = text.StartsWith("Confirm new game") || text.StartsWith("Close today's shop") || text.StartsWith("Save and quit");
             var style = caution ? hudTheme.DangerButton : primary ? hudTheme.PrimaryButton : buttonStyle;
-            if (GUILayout.Button(text, style, GUILayout.MinHeight(38))) action();
+            bool pressed = GUILayout.Button(text, style, GUILayout.MinHeight(38));
+            ObserveNativeUiButton(text, pressed);
+            if (pressed) action();
         }
     }
 }

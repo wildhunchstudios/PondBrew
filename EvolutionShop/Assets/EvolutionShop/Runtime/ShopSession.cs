@@ -116,6 +116,7 @@ namespace EvolutionShop
             InitializeSlap();
             AudioListener.volume = Volume;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
+            ResetNativeUiFeedback();
             initialized = true;
             SetPanel(ValidationMode && !restartStartup ? ShopPanel.None : ShopPanel.Welcome);
             Debug.Log("EVOLUTION_RUNTIME " + Application.dataPath + " save=" + SavePath);
@@ -149,6 +150,7 @@ namespace EvolutionShop
         void Update()
         {
             if (!initialized) return;
+            TickNativeUiFeedback(Time.unscaledDeltaTime);
             var keyboard = Keyboard.current;
             ApplyFxViewPolicy();
             bool placementAtFrameStart = PlacementActive;
@@ -255,6 +257,7 @@ namespace EvolutionShop
             {
                 if (labSaved)
                 {
+                    PresentNativeUiReady(result.FirstDiscovery);
                     belchWait=4f;belchExpiry=8f;
                     if (result.FirstDiscovery)
                     {
@@ -500,7 +503,7 @@ namespace EvolutionShop
             if (panel != ShopPanel.Arrange) pendingFurnitureSaleId = null;
             if (panel != ShopPanel.None && PlacementActive) EndPlacementPreview();
             if (initialized && (Panel == ShopPanel.Pause || Panel == ShopPanel.Reset) && panel == ShopPanel.None) SaveNow();
-            if (Panel != panel) panelScroll = Vector2.zero;
+            if (Panel != panel) { panelScroll = Vector2.zero; NativeUiPanelChanged(panel); }
             bool viewedPrice = panel == ShopPanel.Tank && Panel != ShopPanel.Tank &&
                 Model != null && Model.GetTank(selectedTank).HasValue && Tutorial.ObservePriceViewed();
             if (Panel == ShopPanel.Incubator && panel != Panel) { World?.CancelFxTransient(); sound?.StopDoseAudio(); }
@@ -540,11 +543,12 @@ namespace EvolutionShop
             if (AutosaveBlocked)
             {
                 SaveError = "Saving blocked: original save is invalid. Reload a repaired save or confirm New game.";
+                DiscardUnsavedNativeUiDelta();
                 return false;
             }
             Stocking.PruneTargets(Model);Laboratory.Reconcile(Model);Tutorial.Reconcile(Model);
             var slot = CaptureStaffSlot(Model,Staff);
-            bool success = SaveStore.Write(SavePath, slot, out var error);
+            bool success = WriteUiObservedSlot(slot, out var error);
             SaveError = success ? null : error;
             return success;
         }
@@ -562,7 +566,7 @@ namespace EvolutionShop
             AdoptLayout(restoredLayout);
             Stocker.ResetTransient();Technician.ResetTransient();
             ResetSessionFx();
-            Model = model; ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
+            Model = model; ResetNativeUiFeedback(); ShopDayCycle.TryRestore(slot.cycle, out var cycle); Cycle = cycle;
             ShopStaff.TryRestore(slot.staff,Cycle.DayNumber,out var staff); Staff=staff;
                 ShopStocking.TryRestore(slot.stocker,Model,Cycle.DayNumber,out var stocking);Stocking=stocking;
                 ShopLaboratory.TryRestore(slot.technician,Model,Cycle.DayNumber,out var laboratory);Laboratory=laboratory;
@@ -594,7 +598,7 @@ namespace EvolutionShop
             selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
             Stocker.ResetTransient();Technician.ResetTransient();
             ResetSessionFx();
-            Model = fresh; AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
+            Model = fresh; ResetNativeUiFeedback(); AutosaveBlocked = false; BaselinePreview = false; SaveError = null;
             Cycle = freshCycle; Reports = freshReports; Reputation = freshReputation; Staff=new ShopStaff();Stocking=new ShopStocking();Laboratory=new ShopLaboratory();
             Tutorial = new ShopTutorial(); ResetTutorialPresentation();
             Automation = new ShopAutomation(); AutomationBlockedBySave = false; ResetAutomationClock();

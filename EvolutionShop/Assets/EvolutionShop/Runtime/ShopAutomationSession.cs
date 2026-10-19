@@ -311,7 +311,7 @@ namespace EvolutionShop
             if (AutosaveBlocked || AutomationBlockedBySave || !GameModel.TryRestore(Layout.WithTankIds(Config), Model.CaptureSave(), out var game, out _) ||
                 !ShopLaboratory.TryRestore(Laboratory.CaptureSave(game), game, Cycle.DayNumber, out var lab)) return false;
             if (!lab.AddOrder(game, Automation.RecipeId, count)) return false;
-            if (!SaveStore.Write(SavePath, CaptureStaffSlotWithAutomation(game, Staff, null, null, lab, Automation), out var error))
+            if (!WriteUiObservedSlot( CaptureStaffSlotWithAutomation(game, Staff, null, null, lab, Automation), out var error))
             {
                 SaveError = error; AutomationBlockedBySave = true; ResetAutomationClock();
                 World.CancelFxTransient(); sound.StopLabAudio(); sound.StopResearchAudio(); ReconcileLabPresentation();
@@ -353,7 +353,7 @@ namespace EvolutionShop
                 throw new InvalidOperationException("Cannot stage culture preparation transaction.");
             if (!change(automation, game))
             { Notify("Requires an owned module, a known recipe and no other pending request. Existing cultures are safe."); return false; }
-            if (!SaveStore.Write(SavePath, CaptureStaffSlotWithAutomation(game, Staff, null, null, null, automation), out var error))
+            if (!WriteUiObservedSlot( CaptureStaffSlotWithAutomation(game, Staff, null, null, null, automation), out var error))
             {
                 SaveError = error;
                 AutomationBlockedBySave = true;
@@ -383,7 +383,7 @@ namespace EvolutionShop
                 throw new InvalidOperationException("Cannot stage culture preparation settings.");
             if (!change(automation, stocking, game))
             { Notify("Choose a valid discovered recipe, active display and stock target. No existing work changed."); return false; }
-            if (!SaveStore.Write(SavePath, CaptureStaffSlotWithAutomation(game, Staff, stocking, null, null, automation), out var error))
+            if (!WriteUiObservedSlot( CaptureStaffSlotWithAutomation(game, Staff, stocking, null, null, automation), out var error))
             {
                 SaveError = error; AutomationBlockedBySave = true; ResetAutomationClock();
                 World.CancelFxTransient(); sound.StopLabAudio(); sound.StopResearchAudio(); ReconcileLabPresentation();

@@ -71,7 +71,7 @@ namespace EvolutionShop
             bool cashChanged=stagedGame.Currency!=Model.Currency;
             if (cashChanged && (Cycle.Phase!=ShopDayPhase.Night || Customers.ActiveCount!=0))
             { Notify("Wages can start only during a clear preparation night. No charge was made."); return false; }
-            if (!SaveStore.Write(SavePath,CaptureStaffSlot(stagedGame,stagedStaff),out var error))
+            if (!WriteUiObservedSlot(CaptureStaffSlot(stagedGame,stagedStaff),out var error))
             { SaveError=error; Notify("Staff change was not saved. Your money and previous schedule are unchanged."); return false; }
             // Never replace a live daytime model: queued visitors hold its reservation authority.
             if (cashChanged) { Stocker.ResetTransient();Technician.ResetTransient();Model=stagedGame; }

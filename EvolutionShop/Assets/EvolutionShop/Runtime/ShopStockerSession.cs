@@ -67,7 +67,7 @@ namespace EvolutionShop
             bool paid=game.Currency!=Model.Currency;
             if (paid && (Cycle.Phase!=ShopDayPhase.Night || Customers.ActiveCount!=0))
             { Notify("Wages start during clear preparation nights. No charge was made.");return false; }
-            if (!SaveStore.Write(SavePath,CaptureStaffSlot(game,Staff,setting),out var error))
+            if (!WriteUiObservedSlot(CaptureStaffSlot(game,Staff,setting),out var error))
             { SaveError=error;Notify("Stocker change could not be saved. Money, targets and previous work are unchanged.");return false; }
             Stocker.ResetTransient();
             if (paid) { Cashier.ResetTransient();Technician.ResetTransient();Model=game; }
@@ -104,7 +104,7 @@ namespace EvolutionShop
             var tutorial=CopyTutorial();
             tutorial.ObserveDisplayed(staged,stagedResult,TutorialActionOrigin.Worker);tutorial.Reconcile(staged);
             var slot=CaptureStaffSlot(staged,Staff,Stocking,ledger);slot.tutorial=tutorial.CaptureSave();
-            if (!SaveStore.Write(SavePath,slot,out var error))
+            if (!WriteUiObservedSlot(slot,out var error))
             { SaveError=error;PresentWorkerResult(Stocker.Actor,FxWorkerEvent.Place,jobId,false);Notify("Delivery was not saved. The creature is still safe in its rack. Retry Nori after fixing saving.");return false; }
             // Synchronous main-thread write cannot advance another transaction between staging
             // and this revalidated publication; no animation callback owns this operation.

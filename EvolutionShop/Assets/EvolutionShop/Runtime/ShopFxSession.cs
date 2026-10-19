@@ -50,6 +50,7 @@ namespace EvolutionShop
         }
         void PresentFxResult(ActionResult result, bool saved, FxCueId successCue, FxCueOrigin origin = FxCueOrigin.Manual, CultureKind culture = CultureKind.Bloom, string destination = null)
         {
+            if (!NativeUiVisible) CancelNativeUiFeedback();
             if (!World) return;
             if (result.Success && !saved) {
                 World.CancelFxTransient();
@@ -102,6 +103,7 @@ namespace EvolutionShop
         }
         void ApplyFxViewPolicy()
         {
+            if (!NativeUiVisible) CancelNativeUiFeedback();
             if (!World) return;
             ReconcileLabPresentation();
             if((!fxHasFocus || Paused || PlacementActive || Panel!=ShopPanel.None) &&
@@ -113,8 +115,8 @@ namespace EvolutionShop
             if (World.LabDoseRemaining <= 0 || !fxHasFocus || Paused || PlacementActive || (Panel != ShopPanel.None && Panel != ShopPanel.Incubator)) sound?.StopDoseAudio();
             if (World.LabHatchRemaining <= 0 || !fxHasFocus || Paused || PlacementActive || Panel != ShopPanel.None) sound?.StopHatchAudio();
         }
-        void ResetSessionFx() { fxSequence = 0; World?.ResetFxPresentation(); sound?.StopResearchAudio(); sound?.StopHatchAudio(); sound?.StopDoseAudio(); }
-        void DisableSessionFx() { if (World) { World.SetFxViewPolicy(FxViewPolicy.Unfocused); World.CancelFxTransient(); sound?.StopResearchAudio(); sound?.StopLabAudio(); sound?.StopHatchAudio(); sound?.StopDoseAudio(); } }
+        void ResetSessionFx() { CancelNativeUiFeedback(); fxSequence = 0; World?.ResetFxPresentation(); sound?.StopResearchAudio(); sound?.StopHatchAudio(); sound?.StopDoseAudio(); }
+        void DisableSessionFx() { CancelNativeUiFeedback(); if (World) { World.SetFxViewPolicy(FxViewPolicy.Unfocused); World.CancelFxTransient(); sound?.StopResearchAudio(); sound?.StopLabAudio(); sound?.StopHatchAudio(); sound?.StopDoseAudio(); } }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public uint FxActionSequenceForValidation => fxSequence;
         public void SetFxFocusForValidation(bool value) { fxHasFocus = value; ApplyFxViewPolicy(); }

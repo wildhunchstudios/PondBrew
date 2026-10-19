@@ -53,6 +53,7 @@ namespace EvolutionShop
             bool comedyGate = ShopSession.Arg("-evolutionComedyGateSmoke") != null;
             bool comedy = ShopSession.Arg("-evolutionComedySmoke") != null;
             bool rooms = ShopSession.Arg("-evolutionRoomsSmoke") != null;
+            bool fxNativeUi = ShopSession.Arg("-evolutionFxNativeUiSmoke") != null;
             bool fxRoomAtmosphere = ShopSession.Arg("-evolutionFxRoomAtmosphereSmoke") != null;
             bool fxComedy = ShopSession.Arg("-evolutionFxComedySmoke") != null;
             bool fxWorker = ShopSession.Arg("-evolutionFxWorkerSmoke") != null;
@@ -102,12 +103,12 @@ namespace EvolutionShop
             bool decor = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionDecorSmoke") >= 0;
             bool expansion = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionExpansionSmoke") >= 0;
             bool placement = Array.IndexOf(Environment.GetCommandLineArgs(), "-evolutionPlacementSmoke") >= 0;
-            if (!fxRoomAtmosphere && !fxComedy && !fxWorker && !fxCustomer && !fxSpecies && !fxPlayerInteraction && !fxResearchAutomation && !fxIncubation && !fxAdvancedLab && !fxGrower && !fxAquarium && !fxCollection && !fxGrowth && !fxDose && !fxHatch && !fxOrganic && !fxVocabulary && !fxPondlet && !fxHands && !fxLab && !fxCue && !fxBaseline && !reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms && !automation && !workerComedy && !staff && !stocker && !technician && !tutorial && !guidance && !tutorialCustomer && !tutorialHandoff && !tutorialRecovery && !tutorialConditioningRecovery && !tutorialRestart)
+            if (!fxNativeUi && !fxRoomAtmosphere && !fxComedy && !fxWorker && !fxCustomer && !fxSpecies && !fxPlayerInteraction && !fxResearchAutomation && !fxIncubation && !fxAdvancedLab && !fxGrower && !fxAquarium && !fxCollection && !fxGrowth && !fxDose && !fxHatch && !fxOrganic && !fxVocabulary && !fxPondlet && !fxHands && !fxLab && !fxCue && !fxBaseline && !reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms && !automation && !workerComedy && !staff && !stocker && !technician && !tutorial && !guidance && !tutorialCustomer && !tutorialHandoff && !tutorialRecovery && !tutorialConditioningRecovery && !tutorialRestart)
             {
                 shop.Customers.UseBaseReputationEffectsForValidation = true;
                 limitations.Add("Earlier scenarios retain base customer demand/budgets/tolerances through an explicit validation-only hook; reputation still scores, and real tier effects are covered by the reputation scenario.");
             }
-            if (!fxRoomAtmosphere && !fxComedy && !fxWorker && !fxCustomer && !fxSpecies && !fxPlayerInteraction && !fxResearchAutomation && !fxIncubation && !fxAdvancedLab && !fxGrower && !fxAquarium && !fxCollection && !fxGrowth && !fxDose && !fxHatch && !fxOrganic && !fxVocabulary && !fxPondlet && !fxHands && !fxLab && !fxCue && !fxBaseline && !customerTypes && !reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms && !automation && !workerComedy && !staff && !stocker && !technician && !tutorial && !guidance && !tutorialCustomer && !tutorialHandoff && !tutorialRecovery && !tutorialConditioningRecovery && !tutorialRestart)
+            if (!fxNativeUi && !fxRoomAtmosphere && !fxComedy && !fxWorker && !fxCustomer && !fxSpecies && !fxPlayerInteraction && !fxResearchAutomation && !fxIncubation && !fxAdvancedLab && !fxGrower && !fxAquarium && !fxCollection && !fxGrowth && !fxDose && !fxHatch && !fxOrganic && !fxVocabulary && !fxPondlet && !fxHands && !fxLab && !fxCue && !fxBaseline && !customerTypes && !reputation && !slap && !trading && !placement && !expansion && !decor && !storage && !editedLayout && !lab && !specimens && !research && !conditioning && !airfin && !labGate && !presentation && !comedy && !comedyGate && !rooms && !automation && !workerComedy && !staff && !stocker && !technician && !tutorial && !guidance && !tutorialCustomer && !tutorialHandoff && !tutorialRecovery && !tutorialConditioningRecovery && !tutorialRestart)
             {
                 // Earlier scenarios were written for one visitor of the R02/R03.1 customer type at a time.
                 shop.Customers.MaxVisitors = 1;
@@ -121,7 +122,8 @@ namespace EvolutionShop
             if (fxWorker) { stack.Clear(); stack.Push(FxWorkerScenario()); }
             if (fxComedy) { stack.Clear(); stack.Push(FxComedyScenario()); }
             if (fxRoomAtmosphere) { stack.Clear(); stack.Push(FxRoomAtmosphereScenario()); }
-            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (continuous || fxGrowth || fxCollection || fxPlayerInteraction || fxSpecies || fxContainer || fxCustomer || fxWorker || fxComedy || fxRoomAtmosphere);
+            if (fxNativeUi) { stack.Clear(); stack.Push(FxNativeUiScenario()); }
+            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (continuous || fxGrowth || fxCollection || fxPlayerInteraction || fxSpecies || fxContainer || fxCustomer || fxWorker || fxComedy || fxRoomAtmosphere || fxNativeUi);
             bool failed = false;
             while (stack.Count > 0)
             {
