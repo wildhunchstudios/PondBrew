@@ -79,3 +79,6 @@
 
 # Preserve byte-hashed FX17 room atmosphere evidence.
 /Docs/Evidence/fx-17/** -text -whitespace
+
+# Preserve byte-hashed FX18 native UI evidence.
+/Docs/Evidence/fx-18/** -text -whitespace
