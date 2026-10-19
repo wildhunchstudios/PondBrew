@@ -531,3 +531,13 @@ Model routing: unchanged lead, GPT-6 Astra advanced implementation/review, GPT-6
 
 
 FX-18 delivery: [validation](Evidence/fx-18-VALIDATION.md), [controls and review steps](Evidence/fx-18/PLAY.md), [local gallery](http://127.0.0.1:8806/index.html). Exact source `d034691c68b12fde3938f903c6cd787d96107eb2`; local delivery checkpoint is recorded in `Docs/Evidence/fx-18/checkpoint.json`, tag `fx-native-ui-validated`. Next assignment: **FX-19 Complete audio and mix**, unstarted.
+
+
+## FX19 delivery  -  2026-10-19
+
+**FX-19 technically complete  -  2026-10-19; listening review deferred.** Original aquarium circulation and working-machine loops now follow actual room/source state, with closed-door attenuation and service ducking. Quiet door and native panel-navigation cues share existing transient audio ownership. Five voices total; 25 generated clips. Pause includes a saved machine/ambience volume slider, with safe legacy defaults. Source **76fe297**, revision `fx19-audio-4`. Actual **2277 passed EditMode tests**, **3877 final Windows checks**; build 0 errors / 0 warnings. Exact dry PCM and discontinuous listener output windows are measured; human listening/comfort, physical controls, creative approval and GPU gates remain open. Next: **FX-20 Comfort settings and effect limits**, unstarted. Evidence `Docs/Evidence/fx-19-VALIDATION.md`; controls `Docs/Evidence/fx-19/PLAY.md`; local tag `fx-audio-mix-validated`.
+
+The existing action cues remain intact. Two original four-second loops use five total voices: three transient voices plus one shared water and one shared machine voice. The machine loop requires actual refilling, incubation or conditioning. Distance and the real door reduce cross-room sound; important service cues lower ambience. Quiet door movement and accepted panel-navigation cues use the existing lab voice, with failure/cancellation suppression.
+
+The new Pause slider is **Machine / ambience volume**, default 50%. Master and humor controls remain independent. Runtime save envelope 22 stores the setting, rejects malformed current values and preserves explicit zero. Older saves receive 50% in memory without being rewritten during reading. Core gameplay code and its built assembly are unchanged.
+[Current evidence](Evidence/fx-19-VALIDATION.md). Source `76fe2979473a60c7702ace314ca05ecfe208dd2f`; playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx19-audio-4\EvolutionShop.exe`. Human/listening/creative/GPU gates remain deferred/open; next FX-20 is unstarted.
