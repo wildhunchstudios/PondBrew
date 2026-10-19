@@ -471,3 +471,35 @@ AGENTS.md is canonical. Known limits:
 - The belch puff is now visibly above the existing crown instead of hidden in the vessel. It remains a small, pale accent, especially in reduced mode; the readiness banner closely borders it and background equipment lowers contrast. The counter hides much of Pip lower body, while the selected later frames show both raised hands and cheek puff.
 - Low-intensity cap of 3 particles was reviewed in source without a dedicated Low video. Standard 6 / reduced 1 limits are exercised. Actual imported-frame and particle rendered-AABB clearance is sampled once after the beat in each mode; it is conservative bounding-box evidence, not readable imported vertices or an all-frame geometry proof.
 - FX15 tiny dose/checkout/refusal visibility and its older unmatched trace/video clocks, FX14 rear-facing/cropped customer views, and FX13 menu occlusion/subtle source response/dim movable labels remain historical review limits. New FX16 frame mapping does not retroactively close those observations.
+
+
+### FX-17 completion receipt — 2026-10-19
+
+**FX-17 technically complete — 2026-10-19; hands-on review deferred.** The existing automatic shop/lab door now accelerates and eases to rest safely, and the existing room lights blend between day, closing and night. A restrained crown-vent vapor accent runs only during real incubation. Source **31f433a**, playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx17-rooms-4\EvolutionShop.exe`. Actual **2253 passed EditMode tests**, **1566 final Windows checks**; build 0 errors / 0 warnings. 40 silent videos / 3884 decoded frames. Human/native controls, actual listening, creative approval and causal GPU/minimum-spec acceptance remain deferred/open. FX-18 is next only on continuation; not started here.
+
+Executed behavior:
+
+- The existing automatic shop/lab door now accelerates and eases to rest safely, and the existing room lights blend between day, closing and night. A restrained crown-vent vapor accent runs only during real incubation.
+- Door sensors, clear delay, opaque leaves, colliders and travel bounds remain authoritative. Reapproach removes closing velocity immediately; pause freezes the current pose. Real scripted player passage, reversal, pocket/root bounds and opaque separation were exercised.
+- Live phase changes use a 0.9-second blend from the current light pose; build/load/reset restore exact original phase values. Existing shop/lab and expansion lights are reused across both purchased expansion tiers. Existing grower/tube/tank animation owners remain unchanged.
+- The existing 96-particle pool and scoped cancellation owner provide at most 2 new decorative vent particles in Standard, 0 in Low and 1 with reduced motion. Ready/empty, pause, journal, focus and session-disable states cancel the new vapor. Existing growth, fluids, stock, production and audio ownership remain authoritative; no new audio loops or assets were added.
+- Exact source 31f433af ran 2,253/2,253 unfiltered EditMode tests and a successful Windows build with 0 errors / 0 warnings. Final standalone runs passed 491 checks at 720p, 493 at 1080p and 582 worker checks: 1,566 total, all process exits 0 and no runtime errors. Candidate 3 door 65 / expansion 89 / day-cycle 123 are 277 earlier-source supporting checks before diagnostic camera-only changes.
+- Forty silent primary clips fully decode 3,884 frames. The traces record 15,420 observations with 3,884 exact renderFrame/realtime mappings. Standard/reduced activity, Low suppression with real growth, cancellation, actual phase transitions and warmed resource counts are verified. Ten named root image/contact artifacts were actually inspected, plus a separately attributed independent review.
+- The final audit checks 72 protected files, 5,238 prior-build files and identical Core DLL versus FX16. Earlier FX17 candidates 2 and 3 players each preserve 291 files; 13 archived candidate 3 package outputs are byte-preserved. Approved art, scene, engine pin, packages, integration and save schema remain unchanged.
+
+Known limits:
+
+- Sampled native images/contact sequences were inspected, not every frame or continuous playback. Human native controls, actual listening, creative approval and the prior FX-06R-08 GPU/minimum-spec decision remain deferred/open. Videos are silent.
+- Standard working vapor is a small pale accent just above the crown. Reduced vapor is difficult to distinguish against the bright crown/wall in the inspected still. Numeric particle admission is verified separately; universal perceptual clarity is not claimed.
+- Existing HUD notices obscure parts of world signs, pause panels obscure central door geometry, and the held siphon covers part of the incubator. The revised front view clearly exposes the fluid and growing fish; wide expanded-lab captures show the rear extension, not every station at once.
+- Primary fixtures buy paired store/lab tiers 0/0, 1/1 and 2/2; mixed-tier permutations were not executed. Isolated prepared cultures and 1000 construction credits are labelled setup. Scripted camera/input is not a human playtest.
+- Low intentionally suppresses only this new decorative vent, retaining real fluid/creature/progress. Low and FX reduced-motion fixture policies are diagnostics, not a newly shipped graphics settings menu; FX-20 remains later work.
+- Warmed renderer/light/pool mesh/material counts were checked; this is not an allocation or GPU profile. Tank/cash and active-incubator identity conservation were checked, not every culture quantity. Moved-source cancellation is source-reviewed, not exercised by the primary runtime fixture.
+- Final-source worker routing passed independently. Candidate3 door/expansion/day-cycle regressions passed before the diagnostic camera-only revision; these are earlier-source supporting results, not final4 reruns.
+- Earlier failed evidence is retained: EOF whitespace check, candidate2 Low decorative-visibility assertion, candidate3 worker recording-rate guard, and candidate3 camera occlusion. The worker rerun passed without concurrent media packaging; that earlier timing failure has no measured causal attribution.
+- A brief ordinary DayReport modal appears during the base-lab transition before the final unobscured night frame. It is retained in the actual recording and not presented as uninterrupted unobscured footage.
+
+Model routing: unchanged lead, GPT-6 Astra advanced implementation/review, GPT-6.1 Sol bounded support.
+
+
+FX-17 delivery: [validation](Docs/Evidence/fx-17-VALIDATION.md), [controls and review steps](Docs/Evidence/fx-17/PLAY.md), [local gallery](http://127.0.0.1:8805/index.html). Exact source `31f433af4a0886d3460f46c6c9fee3a4915c5414`; local delivery checkpoint is recorded in `Docs/Evidence/fx-17/checkpoint.json`. Next assignment: **FX-18 Native UI feedback**, unstarted.
