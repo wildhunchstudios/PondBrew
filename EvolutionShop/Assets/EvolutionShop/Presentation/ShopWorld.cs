@@ -293,26 +293,7 @@ namespace EvolutionShop
             Text(returnSign, "FRONT STORE", new Vector3(0, 3.02f, -.035f), .075f, new Color(.96f, .95f, .83f), 2.7f);
         }
         /// <summary>Presentation only: update existing room lights after Build or a restored phase.</summary>
-        public void SetDayPhase(ShopDayPhase phase)
-        {
-            if (phase != ShopDayPhase.Night && phase != ShopDayPhase.Open && phase != ShopDayPhase.Closing)
-                throw new ArgumentOutOfRangeException(nameof(phase));
-            if (!keyLight || !storeFillLight || !labFillLight)
-                throw new InvalidOperationException("Build the shop before applying its day phase.");
-
-            // Ambient light, luminous strips, tank materials, and station lighting remain readable.
-            // The exterior key becomes cooler at night; shop practical lighting stays warm and welcoming.
-            bool night = phase == ShopDayPhase.Night;
-            bool closing = phase == ShopDayPhase.Closing;
-            keyLight.color = night ? new Color(.70f, .82f, 1f) : closing ? new Color(1f, .89f, .76f) : new Color(1f, .95f, .84f);
-            keyLight.intensity = night ? 1.12f : closing ? 1.45f : 1.65f;
-            storeFillLight.color = night ? new Color(1f, .83f, .63f) : closing ? new Color(1f, .87f, .69f) : new Color(1f, .95f, .83f);
-            storeFillLight.intensity = night ? 2.65f : closing ? 3f : 3.4f;
-            labFillLight.color = night ? new Color(.74f, .94f, 1f) : closing ? new Color(.74f, .98f, .97f) : new Color(.75f, 1f, .94f);
-            labFillLight.intensity = 3.2f;
-            RefreshWingLights();
-            RefreshLabWingLights();
-        }
+        public void SetDayPhase(ShopDayPhase phase) => RestoreRoomPhase(phase);
 
         Light LightAt(Vector3 position, Color color, float intensity, float range)
         {
@@ -739,6 +720,7 @@ namespace EvolutionShop
             TickFxPresentation(dt);
             TickLabFx(time, dt);
             TickAdvancedLabFx(time, dt);
+            TickRoomAtmosphere(dt);
         }
 
         static void AnimateCells(List<Transform> cells, float time, float seed)

@@ -161,6 +161,7 @@ namespace EvolutionShop
             if (owner.IsDefined && owner.Equals(playerInteractionOwner)) CancelPlayerInteraction();
             CancelAquariumOwner(owner);
             CancelResearchAutomationOwner(owner);
+            if (owner.IsDefined && owner.Equals(roomAtmosphereOwner)) CancelRoomAtmosphere();
             if(owner.IsDefined && (owner.Equals(comedyFxOwner) || fxCues!=null && fxCues.IsValid(owner) &&
                 fxBindings[owner.Slot].Root==comedyFxSource))CancelComedyFx();
             if (owner.IsDefined && owner.Equals(collectionOwner)) {
@@ -179,6 +180,7 @@ namespace EvolutionShop
             }
             CancelPlayerInteraction();
             CancelComedyFx();
+            CancelRoomAtmosphere();
             fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)

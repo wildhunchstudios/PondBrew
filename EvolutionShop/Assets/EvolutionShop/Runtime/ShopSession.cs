@@ -219,7 +219,7 @@ namespace EvolutionShop
             bool phaseChanged = previousPhase != Cycle.Phase || previousDay != Cycle.DayNumber;
             if (phaseChanged)
             {
-                World.SetDayPhase(Cycle.Phase);
+                World.TransitionDayPhase(Cycle.Phase);
                 Notify(Cycle.Phase == ShopDayPhase.Night ? "Night preparation. Your unsold stock is safe. Prepare for day " + Cycle.DayNumber + "." : "Closing time. The next preparation night begins shortly.");
             }
             World.CaptureConditionerStep(Model);
@@ -275,7 +275,7 @@ namespace EvolutionShop
             { Notify("The day report could not begin. Save and reload before opening."); return false; }
             Cycle.OpenShop();
             Tutorial.ObserveOpened(true);
-            World.SetDayPhase(Cycle.Phase);
+            World.TransitionDayPhase(Cycle.Phase);
             Notify("Day " + Cycle.DayNumber + " is open. Serve the counter and keep your tanks stocked.");
             SaveNow();
             return true;
@@ -284,7 +284,7 @@ namespace EvolutionShop
         {
             if (Paused || !Cycle.RequestClose()) return false;
             CancelComedy();belchWait=-1;
-            World.SetDayPhase(Cycle.Phase);
+            World.TransitionDayPhase(Cycle.Phase);
             Notify("Closing in 3 seconds. Finish checkout now; unpaid orders release safely for the night.");
             SaveNow();
             return true;

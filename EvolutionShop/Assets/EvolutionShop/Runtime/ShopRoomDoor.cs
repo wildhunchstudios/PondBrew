@@ -7,13 +7,18 @@ namespace EvolutionShop
     {
         public float OpenFraction { get; private set; }
         public bool WantsOpen { get; private set; }
+        public float MotionVelocity => motionVelocity;
+        public float ClearDelay => clearDelay;
+        public Transform LeftLeaf => left;
+        public Transform RightLeaf => right;
         Transform left, right;
+        float motionVelocity;
         float clearDelay;
 
         public void Initialize(Transform leftLeaf, Transform rightLeaf)
         {
             left = leftLeaf; right = rightLeaf;
-            OpenFraction = 0; WantsOpen = false; clearDelay = 0;
+            OpenFraction = 0; WantsOpen = false; clearDelay = 0; motionVelocity = 0;
             ApplyPose();
         }
 
@@ -21,7 +26,7 @@ namespace EvolutionShop
 
         public void Tick(Vector3 playerPosition, float dt, Vector3? workerPosition, Vector3? secondWorkerPosition = null)
         {
-            if (!left || !right || dt <= 0) return;
+            if (!isActiveAndEnabled || !left || !right || dt <= 0 || float.IsNaN(dt) || float.IsInfinity(dt)) return;
             Vector3 local = transform.InverseTransformPoint(playerPosition);
             // Includes capsule radius, side approaches and a full movement frame of clearance.
             bool occupied = NearSensor(local) || workerPosition.HasValue && NearSensor(transform.InverseTransformPoint(workerPosition.Value)) ||
@@ -29,7 +34,8 @@ namespace EvolutionShop
             clearDelay = occupied ? 1f : Mathf.Max(0, clearDelay - dt);
             WantsOpen = occupied || clearDelay > 0;
             float previous = OpenFraction;
-            OpenFraction = Mathf.MoveTowards(previous, WantsOpen ? 1 : 0, dt * 2.8f);
+            FxRoomAtmosphereMotion.StepDoor(previous, motionVelocity, WantsOpen, dt, out float next, out motionVelocity);
+            OpenFraction = next;
             if (previous == OpenFraction) return;
             ApplyPose();
             // Moving solid colliders must be current before this frame's focus/movement queries.
