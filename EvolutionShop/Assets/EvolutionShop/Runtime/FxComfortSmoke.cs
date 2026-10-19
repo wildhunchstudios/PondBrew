@@ -16,7 +16,7 @@ namespace EvolutionShop
   [Serializable] sealed class ComfortReceipt
   {public string scope="FX20 actual saved settings and native HWND controls; labelled construction/stock preparation. Frame time includes capture overhead; no causal GPU/human/listening approval.";public ComfortFrame[] frames;public int ownedItems,tankCapacity,storageCapacity,occupiedTanks,occupiedStorage,baselineOwnedItems,baselineOccupiedTanks,baselineOccupiedStorage;public string[] baselineSpecimenIds;}
   readonly List<ComfortFrame> comfortFrames=new List<ComfortFrame>();
-  AudioSource[] comfortVoices;Renderer[] comfortRenderers;string comfortVat;string[] comfortSlots;int comfortItems;string[] comfortOccupiedIds;int comfortTankCapacity,comfortStorageCapacity;Transform comfortFish;Vector3 comfortFishStart;Quaternion comfortFishRotation;float comfortFishTravel,comfortFishAngle;
+  AudioSource[] comfortVoices;Renderer[] comfortRenderers;string comfortVat;string[] comfortSlots;int comfortItems,comfortBaseStations;string[] comfortOccupiedIds;int comfortTankCapacity,comfortStorageCapacity;Transform comfortFish;Vector3 comfortFishStart;Quaternion comfortFishRotation;float comfortFishTravel,comfortFishAngle;
   void ComfortObserve(string clip)
   {
    if(clip.StartsWith("comfort-occupied-")&&comfortFish){comfortFishTravel=Mathf.Max(comfortFishTravel,Vector3.Distance(comfortFish.localPosition,comfortFishStart));comfortFishAngle=Mathf.Max(comfortFishAngle,Quaternion.Angle(comfortFish.localRotation,comfortFishRotation));}
@@ -45,6 +45,7 @@ namespace EvolutionShop
    shop.SetPanel(ShopPanel.Pause);yield return null;
    if(shop.ReducedVisualMotion!=reduced){string label="Reduced visual motion: "+(shop.ReducedVisualMotion?"On":"Off");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Reduced visual motion: "+(reduced?"On":"Off"));Check(nativeUiRect==before,"Comfort native toggle preserves exact hit bounds");}
    if((shop.EffectsDetail==FxEffectDetail.Low)!=low){string label="Effects detail: "+(shop.EffectsDetail==FxEffectDetail.Low?"Low":"Standard");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));Check(nativeUiRect==before,"Comfort detail native control preserves exact hit bounds");}
+   yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));
    ComfortPolicy(reduced,low);Check(SaveStore.Read(shop.SavePath,shop.Config,out _,out var slot,out var error)&&slot.reducedVisualMotion==reduced&&slot.effectsDetail==(low?1:0),"Native controls persist selected policy / "+error);
   }
   string ComfortStock()
@@ -63,16 +64,25 @@ namespace EvolutionShop
    }
    Check(found,"Actually legal reachable occupied-layout placement / "+definition);yield return EditedPlace(null,definition,x,z,turn,approach);
   }
+  void ComfortCheckWorld()
+  {
+   int expectedStations=comfortBaseStations,expectedRoots=0;
+   foreach(var item in shop.Layout.Items){if(item.Stored)continue;expectedRoots++;expectedStations+=ShopLayout.DefinitionSlotCount(item.DefinitionId);if(item.DefinitionId==ShopLayout.RackDefinitionId||item.DefinitionId==ShopLayout.ConditionerDefinitionId)expectedStations++;
+    Check(shop.World.TryGetPlacedTable(item.Id,out var root)&&root.gameObject.activeInHierarchy&&root.GetComponentsInChildren<Collider>().Length>0,"Occupied layout retains actual collision and stable identity / "+item.Id);
+   }
+   Check(expectedRoots==ShopLayout.MaxOwnedItems&&shop.World.GetComponentsInChildren<PlacedWorkTable>().Length==expectedRoots&&shop.World.GetComponents<Unity.AI.Navigation.NavMeshSurface>().Length==1,"Occupied layout has exact16 active owned roots and one native surface");
+   Check(shop.World.Stations.Count==expectedStations,"Occupied layout station count equals original foundation plus actual display compartments, racks and vat");
+  }
   IEnumerator ComfortBuildOccupied()
   {
    StaffCreditFixture(3000,"FX20 labelled maximum-layout preparation only");foreach(string species in new[]{"pondlet","bubblebelly","ribbonfin"}){SpecimenProduce(species);Ok(shop.Model.TransferToTank("tank-a"),"Labelled discovery seed transfer");Ok(shop.Model.SellFromTank("tank-a"),"Labelled discovery seed sale");}shop.World.Refresh(shop.Model);Check(shop.SaveNow(),"Save labelled discovery prerequisites");
    yield return ResearchFacilityPanel(ShopLayout.UpgradeFacilityId,ShopPanel.Upgrade);Check(shop.ResearchSpark(),"Actual research prerequisite for occupied vat");Ok(shop.BuySiphonUpgrade(),"Actual capacity prerequisite");yield return AdvancedProduce("lanternfin");Ok(shop.TransferToDisplay("tank-a"),"Preserve actual Lanternfin prerequisite");Ok(shop.Model.SellFromTank("tank-a"),"Labelled prerequisite sale before identical Pondlet comparison workload");shop.World.Refresh(shop.Model);Check(shop.SaveNow(),"Save actual discovery prerequisite");
-   Check(shop.OpenPlacementMenu()&&shop.BuyStoreExpansion()&&shop.BuyStoreExpansion(),"Both real store expansions");GateAim(new Vector3(0,.2f,2),new Vector3(0,1.2f,5));yield return null;Check(shop.OpenLabMenu()&&shop.BuyLabExpansion()&&shop.BuyLabExpansion(),"Both real lab expansions");shop.SetPanel(ShopPanel.None);
+   Check(shop.OpenPlacementMenu()&&shop.BuyStoreExpansion()&&shop.BuyStoreExpansion(),"Both real store expansions");GateAim(new Vector3(0,.2f,2),new Vector3(0,1.2f,5));yield return null;Check(shop.OpenLabMenu()&&shop.BuyLabExpansion()&&shop.BuyLabExpansion(),"Both real lab expansions");shop.SetPanel(ShopPanel.None);comfortBaseStations=shop.World.Stations.Count;
    yield return EditedPlace(null,ShopLayout.LargeDisplayId,-4,-1,0,new Vector3(-2,.2f,-2.3f));yield return EditedPlace(null,ShopLayout.LargeDisplayId,-18,-3,0,new Vector3(-9,.2f,-4.5f));yield return EditedPlace(null,ShopLayout.LargeDisplayId,-26,-3,0,new Vector3(-13,.2f,-4.5f));
    yield return EditedPlace(null,ShopLayout.TableDefinitionId,9,4,1,new Vector3(3.5f,.2f,3));yield return EditedPlace(null,ShopLayout.TableDefinitionId,6,3,1,new Vector3(1.5f,.2f,1.5f));yield return EditedPlace(null,ShopLayout.TableDefinitionId,11,3,1,new Vector3(6.4f,.2f,2.8f));
    yield return EditedPlace(null,ShopLayout.CoralPlanterId,10,8,0,new Vector3(3.5f,.2f,3));yield return EditedPlace(null,ShopLayout.CoralPlanterId,0,8,0,new Vector3(0,.2f,2.9f));yield return EditedPlace(null,ShopLayout.CoralPlanterId,-28,-8,0,new Vector3(-14,.2f,-2.8f));yield return EditedPlace(null,ShopLayout.BubbleLampId,-23,-8,0,new Vector3(-11.5f,.2f,-2.8f));yield return EditedPlace(null,ShopLayout.SillyStatueId,-20,-8,0,new Vector3(-10,.2f,-2.8f));yield return EditedPlace(null,ShopLayout.BubbleLampId,-17,-8,0,new Vector3(-8.5f,.2f,-2.8f));
    yield return ComfortPlace(ShopLayout.ConditionerDefinitionId,-6,14);comfortVat=shop.Model.ConditionerIds[0];yield return ComfortPlace(ShopLayout.RackDefinitionId,9,15);yield return ComfortPlace(ShopLayout.RackDefinitionId,-9,22);yield return ComfortPlace(ShopLayout.RackDefinitionId,7,23);comfortSlots=shop.Model.StorageIds;comfortItems=shop.Layout.Items.Count;
-   Check(comfortItems==ShopLayout.MaxOwnedItems&&shop.Layout.StoredCount==0&&comfortSlots.Length==6&&shop.Model.TankIds.Length==8,"Actual16 placed ownership cap, eight display slots and six rack slots");EditedCheckWorld("FX20 actual maximum owned");EditedCheckRoutes("FX20 actual maximum owned");
+   Check(comfortItems==ShopLayout.MaxOwnedItems&&shop.Layout.StoredCount==0&&comfortSlots.Length==6&&shop.Model.TankIds.Length==8,"Actual16 placed ownership cap, eight display slots and six rack slots");ComfortCheckWorld();EditedCheckRoutes("FX20 actual maximum owned");
    foreach(string id in shop.Model.TankIds)if(!shop.Model.GetTank(id).HasValue){SpecimenProduce("pondlet");Ok(shop.TransferToDisplay(id),"Labelled occupied display preparation / "+id);}
    foreach(string id in comfortSlots){SpecimenProduce("pondlet");string rack=null;foreach(var item in shop.Layout.Items)foreach(string slot in shop.Layout.GetStorageSlotIds(item.Id))if(slot==id)rack=item.Id;Check(rack!=null,"Exact owned rack mapping");yield return SpecimenRackPanel(rack);Check(shop.StoreReadyInRack(id),"Labelled exact occupied rack preparation / "+id);}
    advancedVat=comfortVat;yield return AdvancedBeginBatch(comfortSlots[0],comfortSlots[1]);yield return WaitFor(()=>shop.Model.GetConditioner(comfortVat).Value.Phase==ConditionerPhase.Ready,20,"Actual two-resident vat finishes naturally");
