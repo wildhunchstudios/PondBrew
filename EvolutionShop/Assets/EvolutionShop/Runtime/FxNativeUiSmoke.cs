@@ -22,14 +22,24 @@ namespace EvolutionShop
         }
         [Serializable] sealed class NativeUiAction
         {
-            public string label, type, controlType, controlRawType;
+            public string label, type, observedType, controlType, controlRawType;
             public Rect bounds, controlLocalRect;
-            public Vector2 point, controlLocalPoint, controlScreenPoint;
+            public Vector2 point, representedPoint, requestedDelta, observedDelta, controlLocalPoint, controlScreenPoint;
+            public NativeUiWindow window;
             public int frame, controlFrame, hotControl;
             public float realtime;
             public uint diagnosticBefore, diagnosticAfter, acceptedBefore, acceptedAfter;
             public bool enabled, controlFound, controlEnabled, controlAccepted, controlRectFromRepaint;
         }
+        [Serializable] sealed class NativeUiWindow
+        {
+            public uint processId, message;
+            public long handle;
+            public int clientWidth, clientHeight, renderWidth, renderHeight, wheelDelta, postedFrame;
+            public Vector2 requestedPoint, clientPoint, representedPoint, messagePoint;
+            public bool leftDown;
+        }
+        static NativeUiWindow NativeUiWindowRow(NativeUiWindowSnapshot w) => new NativeUiWindow{processId=w.ProcessId,message=w.Message,handle=w.Handle,clientWidth=w.ClientWidth,clientHeight=w.ClientHeight,renderWidth=w.RenderWidth,renderHeight=w.RenderHeight,wheelDelta=w.WheelDelta,postedFrame=w.PostedFrame,requestedPoint=w.RequestedPoint,clientPoint=w.ClientPoint,representedPoint=w.ScreenPoint,messagePoint=w.MessagePoint,leftDown=w.LeftDown};
         [Serializable] sealed class NativeUiHost
         {
             public string type, rawType;
@@ -40,13 +50,14 @@ namespace EvolutionShop
         }
         [Serializable] sealed class NativeUiReceipt
         {
-            public string input = "Explicit development-only diagnostic IMGUI Event injection through actual OnGUI/GUILayout controls. Not OS-native clicks. InputSystem keyboard used only for Escape.";
+            public string input = "Explicit Windows development-only own-process HWND posted mouse messages, observed through actual native OnGUI/GUILayout controls. No global cursor/focus/SendInput; not physical-human input. InputSystem keyboard used only for Escape.";
             public string clock = "EndOfFrame immediately before recorder.Sample; event application frame is independently recorded, not assumed equal.";
             public NativeUiFrame[] frames;
             public NativeUiAction[] actions;
             public NativeUiHost[] latestQueuedHostEvents;
             public int latestQueueCountBefore, latestQueueCountAfter;
             public string diagnosticError;
+            public NativeUiWindow latestWindowMessage;
         }
         readonly List<NativeUiFrame> nativeUiFrames = new List<NativeUiFrame>();
         readonly List<NativeUiAction> nativeUiActions = new List<NativeUiAction>();
@@ -72,7 +83,7 @@ namespace EvolutionShop
             var host=new List<NativeUiHost>();
             for(int i=0;i<shop.NativeUiHostEventCountForValidation;i++)
                 if(shop.TryGetNativeUiHostEventForValidation(i,out var sample))host.Add(new NativeUiHost{type=sample.Type.ToString(),rawType=sample.RawType.ToString(),localPoint=sample.LocalPoint,screenPoint=sample.ScreenPoint,hasCommand=sample.HasCommand,tokenMatches=sample.TokenMatches,frame=sample.FrameCount,queuedEventCount=sample.QueuedEventCount,realtime=sample.Realtime});
-            File.WriteAllText(Path.Combine(evidence,"native-ui.json"),JsonUtility.ToJson(new NativeUiReceipt{frames=nativeUiFrames.ToArray(),actions=nativeUiActions.ToArray(),latestQueuedHostEvents=host.ToArray(),latestQueueCountBefore=shop.NativeUiQueueCountBeforeForValidation,latestQueueCountAfter=shop.NativeUiQueueCountAfterForValidation,diagnosticError=shop.NativeUiDiagnosticErrorForValidation},true));
+            File.WriteAllText(Path.Combine(evidence,"native-ui.json"),JsonUtility.ToJson(new NativeUiReceipt{frames=nativeUiFrames.ToArray(),actions=nativeUiActions.ToArray(),latestQueuedHostEvents=host.ToArray(),latestQueueCountBefore=shop.NativeUiQueueCountBeforeForValidation,latestQueueCountAfter=shop.NativeUiQueueCountAfterForValidation,diagnosticError=shop.NativeUiDiagnosticErrorForValidation,latestWindowMessage=NativeUiWindowRow(shop.NativeUiWindowForValidation)},true));
         }
         IEnumerator NativeUiRunAction(IEnumerator action)
         {
@@ -142,11 +153,13 @@ namespace EvolutionShop
         IEnumerator NativeUiEvent(EventType type,Vector2 point,Vector2 delta=default,string target=null)
         {
             var before=shop.NativeUiFxSnapshot;
-            Check(shop.QueueNativeUiEventForValidation(type,point,0,delta),"Single diagnostic IMGUI event admitted / "+type);
+            Check(shop.QueueNativeUiEventForValidation(type,point,0,delta),"Single own-window message admitted / "+type+" / "+shop.NativeUiDiagnosticErrorForValidation);
+            var posted=shop.NativeUiWindowForValidation;Vector2 represented=posted.ScreenPoint;
             yield return WaitFor(()=>shop.NativeUiFxSnapshot.DiagnosticEventCount>before.DiagnosticEventCount,2,"Actual OnGUI event applied / "+type);
             var after=shop.NativeUiFxSnapshot;
-            Check(after.DiagnosticEventCount==before.DiagnosticEventCount+1 && after.DiagnosticAppliedType==type && Vector2.Distance(after.DiagnosticScreenPoint,point)<.1f,"Exact one injected GUI event and screen coordinate / "+type);
-            var row=new NativeUiAction{label=target??"event without target",type=type.ToString(),point=point,frame=Time.frameCount,realtime=Time.realtimeSinceStartup,diagnosticBefore=before.DiagnosticEventCount,diagnosticAfter=after.DiagnosticEventCount,acceptedBefore=before.AcceptedButtonCount,acceptedAfter=after.AcceptedButtonCount};
+            bool actualType=after.DiagnosticAppliedType==type||(type==EventType.MouseMove&&posted.LeftDown&&after.DiagnosticAppliedType==EventType.MouseDrag);
+            Check(after.DiagnosticEventCount==before.DiagnosticEventCount+1&&actualType&&Vector2.Distance(after.DiagnosticScreenPoint,represented)<.25f,"Exact one observed native GUI event at represented window coordinate / "+type);
+            var row=new NativeUiAction{label=target??"event without target",type=type.ToString(),observedType=after.DiagnosticAppliedType.ToString(),point=point,representedPoint=represented,requestedDelta=delta,observedDelta=shop.NativeUiDiagnosticDeltaForValidation,window=NativeUiWindowRow(posted),frame=Time.frameCount,realtime=Time.realtimeSinceStartup,diagnosticBefore=before.DiagnosticEventCount,diagnosticAfter=after.DiagnosticEventCount,acceptedBefore=before.AcceptedButtonCount,acceptedAfter=after.AcceptedButtonCount};
             if(target!=null&&shop.TryGetNativeUiControlForValidation(target,out var control))
             {
                 row.controlFound=true;row.controlLocalRect=control.LocalRect;row.controlLocalPoint=control.LocalPoint;row.controlScreenPoint=control.ScreenPoint;
@@ -155,7 +168,7 @@ namespace EvolutionShop
             }
             nativeUiActions.Add(row);
             NativeUiFlush();
-            if(row.controlFound)Check(Vector2.Distance(row.controlScreenPoint,point)<.25f,"Actual native control pointer roundtrip matches queued screen point / "+target);
+            if(row.controlFound)Check(Vector2.Distance(row.controlScreenPoint,represented)<.25f,"Actual native control pointer roundtrip matches represented window point / "+target);
             yield return null;
         }
         IEnumerator NativeUiClick(string label)
@@ -171,7 +184,7 @@ namespace EvolutionShop
         }
         IEnumerator FxNativeUiScenario()
         {
-            limitations.Add("FX18 isolated save. Explicit development-only queued IMGUI MouseMove/Down/Up/ScrollWheel reaches real OnGUI/GUILayout controls; not OS-native input. InputSystem Escape is separately labelled. Setup seeds carried cultures, currency and stock explicitly; captured incubation uses ordinary frames. Saved failure live-model behavior is not rolled back by this fixture. Static sampled images and silent video do not establish native-human, listening, creative or GPU acceptance.");
+            limitations.Add("FX18 isolated save. Windows development-only own-process HWND posted mouse messages are observed through real OnGUI/GUILayout controls. Integer client coordinates and represented render coordinates are traced; held movement may arrive as MouseDrag. Not physical-human input, and no global cursor/focus/SendInput. InputSystem Escape is separately labelled. Setup seeds carried cultures, currency and stock explicitly; captured incubation uses ordinary frames. Saved failure live-model behavior is not rolled back by this fixture. Static sampled images and silent video do not establish native-human, listening, creative or GPU acceptance.");
             yield return new WaitForSeconds(1);
             Check(shop.ValidationMode&&Path.GetFullPath(shop.SavePath)==Path.GetFullPath(Path.Combine(evidence,"smoke-save.json")),"FX18 isolated save only");
             previousInputSettings=InputSystem.settings;smokeInputSettings=Instantiate(previousInputSettings);smokeInputSettings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;
