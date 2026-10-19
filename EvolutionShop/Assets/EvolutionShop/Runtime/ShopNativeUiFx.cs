@@ -295,6 +295,13 @@ namespace EvolutionShop
             Box(new Rect(rect.x, rect.y + 2, 2, rect.height - 4), color);
             Box(new Rect(rect.xMax - 2, rect.y + 2, 2, rect.height - 4), color);
         }
+        void DrawNativeUiCurrencyIcon()
+        {
+            var pose = FxNativeUiMotion.Sample(nativeUiMoney, nativeUiMoneyAge, NativeUiReduced, NativeUiLow);
+            // The brief fan replaces the large icon; Reduced keeps the original static coin.
+            if (NativeUiVisible && pose.CoinCount > 0 && pose.Alpha > 0) return;
+            hudTheme.Icon(new Rect(1042, 27, 36, 36), ShopUiTheme.Symbol.Coin);
+        }
         void DrawNativeUiMoney()
         {
             if (Event.current.type != EventType.Repaint || !NativeUiVisible) return;
@@ -304,9 +311,14 @@ namespace EvolutionShop
             Color previous = GUI.color; GUI.color = new Color(previous.r, previous.g, previous.b, previous.a * pose.Alpha);
             for (int i = 0; i < pose.CoinCount; i++)
             {
-                float x = pose.CoinCount == 1 ? 1053 : 1040 + i * 13;
-                float y = 48 + pose.Offset.y + (i == 1 ? -4 : 0);
-                hudTheme.Icon(new Rect(x, y, 12 * pose.Scale, 12 * pose.Scale), ShopUiTheme.Symbol.Coin);
+                // Separate centers and staggered heights stay inside the icon region, left of the value.
+                float fan = -pose.Offset.y / 8;
+                float side = i - 1;
+                float x = pose.CoinCount == 1 ? 1060 : 1060 + side * (15 + fan);
+                float y = pose.CoinCount == 1 ? 45 + pose.Offset.y :
+                    (i == 0 ? 51 : i == 1 ? 36 : 47) + pose.Offset.y;
+                float size = (pose.CoinCount == 1 ? 24 : 14) * pose.Scale;
+                hudTheme.Icon(new Rect(x - size / 2, y - size / 2, size, size), ShopUiTheme.Symbol.Coin);
             }
             GUI.color = previous;
         }

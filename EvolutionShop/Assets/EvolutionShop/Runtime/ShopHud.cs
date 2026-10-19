@@ -194,7 +194,7 @@ namespace EvolutionShop
             }
 
             HudCard(new Rect(1030, 18, 232, 54), ShopUiTheme.Honey);
-            hudTheme.Icon(new Rect(1042, 27, 36, 36), ShopUiTheme.Symbol.Coin);
+            DrawNativeUiCurrencyIcon();
             GUI.Label(new Rect(1086, 22, 162, 30), Model.Currency.ToString("N0"), Model.Currency > 9999999 ? hudLargeCurrencyStyle : hudCurrencyStyle);
             GUI.Label(new Rect(1088, 49, 160, 18), nativeUiMoney != FxNativeUiCue.None && NativeUiVisible ? nativeUiMoneyLabel : "SHOP CREDITS", hudSmallStyle);
             DrawNativeUiMoney();

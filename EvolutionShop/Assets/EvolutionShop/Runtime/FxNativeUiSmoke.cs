@@ -144,7 +144,7 @@ namespace EvolutionShop
                 bool footerLabel=label=="Close  /  ESC"||label=="Help  /  F1"||label=="Continue preparation  /  ESC"||label=="Back to my next goal  /  ESC"||label=="Back to my shop  /  ESC or F1";
                 bool footer=footerLabel&&nativeUiRect.yMin>=top+568*scale&&nativeUiRect.yMax<=top+620*scale;
                 if(footer||(nativeUiRect.yMin>=top+130*scale&&nativeUiRect.yMax<=top+553*scale))yield break;
-                yield return NativeUiEvent(EventType.ScrollWheel,new Vector2(Screen.width*.5f,Screen.height*.5f),new Vector2(0,nativeUiRect.yMin<top+130*scale?-4:4),label);
+                yield return NativeUiScrollbar(nativeUiRect.yMin>=top+130*scale);
                 yield return null;
                 Check(shop.TryGetNativeUiButtonForValidation(label,out nativeUiRect,out nativeUiEnabled),"Control retained after actual scroll / "+label);
             }
@@ -186,7 +186,7 @@ namespace EvolutionShop
         }
         IEnumerator FxNativeUiScenario()
         {
-            limitations.Add("FX18 isolated save. Windows development-only own-process HWND posted mouse messages are observed through real OnGUI/GUILayout controls. Integer client coordinates and represented render coordinates are traced. Mouse positioning may be observed on a later Repaint and is counted separately from actual native Down/Up/Wheel events; held native movement may arrive as MouseDrag. Not physical-human input, and no global cursor/focus/SendInput. InputSystem Escape is separately labelled. Setup seeds carried cultures, currency and stock explicitly; captured incubation uses ordinary frames. Saved failure live-model behavior is not rolled back by this fixture. Static sampled images and silent video do not establish native-human, listening, creative or GPU acceptance.");
+            limitations.Add("FX18 isolated save. Windows development-only own-process HWND posted mouse messages are observed through real OnGUI/GUILayout controls. Integer client coordinates and represented render coordinates are traced. Wheel automation is blocked: candidate 8 delivered ScrollWheel with an unrelated global-cursor position; this route instead operates the actual native scrollbar with window-posted Down/Up, without moving the global cursor. Mouse positioning may be observed on a later Repaint and is counted separately from actual native Down/Up/Wheel events; held native movement may arrive as MouseDrag. Not physical-human input, and no global cursor/focus/SendInput. InputSystem Escape is separately labelled. Setup seeds carried cultures, currency and stock explicitly; captured incubation uses ordinary frames. Saved failure live-model behavior is not rolled back by this fixture. Static sampled images and silent video do not establish native-human, listening, creative or GPU acceptance.");
             yield return new WaitForSeconds(1);
             Check(shop.ValidationMode&&Path.GetFullPath(shop.SavePath)==Path.GetFullPath(Path.Combine(evidence,"smoke-save.json")),"FX18 isolated save only");
             previousInputSettings=InputSystem.settings;smokeInputSettings=Instantiate(previousInputSettings);smokeInputSettings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;
@@ -306,11 +306,25 @@ namespace EvolutionShop
             yield return NativeUiEvent(EventType.MouseDown,rect.center,target:label);yield return NativeUiEvent(EventType.MouseUp,rect.center,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted&&shop.NativeUiFxSnapshot.MoneySequence==sequence&&shop.Model.GetPrice("pondlet").Value.Price==price,"Disabled actual native control cannot accept or mutate price/money");
         }
+        IEnumerator NativeUiScrollbar(bool down)
+        {
+            // Existing 720p native image actual-hover.png shows track x889..901 (center895).
+            // DrawPanel retains content origin377,130, width526, and height423/477.
+            bool fixedFooter=shop.Panel!=ShopPanel.Welcome&&shop.Panel!=ShopPanel.Pause&&shop.Panel!=ShopPanel.Reset;
+            float scale=Mathf.Min(Screen.width/1280f,Screen.height/720f);
+            Vector2 origin=new Vector2((Screen.width-1280*scale)/2,(Screen.height-720*scale)/2);
+            Vector2 point=origin+new Vector2(895,down?(fixedFooter?530:584):153)*scale;
+            uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount;
+            yield return NativeUiEvent(EventType.MouseMove,point,target:"native vertical scrollbar track");
+            yield return NativeUiEvent(EventType.MouseDown,point,target:"native vertical scrollbar track");
+            yield return NativeUiEvent(EventType.MouseUp,point,target:"native vertical scrollbar track");
+            Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted,"Native scrollbar cannot activate a content or footer button");
+        }
         IEnumerator NativeUiScrollFooter()
         {
             yield return NativeUiFind("Close  /  ESC");Rect footer=nativeUiRect;Vector2 before=shop.NativeUiFxSnapshot.PanelScroll;
-            for(int i=0;i<4;i++)yield return NativeUiEvent(EventType.ScrollWheel,new Vector2(Screen.width*.5f,Screen.height*.5f),new Vector2(0,8),"Close  /  ESC");
-            yield return NativeUiFind("Close  /  ESC");Check(nativeUiRect==footer&&shop.NativeUiFxSnapshot.PanelScroll.y>before.y,"Native wheel scrolls content while fixed footer hit bounds stay fixed");
+            yield return NativeUiScrollbar(true);
+            yield return NativeUiFind("Close  /  ESC");Check(nativeUiRect==footer&&shop.NativeUiFxSnapshot.PanelScroll.y>before.y,"Native scrollbar scrolls content while fixed footer hit bounds stay fixed");
             yield return NativeUiClick("Help  /  F1");Check(shop.Panel==ShopPanel.TutorialHelp,"Direct GUILayout footer Help responds through actual GUI");
             yield return NativeUiClick("Back to my shop  /  ESC or F1");
         }
