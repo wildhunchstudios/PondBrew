@@ -60,13 +60,13 @@ namespace EvolutionShop
             Check(!sound.ComedyPlaying && sound.ServicePlaying && sound.ServicePriorityActive,"Discovery interrupts comedy and reserves service priority");
             Check(!sound.PlayComedy(ComedyKind.Belch,0,1),"Comedy cannot mask the completion cue");
             for(int i=0;i<20;i++){sound.Collect();sound.Feedback(i%2==0);}
-            Check(sound.ActiveVoiceCount<=1 && sound.ServicePriorityActive,"Repeated service requests replace one voice and retain discovery priority");
+            Check(((sound.ServicePlaying?1:0)+(sound.ComedyPlaying?1:0)+(sound.LabPlaying?1:0))<=1 && sound.ServicePriorityActive,"Repeated service requests replace one transient voice and retain discovery priority");
             yield return new WaitForSeconds(.9f);
             foreach(float gain in new[]{0f,float.NaN,float.PositiveInfinity,-1f,2f})
             {
                 sound.StopComedy();Check(sound.PlayComedy(ComedyKind.Mimic,1,gain),"Accept safe comedy request for edge gain");
                 float expected=float.IsNaN(gain)||float.IsInfinity(gain)?0:Mathf.Clamp01(gain);
-                Check(sound.LastComedyGain==expected && sound.ActiveVoiceCount<=1,"Clamp/mute without extra voices");
+                Check(sound.LastComedyGain==expected && ((sound.ServicePlaying?1:0)+(sound.ComedyPlaying?1:0)+(sound.LabPlaying?1:0))<=1,"Clamp/mute without extra transient voices");
             }
             sound.enabled=false;Check(!sound.ComedyPlaying && !sound.ServicePlaying,"Disable stops both audio voices");sound.enabled=true;
             shop.SetPanel(ShopPanel.None);

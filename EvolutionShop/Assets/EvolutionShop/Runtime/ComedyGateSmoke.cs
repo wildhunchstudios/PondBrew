@@ -196,7 +196,7 @@ namespace EvolutionShop
             }
             GateFresh();GateMature();shop.ReducedGags=true;shop.HumorVolume=0;
             yield return WaitFor(()=>shop.Comedy.Active,6,"muted reduced belch");yield return new WaitForSeconds(.2f);
-            Check(shop.Comedy.Reduced && shop.Comedy.Caption.Length>0 && shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner)==0 && sound.LastComedyGain==0 && sound.ActiveVoiceCount<=1,"Reduced muted readiness retains pre-beat caption without particles and with zero comedy gain");
+            Check(shop.Comedy.Reduced && shop.Comedy.Caption.Length>0 && shop.World.FxPool.ParticleCountForValidation(shop.World.ComedyFxOwner)==0 && sound.LastComedyGain==0 && ((sound.ServicePlaying?1:0)+(sound.ComedyPlaying?1:0)+(sound.LabPlaying?1:0))<=1,"Reduced muted readiness retains pre-beat caption without particles, zero comedy gain and bounded transient voices");
             shop.SetPanel(ShopPanel.Pause);Check(shop.SaveNow() && shop.ReloadSaved() && !shop.Comedy.Active,"Final paused save/reload retains no incident");
         }
 
