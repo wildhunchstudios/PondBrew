@@ -48,10 +48,10 @@ namespace EvolutionShop
         public readonly EventType Type, RawType;
         public readonly int HotControl, FrameCount;
         public readonly bool Enabled, Accepted, RectFromRepaint;
-        internal NativeUiControlSnapshot(string label, Rect rect, bool cached, bool accepted)
+        internal NativeUiControlSnapshot(string label, Rect rect, bool cached, bool accepted, Vector2 screenPoint)
         {
             Label = label; LocalRect = rect; LocalPoint = Event.current.mousePosition;
-            ScreenPoint = GUIUtility.GUIToScreenPoint(LocalPoint);
+            ScreenPoint = screenPoint;
             Type = Event.current.type; RawType = Event.current.rawType;
             HotControl = GUIUtility.hotControl; FrameCount = Time.frameCount;
             Enabled = GUI.enabled; Accepted = accepted; RectFromRepaint = cached;
@@ -105,6 +105,8 @@ namespace EvolutionShop
         float nativeUiHoverAge, nativeUiPressAge = 10;
         string nativeUiHoverLabel, nativeUiPressLabel, nativeUiMoneyLabel;
         Vector2 nativeUiPointer;
+        Vector2 nativeUiRootScreenPointer;
+        Matrix4x4 nativeUiRootMatrix;
         int nativeUiOwnedButtonCapture;
         bool nativeUiCancelButtonCapture;
         uint nativeUiMoneySequence, nativeUiStateSequence, nativeUiMoves, nativeUiDowns, nativeUiUps, nativeUiAccepts;
@@ -210,6 +212,10 @@ namespace EvolutionShop
 
         void BeginNativeUiGui()
         {
+            // Capture before any GUILayout area/scroll clip. Nested GUIToScreenPoint applies
+            // clip translations inconsistently with the HUD scale on the pinned player.
+            nativeUiRootScreenPointer = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+            nativeUiRootMatrix = GUI.matrix;
             // Lifecycle callbacks can run outside OnGUI. Release only our recorded capture here.
             if (nativeUiCancelButtonCapture)
             {
@@ -250,6 +256,14 @@ namespace EvolutionShop
             }
 #endif
         }
+        Vector2 NativeUiLocalToScreen(Vector2 localPoint)
+        {
+            // The pointer is the same physical point in each clip's local coordinates.
+            // Its local delta to the requested point needs only the root HUD linear transform.
+            Vector2 delta = localPoint - Event.current.mousePosition;
+            Vector3 scaled = nativeUiRootMatrix.MultiplyVector(new Vector3(delta.x, delta.y, 0));
+            return nativeUiRootScreenPointer + new Vector2(scaled.x, scaled.y);
+        }
         int NativeUiButtonCaptureBefore()
         {
             return GUI.enabled && Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
@@ -274,7 +288,7 @@ namespace EvolutionShop
             }
             if (Event.current.type != EventType.Repaint) return;
             Rect local = GUILayoutUtility.GetLastRect();
-            Vector2 first = GUIUtility.GUIToScreenPoint(local.min), last = GUIUtility.GUIToScreenPoint(local.max);
+            Vector2 first = NativeUiLocalToScreen(local.min), last = NativeUiLocalToScreen(local.max);
             Rect screen = Rect.MinMaxRect(first.x, first.y, last.x, last.y);
             if (nativeUiButtonCount < nativeUiButtons.Length)
                 nativeUiButtons[nativeUiButtonCount++] = new NativeUiButton { Label = label, ScreenRect = screen, LocalRect = local, Enabled = GUI.enabled };
@@ -379,7 +393,8 @@ namespace EvolutionShop
                     if (nativeUiButtons[i].Label == label) { rect = nativeUiButtons[i].LocalRect; break; }
             // Read-only evidence: never allocate a control ID or change native mouse ownership.
             // Ordinary repaints leave these samples intact until the next diagnostic event.
-            nativeUiDiagnosticControls[nativeUiDiagnosticControlCount++] = new NativeUiControlSnapshot(label, rect, cached, accepted);
+            nativeUiDiagnosticControls[nativeUiDiagnosticControlCount++] = new NativeUiControlSnapshot(label, rect, cached, accepted,
+                NativeUiLocalToScreen(Event.current.mousePosition));
         }
         bool nativeUiQueued, nativeUiDiagnosticPass, nativeUiPostedLeftDown;
         Vector2 nativeUiQueuedPoint, nativeUiQueuedDelta;
