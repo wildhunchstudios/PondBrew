@@ -19,6 +19,8 @@ namespace EvolutionShop
         readonly FxBinding[] fxBindings = new FxBinding[FxCueRuntime.OwnerLimit];
         FxViewPolicy fxPolicy;
         bool fxEnabled = true, fxReducedMotion;
+        public bool VisualMotionReduced => fxReducedMotion;
+        public bool EffectsLow => aquariumLow;
         public bool CustomerReducedMotion => fxReducedMotion;
         public int CustomerPriceAccentCount { get; private set; }
         public int CustomerCheckoutAccentCount { get; private set; }
@@ -80,6 +82,8 @@ namespace EvolutionShop
             // Borrow the existing primitive mesh. New pulses add no material or mesh instances/colliders.
             var template = bloomCells.Count > 0 && bloomCells[0] ? bloomCells[0].GetComponentInChildren<MeshFilter>() : null;
             if (template && template.sharedMesh) fxPool = new FxEffectPool(transform, template.sharedMesh);
+            // A layout/world rebuild must retain the current policy in its fresh pool.
+            fxPool?.SetLowDetail(aquariumLow); fxPool?.SetReducedMotion(fxReducedMotion);
             BindFxOwner("tool", null, toolBody, true);
             fxPolicy = FxViewPolicy.Visible;
             BuildLabFx();
@@ -213,9 +217,19 @@ namespace EvolutionShop
         }
         void DisposeFxPresentation()
         { fxPool?.Dispose(); fxCues?.Dispose(); fxPool = null; fxCues = null; System.Array.Clear(fxBindings, 0, fxBindings.Length); }
+        public void SetFxComfortModes(bool reducedMotion, bool lowDetail)
+        {
+            if (fxReducedMotion != reducedMotion || aquariumLow != lowDetail) CancelFxTransient();
+            fxReducedMotion = reducedMotion; aquariumLow = lowDetail;
+            fxPool?.SetLowDetail(lowDetail); fxPool?.SetReducedMotion(reducedMotion);
+        }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        // Isolated review/test switches only. No user settings or ordinary-save schema in FX-02.
-        public void SetFxPreviewModes(bool reducedMotion, bool lowDetail) { CancelFxTransient(); fxReducedMotion = reducedMotion; aquariumLow = lowDetail; fxPool?.SetLowDetail(lowDetail); fxPool?.SetReducedMotion(reducedMotion); }
+        // Isolated review/test override; does not change the session's saved preferences.
+        public void SetFxPreviewModes(bool reducedMotion, bool lowDetail)
+        {
+            CancelFxTransient();
+            SetFxComfortModes(reducedMotion, lowDetail);
+        }
         public void SetFxEnabledForValidation(bool value) { CancelFxTransient(); fxEnabled = value; }
 #endif
     }

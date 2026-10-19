@@ -277,10 +277,11 @@ namespace EvolutionShop.Tests
         static string JsonWithLayout(SlotData slot, string layout) => "{\"formatVersion\":" + slot.formatVersion +
             ",\"game\":" + JsonUtility.ToJson(slot.game) + ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) +
             ",\"trades\":" + JsonUtility.ToJson(slot.trades) + ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) +
-            (slot.formatVersion == SaveStore.CurrentFormatVersion ? ",\"staff\":" + JsonUtility.ToJson(slot.staff) + ",\"stocker\":" + JsonUtility.ToJson(slot.stocker) + ",\"technician\":" + JsonUtility.ToJson(slot.technician) + ",\"tutorial\":" + JsonUtility.ToJson(slot.tutorial) + ",\"automation\":" + JsonUtility.ToJson(slot.automation) : "") +
-            ",\"layout\":" + (slot.formatVersion == SaveStore.CurrentFormatVersion ? WithCurrentLabFields(layout) : layout) + ",\"sensitivity\":" + slot.sensitivity.ToString(System.Globalization.CultureInfo.InvariantCulture) +
+            (slot.formatVersion >= 23 ? ",\"reducedVisualMotion\":" + (slot.reducedVisualMotion ? "true" : "false") + ",\"effectsDetail\":" + slot.effectsDetail : "") +
+            (slot.formatVersion >= 22 ? ",\"staff\":" + JsonUtility.ToJson(slot.staff) + ",\"stocker\":" + JsonUtility.ToJson(slot.stocker) + ",\"technician\":" + JsonUtility.ToJson(slot.technician) + ",\"tutorial\":" + JsonUtility.ToJson(slot.tutorial) + ",\"automation\":" + JsonUtility.ToJson(slot.automation) : "") +
+            ",\"layout\":" + (slot.formatVersion >= 22 ? WithCurrentLabFields(layout) : layout) + ",\"sensitivity\":" + slot.sensitivity.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"volume\":" + slot.volume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
-            (slot.formatVersion == SaveStore.CurrentFormatVersion ? ",\"ambienceVolume\":" + slot.ambienceVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) : "") +
+            (slot.formatVersion >= 22 ? ",\"ambienceVolume\":" + slot.ambienceVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) : "") +
             ",\"slapKey\":\"" + slot.slapKey + "\",\"humorVolume\":" + slot.humorVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"reducedGags\":" + (slot.reducedGags ? "true" : "false") + "}";
 

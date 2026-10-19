@@ -116,7 +116,7 @@ namespace EvolutionShop
         EventType nativeUiDiagnosticOriginal, nativeUiDiagnosticApplied;
         int nativeUiDiagnosticFrame = -1, nativeUiConsumedFrame = -1;
         Vector2 nativeUiDiagnosticPoint;
-        bool NativeUiReduced => ReducedGags || World && World.CustomerReducedMotion;
+        bool NativeUiReduced => World ? World.VisualMotionReduced : ReducedVisualMotion;
         bool NativeUiLow => World && World.LabDoseLow;
         bool NativeUiVisible => fxHasFocus && !PlacementActive && Panel != ShopPanel.Arrange && Panel != ShopPanel.Presentation;
         public NativeUiSnapshot NativeUiFxSnapshot => new NativeUiSnapshot(nativeUiMoney, nativeUiState,
@@ -179,10 +179,10 @@ namespace EvolutionShop
         }
 
         // Observe the durable result without changing staging, publication, or economics.
-        bool WriteUiObservedSlot(SlotData slot, out string error)
+        bool WriteUiObservedSlot(SlotData slot, out string error, bool preserveFeedbackOnFailure = false)
         {
             bool saved = SaveStore.Write(SavePath, slot, out error);
-            if (!saved) { DiscardUnsavedNativeUiDelta(); return false; }
+            if (!saved) { if (!preserveFeedbackOnFailure) DiscardUnsavedNativeUiDelta(); return false; }
             long currency = slot.game.currency;
             long delta = nativeUiBaselineReady ? currency - nativeUiCurrencyBaseline : 0;
             nativeUiCurrencyBaseline = currency; nativeUiBaselineReady = true;
@@ -407,7 +407,7 @@ namespace EvolutionShop
 
         public bool QueueNativeUiEventForValidation(EventType type, Vector2 screenPoint, int button = 0, Vector2 delta = default)
         {
-            if (!ValidationMode || Arg("-evolutionFxNativeUiSmoke") == null || nativeUiQueued || !NativeUiVisible ||
+            if (!ValidationMode || (Arg("-evolutionFxNativeUiSmoke") == null && Arg("-evolutionFxComfortSmoke") == null) || nativeUiQueued || !NativeUiVisible ||
                 (type != EventType.MouseMove && type != EventType.MouseDown && type != EventType.MouseUp && type != EventType.ScrollWheel) ||
                 !FiniteNativeUiPoint(screenPoint) || !FiniteNativeUiPoint(delta) || button != 0 ||
                 screenPoint.x < 0 || screenPoint.y < 0 || screenPoint.x >= Screen.width || screenPoint.y >= Screen.height ||

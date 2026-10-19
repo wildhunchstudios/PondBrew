@@ -75,6 +75,7 @@ namespace EvolutionShop
                 ShopTradeLedger.TryRestore(slot.trades, slot.cycle, out var reports); Reports = reports;
                 ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
                 Sensitivity = slot.sensitivity; Volume = slot.volume; AmbienceVolume = slot.ambienceVolume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
+                RestoreComfortSettings(slot);
             }
             else
             {
@@ -102,7 +103,7 @@ namespace EvolutionShop
             Player.Initialize(camera);
             Player.ControlledMotion += ObserveTutorialMotion;
             World = new GameObject("Evolution Shop").AddComponent<ShopWorld>();
-            World.Build(camera); World.ApplyLayout(Layout);
+            World.Build(camera); World.ApplyLayout(Layout); ApplyComfortSettings();
             World.SetDayPhase(Cycle.Phase);
             Customers = gameObject.AddComponent<ShopCustomers>();
             Customers.Initialize(this);
@@ -578,6 +579,7 @@ namespace EvolutionShop
             ShopReputation.TryRestore(slot.reputation, out var reputation); Reputation = reputation; Reports.CancelPendingForReload();
             World.SetDayPhase(Cycle.Phase);
             Sensitivity = slot.sensitivity; Volume = slot.volume; AmbienceVolume = slot.ambienceVolume; SlapKey = slot.slapKey; HumorVolume = slot.humorVolume; ReducedGags = slot.reducedGags;
+            RestoreComfortSettings(slot);
             AudioListener.volume = Volume;
             BaselinePreview = false;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned);
@@ -593,7 +595,7 @@ namespace EvolutionShop
             var freshReputation = new ShopReputation();
             var freshLayout = new ShopLayout();
             if (!TryApplyLayoutGeometry(freshLayout)) return;
-            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,ambienceVolume=AmbienceVolume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags},out var error))
+            if (!SaveStore.Write(SavePath,new SlotData {game=fresh.CaptureSave(),cycle=freshCycle.CaptureSave(),trades=freshReports.CaptureSave(),reputation=freshReputation.CaptureSave(),layout=freshLayout.CaptureSave(),sensitivity=Sensitivity,volume=Volume,ambienceVolume=AmbienceVolume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags,reducedVisualMotion=ReducedVisualMotion,effectsDetail=(int)EffectsDetail},out var error))
             { RestoreCurrentLayout(); SaveError = error; SetPanel(ShopPanel.Reset); return; }
             ResetComedyTransient(); Customers.ResetVisitors(); SlapGesture.Cancel(); SlapTarget = null;
             selectedRack = null; selectedConditioner = null; conditioningInputs.Clear();
@@ -606,7 +608,7 @@ namespace EvolutionShop
             Cashier.ResetTransient();Cashier.RefreshVisual();Stocker.RefreshVisual();Technician.RefreshVisual();World.SetDayPhase(Cycle.Phase);
             AdoptLayout(freshLayout);
             revealUntil = 0; revealedSpecies = null;
-            World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false);
+            World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(false); ApplyComfortSettings();
             Vector3 spawn = World.SpawnPosition; spawn.y = 0.2f;
             Player.Teleport(spawn, Quaternion.identity);
             SetPanel(ShopPanel.Welcome); Notify("Preparation night 1. Choose your opening and grow your first stock.");

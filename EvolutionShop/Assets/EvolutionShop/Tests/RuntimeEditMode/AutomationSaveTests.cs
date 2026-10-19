@@ -54,7 +54,7 @@ namespace EvolutionShop.Tests
                 Assert.That(SaveStore.Read(PathFor(),Config,out var loadedGame,out var loaded,out error),Is.True,error);
                 Assert.That(JsonUtility.ToJson(loadedGame.CaptureSave()),Is.EqualTo(JsonUtility.ToJson(slot.game)));
                 Assert.That(JsonUtility.ToJson(loaded.automation),Is.EqualTo(JsonUtility.ToJson(slot.automation)));
-                Assert.That(File.ReadAllBytes(PathFor()),Is.EqualTo(original));Assert.That(loaded.formatVersion,Is.EqualTo(22));
+                Assert.That(File.ReadAllBytes(PathFor()),Is.EqualTo(original));Assert.That(loaded.formatVersion,Is.EqualTo(23));
             }
         }
         [Test]

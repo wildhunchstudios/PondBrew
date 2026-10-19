@@ -88,13 +88,14 @@ namespace EvolutionShop
         }
         public void AnimateComedySample(ComedyKind kind,float elapsed,bool reduced)
         {
+            reduced |= fxReducedMotion;
             if(sampleView==2){studyFish.Animate(reduced?0:Mathf.Floor(elapsed*2f)*.25f);return;}
             var figure=sampleView==4?studyEmployee:studyCustomer;
             if(figure)figure.PoseComedy(kind,elapsed,reduced);
         }
         public void ShowComedyBubble(Vector3 position,float elapsed,bool reduced)
         {
-            if(reduced){HideComedyBubble();return;}
+            if(reduced || fxReducedMotion){HideComedyBubble();return;}
             if(!comedyBubble)
             {
                 comedyBubbleMaterial=MakeMaterial("Original belch bubble",new Color(.47f,.90f,.78f),0,.7f);

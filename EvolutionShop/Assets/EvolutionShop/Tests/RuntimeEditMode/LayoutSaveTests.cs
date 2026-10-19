@@ -356,6 +356,7 @@ namespace EvolutionShop.Tests
             ",\"cycle\":" + JsonUtility.ToJson(slot.cycle) + ",\"trades\":" + JsonUtility.ToJson(slot.trades) +
             ",\"reputation\":" + JsonUtility.ToJson(slot.reputation) + ",\"staff\":" + JsonUtility.ToJson(slot.staff) + ",\"stocker\":" + JsonUtility.ToJson(slot.stocker) + ",\"technician\":" + JsonUtility.ToJson(slot.technician) + ",\"tutorial\":" + JsonUtility.ToJson(slot.tutorial) + ",\"automation\":" + JsonUtility.ToJson(slot.automation) +
             (layout == null ? "" : ",\"layout\":" + WithCurrentLabFields(layout)) +
+            ",\"reducedVisualMotion\":" + (slot.reducedVisualMotion ? "true" : "false") + ",\"effectsDetail\":" + slot.effectsDetail +
             ",\"ambienceVolume\":" + slot.ambienceVolume.ToString(System.Globalization.CultureInfo.InvariantCulture) +
             ",\"slapKey\":\"F\",\"humorVolume\":1,\"reducedGags\":false,\"sensitivity\":1,\"volume\":0.65}";
 

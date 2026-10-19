@@ -367,6 +367,12 @@ namespace EvolutionShop
                     Volume = GUILayout.HorizontalSlider(Volume, 0, 1); AudioListener.volume = Volume;
                     Text("Machine / ambience volume: " + Mathf.RoundToInt(AmbienceVolume * 100) + "%");
                     AmbienceVolume = GUILayout.HorizontalSlider(AmbienceVolume, 0, 1);
+                    Space(); Heading("Visual comfort");
+                    Button(ReducedVisualMotion ? "Reduced visual motion: On" : "Reduced visual motion: Off",
+                        () => SetComfortSettings(!ReducedVisualMotion, EffectsDetail));
+                    Button(EffectsDetail == FxEffectDetail.Low ? "Effects detail: Low" : "Effects detail: Standard",
+                        () => SetComfortSettings(ReducedVisualMotion, EffectsDetail == FxEffectDetail.Low ? FxEffectDetail.Standard : FxEffectDetail.Low));
+                    Small("Click to change. Saved immediately; essential feedback stays visible.");
                     Space(); Heading("Cartoon slap");
                     Small("Close panels, aim at a nearby unpaid customer and tap " + SlapKey + ". They leave; -1 reputation. Three-second cooldown.");
                     Button(WaitingForSlapKey ? "Press a letter / Escape cancels" : "Change slap key / " + SlapKey, BeginSlapRebind);

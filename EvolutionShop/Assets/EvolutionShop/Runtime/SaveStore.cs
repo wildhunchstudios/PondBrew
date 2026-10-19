@@ -34,6 +34,8 @@ namespace EvolutionShop
         public float humorVolume = 1f;
         public float ambienceVolume = FxAudioMix.DefaultAmbienceVolume;
         public bool reducedGags;
+        public bool reducedVisualMotion;
+        public int effectsDetail;
     }
 
     public static class SaveStore
@@ -53,16 +55,17 @@ namespace EvolutionShop
         // 20: guided-opening learning receipts; legacy saves remain unguided.
         // 21: optional one-batch culture collector/doser; shared inventory remains GameModel authority.
         // 22: machine/ambience volume; gameplay and layout versions are unchanged.
-        // Formats 1-21 migrate in memory; historical saves never
+        // 23: independent visual motion and effect-detail preferences.
+        // Formats 1-22 migrate in memory; historical saves never
         // invent furniture, outcomes, rewards, or purchases.
-        public const int CurrentFormatVersion = 22;
+        public const int CurrentFormatVersion = 23;
 
         /// <summary>The game version each envelope carried: price tags arrived with format 4.</summary>
         public static int GameVersionFor(int format) => format >= 1 && format <= 3 ? 1 :
-            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format >= 16 && format <= 22 ? 6 : 0;
+            format >= 4 && format <= 12 ? 2 : format == 13 ? 3 : format == 14 ? 4 : format == 15 ? 5 : format >= 16 && format <= 23 ? 6 : 0;
 
         /// <summary>The report version each envelope carried; formats 1-2 had no report.</summary>
-        public static int ReportVersionFor(int format) => format >= 7 && format <= 22 ? 4 : format == 5 || format == 6 ? 3 :
+        public static int ReportVersionFor(int format) => format >= 7 && format <= 23 ? 4 : format == 5 || format == 6 ? 3 :
             format == 4 ? 2 : format == 3 ? 1 : 0;
         public static string DefaultPath => Path.Combine(Application.persistentDataPath, "evolution-shop.json");
 
@@ -118,7 +121,7 @@ namespace EvolutionShop
                 !ShopTutorial.TryRestore(data.tutorial, game, data.cycle.dayNumber, out _) ||
                 !ShopAutomation.TryRestore(data.automation, game, out _) ||
                 !ValidOwnedConditionerProgress(layout, game) ||
-                !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume) || !ValidHumorVolume(data.ambienceVolume))
+                !SlapRules.IsAllowedKey(data.slapKey) || !ValidHumorVolume(data.humorVolume) || !ValidHumorVolume(data.ambienceVolume) || data.effectsDetail < 0 || data.effectsDetail > 1)
             {
                 error = "Could not save: the current slot, day clock, trading report, reputation, layout, staff, stocker, technician, tutorial, automation, or gag settings are invalid. Original file preserved.";
                 return false;
@@ -164,7 +167,7 @@ namespace EvolutionShop
                 if (currentStorage && !new LayoutJsonShape(json, true, true, true, true,
                     header.formatVersion >= 14, header.formatVersion >= 15, header.formatVersion >= 16,
                     header.formatVersion >= 17, header.formatVersion >= 18, header.formatVersion >= 19,
-                    header.formatVersion >= 20, header.formatVersion >= 21, header.formatVersion >= 22).HasExplicitItemsArray())
+                    header.formatVersion >= 20, header.formatVersion >= 21, header.formatVersion >= 22, header.formatVersion >= 23).HasExplicitItemsArray())
                 {
                     error = "Saved layout, storage, research, conditioning, staff, stocker, technician, tutorial or automation shape could not be validated. Your original file is preserved.";
                     return false;
@@ -334,6 +337,16 @@ namespace EvolutionShop
                     return false;
                 }
 
+                if (header.formatVersion < 23)
+                {
+                    candidate.reducedVisualMotion = false; candidate.effectsDetail = 0;
+                }
+                else if (candidate.effectsDetail < 0 || candidate.effectsDetail > 1)
+                {
+                    error = "Saved visual comfort settings could not be validated. Your original file is preserved.";
+                    return false;
+                }
+
                 // A version 1 game restores with standard prices; capture it in the current form.
                 candidate.game = restoredGame.CaptureSave();
                 candidate.formatVersion = CurrentFormatVersion;
@@ -399,9 +412,10 @@ namespace EvolutionShop
             readonly bool requireTutorial;
             readonly bool requireAutomation;
             readonly bool requireAmbience;
+            readonly bool requireComfort;
             int position;
-            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false, bool requireStaff = false, bool requireStocker = false, bool requireTechnician = false, bool requireTutorial = false, bool requireAutomation = false, bool requireAmbience = false)
-            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; this.requireStaff = requireStaff; this.requireStocker = requireStocker; this.requireTechnician = requireTechnician; this.requireTutorial = requireTutorial; this.requireAutomation = requireAutomation; this.requireAmbience = requireAmbience; }
+            public LayoutJsonShape(string json, bool requireStoreTier, bool requireStored, bool requireLab, bool requireStorage = false, bool requireResearch = false, bool requireConditioners = false, bool requireMist = false, bool requireStaff = false, bool requireStocker = false, bool requireTechnician = false, bool requireTutorial = false, bool requireAutomation = false, bool requireAmbience = false, bool requireComfort = false)
+            { this.json = json; this.requireStoreTier = requireStoreTier; this.requireStored = requireStored; this.requireLab = requireLab; this.requireStorage = requireStorage; this.requireResearch = requireResearch; this.requireConditioners = requireConditioners; this.requireMist = requireMist; this.requireStaff = requireStaff; this.requireStocker = requireStocker; this.requireTechnician = requireTechnician; this.requireTutorial = requireTutorial; this.requireAutomation = requireAutomation; this.requireAmbience = requireAmbience; this.requireComfort = requireComfort; }
 
             public bool HasExplicitItemsArray()
             {
@@ -412,7 +426,7 @@ namespace EvolutionShop
             bool ReadObject(bool layout)
             {
                 if (!Take('{')) return false;
-                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false, hasStaff = false, hasStocker = false, hasTechnician = false, hasTutorial = false, hasAutomation = false, hasAmbience = false;
+                bool required = false, hasStoreTier = false, hasLabTier = false, hasFacilities = false, hasStorage = false, hasStaff = false, hasStocker = false, hasTechnician = false, hasTutorial = false, hasAutomation = false, hasAmbience = false, hasReducedVisualMotion = false, hasEffectsDetail = false;
                 var keys = new HashSet<string>(StringComparer.Ordinal);
                 SkipSpace();
                 if (Take('}')) return false;
@@ -459,6 +473,16 @@ namespace EvolutionShop
                         if (!ReadFiniteNumber()) return false;
                         hasAmbience = true;
                     }
+                    else if (!layout && requireComfort && key == "reducedVisualMotion")
+                    {
+                        if (!ReadBoolean()) return false;
+                        hasReducedVisualMotion = true;
+                    }
+                    else if (!layout && requireComfort && key == "effectsDetail")
+                    {
+                        if (!ReadInteger(out int detail) || detail < 0 || detail > 1) return false;
+                        hasEffectsDetail = true;
+                    }
                     else if (layout && key == "items")
                     {
                         SkipSpace();
@@ -490,7 +514,7 @@ namespace EvolutionShop
                     if (Take('}')) return required && (layout ?
                         ((!requireStoreTier || hasStoreTier) && (!requireLab || hasLabTier && hasFacilities)) :
                         (!requireStorage || hasStorage) && (!requireStaff || hasStaff) && (!requireStocker || hasStocker) &&
-                        (!requireTechnician || hasTechnician) && (!requireTutorial || hasTutorial) && (!requireAutomation || hasAutomation) && (!requireAmbience || hasAmbience));
+                        (!requireTechnician || hasTechnician) && (!requireTutorial || hasTutorial) && (!requireAutomation || hasAutomation) && (!requireAmbience || hasAmbience) && (!requireComfort || hasReducedVisualMotion && hasEffectsDetail));
                     if (!Take(',')) return false;
                 }
                 return false;

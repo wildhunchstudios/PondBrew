@@ -123,6 +123,7 @@ namespace EvolutionShop
         public void AnimatePresentationSample(CharacterSamplePose pose,float time,float angle)
         {
             if(!sampleStage || !sampleStage.gameObject.activeSelf) return;
+            if(fxReducedMotion) time=0;
             sampleFigure.localRotation=Quaternion.Euler(0,angle,0);
             if(sampleView==2) studyFish.Animate(time);
             else if(sampleView==3) studyCustomer.Pose(pose,time);

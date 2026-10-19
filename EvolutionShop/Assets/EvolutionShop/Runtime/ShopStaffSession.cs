@@ -89,7 +89,7 @@ namespace EvolutionShop
         {
             game=game.CaptureSave(),cycle=Cycle.CaptureSave(),trades=(reports??Reports).CaptureSave(),
             reputation=Reputation.CaptureSave(),layout=Layout.CaptureSave(),staff=staff.CaptureSave(),stocker=(stocking??Stocking).CaptureSave(game),technician=(laboratory??Laboratory).CaptureSave(game),tutorial=Tutorial.CaptureSave(),automation=automation.CaptureSave(),
-            sensitivity=Sensitivity,volume=Volume,ambienceVolume=AmbienceVolume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags
+            sensitivity=Sensitivity,volume=Volume,ambienceVolume=AmbienceVolume,slapKey=SlapKey,humorVolume=HumorVolume,reducedGags=ReducedGags,reducedVisualMotion=ReducedVisualMotion,effectsDetail=(int)EffectsDetail
         };
 
         public bool ServeCashier(CustomerVisit expected)
