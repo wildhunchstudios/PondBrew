@@ -2,6 +2,8 @@ using UnityEngine;
 
 namespace EvolutionShop
 {
+    public enum NativeUiObservationKind { None, RepaintPointer, NativeEvent }
+
     public readonly struct NativeUiWindowSnapshot
     {
         public readonly uint ProcessId, Message;
@@ -62,6 +64,8 @@ namespace EvolutionShop
         public readonly long MoneyDelta;
         public readonly float MoneyAge, StateAge, PanelAge, HoverAmount, PressAmount, Realtime;
         public readonly uint MoneySequence, StateSequence, MouseMoveCount, MouseDownCount, MouseUpCount, AcceptedButtonCount, DiagnosticEventCount;
+        public readonly uint PointerObservationCount;
+        public readonly NativeUiObservationKind ObservationKind;
         public readonly int ButtonCount, FrameCount, DiagnosticAppliedFrame, DiagnosticConsumedFrame;
         public readonly bool Reduced, Low;
         public readonly Vector2 PanelScroll, DiagnosticScreenPoint;
@@ -69,7 +73,8 @@ namespace EvolutionShop
         internal NativeUiSnapshot(FxNativeUiCue money, FxNativeUiCue state, long delta, float moneyAge, float stateAge,
             float panelAge, float hover, float press, uint moneySequence, uint stateSequence, uint moves, uint downs,
             uint ups, uint accepts, uint diagnostics, int buttons, bool reduced, bool low, Vector2 scroll,
-            Vector2 point, EventType original, EventType applied, int appliedFrame, int consumedFrame)
+            Vector2 point, EventType original, EventType applied, int appliedFrame, int consumedFrame,
+            uint pointerObservations, NativeUiObservationKind observationKind)
         {
             MoneyKind = money; StateKind = state; MoneyDelta = delta; MoneyAge = moneyAge; StateAge = stateAge;
             PanelAge = panelAge; HoverAmount = hover; PressAmount = press; MoneySequence = moneySequence;
@@ -78,6 +83,7 @@ namespace EvolutionShop
             Reduced = reduced; Low = low; PanelScroll = scroll; DiagnosticScreenPoint = point;
             DiagnosticOriginalType = original; DiagnosticAppliedType = applied; DiagnosticAppliedFrame = appliedFrame;
             DiagnosticConsumedFrame = consumedFrame; FrameCount = Time.frameCount; Realtime = Time.realtimeSinceStartup;
+            PointerObservationCount = pointerObservations; ObservationKind = observationKind;
         }
     }
 
@@ -101,6 +107,8 @@ namespace EvolutionShop
         Vector2 nativeUiPointer;
         uint nativeUiMoneySequence, nativeUiStateSequence, nativeUiMoves, nativeUiDowns, nativeUiUps, nativeUiAccepts;
         uint nativeUiDiagnosticCount;
+        uint nativeUiPointerObservations;
+        NativeUiObservationKind nativeUiObservation;
         EventType nativeUiDiagnosticOriginal, nativeUiDiagnosticApplied;
         int nativeUiDiagnosticFrame = -1, nativeUiConsumedFrame = -1;
         Vector2 nativeUiDiagnosticPoint;
@@ -112,7 +120,8 @@ namespace EvolutionShop
             nativeUiHoverLabel == null ? 0 : FxNativeUiMotion.Hover(nativeUiHoverAge), FxNativeUiMotion.Press(nativeUiPressAge),
             nativeUiMoneySequence, nativeUiStateSequence, nativeUiMoves, nativeUiDowns, nativeUiUps, nativeUiAccepts,
             nativeUiDiagnosticCount, nativeUiButtonCount, NativeUiReduced, NativeUiLow, panelScroll,
-            nativeUiDiagnosticPoint, nativeUiDiagnosticOriginal, nativeUiDiagnosticApplied, nativeUiDiagnosticFrame, nativeUiConsumedFrame);
+            nativeUiDiagnosticPoint, nativeUiDiagnosticOriginal, nativeUiDiagnosticApplied, nativeUiDiagnosticFrame, nativeUiConsumedFrame,
+            nativeUiPointerObservations, nativeUiObservation);
 
         public bool TryGetNativeUiButtonForValidation(string label, out Rect screenRect, out bool enabled)
         {
@@ -138,7 +147,6 @@ namespace EvolutionShop
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             nativeUiQueued = false;
             ReleaseNativeUiPostedPress();
-            nativeUiDiagnosticPointer = false;
 #endif
         }
         void NativeUiPanelChanged(ShopPanel target)
@@ -206,19 +214,13 @@ namespace EvolutionShop
             {
                 nativeUiButtonCount = 0;
                 // Native hover follows the actual repaint pointer even without MouseMove delivery.
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (!nativeUiDiagnosticPointer)
-#endif
-                    nativeUiPointer = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+                nativeUiPointer = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
             }
             if (type == EventType.MouseMove) nativeUiMoves++;
             if (type == EventType.MouseDown) nativeUiDowns++;
             if (type == EventType.MouseUp) nativeUiUps++;
             if (type == EventType.MouseMove || type == EventType.MouseDown || type == EventType.MouseUp || type == EventType.ScrollWheel)
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (!nativeUiDiagnosticPass) nativeUiDiagnosticPointer = false;
-#endif
                 nativeUiPointer = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
             }
         }
@@ -338,7 +340,7 @@ namespace EvolutionShop
             // Ordinary repaints leave these samples intact until the next diagnostic event.
             nativeUiDiagnosticControls[nativeUiDiagnosticControlCount++] = new NativeUiControlSnapshot(label, rect, cached, accepted);
         }
-        bool nativeUiQueued, nativeUiDiagnosticPointer, nativeUiDiagnosticPass, nativeUiPostedLeftDown;
+        bool nativeUiQueued, nativeUiDiagnosticPass, nativeUiPostedLeftDown;
         Vector2 nativeUiQueuedPoint, nativeUiQueuedDelta;
         EventType nativeUiQueuedType;
         int nativeUiQueuedButton, nativeUiPostedFrame;
@@ -371,10 +373,14 @@ namespace EvolutionShop
         {
             if (nativeUiQueued && nativeUiHostEventCount < nativeUiHostEvents.Length)
                 nativeUiHostEvents[nativeUiHostEventCount++] = new NativeUiHostEventSnapshot(null);
-            if (!nativeUiQueued || Time.frameCount < nativeUiPostedFrame || Event.current.button != nativeUiQueuedButton) return;
+            if (!nativeUiQueued || Time.frameCount < nativeUiPostedFrame) return;
             EventType raw = Event.current.rawType;
-            bool requestedMove = nativeUiQueuedType == EventType.MouseMove && (raw == EventType.MouseMove || raw == EventType.MouseDrag);
-            if (raw != nativeUiQueuedType && !requestedMove) return;
+            bool requestedMove = nativeUiQueuedType == EventType.MouseMove;
+            // MonoBehaviour does not necessarily receive MouseMove callbacks. A later repaint
+            // can prove pointer position only; it is never counted as a delivered mouse event.
+            bool repaintPointer = requestedMove && raw == EventType.Repaint && Time.frameCount > nativeUiPostedFrame;
+            bool nativeEvent = raw == nativeUiQueuedType || (requestedMove && raw == EventType.MouseDrag);
+            if ((!repaintPointer && !nativeEvent) || (nativeEvent && Event.current.button != nativeUiQueuedButton)) return;
             Vector2 point = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
             if ((point - nativeUiQueuedPoint).sqrMagnitude > 1) return;
             // Windows messages cannot carry a unique Unity commandName. This is correlation,
@@ -382,10 +388,14 @@ namespace EvolutionShop
             if (raw == EventType.ScrollWheel && (Event.current.delta.y == 0 ||
                 Mathf.Sign(Event.current.delta.y) != Mathf.Sign(nativeUiQueuedDelta.y))) return;
             nativeUiQueued = false; nativeUiDiagnosticPass = true;
-            nativeUiDiagnosticControlCount = 0; nativeUiDiagnosticPointer = true;
+            nativeUiDiagnosticControlCount = 0;
             nativeUiDiagnosticOriginal = Event.current.type; nativeUiDiagnosticApplied = raw;
-            nativeUiDiagnosticPoint = point; NativeUiDiagnosticDeltaForValidation = Event.current.delta;
-            nativeUiDiagnosticFrame = Time.frameCount; nativeUiDiagnosticCount++;
+            nativeUiDiagnosticPoint = point; nativeUiPointer = point;
+            NativeUiDiagnosticDeltaForValidation = Event.current.delta;
+            nativeUiDiagnosticFrame = Time.frameCount;
+            nativeUiObservation = repaintPointer ? NativeUiObservationKind.RepaintPointer : NativeUiObservationKind.NativeEvent;
+            if (requestedMove) nativeUiPointerObservations++;
+            if (nativeEvent) nativeUiDiagnosticCount++;
         }
 
 #if UNITY_STANDALONE_WIN && DEVELOPMENT_BUILD && !UNITY_EDITOR
@@ -442,9 +452,11 @@ namespace EvolutionShop
             if (Screen.width <= 0 || Screen.height <= 0 || !ResolveNativeUiWindow(out var rect))
                 return NativeUiWindowError("No validated current-process UnityWndClass client window.");
             int x = Mathf.RoundToInt(requested.x * rect.Right / Screen.width);
-            int y = Mathf.RoundToInt(requested.y * rect.Bottom / Screen.height);
+            // Pinned Windows player evidence: client row y is reported by IMGUI as row y+1.
+            // Keep that pixel-index conversion explicit and independently checked at each size.
+            int y = Mathf.RoundToInt(requested.y * rect.Bottom / Screen.height - 1);
             if (x < 0 || x >= rect.Right || y < 0 || y >= rect.Bottom) return NativeUiWindowError("Quantized point is outside the client area.");
-            Vector2 represented = new Vector2(x * (float)Screen.width / rect.Right, y * (float)Screen.height / rect.Bottom);
+            Vector2 represented = new Vector2(x * (float)Screen.width / rect.Right, (y + 1) * (float)Screen.height / rect.Bottom);
             uint message = type == EventType.MouseDown ? 0x0201u : type == EventType.MouseUp ? 0x0202u : type == EventType.ScrollWheel ? 0x020Au : 0x0200u;
             bool nextLeft = type == EventType.MouseDown || (type != EventType.MouseUp && nativeUiPostedLeftDown);
             uint keys = nextLeft ? 1u : 0u;
