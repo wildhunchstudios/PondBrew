@@ -100,7 +100,7 @@ namespace EvolutionShop
             nativeUiHoverLabel = nativeUiPressLabel = nativeUiMoneyLabel = null;
             nativeUiButtonCount = 0;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            nativeUiQueued = false;
+            if (nativeUiQueued) nativeUiQueuedCancelled = true;
             nativeUiDiagnosticPointer = false;
 #endif
         }
@@ -162,7 +162,7 @@ namespace EvolutionShop
         void BeginNativeUiGui()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ApplyNativeUiDiagnosticEvent();
+            ObserveNativeUiDispatchedEvent();
 #endif
             var type = Event.current.type;
             if (type == EventType.Repaint)
@@ -180,7 +180,7 @@ namespace EvolutionShop
             if (type == EventType.MouseMove || type == EventType.MouseDown || type == EventType.MouseUp || type == EventType.ScrollWheel)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                if (nativeUiOriginalEvent == null) nativeUiDiagnosticPointer = false;
+                if (!nativeUiDiagnosticPass) nativeUiDiagnosticPointer = false;
 #endif
                 nativeUiPointer = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
             }
@@ -188,10 +188,10 @@ namespace EvolutionShop
         void EndNativeUiGui()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (nativeUiOriginalEvent != null)
+            if (nativeUiDiagnosticPass)
             {
                 if (Event.current.type == EventType.Used) nativeUiConsumedFrame = Time.frameCount;
-                Event.current = nativeUiOriginalEvent; nativeUiOriginalEvent = null;
+                nativeUiDiagnosticPass = false;
             }
 #endif
         }
@@ -280,7 +280,7 @@ namespace EvolutionShop
         }
         void ObserveNativeUiDiagnosticControl(string label, bool accepted)
         {
-            if (nativeUiOriginalEvent == null || nativeUiDiagnosticControlCount >= nativeUiDiagnosticControls.Length) return;
+            if (!nativeUiDiagnosticPass || nativeUiDiagnosticControlCount >= nativeUiDiagnosticControls.Length) return;
             bool cached = Event.current.type == EventType.Used || Event.current.type == EventType.Layout;
             Rect rect = default;
             if (!cached) rect = GUILayoutUtility.GetLastRect();
@@ -292,8 +292,10 @@ namespace EvolutionShop
             nativeUiDiagnosticControls[nativeUiDiagnosticControlCount++] = new NativeUiControlSnapshot(label, rect, cached, accepted);
         }
         readonly Event nativeUiDiagnosticEvent = new Event();
-        Event nativeUiOriginalEvent;
-        bool nativeUiQueued, nativeUiDiagnosticPointer;
+        System.Action<Event> nativeUiEngineQueue;
+        string nativeUiQueuedToken;
+        bool nativeUiQueueResolved, nativeUiQueued, nativeUiQueuedCancelled, nativeUiDiagnosticPointer, nativeUiDiagnosticPass;
+        public string NativeUiDiagnosticErrorForValidation { get; private set; }
         Vector2 nativeUiQueuedPoint, nativeUiQueuedDelta;
         EventType nativeUiQueuedType;
         int nativeUiQueuedButton;
@@ -302,28 +304,68 @@ namespace EvolutionShop
             if (!ValidationMode || Arg("-evolutionFxNativeUiSmoke") == null || nativeUiQueued || !NativeUiVisible ||
                 (type != EventType.MouseMove && type != EventType.MouseDown && type != EventType.MouseUp && type != EventType.ScrollWheel) ||
                 !FiniteNativeUiPoint(screenPoint) || !FiniteNativeUiPoint(delta) || button < 0 || button > 2) return false;
-            nativeUiQueued = true; nativeUiQueuedType = type; nativeUiQueuedPoint = screenPoint;
-            nativeUiQueuedButton = button; nativeUiQueuedDelta = delta; return true;
-        }
-        static bool FiniteNativeUiPoint(Vector2 point) => !float.IsNaN(point.x) && !float.IsInfinity(point.x) && !float.IsNaN(point.y) && !float.IsInfinity(point.y);
-        void ApplyNativeUiDiagnosticEvent()
-        {
-            // Explicit smoke-only synthetic IMGUI input. Native OS input is not claimed.
-            // Substitute a repaint pass after its layout has been built; preserve the host event.
-            if (!nativeUiQueued || Event.current.type != EventType.Repaint) return;
-            nativeUiQueued = false; nativeUiOriginalEvent = Event.current;
-            nativeUiDiagnosticControlCount = 0;
-            nativeUiDiagnosticPointer = true;
-            nativeUiDiagnosticOriginal = nativeUiOriginalEvent.type;
-            nativeUiDiagnosticEvent.type = nativeUiQueuedType;
-            nativeUiDiagnosticEvent.button = nativeUiQueuedButton;
-            nativeUiDiagnosticEvent.delta = nativeUiQueuedDelta;
+            if (!ResolveNativeUiEngineQueue()) return false;
+            nativeUiQueued = true; nativeUiQueuedCancelled = false;
+            nativeUiQueuedType = type; nativeUiQueuedPoint = screenPoint;
+            nativeUiQueuedButton = button; nativeUiQueuedDelta = delta;
+            nativeUiQueuedToken = "EvolutionShop.FX18." + System.Guid.NewGuid().ToString("N");
+            nativeUiDiagnosticEvent.type = type;
+            nativeUiDiagnosticEvent.commandName = nativeUiQueuedToken;
+            nativeUiDiagnosticEvent.mousePosition = screenPoint;
+            nativeUiDiagnosticEvent.button = button;
+            nativeUiDiagnosticEvent.delta = delta;
             nativeUiDiagnosticEvent.clickCount = 1;
             nativeUiDiagnosticEvent.modifiers = EventModifiers.None;
-            Event.current = nativeUiDiagnosticEvent;
-            // Set the pointer on the active native event so nested GUI clips inherit it.
-            Event.current.mousePosition = GUIUtility.ScreenToGUIPoint(nativeUiQueuedPoint);
-            nativeUiDiagnosticApplied = nativeUiQueuedType; nativeUiDiagnosticPoint = nativeUiQueuedPoint;
+            try { nativeUiEngineQueue(nativeUiDiagnosticEvent); return true; }
+            catch (System.Exception error)
+            {
+                nativeUiQueued = false;
+                NativeUiDiagnosticErrorForValidation = "FX18 diagnostic engine queue failed: " + error.Message;
+                Debug.LogError(NativeUiDiagnosticErrorForValidation); return false;
+            }
+        }
+        static bool FiniteNativeUiPoint(Vector2 point) => !float.IsNaN(point.x) && !float.IsInfinity(point.x) && !float.IsNaN(point.y) && !float.IsInfinity(point.y);
+        bool ResolveNativeUiEngineQueue()
+        {
+            if (nativeUiQueueResolved) return nativeUiEngineQueue != null;
+            nativeUiQueueResolved = true;
+            try
+            {
+                // Pinned diagnostic adapter only. Normal gameplay never resolves this internal API.
+                if (!Application.unityVersion.StartsWith("6000.3.", System.StringComparison.Ordinal))
+                    throw new System.NotSupportedException("Requires the pinned Unity 6000.3 runtime.");
+                var method = typeof(Event).GetMethod("QueueEvent", System.Reflection.BindingFlags.Static |
+                    System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(Event) }, null);
+                if (method == null) throw new System.MissingMethodException("UnityEngine.Event.QueueEvent(Event)");
+                nativeUiEngineQueue = (System.Action<Event>)System.Delegate.CreateDelegate(typeof(System.Action<Event>), method);
+                return true;
+            }
+            catch (System.Exception error)
+            {
+                NativeUiDiagnosticErrorForValidation = "FX18 diagnostic engine queue unavailable: " + error.Message;
+                Debug.LogError(NativeUiDiagnosticErrorForValidation); return false;
+            }
+        }
+        void ObserveNativeUiDispatchedEvent()
+        {
+            // Unity dispatch establishes the absolute GUIClip pointer before OnGUI.
+            // Observe only our one pending event; never replace a pass or reset Ignore/ownership.
+            if (!nativeUiQueued || Event.current.commandName != nativeUiQueuedToken ||
+                Event.current.rawType != nativeUiQueuedType || Event.current.button != nativeUiQueuedButton) return;
+            Vector2 point = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+            if ((point - nativeUiQueuedPoint).sqrMagnitude > 1) return;
+            if (nativeUiQueuedType == EventType.ScrollWheel && (Event.current.delta - nativeUiQueuedDelta).sqrMagnitude > .01f) return;
+            nativeUiQueued = false;
+            if (nativeUiQueuedCancelled)
+            {
+                // Drain only the matching canceled diagnostic, never flush unrelated engine input.
+                nativeUiQueuedCancelled = false; Event.current.Use(); return;
+            }
+            nativeUiDiagnosticPass = true;
+            nativeUiDiagnosticControlCount = 0;
+            nativeUiDiagnosticPointer = true;
+            nativeUiDiagnosticOriginal = Event.current.type;
+            nativeUiDiagnosticApplied = Event.current.rawType; nativeUiDiagnosticPoint = point;
             nativeUiDiagnosticFrame = Time.frameCount; nativeUiDiagnosticCount++;
         }
 #endif
