@@ -85,3 +85,6 @@
 
 # Preserve byte-hashed FX19 audio evidence.
 /Docs/Evidence/fx-19/** -text -whitespace
+
+# Preserve byte-hashed FX20 evidence.
+/Docs/Evidence/fx-20/** -text -whitespace
