@@ -22,13 +22,13 @@ namespace EvolutionShop
         }
         [Serializable] sealed class NativeUiAction
         {
-            public string label, type;
-            public Rect bounds;
-            public Vector2 point;
-            public int frame;
+            public string label, type, controlType, controlRawType;
+            public Rect bounds, controlLocalRect;
+            public Vector2 point, controlLocalPoint, controlScreenPoint;
+            public int frame, controlFrame, hotControl;
             public float realtime;
             public uint diagnosticBefore, diagnosticAfter, acceptedBefore, acceptedAfter;
-            public bool enabled;
+            public bool enabled, controlFound, controlEnabled, controlAccepted, controlRectFromRepaint;
         }
         [Serializable] sealed class NativeUiReceipt
         {
@@ -112,29 +112,36 @@ namespace EvolutionShop
                 bool footerLabel=label=="Close  /  ESC"||label=="Help  /  F1"||label=="Continue preparation  /  ESC"||label=="Back to my next goal  /  ESC"||label=="Back to my shop  /  ESC or F1";
                 bool footer=footerLabel&&nativeUiRect.yMin>=top+568*scale&&nativeUiRect.yMax<=top+620*scale;
                 if(footer||(nativeUiRect.yMin>=top+130*scale&&nativeUiRect.yMax<=top+553*scale))yield break;
-                yield return NativeUiEvent(EventType.ScrollWheel,new Vector2(Screen.width*.5f,Screen.height*.5f),new Vector2(0,nativeUiRect.yMin<top+130*scale?-4:4));
+                yield return NativeUiEvent(EventType.ScrollWheel,new Vector2(Screen.width*.5f,Screen.height*.5f),new Vector2(0,nativeUiRect.yMin<top+130*scale?-4:4),label);
                 yield return null;
                 Check(shop.TryGetNativeUiButtonForValidation(label,out nativeUiRect,out nativeUiEnabled),"Control retained after actual scroll / "+label);
             }
             throw new InvalidOperationException("Native button could not be brought into visible content / "+label);
         }
-        IEnumerator NativeUiEvent(EventType type,Vector2 point,Vector2 delta=default)
+        IEnumerator NativeUiEvent(EventType type,Vector2 point,Vector2 delta=default,string target=null)
         {
             var before=shop.NativeUiFxSnapshot;
             Check(shop.QueueNativeUiEventForValidation(type,point,0,delta),"Single diagnostic IMGUI event admitted / "+type);
             yield return WaitFor(()=>shop.NativeUiFxSnapshot.DiagnosticEventCount>before.DiagnosticEventCount,2,"Actual OnGUI event applied / "+type);
             var after=shop.NativeUiFxSnapshot;
             Check(after.DiagnosticEventCount==before.DiagnosticEventCount+1 && after.DiagnosticAppliedType==type && Vector2.Distance(after.DiagnosticScreenPoint,point)<.1f,"Exact one injected GUI event and screen coordinate / "+type);
-            nativeUiActions.Add(new NativeUiAction{label="event",type=type.ToString(),point=point,frame=Time.frameCount,realtime=Time.realtimeSinceStartup,diagnosticBefore=before.DiagnosticEventCount,diagnosticAfter=after.DiagnosticEventCount,acceptedBefore=before.AcceptedButtonCount,acceptedAfter=after.AcceptedButtonCount});
+            var row=new NativeUiAction{label=target??"event without target",type=type.ToString(),point=point,frame=Time.frameCount,realtime=Time.realtimeSinceStartup,diagnosticBefore=before.DiagnosticEventCount,diagnosticAfter=after.DiagnosticEventCount,acceptedBefore=before.AcceptedButtonCount,acceptedAfter=after.AcceptedButtonCount};
+            if(target!=null&&shop.TryGetNativeUiControlForValidation(target,out var control))
+            {
+                row.controlFound=true;row.controlLocalRect=control.LocalRect;row.controlLocalPoint=control.LocalPoint;row.controlScreenPoint=control.ScreenPoint;
+                row.controlType=control.Type.ToString();row.controlRawType=control.RawType.ToString();row.hotControl=control.HotControl;row.controlEnabled=control.Enabled;
+                row.controlAccepted=control.Accepted;row.controlFrame=control.FrameCount;row.controlRectFromRepaint=control.RectFromRepaint;
+            }
+            nativeUiActions.Add(row);
             NativeUiFlush(); yield return null;
         }
         IEnumerator NativeUiClick(string label)
         {
             yield return NativeUiFind(label);Rect rect=nativeUiRect;bool enabled=nativeUiEnabled;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount;
             Check(enabled,"Enabled native action / "+label);
-            yield return NativeUiEvent(EventType.MouseMove,rect.center);
-            yield return NativeUiEvent(EventType.MouseDown,rect.center);
-            yield return NativeUiEvent(EventType.MouseUp,rect.center);
+            yield return NativeUiEvent(EventType.MouseMove,rect.center,target:label);
+            yield return NativeUiEvent(EventType.MouseDown,rect.center,target:label);
+            yield return NativeUiEvent(EventType.MouseUp,rect.center,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted+1,"Exactly one GUILayout button accepted / "+label);
             nativeUiActions.Add(new NativeUiAction{label=label,type="completed native GUILayout click",bounds=rect,enabled=enabled,frame=Time.frameCount,realtime=Time.realtimeSinceStartup,acceptedBefore=accepted,acceptedAfter=shop.NativeUiFxSnapshot.AcceptedButtonCount});
         }
@@ -182,15 +189,15 @@ namespace EvolutionShop
         IEnumerator NativeUiBoundsAndCancel(string label)
         {
             yield return NativeUiFind(label);Rect original=nativeUiRect;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount;
-            yield return NativeUiEvent(EventType.MouseMove,original.center);yield return new WaitForSeconds(.15f);
+            yield return NativeUiEvent(EventType.MouseMove,original.center,target:label);yield return new WaitForSeconds(.15f);
             Check(shop.NativeUiFxSnapshot.HoverAmount>0,"Actual IMGUI hover accent observed");
             yield return NativeUiFind(label);Check(nativeUiRect==original,"Hover does not move native hit bounds");
-            yield return NativeUiEvent(EventType.MouseDown,original.center);yield return new WaitForSeconds(.12f);
+            yield return NativeUiEvent(EventType.MouseDown,original.center,target:label);yield return new WaitForSeconds(.12f);
             yield return NativeUiFind(label);Check(nativeUiRect==original,"Held press does not move native hit bounds");
             var outside=new Vector2(10,Screen.height-10);
-            yield return NativeUiEvent(EventType.MouseMove,outside);yield return NativeUiEvent(EventType.MouseUp,outside);
+            yield return NativeUiEvent(EventType.MouseMove,outside,target:label);yield return NativeUiEvent(EventType.MouseUp,outside,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted,"Drag-out release cancels native action");
-            yield return NativeUiEvent(EventType.MouseDown,outside);yield return NativeUiEvent(EventType.MouseUp,original.center);
+            yield return NativeUiEvent(EventType.MouseDown,outside,target:label);yield return NativeUiEvent(EventType.MouseUp,original.center,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted,"Outside-down inside-up cannot activate native button");
         }
         IEnumerator NativeUiStagedPurchase()
@@ -242,8 +249,8 @@ namespace EvolutionShop
                 yield return NativeUiClip("ui-money-"+mode,1.4f,NativeUiClick("Schedule Pip / pay "+ShopStaff.CashierWage+" credits"));
                 Check(shop.Model.Currency==100-ShopStaff.CashierWage,"Comfort policy preserves exact committed price / "+mode);
             }
-            shop.World.SetFxPreviewModes(false,false);shop.SetPanel(ShopPanel.Pause);yield return NativeUiFind("Save and resume");yield return NativeUiEvent(EventType.MouseDown,nativeUiRect.center);shop.SetPanel(ShopPanel.Journal);yield return NativeUiClip("ui-panel-interruption",.8f);
-            uint before=shop.NativeUiFxSnapshot.AcceptedButtonCount;yield return NativeUiEvent(EventType.MouseUp,new Vector2(10,10));Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==before,"Panel interruption cannot replay held old button");
+            shop.World.SetFxPreviewModes(false,false);shop.SetPanel(ShopPanel.Pause);yield return NativeUiFind("Save and resume");yield return NativeUiEvent(EventType.MouseDown,nativeUiRect.center,target:"Save and resume");shop.SetPanel(ShopPanel.Journal);yield return NativeUiClip("ui-panel-interruption",.8f);
+            uint before=shop.NativeUiFxSnapshot.AcceptedButtonCount;yield return NativeUiEvent(EventType.MouseUp,new Vector2(10,10),target:"Save and resume");Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==before,"Panel interruption cannot replay held old button");
             shop.SetFxFocusForValidation(false);yield return null;shop.SetFxFocusForValidation(true);shop.enabled=false;yield return null;shop.enabled=true;yield return null;
             Check(shop.SaveNow()&&shop.ReloadSaved(),"UI focus/disable/reload lifecycle saves normally");yield return NativeUiClip("ui-lifecycle-rest",.8f);Check(shop.NativeUiFxSnapshot.MoneyKind==FxNativeUiCue.None&&shop.NativeUiFxSnapshot.StateKind==FxNativeUiCue.None,"Lifecycle cannot replay monetary/state success");
         }
@@ -257,13 +264,13 @@ namespace EvolutionShop
             int price=shop.Model.GetPrice("pondlet").Value.Standard;string label="Use standard price  /  "+price+" credits";
             yield return NativeUiFind(label);Check(!nativeUiEnabled,"Actual standard-price native button is disabled");
             Rect rect=nativeUiRect;uint accepted=shop.NativeUiFxSnapshot.AcceptedButtonCount,sequence=shop.NativeUiFxSnapshot.MoneySequence;
-            yield return NativeUiEvent(EventType.MouseDown,rect.center);yield return NativeUiEvent(EventType.MouseUp,rect.center);
+            yield return NativeUiEvent(EventType.MouseDown,rect.center,target:label);yield return NativeUiEvent(EventType.MouseUp,rect.center,target:label);
             Check(shop.NativeUiFxSnapshot.AcceptedButtonCount==accepted&&shop.NativeUiFxSnapshot.MoneySequence==sequence&&shop.Model.GetPrice("pondlet").Value.Price==price,"Disabled actual native control cannot accept or mutate price/money");
         }
         IEnumerator NativeUiScrollFooter()
         {
             yield return NativeUiFind("Close  /  ESC");Rect footer=nativeUiRect;Vector2 before=shop.NativeUiFxSnapshot.PanelScroll;
-            for(int i=0;i<4;i++)yield return NativeUiEvent(EventType.ScrollWheel,new Vector2(Screen.width*.5f,Screen.height*.5f),new Vector2(0,8));
+            for(int i=0;i<4;i++)yield return NativeUiEvent(EventType.ScrollWheel,new Vector2(Screen.width*.5f,Screen.height*.5f),new Vector2(0,8),"Close  /  ESC");
             yield return NativeUiFind("Close  /  ESC");Check(nativeUiRect==footer&&shop.NativeUiFxSnapshot.PanelScroll.y>before.y,"Native wheel scrolls content while fixed footer hit bounds stay fixed");
             yield return NativeUiClick("Help  /  F1");Check(shop.Panel==ShopPanel.TutorialHelp,"Direct GUILayout footer Help responds through actual GUI");
             yield return NativeUiClick("Back to my shop  /  ESC or F1");

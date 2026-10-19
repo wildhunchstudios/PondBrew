@@ -2,6 +2,24 @@ using UnityEngine;
 
 namespace EvolutionShop
 {
+    public readonly struct NativeUiControlSnapshot
+    {
+        public readonly string Label;
+        public readonly Rect LocalRect;
+        public readonly Vector2 LocalPoint, ScreenPoint;
+        public readonly EventType Type, RawType;
+        public readonly int HotControl, FrameCount;
+        public readonly bool Enabled, Accepted, RectFromRepaint;
+        internal NativeUiControlSnapshot(string label, Rect rect, bool cached, bool accepted)
+        {
+            Label = label; LocalRect = rect; LocalPoint = Event.current.mousePosition;
+            ScreenPoint = GUIUtility.GUIToScreenPoint(LocalPoint);
+            Type = Event.current.type; RawType = Event.current.rawType;
+            HotControl = GUIUtility.hotControl; FrameCount = Time.frameCount;
+            Enabled = GUI.enabled; Accepted = accepted; RectFromRepaint = cached;
+        }
+    }
+
     public readonly struct NativeUiSnapshot
     {
         public readonly FxNativeUiCue MoneyKind, StateKind;
@@ -33,6 +51,7 @@ namespace EvolutionShop
         {
             public string Label;
             public Rect ScreenRect;
+            public Rect LocalRect;
             public bool Enabled;
         }
         readonly NativeUiButton[] nativeUiButtons = new NativeUiButton[64];
@@ -178,6 +197,9 @@ namespace EvolutionShop
         }
         void ObserveNativeUiButton(string label, bool accepted)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ObserveNativeUiDiagnosticControl(label, accepted);
+#endif
             if (accepted)
             {
                 nativeUiAccepts++; nativeUiPressLabel = label; nativeUiPressAge = 0;
@@ -187,7 +209,7 @@ namespace EvolutionShop
             Vector2 first = GUIUtility.GUIToScreenPoint(local.min), last = GUIUtility.GUIToScreenPoint(local.max);
             Rect screen = Rect.MinMaxRect(first.x, first.y, last.x, last.y);
             if (nativeUiButtonCount < nativeUiButtons.Length)
-                nativeUiButtons[nativeUiButtonCount++] = new NativeUiButton { Label = label, ScreenRect = screen, Enabled = GUI.enabled };
+                nativeUiButtons[nativeUiButtonCount++] = new NativeUiButton { Label = label, ScreenRect = screen, LocalRect = local, Enabled = GUI.enabled };
             if (!NativeUiVisible || !GUI.enabled) return;
             bool hover = screen.Contains(nativeUiPointer);
             if (hover && nativeUiHoverLabel != label) { nativeUiHoverLabel = label; nativeUiHoverAge = 0; }
@@ -247,6 +269,28 @@ namespace EvolutionShop
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        readonly NativeUiControlSnapshot[] nativeUiDiagnosticControls = new NativeUiControlSnapshot[64];
+        int nativeUiDiagnosticControlCount;
+        public bool TryGetNativeUiControlForValidation(string label, out NativeUiControlSnapshot snapshot)
+        {
+            for (int i = 0; i < nativeUiDiagnosticControlCount; i++)
+                if (nativeUiDiagnosticControls[i].Label == label)
+                { snapshot = nativeUiDiagnosticControls[i]; return true; }
+            snapshot = default; return false;
+        }
+        void ObserveNativeUiDiagnosticControl(string label, bool accepted)
+        {
+            if (nativeUiOriginalEvent == null || nativeUiDiagnosticControlCount >= nativeUiDiagnosticControls.Length) return;
+            bool cached = Event.current.type == EventType.Used || Event.current.type == EventType.Layout;
+            Rect rect = default;
+            if (!cached) rect = GUILayoutUtility.GetLastRect();
+            else
+                for (int i = 0; i < nativeUiButtonCount; i++)
+                    if (nativeUiButtons[i].Label == label) { rect = nativeUiButtons[i].LocalRect; break; }
+            // Read-only evidence: never allocate a control ID or change native mouse ownership.
+            // Ordinary repaints leave these samples intact until the next diagnostic event.
+            nativeUiDiagnosticControls[nativeUiDiagnosticControlCount++] = new NativeUiControlSnapshot(label, rect, cached, accepted);
+        }
         readonly Event nativeUiDiagnosticEvent = new Event();
         Event nativeUiOriginalEvent;
         bool nativeUiQueued, nativeUiDiagnosticPointer;
@@ -268,6 +312,7 @@ namespace EvolutionShop
             // Substitute a repaint pass after its layout has been built; preserve the host event.
             if (!nativeUiQueued || Event.current.type != EventType.Repaint) return;
             nativeUiQueued = false; nativeUiOriginalEvent = Event.current;
+            nativeUiDiagnosticControlCount = 0;
             nativeUiDiagnosticPointer = true;
             nativeUiDiagnosticOriginal = nativeUiOriginalEvent.type;
             nativeUiDiagnosticEvent.type = nativeUiQueuedType;
