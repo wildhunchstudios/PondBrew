@@ -105,6 +105,8 @@ namespace EvolutionShop
         float nativeUiHoverAge, nativeUiPressAge = 10;
         string nativeUiHoverLabel, nativeUiPressLabel, nativeUiMoneyLabel;
         Vector2 nativeUiPointer;
+        int nativeUiOwnedButtonCapture;
+        bool nativeUiCancelButtonCapture;
         uint nativeUiMoneySequence, nativeUiStateSequence, nativeUiMoves, nativeUiDowns, nativeUiUps, nativeUiAccepts;
         uint nativeUiDiagnosticCount;
         uint nativeUiPointerObservations;
@@ -139,6 +141,7 @@ namespace EvolutionShop
         }
         void CancelNativeUiFeedback()
         {
+            nativeUiCancelButtonCapture = true;
             nativeUiMoney = nativeUiState = FxNativeUiCue.None;
             nativeUiMoneyAge = nativeUiStateAge = nativeUiPanelAge = nativeUiPressAge = 10;
             nativeUiDelta = 0; nativeUiHoverAge = 0;
@@ -151,6 +154,7 @@ namespace EvolutionShop
         }
         void NativeUiPanelChanged(ShopPanel target)
         {
+            nativeUiCancelButtonCapture = true;
             // Pause cancels action cues, while its own controls and border can still settle.
             if (target == ShopPanel.Pause || target == ShopPanel.Reset || target == ShopPanel.Welcome ||
                 target == ShopPanel.TutorialHelp || target == ShopPanel.Presentation || target == ShopPanel.Arrange)
@@ -206,6 +210,14 @@ namespace EvolutionShop
 
         void BeginNativeUiGui()
         {
+            // Lifecycle callbacks can run outside OnGUI. Release only our recorded capture here.
+            if (nativeUiCancelButtonCapture)
+            {
+                ReleaseNativeUiButtonCapture();
+                nativeUiCancelButtonCapture = false;
+            }
+            if (nativeUiOwnedButtonCapture != 0 && GUIUtility.hotControl != nativeUiOwnedButtonCapture)
+                nativeUiOwnedButtonCapture = 0;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ObserveNativeUiDispatchedEvent();
 #endif
@@ -226,6 +238,10 @@ namespace EvolutionShop
         }
         void EndNativeUiGui()
         {
+            // A scroll/area clip can turn MouseUp into Ignore before GUI.Button sees it.
+            // Native controls get first refusal; release only a still-owned left-button capture.
+            if (Event.current.rawType == EventType.MouseUp && Event.current.button == 0)
+                ReleaseNativeUiButtonCapture();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (nativeUiDiagnosticPass)
             {
@@ -234,8 +250,21 @@ namespace EvolutionShop
             }
 #endif
         }
-        void ObserveNativeUiButton(string label, bool accepted)
+        int NativeUiButtonCaptureBefore()
         {
+            return GUI.enabled && Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
+                GUIUtility.hotControl == 0 ? 0 : -1;
+        }
+        void ReleaseNativeUiButtonCapture()
+        {
+            if (nativeUiOwnedButtonCapture != 0 && GUIUtility.hotControl == nativeUiOwnedButtonCapture)
+                GUIUtility.hotControl = 0;
+            nativeUiOwnedButtonCapture = 0;
+        }
+        void ObserveNativeUiButton(string label, bool accepted, int captureBefore)
+        {
+            if (captureBefore == 0 && Event.current.type == EventType.Used && GUIUtility.hotControl != 0)
+                nativeUiOwnedButtonCapture = GUIUtility.hotControl;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ObserveNativeUiDiagnosticControl(label, accepted);
 #endif

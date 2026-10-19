@@ -402,11 +402,13 @@ namespace EvolutionShop
                 {
                     GUILayout.BeginHorizontal();
                     string backLabel = dayReportPanel ? "Continue preparation  /  ESC" : TutorialJournalReturnsToHelp ? "Back to my next goal  /  ESC" : "Close  /  ESC";
+                    int backCaptureBefore = NativeUiButtonCaptureBefore();
                     bool backPressed = GUILayout.Button(backLabel, dayReportPanel ? hudTheme.PrimaryButton : buttonStyle, GUILayout.Width(358), GUILayout.MinHeight(38));
-                    ObserveNativeUiButton(backLabel, backPressed);
+                    ObserveNativeUiButton(backLabel, backPressed, backCaptureBefore);
                     if (backPressed) BackFromPanel();
+                    int helpCaptureBefore = NativeUiButtonCaptureBefore();
                     bool helpPressed = GUILayout.Button("Help  /  F1", buttonStyle, GUILayout.MinHeight(38));
-                    ObserveNativeUiButton("Help  /  F1", helpPressed);
+                    ObserveNativeUiButton("Help  /  F1", helpPressed, helpCaptureBefore);
                     if (helpPressed) OpenTutorialHelp();
                     GUILayout.EndHorizontal();
                 }
@@ -787,8 +789,9 @@ namespace EvolutionShop
                 text.StartsWith("Save and resume") || text.StartsWith("Start conditioning") || text.StartsWith("Research ");
             bool caution = text.StartsWith("Confirm new game") || text.StartsWith("Close today's shop") || text.StartsWith("Save and quit");
             var style = caution ? hudTheme.DangerButton : primary ? hudTheme.PrimaryButton : buttonStyle;
+            int captureBefore = NativeUiButtonCaptureBefore();
             bool pressed = GUILayout.Button(text, style, GUILayout.MinHeight(38));
-            ObserveNativeUiButton(text, pressed);
+            ObserveNativeUiButton(text, pressed, captureBefore);
             if (pressed) action();
         }
     }
