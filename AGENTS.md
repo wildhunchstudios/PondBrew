@@ -1,4 +1,4 @@
-**FX-18 active — 2026-10-19; provisional continuation authorized.** Add responsive native UI feedback for existing controls, panel entry, progress/readiness/discovery and committed purchase/sale changes. Keep actual values immediate, hit rectangles and focus stable, and normal keyboard/back/Escape/scroll behavior. Preserve approved art, world effects, stock/save ownership and IMGUI. Human controls/listening/creative/GPU gates remain open. Sol support, Astra implementation/review, root integration. FX-19 is outside this assignment.
+**FX-18 technically complete — 2026-10-19; hands-on review deferred.** Existing buttons now highlight and settle after a click; panels receive a brief entry accent, incubation shows real progress, and saved purchases and sales show a brief coin accent with the exact credit change. Source **d034691**, revision `fx18-ui-10`. Actual **2259 passed EditMode tests**, **1394 final Windows checks**; build 0 errors / 0 warnings. 38 silent videos / 2200 decoded frames. Windows messages were posted only to the game window and observed by native controls; physical-human input was not verified. Human/listening/creative/GPU gates remain open. FX-19 is next only on continuation; not started here.
 
 **FX-17 technically complete — 2026-10-19; hands-on review deferred.** The existing automatic shop/lab door now accelerates and eases to rest safely, and the existing room lights blend between day, closing and night. A restrained crown-vent vapor accent runs only during real incubation. Source **31f433a**, playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx17-rooms-4\EvolutionShop.exe`. Actual **2253 passed EditMode tests**, **1566 final Windows checks**; build 0 errors / 0 warnings. 40 silent videos / 3884 decoded frames. Human/native controls, actual listening, creative approval and causal GPU/minimum-spec acceptance remain deferred/open. FX-18 is next only on continuation; not started here.
 
@@ -544,11 +544,11 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
-### Current handoff — FX-17 technically complete; hands-on review deferred
+### Current handoff — FX-18 technically complete; hands-on review deferred
 
-FX-00–05, FX-A and FX-07 through FX-17 are technically complete within their bounded assignments. FX-C technical container coverage is recorded by the FX13 checkpoint; this does not close deferred human review or FX-B. The frozen cue/asset contract remains Docs/Design/FX01_CUE_ASSET_CONTRACT.md; latest executed evidence is Docs/Evidence/fx-17-VALIDATION.md. All earlier presentation baselines remain preserved.
+FX-00–05, FX-A and FX-07 through FX-18 are technically complete within their bounded assignments. FX-C technical container coverage is recorded by the FX13 checkpoint; this does not close deferred human review or FX-B. The frozen cue/asset contract remains Docs/Design/FX01_CUE_ASSET_CONTRACT.md; latest executed evidence is Docs/Evidence/fx-18-VALIDATION.md. All earlier presentation baselines remain preserved.
 
-The user explicitly authorized provisional continuation while deferring hands-on feedback. FX-17 is technically delivered with current evidence below. Next implementation is FX-18 only when continued; no later assignment started here. Keep FX-06R-08 native/listening/creative/GPU decisions and all prior tutorial/campaign human gates open.
+The user explicitly authorized provisional continuation while deferring hands-on feedback. FX-18 is technically delivered with current evidence below. Next implementation is FX-19 only when continued; no later assignment started here. Keep FX-06R-08 native/listening/creative/GPU decisions and all prior tutorial/campaign human gates open.
 
 FX-02 executable subtasks (complete; final evidence under fx-02/):
 
@@ -2411,7 +2411,7 @@ The next bounded assignment is R08.5 consecutive shifts and mixed manual/automat
 
 ## FX — Living Shop effects and animation specification
 
-Planning checkpoint: **2026-10-11**. Owner: root. **Current status: FX-PLAN, FX-00–05, FX-06R-00–07, FX-07, FX-08, FX-09, FX-10, FX-11, FX-12, FX-13, FX-14, FX-15, FX-16 and FX-17 are technically delivered. FX-06R-08 and human review gates FX-06/24 remain open; the user explicitly authorized provisional continuation. FX-18–24 remain planned.** This specification follows the user's answers and takes priority for the next requested presentation assignment. It preserves the R08.4 game; R08.5, R09 and the deferred tutorial remainder are not completed by this plan.
+Planning checkpoint: **2026-10-11**. Owner: root. **Current status: FX-PLAN, FX-00–05, FX-06R-00–07, FX-07, FX-08, FX-09, FX-10, FX-11, FX-12, FX-13, FX-14, FX-15, FX-16, FX-17 and FX-18 are technically delivered. FX-06R-08 and human review gates FX-06/24 remain open; the user explicitly authorized provisional continuation. FX-19–24 remain planned.** This specification follows the user's answers and takes priority for the next requested presentation assignment. It preserves the R08.4 game; R08.5, R09 and the deferred tutorial remainder are not completed by this plan.
 
 ### FX.1 — Approved direction, purpose and bounded scope
 
@@ -2525,7 +2525,7 @@ Completed rows cite executed evidence; the remaining tasks below are **planned**
 | [x] **FX-15 Pip, Nori and Moss work** |Animator + runtime + QA|FX-10,13,14|Subassignments15a cashier: checkout/confirm/refusal;15b stocker: stable container grip, pickup/carry/place;15c technician: measure/dose/start/check/rack. Preserve prior completion gags and job priority. Verify temporary disable, blocked route, dismissal, active reservation, failed save and reload; carry proxies never own goods or release a second item. Apply FX.10: visible committed pickup/place/dose/checkout effects at real owners; module/worker actions never create fake player hands or stock.|
 | [x] **FX-16 Comedy impact and reaction pass** |Animator + VFX + audio|FX-11,14,15|Polish the existing six incidents and slap contact/whiff/recovery, face/body timing and bounded stars/puffs. Respect remapping, cooldowns, skip, reduced gags, captioning and service priority. Repeated gags cannot drown routine feedback, alter an established transaction outcome or accumulate stale particles. Apply FX.10: punchier contact puffs/stars and occasional harmless lab fizz/puff variants of existing incidents, with existing cooldown/service priority.|
 | [x] **FX-17 Room and door atmosphere** |3D + VFX + audio|FX-07,13,06|Refine existing sensor/door mechanism easing, subtle shop/lab ambient movement and day/night light transitions across both expansion tiers. Validate opaque closed separation, collider/root clearance, reversal and pause; no decorative world part enters aisles or pockets. Prevent lab loops overwhelming the cozy shop. Apply FX.10: living room/machine/tube atmosphere, restrained steam/glow and water motion; warm shop and lively lab retain full separation.|
-| [~] **FX-18 Native UI feedback** |UI + runtime + designer|FX-02,06|Add restrained hover/press, panel settle, progress/readiness/discovery and purchase/sale delta accents in existing IMGUI. Keep hit rectangles/focus stable, actual values immediate, keyboard/back/Escape and scroll footers usable. Check long values, failures, paused modals and overlay combinations at both sizes. No UI-framework migration. Apply FX.10: clearly visible local button/progress/discovery/purchase/sale accents, including readable till/coin bursts; no obstructing prices or controls.|
+| [x] **FX-18 Native UI feedback** |UI + runtime + designer|FX-02,06|Add restrained hover/press, panel settle, progress/readiness/discovery and purchase/sale delta accents in existing IMGUI. Keep hit rectangles/focus stable, actual values immediate, keyboard/back/Escape and scroll footers usable. Check long values, failures, paused modals and overlay combinations at both sizes. No UI-framework migration. Apply FX.10: clearly visible local button/progress/discovery/purchase/sale accents, including readable till/coin bursts; no obstructing prices or controls.|
 | [ ] **FX-19 Complete audio and mix** |Audio + integration|FX-07–18|Audit the earlier per-slice sounds, author any remaining original cues, finalize bounded machine/room loops and service priority/ducking. Measure PCM/loop seams and listen at default/full/muted settings from both rooms, rapid actions and concurrent worker/machine activity. Document source/import and volume behavior; distinguish exported waveform evidence from listening. Match the stronger FX.10 action timing with layered but bounded original local sounds; prove repeated-batch and simultaneous-work listening comfort.|
 | [ ] **FX-20 Comfort settings and effect limits** |VFX + UI + save integration|FX-07–19|Implement Reduced visual motion and Low/Standard effect detail, retaining reduced-gag/master/humor behavior; add machine/ambience volume only with sustained loops. Validate legacy defaults, malformed values, save/reset/reload and cues still readable in low/reduced mode. Tune measured emitter/voice/pool/material bounds and inspect maximum supported occupied layout. Include FX.10 Low/reduced-density, quieter motion and preserved essential feedback with safe legacy defaults.|
 | [ ] **FX-21 Integrated interruption/ownership QA** |QA + runtime integration|FX-07–20|Reuse existing suitable smoke/tests and add targeted checks for new failure modes: repeated cues, late callbacks, pause/close/focus/arrange, failed saves, active hatch/transfer, deleted/moved station, worker interruption and reload/reset. Compare exact culture/specimen/cash/job identity. Verify no stale hands, ghost creatures, uncancelled sound/effects or unbounded owned objects. Do not write tests merely mirroring cosmetic constants. Update the inherited default smoke reset fixture to leave tutorial Welcome explicitly; FX-00 reproduced its108-check failure in both preserved R08.4 and diagnostic players. Include every FX.10 stronger action and state/cancellation path; retain explicit proof of no false success or duplicate ownership.|
@@ -2559,7 +2559,7 @@ FX is complete only when all planned tasks/required supported states have execut
 
 ### FX.10 — Stronger effects revision: confirmed feedback and complete work plan (2026-10-12)
 
-**Status:** FX-06R-00–07, FX-07, FX-08, FX-09, FX-10, FX-11, FX-12, FX-13, FX-14, FX-15, FX-16 and FX-17 are technically delivered; FX-06R-08 human review and GPU decision remain open. The user explicitly deferred hands-on feedback and authorized provisional continuation. FX-18 is next only on continuation; not started here. Sol supports bounded work; Astra owns advanced implementation/review. No human acceptance or GPU pass is inferred.
+**Status:** FX-06R-00–07, FX-07, FX-08, FX-09, FX-10, FX-11, FX-12, FX-13, FX-14, FX-15, FX-16, FX-17 and FX-18 are technically delivered; FX-06R-08 human review and GPU decision remain open. The user explicitly deferred hands-on feedback and authorized provisional continuation. FX-19 is next only on continuation; not started here. Sol supports bounded work; Astra owns advanced implementation/review. No human acceptance or GPU pass is inferred.
 
 **Confirmed user requirements:** all action families need clearly visible, stronger effects. Event priority is **1. hatching; 2. dosing the incubator; 3. creatures growing**. Combine colorful liquid streams/droplets/bubbles, magical science glow/trails/sparks/rings, and messy cartoon puffs/steam/fizz/small bursts. Everyday actions should read clearly, with larger hatch/discovery celebrations. Include all requested living detail: moving liquid in tubes, bubbling cultures, incubator steam/glow, subtle fish bubble trails, moving water/plants and occasional harmless science mishaps. The two named hero moments are a swirling intake into the siphon and an incubator release/pop in a colorful bubble cloud. No external reference was supplied. Existing cartoon hands, original matching sounds, cozy aquatic shop and quirky lab remain the direction.
 
@@ -3292,13 +3292,41 @@ FX-17 delivery: [validation](Docs/Evidence/fx-17-VALIDATION.md), [controls and r
 
 Player: make commands and committed outcomes easy to read without delaying their result. Layout: keep creatures, prices, prompts, panel controls and fixed hit rectangles clear. Specification: hover/press, restrained panel settle and real progress/readiness/discovery/purchase/sale feedback; no false success on failure/reload. Engineering: extend existing IMGUI and feedback owners, never duplicate economic authority or migrate frameworks. Validation: actual runtime controls and 720p/1080p rendered states, long values, failure, pause/modal/scroll/re-entry, ownership and exact-source Windows player. Scope: FX-18 only; no FX-19 audio completion or FX-20 settings.
 
-- [~] FX18-A1 / gpt-6.1-sol: Read-only UI inventory and bounded scratch media/evidence support.
-- [~] FX18-A2 / gpt-6-astra: Existing IMGUI feedback implementation.
-- [~] FX18-A3 / gpt-6-astra: Scoped tests, runtime fixture and independent source/pixel review.
-- [~] FX18-A4 / unchanged lead: Identity, integration, serial Unity execution, canonical handoff and checkpoints.
-- [ ] FX18a: Verify pinned Unity identity and preserve baseline.
-- [ ] FX18b: Implement fixed-hitbox hover/press and bounded panel settle.
-- [ ] FX18c: Integrate truthful progress/readiness/discovery and committed transaction accents.
-- [ ] FX18d: Validate failures, immediate values, focus/back/Escape/scroll, pause and cleanup.
-- [ ] FX18e: Run meaningful tests, exact Windows routes and actual 720p/1080p visual review.
-- [ ] FX18f: Deliver playable, controls, evidence, canonical handoff and local checkpoints.
+- [x] FX18-A1 / gpt-6.1-sol: Read-only UI inventory and bounded scratch media/evidence support.
+- [x] FX18-A2 / gpt-6-astra: Existing IMGUI feedback implementation.
+- [x] FX18-A3 / gpt-6-astra: Scoped tests, runtime fixture and independent source/pixel review.
+- [x] FX18-A4 / unchanged lead: Identity, integration, serial Unity execution, canonical handoff and checkpoints.
+- [x] FX18a: Verify pinned Unity identity and preserve baseline.
+- [x] FX18b: Implement fixed-hitbox hover/press and bounded panel settle.
+- [x] FX18c: Integrate truthful progress/readiness/discovery and committed transaction accents.
+- [x] FX18d: Validate failures, immediate values, focus/back/Escape/scroll, pause and cleanup.
+- [x] FX18e: Run meaningful tests, exact Windows routes and actual 720p/1080p visual review.
+- [x] FX18f: Deliver playable, controls, evidence, canonical handoff and local checkpoints.
+
+
+### FX-18 completion receipt — 2026-10-19
+
+**FX-18 technically complete — 2026-10-19; hands-on review deferred.** Existing buttons now highlight and settle after a click; panels receive a brief entry accent, incubation shows real progress, and saved purchases and sales show a brief coin accent with the exact credit change. Source **d034691**, playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx18-ui-10\EvolutionShop.exe`. Actual **2259 passed EditMode tests**, **1394 final Windows checks**; build 0 errors / 0 warnings. 38 silent videos / 2200 decoded frames. Human/native controls, actual listening, creative approval and causal GPU/minimum-spec acceptance remain deferred/open. FX-19 is next only on continuation; not started here.
+
+Executed behavior:
+
+- Existing buttons now highlight and settle after a click; panels receive a brief entry accent, incubation shows real progress, and saved purchases and sales show a brief coin accent with the exact credit change.
+- Native hit rectangles and immediate authoritative values are preserved. A reproduced clipped-release issue was fixed by releasing only capture acquired by the game's own native button after release or interruption.
+- Saved transactions publish success once. Staged purchase failure preserves live and durable cash; failed live-sale persistence suppresses success and does not replay it on a later save. Reloads remain quiet.
+- Standard coin accents use separate staggered positions; Low uses one coin and Reduced keeps the static icon. Existing art, rooms, world effects, save format, Core assembly and prior builds remain preserved.
+- Actual Windows checks cover native button acceptance, canceled/disabled/interrupted presses, exact doses, incubation readiness/discovery, purchases/sales/failures/overflow, maximum cash, native scrollbar/fixed footers, synthetic Escape, and lifecycle cleanup at 720p and 1080p.
+
+Known limits:
+
+- Hands-on keyboard/mouse controls, listening, visual/motion approval and the earlier causal GPU/minimum-spec decision remain open under the user's deferred-review authorization. No human or GPU acceptance is inferred.
+- Automated button/scrollbar checks post bounded Windows messages only to the verified game-process window; hover positions may be observed during repaint. Input correlation is not unique physical-input provenance. Escape uses an explicitly isolated synthetic InputSystem keyboard.
+- Wheel automation is blocked: Unity associated the posted wheel event with the desktop cursor. Final scrolling checks operate the actual native scrollbar; physical wheel use remains unverified. No global cursor, focus or SendInput workaround is used.
+- 9 failed diagnostic/player attempts are preserved and excluded from final pass counts. Candidate8 verified the capture fix, then failed wheel routing; its incomplete Journal clip is excluded from media. Candidate9 passed720p but exposed a nested-coordinate scaling error at1080p; final-source evidence must pass both sizes.
+- Recorded routes use isolated saves and declared fixture setup. Videos are silent; sampled pixels and frame-linked traces do not establish continuous human motion approval or performance on other hardware.
+- After a live sale fails to save, existing Purchase complete text and live cash remain visible alongside PROGRESS NOT SAVED. These describe the live transaction, not durable success; saved credit accents are suppressed. The existing failure banner can include a verbose technical path.
+- FX-19 and later assignments remain unstarted. Existing tutorial, campaign and earlier human-review gates retain their recorded status.
+
+Model routing: unchanged lead, GPT-6 Astra advanced implementation/review, GPT-6.1 Sol bounded support.
+
+
+FX-18 delivery: [validation](Docs/Evidence/fx-18-VALIDATION.md), [controls and review steps](Docs/Evidence/fx-18/PLAY.md), [local gallery](http://127.0.0.1:8806/index.html). Exact source `d034691c68b12fde3938f903c6cd787d96107eb2`; local delivery checkpoint is recorded in `Docs/Evidence/fx-18/checkpoint.json`, tag `fx-native-ui-validated`. Next assignment: **FX-19 Complete audio and mix**, unstarted.

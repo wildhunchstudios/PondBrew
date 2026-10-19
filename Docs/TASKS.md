@@ -522,3 +522,31 @@ Model routing: unchanged lead, GPT-6 Astra advanced implementation/review, GPT-6
 
 
 FX-17 delivery: [validation](Docs/Evidence/fx-17-VALIDATION.md), [controls and review steps](Docs/Evidence/fx-17/PLAY.md), [local gallery](http://127.0.0.1:8805/index.html). Exact source `31f433af4a0886d3460f46c6c9fee3a4915c5414`; local delivery checkpoint is recorded in `Docs/Evidence/fx-17/checkpoint.json`. Next assignment: **FX-18 Native UI feedback**, unstarted.
+
+
+### FX-18 completion receipt — 2026-10-19
+
+**FX-18 technically complete — 2026-10-19; hands-on review deferred.** Existing buttons now highlight and settle after a click; panels receive a brief entry accent, incubation shows real progress, and saved purchases and sales show a brief coin accent with the exact credit change. Source **d034691**, playable `C:\dev\DumbVideoGameStudio\Builds\Windows-6000.3.21f1-fx18-ui-10\EvolutionShop.exe`. Actual **2259 passed EditMode tests**, **1394 final Windows checks**; build 0 errors / 0 warnings. 38 silent videos / 2200 decoded frames. Human/native controls, actual listening, creative approval and causal GPU/minimum-spec acceptance remain deferred/open. FX-19 is next only on continuation; not started here.
+
+Executed behavior:
+
+- Existing buttons now highlight and settle after a click; panels receive a brief entry accent, incubation shows real progress, and saved purchases and sales show a brief coin accent with the exact credit change.
+- Native hit rectangles and immediate authoritative values are preserved. A reproduced clipped-release issue was fixed by releasing only capture acquired by the game's own native button after release or interruption.
+- Saved transactions publish success once. Staged purchase failure preserves live and durable cash; failed live-sale persistence suppresses success and does not replay it on a later save. Reloads remain quiet.
+- Standard coin accents use separate staggered positions; Low uses one coin and Reduced keeps the static icon. Existing art, rooms, world effects, save format, Core assembly and prior builds remain preserved.
+- Actual Windows checks cover native button acceptance, canceled/disabled/interrupted presses, exact doses, incubation readiness/discovery, purchases/sales/failures/overflow, maximum cash, native scrollbar/fixed footers, synthetic Escape, and lifecycle cleanup at 720p and 1080p.
+
+Known limits:
+
+- Hands-on keyboard/mouse controls, listening, visual/motion approval and the earlier causal GPU/minimum-spec decision remain open under the user's deferred-review authorization. No human or GPU acceptance is inferred.
+- Automated button/scrollbar checks post bounded Windows messages only to the verified game-process window; hover positions may be observed during repaint. Input correlation is not unique physical-input provenance. Escape uses an explicitly isolated synthetic InputSystem keyboard.
+- Wheel automation is blocked: Unity associated the posted wheel event with the desktop cursor. Final scrolling checks operate the actual native scrollbar; physical wheel use remains unverified. No global cursor, focus or SendInput workaround is used.
+- 9 failed diagnostic/player attempts are preserved and excluded from final pass counts. Candidate8 verified the capture fix, then failed wheel routing; its incomplete Journal clip is excluded from media. Candidate9 passed720p but exposed a nested-coordinate scaling error at1080p; final-source evidence must pass both sizes.
+- Recorded routes use isolated saves and declared fixture setup. Videos are silent; sampled pixels and frame-linked traces do not establish continuous human motion approval or performance on other hardware.
+- After a live sale fails to save, existing Purchase complete text and live cash remain visible alongside PROGRESS NOT SAVED. These describe the live transaction, not durable success; saved credit accents are suppressed. The existing failure banner can include a verbose technical path.
+- FX-19 and later assignments remain unstarted. Existing tutorial, campaign and earlier human-review gates retain their recorded status.
+
+Model routing: unchanged lead, GPT-6 Astra advanced implementation/review, GPT-6.1 Sol bounded support.
+
+
+FX-18 delivery: [validation](Evidence/fx-18-VALIDATION.md), [controls and review steps](Evidence/fx-18/PLAY.md), [local gallery](http://127.0.0.1:8806/index.html). Exact source `d034691c68b12fde3938f903c6cd787d96107eb2`; local delivery checkpoint is recorded in `Docs/Evidence/fx-18/checkpoint.json`, tag `fx-native-ui-validated`. Next assignment: **FX-19 Complete audio and mix**, unstarted.
