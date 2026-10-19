@@ -40,11 +40,14 @@ namespace EvolutionShop
   }
   void ComfortPolicy(bool reduced,bool low)
   {var s=shop.ComfortSnapshot;Check(shop.ReducedVisualMotion==reduced&&s.EffectiveReducedMotion==reduced&&s.LowDetail==low&&s.EffectiveLowDetail==low,"Saved preference reaches actual world policy");Check(s.ActionLimit==(low?24:64)&&s.AmbientLimit==(low?8:32)&&s.EmitterLimit==(low?6:12),"Existing bounded detail admission limits");Check(shop.Volume==.65f&&shop.HumorVolume==.37f&&shop.AmbienceVolume==.29f&&!shop.ReducedGags,"Visual settings preserve independent audio and gag preferences");}
+  // Screen rects are mapped through the pointer position in the scrolled panel; at a 1.5 GUI scale the
+  // mapping rounds differently when the pointer moves, so allow one device pixel. Layout itself is unchanged.
+  static bool ComfortSameBounds(Rect a,Rect b)=>Mathf.Abs(a.x-b.x)<=1&&Mathf.Abs(a.y-b.y)<=1&&Mathf.Abs(a.width-b.width)<=1&&Mathf.Abs(a.height-b.height)<=1;
   IEnumerator ComfortNativeMode(bool reduced,bool low)
   {
    shop.SetPanel(ShopPanel.Pause);yield return null;
-   if(shop.ReducedVisualMotion!=reduced){string label="Reduced visual motion: "+(shop.ReducedVisualMotion?"On":"Off");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Reduced visual motion: "+(reduced?"On":"Off"));Check(nativeUiRect==before,"Comfort native toggle preserves exact hit bounds");}
-   if((shop.EffectsDetail==FxEffectDetail.Low)!=low){string label="Effects detail: "+(shop.EffectsDetail==FxEffectDetail.Low?"Low":"Standard");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));Check(nativeUiRect==before,"Comfort detail native control preserves exact hit bounds");}
+   if(shop.ReducedVisualMotion!=reduced){string label="Reduced visual motion: "+(shop.ReducedVisualMotion?"On":"Off");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Reduced visual motion: "+(reduced?"On":"Off"));Check(ComfortSameBounds(nativeUiRect,before),"Comfort native toggle keeps its hit bounds within one device pixel / "+before+" / "+nativeUiRect);}
+   if((shop.EffectsDetail==FxEffectDetail.Low)!=low){string label="Effects detail: "+(shop.EffectsDetail==FxEffectDetail.Low?"Low":"Standard");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));Check(ComfortSameBounds(nativeUiRect,before),"Comfort detail native control keeps its hit bounds within one device pixel / "+before+" / "+nativeUiRect);}
    yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));
    ComfortPolicy(reduced,low);Check(SaveStore.Read(shop.SavePath,shop.Config,out _,out var slot,out var error)&&slot.reducedVisualMotion==reduced&&slot.effectsDetail==(low?1:0),"Native controls persist selected policy / "+error);
   }
