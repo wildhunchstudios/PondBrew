@@ -16,7 +16,8 @@ namespace EvolutionShop
             bool requested = Arg("-evolutionToolkitUi") != null;
             // Existing validation routes keep their exact object set; only UI routes create the preview root.
             if (ValidationMode && !requested && Arg("-evolutionToolkitUiSmoke") == null && Arg("-evolutionToolkitHudSmoke") == null &&
-                Arg("-evolutionToolkitCardsSmoke") == null && Arg("-evolutionToolkitLabCardsSmoke") == null) return;
+                Arg("-evolutionToolkitCardsSmoke") == null && Arg("-evolutionToolkitLabCardsSmoke") == null &&
+                Arg("-evolutionToolkitPlanningSmoke") == null) return;
             ToolkitUi = gameObject.AddComponent<ShopUiRoot>();
             ToolkitUi.Initialize(this, requested);
 #endif

@@ -10,7 +10,8 @@ namespace EvolutionShop
 
         public bool OpenStaffMenu()
         {
-            if (Paused || !IsAtCounter || (Panel != ShopPanel.Counter && Panel != ShopPanel.Staff))
+            // UX-06: the notebook's tabs switch here from another planning panel, still only at the counter.
+            if (Paused || !IsAtCounter || (Panel != ShopPanel.Counter && Panel != ShopPanel.Staff && !ToolkitPlanning))
             { Notify("Use the physical front counter to manage your staff."); return false; }
             SetPanel(ShopPanel.Staff);
             return true;

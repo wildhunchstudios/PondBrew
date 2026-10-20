@@ -17,7 +17,9 @@ namespace EvolutionShop
         }
         bool StockerControlsAvailable()
         {
-            if (Paused || !IsAtCounter || (Panel!=ShopPanel.Stocker && Panel!=ShopPanel.StockerTargets))
+            // UX-06: the notebook's crew tab (Staff) holds Nori's card, at the same counter.
+            bool crewTab=Panel==ShopPanel.Staff && ToolkitOwnsPanel(ShopPanel.Staff);
+            if (Paused || !IsAtCounter || (Panel!=ShopPanel.Stocker && Panel!=ShopPanel.StockerTargets && !crewTab))
             { Notify("Use Nori's staff controls at the physical front counter."); return false; }
             return true;
         }

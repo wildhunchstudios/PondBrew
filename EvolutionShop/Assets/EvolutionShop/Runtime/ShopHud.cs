@@ -95,7 +95,8 @@ namespace EvolutionShop
                     if (Panel == ShopPanel.None && !PlacementActive) DrawFocusPrompt();
                 }
                 if (Panel != ShopPanel.None && !ToolkitOwnsPanel(Panel)) DrawPanel();
-                if (PlacementActive) DrawPlacementOverlay();
+                // UX-06: with the UI Toolkit preview on, the notebook's key bar replaces this overlay.
+                if (PlacementActive && !ToolkitUiActive) DrawPlacementOverlay();
                 if (classicHud)
                 {
                     DrawHudNotice();

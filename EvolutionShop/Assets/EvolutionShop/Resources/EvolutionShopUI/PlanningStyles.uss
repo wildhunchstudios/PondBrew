@@ -1,0 +1,1178 @@
+/* UX-06 planning notebook: crew, automation, arrange and research over the dimmed world (UX.6), after the approved
+   crew mockup. Sizes are for the 1920x1080 reference panel. Every class here starts with es-plan, so the HUD and card
+   sheets on the same root never style it (PlanningViewTests.PlanningStylesShareNoClassNamesWithTheHudOrCards). */
+
+.es-plan {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    padding-top: 126px;
+    padding-bottom: 30px;
+}
+
+.es-plan__dim {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(8, 26, 24, 0.76);
+}
+
+.es-plan__book {
+    flex-grow: 1;
+    width: 82%;
+    max-width: 1640px;
+    flex-direction: column;
+}
+
+/* ---------- tabs ---------- */
+
+.es-plan__tabs {
+    flex-direction: row;
+    align-items: flex-end;
+    padding-left: 26px;
+    flex-shrink: 0;
+}
+
+.es-plan-tab {
+    flex-direction: column;
+    align-items: center;
+    margin: 0 8px 0 0;
+    padding: 10px 26px 10px 26px;
+    background-color: #DCCFA8;
+    color: #3F5550;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.es-plan-tab:hover {
+    background-color: #E6DBB8;
+}
+
+.es-plan-tab:disabled {
+    opacity: 0.75;
+}
+
+.es-plan-tab--active,
+.es-plan-tab--active:hover {
+    background-color: var(--es-paper);
+    padding-top: 14px;
+    padding-bottom: 16px;
+}
+
+.es-plan-tab__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+    color: #3F5550;
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-tab--active .es-plan-tab__name {
+    color: var(--es-ink);
+}
+
+.es-plan-tab__where {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: #5D6A60;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---------- the sheet ---------- */
+
+.es-plan__sheet {
+    flex-grow: 1;
+    flex-direction: column;
+    background-color: var(--es-paper);
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    border-bottom-left-radius: 26px;
+    border-bottom-right-radius: 26px;
+    border-bottom-width: 8px;
+    border-color: var(--es-paper-lip);
+    padding: 30px 40px 20px 40px;
+    overflow: hidden;
+}
+
+.es-plan__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+
+.es-plan__titles {
+    flex-direction: column;
+    flex-shrink: 1;
+}
+
+.es-plan__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 52px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan__subtitle {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan__back {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 18px 6px 8px;
+    flex-shrink: 0;
+}
+
+.es-plan__back-key {
+    margin-right: 10px;
+}
+
+.es-plan__back-text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-teal);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.es-plan__footer {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 14px 0 0 0;
+    padding: 0;
+    white-space: normal;
+    flex-shrink: 0;
+}
+
+.es-plan__footer--notice {
+    color: var(--es-ink);
+}
+
+.es-plan__footer--error {
+    color: var(--es-coral-ink);
+}
+
+.es-plan-view {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    flex-direction: column;
+}
+
+.es-plan-grow {
+    flex-grow: 1;
+}
+
+/* ---------- shared pieces ---------- */
+
+.es-plan-chip {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    align-self: flex-start;
+    color: #3F5550;
+    background-color: #EFE7CF;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    padding: 4px 14px 4px 14px;
+    margin: 12px 0 0 0;
+}
+
+.es-plan-chip--on {
+    color: #1E5232;
+    background-color: #CFE6D3;
+}
+
+.es-plan-chip--warn {
+    color: var(--es-coral-ink);
+    background-color: var(--es-coral-soft);
+}
+
+.es-plan-empty {
+    font-size: 20px;
+    color: var(--es-muted);
+    margin: 8px 0 8px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-why {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    color: var(--es-coral-ink);
+    margin: 6px 0 6px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+/* A location note, not a warning (Mist is researched at the vat). After .es-plan-why, so it wins. */
+.es-plan-why--info {
+    color: var(--es-muted);
+}
+
+.es-plan-scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.es-plan-list {
+    flex-direction: column;
+}
+
+.es-plan-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 16px 10px 16px;
+    margin: 0 0 10px 0;
+    background-color: #FFFDF5;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.es-plan-row--chosen {
+    border-color: var(--es-teal);
+    background-color: #EAF3EC;
+}
+
+.es-plan-row__index {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    width: 34px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-muted);
+}
+
+.es-plan-row__glyph {
+    width: 64px;
+    height: 34px;
+    flex-shrink: 0;
+}
+
+.es-plan-row__thumb {
+    width: 84px;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.es-plan-row__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+    margin-left: 12px;
+}
+
+.es-plan-row__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    color: var(--es-ink);
+    margin: 0 0 0 12px;
+    padding: 0;
+    flex-grow: 1;
+}
+
+.es-plan-row__text .es-plan-row__name {
+    margin-left: 0;
+    flex-grow: 0;
+}
+
+.es-plan-row__meta {
+    font-size: 17px;
+    color: var(--es-muted);
+    margin: 0 12px 0 0;
+    padding: 0;
+}
+
+.es-plan-row__actions {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-plan-row__actions .es-plan-row__meta {
+    margin-right: 0;
+}
+
+.es-plan-row .es-plan-chip {
+    margin: 0 10px 0 0;
+    align-self: center;
+}
+
+.es-plan-picks {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.es-plan-pick {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    background-color: #EFE7CF;
+    padding: 8px 16px 8px 16px;
+    margin: 0 8px 8px 0;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.es-plan-pick:hover {
+    background-color: #E6DCBD;
+}
+
+.es-plan-pick--on,
+.es-plan-pick--on:hover {
+    color: var(--es-paper);
+    background-color: var(--es-teal);
+}
+
+.es-plan-confirm {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    padding: 14px 16px 14px 16px;
+    background-color: #FFF0E8;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: var(--es-coral);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.es-plan-confirm--inline {
+    position: relative;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 10px 0 0 0;
+    flex-shrink: 1;
+}
+
+.es-plan-row .es-plan-confirm--inline {
+    margin: 0 0 0 12px;
+    flex-grow: 1;
+}
+
+.es-plan-confirm__text {
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 0 0 10px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-confirm__buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.es-plan-confirm__buttons .es-button {
+    margin-left: 10px;
+}
+
+.es-plan-menu {
+    position: absolute;
+    top: 64px;
+    right: 16px;
+    flex-direction: column;
+    padding: 8px 8px 8px 8px;
+    background-color: var(--es-paper);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 4px;
+    border-color: var(--es-paper-lip);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.es-plan-menu__item {
+    font-size: 22px;
+    color: var(--es-ink);
+    background-color: rgba(0, 0, 0, 0);
+    padding: 8px 16px 8px 16px;
+    -unity-text-align: middle-left;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.es-plan-menu__item:hover {
+    background-color: #EFE7CF;
+}
+
+.es-plan-menu__item--danger {
+    color: var(--es-coral-ink);
+}
+
+.es-plan-switch-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-plan-switch-row__label {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    margin: 0 10px 0 0;
+    padding: 0;
+}
+
+.es-plan-switch {
+    width: 72px;
+    height: 42px;
+    padding: 4px 4px 4px 4px;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: #CFC5A6;
+    border-top-left-radius: 21px;
+    border-top-right-radius: 21px;
+    border-bottom-left-radius: 21px;
+    border-bottom-right-radius: 21px;
+    flex-shrink: 0;
+}
+
+.es-plan-switch:disabled {
+    opacity: 0.72;
+}
+
+.es-plan-switch:hover {
+    background-color: #C4B992;
+}
+
+.es-plan-switch--on,
+.es-plan-switch--on:hover {
+    justify-content: flex-end;
+    background-color: var(--es-teal);
+}
+
+.es-plan-switch__knob {
+    width: 34px;
+    height: 34px;
+    background-color: var(--es-paper);
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+    border-bottom-left-radius: 17px;
+    border-bottom-right-radius: 17px;
+}
+
+.es-plan-wage {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-plan-wage__coin {
+    width: 28px;
+    height: 28px;
+    margin-right: 6px;
+}
+
+.es-plan-wage__amount {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-wage__unit {
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 0 0 0 6px;
+    padding: 0;
+}
+
+.es-plan-recipe-pips {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.es-plan-pip {
+    width: 14px;
+    height: 14px;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+    margin-right: 3px;
+}
+
+.es-plan-pip__count {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-muted);
+    margin: 0 10px 0 0;
+    padding: 0;
+}
+
+.es-plan-links {
+    flex-direction: row;
+    margin-top: 8px;
+}
+
+.es-plan-links .es-button {
+    margin-right: 18px;
+}
+
+/* ---------- crew ---------- */
+
+.es-plan-crew-grid {
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.es-plan-crew-card {
+    width: 32%;
+    flex-direction: column;
+    padding: 24px 24px 22px 24px;
+    background-color: #FFFDF5;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.es-plan-crew-card--on {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-teal);
+    padding: 23px 23px 21px 23px;
+}
+
+.es-plan-crew-card__top {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-plan-portrait {
+    width: 126px;
+    height: 126px;
+    flex-shrink: 0;
+}
+
+.es-plan-crew-card__names {
+    flex-direction: column;
+    margin-left: 16px;
+}
+
+.es-plan-crew-card__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 42px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-crew-card__role {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-crew-card__menu-button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 54px;
+    height: 40px;
+    padding: 0;
+    font-size: 20px;
+    color: var(--es-ink);
+    background-color: #EFE7CF;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.es-plan-crew-card__menu-button:hover {
+    background-color: #E6DCBD;
+}
+
+.es-plan-crew-card__what {
+    font-size: 23px;
+    color: var(--es-ink);
+    margin: 16px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-crew-card__pay,
+.es-plan-crew-card__page {
+    align-self: flex-start;
+    margin-top: 10px;
+}
+
+.es-plan-crew-card__footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.es-plan-crew-card .es-plan-chip {
+    font-size: 20px;
+    padding: 5px 16px 5px 16px;
+    margin-top: 16px;
+}
+
+.es-plan-crew-card .es-plan-wage__amount {
+    font-size: 32px;
+}
+
+.es-plan-crew-card .es-plan-wage__unit {
+    font-size: 20px;
+}
+
+.es-plan-crew-card .es-plan-switch-row__label {
+    font-size: 22px;
+}
+
+/* ---------- Moss's queue ---------- */
+
+.es-plan-queue__active {
+    margin: 0 0 14px 0;
+}
+
+.es-plan-queue__clear {
+    align-self: flex-start;
+    margin-top: 14px;
+}
+
+/* ---------- automation ---------- */
+
+.es-plan-columns {
+    flex-grow: 1;
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 0;
+}
+
+.es-plan-col {
+    width: 47%;
+    flex-direction: column;
+}
+
+.es-plan-col--detail {
+    padding: 20px 22px 20px 22px;
+    background-color: #FFFDF5;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
+}
+
+.es-plan-modules {
+    flex-direction: row;
+    flex-shrink: 0;
+}
+
+.es-plan-auto__helpers {
+    margin-top: 12px;
+}
+
+.es-plan-module {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px 10px 14px;
+    margin-right: 12px;
+    background-color: #EFE7CF;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.es-plan-module__text {
+    flex-direction: column;
+    flex-shrink: 1;
+}
+
+.es-plan-module__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-module__state {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-module__state--on {
+    color: var(--es-teal);
+}
+
+.es-plan-auto__chosen {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.es-plan-auto__chosen > *,
+.es-plan-auto__actions > * {
+    flex-shrink: 0;
+}
+
+.es-plan-auto__head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.es-plan-auto__glyph {
+    width: 64px;
+    height: 34px;
+}
+
+.es-plan-auto__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    color: var(--es-ink);
+    margin: 0 0 0 10px;
+    padding: 0;
+}
+
+.es-plan-auto__line {
+    flex-direction: row;
+    align-items: center;
+    margin: 4px 0 10px 0;
+}
+
+.es-plan-auto__into {
+    align-items: flex-start;
+}
+
+.es-plan-auto__into .es-plan-auto__label {
+    margin-top: 8px;
+}
+
+.es-plan-auto__picks {
+    flex-shrink: 1;
+}
+
+.es-plan-auto__label {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    margin: 0 14px 0 0;
+    padding: 0;
+}
+
+.es-plan-auto__count {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    width: 52px;
+    -unity-text-align: middle-center;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan-auto__maintain {
+    margin-top: 6px;
+}
+
+.es-plan-auto__status {
+    font-size: 17px;
+    color: var(--es-muted);
+    margin: 10px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-auto__actions {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* ---------- arrange ---------- */
+
+.es-plan-arrange__open {
+    flex-grow: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.es-plan-arrange__page {
+    flex-grow: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.es-plan-segs {
+    flex-direction: row;
+    margin-bottom: 18px;
+    flex-shrink: 0;
+}
+
+.es-plan-seg {
+    font-size: 22px;
+    color: #3F5550;
+    background-color: #EFE7CF;
+    padding: 8px 22px 8px 22px;
+    margin: 0 10px 0 0;
+}
+
+.es-plan-seg:hover {
+    background-color: #E6DCBD;
+}
+
+.es-plan-seg--on,
+.es-plan-seg--on:hover {
+    color: var(--es-paper);
+    background-color: var(--es-teal);
+}
+
+.es-plan-tiles {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.es-plan-tile {
+    width: 290px;
+    flex-direction: column;
+    align-items: flex-start;
+    -unity-text-align: upper-left;
+    flex-shrink: 0;
+    padding: 12px 16px 12px 16px;
+    margin: 0 16px 14px 0;
+    background-color: #FFFDF5;
+    color: var(--es-ink);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
+}
+
+.es-plan-tile:hover {
+    border-color: var(--es-teal);
+    background-color: #FFFFFF;
+}
+
+.es-plan-tile--small {
+    width: 276px;
+}
+
+.es-plan-thumb {
+    width: 132px;
+    height: 88px;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+.es-plan-tile--small .es-plan-thumb {
+    width: 66px;
+    height: 44px;
+    margin-right: 12px;
+}
+
+.es-plan-tile--small {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 14px 10px 12px;
+}
+
+.es-plan-tile__text {
+    flex-direction: column;
+    flex-shrink: 1;
+}
+
+.es-plan-tile--small .es-plan-tile__name {
+    font-size: 21px;
+    margin-top: 0;
+}
+
+.es-plan-tile__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 23px;
+    flex-shrink: 0;
+    color: var(--es-ink);
+    margin: 4px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-tile__meta {
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.es-plan-tile__coin {
+    width: 24px;
+    height: 24px;
+}
+
+.es-plan-tile__price {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    color: var(--es-ink);
+    margin: 0 12px 0 4px;
+    padding: 0;
+}
+
+.es-plan-tile__detail {
+    font-size: 17px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-tile__why {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    flex-shrink: 0;
+    color: var(--es-coral-ink);
+    margin: 4px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan-appeal {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.es-plan-appeal__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    margin: 0 16px 0 0;
+    padding: 0;
+}
+
+.es-plan-appeal__bar {
+    width: 320px;
+    height: 18px;
+    background-color: #EFE7CF;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+    border-bottom-left-radius: 9px;
+    border-bottom-right-radius: 9px;
+    overflow: hidden;
+}
+
+.es-plan-appeal__fill {
+    height: 100%;
+    background-color: var(--es-honey);
+}
+
+/* ---------- research ---------- */
+
+.es-plan-path {
+    flex-direction: row;
+    align-items: stretch;
+    flex-shrink: 0;
+}
+
+.es-plan-path__link {
+    width: 2.5%;
+    height: 6px;
+    align-self: center;
+    background-color: #D9CFAF;
+}
+
+.es-plan-culture {
+    width: 23%;
+    flex-direction: column;
+    padding: 16px 18px 16px 18px;
+    background-color: #FFFDF5;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
+}
+
+.es-plan-culture--done {
+    background-color: #EAF3EC;
+}
+
+.es-plan-culture--next {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-teal);
+    padding: 15px 17px 15px 17px;
+}
+
+.es-plan-culture > * {
+    flex-shrink: 0;
+}
+
+.es-plan-culture__swatch {
+    width: 40px;
+    height: 40px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.es-plan-culture__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    color: var(--es-ink);
+    margin: 4px 0 0 0;
+    padding: 0;
+}
+
+.es-plan-culture__button {
+    margin-top: 10px;
+}
+
+.es-plan-research__eyebrow {
+    margin-top: 18px;
+}
+
+.es-plan-research__gear .es-plan-thumb {
+    width: 84px;
+    height: 56px;
+}
+
+.es-plan-research__gear {
+    margin-top: 8px;
+}
+
+/* ---------- placing: the key bar ---------- */
+
+.es-plan__placebar {
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    bottom: 36px;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 24px 16px 24px;
+    background-color: var(--es-ink);
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
+}
+
+.es-plan__place-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-direction: column;
+}
+
+.es-plan__place-title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 26px;
+    color: var(--es-paper);
+    margin: 0;
+    padding: 0;
+}
+
+.es-plan__place-detail {
+    font-size: 18px;
+    color: #F3C7B6;
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-plan__place-detail--ok {
+    color: #CFE6D3;
+}
+
+.es-plan__place-keys {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.es-plan__place-key {
+    flex-direction: row;
+    align-items: center;
+    margin-left: 18px;
+}
+
+.es-plan__place-key-text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-paper);
+    margin: 0 0 0 8px;
+    padding: 0;
+}

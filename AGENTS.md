@@ -1,3 +1,5 @@
+**UX-06 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), crew, automation, arrange and research are one planning notebook over the dimmed world: tabs along the top (a tab you can't use from where you stand says *At the counter*, *At the lab bench* or *At night*), *Back* (Esc backs out one level) and a footer line for what just happened. **Crew** (counter card → *Crew*): Pip, Nori and Moss as portrait cards with a status chip, the wage, an **On duty** switch that pays tonight's wage, a *•••* menu (Pause, Retry route, Dismiss… that asks first), and pages for Nori's display targets and Moss's recipe queue. **Automation** (bench card → *Culture prep*, the *Lab helper*): choose one known recipe, then Keep − N +, *Into* a display, the Keep stock switch and **Prepare one batch**, with the collector and doser switches beside the recipes. **Arrange**: Furniture / Decor / Owned / Lab catalogue tiles that say why they can't be used; placing hands over to the existing placement mode with a bottom key bar. **Research** (bench card → *Research path*): Bloom, Flow, Spark and Mist on a path with stamps and one **Research Spark · 48**; Siphon MK II as equipment. Every control calls the classic panel's session command. UX-03's toolkit HUD took any new game model as a reload, so it dropped every wage's money floater; its generation now changes only on a reload or New game. With the preview off every classic panel is unchanged. Revision `ux06-planning-2`. Actual **2379 passed EditMode tests** and **3208 final Windows checks** (the planning route at three sizes plus 15 regressions: the UX-05 lab cards, UX-04 cards, UX-02 card, UX-03 HUD, and the staff, stocker, technician, automation, research, placement, storage, decor, lab, cycle and comedy-gate routes); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-07 journal, day report, pause and help**, unstarted. Evidence `Docs/Evidence/ux-06-VALIDATION.md`; controls `Docs/Evidence/ux-06/PLAY.md`; local tag `ux06-planning-validated`.
+
 **UX-05 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the specimen rack, conditioning vat and research bench open UX.5 cards beside the station, and the collector and doser are installed and switched in the bench's card. The bench lists Spark culture (with *Need Ribbonfin* stamps), Siphon MK II, Collector and Doser, each with its own small button, and its one primary is always the next thing to get, then to switch on: **Research Spark · 48**, **Buy Siphon MK II · 24**, **Install collector · 36**, **Turn on collector**. The rack shows its compartments and what's ready to store (from the incubator or the vat) as tiles, with **Store Pondlet**. The vat lists stored Pondlets to pick, **Start vat · 12s** with the Spark reason, a lantern ring while glowing, *Cancel batch…* that asks first and returns the Pondlets and the Spark, and the Lanternfins to collect; *Research Mist · 40* sits under it. UX-04's card `.es-pip` had collapsed the HUD discovery stamp's recipe pips: the card classes are renamed, and an EditMode test now fails if the HUD and card stylesheets share a class name. The UX-02 placeholder is gone; with the preview off every classic panel is unchanged. Revision `ux05-lab-cards-5`. Actual **2368 passed EditMode tests** and **1845 final Windows checks** (the lab route at three sizes plus the UX-04 cards, UX-02 card, UX-03 HUD, R08 automation, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-06 planning views**, unstarted. Evidence `Docs/Evidence/ux-05-VALIDATION.md`; controls `Docs/Evidence/ux-05/PLAY.md`; local tag `ux05-lab-cards-validated`.
 
 **UX-04 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the incubator, display tank and counter open the UX.5 cards beside the station, and the whole manual loop (collect → dose → start → place → price → open → serve → close) plays through them. The incubator has recipe tiles (coral *Grab Bloom at the grower* when short), culture chips with − / + and the wheel, **Start · 10s** and a growing ring. The tank lists ready stock as tiles, then becomes a kraft price tag: − / + (Shift ±5, wheel), four hatted customer faces (Bargain!, Fair, Pricey, Nope, Broke) with *3 of 4 will buy*, and *Use standard (6)*. The counter is an order clipboard with patience rings, **Open shop · 8:00** with empty-display warnings, **Serve · +6** and *Close early…* with a confirm step. Every card shows at most one primary and needs no scroll at 1280×720, 1920×1080 or 2560×1080. A synthetic Input System mouse and keyboard pressed the controls, so UI Toolkit receives Input System pointer input without an EventSystem. Rack, vat and bench keep the placeholder until UX-05; with the preview off every classic panel is unchanged. Revision `ux04-cards-4`. Actual **2360 passed EditMode tests** and **993 final Windows checks** (the card route at three sizes plus the UX-02 card, UX-03 HUD, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-05 remaining station cards**, unstarted. Evidence `Docs/Evidence/ux-04-VALIDATION.md`; controls `Docs/Evidence/ux-04/PLAY.md`; local tag `ux04-cards-validated`.
@@ -515,7 +517,8 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-03 HUD: technically complete 2026-10-20; hands-on review deferred (see UX.14).
 - [x] UX-04 Core station cards: technically complete 2026-10-20; hands-on review deferred (see UX.15).
 - [x] UX-05 Remaining station cards: technically complete 2026-10-20; hands-on review deferred (see UX.16).
-- [ ] UX-06–UX-09 planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
+- [x] UX-06 Planning views: technically complete 2026-10-21; hands-on review deferred (see UX.17).
+- [ ] UX-07–UX-09 journal/report/pause, feel pass, IMGUI removal and full validation.
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -585,6 +588,23 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-06 technically complete; hands-on review deferred (2026-10-21, Claude)
+
+**State:** UX-00 to UX-06 are done. UX-06 was validated in two numbered runs, the second final, after 17 numbered scratch builds (record in UX.17 and `Docs/Evidence/ux-06-VALIDATION.md`). Local tag `ux06-planning-validated`; checkpoint `Docs/Evidence/ux-06/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux06-planning-2`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-06/PLAY.md`), UX-05's, UX-04's and UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
+
+**Exact next action:** UX-07 (UX.6, acceptance in UX.12): the journal (Creatures / Customers / Shop), day report (receipt slip, **Next night**), pause and settings, help, welcome and the tutorial callouts, in the same visual language, with TUT logic and saved state unchanged. The planning notebook's frame (`PlanningViewPresenter`: dim, sheet, tabs, Back, footer) fits the journal's tabs; the counter card's *Day 1 report* link still opens the classic report. First remove the duplicated `<summary>` line above `PlanningNotice` in `ShopToolkitPlanning.cs` (left as built in UX-06). Copy `Docs/Evidence/ux-06/Invoke-UX06.ps1` to `ux-07` (it takes `-Run N`) and keep its regressions, adding the tutorial, report and pause routes whose panels UX-07 replaces.
+
+**Learned in UX-06, apply to the rest of UX:**
+
+- The editor in batchmode can't deliver synthetic clicks to UI Toolkit (its screen is 640×480 and no click arrives). Bring a route up in scratch player builds at one size (a script that builds `-evolutionBuildRevision uxNN-dev-N`, restores `Docs/Evidence/windows-build-result.json`, and stops on `error CS`), then start numbered runs.
+- Check that every element stays inside the box that holds it, not only that text fits: squashed tiles kept their text inside the notebook while it spilled past the tile. A wrapping row inside a column needs `flex-shrink: 0`, and the 926-high ultrawide panel is the tight case.
+- `PickingMode.Ignore` on a button's inner holder, never on the button; when a click misses, `root.panel.Pick(point)` names what is in the way.
+- The panel blends in linear colour: measure a dim on a capture (alpha 0.76 gave the mockup's half brightness, 0.58 only a third).
+- A route's model fixtures (sales, produced creatures) must be saved before the HUD shows, or the next real save's money floater reports them together with the real change.
+- A notice belongs to the page where it was raised (the notebook keeps a floor at each page change); the generic *Done.* is the page's own business.
+- Paid staff changes replace `Model`, so nothing should take a new `Model` object as a reload; the HUD now uses `hudGeneration`.
+- Git Bash's `grep -c $'\r$'` miscounts line endings here; count CR bytes with a script before worrying about CRLF.
+
 ### Current handoff — UX-05 technically complete; hands-on review deferred (2026-10-20, Claude)
 
 **State:** UX-00 to UX-05 are done. UX-05 was validated in five numbered runs, the fifth final (record in UX.16 and `Docs/Evidence/ux-05-VALIDATION.md`). Local tag `ux05-lab-cards-validated`; checkpoint `Docs/Evidence/ux-05/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux05-lab-cards-5`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-05/PLAY.md`), UX-04's and UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
@@ -3644,7 +3664,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-03 (technically complete 2026-10-20; hands-on review deferred; see UX.14) HUD: day chip, money chip, next step, queue strip, ready pings, floaters, interaction prompt, bubble captions; remove retired cards. Accept: captures of night/open/closing/tutorial states; no HUD element overlaps the crosshair area or another element.
 - [x] UX-04 (technically complete 2026-10-20; hands-on review deferred; see UX.15) Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
 - [x] UX-05 (technically complete 2026-10-20; hands-on review deferred; see UX.16) Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
-- [ ] UX-06 Planning views: crew, automation, arrange, research.
+- [x] UX-06 (technically complete 2026-10-21; hands-on review deferred; see UX.17) Planning views: crew, automation, arrange, research.
 - [ ] UX-07 Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
 - [ ] UX-08 Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
 - [ ] UX-09 Delete the IMGUI path, finish UI test migration, full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop.
@@ -3806,6 +3826,8 @@ The handoff's risks resolved as: `NavigationSubmitEvent` does activate the Close
 
 **Still open:** hands-on play (`Docs/Evidence/ux-03/PLAY.md`); UX.7 copy for objectives, notices and tutorial marker text; HUD performance cost and Alt under physical input are not claimed; the comedy bubble uses a fallback spot when the speaker's head is off-screen.
 
+**Correction (2026-10-21, found in UX-06):** the HUD used the game model object as its generation, so any new model counted as a reload. Paying a wage (Pip, Nori or Moss) also swaps in a new model, so UX-03 shipped a toolkit HUD that dropped every wage's money floater. Its generation is now a token that changes only on a reload or New game (`hudGeneration`, set in `ResetNativeUiFeedback`); the UX-06 planning route checks the wage floater (UX.17).
+
 ### UX.15 — UX-04 station cards implementation record (2026-10-20, validated)
 
 **Decisions (Claude, within UX.5, UX.7 and UX.10):**
@@ -3913,3 +3935,64 @@ Full record: `Docs/Evidence/ux-05-VALIDATION.md`; file hashes as built: `Docs/Ev
 - Automation recipes, targets and destinations (UX-06; *Culture prep* opens the classic panel); tutorial callouts (UX-07); card motion and sounds (UX-08).
 - Notice toasts repeat card information, and some classic notices use the retired ` / ` (UX.7 copy).
 - At 2560×1080 a card can sit over the end of a long toast.
+
+### UX.17 — UX-06 planning notebook implementation record (2026-10-21, validated)
+
+**Decisions (Claude, within UX.6, UX.7 and UX.10):**
+
+- **One notebook for five panels.** `PlanningViewPresenter` draws the dim, the sheet, the tabs (each with a where-to-go label when it can't be opened), the title, *Back*, the footer and the placement key bar. It registers `CrewView` (the Staff, Stocker and Technician panels), `StockerTargetsView`, `TechnicianQueueView`, `AutomationView`, `ArrangeView` and `ResearchView` (a new `ShopPanel.Research`, notebook only). Views read snapshots the session fills (`FillCrewView`, `FillStockerTargets`, `FillTechnicianQueue`, `FillAutomationView`, `FillArrangeView`, `FillResearchView` in `ShopToolkitPlanning.cs`) and call the existing commands through thin wrappers (`PlanHire`, `PlanSchedule`, `PlanPay`, `PlanPause`, `PlanDismiss`, `PlanRetry`, `PlanTile`, `PlanMoveOwned`, `PlanResearchSpark`, `PlanBuySiphon`). Pure rules (`PlanningRules`) carry the EditMode tests.
+- **Guards widened, never bypassed:** the crew, automation and research commands also accept the notebook's own panel while it draws it, at the same station. Tabs open only what the player could open from where they stand (`PlanningTabAvailable`).
+- **Esc** (`PlanningBack`, asked first by `BackFromPanel`): a crew page to the crew, a tab to the station card it was opened from while the player still stands there, otherwise back to play. Placement's Esc cancels back to Arrange.
+- **Automation as one chosen recipe:** UX.6 drew a row per species with its own stepper, destination and switch, but the lab helper keeps one target recipe at a time, so the notebook lists the known recipes to *Choose* and sets the chosen one on the right. *Prepare one batch* is the one primary, its reason said once above it.
+- **Research:** reached from the bench card's new *Research path* link; Mist says it is researched at the vat; Siphon MK II is equipment on the same page.
+- **Placement:** the notebook steps aside and its key bar replaces the classic placement overlay while the preview is on.
+- **The world dimmed** at alpha 0.76 (half brightness, as the mockup); the HUD keeps its day and money chips over it and hides its toasts, queue and stamp.
+- **Footer:** the page's own line unless a notice raised on this page is current; save errors always; never the generic *Done.*
+- **Styles:** `PlanningStyles.uss` classes start `es-plan`; the style test covers the HUD, card and planning stylesheets together.
+- **Strings:** 208 → 383 entries.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/ShopToolkitPlanning.cs`; `Runtime/UI/PlanningModel.cs`, `PlanningElements.cs`, `PlanningViewPresenter.cs`, `PlanningCrewViews.cs`, `PlanningLabViews.cs`, `PlanningArrangeView.cs`; `Resources/EvolutionShopUI/PlanningStyles.uss`; `Runtime/ToolkitPlanningSmoke.cs` (`-evolutionToolkitPlanningSmoke`); `Tests/RuntimeEditMode/PlanningViewTests.cs` (11 tests). Edited: `ShopSession.cs`, `ShopTutorialSession.cs`, `ShopStaffSession.cs`, `ShopStockerSession.cs`, `ShopTechnicianSession.cs`, `ShopAutomationSession.cs`, `ShopResearch.cs`, `ShopHud.cs`, `ShopNativeUiFx.cs`, `ShopToolkitHud.cs`, `UI/ShopUiRoot.cs`, `UI/HudPresenter.cs`, `UI/ShopHudModel.cs`, `UI/StationCardLabViews.cs`, `ToolkitLabCardsSmoke.cs`, `ShopToolkitUi.cs`, `MilestoneSmoke.cs`, `strings.en.json`.
+
+**Validation, 2026-10-21 (Claude Opus 5.5).** `Docs/Evidence/ux-06/Invoke-UX06.ps1 -Run N` runs, in order:
+- the EditMode suite and a development build;
+- the planning route at three sizes;
+- the UX-05 lab cards, UX-04 cards, UX-02 card and UX-03 HUD routes, and the staff, stocker, technician, automation, research, placement, storage, decor, lab, cycle and comedy-gate regressions.
+
+The route hires, schedules, pauses and dismisses crew, sets Nori's displays and Moss's queue, buys a wing, places, stores and sells furniture, moves equipment, buys the siphon, researches Spark, installs and uses the lab helper, and checks the day rules and Esc at each level, pressing controls with a synthetic Input System mouse and keyboard. Run 2 is final:
+
+| Step | Result |
+|---|---:|
+| EditMode | **2379/2379** |
+| Build | **0 errors / 0 warnings** |
+| Planning route, each size | **302/302** |
+| UX-05 lab cards | **283/283** |
+| UX-04 cards | **166/166** |
+| UX-02 card | **28/28** |
+| UX-03 HUD | **74/74** |
+| Staff | **102/102** |
+| Stocker | **133/133** |
+| Technician | **145/145** |
+| R08 automation | **335/335** |
+| Research | **194/194** |
+| Placement | **95/95** |
+| Storage | **110/110** |
+| Decor | **91/91** |
+| Lab | **153/153** |
+| Cycle | **123/123** |
+| Comedy gate | **270/270** |
+
+Full record: `Docs/Evidence/ux-06-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-06/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| Scratch builds 1–14 | Brought the route up at one size each; found no visible dim, squashed tiles and stamps and a spilling link at 2560×1080, a text check that missed spills past a tile, and a west wing click my own fix had broken | Dim at 0.76; layout fixes; containment and pick checks |
+| 1 | Everything passed (296 checks at each size, the first ten regressions); captures showed fixture money in the first floaters (+16, −38), notices carried to other pages, and the generic *Done.* in the footer | Fixture saved first; a notice stays on its page; *Done.* left out; four route checks. Stopped during its research regression |
+| Scratch builds 15–17 | The new wage floater check failed with the cue at −4 and no floater: UX-03's HUD took the wage's new model as a reload | HUD generation token; 302 checks passed |
+| 2 | Final: everything passed | — |
+
+**Still open:**
+- Hands-on play with physical input (`Docs/Evidence/ux-06/PLAY.md`).
+- The journal, day report, pause and help (UX-07); notebook motion and sounds (UX-08).
+- Some session notices in the footer still use the retired ` / ` and *his* for Moss (UX.7 copy).
+- A duplicated `<summary>` line above `PlanningNotice` in `ShopToolkitPlanning.cs`, left as built; remove it first in UX-07.
+- UX-05's lab card route shows a −22 floater at the bench: its unsaved starter sales fold into Spark's −48, the fixture artifact UX-06 fixed in its own route. Route evidence only; saving that fixture before the preview tidies it.

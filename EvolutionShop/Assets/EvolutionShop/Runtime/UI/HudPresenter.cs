@@ -146,7 +146,7 @@ namespace EvolutionShop
             if (baselined && state.MoneySequence != moneySequence && state.MoneyDelta != 0)
                 AddFloater(ShopHudRules.Signed(state.MoneyDelta), ShopUiTheme.Symbol.Coin, state.MoneyDelta < 0, now);
             // Points that change while paused are a new baseline, not news; a reload or New game swaps the model
-            // (Generation). Placement counts: committing decor changes appeal while neither in play nor in a panel.
+            // (a new Generation). Placement counts: committing decor changes appeal while neither in play nor in a panel.
             bool countable = !state.Paused;
             if (baselined && countable && state.Reputation != reputation)
                 AddFloater(Strings.Format("hud.float.rep", ShopHudRules.Signed(state.Reputation - reputation)), ShopUiTheme.Symbol.Star, state.Reputation < reputation, now);
@@ -206,7 +206,7 @@ namespace EvolutionShop
             int extra = state.Queue.Count - shown;
             SetShown(queueMore, extra > 0);
             if (extra > 0) SetText(queueMore, Strings.Format("hud.queue.more", extra));
-            SetShown(queue, state.Queue.Count > 0 && !state.Paused);
+            SetShown(queue, state.Queue.Count > 0 && !state.Paused && !state.Planning);
         }
 
         internal static Color ArchetypeColor(string id)
@@ -265,6 +265,14 @@ namespace EvolutionShop
                 if (discovery.layout.height > 1 && !float.IsNaN(discovery.layout.height)) stampHeight = discovery.layout.height;
             }
 
+            if (state.Planning)
+            {
+                // UX-06: the notebook's footer shows the notice and save error itself; pings wait until it closes.
+                foreach (var t in pingToasts) SetShown(t.Element, false);
+                SetShown(saveToast.Element, false); SetShown(noticeToast.Element, false); SetShown(discovery, false);
+                ToastsShown = 0; ToastsHeldBack = 0;
+                return;
+            }
             // Priority: a save error, then the notice, then pings, newest first; as many as fit above the
             // crosshair area under the stamp (a short ultrawide panel holds fewer).
             wantedToasts.Clear(); wantedHeights.Clear();

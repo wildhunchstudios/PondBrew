@@ -23,7 +23,8 @@ namespace EvolutionShop
             if (Cycle.Phase != ShopDayPhase.Night)
             { Notify("Research Spark during preparation night. Unlocked cultures still grow during the day."); return false; }
             bool atBench = false;
-            if (Panel == ShopPanel.Upgrade)
+            // UX-06: the notebook's research path offers it too, at the same bench.
+            if (Panel == ShopPanel.Upgrade || Panel == ShopPanel.Research && ToolkitOwnsPanel(ShopPanel.Research))
                 foreach (var station in World.Stations)
                     if (station.Kind == StationKind.Upgrade && AtStockStation(station)) atBench = true;
             if (!atBench) { Notify("Use E at the lab research bench in person."); return false; }

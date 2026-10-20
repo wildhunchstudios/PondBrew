@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
-    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets, Technician, TechnicianOrders, TutorialHelp, Automation }
+    public enum ShopPanel { None, Welcome, Incubator, Tank, Counter, Upgrade, Journal, Pause, Reset, CloseShop, DayReport, Arrange, StorageRack, Conditioning, Presentation, Staff, Stocker, StockerTargets, Technician, TechnicianOrders, TutorialHelp, Automation, Research }
     public sealed partial class ShopSession : MonoBehaviour
     {
         public GameModel Model { get; private set; }
@@ -36,6 +36,9 @@ namespace EvolutionShop
         ShopAudio sound;
         string message;
         float messageUntil, revealUntil, saveClock, visualClock;
+        // When the message was raised, and whether it is the generic "Done." acknowledgement (UX-06 notebook footer).
+        float messageAt;
+        bool messageGeneric;
         string revealedSpecies, selectedTank = "tank-a";
         bool initialized, quitRequested, collectionNeedsRelease;
         CultureKind? harvesting;
@@ -460,7 +463,7 @@ namespace EvolutionShop
             if (!result.Success) sound.Feedback(false);
             if (result.Success)
             {
-                Notify("Done.", 1.3f);
+                Notify("Done.", 1.3f); messageGeneric = true;
                 if (BaselinePreview && Model.ReservedCultureCount > Config.BaseCapacity) SetBaselinePreview(false);
                 World.CaptureHabitatTransfers();
                 World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
@@ -515,6 +518,7 @@ namespace EvolutionShop
                 collectionNeedsRelease = Mouse.current != null && Mouse.current.leftButton.isPressed;
                 World?.CancelResearchUpgrade(); World?.CancelPlayerInteraction();
             }
+            NotePlanningReturn(Panel, panel);
             Panel = panel;
             ApplyFxViewPolicy();
             if (Paused || panel == ShopPanel.Arrange) ResetAutomationClock();
@@ -540,7 +544,7 @@ namespace EvolutionShop
             Notify(enabled ? "DEV comparison: original 4-unit chamber / slower collection." : "Upgraded chamber restored.");
             return true;
         }
-        public void Notify(string text, float seconds = 4) { message = text; messageUntil = Time.unscaledTime + seconds; }
+        public void Notify(string text, float seconds = 4) { message = text; messageAt = Time.unscaledTime; messageUntil = messageAt + seconds; messageGeneric = false; }
         public bool SaveNow()
         {
             saveClock = 0;

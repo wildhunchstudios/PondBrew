@@ -135,8 +135,12 @@ namespace EvolutionShop
             screenRect = default; enabled = false; return false;
         }
 
+        // The toolkit HUD's generation: a new one only on a reload or New game. Paid staff changes also replace Model, and
+        // using Model itself made the HUD take every wage as a reload, so wage floaters never showed (found by UX-06).
+        object hudGeneration = new object();
         void ResetNativeUiFeedback()
         {
+            hudGeneration = new object();
             CancelNativeUiFeedback();
             nativeUiCurrencyBaseline = Model == null ? 0 : Model.Currency;
             nativeUiBaselineReady = Model != null;

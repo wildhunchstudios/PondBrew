@@ -23,9 +23,10 @@ namespace EvolutionShop
         public void FillHudState(ShopHudState s, ShopUiStrings strings)
         {
             s.Clear();
-            s.Generation = Model;
+            s.Generation = hudGeneration;
             s.PanelOpen = Panel != ShopPanel.None;
             s.Placement = PlacementActive;
+            s.Planning = ToolkitUiActive && !PlacementActive && PlanningViewPresenter.Handles(Panel);
             s.Paused = Paused;
             s.Gameplay = !s.PanelOpen && !s.Placement;
             s.Phase = Cycle.Phase == ShopDayPhase.Night ? HudDayPhase.Night : Cycle.Phase == ShopDayPhase.Open ? HudDayPhase.Open : HudDayPhase.Closing;

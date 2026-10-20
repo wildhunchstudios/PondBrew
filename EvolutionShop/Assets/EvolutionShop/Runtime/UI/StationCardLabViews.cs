@@ -322,7 +322,7 @@ namespace EvolutionShop
     {
         public const string ViewName = "es-bench";
         public const string SparkRowName = "es-bench-spark", SiphonRowName = "es-bench-siphon", CollectorRowName = "es-bench-collector", DoserRowName = "es-bench-doser",
-            CulturePrepName = "es-bench-culture-prep";
+            CulturePrepName = "es-bench-culture-prep", ResearchLinkName = "es-bench-research";
         public static string ButtonName(string row) => row + "-button";
         public static string ChipName(string row) => row + "-chip";
 
@@ -346,6 +346,8 @@ namespace EvolutionShop
             doser = NewRow(DoserRowName, "card.bench.doser", () => ModuleRowPressed(false));
             var links = NewBox(After, "es-links");
             NewButton(links, CulturePrepName, "es-link", Strings.Get("card.bench.culturePrep"), () => Shop.CardCulturePrep());
+            // UX-06: the research path, a planning page of its own.
+            NewButton(links, ResearchLinkName, "es-link", Strings.Get("card.bench.research"), () => Shop.OpenResearchView());
         }
 
         Row NewRow(string name, string titleKey, System.Action onClick)

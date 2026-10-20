@@ -134,6 +134,8 @@ namespace EvolutionShop
                 if (!ContinueGuidedOpening()) Notify("Choose Start guided opening or Play without guidance.");
                 return;
             }
+            // UX-06: in the UI Toolkit notebook Esc backs out one level instead of closing it.
+            if (PlanningBack()) return;
             SetPanel(Panel == ShopPanel.Presentation ? ShopPanel.Pause : Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
         }
 

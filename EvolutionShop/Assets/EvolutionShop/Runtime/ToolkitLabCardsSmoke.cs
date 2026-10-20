@@ -92,7 +92,7 @@ namespace EvolutionShop
             yield return HudShot("ux05-bench-done");
             CheckCard(card, "Bench, everything done", 0);
             yield return CardClick(root.Q<Button>(BenchCardView.CulturePrepName), "Culture prep");
-            Check(shop.Panel == ShopPanel.Automation && !card.IsShown, "Culture prep opens the planning panel (still classic until UX-06)");
+            Check(shop.Panel == ShopPanel.Automation && !card.IsShown, "Culture prep opens the lab helper (the UX-06 planning notebook)");
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
 

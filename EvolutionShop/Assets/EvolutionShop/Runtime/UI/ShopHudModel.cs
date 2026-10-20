@@ -47,6 +47,8 @@ namespace EvolutionShop
         public bool Gameplay;
         public bool PanelOpen;
         public bool Placement;
+        /// <summary>The UX-06 planning notebook is up: its footer shows notices, so toasts and the queue strip wait.</summary>
+        public bool Planning;
         public bool Paused;
         public HudDayPhase Phase;
         public int Day;

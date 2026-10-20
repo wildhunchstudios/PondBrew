@@ -19,8 +19,10 @@ namespace EvolutionShop
         public const string HudResource = ResourceFolder + "Hud";
         public const string HudStylesResource = ResourceFolder + "HudStyles";
         public const string CardStylesResource = ResourceFolder + "CardStyles";
+        public const string PlanningStylesResource = ResourceFolder + "PlanningStyles";
         public const string LayerName = "es-layer";
         public const string HudLayerName = "es-hud-layer";
+        public const string PlanningLayerName = "es-plan-layer";
         public static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
         public const float ScreenMatch = 0.5f;
         public const int SortingOrder = 100;
@@ -36,6 +38,7 @@ namespace EvolutionShop
         public ShopUiStrings Strings { get; private set; } = ShopUiStrings.Empty;
         public StationCardPresenter StationCard { get; private set; }
         public HudPresenter Hud { get; private set; }
+        public PlanningViewPresenter Planning { get; private set; }
         public VisualElement Root => document != null ? document.rootVisualElement : null;
         public PanelSettings Settings => settings;
 
@@ -49,10 +52,11 @@ namespace EvolutionShop
             var hudTemplate = Resources.Load<VisualTreeAsset>(HudResource);
             var hudStyles = Resources.Load<StyleSheet>(HudStylesResource);
             var cardStyles = Resources.Load<StyleSheet>(CardStylesResource);
-            if (!theme || !tokens || !cardTemplate || !hudTemplate || !hudStyles || !cardStyles)
+            var planningStyles = Resources.Load<StyleSheet>(PlanningStylesResource);
+            if (!theme || !tokens || !cardTemplate || !hudTemplate || !hudStyles || !cardStyles || !planningStyles)
             {
                 LoadProblem = "Missing UI Toolkit resource:" + (theme ? "" : " theme") + (tokens ? "" : " tokens") + (cardTemplate ? "" : " station card") +
-                    (hudTemplate ? "" : " HUD") + (hudStyles ? "" : " HUD styles") + (cardStyles ? "" : " card styles");
+                    (hudTemplate ? "" : " HUD") + (hudStyles ? "" : " HUD styles") + (cardStyles ? "" : " card styles") + (planningStyles ? "" : " planning styles");
                 Debug.LogError(LoadProblem);
                 return;
             }
@@ -77,7 +81,12 @@ namespace EvolutionShop
             root.styleSheets.Add(tokens);
             root.styleSheets.Add(hudStyles);
             root.styleSheets.Add(cardStyles);
+            root.styleSheets.Add(planningStyles);
             root.pickingMode = PickingMode.Ignore;
+            // The planning notebook comes first: it dims the world, while the HUD's day and money chips stay on top of it.
+            var planningLayer = new VisualElement { name = PlanningLayerName, pickingMode = PickingMode.Ignore };
+            planningLayer.AddToClassList("es-layer");
+            root.Add(planningLayer);
             // The HUD layer comes first, so station cards draw above it.
             var hudLayer = new VisualElement { name = HudLayerName, pickingMode = PickingMode.Ignore };
             hudLayer.AddToClassList("es-layer");
@@ -90,6 +99,8 @@ namespace EvolutionShop
             Hud.Bind(shop, hudLayer, hudTemplate, Strings);
             StationCard = new StationCardPresenter();
             StationCard.Bind(shop, layer, cardTemplate, Strings);
+            Planning = new PlanningViewPresenter();
+            Planning.Bind(shop, planningLayer, null, Strings);
             Ready = true;
             SetActive(active);
         }
@@ -97,11 +108,16 @@ namespace EvolutionShop
         public void SetActive(bool active)
         {
             Active = active && Ready;
-            if (!Active) { StationCard?.Hide(); Hud?.Hide(); }
+            if (!Active)
+            {
+                StationCard?.Hide(); Hud?.Hide(); Planning?.Hide();
+                // The research path exists only in the notebook; without it the bench's classic panel holds research.
+                if (shop != null && shop.Panel == ShopPanel.Research) shop.SetPanel(ShopPanel.Upgrade);
+            }
         }
 
         /// <summary>True when this root draws the given panel, so the IMGUI path must not.</summary>
-        public bool OwnsPanel(ShopPanel panel) => Active && StationCardPresenter.Handles(panel);
+        public bool OwnsPanel(ShopPanel panel) => Active && (StationCardPresenter.Handles(panel) || PlanningViewPresenter.Handles(panel));
 
         void LateUpdate()
         {
@@ -112,6 +128,7 @@ namespace EvolutionShop
             if (!shop.ValidationMode && keyboard != null && keyboard.f9Key.wasPressedThisFrame) SetActive(!Active);
 #endif
             Hud.Refresh();
+            Planning.Refresh();
             StationCard.Refresh();
         }
 
@@ -121,6 +138,8 @@ namespace EvolutionShop
             Hud = null;
             StationCard?.Unbind();
             StationCard = null;
+            Planning?.Unbind();
+            Planning = null;
             if (documentObject) Destroy(documentObject);
             if (settings) Destroy(settings);
             Ready = false; Active = false;

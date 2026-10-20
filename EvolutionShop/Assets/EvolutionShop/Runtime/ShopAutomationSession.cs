@@ -51,7 +51,8 @@ namespace EvolutionShop
         }
         public bool OpenAutomationMenu()
         {
-            if ((Panel != ShopPanel.Upgrade && Panel != ShopPanel.Automation) || !AtAutomationStation(StationKind.Upgrade))
+            // UX-06: the notebook's tabs switch here from another planning panel, still only at the bench.
+            if ((Panel != ShopPanel.Upgrade && Panel != ShopPanel.Automation && !ToolkitPlanning) || !AtAutomationStation(StationKind.Upgrade))
             { Notify("Use E at the lab bench, then choose culture preparation."); return false; }
             SetPanel(ShopPanel.Automation);
             return true;

@@ -17,7 +17,9 @@ namespace EvolutionShop
         }
         bool TechnicianControlsAvailable()
         {
-            if (Paused || !IsAtCounter || (Panel!=ShopPanel.Technician && Panel!=ShopPanel.TechnicianOrders))
+            // UX-06: the notebook's crew tab (Staff) holds Moss's card, at the same counter.
+            bool crewTab=Panel==ShopPanel.Staff && ToolkitOwnsPanel(ShopPanel.Staff);
+            if (Paused || !IsAtCounter || (Panel!=ShopPanel.Technician && Panel!=ShopPanel.TechnicianOrders && !crewTab))
             { Notify("Use Moss's staff controls at the physical front counter.");return false; }
             return true;
         }
