@@ -137,10 +137,161 @@ namespace EvolutionShop
         }
     }
 
+    // ---------- UX-05: specimen rack, conditioning vat, research bench ----------
+
+    public struct RackCompartment
+    {
+        public string StorageId;
+        /// <summary>"lower" or "upper".</summary>
+        public string Where;
+        /// <summary>Null when the compartment is empty.</summary>
+        public string SpeciesName;
+        public string Look;
+        /// <summary>Nori has reserved what is here for a delivery.</summary>
+        public bool Reserved;
+    }
+
+    public sealed class RackCardState
+    {
+        public bool Placed;
+        public readonly List<RackCompartment> Compartments = new List<RackCompartment>();
+        /// <summary>Ready output that can be stored here: the incubator, then each ready vat chamber.</summary>
+        public readonly List<StockTile> Sources = new List<StockTile>();
+
+        public void Clear()
+        {
+            Compartments.Clear(); Sources.Clear();
+            Placed = false;
+        }
+    }
+
+    public enum VatCardMode { Missing, Locked, Idle, Processing, Ready }
+
+    public struct VatInput
+    {
+        public string StorageId;
+        public string ExpectedId;
+        public string Where;
+        public bool Selected;
+    }
+
+    public struct VatOutput
+    {
+        public int Chamber;
+        public string Name;
+        public string Look;
+    }
+
+    public sealed class VatCardState
+    {
+        public VatCardMode Mode;
+        public float SecondsLeft, Duration;
+        public int SelectedCount, SparkInSiphon;
+        public bool FreeSpace;
+        public bool MistUnlocked, MistReady, Night;
+        public int MistCost, Currency;
+        public readonly List<VatInput> Inputs = new List<VatInput>();
+        public readonly List<VatOutput> Outputs = new List<VatOutput>();
+
+        public void Clear()
+        {
+            Inputs.Clear(); Outputs.Clear();
+            Mode = VatCardMode.Missing; SecondsLeft = 0; SelectedCount = SparkInSiphon = 0;
+            FreeSpace = MistUnlocked = MistReady = Night = false;
+        }
+    }
+
+    public struct BenchRequirement
+    {
+        public string Name;
+        public bool Done;
+    }
+
+    public struct BenchModule
+    {
+        public bool Owned, Enabled, CanInstall;
+        public int Cost;
+        /// <summary>Why it can't be installed now (a string key, formatted with the coins missing); null when it can.</summary>
+        public string BlockedKey;
+        public int Missing;
+    }
+
+    public enum BenchAction { None, ResearchSpark, BuySiphon, InstallCollector, InstallDoser, TurnOnCollector, TurnOnDoser }
+
+    public sealed class BenchCardState
+    {
+        public bool SparkUnlocked, SparkReady, Night, UpgradeOwned;
+        public int SparkCost, UpgradeCost, Currency, BaseCapacity, UpgradedCapacity;
+        public BenchModule Collector, Doser;
+        public readonly List<BenchRequirement> Requirements = new List<BenchRequirement>();
+
+        public void Clear()
+        {
+            Requirements.Clear();
+            SparkUnlocked = SparkReady = Night = UpgradeOwned = false;
+            Collector = Doser = default;
+        }
+    }
+
     /// <summary>Pure rules shared by the station cards and their EditMode tests.</summary>
     public static class StationCardRules
     {
         public const int ShiftStep = 5;
+
+        public const int VatCapacity = 2;
+
+        /// <summary>
+        /// The research bench's one primary: the next thing to get, in order: Spark research, the bigger siphon, the
+        /// collector, the doser; then switching an installed module on. None once everything is owned and on.
+        /// </summary>
+        public static BenchAction BenchPrimary(bool sparkUnlocked, bool upgradeOwned, BenchModule collector, BenchModule doser)
+        {
+            if (!sparkUnlocked) return BenchAction.ResearchSpark;
+            if (!upgradeOwned) return BenchAction.BuySiphon;
+            if (!collector.Owned) return BenchAction.InstallCollector;
+            if (!doser.Owned) return BenchAction.InstallDoser;
+            if (!collector.Enabled) return BenchAction.TurnOnCollector;
+            if (!doser.Enabled) return BenchAction.TurnOnDoser;
+            return BenchAction.None;
+        }
+
+        /// <summary>Why Spark research can't start now (a string key); null when it can.</summary>
+        public static string SparkBlockedKey(bool ready, bool night, int currency, int cost)
+        {
+            if (!ready) return "card.bench.why.starters";
+            if (!night) return "card.bench.why.night";
+            return currency < cost ? "card.bench.why.coins" : null;
+        }
+
+        /// <summary>Why a helper module can't be installed now (a string key); null when it can.</summary>
+        public static string ModuleBlockedKey(bool upgradeOwned, bool pondletKnown, bool night, int customers, int currency, int cost)
+        {
+            if (!upgradeOwned) return "card.bench.why.siphon";
+            if (!pondletKnown) return "card.bench.why.pondlet";
+            if (!night || customers > 0) return "card.bench.why.clearNight";
+            return currency < cost ? "card.bench.why.coins" : null;
+        }
+
+        /// <summary>The rack compartment a store goes into: the chosen one while it is empty, else the first empty one.</summary>
+        public static string RackTarget(IList<RackCompartment> compartments, string chosen)
+        {
+            string first = null;
+            foreach (var compartment in compartments)
+            {
+                if (compartment.SpeciesName != null) continue;
+                if (compartment.StorageId == chosen) return chosen;
+                if (first == null) first = compartment.StorageId;
+            }
+            return first;
+        }
+
+        /// <summary>Why the vat can't start (a string key); null when one or two Pondlets are chosen and a Spark is in the siphon.</summary>
+        public static string VatBlockedKey(int stored, int selected, int spark)
+        {
+            if (stored <= 0) return "card.vat.why.none";
+            if (selected <= 0) return "card.vat.why.pick";
+            return spark < 1 ? "card.vat.why.spark" : null;
+        }
 
         /// <summary>A price after one press: ±1, or ±5 with Shift, kept inside the tag's allowed range.</summary>
         public static int PriceStep(int price, int minimum, int maximum, int direction, bool shift) =>

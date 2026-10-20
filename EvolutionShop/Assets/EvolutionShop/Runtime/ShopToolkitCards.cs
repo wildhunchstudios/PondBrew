@@ -66,21 +66,7 @@ namespace EvolutionShop
                         StorageId = id, ExpectedId = stored.Value.Id, Enabled = !Model.IsStorageReservedForStocking(id) && !s.StockerDelivering
                     });
                 }
-                foreach (string id in Model.ConditionerIds)
-                {
-                    var vat = Model.GetConditioner(id);
-                    if (!vat.HasValue || vat.Value.Phase != ConditionerPhase.Ready) continue;
-                    for (int i = 0; i < 2; i++)
-                    {
-                        var fish = i == 0 ? vat.Value.First : vat.Value.Second;
-                        if (!fish.HasValue) continue;
-                        s.Sources.Add(new StockTile
-                        {
-                            Source = StockSource.Vat, Name = Model.GetSpecies(fish.Value.SpeciesId).DisplayName, Look = Model.GetSpecies(fish.Value.SpeciesId).PresentationId, Where = strings.Format("card.tank.fromVat", i + 1),
-                            MachineId = id, MachineSlot = i, ExpectedId = fish.Value.Id, Enabled = true
-                        });
-                    }
-                }
+                AddVatSources(s.Sources, strings);
                 return;
             }
             var species = Model.GetSpecies(resident.Value.SpeciesId);
@@ -142,6 +128,123 @@ namespace EvolutionShop
             if (Staff.Hired) s.Cashier = Cashier.Status;
         }
 
+        /// <summary>Each ready vat chamber as a source to stock a display or store in a rack.</summary>
+        void AddVatSources(System.Collections.Generic.List<StockTile> sources, ShopUiStrings strings)
+        {
+            foreach (string id in Model.ConditionerIds)
+            {
+                var vat = Model.GetConditioner(id);
+                if (!vat.HasValue || vat.Value.Phase != ConditionerPhase.Ready) continue;
+                for (int i = 0; i < 2; i++)
+                {
+                    var fish = i == 0 ? vat.Value.First : vat.Value.Second;
+                    if (!fish.HasValue) continue;
+                    var species = Model.GetSpecies(fish.Value.SpeciesId);
+                    sources.Add(new StockTile
+                    {
+                        Source = StockSource.Vat, Name = species.DisplayName, Look = species.PresentationId, Where = strings.Format("card.tank.fromVat", i + 1),
+                        MachineId = id, MachineSlot = i, ExpectedId = fish.Value.Id, Enabled = true
+                    });
+                }
+            }
+        }
+
+        // ---------- UX-05: specimen rack, conditioning vat, research bench ----------
+
+        public void FillRackCard(RackCardState s, ShopUiStrings strings)
+        {
+            s.Clear();
+            var item = selectedRack == null ? null : Layout.GetItem(selectedRack);
+            s.Placed = item.HasValue && !item.Value.Stored && item.Value.DefinitionId == ShopLayout.RackDefinitionId;
+            if (!s.Placed) return;
+            var ids = Layout.GetStorageSlotIds(selectedRack);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var stored = Model.GetStorage(ids[i]);
+                var species = stored.HasValue ? Model.GetSpecies(stored.Value.SpeciesId) : null;
+                s.Compartments.Add(new RackCompartment
+                {
+                    StorageId = ids[i], Where = strings.Get(i == 0 ? "card.rack.lower" : "card.rack.upper"),
+                    SpeciesName = species != null ? species.DisplayName : null, Look = species != null ? species.PresentationId : null,
+                    Reserved = Model.IsStorageReservedForStocking(ids[i])
+                });
+            }
+            if (Model.Incubator.Phase == IncubatorPhase.Ready && !string.IsNullOrEmpty(Model.Incubator.SpeciesId))
+            {
+                var ready = Model.GetSpecies(Model.Incubator.SpeciesId);
+                s.Sources.Add(new StockTile { Source = StockSource.Incubator, Name = ready.DisplayName, Look = ready.PresentationId, Where = strings.Get("card.tank.fromIncubator"), Enabled = true });
+            }
+            AddVatSources(s.Sources, strings);
+        }
+
+        public void FillVatCard(VatCardState s, ShopUiStrings strings)
+        {
+            s.Clear();
+            s.Duration = Config.ConditioningSeconds;
+            s.Night = Cycle.Phase == ShopDayPhase.Night;
+            s.Currency = Model.Currency;
+            s.MistUnlocked = Model.MistResearchUnlocked; s.MistReady = Model.MistResearchReady; s.MistCost = Config.MistResearchCost;
+            s.SparkInSiphon = Model.Available(CultureKind.Spark);
+            var state = selectedConditioner == null ? null : Model.GetConditioner(selectedConditioner);
+            if (!state.HasValue) { s.Mode = VatCardMode.Missing; return; }
+            var vat = state.Value;
+            foreach (string id in Model.StorageIds) if (!Model.GetStorage(id).HasValue) s.FreeSpace = true;
+            foreach (string id in Model.TankIds) if (!Model.GetTank(id).HasValue) s.FreeSpace = true;
+            if (vat.Phase != ConditionerPhase.Idle)
+            {
+                s.Mode = vat.Phase == ConditionerPhase.Processing ? VatCardMode.Processing : VatCardMode.Ready;
+                s.SecondsLeft = vat.SecondsRemaining;
+                for (int i = 0; i < 2; i++)
+                {
+                    var fish = i == 0 ? vat.First : vat.Second;
+                    if (!fish.HasValue) continue;
+                    var species = Model.GetSpecies(fish.Value.SpeciesId);
+                    s.Outputs.Add(new VatOutput { Chamber = i + 1, Name = species.DisplayName, Look = species.PresentationId });
+                }
+                return;
+            }
+            s.Mode = Model.SparkResearchUnlocked && Model.IsDiscovered("lanternfin") ? VatCardMode.Idle : VatCardMode.Locked;
+            if (s.Mode != VatCardMode.Idle) return;
+            foreach (string id in Model.StorageIds)
+            {
+                var fish = Model.GetStorage(id);
+                if (!fish.HasValue || fish.Value.SpeciesId != "pondlet") continue;
+                bool selected = conditioningInputs.TryGetValue(id, out string expected) && expected == fish.Value.Id;
+                if (selected) s.SelectedCount++;
+                s.Inputs.Add(new VatInput { StorageId = id, ExpectedId = fish.Value.Id, Where = CardRackName(id), Selected = selected });
+            }
+        }
+
+        public void FillBenchCard(BenchCardState s)
+        {
+            s.Clear();
+            s.SparkUnlocked = Model.SparkResearchUnlocked; s.SparkReady = Model.SparkResearchReady; s.SparkCost = Config.SparkResearchCost;
+            s.Night = Cycle.Phase == ShopDayPhase.Night;
+            s.Currency = Model.Currency;
+            s.UpgradeOwned = Model.UpgradeOwned; s.UpgradeCost = Config.UpgradeCost;
+            s.BaseCapacity = Config.BaseCapacity; s.UpgradedCapacity = Config.UpgradedCapacity;
+            foreach (string id in new[] { "pondlet", "bubblebelly", "ribbonfin" })
+            {
+                var species = Model.GetSpecies(id);
+                if (species != null) s.Requirements.Add(new BenchRequirement { Name = species.DisplayName, Done = Model.IsDiscovered(id) });
+            }
+            s.Collector = BenchModuleOf(true);
+            s.Doser = BenchModuleOf(false);
+        }
+
+        BenchModule BenchModuleOf(bool collector)
+        {
+            int cost = collector ? ShopAutomation.CollectorCost : ShopAutomation.DoserCost;
+            string blocked = StationCardRules.ModuleBlockedKey(Model.UpgradeOwned, Model.IsDiscovered("pondlet"), Cycle.Phase == ShopDayPhase.Night,
+                Customers ? Customers.ActiveCount : 0, Model.Currency, cost);
+            return new BenchModule
+            {
+                Owned = collector ? Automation.CollectorOwned : Automation.DoserOwned,
+                Enabled = collector ? Automation.CollectorEnabled : Automation.DoserEnabled,
+                Cost = cost, CanInstall = blocked == null, BlockedKey = blocked, Missing = Mathf.Max(0, cost - Model.Currency)
+            };
+        }
+
         // Card commands: each is the existing session command; the card shows its result through the state above.
         public bool CardDose(CultureKind kind) => DoseCulture(kind);
         public bool CardReturnDose(CultureKind kind) => ReturnCultureDose(kind);
@@ -168,5 +271,16 @@ namespace EvolutionShop
         public bool CardArrange() => OpenPlacementMenu();
         public bool CardReport() => ShowDayReport();
         public bool CardNextGoal() => ShowTutorialHandoff();
+        public bool CardStoreInRack(StockTile source, string storageId) => source.Source == StockSource.Incubator
+            ? StoreReadyInRack(storageId) : StoreConditionerInRack(source.MachineId, source.MachineSlot, storageId, source.ExpectedId);
+        public bool CardToggleVatInput(VatInput input) => ToggleConditioningInput(input.StorageId, input.ExpectedId);
+        public bool CardStartVat() => BeginSelectedConditioning();
+        public bool CardCancelVat() => CancelSelectedConditioning();
+        public bool CardResearchMist() => ResearchMist();
+        public bool CardResearchSpark() => ResearchSpark();
+        public bool CardBuySiphon() => BuySiphonUpgrade().Success;
+        public bool CardInstallModule(bool collector) => PurchaseAutomationModule(collector);
+        public bool CardSwitchModule(bool collector, bool on) => SetAutomationEnabled(collector, on);
+        public bool CardCulturePrep() => OpenAutomationMenu();
     }
 }

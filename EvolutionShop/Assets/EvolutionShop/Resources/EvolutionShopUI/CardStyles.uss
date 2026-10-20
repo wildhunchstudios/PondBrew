@@ -269,12 +269,12 @@
     white-space: normal;
 }
 
-.es-pips {
+.es-card-pips {
     flex-direction: row;
     align-items: center;
 }
 
-.es-pip {
+.es-card-pip {
     width: 12px;
     height: 12px;
     margin-right: 3px;
@@ -771,4 +771,137 @@
 
 .es-button.es-button--danger:hover {
     background-color: #FBE1D6;
+}
+
+/* ---------- UX-05: lab cards (rack, vat, bench) ---------- */
+
+/* A chosen tile: rack source and target, vat inputs. A thick teal edge, not colour alone: the primary names the choice.
+   The padding gives back the 2px the edge takes, so the tile's text doesn't move when it's chosen. */
+.es-button.es-tile--selected,
+.es-button.es-tile--selected:hover {
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    padding: 6px 8px;
+    border-color: var(--es-teal);
+    background-color: #EAF3EC;
+}
+
+.es-tile--empty {
+    border-color: var(--es-paper-lip);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.es-tile--empty .es-tile__name {
+    color: var(--es-muted);
+}
+
+/* Shown, not pressed: filled compartments and vat output keep full contrast. */
+.es-button.es-tile--static,
+.es-button.es-tile--static:hover {
+    border-color: #D9CFAF;
+    background-color: var(--es-paper);
+}
+
+.es-card__wide {
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.es-bench-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background-color: var(--es-paper);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+/* The row the primary acts on. */
+.es-bench-row--next {
+    border-color: var(--es-teal);
+    background-color: #EAF3EC;
+}
+
+.es-bench-row__text {
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.es-bench-row__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-bench-row__detail {
+    margin: 0;
+}
+
+.es-bench-row__side {
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.es-bench-chip {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-teal);
+    background-color: #D6E2D8;
+    padding: 2px 10px;
+    margin: 0 0 4px 0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.es-bench-chip--on {
+    color: var(--es-paper);
+    background-color: var(--es-teal);
+}
+
+.es-reqs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.es-req {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-coral-ink);
+    padding: 1px 8px;
+    margin: 0 4px 4px 0;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: var(--es-coral);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.es-req--done {
+    color: var(--es-teal);
+    border-color: var(--es-teal);
+    background-color: #EAF3EC;
 }

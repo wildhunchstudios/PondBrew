@@ -18,6 +18,8 @@ namespace EvolutionShop
         protected readonly ShopUiStrings Strings;
         public VisualElement Root { get; }
         public VisualElement After { get; }
+        /// <summary>The card's title when it isn't the station's own label (a tank's slot, the bench's name); null keeps the label.</summary>
+        public string Title { get; protected set; }
         public string Status { get; protected set; }
         public string Line { get; protected set; }
         /// <summary>The primary button's label; null when this card has no primary action in its current state.</summary>
@@ -245,7 +247,7 @@ namespace EvolutionShop
             tile.Button.Add(tile.Glyph);
             tile.Name = NewLabel(tile.Button, "es-inc-recipe-name", "es-tile__name");
             var meta = NewBox(tile.Button, "es-tile__meta");
-            tile.Pips = NewBox(meta, "es-pips");
+            tile.Pips = NewBox(meta, "es-card-pips");
             tile.Time = NewLabel(meta, "es-inc-recipe-time", "es-tile__time");
             tile.Need = NewLabel(tile.Button, "es-inc-recipe-need", "es-tile__need");
             return tile;
@@ -256,7 +258,7 @@ namespace EvolutionShop
             int total = recipe.Bloom + recipe.Flow + recipe.Spark + recipe.Mist;
             while (tile.PipDots.Count < total)
             {
-                var dot = NewBox(tile.Pips, "es-pip");
+                var dot = NewBox(tile.Pips, "es-card-pip");
                 dot.pickingMode = PickingMode.Ignore;
                 tile.PipDots.Add(dot);
             }
@@ -394,6 +396,7 @@ namespace EvolutionShop
         {
             Shop.FillTankCard(State, Strings);
             var s = State;
+            Title = s.Title;
             PrimaryText = null; PrimaryEnabled = false; Reason = null; ReasonIsWarning = false;
             Shown(tag, !s.Empty);
             Shown(stock, s.Empty);

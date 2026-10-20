@@ -42,7 +42,8 @@ namespace EvolutionShop
         }
         bool AutomationControlsAvailable(bool cancel = false)
         {
-            bool bench = Panel == ShopPanel.Automation && AtAutomationStation(StationKind.Upgrade);
+            // UX-05: the research bench card (Upgrade) installs and switches modules at the same physical bench.
+            bool bench = (Panel == ShopPanel.Automation || Panel == ShopPanel.Upgrade) && AtAutomationStation(StationKind.Upgrade);
             bool incubator = cancel && Panel == ShopPanel.Incubator && AtAutomationStation(StationKind.Incubator);
             if (bench || incubator) return true;
             Notify("Use culture preparation at the physical lab bench.");

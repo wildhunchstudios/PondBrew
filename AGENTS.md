@@ -1,3 +1,5 @@
+**UX-05 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the specimen rack, conditioning vat and research bench open UX.5 cards beside the station, and the collector and doser are installed and switched in the bench's card. The bench lists Spark culture (with *Need Ribbonfin* stamps), Siphon MK II, Collector and Doser, each with its own small button, and its one primary is always the next thing to get, then to switch on: **Research Spark · 48**, **Buy Siphon MK II · 24**, **Install collector · 36**, **Turn on collector**. The rack shows its compartments and what's ready to store (from the incubator or the vat) as tiles, with **Store Pondlet**. The vat lists stored Pondlets to pick, **Start vat · 12s** with the Spark reason, a lantern ring while glowing, *Cancel batch…* that asks first and returns the Pondlets and the Spark, and the Lanternfins to collect; *Research Mist · 40* sits under it. UX-04's card `.es-pip` had collapsed the HUD discovery stamp's recipe pips: the card classes are renamed, and an EditMode test now fails if the HUD and card stylesheets share a class name. The UX-02 placeholder is gone; with the preview off every classic panel is unchanged. Revision `ux05-lab-cards-5`. Actual **2368 passed EditMode tests** and **1845 final Windows checks** (the lab route at three sizes plus the UX-04 cards, UX-02 card, UX-03 HUD, R08 automation, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-06 planning views**, unstarted. Evidence `Docs/Evidence/ux-05-VALIDATION.md`; controls `Docs/Evidence/ux-05/PLAY.md`; local tag `ux05-lab-cards-validated`.
+
 **UX-04 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the incubator, display tank and counter open the UX.5 cards beside the station, and the whole manual loop (collect → dose → start → place → price → open → serve → close) plays through them. The incubator has recipe tiles (coral *Grab Bloom at the grower* when short), culture chips with − / + and the wheel, **Start · 10s** and a growing ring. The tank lists ready stock as tiles, then becomes a kraft price tag: − / + (Shift ±5, wheel), four hatted customer faces (Bargain!, Fair, Pricey, Nope, Broke) with *3 of 4 will buy*, and *Use standard (6)*. The counter is an order clipboard with patience rings, **Open shop · 8:00** with empty-display warnings, **Serve · +6** and *Close early…* with a confirm step. Every card shows at most one primary and needs no scroll at 1280×720, 1920×1080 or 2560×1080. A synthetic Input System mouse and keyboard pressed the controls, so UI Toolkit receives Input System pointer input without an EventSystem. Rack, vat and bench keep the placeholder until UX-05; with the preview off every classic panel is unchanged. Revision `ux04-cards-4`. Actual **2360 passed EditMode tests** and **993 final Windows checks** (the card route at three sizes plus the UX-02 card, UX-03 HUD, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-05 remaining station cards**, unstarted. Evidence `Docs/Evidence/ux-04-VALIDATION.md`; controls `Docs/Evidence/ux-04/PLAY.md`; local tag `ux04-cards-validated`.
 
 **UX-03 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the HUD is UX.4's: a day chip, a money chip and one next-step line that fades after ten seconds (and stays in the tutorial), plus contextual pieces — queue faces with patience rings, ready-ping toasts with edge arrows, money/rep/appeal floaters, a discovery stamp, the `[E] Incubator · empty` tag beside the crosshair, comedy speech bubbles and the tutorial marker. The NO RUSH, Ready to create, Shop & crew and siphon cards and the controls bar are retired; with the preview off the IMGUI HUD is unchanged. World-anchored pieces never cover the crosshair square or another HUD element. Revision `ux03-hud-6`. Actual **2350 passed EditMode tests**, **643 final Windows checks** (the HUD route at 1280×720, 1920×1080 and 2560×1080, plus the UX-02 card, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-04 core station cards**, unstarted. Evidence `Docs/Evidence/ux-03-VALIDATION.md`; controls `Docs/Evidence/ux-03/PLAY.md`; local tag `ux03-hud-validated`.
@@ -512,7 +514,8 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-02 UI Toolkit foundation: technically complete 2026-10-20; hands-on mouse check deferred (see UX.13).
 - [x] UX-03 HUD: technically complete 2026-10-20; hands-on review deferred (see UX.14).
 - [x] UX-04 Core station cards: technically complete 2026-10-20; hands-on review deferred (see UX.15).
-- [ ] UX-05–UX-09 remaining station cards, planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
+- [x] UX-05 Remaining station cards: technically complete 2026-10-20; hands-on review deferred (see UX.16).
+- [ ] UX-06–UX-09 planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -582,6 +585,20 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-05 technically complete; hands-on review deferred (2026-10-20, Claude)
+
+**State:** UX-00 to UX-05 are done. UX-05 was validated in five numbered runs, the fifth final (record in UX.16 and `Docs/Evidence/ux-05-VALIDATION.md`). Local tag `ux05-lab-cards-validated`; checkpoint `Docs/Evidence/ux-05/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux05-lab-cards-5`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-05/PLAY.md`), UX-04's and UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
+
+**Exact next action:** UX-06 planning views (UX.6, acceptance in UX.12): crew, automation, arrange and research as full-screen notebook views with tabs, the world dimmed, no scroll at 1280×720 for the default tab, and Esc backing out one level. They replace the classic Staff, Automation, Arrange and research panels behind the F9 preview, calling the existing session commands only; the bench card's *Culture prep* (`CardCulturePrep` → `OpenAutomationMenu`) then opens the new Automation view. Copy `Docs/Evidence/ux-05/Invoke-UX05.ps1` to `ux-06` (it takes `-Run N`) and keep its regressions, the R08 automation route most of all, since UX-06 replaces its panel.
+
+**Learned in UX-05, apply to the rest of UX:**
+
+- The HUD and card stylesheets both sit on the panel root, so a class name in both styles both. `LabCardTests.HudAndCardStylesShareNoClassNames` fails on any overlap; a new view stylesheet joins that test rather than copying it.
+- Look at every regression's captures, not only the new route's: UX-04 shipped broken HUD pips that only its HUD regression captures showed.
+- Say a thing once per card: the reason line owns "why not", so notes, the body line and headings over empty lists mustn't repeat it.
+- A chosen state with a thicker border gives the width back in padding, or the content moves when clicked.
+- A command guarded to one panel (`AutomationControlsAvailable`) has its guard widened for the card that offers it, never bypassed.
+
 ### Current handoff — UX-04 technically complete; hands-on review deferred (2026-10-20, Claude)
 
 **State:** UX-00 to UX-04 are done. UX-04 was validated in four numbered runs, the fourth final (record in UX.15 and `Docs/Evidence/ux-04-VALIDATION.md`). Local tag `ux04-cards-validated`; checkpoint `Docs/Evidence/ux-04/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux04-cards-4`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-04/PLAY.md`), UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
@@ -3626,7 +3643,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-02 (technically complete 2026-10-20; hands-on mouse check deferred; see UX.13) Foundation: UI Toolkit setup, theme USS from `ShopUiTheme`, fonts with provenance, scaler, cursor/input handling, presenter pattern, string table, named-element test helper. Accept: an empty themed card opens and closes from a station at 720p/1080p/2560×1080 with real input.
 - [x] UX-03 (technically complete 2026-10-20; hands-on review deferred; see UX.14) HUD: day chip, money chip, next step, queue strip, ready pings, floaters, interaction prompt, bubble captions; remove retired cards. Accept: captures of night/open/closing/tutorial states; no HUD element overlaps the crosshair area or another element.
 - [x] UX-04 (technically complete 2026-10-20; hands-on review deferred; see UX.15) Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
-- [ ] UX-05 Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
+- [x] UX-05 (technically complete 2026-10-20; hands-on review deferred; see UX.16) Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
 - [ ] UX-06 Planning views: crew, automation, arrange, research.
 - [ ] UX-07 Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
 - [ ] UX-08 Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
@@ -3840,3 +3857,59 @@ Full record: `Docs/Evidence/ux-04-VALIDATION.md`; file hashes as built: `Docs/Ev
 - Not in the cards yet: tutorial callouts (UX-07); the dose strip and card motion (UX-08); the rack, vat and bench cards (UX-05).
 - A card can overlap the held siphon at the lower right.
 - Notice toasts repeat card information (UX.7 copy).
+
+**Correction (2026-10-20, found in UX-05):** UX-04's `CardStyles.uss` styled `.es-pip`, a class the HUD discovery stamp also uses. Both stylesheets sit on the panel root, so UX-04 shipped the HUD discovery stamp with its recipe pips collapsed; the review hadn't looked at the HUD regression captures. UX-05 renamed the card classes and added a test against shared class names (UX.16).
+
+### UX.16 — UX-05 lab station cards implementation record (2026-10-20, validated)
+
+**Decisions (Claude, within UX.5, UX.7 and UX.10):**
+
+- Three views in `Runtime/UI/StationCardLabViews.cs` (`RackCardView`, `VatCardView`, `BenchCardView`, with a shared `CreatureTile`) use UX-04's frame. They read snapshots the session fills (`FillRackCard`, `FillVatCard`, `FillBenchCard` in `ShopToolkitCards.cs`) and call only existing commands (`StoreReadyInRack`, `StoreConditionerInRack`, `ToggleConditioningInput`, `BeginSelectedConditioning`, `CancelSelectedConditioning`, `ResearchSpark`, `ResearchMist`, `BuySiphonUpgrade`, `PurchaseAutomationModule`, `SetAutomationEnabled`). Pure rules (`BenchPrimary`, `SparkBlockedKey`, `ModuleBlockedKey`, `RackTarget`, `VatBlockedKey`) carry the EditMode tests.
+- **Collector and doser** have no station, so they live in the bench card, as the classic panel reached them from the bench. `AutomationControlsAvailable` now also accepts the Upgrade panel at the bench; the R08 automation route passed with it.
+- **At most one primary:**
+  - Bench: the next thing to get, in a fixed order (Spark, Siphon, collector, doser), then the next module to switch on; none when all is done. Every other row has its own small button.
+  - Rack: Store, into the chosen empty compartment or else the first empty one.
+  - Vat: Start while idle; none while glowing (Cancel batch is a link that asks first) or ready.
+- **Content choices:**
+  - The vat reads *Start vat · 12s*, the configured `ConditioningSeconds`, where UX.5's example said 20 s. Mist research sits under the vat, as in the classic vat panel.
+  - The rack keeps its layout name (*Specimen rack #1*); the vat is *Conditioning vat* (a shop owns one); the bench is *Research bench*.
+  - The reason line says why the primary can't be used, once: no second note, no heading over an empty list.
+  - A chosen tile has a thick teal edge, not colour alone, and its text doesn't move.
+- **Styles:** card classes never share a name with the HUD's (`HudAndCardStylesShareNoClassNames`). The UX-02 placeholder path and strings are removed.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/UI/StationCardLabViews.cs`, `Runtime/ToolkitLabCardsSmoke.cs` (`-evolutionToolkitLabCardsSmoke`), `Tests/RuntimeEditMode/LabCardTests.cs` (8 tests). Edited: `UI/StationCardModel.cs`, `UI/StationCardPresenter.cs`, `UI/StationCardViews.cs`, `ShopToolkitCards.cs`, `ShopAutomationSession.cs`, `ShopToolkitUi.cs`, `MilestoneSmoke.cs`, `CardStyles.uss`, `strings.en.json`, `ShopUiFoundationTests.cs`.
+
+**Validation, 2026-10-20 (Claude Opus 5.5).** `Docs/Evidence/ux-05/Invoke-UX05.ps1 -Run N` runs, in order:
+- the EditMode suite and a development build;
+- the lab card route at three sizes;
+- the UX-04 cards, UX-02 card, UX-03 HUD, R08 automation, cycle and comedy-gate regressions.
+
+The route buys, researches, installs and switches at the bench, stores at the rack, picks, starts, cancels and finishes a vat batch, collects it at the rack and a display, and researches Mist, pressing controls with a synthetic Input System mouse and keyboard. Run 5 is final:
+
+| Step | Result |
+|---|---:|
+| EditMode | **2368/2368** |
+| Build | **0 errors / 0 warnings** |
+| Lab card route, each size | **283/283** |
+| UX-04 cards | **166/166** |
+| UX-02 card | **28/28** |
+| UX-03 HUD | **74/74** |
+| R08 automation | **335/335** |
+| Cycle | **123/123** |
+| Comedy gate | **270/270** |
+
+Full record: `Docs/Evidence/ux-05-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-05/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| 1 | Bench chips took the HUD's `.es-stamp` style (tilted, 400 px wide) and left the card; this showed UX-04's `.es-pip` had broken the HUD stamp's pips | Card classes renamed; EditMode test against shared class names, seen to fail on the collision |
+| 2 | All passed; captures showed text said twice (Spark note and reason, empty rack's note) and the vat title wrapping | Each said once; vat titled *Conditioning vat*; stopped early |
+| 3 | 1280×720 and 1920×1080 passed; a vat with no Pondlets said two things | A third reason, no empty heading, a route check; stopped early |
+| 4 | Everything passed; captures showed a chosen tile's text moving 2 px and the finished vat saying where to collect twice | Padding gives the width back; the note only when there's no room; route checks |
+| 5 | Final: everything passed | — |
+
+**Still open:**
+- Hands-on play with physical input (`Docs/Evidence/ux-05/PLAY.md`).
+- Automation recipes, targets and destinations (UX-06; *Culture prep* opens the classic panel); tutorial callouts (UX-07); card motion and sounds (UX-08).
+- Notice toasts repeat card information, and some classic notices use the retired ` / ` (UX.7 copy).
+- At 2560×1080 a card can sit over the end of a long toast.

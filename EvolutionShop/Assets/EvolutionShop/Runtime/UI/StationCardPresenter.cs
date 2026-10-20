@@ -6,11 +6,11 @@ using UnityEngine.UIElements;
 namespace EvolutionShop
 {
     /// <summary>
-    /// World-anchored station card (UX-02 frame, UX-04 content). It follows ShopSession.Panel: it appears when a
-    /// station panel opens, sits beside the station and closes through the session's ordinary SetPanel(None).
-    /// The incubator, display tank and counter show their controls (StationCardViews.cs); the specimen rack,
-    /// conditioning vat and research bench keep the placeholder until UX-05. Each card has at most one primary
-    /// button, the frame's own; views decide what it says and does.
+    /// World-anchored station card (UX-02 frame, UX-04/UX-05 content). It follows ShopSession.Panel: it appears when
+    /// a station panel opens, sits beside the station and closes through the session's ordinary SetPanel(None).
+    /// Every station panel has a view: incubator, display tank and counter (StationCardViews.cs), and specimen rack,
+    /// conditioning vat and research bench (StationCardLabViews.cs). Each card has at most one primary button, the
+    /// frame's own; views decide what it says and does.
     /// </summary>
     public sealed class StationCardPresenter : ShopUiPresenter
     {
@@ -48,6 +48,9 @@ namespace EvolutionShop
         public IncubatorCardView IncubatorView => views.TryGetValue(ShopPanel.Incubator, out var v) ? (IncubatorCardView)v : null;
         public TankCardView TankView => views.TryGetValue(ShopPanel.Tank, out var v) ? (TankCardView)v : null;
         public CounterCardView CounterView => views.TryGetValue(ShopPanel.Counter, out var v) ? (CounterCardView)v : null;
+        public RackCardView RackView => views.TryGetValue(ShopPanel.StorageRack, out var v) ? (RackCardView)v : null;
+        public VatCardView VatView => views.TryGetValue(ShopPanel.Conditioning, out var v) ? (VatCardView)v : null;
+        public BenchCardView BenchView => views.TryGetValue(ShopPanel.Upgrade, out var v) ? (BenchCardView)v : null;
 
         /// <summary>Panels that belong to a physical station and therefore use a world-anchored card.</summary>
         public static bool Handles(ShopPanel panel)
@@ -92,6 +95,9 @@ namespace EvolutionShop
                 AddView(ShopPanel.Incubator, new IncubatorCardView(Shop, Strings));
                 AddView(ShopPanel.Tank, new TankCardView(Shop, Strings));
                 AddView(ShopPanel.Counter, new CounterCardView(Shop, Strings));
+                AddView(ShopPanel.StorageRack, new RackCardView(Shop, Strings));
+                AddView(ShopPanel.Conditioning, new VatCardView(Shop, Strings));
+                AddView(ShopPanel.Upgrade, new BenchCardView(Shop, Strings));
             }
         }
 
@@ -142,12 +148,10 @@ namespace EvolutionShop
                 Show();
             }
             RefreshContent();
-            if (panel == ShopPanel.Tank && title != null)
-            {
-                // A tank card names its slot (Display tank A): the session's selected tank, not the last station used.
-                string slot = TankView != null ? TankView.State.Title : null;
-                if (!string.IsNullOrEmpty(slot) && title.text != slot) title.text = slot;
-            }
+            // A view may name the card itself: a tank names its slot (the session's selected tank, not the last station
+            // used) and the bench uses the string table, since its world label carries " / ".
+            string viewTitle = CurrentView != null ? CurrentView.Title : null;
+            if (title != null && !string.IsNullOrEmpty(viewTitle) && title.text != viewTitle) title.text = viewTitle;
             Position();
             // E toggles the card closed like the station prompt opened it; the opening press is ignored.
             var keyboard = Keyboard.current;
@@ -159,10 +163,9 @@ namespace EvolutionShop
             var view = CurrentView;
             if (view == null)
             {
-                SetText(status, Strings.Get("card.status.preview"));
-                SetShown(status, true);
-                SetText(body, Strings.Get("card.preview"));
-                SetShown(body, true);
+                // Every station panel has a view since UX-05; a panel without one shows the frame alone.
+                SetShown(status, false);
+                SetShown(body, false);
                 SetShown(primary, false);
                 SetShown(reason, false);
                 return;
