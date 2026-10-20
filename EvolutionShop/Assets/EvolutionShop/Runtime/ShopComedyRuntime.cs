@@ -95,6 +95,7 @@ namespace EvolutionShop
         }
         void BeginComedyPresentation(Transform source)
         {
+            comedySpeaker=source; // UX-03: the toolkit HUD's caption bubble follows the beat's source
             if(World && fxHasFocus && !Paused && Panel==ShopPanel.None && !PlacementActive)
                 World.BeginComedyFx(Comedy.Kind,Comedy.Variant,source,NextFxSequence(),ReducedGags);
         }
@@ -113,7 +114,7 @@ namespace EvolutionShop
         {
             ClearWorkerCelebration();
             if(comedyActor)comedyActor.ClearComedyPose();
-            comedyActor=null;comedyVisitor=null;mimicTank=null;
+            comedyActor=null;comedyVisitor=null;mimicTank=null;comedySpeaker=null;
             if(World) { World.CancelComedyFx(); World.HideComedyBubble(); World.ClearFishMimic(); }
             if(sound)sound.StopComedy();
         }

@@ -1,3 +1,5 @@
+**UX-03 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the HUD is UX.4's: a day chip, a money chip and one next-step line that fades after ten seconds (and stays in the tutorial), plus contextual pieces — queue faces with patience rings, ready-ping toasts with edge arrows, money/rep/appeal floaters, a discovery stamp, the `[E] Incubator · empty` tag beside the crosshair, comedy speech bubbles and the tutorial marker. The NO RUSH, Ready to create, Shop & crew and siphon cards and the controls bar are retired; with the preview off the IMGUI HUD is unchanged. World-anchored pieces never cover the crosshair square or another HUD element. Revision `ux03-hud-6`. Actual **2350 passed EditMode tests**, **643 final Windows checks** (the HUD route at 1280×720, 1920×1080 and 2560×1080, plus the UX-02 card, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-04 core station cards**, unstarted. Evidence `Docs/Evidence/ux-03-VALIDATION.md`; controls `Docs/Evidence/ux-03/PLAY.md`; local tag `ux03-hud-validated`.
+
 **UX-02 technically complete — 2026-10-20; hands-on mouse check deferred.** UI Toolkit now runs beside the IMGUI HUD: runtime PanelSettings (1920×1080 reference, scale with screen, match 0.5), theme and tokens from `ShopUiTheme`, Baloo 2 and Nunito (OFL), a string table, presenters and a named-element test driver. The first screen is a themed, world-anchored station card frame, a development-build preview switched with F9. Revision `ux02-foundation-6`. Actual **2336 passed EditMode tests**, **207 final Windows checks** (the card route at 1280×720, 1920×1080 and 2560×1080, and the cycle regression); build 0 errors / 0 warnings. Validation fixed a compile error, the ultrawide scale formula, fonts that were assigned but not drawn, and long titles spilling out of their strip (UX.13). A physical mouse click on Close and real Esc/E/F9 presses remain open. Next: **UX-03 HUD**, unstarted; AD-A is also unblocked. Evidence `Docs/Evidence/ux-02-VALIDATION.md`; controls `Docs/Evidence/ux-02/PLAY.md`; local tag `ux02-foundation-validated`.
 
 **AD redesign approved — 2026-10-19.** The user approved the Pocket Aquarium Diorama proposal (toon shading, outlines and bloom; redesigned creatures, characters, rooms and effects; wish bubbles and forecasts) and asked for a much larger, long-to-complete collection: now 24 species × 4 variants = 96 entries, Exhibition at 18 of 24 species. Specification **AD.1–AD.7 at the end of this file**. No runtime change yet; AD-A art slice follows UX-02.
@@ -506,7 +508,8 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-00 Audit, questions, specification and mockups.
 - [x] UX-01 User approved the mockups on 2026-10-19.
 - [x] UX-02 UI Toolkit foundation: technically complete 2026-10-20; hands-on mouse check deferred (see UX.13).
-- [ ] UX-03–UX-09 HUD, station cards, planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
+- [x] UX-03 HUD: technically complete 2026-10-20; hands-on review deferred (see UX.14).
+- [ ] UX-04–UX-09 station cards, planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -576,6 +579,21 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-03 technically complete; hands-on review deferred (2026-10-20, Claude)
+
+**State:** UX-00 to UX-03 are done. UX-03 was validated in six numbered runs, the sixth final (record in UX.14 and `Docs/Evidence/ux-03-VALIDATION.md`). Local tag `ux03-hud-validated`; checkpoint `Docs/Evidence/ux-03/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux03-hud-6`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-03/PLAY.md`) and UX-02's mouse check. AD-A stays unblocked if the user picks it.
+
+**Exact next action:** UX-04 core station cards (UX.5, acceptance in UX.12): incubator (recipe tiles, culture chips, Start · 10s), display tank price tag (faces of the four customer types, − / +, Use standard) and counter (order clipboard, Serve, Open shop / Close early). Build them inside `StationCardPresenter`'s frame (UX-02) and call the existing session commands only. The full manual loop (collect → dose → start → place → price → open → serve → close) must be playable with the new UI, with no scroll at 1280×720 and one primary button per card. Copy `Docs/Evidence/ux-03/Invoke-UX03.ps1` to `ux-04` (it takes `-Run N`), and reuse `HudLayoutProblem` and the screen-only `HudShot` from `ToolkitHudSmoke.cs` for the card route.
+
+**Learned in UX-03, apply to the rest of UX:**
+
+- Read the world through `ShopHudState` (`FillHudState` in `ShopToolkitHud.cs`); presenters never read the session's private state themselves.
+- Anything placed in the world must check free space against the crosshair square and the other HUD items. `ShopHudRules.TryPlaceAround`, `Free` and `ToastsThatFit` exist; the 926-high ultrawide panel is the tight case.
+- A new game model (New game, reload) is a new baseline for anything that reacts to changes.
+- Draw directional glyphs from a direction vector in `generateVisualContent`, not with element rotation, and make them unmistakably pointed.
+- IMGUI draws over the toolkit layer, so remaining IMGUI panels still dim the HUD; their ultrawide letterbox leaves side strips undimmed until those panels move (UX-06/UX-07).
+- Captures: wait for fades before capturing, and avoid "ready" or "full-tanks" in `Capture` names (`Capture` moves the camera for those); `HudShot` is screen-only.
+
 ### Current handoff — UX-02 technically complete; hands-on mouse check deferred (2026-10-20, Claude)
 
 **State:** UX-00 to UX-02 are done; UX-02 was validated on 2026-10-20 in six numbered runs, the sixth final (record and results in UX.13 and `Docs/Evidence/ux-02-VALIDATION.md`). Local tag `ux02-foundation-validated`; checkpoint `Docs/Evidence/ux-02/checkpoint.json`. The player is `Builds/Windows-6000.3.21f1-ux02-foundation-6`. Open human gate: a physical mouse click on Close and real Esc, E and F9 presses (`Docs/Evidence/ux-02/PLAY.md`), under the deferred-review practice. UX-03 and AD-A are both unblocked; UX-03 is next in the UX order (UX.11), AD-A only if the user picks it.
@@ -3589,7 +3607,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-00 Audit, user questions, this specification and mockups of HUD, incubator, display tank price tag, counter, crew, day report and pause. Documentation and mockups only; no runtime change.
 - [x] UX-01 **User approved the mockups** on 2026-10-19 ("approve on the UX01 start UX 02"); no changes requested.
 - [x] UX-02 (technically complete 2026-10-20; hands-on mouse check deferred; see UX.13) Foundation: UI Toolkit setup, theme USS from `ShopUiTheme`, fonts with provenance, scaler, cursor/input handling, presenter pattern, string table, named-element test helper. Accept: an empty themed card opens and closes from a station at 720p/1080p/2560×1080 with real input.
-- [ ] UX-03 HUD: day chip, money chip, next step, queue strip, ready pings, floaters, interaction prompt, bubble captions; remove retired cards. Accept: captures of night/open/closing/tutorial states; no HUD element overlaps the crosshair area or another element.
+- [x] UX-03 (technically complete 2026-10-20; hands-on review deferred; see UX.14) HUD: day chip, money chip, next step, queue strip, ready pings, floaters, interaction prompt, bubble captions; remove retired cards. Accept: captures of night/open/closing/tutorial states; no HUD element overlaps the crosshair area or another element.
 - [ ] UX-04 Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
 - [ ] UX-05 Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
 - [ ] UX-06 Planning views: crew, automation, arrange, research.
@@ -3719,3 +3737,37 @@ The handoff's risks resolved as: `NavigationSubmitEvent` does activate the Close
 **Still open:** physical mouse click on Close and real Esc, E and F9 presses (`Docs/Evidence/ux-02/PLAY.md`); the card can overlap the held siphon at the right of the view; long station names still carry " / " from the world labels until UX-04/UX-05 titles come from the string table. No UI performance cost is claimed.
 
 **Session housekeeping:** `Temp/` holds this session's scratch copies (`ux_spec.md`, `ad_spec.md`, `AGENTS.md.pre-ux.bak`, `AGENTS.md.pre-ad.bak`); safe to delete. Concept canvases for the UI mockups and the AD proposal are in the user's Claude artifacts, not in the repo.
+
+### UX.14 — UX-03 HUD implementation record (2026-10-20, validated)
+
+**Decisions (Claude, within UX.4 and UX.10):**
+
+- The HUD is part of the UI Toolkit preview (F9 or `-evolutionToolkitUi`, development builds). While it is on, `ShopHud.OnGUI` skips the IMGUI status cards, siphon card, controls bar, focus prompt, notice, discovery card, comedy caption and tutorial world marker. Panels, Arrange's placement overlay and the development baseline label stay IMGUI. With it off nothing changes, so every earlier route is untouched.
+- The session fills a `ShopHudState` snapshot each frame (`FillHudState`, `Runtime/ShopToolkitHud.cs`). `HudPresenter` reads only that, and its pure rules (`ShopHudRules`, `HudPingTracker` in `Runtime/UI/ShopHudModel.cs`) carry the EditMode tests.
+- **Persistent:** day chip (Night/Day/closing, clock; *paused*), money chip, next step (fades after 10 s without a change; F1 or a new objective brings it back; stays in the tutorial with an F1 key).
+- **Contextual:**
+  - Queue faces for customers walking to or waiting at the counter. The patience ring turns coral below 30% and the mouth turns to a frown; Alt shows the seconds.
+  - Toasts for a save error, a notice and pings, in that priority, as many as fit above the crosshair square. A held-back ping keeps its full time.
+  - Ready pings for the incubator, ready vats and a stuck Nori or Moss, each with an edge arrow (a dart) when the source is off-screen.
+  - Floaters under the money chip: the saved money change (FX-18 cue), and reputation and appeal changes while not paused. A new model (New game, reload) is a new baseline.
+  - A discovery stamp with the recipe pips.
+  - The interaction tag beside the crosshair (key caps, name, one status word) plus the slap tag.
+  - The comedy bubble near the beat's source (recorded by `BeginComedyPresentation`), with a fallback spot when the source is off-screen.
+  - The tutorial marker beside its target.
+- **Layout:** world-anchored pieces try four sides at 28 px, then outside the 120×120 crosshair square, then a fallback, and are hidden rather than overlapping.
+- **Assets:** icons reuse the code-drawn ShopUiTheme textures (`IconTexture`); UX-09 must give them an owner when IMGUI goes. Strings are in `strings.en.json` (`hud.*`), with `ShopUiStrings.Format`.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/UI/ShopHudModel.cs`, `Runtime/UI/HudPresenter.cs`, `Runtime/UI/HudElements.cs` (HudFace, HudArrowGlyph), `Runtime/ShopToolkitHud.cs`, `Runtime/ToolkitHudSmoke.cs` (`-evolutionToolkitHudSmoke`), `Resources/EvolutionShopUI/Hud.uxml` and `HudStyles.uss`, `Tests/RuntimeEditMode/ShopHudTests.cs` (14 tests). Edited: `ShopHud.cs`, `ShopComedyRuntime.cs`, `ShopUiTheme.cs`, `ShopToolkitUi.cs`, `MilestoneSmoke.cs`, `UI/ShopUiRoot.cs`, `UI/ShopUiStrings.cs`, `strings.en.json`.
+
+**Validation, 2026-10-20 (Claude Opus 5.5).** `Docs/Evidence/ux-03/Invoke-UX03.ps1 -Run N` runs the EditMode suite, a development build, the HUD route at three sizes, then the UX-02 card, cycle and comedy-gate regressions. Run 6 is final: **2350/2350 EditMode**, build **0 errors / 0 warnings**, HUD route **74/74 checks** at each size, card **28/28**, cycle **123/123**, comedy gate **270/270**. Full record, failed runs and their fixes: `Docs/Evidence/ux-03-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-03/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| 1 | Compile error CS0165 in `HudPresenter.cs` | Assigned before use |
+| 2 | 2560×1080: discovery stamp in the crosshair square; captures: false −2 rep after New game, faint floaters, mid-fade shots | Compact stamp and toasts that fit; model swap rebaselines; floater pills; waits before captures |
+| 3 | 2560×1080: ready toast held back as designed; the arrow read as pointing up | Route accepts held-back pings and checks they show after the stamp; dart glyph drawn from the direction |
+| 4 | All passed; the appeal floater had no check | Route adds reload and decor steps; appeal rule simplified (not a bug: placement returns to Arrange, which was counted) |
+| 5 | New-game check saw the decor step's legitimate floater | Route lets floaters expire first |
+| 6 | Final: everything passed | — |
+
+**Still open:** hands-on play (`Docs/Evidence/ux-03/PLAY.md`); UX.7 copy for objectives, notices and tutorial marker text; HUD performance cost and Alt under physical input are not claimed; the comedy bubble uses a fallback spot when the speaker's head is off-screen.

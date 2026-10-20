@@ -58,6 +58,9 @@ namespace EvolutionShop
             FxDisc=MakeFxMask(false);FxRing=MakeFxMask(true);
         }
 
+        /// <summary>The owned icon texture, shared with the UI Toolkit HUD (UX-03); null for an unknown symbol.</summary>
+        internal Texture2D IconTexture(Symbol symbol) => icons.TryGetValue(symbol, out var texture) ? texture : null;
+
         Texture2D MakeFxMask(bool ring)
         {
             const int size=48;var texture=Own(new Texture2D(size,size,TextureFormat.RGBA32,false));

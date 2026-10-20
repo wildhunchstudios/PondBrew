@@ -21,6 +21,14 @@ namespace EvolutionShop
         /// <summary>The text for a key; a visible "[key]" placeholder when it is missing.</summary>
         public string Get(string key) => key != null && texts.TryGetValue(key, out var text) ? text : "[" + key + "]";
 
+        /// <summary>The text for a key with {0}, {1} filled in; a table text that isn't a valid format shows as it is.</summary>
+        public string Format(string key, params object[] args)
+        {
+            string text = Get(key);
+            try { return string.Format(System.Globalization.CultureInfo.InvariantCulture, text, args); }
+            catch (FormatException) { return text; }
+        }
+
         /// <summary>Parses a string table. Rejects empty input, empty keys and duplicate keys.</summary>
         public static ShopUiStrings Parse(string json)
         {

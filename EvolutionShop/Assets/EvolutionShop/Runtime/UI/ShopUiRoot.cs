@@ -16,7 +16,10 @@ namespace EvolutionShop
         public const string ThemeResource = ResourceFolder + "ShopTheme";
         public const string TokensResource = ResourceFolder + "ShopTokens";
         public const string StationCardResource = ResourceFolder + "StationCard";
+        public const string HudResource = ResourceFolder + "Hud";
+        public const string HudStylesResource = ResourceFolder + "HudStyles";
         public const string LayerName = "es-layer";
+        public const string HudLayerName = "es-hud-layer";
         public static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
         public const float ScreenMatch = 0.5f;
         public const int SortingOrder = 100;
@@ -31,6 +34,7 @@ namespace EvolutionShop
         public string LoadProblem { get; private set; }
         public ShopUiStrings Strings { get; private set; } = ShopUiStrings.Empty;
         public StationCardPresenter StationCard { get; private set; }
+        public HudPresenter Hud { get; private set; }
         public VisualElement Root => document != null ? document.rootVisualElement : null;
         public PanelSettings Settings => settings;
 
@@ -41,9 +45,12 @@ namespace EvolutionShop
             var theme = Resources.Load<ThemeStyleSheet>(ThemeResource);
             var tokens = Resources.Load<StyleSheet>(TokensResource);
             var cardTemplate = Resources.Load<VisualTreeAsset>(StationCardResource);
-            if (!theme || !tokens || !cardTemplate)
+            var hudTemplate = Resources.Load<VisualTreeAsset>(HudResource);
+            var hudStyles = Resources.Load<StyleSheet>(HudStylesResource);
+            if (!theme || !tokens || !cardTemplate || !hudTemplate || !hudStyles)
             {
-                LoadProblem = "Missing UI Toolkit resource:" + (theme ? "" : " theme") + (tokens ? "" : " tokens") + (cardTemplate ? "" : " station card");
+                LoadProblem = "Missing UI Toolkit resource:" + (theme ? "" : " theme") + (tokens ? "" : " tokens") + (cardTemplate ? "" : " station card") +
+                    (hudTemplate ? "" : " HUD") + (hudStyles ? "" : " HUD styles");
                 Debug.LogError(LoadProblem);
                 return;
             }
@@ -66,11 +73,18 @@ namespace EvolutionShop
 
             var root = document.rootVisualElement;
             root.styleSheets.Add(tokens);
+            root.styleSheets.Add(hudStyles);
             root.pickingMode = PickingMode.Ignore;
+            // The HUD layer comes first, so station cards draw above it.
+            var hudLayer = new VisualElement { name = HudLayerName, pickingMode = PickingMode.Ignore };
+            hudLayer.AddToClassList("es-layer");
+            root.Add(hudLayer);
             var layer = new VisualElement { name = LayerName, pickingMode = PickingMode.Ignore };
             layer.AddToClassList("es-layer");
             root.Add(layer);
 
+            Hud = new HudPresenter();
+            Hud.Bind(shop, hudLayer, hudTemplate, Strings);
             StationCard = new StationCardPresenter();
             StationCard.Bind(shop, layer, cardTemplate, Strings);
             Ready = true;
@@ -80,7 +94,7 @@ namespace EvolutionShop
         public void SetActive(bool active)
         {
             Active = active && Ready;
-            if (!Active) StationCard?.Hide();
+            if (!Active) { StationCard?.Hide(); Hud?.Hide(); }
         }
 
         /// <summary>True when this root draws the given panel, so the IMGUI path must not.</summary>
@@ -94,11 +108,14 @@ namespace EvolutionShop
             var keyboard = Keyboard.current;
             if (!shop.ValidationMode && keyboard != null && keyboard.f9Key.wasPressedThisFrame) SetActive(!Active);
 #endif
+            Hud.Refresh();
             StationCard.Refresh();
         }
 
         void OnDestroy()
         {
+            Hud?.Unbind();
+            Hud = null;
             StationCard?.Unbind();
             StationCard = null;
             if (documentObject) Destroy(documentObject);

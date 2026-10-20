@@ -83,17 +83,25 @@ namespace EvolutionShop
             {
                 BeginNativeUiGui();
                 if (Panel == ShopPanel.Presentation) { DrawPresentationView(); return; }
-                DrawTutorialWorldGuidance();
-                DrawCompactStatus();
-                DrawCultureStatus();
-                hudTheme.Draw(new Rect(433, 676, 548, 26), hudTheme.DarkCard);
-                GUI.Label(new Rect(443, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move  |  E use  |  TAB journal  |  F1 help  |  ESC pause", hudLightControlsStyle);
-                if (Panel == ShopPanel.None && !PlacementActive) DrawFocusPrompt();
+                // UX-03: with the UI Toolkit preview on, its HUD replaces these cards; panels and placement stay here.
+                bool classicHud = !ToolkitHudActive;
+                if (classicHud)
+                {
+                    DrawTutorialWorldGuidance();
+                    DrawCompactStatus();
+                    DrawCultureStatus();
+                    hudTheme.Draw(new Rect(433, 676, 548, 26), hudTheme.DarkCard);
+                    GUI.Label(new Rect(443, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move  |  E use  |  TAB journal  |  F1 help  |  ESC pause", hudLightControlsStyle);
+                    if (Panel == ShopPanel.None && !PlacementActive) DrawFocusPrompt();
+                }
                 if (Panel != ShopPanel.None && !ToolkitOwnsPanel(Panel)) DrawPanel();
                 if (PlacementActive) DrawPlacementOverlay();
-                DrawHudNotice();
-                DrawDiscoveryCard();
-                DrawComedyCaption();
+                if (classicHud)
+                {
+                    DrawHudNotice();
+                    DrawDiscoveryCard();
+                    DrawComedyCaption();
+                }
                 if (BaselinePreview)
                 {
                     HudCard(new Rect(430, 646, 562, 22), coral);
