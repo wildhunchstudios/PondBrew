@@ -18,6 +18,7 @@ namespace EvolutionShop
         public const string StationCardResource = ResourceFolder + "StationCard";
         public const string HudResource = ResourceFolder + "Hud";
         public const string HudStylesResource = ResourceFolder + "HudStyles";
+        public const string CardStylesResource = ResourceFolder + "CardStyles";
         public const string LayerName = "es-layer";
         public const string HudLayerName = "es-hud-layer";
         public static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
@@ -47,10 +48,11 @@ namespace EvolutionShop
             var cardTemplate = Resources.Load<VisualTreeAsset>(StationCardResource);
             var hudTemplate = Resources.Load<VisualTreeAsset>(HudResource);
             var hudStyles = Resources.Load<StyleSheet>(HudStylesResource);
-            if (!theme || !tokens || !cardTemplate || !hudTemplate || !hudStyles)
+            var cardStyles = Resources.Load<StyleSheet>(CardStylesResource);
+            if (!theme || !tokens || !cardTemplate || !hudTemplate || !hudStyles || !cardStyles)
             {
                 LoadProblem = "Missing UI Toolkit resource:" + (theme ? "" : " theme") + (tokens ? "" : " tokens") + (cardTemplate ? "" : " station card") +
-                    (hudTemplate ? "" : " HUD") + (hudStyles ? "" : " HUD styles");
+                    (hudTemplate ? "" : " HUD") + (hudStyles ? "" : " HUD styles") + (cardStyles ? "" : " card styles");
                 Debug.LogError(LoadProblem);
                 return;
             }
@@ -74,6 +76,7 @@ namespace EvolutionShop
             var root = document.rootVisualElement;
             root.styleSheets.Add(tokens);
             root.styleSheets.Add(hudStyles);
+            root.styleSheets.Add(cardStyles);
             root.pickingMode = PickingMode.Ignore;
             // The HUD layer comes first, so station cards draw above it.
             var hudLayer = new VisualElement { name = HudLayerName, pickingMode = PickingMode.Ignore };

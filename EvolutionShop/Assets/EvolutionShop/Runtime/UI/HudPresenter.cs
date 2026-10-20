@@ -209,7 +209,7 @@ namespace EvolutionShop
             SetShown(queue, state.Queue.Count > 0 && !state.Paused);
         }
 
-        static Color ArchetypeColor(string id)
+        internal static Color ArchetypeColor(string id)
         {
             switch (id)
             {

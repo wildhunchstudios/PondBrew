@@ -1,0 +1,774 @@
+/* Evolution Shop station cards (UX-04). Sizes are for the 1920x1080 reference panel; colours come from ShopTokens.uss.
+   Nothing is drawn below 14 px (UX.8). Fonts are set with -unity-font-definition (UX-02 lesson). */
+
+/* ---------- frame ---------- */
+
+.es-card__line {
+    font-size: 18px;
+    margin: 0 0 12px 0;
+}
+
+.es-card__view {
+    flex-direction: column;
+}
+
+.es-card__after {
+    flex-direction: column;
+}
+
+.es-view,
+.es-view-after {
+    flex-direction: column;
+}
+
+.es-card__reason {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: var(--es-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 4px 0 6px 0;
+    padding: 0;
+}
+
+.es-card__reason--warn {
+    color: var(--es-coral-ink);
+    background-color: var(--es-coral-soft);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 5px 10px;
+}
+
+.es-card__primary {
+    margin: 0 0 2px 0;
+}
+
+.es-card__hint {
+    margin-top: 12px;
+}
+
+.es-card__hint-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.es-card__close {
+    font-size: 18px;
+    padding: 4px 14px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+/* ---------- shared bits ---------- */
+
+.es-eyebrow {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-muted);
+    margin: 0 0 6px 0;
+    padding: 0;
+}
+
+.es-note {
+    font-size: 15px;
+    color: var(--es-muted);
+    white-space: normal;
+    margin: 0 0 8px 0;
+    padding: 0;
+}
+
+.es-note--warn {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    color: var(--es-coral-ink);
+}
+
+.es-links {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.es-link {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-teal);
+    background-color: rgba(0, 0, 0, 0);
+    padding: 4px 0;
+    margin: 0 20px 0 0;
+    -unity-text-align: middle-left;
+}
+
+.es-link:hover {
+    color: var(--es-teal-dark);
+}
+
+.es-link:disabled {
+    opacity: 0.45;
+}
+
+.es-rule {
+    height: 2px;
+    background-color: rgba(180, 140, 78, 0.55);
+    margin: 8px 0 10px 0;
+}
+
+.es-big-number {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 44px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-button--compact {
+    font-size: 18px;
+    padding: 5px 14px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+/* Culture colours: saturated for pips and release buttons, soft for dose chips. */
+.es-culture--bloom { background-color: var(--es-bloom); }
+.es-culture--flow { background-color: var(--es-flow); }
+.es-culture--spark { background-color: var(--es-spark); }
+.es-culture--mist { background-color: var(--es-mist); }
+
+/* − / + steppers: the price tag's large ones and the dose chips' small ones. */
+.es-step {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    /* Nunito: Baloo 2's tall line box needs 52 px at 30 px and clipped inside the 48 px the button leaves. */
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    -unity-text-align: middle-center;
+    font-size: 30px;
+    color: var(--es-ink);
+    background-color: var(--es-paper);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 5px;
+    border-color: var(--es-ink);
+    flex-shrink: 0;
+}
+
+.es-step:hover {
+    background-color: #FFFDF5;
+}
+
+.es-step:active {
+    background-color: var(--es-paper-deep);
+}
+
+.es-step--small {
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 3px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/* ---------- incubator ---------- */
+
+.es-tiles {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.es-tile {
+    width: 48.5%;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 0 8px 0;
+    padding: 8px 10px;
+    background-color: var(--es-paper);
+    color: var(--es-ink);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: #D9CFAF;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    -unity-text-align: upper-left;
+}
+
+.es-tile:hover {
+    border-color: var(--es-teal);
+    background-color: #FFFDF5;
+}
+
+.es-tile--short {
+    border-color: var(--es-coral);
+}
+
+.es-tile--short:disabled {
+    opacity: 0.85;
+}
+
+.es-tile__glyph {
+    width: 56px;
+    height: 28px;
+    margin-bottom: 2px;
+}
+
+.es-tile__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+    white-space: normal;
+}
+
+.es-tile__meta {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-tile__time {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-muted);
+    margin: 0 0 0 4px;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-tile--stock .es-tile__time {
+    margin-left: 0;
+}
+
+.es-tile__need {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-coral-ink);
+    margin: 2px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-pips {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-pip {
+    width: 12px;
+    height: 12px;
+    margin-right: 3px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.es-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.es-chip-dose {
+    width: 48.5%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.es-chip-dose.es-culture--bloom { background-color: #FBE1D6; }
+.es-chip-dose.es-culture--flow { background-color: #D7EEF3; }
+.es-chip-dose.es-culture--spark { background-color: #F8EBC4; }
+.es-chip-dose.es-culture--mist { background-color: #ECE3F6; }
+
+.es-chip-dose__text {
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.es-chip-dose__count {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-chip-dose__siphon {
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-muted);
+}
+
+.es-release {
+    flex-direction: column;
+    margin-bottom: 6px;
+}
+
+.es-release__buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.es-button--tiny {
+    font-size: 16px;
+    padding: 3px 12px;
+    margin: 0 6px 4px 0;
+    color: var(--es-ink);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.es-inc__growing {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.es-ring {
+    width: 132px;
+    height: 132px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.es-ring__creature {
+    width: 76px;
+    height: 38px;
+}
+
+.es-inc__grow-text {
+    flex-direction: column;
+    margin-left: 16px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+/* ---------- display tank price tag ---------- */
+
+.es-card--tag {
+    background-color: var(--es-kraft);
+    border-color: var(--es-kraft-lip);
+}
+
+.es-tag {
+    flex-direction: column;
+}
+
+.es-tag__hole {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 22px;
+    height: 22px;
+    background-color: var(--es-paper);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: #B48C4E;
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-left-radius: 11px;
+    border-bottom-right-radius: 11px;
+}
+
+.es-tag__species {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    margin: 0 0 4px 32px;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-tag__price-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 4px 0 6px 0;
+}
+
+.es-tag__amount {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-tag__coin {
+    width: 38px;
+    height: 38px;
+    margin-right: 6px;
+}
+
+.es-tag__price {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 72px;
+    min-width: 90px;
+    -unity-text-align: middle-center;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-tag__standard {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    min-height: 32px;
+    margin-bottom: 2px;
+}
+
+.es-tag__standard-chip {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: #5A4318;
+    background-color: #E3C98F;
+    padding: 2px 12px;
+    margin: 0;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.es-tag__standard .es-link {
+    margin: 0;
+}
+
+.es-faces {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.es-face-cell {
+    width: 24%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.es-mood {
+    width: 64px;
+    height: 64px;
+}
+
+.es-face-word {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    margin: 2px 0 0 0;
+    padding: 1px 8px;
+    -unity-text-align: middle-center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    color: #1E5232;
+    background-color: #CFE6D3;
+}
+
+.es-face-word--pricey {
+    color: #5A4318;
+    background-color: #F5E2A8;
+}
+
+.es-face-word--nope {
+    color: #7E2512;
+    background-color: #F6C9B8;
+}
+
+.es-tag__footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.es-tag__buyers {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+    flex-shrink: 0;
+}
+
+.es-tag__detail {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: #6B5222;
+    margin: 0 0 0 10px;
+    padding: 0;
+    white-space: normal;
+    -unity-text-align: middle-right;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+}
+
+.es-stock {
+    flex-direction: column;
+}
+
+/* ---------- counter clipboard ---------- */
+
+.es-card--clipboard {
+    background-color: #B98B57;
+    border-color: #8C6537;
+}
+
+.es-card--clipboard .es-card__body {
+    background-color: #FFFDF5;
+    margin: 0 12px 12px 12px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding: 16px 16px 14px 16px;
+}
+
+.es-clip__heading {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.es-clip__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-orders {
+    flex-direction: column;
+}
+
+.es-order {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    background-color: #F6F1E2;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.es-order--next {
+    background-color: #EAF3EC;
+    border-color: var(--es-teal);
+}
+
+.es-order--coming {
+    opacity: 0.8;
+}
+
+.es-order__face {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+}
+
+.es-order__text {
+    flex-direction: column;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    margin-left: 10px;
+}
+
+.es-order__species {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-order__meta {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-muted);
+    white-space: normal;
+}
+
+.es-order__amount {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.es-order__coin {
+    width: 24px;
+    height: 24px;
+    margin-right: 4px;
+}
+
+.es-order__price {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-day-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.es-day-row__text {
+    flex-direction: column;
+}
+
+.es-day-row__text .es-eyebrow {
+    margin: 0;
+}
+
+.es-day-row__left {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    margin: 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-confirm {
+    flex-direction: column;
+    margin-bottom: 4px;
+}
+
+.es-confirm__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    margin: 0 0 6px 0;
+    padding: 0;
+    color: var(--es-ink);
+    white-space: normal;
+}
+
+.es-confirm__buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.es-confirm__buttons .es-button {
+    margin-left: 8px;
+}
+
+/* ---------- pointer states ----------
+   The default runtime theme styles .unity-button:hover/:active/:focus with its own grey; two-class selectors keep
+   these buttons in the card's look whatever the theme's specificity. */
+
+.es-button.es-link,
+.es-button.es-link:hover,
+.es-button.es-link:active,
+.es-button.es-link:focus {
+    background-color: rgba(0, 0, 0, 0);
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+}
+
+.es-button.es-tile:hover,
+.es-button.es-tile:focus {
+    background-color: #FFFDF5;
+    border-color: var(--es-teal);
+}
+
+.es-button.es-tile:active {
+    background-color: var(--es-paper-deep);
+    border-color: var(--es-teal);
+}
+
+.es-button.es-tile--short:hover {
+    border-color: var(--es-coral);
+}
+
+.es-button.es-step:hover,
+.es-button.es-step:focus {
+    background-color: #FFFDF5;
+    border-color: var(--es-ink);
+}
+
+.es-button.es-step:active {
+    background-color: var(--es-paper-deep);
+    border-color: var(--es-ink);
+}
+
+.es-button.es-button--tiny:hover,
+.es-button.es-button--tiny:active,
+.es-button.es-button--tiny:focus {
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+}
+
+.es-button.es-button--tiny.es-culture--bloom:hover { background-color: var(--es-bloom); }
+.es-button.es-button--tiny.es-culture--flow:hover { background-color: var(--es-flow); }
+.es-button.es-button--tiny.es-culture--spark:hover { background-color: var(--es-spark); }
+.es-button.es-button--tiny.es-culture--mist:hover { background-color: var(--es-mist); }
+
+.es-button.es-button--primary:hover {
+    background-color: var(--es-teal-hover);
+}
+
+.es-button.es-button--primary:active {
+    background-color: var(--es-teal-dark);
+}
+
+.es-button.es-button--secondary:hover {
+    background-color: rgba(33, 94, 89, 0.1);
+}
+
+.es-button.es-button--danger:hover {
+    background-color: #FBE1D6;
+}

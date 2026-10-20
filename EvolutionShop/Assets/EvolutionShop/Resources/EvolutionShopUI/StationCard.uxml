@@ -5,11 +5,15 @@
             <ui:Label name="es-card-status" class="es-card__status" text="" />
         </ui:VisualElement>
         <ui:VisualElement name="es-card-content" class="es-card__body">
-            <ui:Label name="es-card-body" class="es-text" text="" />
-            <ui:Button name="es-card-close" class="es-button es-button--primary" text="Close" />
-            <ui:VisualElement class="es-row es-card__hint">
+            <ui:Label name="es-card-body" class="es-text es-card__line" text="" />
+            <ui:VisualElement name="es-card-view" class="es-card__view" />
+            <ui:Label name="es-card-reason" class="es-card__reason" text="" />
+            <ui:Button name="es-card-primary" class="es-button es-button--primary es-card__primary" text="" />
+            <ui:VisualElement name="es-card-after" class="es-card__after" />
+            <ui:VisualElement name="es-card-footer" class="es-row es-card__hint">
                 <ui:Label name="es-card-keycap" class="es-keycap" text="Esc" />
-                <ui:Label name="es-card-hint" class="es-text es-text--muted" text="" />
+                <ui:Label name="es-card-hint" class="es-text es-text--muted es-card__hint-text" text="" />
+                <ui:Button name="es-card-close" class="es-button es-button--secondary es-card__close" text="Close" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

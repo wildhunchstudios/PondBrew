@@ -1,3 +1,5 @@
+**UX-04 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the incubator, display tank and counter open the UX.5 cards beside the station, and the whole manual loop (collect → dose → start → place → price → open → serve → close) plays through them. The incubator has recipe tiles (coral *Grab Bloom at the grower* when short), culture chips with − / + and the wheel, **Start · 10s** and a growing ring. The tank lists ready stock as tiles, then becomes a kraft price tag: − / + (Shift ±5, wheel), four hatted customer faces (Bargain!, Fair, Pricey, Nope, Broke) with *3 of 4 will buy*, and *Use standard (6)*. The counter is an order clipboard with patience rings, **Open shop · 8:00** with empty-display warnings, **Serve · +6** and *Close early…* with a confirm step. Every card shows at most one primary and needs no scroll at 1280×720, 1920×1080 or 2560×1080. A synthetic Input System mouse and keyboard pressed the controls, so UI Toolkit receives Input System pointer input without an EventSystem. Rack, vat and bench keep the placeholder until UX-05; with the preview off every classic panel is unchanged. Revision `ux04-cards-4`. Actual **2360 passed EditMode tests** and **993 final Windows checks** (the card route at three sizes plus the UX-02 card, UX-03 HUD, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-05 remaining station cards**, unstarted. Evidence `Docs/Evidence/ux-04-VALIDATION.md`; controls `Docs/Evidence/ux-04/PLAY.md`; local tag `ux04-cards-validated`.
+
 **UX-03 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the HUD is UX.4's: a day chip, a money chip and one next-step line that fades after ten seconds (and stays in the tutorial), plus contextual pieces — queue faces with patience rings, ready-ping toasts with edge arrows, money/rep/appeal floaters, a discovery stamp, the `[E] Incubator · empty` tag beside the crosshair, comedy speech bubbles and the tutorial marker. The NO RUSH, Ready to create, Shop & crew and siphon cards and the controls bar are retired; with the preview off the IMGUI HUD is unchanged. World-anchored pieces never cover the crosshair square or another HUD element. Revision `ux03-hud-6`. Actual **2350 passed EditMode tests**, **643 final Windows checks** (the HUD route at 1280×720, 1920×1080 and 2560×1080, plus the UX-02 card, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-04 core station cards**, unstarted. Evidence `Docs/Evidence/ux-03-VALIDATION.md`; controls `Docs/Evidence/ux-03/PLAY.md`; local tag `ux03-hud-validated`.
 
 **UX-02 technically complete — 2026-10-20; hands-on mouse check deferred.** UI Toolkit now runs beside the IMGUI HUD: runtime PanelSettings (1920×1080 reference, scale with screen, match 0.5), theme and tokens from `ShopUiTheme`, Baloo 2 and Nunito (OFL), a string table, presenters and a named-element test driver. The first screen is a themed, world-anchored station card frame, a development-build preview switched with F9. Revision `ux02-foundation-6`. Actual **2336 passed EditMode tests**, **207 final Windows checks** (the card route at 1280×720, 1920×1080 and 2560×1080, and the cycle regression); build 0 errors / 0 warnings. Validation fixed a compile error, the ultrawide scale formula, fonts that were assigned but not drawn, and long titles spilling out of their strip (UX.13). A physical mouse click on Close and real Esc/E/F9 presses remain open. Next: **UX-03 HUD**, unstarted; AD-A is also unblocked. Evidence `Docs/Evidence/ux-02-VALIDATION.md`; controls `Docs/Evidence/ux-02/PLAY.md`; local tag `ux02-foundation-validated`.
@@ -509,7 +511,8 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-01 User approved the mockups on 2026-10-19.
 - [x] UX-02 UI Toolkit foundation: technically complete 2026-10-20; hands-on mouse check deferred (see UX.13).
 - [x] UX-03 HUD: technically complete 2026-10-20; hands-on review deferred (see UX.14).
-- [ ] UX-04–UX-09 station cards, planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
+- [x] UX-04 Core station cards: technically complete 2026-10-20; hands-on review deferred (see UX.15).
+- [ ] UX-05–UX-09 remaining station cards, planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -579,6 +582,20 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-04 technically complete; hands-on review deferred (2026-10-20, Claude)
+
+**State:** UX-00 to UX-04 are done. UX-04 was validated in four numbered runs, the fourth final (record in UX.15 and `Docs/Evidence/ux-04-VALIDATION.md`). Local tag `ux04-cards-validated`; checkpoint `Docs/Evidence/ux-04/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux04-cards-4`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-04/PLAY.md`), UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
+
+**Exact next action:** UX-05 remaining station cards (UX.5, acceptance in UX.12): specimen rack, conditioning vat, research bench, and collector and doser. Each gets a view in `Runtime/UI/StationCardViews.cs`, filled from a session snapshot in `ShopToolkitCards.cs`, using the frame's one primary ("Store", "Start vat · 20s", "Research Spark · 48", "Turn on"); then remove the placeholder path in `StationCardPresenter.RefreshContent`. Copy `Docs/Evidence/ux-04/Invoke-UX04.ps1` to `ux-05` (it takes `-Run N`) and extend `ToolkitCardsSmoke.cs`'s helpers (`CardClick`, `CardWheel`, `CheckCard`, `CardTextProblem`).
+
+**Learned in UX-04, apply to the rest of UX:**
+
+- UI Toolkit receives Input System pointer input without an EventSystem: a synthetic `Mouse` added with `InputSystem.AddDevice` and `IgnoreFocus` background behaviour clicks, scrolls and hovers real cards (`CardClick` converts panel to screen coordinates, origin bottom-left).
+- Capture before checking a state, so a failing check still leaves its picture.
+- Measure text against the box inside its borders (padding may hold text unclipped) with one pixel of wrap slack on the scaled ultrawide panel; Baloo 2's line box is about 1.7× the font size, too tall for small fixed-height buttons (use Nunito there).
+- Textures from `ShopUiTheme` don't exist when presenters bind; assign them on refresh.
+- `windows-cycle-regression` failed once (run 3) on its existing 2.8-second closing-grace timing check, with no UI code in that route; it passed in runs 1 and 4. If it recurs, look at the save stall in `CloseForNight`.
+
 ### Current handoff — UX-03 technically complete; hands-on review deferred (2026-10-20, Claude)
 
 **State:** UX-00 to UX-03 are done. UX-03 was validated in six numbered runs, the sixth final (record in UX.14 and `Docs/Evidence/ux-03-VALIDATION.md`). Local tag `ux03-hud-validated`; checkpoint `Docs/Evidence/ux-03/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux03-hud-6`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-03/PLAY.md`) and UX-02's mouse check. AD-A stays unblocked if the user picks it.
@@ -3608,7 +3625,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-01 **User approved the mockups** on 2026-10-19 ("approve on the UX01 start UX 02"); no changes requested.
 - [x] UX-02 (technically complete 2026-10-20; hands-on mouse check deferred; see UX.13) Foundation: UI Toolkit setup, theme USS from `ShopUiTheme`, fonts with provenance, scaler, cursor/input handling, presenter pattern, string table, named-element test helper. Accept: an empty themed card opens and closes from a station at 720p/1080p/2560×1080 with real input.
 - [x] UX-03 (technically complete 2026-10-20; hands-on review deferred; see UX.14) HUD: day chip, money chip, next step, queue strip, ready pings, floaters, interaction prompt, bubble captions; remove retired cards. Accept: captures of night/open/closing/tutorial states; no HUD element overlaps the crosshair area or another element.
-- [ ] UX-04 Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
+- [x] UX-04 (technically complete 2026-10-20; hands-on review deferred; see UX.15) Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
 - [ ] UX-05 Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
 - [ ] UX-06 Planning views: crew, automation, arrange, research.
 - [ ] UX-07 Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
@@ -3771,3 +3788,55 @@ The handoff's risks resolved as: `NavigationSubmitEvent` does activate the Close
 | 6 | Final: everything passed | — |
 
 **Still open:** hands-on play (`Docs/Evidence/ux-03/PLAY.md`); UX.7 copy for objectives, notices and tutorial marker text; HUD performance cost and Alt under physical input are not claimed; the comedy bubble uses a fallback spot when the speaker's head is off-screen.
+
+### UX.15 — UX-04 station cards implementation record (2026-10-20, validated)
+
+**Decisions (Claude, within UX.5, UX.7 and UX.10):**
+
+- `StationCardPresenter` (the UX-02 frame) owns the title strip, status line, a reason line, the card's **one primary button** and the footer (Esc key cap, Close as a secondary). A view per station (`IncubatorCardView`, `TankCardView`, `CounterCardView` in `Runtime/UI/StationCardViews.cs`) fills the content above and below the primary and says what the primary does.
+- Views read snapshots the session fills (`FillIncubatorCard`, `FillTankCard`, `FillCounterCard` in `Runtime/ShopToolkitCards.cs`) and call only existing session commands (`DoseCulture`, `PrepareKnownRecipe`, `BeginManualIncubation`, `StockDisplayFrom*`, `SetSpeciesPrice`, `OpenForDay`, `ServeCustomer`, `CloseForNight`, …), with their presence checks, saves and FX. Pure rules (`StationCardRules`) carry the EditMode tests.
+- **At most one primary:**
+  - Incubator: Start while dosing; none while growing or ready.
+  - Tank: none; its − / + and stock tiles are its controls.
+  - Counter: Open shop at night; Serve while open and while closing.
+- **Classic behaviour kept:** Start closes the card; E and Esc close it; Close early asks inline.
+- **Content choices:**
+  - Recipe tiles show discovered species only.
+  - Faces use the HUD type colours with a hat each; *Broke* replaces *Can't afford* for width.
+  - Hovering a face writes its reaction and budget in the tag's footer, since runtime UI Toolkit has no tooltips.
+  - *Back to …* offers the first empty rack slot.
+- **Assets:** drawn elements are `MoodFace`, `CreatureGlyph` and `ProgressRing` (`Runtime/UI/CardElements.cs`). Styles are in `Resources/EvolutionShopUI/CardStyles.uss`, strings in `strings.en.json` (`card.*`). Nothing is under 14 px.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/UI/StationCardModel.cs`, `Runtime/UI/StationCardViews.cs`, `Runtime/UI/CardElements.cs`, `Runtime/ShopToolkitCards.cs`, `Runtime/ToolkitCardsSmoke.cs` (`-evolutionToolkitCardsSmoke`), `Resources/EvolutionShopUI/CardStyles.uss`, `Tests/RuntimeEditMode/StationCardTests.cs` (10 tests). Edited: `StationCard.uxml`, `UI/StationCardPresenter.cs`, `UI/ShopUiRoot.cs`, `UI/HudPresenter.cs`, `ShopToolkitUi.cs`, `MilestoneSmoke.cs`, `strings.en.json`.
+
+**Validation, 2026-10-20 (Claude Opus 5.5).** `Docs/Evidence/ux-04/Invoke-UX04.ps1 -Run N` runs, in order:
+- the EditMode suite and a development build;
+- the card route at three sizes;
+- the UX-02 card, UX-03 HUD, cycle and comedy-gate regressions.
+
+The route plays collect → dose → start → place → price → open → serve → close, pressing controls with a synthetic Input System mouse and keyboard. Run 4 is final:
+
+| Step | Result |
+|---|---:|
+| EditMode | **2360/2360** |
+| Build | **0 errors / 0 warnings** |
+| Card route, each size | **166/166** |
+| UX-02 card | **28/28** |
+| UX-03 HUD | **74/74** |
+| Cycle | **123/123** |
+| Comedy gate | **270/270** |
+
+Full record: `Docs/Evidence/ux-04-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-04/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| 1 | Steppers' Baloo 2 glyph needed 36–38 px in a 29–30 px button; no capture before the check | Nunito steppers; captures before checks |
+| 2 | Esc key cap's text measured against its padded content box | Text measured inside the borders; run stopped early |
+| 3 | Route expected no primary while a customer walks up; ultrawide measurement wrapped a one-line word; captures showed missing coins; cycle regression's closing-grace timing check failed once | Expect the disabled Serve; 1 px wrap slack; icons filled on refresh with checks; redundant counter line dropped |
+| 4 | Final: everything passed | — |
+
+**Still open:**
+- Hands-on play with physical input (`Docs/Evidence/ux-04/PLAY.md`).
+- Not in the cards yet: tutorial callouts (UX-07); the dose strip and card motion (UX-08); the rack, vat and bench cards (UX-05).
+- A card can overlap the held siphon at the lower right.
+- Notice toasts repeat card information (UX.7 copy).
