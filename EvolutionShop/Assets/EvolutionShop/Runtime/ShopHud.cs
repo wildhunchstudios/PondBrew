@@ -89,7 +89,7 @@ namespace EvolutionShop
                 hudTheme.Draw(new Rect(433, 676, 548, 26), hudTheme.DarkCard);
                 GUI.Label(new Rect(443, 678, 528, 21), PlacementActive ? "WASD move   |   R rotate   |   ESC cancel placement" : "WASD move  |  E use  |  TAB journal  |  F1 help  |  ESC pause", hudLightControlsStyle);
                 if (Panel == ShopPanel.None && !PlacementActive) DrawFocusPrompt();
-                if (Panel != ShopPanel.None) DrawPanel();
+                if (Panel != ShopPanel.None && !ToolkitOwnsPanel(Panel)) DrawPanel();
                 if (PlacementActive) DrawPlacementOverlay();
                 DrawHudNotice();
                 DrawDiscoveryCard();

@@ -5,7 +5,7 @@ description: Implement or review Evolution Shop HUD and menus using its verified
 
 # Unity Game Ui Ux
 
-Read AGENTS.md current task and inspect Runtime/ShopHud.cs plus affected menu partials. The verified HUD uses IMGUI OnGUI with the Unity Input System; uGUI being installed does not mean the HUD uses it. Re-detect the actual changed surface before choosing APIs. No React, browser framework or UI Toolkit migration is implied.
+Read AGENTS.md current task and inspect Runtime/ShopHud.cs plus affected menu partials. The verified HUD uses IMGUI OnGUI with the Unity Input System; uGUI being installed does not mean the HUD uses it. Re-detect the actual changed surface before choosing APIs. No React or browser framework. The user approved a UI Toolkit rebuild on 2026-10-19 (AGENTS.md UX.1–UX.12); until UX-09 retires IMGUI, check which path a screen uses before editing it.
 
 Inputs: the screen/state and player decision, current screenshots, supported resolution/input, and permitted Figma design context if provided. Figma installation is not account authorization; no production file writes or screenshot uploads occur merely to test setup. Interpret Figma layout/tokens as design input, not automatic Unity import.
 

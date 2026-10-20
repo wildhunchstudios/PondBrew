@@ -118,6 +118,7 @@ namespace EvolutionShop
             AudioListener.volume = Volume;
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
             ResetNativeUiFeedback();
+            InitializeToolkitUi();
             initialized = true;
             SetPanel(ValidationMode && !restartStartup ? ShopPanel.None : ShopPanel.Welcome);
             Debug.Log("EVOLUTION_RUNTIME " + Application.dataPath + " save=" + SavePath);
@@ -424,6 +425,7 @@ namespace EvolutionShop
                 Vector3.Distance(Player.transform.position, station.transform.position) < 4.5f &&
                 Tutorial.ObserveOrientation(false, false, true)) SaveNow();
             var previousPanel = Panel;
+            NoteToolkitStation(station);
             switch (station.Kind)
             {
                 case StationKind.Bloom: case StationKind.Flow:

@@ -1,0 +1,225 @@
+/* Evolution Shop UI tokens (UX-02). Sizes are for the 1920x1080 reference panel.
+   Colours mirror Runtime/ShopUiTheme.cs so the IMGUI and UI Toolkit paths match during migration. */
+:root {
+    --es-paper: #FFF6DF;
+    --es-paper-deep: #F3E6C4;
+    --es-paper-lip: #C9B88F;
+    --es-kraft: #F0DBAE;
+    --es-kraft-lip: #C9A86A;
+    --es-ink: #1B413E;
+    --es-muted: #576E63;
+    --es-teal: #215E59;
+    --es-teal-hover: #2B6F69;
+    --es-teal-dark: #123C38;
+    --es-coral: #D66145;
+    --es-coral-soft: #F7D3C2;
+    --es-coral-ink: #8A2E1A;
+    --es-honey: #FAC75E;
+    --es-bloom: #F07A5A;
+    --es-flow: #4FA8C0;
+    --es-spark: #E8B53A;
+    --es-mist: #BFA8D9;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    color: var(--es-ink);
+    font-size: 20px;
+}
+
+.es-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* Station card: sits beside the station, never on top of its anchor. */
+.es-card {
+    position: absolute;
+    width: 380px;
+    background-color: var(--es-paper);
+    border-top-left-radius: 22px;
+    border-top-right-radius: 22px;
+    border-bottom-left-radius: 22px;
+    border-bottom-right-radius: 22px;
+    border-bottom-width: 6px;
+    border-color: var(--es-paper-lip);
+    overflow: hidden;
+}
+
+.es-card__strip {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    padding-bottom: 12px;
+    padding-left: 22px;
+    padding-right: 18px;
+    background-color: var(--es-teal);
+}
+
+.es-card__strip--shop {
+    background-color: var(--es-kraft);
+}
+
+.es-card__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    color: var(--es-paper);
+    margin: 0;
+    padding: 0;
+    /* Take the width left beside the status chip from the start, so a long name is measured, and wraps, at the
+       width it is drawn at. With only flex-shrink, a shrunk title kept its one-line height and spilled out. */
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    white-space: normal;
+}
+
+.es-card__strip--shop .es-card__title {
+    color: var(--es-ink);
+}
+
+.es-card__status {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-teal);
+    background-color: var(--es-paper);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin: 0 0 0 10px;
+    flex-shrink: 0;
+}
+
+.es-card__body {
+    padding-top: 18px;
+    padding-bottom: 20px;
+    padding-left: 22px;
+    padding-right: 22px;
+}
+
+.es-text {
+    font-size: 18px;
+    white-space: normal;
+    margin: 0 0 14px 0;
+    padding: 0;
+    color: var(--es-ink);
+}
+
+.es-text--muted {
+    font-size: 16px;
+    color: var(--es-muted);
+    margin: 0 0 0 10px;
+}
+
+.es-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-card__hint {
+    margin-top: 12px;
+}
+
+/* Buttons: one primary per surface; secondary is outlined; danger is coral and confirmed. */
+.es-button {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    margin: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 18px;
+    padding-right: 18px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    -unity-text-align: middle-center;
+}
+
+.es-button--primary {
+    background-color: var(--es-teal);
+    color: var(--es-paper);
+    border-bottom-width: 4px;
+    border-color: var(--es-teal-dark);
+}
+
+.es-button--primary:hover {
+    background-color: var(--es-teal-hover);
+}
+
+.es-button--primary:active {
+    background-color: var(--es-teal-dark);
+}
+
+.es-button--primary:focus {
+    border-color: var(--es-honey);
+}
+
+.es-button--secondary {
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--es-teal);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-teal);
+}
+
+.es-button--secondary:hover {
+    background-color: rgba(33, 94, 89, 0.1);
+}
+
+.es-button--secondary:active {
+    background-color: rgba(33, 94, 89, 0.2);
+}
+
+.es-button--danger {
+    background-color: var(--es-coral-soft);
+    color: var(--es-coral-ink);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-coral);
+}
+
+.es-button--danger:hover {
+    background-color: #FBE1D6;
+}
+
+.es-button:disabled {
+    opacity: 0.5;
+}
+
+.es-keycap {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    min-width: 34px;
+    height: 30px;
+    margin: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    -unity-text-align: middle-center;
+    color: var(--es-ink);
+    background-color: var(--es-paper);
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 4px;
+    border-color: var(--es-ink);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}

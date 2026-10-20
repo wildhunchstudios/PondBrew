@@ -1,3 +1,9 @@
+**UX-02 technically complete — 2026-10-20; hands-on mouse check deferred.** UI Toolkit now runs beside the IMGUI HUD: runtime PanelSettings (1920×1080 reference, scale with screen, match 0.5), theme and tokens from `ShopUiTheme`, Baloo 2 and Nunito (OFL), a string table, presenters and a named-element test driver. The first screen is a themed, world-anchored station card frame, a development-build preview switched with F9. Revision `ux02-foundation-6`. Actual **2336 passed EditMode tests**, **207 final Windows checks** (the card route at 1280×720, 1920×1080 and 2560×1080, and the cycle regression); build 0 errors / 0 warnings. Validation fixed a compile error, the ultrawide scale formula, fonts that were assigned but not drawn, and long titles spilling out of their strip (UX.13). A physical mouse click on Close and real Esc/E/F9 presses remain open. Next: **UX-03 HUD**, unstarted; AD-A is also unblocked. Evidence `Docs/Evidence/ux-02-VALIDATION.md`; controls `Docs/Evidence/ux-02/PLAY.md`; local tag `ux02-foundation-validated`.
+
+**AD redesign approved — 2026-10-19.** The user approved the Pocket Aquarium Diorama proposal (toon shading, outlines and bloom; redesigned creatures, characters, rooms and effects; wish bubbles and forecasts) and asked for a much larger, long-to-complete collection: now 24 species × 4 variants = 96 entries, Exhibition at 18 of 24 species. Specification **AD.1–AD.7 at the end of this file**. No runtime change yet; AD-A art slice follows UX-02.
+
+**UX-00 complete, UX-01 approved — 2026-10-19; UI redesign requested.** The user called the current screens cluttered, unclear and uncomfortable and asked for a full redesign. After an audit and two rounds of questions the user chose: in-world station cards, a minimal contextual HUD, a cozy diegetic look, short slightly silly copy, visual-first numbers, punchy-but-quick feel, KB/M with controller-ready navigation, and a rebuild on UI Toolkit with coordinate-based UI tests rewritten. Specification: **UX.1–UX.12 at the end of this file**. Mockups of HUD, incubator, display tank price tag, counter, crew, day report and pause were approved by the user (UX-01, 2026-10-19). No runtime, test, save or build change. Scheduling decision: UX-02–UX-09 run before FX-21–23, open to user override.
+
 **FX-20 technically complete - 2026-10-19; hands-on comfort review deferred.** Pause has a saved Visual comfort section: Reduced visual motion Off/On and Effects detail Standard/Low, through the existing presentation policy and fixed pool. Essential prompts, prices, readiness, shortage text and accepted-action accents stay visible; master, ambience and humor volumes and Reduced gags stay independent. Save envelope 23; formats 1-22 default Off/Standard without rewriting; malformed current values rejected; a failed write keeps the old setting. Source **fda2521**, revision `fx20-comfort-7`. Actual **2320 passed EditMode tests**, **3905 final Windows checks**; build 0 errors / 0 warnings. Maximum legal occupied layout measured in all four modes with 96 pool objects, 1 material, 5 meshes and 5 voices throughout. Human controls/comfort, creative approval and GPU gates remain open. Next: **FX-21 Integrated interruption/ownership QA**, unstarted. Evidence `Docs/Evidence/fx-20-VALIDATION.md`; controls `Docs/Evidence/fx-20/PLAY.md`; local tag `fx-comfort-validated`.
 
 **FX-19 technically complete  -  2026-10-19; listening review deferred.** Original aquarium circulation and working-machine loops now follow actual room/source state, with closed-door attenuation and service ducking. Quiet door and native panel-navigation cues share existing transient audio ownership. Five voices total; 25 generated clips. Pause includes a saved machine/ambience volume slider, with safe legacy defaults. Source **76fe297**, revision `fx19-audio-4`. Actual **2277 passed EditMode tests**, **3877 final Windows checks**; build 0 errors / 0 warnings. Exact dry PCM and discontinuous listener output windows are measured; human listening/comfort, physical controls, creative approval and GPU gates remain open. Next: **FX-20 Comfort settings and effect limits**, unstarted. Evidence `Docs/Evidence/fx-19-VALIDATION.md`; controls `Docs/Evidence/fx-19/PLAY.md`; local tag `fx-audio-mix-validated`.
@@ -148,11 +154,11 @@ This ties together discovery, store quality, service, staffing, and automation. 
 Provisional implementation contract:
 
 - The objective board shows progress from the first few days; the ending must not appear as a surprise late requirement.
-- Unlock the event after reaching the final planned store and lab tiers, discovering 9 of the proposed 12 species across all three families (including the three signature species), and completing one ordinary shift with a working automated production-to-sale route. Identify those signature targets early on the objective board.
+- Unlock the event after reaching the final planned store and lab tiers, discovering 18 of the 24 species across all four families (AD.3; previously 9 of 12 across three) (including the three signature species), and completing one ordinary shift with a working automated production-to-sale route. Identify those signature targets early on the objective board.
 - Prepare three designated signature species, one from each family, in protected exhibition displays. Their acquisition is deterministic through research clues and known processes; they cannot be accidentally sold by a worker.
 - Prepare for six clearly listed exhibition purchases using species already unlocked. These are preannounced ordinary customer purchases through the existing queue and checkout, not a new quest-delivery system. Targets and counts are tunable; the event introduces no new service mechanic that day.
 - Complete all six purchases while keeping the three exhibition specimens on display. Failures affect only this attempt: retain upgrades, discoveries, remaining unsold stock, and legitimately earned money; release unpaid reservations. Completed sales stay committed: never restore sold specimens while retaining their payment. Show why the attempt failed and allow another preparation night. No campaign restart or irreversible failure.
-- Completion is awarded once and survives save/load. Free play keeps the upgraded shop and lab. Discovering all 12 species, optional customer requests, alternate layouts, and efficiency challenges are extra goals, not prerequisites for the main ending.
+- Completion is awarded once and survives save/load. Free play keeps the upgraded shop and lab. Completing all 96 journal entries (AD.3), optional customer requests, alternate layouts, and efficiency challenges are extra goals, not prerequisites for the main ending.
 
 Validate this goal with a rough, shortened playable version before building all final content. If business-oriented players find it too collection-heavy, reduce the discovery requirement; if collectors find business steps excessive, shorten those gates. Preserve a clear finish rather than expanding requirements indefinitely.
 
@@ -164,7 +170,7 @@ The following numbers are **planning ceilings and tuning defaults**, not promise
 |---|---|
 | Platform | Offline, single-player Windows PC, keyboard/mouse; one shop and adjoining lab |
 | Room growth | Three store tiers and three lab tiers, including the starting tier; modular extensions of the same location |
-| Discoveries | 12 visibly distinct aquatic species in three families, including the existing three; four culture types total |
+| Discoveries | **Superseded 2026-10-19 (AD.3):** 24 species in four families with four deterministic colour variants each (96 journal entries), including the existing five; four culture types total. Earlier ceiling: 12 species in three families |
 | Production | Culture growing, incubation, and one later conditioning process; a small set of upgrades and automation modules |
 | Shop furniture | Small/large display tables or tank stands, counter, storage; approximately eight reusable décor items |
 | Customers | Four behavior archetypes with shared navigation/transaction systems and varied presentation |
@@ -493,6 +499,28 @@ The user requested this workstream on2026-10-11, including specification/tasks b
 - [ ] FX-G Scoped feedback fixes, final creative acceptance and source/build delivery (FX-24).
 
 Gate: ordinary lab/tank play feels alive and readable; hands/actions are satisfying; motion/sound stay comfortable during repeated work; the existing manual and automated loop remains correct. Planned tasks/labels are not implemented assets, executed tests or accepted art. R08.5 remains pending; do not infer its enjoyment/pacing gate from an FX showcase.
+### UX — Cozy in-world UI redesign (selected 2026-10-19)
+
+Requested by the user on 2026-10-19 for every screen. The authoritative decisions, audit, principles, screen specs, technical plan and tasks are in **UX.1–UX.12 at the end of this file**. Runs before FX-21–23 (see UX.11). Gameplay rules and saves are out of scope.
+
+- [x] UX-00 Audit, questions, specification and mockups.
+- [x] UX-01 User approved the mockups on 2026-10-19.
+- [x] UX-02 UI Toolkit foundation: technically complete 2026-10-20; hands-on mouse check deferred (see UX.13).
+- [ ] UX-03–UX-09 HUD, station cards, planning views, journal/report/pause, feel pass, IMGUI removal and full validation.
+
+Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
+
+### AD — Pocket Aquarium Diorama redesign (selected 2026-10-19)
+
+User-approved art, effects and gameplay redesign. Authoritative decisions, collection scope, visual direction, effects language, gameplay changes and tasks are in **AD.1–AD.7 at the end of this file**. Runs after UX-02; AD-A is a human-reviewed art slice before any rollout.
+
+- [ ] AD-A Art slice (display corner + incubator) and in-game review.
+- [ ] AD-B–AD-D Creatures, characters, rooms and effects rollout.
+- [ ] AD-E Gameplay prototype (wishes, forecast, checkout, stars, tank themes) and playtest.
+- [ ] AD-F Content expansion to 24 species / 96 entries within R09.
+
+Gate: the slice is approved in game before bulk art; gameplay changes are playtested before they replace current behaviour.
+
 ### R09 — Complete progression, collection, and ending
 
 Depends on: R06 tone/sample and R08 reliable loop. Output: a complete rough campaign from new game to credits/free play.
@@ -548,6 +576,24 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-02 technically complete; hands-on mouse check deferred (2026-10-20, Claude)
+
+**State:** UX-00 to UX-02 are done; UX-02 was validated on 2026-10-20 in six numbered runs, the sixth final (record and results in UX.13 and `Docs/Evidence/ux-02-VALIDATION.md`). Local tag `ux02-foundation-validated`; checkpoint `Docs/Evidence/ux-02/checkpoint.json`. The player is `Builds/Windows-6000.3.21f1-ux02-foundation-6`. Open human gate: a physical mouse click on Close and real Esc, E and F9 presses (`Docs/Evidence/ux-02/PLAY.md`), under the deferred-review practice. UX-03 and AD-A are both unblocked; UX-03 is next in the UX order (UX.11), AD-A only if the user picks it.
+
+**Exact next action:** UX-03 HUD (UX.4, acceptance in UX.12). Build the day chip, money chip, next-step line, queue strip, ready pings, floaters, interaction prompt and bubble captions as presenters on `ShopUiRoot`, the way `StationCardPresenter` is. Retire the IMGUI HUD cards UX.4 removes while the preview is on, and keep them unchanged with it off. Copy `Docs/Evidence/ux-02/Invoke-UX02.ps1` to `ux-03` (it takes `-Run N`) with a HUD route that captures night, open, closing and tutorial states at the three sizes, plus the cycle regression.
+
+**Learned in UX-02 validation, apply to every UX task:**
+
+- Set fonts with `-unity-font-definition`, never `-unity-font`: the default runtime theme sets a font definition, which wins when text is drawn. Check the drawn font with `resolvedStyle.unityFontDefinition` (see `DrawnFontName` in `ToolkitUiSmoke.cs`), not `resolvedStyle.unityFont`.
+- UI Toolkit's ScaleWithScreenSize divides by a linear blend of the width and height ratios, not uGUI's log average; `ShopUiLayout.ExpectedPanelSize` matches it (2560×1080 gives a 2194×926 panel).
+- A wrapping label beside other items in a row needs `flex-grow: 1; flex-basis: 0; min-width: 0`, or it keeps its one-line height when it shrinks. Check text fit by measuring the text at its drawn width (`TitleProblem` in `ToolkitUiSmoke.cs`); a label's box can fit while its text spills.
+- Look at every capture. Runs 3 and 4 passed every check while the captures showed the wrong font and a spilling title.
+- The station card sits right of the crosshair and can overlap the near-camera siphon held in the right hand; decide its side with the HUD layout in UX-03/UX-04.
+
+### Current handoff — UX-00 redesign specification (2026-10-19)
+
+AD redesign (AD.1–AD.7) was approved on 2026-10-19 and follows UX-02. UX-00 is complete and the user approved the mockups (UX-01). UX-02 is technically complete (2026-10-20); see the UX-02 handoff above. FX-21 stays unstarted and now follows UX-09 unless the user overrides. The FX-20 handoff below remains accurate for the FX workstream.
+
 ### Current handoff — FX-20 technically complete; hands-on review deferred
 
 FX-00–05, FX-A and FX-07 through FX-20 are technically complete within their bounded assignments. FX-C technical container coverage is recorded by the FX13 checkpoint; this does not close deferred human review or FX-B. The frozen cue/asset contract remains Docs/Design/FX01_CUE_ASSET_CONTRACT.md; latest executed evidence is Docs/Evidence/fx-20-VALIDATION.md. All earlier presentation baselines remain preserved.
@@ -713,6 +759,7 @@ When resuming implementation, select the first unfinished ready task, record its
 |---|---|---|
 | 2026-10-03 | Separate front store and back lab | User confirmed; implemented and verified at `5606dbf` |
 | 2026-10-03 | Night laboratory work, daytime personal shopkeeping, expansion, staff, automation, and comedy | User requirements; night/day and first personal customer checkout now implemented. Expansion, staff, automation and comedy remain planned |
+| 2026-10-19 | Pocket Aquarium Diorama redesign: toon shading, outlines and bloom; large collection (24 species × 4 variants); wishes and forecasts prototyped | User approved Claude's proposal; scope in AD.1–AD.7. Collection size and Exhibition threshold are Claude's tuning defaults |
 | 2026-10-03 | Grand Exhibition main ending; collect-all optional | Recommended design default; user can revise after seeing the rationale/playable goal |
 | 2026-10-03 | 12-species launch ceiling, four cultures, three employee roles, same-location expansions | Provisional scope control; validate before bulk production |
 | 2026-10-03 | One canonical root guide; R01–R11 replace old draft future milestone labels | This document request; preserve earlier files as historical evidence |
@@ -3399,3 +3446,276 @@ Candidates 3-7 corrected only test helpers: the shared native find helper now us
 Human controls and repeated-shift comfort, physical keyboard/mouse/wheel use, listening, creative acceptance and the earlier causal GPU/minimum-spec decision remain open under the user's deferred-review instruction. Native GUI checks use bounded Windows messages to the verified game window. Existing tutorial and campaign gates keep their prior status. FX-21 did not start.
 
 **Next bounded assignment: FX-21 Integrated interruption/ownership QA.** It remains unstarted.
+
+## UX — Cozy in-world UI redesign specification (2026-10-19)
+
+Requested by the user on 2026-10-19 after reviewing every screen: *"very cluttered, unclear, badly designed and overall uncomfortable."* This section is the authoritative scope for the redesign. The milestone entry in section 9 points here. Nothing below is implemented yet; mockups are design input, not proof of native rendering.
+
+### UX.1 — User decisions (2026-10-19)
+
+| Question | User's answer |
+|---|---|
+| Station interaction | **In-world first.** A small card beside the machine; physical siphon actions for dosing and pricing. Full-screen views only for planning (crew, research, layout, automation, journal, report, settings). |
+| HUD density | **Minimal and contextual.** Money, day/clock and one next-step line. Everything else appears when relevant and fades. |
+| Screens in scope | **All of them:** HUD, lab panels, shop panels and meta screens. |
+| Foundation | **Rebuild on Unity UI Toolkit** and rewrite the UI tests that click fixed coordinates. Game rules and saves stay untouched. |
+| Look | **Cozy diegetic:** paper price tags, an order clipboard, enamel lab labels and gauges, chunky rounded shapes matching the warm shop and quirky lab. |
+| Copy tone | **Short and a bit silly.** Verb-first, 1–4 words per button, a small joke where it costs nothing. Rule explanations live in Help. |
+| Numbers | **Visual first, numbers on hover.** Faces, pips and bars; exact values on hover or while holding Alt. |
+| Game feel | **Punchy but quick.** Snappy pop-in, coin fly-up, sale ka-ching, celebratory day report; nothing delays input; Reduced motion respected. |
+| Controller | **Keyboard/mouse only, controller-ready.** Every screen gets a defined focus order so gamepad can be added cheaply later. |
+| Process | **Spec and mockups first.** The user approves mockups before any Unity code changes. |
+
+These answers supersede two older constraints: the `.agents/skills/unity-game-ui-ux` line "No ... UI Toolkit migration is implied", and the HUD comment that panel anchors are "deliberately retained for established input scenarios". Coordinate-based UI tests are rewritten, not preserved.
+
+### UX.2 — Audit of the current UI (evidence for the redesign)
+
+Reviewed `Runtime/ShopHud.cs` and its panel partials plus actual captures under `Docs/Evidence/fx-20/`, `fx-18/`, `fx-17/`, `fx-16/` and `fx-11/` (720p).
+
+1. **One centred form for everything.** All 21 `ShopPanel` values draw into one fixed 580×518 card at screen centre with a scroll view. It hides the station being used, and important actions fall below the fold (Pause: *Save and resume* appears only after scrolling past slap settings).
+2. **Copy written for the test harness.** Panels explain safety guarantees instead of the next action ("Unsupported mixtures never consume resources", "Sales minus staff wages: 12 credits / other investments excluded", an empty "RESEARCH / SAVED INSTALLATIONS" header). The " / " separator is used everywhere ("Pip / cashier", "Close / ESC", "Dismiss Pip / no wage refund").
+3. **No hierarchy.** Nearly every button is the same mint pill; primary, secondary and destructive actions look alike. Heading, body and fine-print sizes are too close together.
+4. **HUD crowding and duplication.** Up to ten persistent cards: day, "NO RUSH / Untimed preparation", next step, credits, rep/appeal, "Ready to create", shop & crew, discovery, siphon, permanent controls bar. Siphon fill also appears on the held tool.
+5. **Physical actions buried in menus.** Dosing is +Bloom/−Bloom buttons; pricing is −5/−1/+1/+5 plus four lines of text reactions.
+6. **World signs compete with the HUD.** Floating labels such as "2/2 / READY / COLL" and "MIST RESEARCH / E" clip and add noise.
+7. **Technical lock-in.** IMGUI with hand-placed rectangles on a letterboxed 1280×720 canvas; tests click fixed coordinates, freezing the layout.
+
+### UX.3 — Design principles (apply to every screen)
+
+1. **Keep the world visible.** Using a station never covers that station. Station cards sit beside it; planning views dim the world rather than replace it.
+2. **One job per surface.** Each card answers one question ("What do I make?", "What price?", "Who's waiting?"). If it needs a scroll bar at 1280×720, split it.
+3. **Three button levels.** One *primary* action per card (filled teal), *secondary* actions (outlined), *destructive* actions (coral, behind a confirm step or hold). Disabled buttons say why on hover.
+4. **Verb-first labels, no " / ".** 1–4 words: "Start", "Serve", "Open shop", "Hire Pip". Key hints are separate key-cap glyphs, not text.
+5. **Show state, not guarantees.** Status words, pips, rings and faces. Safety rules and edge-case explanations move to Help (F1) and tooltips.
+6. **Visual first, numbers on demand.** Every bar, pip or face exposes its exact value on hover or while Alt is held.
+7. **Feedback within 100 ms, never blocking.** Presentation follows the authoritative result (existing FX ownership rule) and never delays the next command.
+8. **Comfort.** Reduced motion and Effects detail settings scale or remove UI motion. Nothing important is shown by colour alone.
+
+### UX.4 — HUD
+
+**Always visible (only these):**
+- **Top-left day chip:** sun/moon icon, "Day 3", and the trading clock inside the same chip ("4:12 left"). At night it reads "Night 3 · no rush" with no timer card.
+- **Top-right money:** coin icon and credits. Sale income flies from the counter into it and ticks up.
+- **Bottom-centre next step:** one line ("Mix a Bloom and a Flow in the lab"). It fades after 10 s without change and returns when the objective changes or F1 is pressed. During the tutorial it stays.
+
+**Contextual (appears, then fades):**
+- **Queue strip** under the day chip while customers wait: one face per customer with a patience ring; it turns coral when patience is low.
+- **Ready pings:** "Pondlet ready" toast plus an edge-of-screen arrow when the source is off-screen (incubator, vat, worker blocked).
+- **Rep and appeal:** small "+2 ★" floater at the moment it changes; full values live in the day report and journal.
+- **Discovery stamp:** a large one-time card with the new silhouette, then it moves into the journal.
+- **Comedy captions:** speech bubbles anchored to the speaking character, not a screen-fixed bar.
+
+**Removed:** the "NO RUSH" card, "Ready to create" card (replaced by ready pings), persistent "Shop & crew" card (replaced by the queue strip and worker status in the crew view), HUD siphon card (the tool readout stays), and the permanent controls bar (key hints sit on the interaction prompt; F1 shows the full control sheet).
+
+**Interaction prompt:** a small tag beside the crosshair: key-cap glyph, station name, one live status word. Examples: `[E] Incubator · 7s`, `[Hold LMB] Bloom grower · full`, `[F] Slap · ready`.
+
+### UX.5 — Station cards (in-world)
+
+Common pattern: a card up to 380 px wide (1080p reference) anchored beside the station's screen position, flipped to the other side when near an edge and clamped on-screen. Opening a card frees the cursor; Escape, E or stepping away closes it. Simulation keeps running, as today. Each card has a title strip in the station's material (enamel label for lab, paper tag or clipboard for shop), a status line, the content, and one primary action.
+
+- **Incubator:** recipe tiles for known species (silhouette, culture pips, time). Clicking a tile doses from the siphon in one step; manual doses use culture chips with − / + and the mouse wheel. A shortage shows the missing culture in coral with "Grab Flow at the grower". Primary: **Start · 10s**. Secondary: *Return doses*. While growing, the card shows a progress ring and the fish silhouette filling in.
+- **Display tank (price tag):** a paper tag with the price large; − and + buttons (Shift for ±5, wheel works); a row of four customer faces (happy = bargain/fair, neutral = pricey but buys, frown = too expensive, wallet-X = over budget) and "3 of 4 will buy". Hover a face for the exact reaction and limit. Small link: *Use standard (10)*. An empty tank shows ready stock to place as tiles.
+- **Counter (order clipboard):** waiting customers as rows (face, species, agreed price, patience ring). Primary: **Serve**. Day controls as a large switch: at night **Open shop · 8:00** with warnings above it ("1 display empty"); by day *Close early* with a confirm step. Links to Crew, Arrange and last report.
+- **Specimen rack, conditioning vat, research bench, collector/doser:** same pattern. One status line, contents as tiles, one primary action ("Store", "Start vat · 20s", "Research Spark · 48", "Turn on").
+
+### UX.6 — Planning views (full screen, world dimmed)
+
+Notebook/clipboard metaphor, tabs along the top, no scrolling at 1280×720 for the default tab. Escape always backs out one level.
+
+- **Crew:** three portrait cards (Pip cashier, Nori stocker, Moss lab technician). Each card: what they do in one line, wage per duty period, an **On duty** toggle, current status chip ("Serving", "Idle: no stock"). Pause and Dismiss live in a "…" menu; Dismiss needs a confirm.
+- **Automation:** one row per known species: target stepper (1–9), destination picker, on/off, status chip with the blocked reason in plain words.
+- **Arrange:** catalogue grid (thumbnail, price, appeal, slots) with tabs Furniture / Decor / Owned / Lab. "Place" enters the existing placement mode; placement hints move to a bottom key bar shown only during placement.
+- **Research:** the four cultures as cards on a short path (Bloom, Flow, Spark, Mist): requirements as discovery stamps, cost, one **Research** button. Siphon MK II sits on the same screen as equipment.
+- **Journal:** tabs Creatures / Customers / Shop. Creatures is a grid of silhouettes; discovered ones show recipe pips, family and standard price; undiscovered ones show the clue. Customers shows the four portraits with budget, patience and favourites as icons. Shop shows reputation tier and appeal with what the next tier gives.
+- **Day report:** a receipt slip. Headline income counts up; three stats (sold, visitors, missed); a missed-sales line only lists non-zero reasons; one tip for tonight; primary **Next night**. Wages and other details on hover.
+- **Pause:** left column Resume / Settings / Help / Save & quit. Settings tabs: Controls (sensitivity, slap key), Sound (master, ambience, humor), Comfort (reduced motion, effects detail, reduced gags). Reload save and New game sit under a "Save file" section with confirm steps. Dev-only buttons (presentation sample, comedy preview) appear only in development builds.
+- **Welcome and tutorial help:** ported into the same visual language. The TUT lesson logic and saved state are unchanged; remaining TUT-11–14 stays deferred.
+
+### UX.7 — Copy rules and example rewrites
+
+Rules: verb-first; buttons 1–4 words; status words, not sentences; no " / " separators; one joke at most per card and never on a warning; explanations go to Help or tooltips; numbers always carry their unit icon.
+
+| Current | New |
+|---|---|
+| Begin incubation / 10 sec | Start · 10s |
+| Return all doses safely | Return doses |
+| Doses reserve room in your siphon until incubation begins. Unsupported mixtures never consume resources. | (Help tooltip) |
+| Close for the night... | Close early |
+| Open for day 1 | Open shop |
+| Continue preparation / ESC | Next night |
+| Dismiss Pip / no wage refund | Dismiss Pip… (confirm: "Pip packs up. Today's wage stays paid.") |
+| Pause work / no refund | Pause |
+| Use standard price / 10 credits | Use standard (10) |
+| Too expensive, won't buy | Nope, too pricey |
+| SHOP CREDITS | (coin icon only) |
+| Untimed preparation | no rush |
+| Placement cancelled. Your room layout and credits are unchanged. | Placement cancelled |
+| Creature stored. The incubator is free for the next recipe. | Stored on rack 1 |
+
+### UX.8 — Visual language
+
+- **Palette:** keep `ShopUiTheme` (Paper, Ink, Teal, Coral, Honey, Muted) and the culture colours (Bloom coral-orange, Flow blue, Spark gold, Mist lilac). Add a darker paper for nested surfaces and a kraft tan for tags. Contrast for text at least 4.5:1.
+- **Materials:** shop surfaces are paper tags with a string hole, clipboards and receipt slips; lab surfaces are enamel labels with rivets, glass gauges and dials. Rounded chunky corners, a soft drop shadow, no thin hairlines.
+- **Type:** a rounded display face for headings and numbers and a sturdy humanist sans for body, both open-licensed (proposal: Baloo 2 and Nunito, SIL OFL) with provenance recorded under R11.3. At the 1920×1080 reference: headings 32–40 px, body 20 px, small 16 px, nothing below 14 px. UI scale setting 90–130% under Comfort.
+- **Icons:** one consistent set (culture drops, coin, star, sun/moon, faces, key caps) drawn as simple filled shapes; no emoji.
+
+### UX.9 — Game feel
+
+- Card open: 120 ms scale 0.94→1 with slight overshoot plus a soft paper or enamel click; close in 80 ms.
+- Button press: 60 ms squash and a tick sound; disabled press: 2 px shake and a dull thunk with the reason tooltip.
+- Price change: the tag wiggles and faces swap with a small bounce.
+- Sale: ka-ching, coins fly from the counter into the money chip (≈450 ms), money ticks up.
+- Discovery: stamp-down animation with the existing discovery sound.
+- Day report: tallies count up over 600 ms (any input skips to the end), then the tip slides in.
+- Reduced motion: no scale/shake/fly; fades only. Effects detail Low: no particles on UI.
+- All UI feedback reuses the existing FX ownership rule: it plays only after the authoritative result and never delays the next command.
+
+### UX.10 — Technical plan
+
+- **Framework:** UI Toolkit runtime (`UIDocument`, UXML, USS) with one `PanelSettings` at 1920×1080 reference, scale-with-screen, match 0.5. Layout uses flex; no absolute pixel layout except world-anchored cards.
+- **Presenters:** each screen gets a small presenter that reads `ShopSession`/`GameModel` state and calls the existing command methods (`SetSpeciesPrice`, `OpenForDay`, serve, dose, hire, etc.). UI never mutates money, stock or saves directly; all current command validation stays authoritative.
+- **World anchoring:** cards follow `Camera.WorldToScreenPoint` of the station's interaction anchor, clamped and side-flipped; they never cover the anchor itself.
+- **Input:** Input System UI module; cursor freed while a card or planning view is open; every screen has a defined focus order and a Back action, so gamepad support can be added later.
+- **Strings:** all player-facing text in one string table (keys per screen) so wording can change without code edits; no translation is claimed.
+- **Migration:** the IMGUI path stays behind a development toggle until each replacement reaches parity, then is deleted in UX-09. The FX-18 IMGUI accents are re-implemented as USS transitions.
+- **Tests:** rule, save, ledger and staff tests are untouched. UI tests switch from coordinate clicks to named-element queries (`Q<Button>("serve")`) and real click events. Existing validation scenarios keep their gameplay assertions.
+
+### UX.11 — Ordering relative to other open work
+
+FX-21–23 (integrated interruption, native visual/input/performance validation and tester candidate) validate the UI that this milestone replaces. **Claude's scheduling decision (2026-10-19), open to user override:** run UX-02 through UX-09 before FX-21–23, so that integrated QA validates the final UI once. FX-24, R08.5, TUT-11–14 and all open human gates keep their status.
+
+### UX.12 — Tasks and acceptance
+
+- [x] UX-00 Audit, user questions, this specification and mockups of HUD, incubator, display tank price tag, counter, crew, day report and pause. Documentation and mockups only; no runtime change.
+- [x] UX-01 **User approved the mockups** on 2026-10-19 ("approve on the UX01 start UX 02"); no changes requested.
+- [x] UX-02 (technically complete 2026-10-20; hands-on mouse check deferred; see UX.13) Foundation: UI Toolkit setup, theme USS from `ShopUiTheme`, fonts with provenance, scaler, cursor/input handling, presenter pattern, string table, named-element test helper. Accept: an empty themed card opens and closes from a station at 720p/1080p/2560×1080 with real input.
+- [ ] UX-03 HUD: day chip, money chip, next step, queue strip, ready pings, floaters, interaction prompt, bubble captions; remove retired cards. Accept: captures of night/open/closing/tutorial states; no HUD element overlaps the crosshair area or another element.
+- [ ] UX-04 Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
+- [ ] UX-05 Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
+- [ ] UX-06 Planning views: crew, automation, arrange, research.
+- [ ] UX-07 Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
+- [ ] UX-08 Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
+- [ ] UX-09 Delete the IMGUI path, finish UI test migration, full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop.
+
+Milestone gate: a new player can run a full night/day loop without reading a paragraph; every station is used without covering it; the HUD shows at most three persistent elements; all gameplay, save and staff tests still pass; the user reports the UI as clear and comfortable.
+
+## AD — Pocket Aquarium Diorama: art, effects and gameplay redesign (2026-10-19)
+
+Proposed by Claude on 2026-10-19 after an audit of current captures (concept canvas "Evolution Shop Redesign Proposal", eight boards). The user replied: *"in the final game i want a lot more than a few (15) collectables it need to take time to get them all so its ok, other than that yes to the rest."* This section is the authoritative scope for the redesign. Concept sketches are direction, not final art or proof of native rendering.
+
+### AD.1 — User decisions (2026-10-19)
+
+| Question | Decision |
+|---|---|
+| Overall look | **Yes: Pocket Aquarium Diorama.** Keep the cozy aquatic shop and quirky lab, the room split and opaque door; push to chunky toy-like shapes, warm practical light and glowing creatures. |
+| Toon shading, outlines and bloom | **Yes.** Two-step soft toon lighting with rim light; thin dark outline on creatures and characters only; URP bloom plus one colour-grading Volume per room. This supersedes the R06.5 "first pass" materials and the FX.10 rule that glow must read "without assuming global bloom". |
+| Colour variants | **Yes, and the collection must be large and take time to complete.** See AD.3. |
+| Wish bubbles, tomorrow's forecast and the other gameplay changes | **Yes**, prototyped with placeholder art and playtested before they replace current behaviour. |
+| Process | Prove the look on one slice (display corner + incubator) in game before rolling it out. |
+
+### AD.2 — Audit findings (current build captures)
+
+1. Expanded rooms are empty tile boxes (lab tier 3 especially).
+2. Day and night look the same: no window, flat light; the rhythm is only visible on the HUD clock.
+3. Customers are peg figures (tube limbs, no hands, tiny faces); hats are the only differentiator.
+4. Creatures are small and can be low contrast (teal Driftwing in teal water inside a large incubator ring).
+5. Crew and customers share one body and read the same at a glance.
+6. The siphon's glass jar fills the lower right of the view; world signs are too small to read.
+
+### AD.3 — Collection scope change (user decision, replaces section 5 "Discoveries")
+
+The user wants far more than 15 collectables and a long completion. Claude's tuning default, open to revision after playtests:
+
+- **24 species in 4 families of 6** (Brookkin, Sparkline, Airfin and a fourth Mist-led family), including the existing five. Each family shares one Blender rig; species differ by mesh, signature feature and idle habit.
+- **4 colour variants per species = 96 journal entries.** Classic, Sunny (+Bloom), Deep (+Flow) and Shimmer (needs the conditioning vat or a later process). Variants are deterministic and learnable from recipes and journal clues; no required entry depends on a random roll (section 6.5 still applies). Variants are material/texture swaps, not new meshes.
+- **Main ending stays the Grand Exhibition.** Unlock moves from "9 of 12 species" to **18 of 24 species** across all four families, including the signature species. Completing all 96 entries is an optional long-term goal, not a prerequisite.
+- **Pacing goal:** collect-all should take well beyond reaching the ending. No campaign-hour promise; measure in R10 playtests. Higher variants and late families should be gated by research, facilities and processes, so collecting stays directed rather than grindy.
+- **Market role:** Collectors pay more for entries they are missing; wishes (AD.6) can ask for a variant.
+
+### AD.4 — Visual direction
+
+- **Pillars:** chunky and squishy shapes; light tells the time; creatures are the jewels (only cultures and creatures get full saturation and glow); everything reacts (squash/stretch, fish look at the player, machines wobble on completion).
+- **Lighting keys:** morning open, midday busy, closing amber lamps, night tank glow. The shop gets a street window; the lab keeps its cool mint grade.
+- **Creatures:** about twice today's on-screen size; eyes a third of the head with highlights; one signature trick and one idle habit per species; family water tints so no species blends in (Driftwing lilac on warm sand water). Face shape keys: blink, happy, surprised, puffed.
+- **Characters:** about 2.5 heads tall; mitten hands with a thumb; body shape per type (Casual round, Bargain tall/thin, Collector pear, Big spender wide coat). Crew always wear shop teal, customers never do. One humanoid rig; body types as shape keys; props on sockets; four reactions per type.
+- **Rooms:** each tier adds a set piece (shop: window bench and hanging bowls, then a feature tank; lab: overhead pipe gallery, then a glass dome for Spark/Mist). Glowing glass pipes carry each culture's colour to the incubator. Fewer, bigger signs painted onto objects. Station positions, footprints, colliders, aisles and save IDs are unchanged; new art is decorative children.
+- **Siphon:** slimmer, side-mounted chamber that shows carried culture colours; roughly a third less screen area.
+
+### AD.5 — Effects language
+
+- Six hand-drawn flipbook shapes on the built-in particle system: bubble, swirl, sparkle, puff, ripple, coin. No new package.
+- Hatch hero moment (about 1.4 s, never blocks input): wind-up, 0.08 s presentation-only freeze beat (game clock keeps running), pop with bubble cloud, pose with NEW stamp, settle. Repeat hatches use wind-up, pop and settle.
+- Sale: scoop into bag, bag ties, coins arc to the money chip, customer hop. Slap: impact star, spinning hat, brief cartoon birds. Refusal or blocked: small grey puff and shake only.
+- Water: moving caustics on tank floors and walls, wobbling surface, fish bubble trails.
+- Kept: the existing FX pool, cue ownership and cancellation rules, Reduced motion and Low detail (no freeze beat, flash or shake in Reduced motion).
+
+### AD.6 — Gameplay changes (prototype first, then playtest)
+
+- **Wish bubbles:** customers arrive with an icon wish (species, colour/variant, or a trait such as "glows"). Exact match gives a tip and a star point; close match leads to haggling. Uses existing archetypes, reservations and checkout; a wish is a preference, not a quest.
+- **Tomorrow's forecast:** the night receipt previews tomorrow's visitors so the untimed night has a goal.
+- **Hands-on checkout:** a one-second scoop-and-bag with the siphon replaces the Serve button; Pip still serves automatically when hired.
+- **Shop stars:** a 1–5 star storefront sign replaces "Rep 0/100"; each star unlocks something visible (customer type, bigger budgets, the Exhibition at 5). Underlying reputation rules stay.
+- **Tank themes:** decor sets a tank theme; matching species sell for more and attract certain customers.
+- **Day length:** test 5–6 minute days with one rush event; decide from measured playtests.
+- Kept: manual and automated paths, no fail states, Grand Exhibition ending.
+
+### AD.7 — Order, tasks and gates
+
+UX-02–UX-09 (approved UI redesign) run first. AD-A can start once UX-02 (UI Toolkit foundation) is in.
+
+- [ ] AD-A Art slice: display corner + incubator at final quality: toon shading, outlines, bloom, room Volumes, shop window lighting keys, redesigned Pondlet and Casual visitor, full hatch moment, measured cost on the user's PC. **Gate: user reviews it in game before AD-B.**
+- [ ] AD-B Creatures: family rigs, the five existing species redone, face shape keys, signature tricks, water tints, variant material atlas.
+- [ ] AD-C Characters: one humanoid rig, four customer bodies, three crew, hands, four reactions each.
+- [ ] AD-D Rooms and effects: tier set pieces, lab pipe network, slim siphon, flipbook effects and sounds everywhere.
+- [ ] AD-E Gameplay prototype: wishes, forecast, hands-on checkout, stars, tank themes, day length test. **Gate: user playtest.**
+- [ ] AD-F Content expansion: remaining species to 24 across four families and all 96 variant entries, folded into R09.3 and R09 progression gating.
+
+Rules: original art only (Blender, local; no paid generation or bought assets without authorization); gameplay code stays authoritative; every phase ends in a playable build with real 1280×720 and 1920×1080 captures; performance is measured before effects spread; comfort settings scale every new moment.
+
+### UX.13 — UX-02 implementation record (written 2026-10-19, validated 2026-10-20)
+
+**Decisions (Claude, within the approved plan):**
+
+- The UI Toolkit path is an **opt-in development preview** until each screen reaches parity: created only in Editor/development builds; on with `-evolutionToolkitUi` or the **F9** key (F9 ignored in validation mode). Release builds and every existing validation route are unchanged; the root is created in validation only for `-evolutionToolkitUi` or `-evolutionToolkitUiSmoke`.
+- With the preview on, station panels (Incubator, Tank, Counter, Upgrade, StorageRack, Conditioning) show the new card **instead of** the IMGUI panel; planning panels stay IMGUI. The card is a frame only (title, status, placeholder, Close); controls arrive in UX-04/05.
+- PanelSettings is created at runtime (1920×1080 reference, ScaleWithScreenSize, MatchWidthOrHeight 0.5, sorting order 100). Resources load by path from `Resources/EvolutionShopUI/` because the scene is generated in code.
+- Fonts: Baloo 2 ExtraBold (display/buttons), Nunito SemiBold (body) and ExtraBold (chips/keycaps), static instances made with fontTools from Google Fonts' variable files; OFL 1.1, provenance in `UI/Fonts/PROVENANCE.md`.
+- The card closes through the session's ordinary `SetPanel(None)` (Close button, Esc via the existing back path, or E after the opening frame); cursor and movement policy stay owned by `SetPanel`.
+- Scheduling (already in UX.11/AD.7): UX-02–UX-09 before FX-21–23; AD-A art slice may start after UX-02.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):**
+
+| Path | Purpose |
+|---|---|
+| `Runtime/UI/ShopUiRoot.cs` | Runtime PanelSettings + UIDocument, theme/tokens, presenter host, F9 toggle |
+| `Runtime/UI/ShopUiPresenter.cs` | Presenter base: reads session state, calls existing session commands only |
+| `Runtime/UI/StationCardPresenter.cs` | World-anchored station card frame; named elements `es-station-card`, `es-card-title`, `es-card-status`, `es-card-body`, `es-card-close`, `es-card-keycap`, `es-card-hint` |
+| `Runtime/UI/ShopUiLayout.cs` | Pure placement (right of anchor, flip left, clamp, hidden-anchor slot) and expected panel size |
+| `Runtime/UI/ShopUiStrings.cs` | String table loader/validator (`Resources/EvolutionShopUI/strings.en.json`) |
+| `Runtime/UI/ShopUiTestDriver.cs` | Dev-only: find by name, submit a button through panel event dispatch, on-screen check |
+| `Runtime/ShopToolkitUi.cs` | ShopSession partial: create root, `SetToolkitUiActive`, `ToolkitAnchorFor`, panel/station mapping |
+| `Runtime/ToolkitUiSmoke.cs` | MilestoneSmoke partial: `-evolutionToolkitUiSmoke` route (scaling, fonts, card open/placement/close, counter, classic fallback, captures) |
+| `Resources/EvolutionShopUI/ShopTheme.tss`, `ShopTokens.uss`, `StationCard.uxml`, `strings.en.json` | Theme (imports default runtime theme), tokens/components, card template, English strings |
+| `UI/Fonts/*.ttf`, `OFL-*.txt`, `PROVENANCE.md` | Fonts and licences |
+| `Tests/RuntimeEditMode/ShopUiFoundationTests.cs` | 14 EditMode tests (16 cases): placement, scaling, strings, resources/template parts, panel mapping, font files |
+
+**Edits to existing files (4 lines):** `Runtime/ShopSession.cs` (calls `InitializeToolkitUi()` before `initialized = true`; `NoteToolkitStation(station)` in `Interact`), `Runtime/ShopHud.cs` (`DrawPanel()` skipped when `ToolkitOwnsPanel(Panel)`), `Runtime/MilestoneSmoke.cs` (flag, dispatch and scenario label for `-evolutionToolkitUiSmoke`). Also `.agents/skills/unity-game-ui-ux/SKILL.md` now records the approved UI Toolkit rebuild.
+
+**Validation script:** `Docs/Evidence/ux-02/Invoke-UX02.ps1 -Run N`: full EditMode suite, development build `ux02-foundation-N`, the `-evolutionToolkitUiSmoke` route at 1280×720, 1920×1080 and 2560×1080, and the `-evolutionCycleSmoke` regression at 720p. Each run has its own folders, player and `summary-N.json`; existing ones are refused.
+
+**Validation, 2026-10-20 (Claude Opus 5.5, no delegation).** Run 6 is final: **2336/2336 EditMode** (16 new), build **0 errors / 0 warnings**, card route **28/28 checks** at each size, cycle regression **123/123**, no runtime errors. Panel 1920×1080 at 720p and 1080p, 2194×926 at 2560×1080. Full record: `Docs/Evidence/ux-02-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-02/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| 1 | Compile error CS0104: `Cursor` ambiguous with `UnityEngine.UIElements.Cursor` in `ToolkitUiSmoke.cs` | `using Cursor = UnityEngine.Cursor;` |
+| 2 | 2560×1080 failed the panel-size check (2194×926 measured, 2217×935 expected); 720p, 1080p and cycle passed | `ExpectedPanelSize` and its test use UI Toolkit's linear blend, not uGUI's log average |
+| 3 | All passed, but captures showed the theme's default font: `-unity-font` loses to the theme's `-unity-font-definition`, and the check read `unityFont` | Stylesheet sets `-unity-font-definition`; the route checks the drawn font of title, body and button |
+| 4 | All passed, but captures showed *Sales counter* spilling out of its strip at 1080p and 2560×1080 | Title `flex-grow: 1; flex-basis: 0; min-width: 0`, status chip `flex-shrink: 0`; the route measures each title's text at its drawn width and forces a real long name (*Spark grower / Siphon upgrade*) |
+| 5 | Deliberate check: the new route against the old title style failed at all three sizes (text 97–98 px in a 49–50 px box) | Fix restored |
+| 6 | Final: everything passed | — |
+
+The handoff's risks resolved as: `NavigationSubmitEvent` does activate the Close button; `-unity-font` resolved the TTFs but wasn't drawn (fixed above); `:root` tokens apply; `CameraTransformWorldToPanel` places the card beside the anchor at all three sizes (never flipped, never covering the anchor); the 2560×1080 window was not clamped on this PC.
+
+**Still open:** physical mouse click on Close and real Esc, E and F9 presses (`Docs/Evidence/ux-02/PLAY.md`); the card can overlap the held siphon at the right of the view; long station names still carry " / " from the world labels until UX-04/UX-05 titles come from the string table. No UI performance cost is claimed.
+
+**Session housekeeping:** `Temp/` holds this session's scratch copies (`ux_spec.md`, `ad_spec.md`, `AGENTS.md.pre-ux.bak`, `AGENTS.md.pre-ad.bak`); safe to delete. Concept canvases for the UI mockups and the AD proposal are in the user's Claude artifacts, not in the repo.

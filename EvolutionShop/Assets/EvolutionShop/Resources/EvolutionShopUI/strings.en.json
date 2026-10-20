@@ -1,0 +1,15 @@
+{
+    "entries": [
+        { "key": "card.close", "text": "Close" },
+        { "key": "card.keycap.back", "text": "Esc" },
+        { "key": "card.hint", "text": "Back  ·  F9 for the classic panels" },
+        { "key": "card.preview", "text": "New card frame. This station's controls move in here in UX-04." },
+        { "key": "card.status.preview", "text": "Preview" },
+        { "key": "card.title.Incubator", "text": "Incubator" },
+        { "key": "card.title.Tank", "text": "Display tank" },
+        { "key": "card.title.Counter", "text": "Counter" },
+        { "key": "card.title.Upgrade", "text": "Research bench" },
+        { "key": "card.title.StorageRack", "text": "Specimen rack" },
+        { "key": "card.title.Conditioning", "text": "Conditioning vat" }
+    ]
+}
