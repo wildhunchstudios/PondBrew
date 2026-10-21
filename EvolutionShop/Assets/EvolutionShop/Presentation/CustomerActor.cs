@@ -45,6 +45,7 @@ namespace EvolutionShop
         bool reducedSlap;
         float animationTime, captionBase = 2.03f, captionLift, captionLiftTarget;
         Transform upperBody;
+        ShopCharacterVisual dioramaVisitor;
         ShopWorld customerWorld;
         string customerVisitId;
         FxOwnerToken customerFxOwner;
@@ -283,7 +284,16 @@ namespace EvolutionShop
                 if (!IsSlapReacting && slapStars) slapStars.gameObject.SetActive(false);
             }
             ApplyBodyPose(0, 0);
+            if (dioramaVisitor) dioramaVisitor.TickDioramaFace(DioramaMood, dt, reduced);
         }
+
+        /// <summary>AD-A: the kit visitor's face follows what it is doing: studying prices, liking a deal, a refusal or a slap.</summary>
+        public DioramaVisitorMood DioramaMood =>
+            IsSlapReacting ? DioramaVisitorMood.Ouch :
+            customerReaction == FxCustomerReaction.Refused ? DioramaVisitorMood.Shocked :
+            customerReaction == FxCustomerReaction.Accepted || customerReaction == FxCustomerReaction.Checkout || Phase == CustomerPhase.Paid ? DioramaVisitorMood.Happy :
+            Phase == CustomerPhase.Browsing ? DioramaVisitorMood.Haggle : DioramaVisitorMood.Content;
+        public ShopCharacterVisual DioramaVisitor => dioramaVisitor;
 
         void BuildCustomerJoints()
         {
@@ -384,7 +394,10 @@ namespace EvolutionShop
             if (look == "casual")
             {
                 body = Group("Visitor appearance", transform, Vector3.zero);
-                var sample = body.gameObject.AddComponent<ShopCharacterVisual>(); sample.Build(false);
+                var sample = body.gameObject.AddComponent<ShopCharacterVisual>();
+                // AD-A: with the diorama look on, the kit visitor replaces the classic Casual (same joints, same poses).
+                if (DioramaLook.Active && sample.BuildDioramaCasual()) dioramaVisitor = sample;
+                else sample.Build(false);
                 leftLeg=sample.LeftLeg; rightLeg=sample.RightLeg; leftArm=sample.LeftArm; rightArm=sample.RightArm;
                 bodyBaseScale=body.localScale;
             }

@@ -88,7 +88,7 @@ namespace EvolutionShop
             var pose = FxGrowthMotion.Resolve(progress, time, display.Seed, quiet);
             var root = display.Creature.transform;
             root.localPosition = pose.Position; root.localRotation = Quaternion.Euler(pose.Angles);
-            root.localScale = pose.Scale * (CreatureVisual.IncubationScale(display.SpeciesId) / .62f);
+            root.localScale = pose.Scale * (CreatureVisual.IncubationScale(display.SpeciesId) / .62f) * display.Creature.ContainerScale(true);
             display.Creature.AnimateIncubation(time + display.Seed, pose.Effort, quiet);
         }
         void ResetGrowthFx()

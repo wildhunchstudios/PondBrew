@@ -30,8 +30,8 @@ namespace EvolutionShop
         void RefreshHatcheryLamp(IncubatorPhase phase)
         {
             if (!hatcheryLamp) return;
-            hatcheryLamp.sharedMaterial = phase == IncubatorPhase.Ready ? hatcheryReady :
-                phase == IncubatorPhase.Incubating ? hatcheryGrowing : hatcheryIdle;
+            hatcheryLamp.sharedMaterial = DioramaFor(phase == IncubatorPhase.Ready ? hatcheryReady :
+                phase == IncubatorPhase.Incubating ? hatcheryGrowing : hatcheryIdle);
         }
 
         void BuildResearchBenchVisual(Transform station)

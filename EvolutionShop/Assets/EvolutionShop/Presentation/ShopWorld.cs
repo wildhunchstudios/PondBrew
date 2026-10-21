@@ -56,6 +56,8 @@ namespace EvolutionShop
             public float PondletPlacedAge = -1, PondletGlanceAge = -1;
             public uint PondletSequence;
             public bool Incubator;
+            /// <summary>AD-A: the two fixed display tanks show the kit Pondlet larger; other containers keep its classic size.</summary>
+            public bool DioramaLarge;
             public TextMesh Status;
             public TextMesh StorageStatus;
             public HashSet<Material> StorageMaterials;
@@ -89,6 +91,7 @@ namespace EvolutionShop
             DisposeResearchPresentation();
             DisposeStoragePresentation();
             DisposePlacementPresentation();
+            DisposeDiorama();
             foreach (var material in fontMaterials.Values) if (material) Destroy(material);
         }
 
@@ -410,7 +413,7 @@ namespace EvolutionShop
             }
             Faceplate(r, title, new Vector3(0, .58f, -.68f), shell);
             status[kind] = Text(r, "EMPTY  /  1 SPACE", new Vector3(0, .31f, -.69f), .047f, Color.white);
-            displays[id] = new Display { Root = Group("Resident", r, new Vector3(0, 1.56f, 0)), Seed = seed };
+            displays[id] = new Display { Root = Group("Resident", r, new Vector3(0, 1.56f, 0)), Seed = seed, DioramaLarge = true };
             for (int i = 0; i < 4; i++)
             {
                 var bubble = Shape(r, "Air bubble", PrimitiveType.Sphere, new Vector3(.72f, 1.16f + i * .21f, .29f), Vector3.one * (.025f + i * .008f), glass);
@@ -632,6 +635,8 @@ namespace EvolutionShop
             r.localScale = Vector3.one * (display.Incubator ? CreatureVisual.IncubationScale(species) : species == "driftwing" ? .59f : .69f);
             display.Creature = r.gameObject.AddComponent<CreatureVisual>();
             display.Creature.Build(species);
+            if (display.Creature.IsDiorama && (display.Incubator || display.DioramaLarge))
+                r.localScale *= display.Creature.ContainerScale(display.Incubator);
             ResetPondletIdentity(display);
             if (display.Incubator) PoseLabCreature(display, lastTime, -1, false);
             else PoseResident(display, 0, fxReducedMotion || !fxEnabled);
@@ -721,6 +726,7 @@ namespace EvolutionShop
             TickLabFx(time, dt);
             TickAdvancedLabFx(time, dt);
             TickRoomAtmosphere(dt);
+            TickDiorama(dt);
         }
 
         static void AnimateCells(List<Transform> cells, float time, float seed)

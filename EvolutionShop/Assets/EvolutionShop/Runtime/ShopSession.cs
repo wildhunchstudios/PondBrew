@@ -122,6 +122,7 @@ namespace EvolutionShop
             World.Refresh(Model); World.SetToolUpgrade(Model.UpgradeOwned && !BaselinePreview);
             ResetUiFeedback();
             InitializeToolkitUi();
+            InitializeDiorama();
             initialized = true;
             SetPanel(ValidationMode && !restartStartup ? ShopPanel.None : ShopPanel.Welcome);
             Debug.Log("EVOLUTION_RUNTIME " + Application.dataPath + " save=" + SavePath);
@@ -158,6 +159,7 @@ namespace EvolutionShop
             TickUiFeedback();
             var keyboard = Keyboard.current;
             ApplyFxViewPolicy();
+            TickDioramaInput(keyboard);
             bool placementAtFrameStart = PlacementActive;
             bool gameplayAtFrameStart = Panel == ShopPanel.None && !placementAtFrameStart;
             if (placementAtFrameStart) HandlePlacementInput(keyboard);

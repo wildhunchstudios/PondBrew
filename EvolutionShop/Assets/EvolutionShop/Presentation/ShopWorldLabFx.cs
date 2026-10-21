@@ -92,6 +92,8 @@ namespace EvolutionShop
         {
             if (labHatchRemaining <= 0 || fxPool == null || !fxCues.IsValid(labHatchOwner) ||
                 !displays.TryGetValue("incubator", out var display)) return;
+            // AD-A: the diorama look releases its hand-drawn bubble cloud instead (ShopWorldDioramaHatch).
+            if (dioramaActive) return;
             float age = LabHatchAge - FxHatchChoreography.Release(labHatchFirst);
             if (age < 0) return;
             int count = FxHatchRelease.Count(labHatchFirst, fxPool.ActionLimit < 64, fxReducedMotion);
@@ -116,12 +118,19 @@ namespace EvolutionShop
         {
             if (lastModel.Incubator.Phase == IncubatorPhase.Incubating) { PoseGrowingCreature(display, LabGrowthProgress, time); return; }
             bool quiet = IncubationQuiet;
+            if (dioramaActive && PoseDioramaHatchCreature(display, time, age, first, quiet)) return;
             var pose = FxHatchChoreography.Resolve(age, first, quiet);
             float t = time * .78f + display.Seed, calm = pose.IdleWeight;
             var root = display.Creature.transform;
             root.localPosition = quiet ? Vector3.zero : new Vector3(Mathf.Sin(t)*.04f*calm, Mathf.Sin(t*1.8f)*.085f*calm + pose.Lift, 0);
             root.localRotation = quiet ? Quaternion.Euler(0,-90,0) : Quaternion.Euler(0,-90 + Mathf.Cos(t)*20*calm, Mathf.Sin(t*1.6f)*5*calm + pose.Roll);
-            root.localScale = pose.Scale * CreatureVisual.IncubationScale(display.SpeciesId);
+            root.localScale = pose.Scale * CreatureVisual.IncubationScale(display.SpeciesId) * display.Creature.ContainerScale(true);
+            if (display.Creature.IsDiorama)
+            {
+                // Waiting to be collected: a contented face that watches the player.
+                display.Creature.SetDioramaFace(.3f, 0, 0);
+                if (dioramaCamera) display.Creature.SetLookTarget(dioramaCamera.transform.position);
+            }
             display.Creature.AnimateIncubation(time+display.Seed,.7f,quiet,age,first);
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -152,6 +161,7 @@ namespace EvolutionShop
         {
             labHatchEmitted = 0; labHatchOwner = default; labHatchSeed = 0;
             labHarvestSource = null; labDoseRemaining = labHatchRemaining = labModuleRemaining = 0;
+            ClearDioramaHatch();
             ResetCollectionFx();
             ResetDoseFx(); ResetGrowthFx();
             foreach (var needle in labNeedles) if (needle) needle.localRotation = Quaternion.identity;

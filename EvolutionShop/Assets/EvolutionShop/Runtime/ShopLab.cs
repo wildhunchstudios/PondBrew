@@ -4,15 +4,7 @@ namespace EvolutionShop
 {
     public sealed partial class ShopSession
     {
-        bool showLabFacilities;
-
-        public bool OpenLabMenu()
-        {
-            if (!OpenPlacementMenu()) return false;
-            showLabFacilities = true; showDecorCatalogue = false; showOwnedFurniture = false;
-           
-            return true;
-        }
+        public bool OpenLabMenu() => OpenPlacementMenu();
 
         public bool BeginFacilityPlacement(string id)
         {

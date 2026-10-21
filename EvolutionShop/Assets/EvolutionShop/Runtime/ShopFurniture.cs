@@ -6,16 +6,9 @@ namespace EvolutionShop
     public sealed partial class ShopSession
     {
         string pendingFurnitureSaleId;
-        bool showOwnedFurniture;
         public string PendingFurnitureSaleId => pendingFurnitureSaleId;
 
-        public bool OpenOwnedFurnitureMenu()
-        {
-            if (!OpenPlacementMenu()) return false;
-            showLabFacilities = false;
-            showOwnedFurniture = true; showDecorCatalogue = false;
-            return true;
-        }
+        public bool OpenOwnedFurnitureMenu() => OpenPlacementMenu();
 
         bool DisplayHasReservation(string itemId)
         {
@@ -33,7 +26,7 @@ namespace EvolutionShop
             if (!PreflightFurnitureChange(candidate)) return false;
             var result = Layout.TryStore(Model, Cycle.Phase, itemId);
             if (!result.Success) { RestoreCurrentLayout(); Notify(PlacementFailureText(result.Failure)); return false; }
-            Focused = null; selectedTank = "tank-a"; showOwnedFurniture = true;
+            Focused = null; selectedTank = "tank-a";
             World.ApplyLayout(Layout); World.Refresh(Model); SaveNow();
             Notify("Furniture stored. Place it again for free from Owned furniture.");
             return true;
@@ -60,7 +53,7 @@ namespace EvolutionShop
             int refund = ShopLayout.DefinitionResalePrice(item.Value.DefinitionId);
             var result = Layout.TrySell(Model, Cycle.Phase, id);
             if (!result.Success) { RestoreCurrentLayout(); Notify(PlacementFailureText(result.Failure)); return false; }
-            CancelFurnitureSale(); Focused = null; selectedTank = "tank-a"; showOwnedFurniture = true;
+            CancelFurnitureSale(); Focused = null; selectedTank = "tank-a";
             World.ApplyLayout(Layout); World.Refresh(Model); SaveNow();
             Notify("Furniture sold / " + refund + " credits returned. Its ownership is removed.");
             return true;

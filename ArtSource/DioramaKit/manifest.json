@@ -1,0 +1,263 @@
+{
+  "schema": 1,
+  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice)",
+  "origin": {
+    "author": "Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)",
+    "external_sources": [],
+    "license": "Original project work; no third-party source or asset license",
+    "paid_generation": false,
+    "external_uploads": false
+  },
+  "blender_version": "5.0.1",
+  "source_script": "Tools/Art/create_diorama_kit.py",
+  "source_script_sha256": "7439e53de563ad32cb44ffcd6c8a5a9b008ba672d01f7beac50ae9cd51794970",
+  "blend_source": "ArtSource/DioramaKit/EvolutionShop_DioramaKit.blend",
+  "scale": "1 unit = 1 metre",
+  "up": "Unity +Y",
+  "front": {
+    "DioramaPondlet": "local -Z (creature)",
+    "DioramaCasualVisitor": "local +Z (character)"
+  },
+  "export_settings": {
+    "format": "FBX",
+    "forward": "-Z",
+    "up": "Y",
+    "global_scale": 1,
+    "bake_space_transform": true,
+    "animations": false,
+    "shape_keys": true,
+    "modifiers": "none (shape keys require unmodified meshes)",
+    "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly",
+    "hierarchy": "every part directly under the asset root and its own pivot; the visitor face parts are reparented onto Head pivot in game"
+  },
+  "unity_import_expected": {
+    "globalScale": 1,
+    "useFileScale": true,
+    "importAnimation": false,
+    "addCollider": false,
+    "importBlendShapes": true,
+    "material_mapping": "DK_* slot names map to runtime toon materials"
+  },
+  "materials": {
+    "DK_PondletCoral": {
+      "srgb_hex": "#FF6F57"
+    },
+    "DK_PondletFin": {
+      "srgb_hex": "#FF9E6E"
+    },
+    "DK_PondletBelly": {
+      "srgb_hex": "#FFD9A0"
+    },
+    "DK_PondletLip": {
+      "srgb_hex": "#FF8FA0"
+    },
+    "DK_Blush": {
+      "srgb_hex": "#FF9EA0"
+    },
+    "DK_EyeWhite": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_Pupil": {
+      "srgb_hex": "#1B413E"
+    },
+    "DK_Glint": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_CasualKnit": {
+      "srgb_hex": "#F08A3C"
+    },
+    "DK_Collar": {
+      "srgb_hex": "#FFF6DF"
+    },
+    "DK_Trousers": {
+      "srgb_hex": "#2B3B4F"
+    },
+    "DK_Shoes": {
+      "srgb_hex": "#3B2A22"
+    },
+    "DK_Skin": {
+      "srgb_hex": "#B9774E"
+    },
+    "DK_Beret": {
+      "srgb_hex": "#1B2B33"
+    },
+    "DK_Nub": {
+      "srgb_hex": "#D66145"
+    },
+    "DK_Tote": {
+      "srgb_hex": "#E9D6A8"
+    },
+    "DK_Hair": {
+      "srgb_hex": "#3B2A22"
+    },
+    "DK_Mouth": {
+      "srgb_hex": "#5A1F22"
+    },
+    "DK_Button": {
+      "srgb_hex": "#D66145"
+    }
+  },
+  "assets": [
+    {
+      "triangles": 10280,
+      "vertices": 5176,
+      "bounds_unity_m": {
+        "min": [
+          -0.32086601853370667,
+          -0.25996193289756775,
+          -0.40700000524520874
+        ],
+        "max": [
+          0.32086601853370667,
+          0.3444867730140686,
+          0.671610951423645
+        ],
+        "size": [
+          0.6417320370674133,
+          0.6044487059116364,
+          1.0786109566688538
+        ]
+      },
+      "id": "DioramaPondlet",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaPondlet.fbx",
+      "sha256": "2eba946706b306747e79c0ca8e813828636110c4ef21a4c8317f765775ac7183",
+      "bytes": 224332,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_Blush",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_PondletBelly",
+        "DK_PondletCoral",
+        "DK_PondletFin",
+        "DK_PondletLip",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 16592,
+      "vertices": 8374,
+      "bounds_unity_m": {
+        "min": [
+          -0.39800000190734863,
+          -0.0020000040531158447,
+          -0.35999998450279236
+        ],
+        "max": [
+          0.39800000190734863,
+          1.6890000104904175,
+          0.3539971113204956
+        ],
+        "size": [
+          0.7960000038146973,
+          1.6910000145435333,
+          0.713997095823288
+        ]
+      },
+      "id": "DioramaCasualVisitor",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCasualVisitor.fbx",
+      "sha256": "c0dedc8ccc08e6ff0d4d0b46d5aa04e7e33b2aa8a393c86dcde8bd9085aa870c",
+      "bytes": 298332,
+      "objects": [
+        "Blush",
+        "Body",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_Beret",
+        "DK_Blush",
+        "DK_Button",
+        "DK_CasualKnit",
+        "DK_Collar",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Hair",
+        "DK_Mouth",
+        "DK_Nub",
+        "DK_Pupil",
+        "DK_Shoes",
+        "DK_Skin",
+        "DK_Tote",
+        "DK_Trousers"
+      ]
+    }
+  ],
+  "flipbook": {
+    "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaFlipbook.png",
+    "size": [
+      512,
+      768
+    ],
+    "cell_px": 128,
+    "columns": 4,
+    "rows_top_to_bottom": [
+      "bubble",
+      "swirl",
+      "sparkle",
+      "puff",
+      "ripple",
+      "coin"
+    ],
+    "sha256": "99ce3c0bc0cbd894b1c591abd9aa8da01c24c25f236024ebfd9ca17c76e9fb5c",
+    "drawing": "White fills and dark ink outline drawn from wobbled signed-distance shapes, 3x supersampled; particles tint the fill."
+  },
+  "renders": [
+    "ArtSource/DioramaKit/DioramaKit_Pondlet_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Pondlet_Side.png",
+    "ArtSource/DioramaKit/DioramaKit_Casual_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Casual_Face.png"
+  ],
+  "validation_limits": [
+    "Workbench review renders show shape and colour only, not the in-game toon shading, outline or bloom.",
+    "In-game scale, fit inside containers and posing are verified by the AD-A route, not here."
+  ]
+}

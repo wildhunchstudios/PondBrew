@@ -19,7 +19,12 @@ namespace EvolutionShop
         public void Build(string speciesId)
         {
             species = speciesId;
-            if (speciesId == "pondlet") { BuildPondlet(); CaptureExpressions(); Animate(0); return; }
+            if (speciesId == "pondlet")
+            {
+                // AD-A: with the diorama look on, the kit Pondlet replaces the classic one wherever a Pondlet appears.
+                if (DioramaLook.Active && BuildDioramaPondlet()) { Animate(0); return; }
+                BuildPondlet(); CaptureExpressions(); Animate(0); return;
+            }
             if (speciesId == "lanternfin") { BuildLanternfin(); CaptureExpressions(); Animate(0); return; }
             if (speciesId == "driftwing") { BuildDriftwing(); CaptureExpressions(); Animate(0); return; }
 
@@ -216,6 +221,7 @@ namespace EvolutionShop
             if (commonMaterials != null) foreach (var material in commonMaterials) if (material) ReleaseCreatureAsset(material);
             if (pondletFinMesh) ReleaseCreatureAsset(pondletFinMesh);
             if (pondletMaterials != null) foreach (var material in pondletMaterials) if (material) ReleaseCreatureAsset(material);
+            ReleaseDioramaMaterials();
             if (driftwingMaterials != null) foreach (var material in driftwingMaterials) if (material) ReleaseCreatureAsset(material);
             if (lanternMaterials == null) return;
             // Storage may already have released these private materials when retiring a resident.

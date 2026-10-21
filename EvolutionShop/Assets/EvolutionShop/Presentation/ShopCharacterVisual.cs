@@ -7,7 +7,7 @@ namespace EvolutionShop
 
     /// <summary>Original jointed sample, shared by the casual visitor and employee study.
     /// Local poses only: navigation, work, inventory and payment have separate owners.</summary>
-    public sealed class ShopCharacterVisual : MonoBehaviour
+    public sealed partial class ShopCharacterVisual : MonoBehaviour
     {
         public Transform LeftLeg { get; private set; }
         public Transform RightLeg { get; private set; }
@@ -255,6 +255,6 @@ namespace EvolutionShop
         public void PreviewComedyForValidation(ComedyKind kind,float elapsed,bool reduced,int variant)
         {if(built)ApplyComedyPose(FxComedyMotion.Sample(kind,elapsed,reduced,variant));}
 #endif
-        void OnDestroy() { foreach(var material in materials) if(material) Destroy(material); }
+        void OnDestroy() { foreach(var material in materials) if(material) Destroy(material); ReleaseDiorama(); }
     }
 }

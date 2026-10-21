@@ -65,6 +65,7 @@ namespace EvolutionShop
             if (!FxParticleRequest.Finite(time)) time = 0;
             effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
             AnimateExpression(time, reduced);
+            if (IsDiorama) AnimateDioramaFace(time, reduced);
             float stroke = (time + pondletIdentityPhase) * 3.8f;
             float wave = Mathf.Sin(stroke), petal = Mathf.Sin(stroke - .55f);
             if (MimicPoseActive && !reduced) wave = petal = Mathf.Sin(Mathf.Floor(mimicTime * 2) * 1.7f);

@@ -187,10 +187,24 @@ namespace EvolutionShop
                 {
                     var token = fxCues.Find(display.Habitat.TankId);
                     if (fxCues.Play(token, FxCueId.PondletGlance, ++display.PondletSequence, FxCueOrigin.Manual, .6f, 1))
-                    { display.PondletGlanceAge = 0; display.PondletCooldown = 8; PondletGlanceCount++; }
+                    {
+                        display.PondletGlanceAge = 0; display.PondletCooldown = 8; PondletGlanceCount++;
+                        // AD-A signature trick: the kit Pondlet blows a bubble at whoever lingers at its tank.
+                        if (dioramaActive && dioramaCamera) DioramaTrickBubble(display.Creature, dioramaCamera.transform.position);
+                    }
                 }
             }
             var pose = PondletMotion.Resolve(display.PondletClock, display.PondletPhase, fxReducedMotion || !fxEnabled, display.PondletPlacedAge, display.PondletGlanceAge);
+            if (display.Creature.IsDiorama)
+            {
+                bool calm = fxReducedMotion || !fxEnabled;
+                if (display.DioramaLarge) pose.Position *= CreatureVisual.DioramaSwimAmplitude;
+                // Idle habit: between darts it bobs nose-down.
+                if (!calm) pose.Angles.x -= (1 - pose.Effort) * (5 + 3 * Mathf.Sin(display.PondletClock * 2.3f));
+                bool trick = display.PondletGlanceAge >= 0;
+                display.Creature.SetDioramaFace(trick ? .75f : .2f, 0, trick ? .3f : 0);
+                if (dioramaCamera) display.Creature.SetLookTarget(dioramaCamera.transform.position);
+            }
             display.Creature.transform.localPosition = pose.Position;
             display.Creature.transform.localRotation = Quaternion.Euler(pose.Angles);
             display.Creature.AnimatePondlet(display.PondletClock, pose.Effort, fxReducedMotion || !fxEnabled, display.PondletGlanceAge);
