@@ -75,7 +75,7 @@ namespace EvolutionShop
             shop.Tutorial.ObservePriceViewed(); shop.World.Refresh(shop.Model);
             Check(shop.OpenForDay() && shop.ActiveTutorialLesson == TutorialLesson.Serve, "Ordinary opening retains first-sale lesson and prior manual display receipt");
             Check(shop.TryGetTutorialGuidance(out target) && target.Station && target.Station.TankId == "tank-a" &&
-                shop.TutorialObjectiveForDisplay.Contains("stock"), "A decoy in tank B cannot hide the need to restock the exact first-sale candidate");
+                shop.TutorialObjectiveForDisplay == shop.ToolkitUi.Strings.Get("tut.obj.restock"), "A decoy in tank B cannot hide the need to restock the exact first-sale candidate / " + shop.TutorialObjectiveForDisplay);
             shop.Player.View.transform.LookAt(target.Position);
             yield return TutorialCapture("483-recovery-restock-exact-candidate");
             Ok(shop.Model.ReserveStockTransfer("recovery-exact", "nori", slots[0], "tank-a", candidate), "Reserve the exact candidate for Nori without moving it");

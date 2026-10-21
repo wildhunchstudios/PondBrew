@@ -6,7 +6,7 @@ namespace EvolutionShop
 {
     /// <summary>
     /// UX-07 screens (UX.6): welcome, help, journal, day report and pause, over the dimmed world. Like the planning
-    /// notebook it follows ShopSession.Panel and shows while one of these panels is open and the preview is on. Help and
+    /// notebook it follows ShopSession.Panel and shows while one of these panels is open. Help and
     /// the journal sit on a notebook sheet with a title, Back (Esc) and a footer line; the welcome card, the receipt and
     /// the pause cards draw their own shapes on a stage, after the approved mockups.
     /// </summary>
@@ -41,7 +41,7 @@ namespace EvolutionShop
         public ReportView Report { get; private set; }
         public PauseView Pause { get; private set; }
 
-        /// <summary>Panels these screens draw; the classic IMGUI panel must not draw them while the preview is on.</summary>
+        /// <summary>Panels these screens draw.</summary>
         public static bool Handles(ShopPanel panel) => ShopSession.IsScreenPanel(panel);
 
         protected override VisualElement Build(VisualTreeAsset template)

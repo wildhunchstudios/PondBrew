@@ -83,7 +83,7 @@ namespace EvolutionShop
         public void SelectTutorialHelpLesson(TutorialLesson lesson)
         {
             if (Panel != ShopPanel.TutorialHelp || lesson < TutorialLesson.Orient || lesson > TutorialLesson.NextPlan) return;
-            TutorialUpgradeHelpOpen = false; TutorialHelpLesson = lesson; panelScroll = Vector2.zero;
+            TutorialUpgradeHelpOpen = false; TutorialHelpLesson = lesson;
         }
         public void CloseTutorialHelp()
         {

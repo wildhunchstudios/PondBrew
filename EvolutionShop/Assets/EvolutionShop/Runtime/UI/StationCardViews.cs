@@ -592,11 +592,16 @@ namespace EvolutionShop
             confirm = NewBox(After, "es-confirm", ConfirmName);
             NewLabel(confirm, "es-counter-confirm-text", "es-confirm__text", Strings.Get("card.counter.confirm"));
             var confirmButtons = NewBox(confirm, "es-confirm__buttons");
-            NewButton(confirmButtons, KeepName, "es-button--secondary es-button--compact", Strings.Get("card.counter.keep"), () => confirming = false);
+            NewButton(confirmButtons, KeepName, "es-button--secondary es-button--compact", Strings.Get("card.counter.keep"), () =>
+            {
+                confirming = false;
+                if (Shop.Panel == ShopPanel.CloseShop) Shop.SetPanel(ShopPanel.Counter);
+            });
             NewButton(confirmButtons, CloseNowName, "es-button--danger es-button--compact", Strings.Get("card.counter.closeNow"), () =>
             {
                 confirming = false;
                 Shop.CardCloseEarly();
+                if (Shop.Panel == ShopPanel.CloseShop) Shop.SetPanel(ShopPanel.Counter);
             });
             var links = NewBox(After, "es-links");
             NewButton(links, CrewName, "es-link", Strings.Get("card.counter.crew"), () => Shop.CardCrew());
@@ -629,6 +634,8 @@ namespace EvolutionShop
             Shop.FillCounterCard(State);
             var s = State;
             bool night = s.Phase == HudDayPhase.Night;
+            // ShopPanel.CloseShop asks at once, as the classic close panel did (UX-09).
+            if (Shop.Panel == ShopPanel.CloseShop) confirming = true;
             if (s.Phase != HudDayPhase.Open) confirming = false;
             int waiting = 0;
             foreach (var r in s.Rows) if (r.AtCounter) waiting++;

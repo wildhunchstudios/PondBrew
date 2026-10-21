@@ -51,11 +51,5 @@ namespace EvolutionShop
         {
             audioDoorKnown = false; audioDoor = null; sound?.StopMixAudio();
         }
-        uint NativeUiAudioSequence() => sound ? sound.ServiceRequestSequence : 0;
-        void NativeUiNavigationAudio(uint sequence, ShopPanel previousPanel)
-        {
-            if (sound && fxHasFocus && previousPanel != Panel && !PlacementActive &&
-                Panel != ShopPanel.Arrange && Panel != ShopPanel.Presentation) sound.UiNavigation(sequence);
-        }
     }
 }

@@ -170,6 +170,8 @@ namespace EvolutionShop
             sound.PlayComedy(kind,PreviewComedy.Variant,HumorVolume);
             return PreviewComedy.Active;
         }
+        /// <summary>The beat the comedy study last played (or is playing); the study view names it.</summary>
+        public ComedyKind ComedyPreviewKind => previewKind;
         public void StopComedyPreview()
         {
             PreviewComedy.Cancel();if(sound)sound.StopComedy();
@@ -184,46 +186,6 @@ namespace EvolutionShop
                 if(PreviewComedy.Kind==ComedyKind.Belch)World.ShowComedyBubble(new Vector3(0,1.5f,-2.35f),PreviewComedy.Elapsed,PreviewComedy.Reduced);
             }
             else{World.HideComedyBubble();World.AnimatePresentationSample(CharacterSamplePose.Idle,0,0);}
-        }
-        static string ComedyTitle(ComedyKind kind)
-        {
-            switch(kind)
-            {
-                case ComedyKind.Slap:return "Cartoon slap";
-                case ComedyKind.Fart:return "Suspicious fart";
-                case ComedyKind.Complaint:return "Ridiculous complaint";
-                case ComedyKind.Belch:return "Incubator belch";
-                case ComedyKind.WorkerCelebration:return "Worker celebration";
-                default:return "Fish copies a customer";
-            }
-        }
-        void DrawComedyCaption()
-        {
-            if(Panel!=ShopPanel.None || !Comedy.Active)return;
-            string caption=WorkerComedyCaption+Comedy.Caption;
-            hudMeasure.text=caption;
-            float width=Mathf.Clamp(centerStyle.CalcSize(hudMeasure).x+36,548,644);
-            float left=686-width*0.5f;
-            float captionHeight=Mathf.Max(24,HudTextHeight(caption,centerStyle,width-36));
-            HudCard(new Rect(left,112,width,captionHeight+35),coral);
-            GUI.Label(new Rect(left+18,118,width-36,captionHeight),caption,centerStyle);
-            GUI.Label(new Rect(left+18,121+captionHeight,width-36,21),"BACKSPACE: skip gag  /  service and movement stay available",controlsStyle);
-        }
-        void DrawComedyPreview()
-        {
-            Box(new Rect(24,22,1232,83),ink);
-            GUI.Label(new Rect(44,29,1100,23),"COMEDY STUDY / YOUR SHOP IS PAUSED / NO SALES OR WORK ARE PERFORMED",smallStyle);
-            GUI.Label(new Rect(44,53,1090,42),ComedyTitle(previewKind),titleStyle);
-            Box(new Rect(24,470,1232,226),ink);
-            GUI.Label(new Rect(44,481,1190,45),PreviewComedy.Active?PreviewComedy.Caption:"Pick a beat to preview. Repeat it for the alternate caption and sound.",centerStyle);
-            for(int i=0;i<6;i++)
-            {
-                var kind=(ComedyKind)i;
-                if(GUI.Button(new Rect(44+(i%3)*397,534+(i/3)*43,384,36),ComedyTitle(kind),buttonStyle))PlayComedyPreview(kind);
-            }
-            GUI.Label(new Rect(44,622,800,25),"Uses your Humor volume and Reduced gags settings. Live workers celebrate completed jobs when idle.",smallStyle);
-            if(GUI.Button(new Rect(44,653,280,32),"Skip / BACKSPACE",buttonStyle))StopComedyPreview();
-            if(GUI.Button(new Rect(914,653,320,32),"Back to pause / ESC",buttonStyle))SetPanel(ShopPanel.Pause);
         }
     }
 }

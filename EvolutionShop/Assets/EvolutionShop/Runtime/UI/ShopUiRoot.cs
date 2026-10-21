@@ -1,13 +1,12 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace EvolutionShop
 {
     /// <summary>
-    /// UX-02 UI Toolkit root. Owns a runtime PanelSettings (1920x1080 reference, scale with screen, match 0.5),
-    /// the shared theme and tokens, and the presenters. It is presentation only. During migration it exists
-    /// in Editor/development builds as an opt-in preview: -evolutionToolkitUi or F9 turns it on.
+    /// The game's UI (UX-02 to UX-09). Owns a runtime PanelSettings (1920x1080 reference, scale with screen, match 0.5),
+    /// the shared theme, tokens and code-drawn icons, and the presenters. It is presentation only. Every build creates it at
+    /// start-up and it stays on: since UX-09 there is no other UI and no preview toggle.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ShopUiRoot : MonoBehaviour
@@ -25,6 +24,7 @@ namespace EvolutionShop
         public const string HudLayerName = "es-hud-layer";
         public const string PlanningLayerName = "es-plan-layer";
         public const string ScreenLayerName = "es-screen-layer";
+        public const string StudyLayerName = "es-study-layer";
         public const string FeelLayerName = "es-feel-layer";
         public static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
         public const float ScreenMatch = 0.5f;
@@ -36,23 +36,30 @@ namespace EvolutionShop
         GameObject documentObject;
 
         public bool Ready { get; private set; }
-        public bool Active { get; private set; }
+        /// <summary>The UI is on whenever it loaded; kept as a name the presenters and routes already read.</summary>
+        public bool Active => Ready;
         public string LoadProblem { get; private set; }
         public ShopUiStrings Strings { get; private set; } = ShopUiStrings.Empty;
         public StationCardPresenter StationCard { get; private set; }
         public HudPresenter Hud { get; private set; }
         public PlanningViewPresenter Planning { get; private set; }
         public ScreenPresenter Screens { get; private set; }
+        /// <summary>UX-09: the development builds' presentation and comedy studies (ShopPanel.Presentation).</summary>
+        public StudyPresenter Study { get; private set; }
         /// <summary>UX-08 feel: animations, UI sounds, button presses and the disabled-press tip.</summary>
         public UiFeel Feel { get; private set; }
         /// <summary>No feel animation, coin flight, money count or receipt count-up is running (validation waits on this).</summary>
         public bool Settled => Feel == null || (Feel.Motion.Idle && (Hud == null || Hud.FeelSettled) && (Screens == null || Screens.Report == null || !Screens.Report.Counting));
         public VisualElement Root => document != null ? document.rootVisualElement : null;
         public PanelSettings Settings => settings;
+        /// <summary>The code-drawn icons (coin, star, sun and moon, cultures, flask, leaf) the HUD, cards and notebook show.</summary>
+        internal ShopUiTheme Icons { get; private set; }
+        internal Texture2D Icon(ShopUiTheme.Symbol symbol) => Icons != null ? Icons.IconTexture(symbol) : null;
 
-        public void Initialize(ShopSession owner, bool active)
+        public void Initialize(ShopSession owner)
         {
             shop = owner;
+            Icons = new ShopUiTheme();
             Strings = ShopUiStrings.LoadDefault();
             var theme = Resources.Load<ThemeStyleSheet>(ThemeResource);
             var tokens = Resources.Load<StyleSheet>(TokensResource);
@@ -101,6 +108,10 @@ namespace EvolutionShop
             var screenLayer = new VisualElement { name = ScreenLayerName, pickingMode = PickingMode.Ignore };
             screenLayer.AddToClassList("es-layer");
             root.Add(screenLayer);
+            // UX-09: the development studies sit over the screens; the world they show stays undimmed.
+            var studyLayer = new VisualElement { name = StudyLayerName, pickingMode = PickingMode.Ignore };
+            studyLayer.AddToClassList("es-layer");
+            root.Add(studyLayer);
             // The HUD layer comes first, so station cards draw above it.
             var hudLayer = new VisualElement { name = HudLayerName, pickingMode = PickingMode.Ignore };
             hudLayer.AddToClassList("es-layer");
@@ -122,38 +133,23 @@ namespace EvolutionShop
             Planning.Bind(shop, planningLayer, null, Strings);
             Screens = new ScreenPresenter();
             Screens.Bind(shop, screenLayer, null, Strings);
+            Study = new StudyPresenter();
+            Study.Bind(shop, studyLayer, null, Strings);
             Ready = true;
-            SetActive(active);
         }
 
-        public void SetActive(bool active)
-        {
-            Active = active && Ready;
-            if (!Active)
-            {
-                StationCard?.Hide(); Hud?.Hide(); Planning?.Hide(); Screens?.Hide();
-                Feel?.Reset();
-                // The research path exists only in the notebook; without it the bench's classic panel holds research.
-                if (shop != null && shop.Panel == ShopPanel.Research) shop.SetPanel(ShopPanel.Upgrade);
-            }
-        }
-
-        /// <summary>True when this root draws the given panel, so the IMGUI path must not.</summary>
-        public bool OwnsPanel(ShopPanel panel) => Active && (StationCardPresenter.Handles(panel) || PlanningViewPresenter.Handles(panel) || ScreenPresenter.Handles(panel));
+        /// <summary>True when one of the presenters draws the given panel.</summary>
+        public bool OwnsPanel(ShopPanel panel) => Active && (StationCardPresenter.Handles(panel) || PlanningViewPresenter.Handles(panel) || ScreenPresenter.Handles(panel) || StudyPresenter.Handles(panel));
 
         void LateUpdate()
         {
             if (!Ready || shop == null) return;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            // Validation routes control the preview explicitly; F9 is for hands-on comparison only.
-            var keyboard = Keyboard.current;
-            if (!shop.ValidationMode && keyboard != null && keyboard.f9Key.wasPressedThisFrame) SetActive(!Active);
-#endif
             // The feel clock moves first, so whatever a presenter starts this frame starts at this frame's time.
             Feel.Advance(Time.unscaledDeltaTime);
             Hud.Refresh();
             Planning.Refresh();
             Screens.Refresh();
+            Study.Refresh();
             StationCard.Refresh();
             Feel.Tick();
         }
@@ -168,11 +164,15 @@ namespace EvolutionShop
             Planning = null;
             Screens?.Unbind();
             Screens = null;
+            Study?.Unbind();
+            Study = null;
             Feel?.Unbind();
             Feel = null;
             if (documentObject) Destroy(documentObject);
             if (settings) Destroy(settings);
-            Ready = false; Active = false;
+            Icons?.Dispose();
+            Icons = null;
+            Ready = false;
         }
     }
 }

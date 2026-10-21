@@ -136,9 +136,8 @@ namespace EvolutionShop
             Check(shop.Tutorial.CaptureSave().reportAcknowledged && shop.ActiveTutorialLesson == TutorialLesson.NextPlan,
                 "Leaving the qualifying report in the next night records acknowledgement and offers a next plan");
             Check(shop.OpenTutorialHelp(), "Open optional next-plan help without requiring an unaffordable purchase");
+            // The help screen shows the whole plan at once (UX-07); the IMGUI panel needed a second, scrolled capture.
             yield return TutorialCapture("406-tutorial-next-plan");
-            shop.ScrollPanel(10000);
-            yield return TutorialCapture("406-tutorial-next-plan-finish");
             Check(shop.SaveNow(), "Save final lesson before handoff fault injection");
             beforeFile = File.ReadAllText(shop.SavePath); beforeTutorial = TutorialState(); beforeModel = shop.Model;
             TutorialBlockSave();

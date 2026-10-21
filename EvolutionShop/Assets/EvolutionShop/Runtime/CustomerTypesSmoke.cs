@@ -70,10 +70,8 @@ namespace EvolutionShop
             AimAt(new Vector3(-0.6f, 0.2f, -1.2f), (nav.QueueSpot(0) + nav.QueueSpot(1)) * .5f + Vector3.up * 1.2f);
             yield return Capture("50-two-customers-queue");
             yield return EnterCounter();
+            // The counter card lists the whole queue without scrolling (UX-04); the IMGUI panel needed a scrolled capture.
             yield return Capture("51-counter-queue");
-            shop.ScrollPanel(10000);
-            yield return Capture("51b-counter-queue-scrolled");
-            shop.ScrollPanel(0);
             yield return ServeNext("The bargain hunter at the front");
             Check(collector.Phase == CustomerPhase.Queued && shop.Model.GetTank("tank-b").HasValue, "Serving the front leaves the collector's order untouched");
             yield return WaitFor(() => customers.QueuePlaceOf(collector) == 0 && Flat(ActorPosition(collector), nav.QueueSpot(0)) < .5f, 12,
@@ -226,8 +224,7 @@ namespace EvolutionShop
                 "The day report reconciles 16 visitors: " + expectedSales + " sales for " + expectedRevenue + ", 2 too expensive, 1 no stock, 1 impatient, 2 interrupted, 1 closed");
             yield return Capture("57-two-visitor-day-report");
             shop.SetPanel(ShopPanel.Journal);
-            shop.ScrollPanel(10000);
-            yield return null;
+            yield return UiPress(JournalView.TabName(JournalTab.Customers), "The journal's Customers tab");
             yield return Capture("59-journal-customers");
             shop.SetPanel(ShopPanel.None);
 

@@ -114,43 +114,5 @@ namespace EvolutionShop
         string StaffPaymentLine() => Staff.PaidDay==Cycle.DayNumber ?
             Staff.PaidWage+" credits paid for preparation night + trading day "+Cycle.DayNumber+"." :
             "Off duty for day "+Cycle.DayNumber+" / "+ShopStaff.CashierWage+" credits needed at night. You can work manually.";
-
-        void DrawStaffPanel()
-        {
-            Heading("Your shop crew");
-            GUILayout.BeginHorizontal();
-            Button("Nori / stocker",()=>OpenStockerMenu());
-            Button("Moss / lab technician",()=>OpenTechnicianMenu());
-            GUILayout.EndHorizontal();
-            Space();
-            Text("Pip / cashier");
-            Small("Serves queued customers while you grow and restock. You can still check out any order yourself.");
-            Text(ShopStaff.CashierWage+" credits per duty period / no hiring fee");
-            Small("Covers preparation night and the following trading day. Scheduled staff are paid at each new night if you have enough cash. Started wages are not refundable.");
-            Space();
-            Text(Cashier.Status);
-            Small(StaffPaymentLine());
-            bool night=Cycle.Phase==ShopDayPhase.Night;
-            if (!night) Small("Hire, change schedules and pay wages during night preparation.");
-            if (!Staff.Hired)
-                StaffButton("Hire Pip / initially off schedule",night,()=>HireCashier());
-            else
-            {
-                if (Staff.Scheduled)
-                    StaffButton("Stop recurring schedule",night,()=>SetCashierScheduled(false));
-                else
-                    StaffButton(Staff.PaidDay==Cycle.DayNumber ? "Schedule Pip / this period already paid" : "Schedule Pip / pay "+ShopStaff.CashierWage+" credits",night,()=>SetCashierScheduled(true));
-                if (Staff.Scheduled && Staff.PaidDay!=Cycle.DayNumber)
-                    StaffButton("Pay "+ShopStaff.CashierWage+" credits / start this duty period",night && !Staff.Paused && Model.Currency>=ShopStaff.CashierWage,()=>PayCashierDuty());
-                StaffButton(Staff.Paused ? "Resume work" : "Pause work / no refund",true,()=>SetCashierPaused(!Staff.Paused));
-                StaffButton("Dismiss Pip / no wage refund",night,()=>DismissCashier());
-            }
-            Space();
-            Button("Back to the sales counter",()=>SetPanel(ShopPanel.Counter));
-        }
-        void StaffButton(string label,bool enabled,Action action)
-        {
-            bool previous=GUI.enabled;GUI.enabled=previous&&enabled;Button(label,action);GUI.enabled=previous;
-        }
     }
 }

@@ -68,12 +68,15 @@ namespace EvolutionShop
         {
             switch (panel)
             {
-                case ShopPanel.Incubator: case ShopPanel.Tank: case ShopPanel.Counter:
+                case ShopPanel.Incubator: case ShopPanel.Tank: case ShopPanel.Counter: case ShopPanel.CloseShop:
                 case ShopPanel.Upgrade: case ShopPanel.StorageRack: case ShopPanel.Conditioning:
                     return true;
                 default: return false;
             }
         }
+
+        /// <summary>The station whose card a panel shows: closing early (UX-09) is the counter card at its confirm step.</summary>
+        public static ShopPanel CardPanel(ShopPanel panel) => panel == ShopPanel.CloseShop ? ShopPanel.Counter : panel;
 
         /// <summary>Front-shop stations use the paper/kraft strip; lab stations use the teal enamel strip.</summary>
         public static bool IsShopPanel(ShopPanel panel) => panel == ShopPanel.Tank || panel == ShopPanel.Counter;
@@ -144,7 +147,7 @@ namespace EvolutionShop
         {
             if (Element == null || Shop == null) return;
             var root = Shop.ToolkitUi;
-            ShopPanel panel = Shop.Panel;
+            ShopPanel panel = CardPanel(Shop.Panel);
             if (root == null || !root.Active || !Handles(panel))
             {
                 if (IsShown) { if (root != null && root.Active) BeginClose(); else Hide(); }

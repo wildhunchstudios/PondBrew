@@ -15,13 +15,12 @@ namespace EvolutionShop
         IEnumerator ToolkitHudScenario()
         {
             limitations.Add("UX-03 HUD route: states are reached through the session's own commands (New game, guided opening, OpenForDay, SpawnNow, ServeCustomer, CloseForNight, TryStartComedy) and scripted aims; no physical input. Captures are screen-only.");
-            limitations.Add("The IMGUI HUD is skipped while the preview is on; with it off every existing route and the IMGUI HUD are unchanged.");
             var ui = shop.ToolkitUi;
             Check(ui != null && ui.Ready && ui.Hud != null, "UI Toolkit root and HUD load" + (ui != null && ui.LoadProblem != null ? " / " + ui.LoadProblem : ""));
             if (ui == null || !ui.Ready || ui.Hud == null) yield break;
             GateFresh();
             Check(ui.Strings.Has("hud.day.night") && ui.Strings.Has("hud.status.waiting"), "HUD strings load (" + ui.Strings.Count + " entries)");
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitHudActive, "Preview turns the toolkit HUD on");
+            Check(shop.ToolkitHudActive && ui.Active, "The UI Toolkit HUD is on from start-up; since UX-09 it is the only HUD");
             var hud = ui.Hud;
             var root = hud.Element;
             yield return HudFrames(4);
@@ -152,7 +151,7 @@ namespace EvolutionShop
             CheckHudLayout(hud, "Closing");
             yield return HudShot("ux03-closing");
 
-            // The day report is still a classic panel: the HUD keeps its corners and hides what belongs to play.
+            // The day report is open: the HUD keeps its corners and hides what belongs to play.
             deadline = Time.realtimeSinceStartup + 10f;
             while (shop.Cycle.Phase != ShopDayPhase.Night && Time.realtimeSinceStartup < deadline) yield return null;
             yield return HudFrames(3);
@@ -201,11 +200,10 @@ namespace EvolutionShop
             yield return new WaitForSecondsRealtime(ShopHudRules.NextStepSeconds + .7f);
             Check(hud.NextStepShown, "During the tutorial the next step stays past ten seconds");
 
-            // Preview off: the classic HUD is back and the toolkit HUD hides.
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitHudActive, "Preview turns off");
+            // Only HUD (UX-09): no other HUD draws, and this one stays.
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
             yield return HudFrames(3);
-            Check(!hud.IsShown, "Toolkit HUD hides with the preview off");
-            yield return HudShot("ux03-classic");
+            Check(hud.IsShown, "The toolkit HUD stays on; there is no classic HUD to hand back to");
         }
 
         void HudFaceCounter(Station counter)
@@ -316,6 +314,25 @@ namespace EvolutionShop
         {
             string problem = HudLayoutProblem(hud);
             Check(problem == null, state + ": no HUD element overlaps another, covers the crosshair area or leaves the screen" + (problem != null ? " / " + problem : ""));
+            // UX-09: a toast or the next step once kept a one-line height while its text wrapped onto a clipped second line.
+            string clipped = HudClippedText(hud.Element);
+            Check(clipped == null, state + ": every toast and next-step line fits its card" + (clipped != null ? " / " + clipped : ""));
+        }
+
+        /// <summary>The first toast or next-step text whose wrapped lines need more height than its box has; null when all fit.</summary>
+        static string HudClippedText(VisualElement root)
+        {
+            // The wrapping texts only; key caps are fixed-height glyphs.
+            foreach (string textClass in new[] { "es-toast__text", "es-next__text" })
+                foreach (var label in root.Query<Label>(className: textClass).ToList())
+                {
+                    if (!HudPresenter.Visible(label) || !HudPresenter.Visible(label.parent) || string.IsNullOrEmpty(label.text)) continue;
+                    float width = label.contentRect.width;
+                    if (float.IsNaN(width) || width <= 0) continue;
+                    var need = label.MeasureTextSize(label.text, width, VisualElement.MeasureMode.Exactly, 0, VisualElement.MeasureMode.Undefined);
+                    if (need.y > label.contentRect.height + 1) return "'" + label.text + "' needs " + need.y.ToString("0") + " px at " + width.ToString("0") + " wide, has " + label.contentRect.height.ToString("0");
+                }
+            return null;
         }
     }
 }

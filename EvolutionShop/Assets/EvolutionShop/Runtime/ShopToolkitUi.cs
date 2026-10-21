@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace EvolutionShop
 {
-    // UX-02: bridge between the session and the UI Toolkit preview. The IMGUI path stays the default until
-    // each replacement screen reaches parity (UX.10); then UX-09 removes it.
+    // The session's bridge to the UI Toolkit UI (UX-02 to UX-08). Since UX-09 it is the only UI: every build creates it at start-up
+    // and it stays on; the IMGUI path it replaced is gone.
     public sealed partial class ShopSession
     {
         public ShopUiRoot ToolkitUi { get; private set; }
@@ -12,29 +12,14 @@ namespace EvolutionShop
 
         void InitializeToolkitUi()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            bool requested = Arg("-evolutionToolkitUi") != null;
-            // Existing validation routes keep their exact object set; only UI routes create the preview root.
-            if (ValidationMode && !requested && Arg("-evolutionToolkitUiSmoke") == null && Arg("-evolutionToolkitHudSmoke") == null &&
-                Arg("-evolutionToolkitCardsSmoke") == null && Arg("-evolutionToolkitLabCardsSmoke") == null &&
-                Arg("-evolutionToolkitPlanningSmoke") == null && Arg("-evolutionToolkitScreensSmoke") == null && Arg("-evolutionToolkitFeelSmoke") == null) return;
             ToolkitUi = gameObject.AddComponent<ShopUiRoot>();
-            ToolkitUi.Initialize(this, requested);
-#endif
-        }
-
-        /// <summary>Turns the UI Toolkit preview on or off; false when the root is unavailable.</summary>
-        public bool SetToolkitUiActive(bool active)
-        {
-            if (ToolkitUi == null || !ToolkitUi.Ready) return false;
-            ToolkitUi.SetActive(active);
-            return ToolkitUi.Active == active;
+            ToolkitUi.Initialize(this);
         }
 
         bool ToolkitOwnsPanel(ShopPanel panel) => ToolkitUi != null && ToolkitUi.OwnsPanel(panel);
 
         /// <summary>UX-08: the comfort settings the UI feel follows, as the world applies them (FX-20).</summary>
-        public bool ToolkitReducedMotion => NativeUiReduced;
+        public bool ToolkitReducedMotion => UiFeedbackReduced;
         public bool ToolkitLowDetail => World ? World.EffectsLow : EffectsDetail == FxEffectDetail.Low;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

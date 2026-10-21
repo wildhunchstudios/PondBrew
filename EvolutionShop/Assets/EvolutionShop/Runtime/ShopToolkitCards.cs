@@ -3,7 +3,7 @@ using UnityEngine;
 namespace EvolutionShop
 {
     // UX-04: what the incubator, display-tank and counter cards read, and the commands they call. Every command
-    // is the session's existing one (the IMGUI panels call the same), with its own presence checks and saves.
+    // is the session's existing one, with its own presence checks and saves.
     public sealed partial class ShopSession
     {
         static readonly CultureKind[] CardCultures = { CultureKind.Bloom, CultureKind.Flow, CultureKind.Spark, CultureKind.Mist };

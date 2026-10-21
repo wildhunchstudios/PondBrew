@@ -8,7 +8,7 @@ namespace EvolutionShop
     /// <summary>
     /// UX-06 planning notebook (UX.6): crew, automation, arrange and research as full-screen pages over the dimmed world,
     /// with tabs along the top and Esc backing out one level. It follows ShopSession.Panel like the station card: it
-    /// shows while a planning panel is open and the preview is on. A tab that can't be used from where the player stands
+    /// shows while a planning panel is open. A tab that can't be used from where the player stands
     /// says where to go instead. While the player places furniture, the notebook steps aside for a key bar.
     /// </summary>
     public sealed class PlanningViewPresenter : ShopUiPresenter
@@ -52,7 +52,7 @@ namespace EvolutionShop
         public ArrangeView Arrange { get; private set; }
         public ResearchView Research { get; private set; }
 
-        /// <summary>Planning panels this notebook draws; the classic IMGUI panel must not draw them while the preview is on.</summary>
+        /// <summary>Planning panels this notebook draws.</summary>
         public static bool Handles(ShopPanel panel) => ShopSession.IsPlanningPanel(panel);
 
         protected override VisualElement Build(VisualTreeAsset template)

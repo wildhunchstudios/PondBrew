@@ -103,7 +103,7 @@ namespace EvolutionShop.Tests
             foreach (var key in new[] { "card.close", "card.keycap.back", "card.hint" })
                 Assert.That(table.Has(key), Is.True, key);
             foreach (ShopPanel panel in Enum.GetValues(typeof(ShopPanel)))
-                if (StationCardPresenter.Handles(panel)) Assert.That(table.Has("card.title." + panel), Is.True, "card.title." + panel);
+                if (StationCardPresenter.Handles(panel)) Assert.That(table.Has("card.title." + StationCardPresenter.CardPanel(panel)), Is.True, "card.title." + panel);
         }
 
         [Test] public void UiResourcesImportAndTheCardTemplateHasItsNamedParts()

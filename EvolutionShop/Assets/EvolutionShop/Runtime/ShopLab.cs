@@ -10,7 +10,7 @@ namespace EvolutionShop
         {
             if (!OpenPlacementMenu()) return false;
             showLabFacilities = true; showDecorCatalogue = false; showOwnedFurniture = false;
-            panelScroll = Vector2.zero;
+           
             return true;
         }
 
@@ -53,39 +53,5 @@ namespace EvolutionShop
             return true;
         }
 
-        void DrawLabArrangement()
-        {
-            Heading("Culture lab / tier " + (Layout.LabTier + 1) + " of 3");
-            Text("Extend the lab behind the shop, then rearrange your working equipment. Each extension adds 4 m of floor space.");
-            if (Layout.LabTier < ShopLayout.MaxLabTier)
-                Button("Expand lab / " + Layout.NextLabExpansionPrice + " credits", () => BuyLabExpansion());
-            else Small("Lab fully expanded. Both rear extensions are ready.");
-            Small("Expansion adds space. Grower speed, incubation time and creature capacity stay the same.");
-            Space();
-            Text("Specimen racks " + Layout.RackCount + " / " + Layout.RackLimit + " owned / " + StoredSpecimenCount + " creatures stored");
-            if (Layout.RackCount < Layout.RackLimit)
-                Button("Specimen rack / 2 slots / 32 credits", () => BeginPlacement(null, ShopLayout.RackDefinitionId));
-            else Small("Rack limit reached. Each lab expansion permits one more rack.");
-            Small("Racks free the incubator for the next creature. Hidden stock is never sold to customers. Move, store or sell racks from Owned / storage.");
-            Space();
-            Text("Conditioning vat / " + Layout.ConditionerCount + " of 1 owned");
-            if (Layout.ConditionerCount == 0)
-            {
-                if (!Model.SparkResearchUnlocked || !Model.IsDiscovered("lanternfin"))
-                    Small("Unlock: research Spark and discover Lanternfin by incubation first.");
-                else Button("Conditioning vat / 2 creatures / 64 credits", () => BeginPlacement(null, ShopLayout.ConditionerDefinitionId));
-            }
-            Small("Known Glow bath: 1–2 stored Pondlets + 1 collected Spark per batch become Lanternfin in 12 seconds. Two at once saves one Spark; the incubator stays free.");
-            Small("Requires a specimen rack for inputs. Collect outputs at a rack or display. Canceling returns the same Pondlets and your reserved Spark.");
-            Small("After discovering Lanternfin, use E at a placed vat during preparation night to research renewable Mist for " + Config.MistResearchCost + " credits. Hold left mouse at the vat to collect it.");
-            Space();
-            foreach (var facility in Layout.Facilities)
-            {
-                string id = facility.Id;
-                Button("Move " + ShopLayout.FacilityName(id) + " / free", () => BeginFacilityPlacement(id));
-            }
-            Small("Equipment keeps its cultures, doses, work in progress and ready specimen when moved. These four essential stations cannot be stored or sold.");
-            Small("Night only. Aim at the floor; R rotates; left click places; right click or Escape cancels. Leave the marked front service space open.");
-        }
     }
 }

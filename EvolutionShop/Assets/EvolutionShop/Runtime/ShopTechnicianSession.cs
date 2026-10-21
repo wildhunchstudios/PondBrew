@@ -138,61 +138,9 @@ namespace EvolutionShop
                 "Moss stored "+Model.GetSpecies(claim.SpeciesId).DisplayName+" in the lab rack.");
             return true;
         }
+
         string TechnicianPaymentLine() => Laboratory.Employee.PaidDay==Cycle.DayNumber ?
             Laboratory.Employee.PaidWage+" credits paid for preparation night + trading day "+Cycle.DayNumber+"." :
             "Off duty / "+ShopStaff.TechnicianWage+" credits needed at night. Manual lab work remains available.";
-
-        void DrawTechnicianPanel()
-        {
-            Heading("Moss / your lab technician");
-            Small("Prepares discovered recipes from your available cultures, then carries finished creatures to a free lab rack. The optional lab helper can collect cultures, but waits while Moss has paid work queued. Research and conditioning stay in your hands.");
-            Text(ShopStaff.TechnicianWage+" credits per night + day / no hiring fee");
-            Small("Scheduled wages repeat each new night when funded. Limited funds pay Pip, then Nori, then Moss. Started wages are not refunded.");
-            Space();Text(Technician.Status);Small(TechnicianPaymentLine());
-            if (Laboratory.ActiveSpecimenId!=null) Small("Current batch: "+Model.GetSpecies(Laboratory.ActiveSpeciesId).DisplayName+" / already started");
-            Button("Known recipes / order and priority",()=>SetPanel(ShopPanel.TechnicianOrders));
-            bool night=Cycle.Phase==ShopDayPhase.Night;var employee=Laboratory.Employee;
-            if (!night) Small("Hire, schedule, dismiss and pay at night. Queue and pause can change now.");
-            if (!employee.Hired) StaffButton("Hire Moss / initially off schedule",night,()=>HireTechnician());
-            else
-            {
-                StaffButton(employee.Scheduled ? "Stop recurring schedule" : employee.PaidDay==Cycle.DayNumber ? "Schedule Moss / this period already paid" :
-                    "Schedule Moss / pay "+ShopStaff.TechnicianWage+" credits",night,()=>SetTechnicianScheduled(!employee.Scheduled));
-                if (employee.Scheduled && employee.PaidDay!=Cycle.DayNumber)
-                    StaffButton("Pay "+ShopStaff.TechnicianWage+" credits / start duty",night && !employee.Paused && Model.Currency>=ShopStaff.TechnicianWage,()=>PayTechnicianDuty());
-                StaffButton(employee.Paused ? "Resume lab work" : "Pause lab work / release reserved stations",true,()=>SetTechnicianPaused(!employee.Paused));
-                StaffButton("Retry a blocked route",Technician.Blocked,()=>RetryTechnician());
-                StaffButton("Dismiss Moss / leave batch safe",night,()=>DismissTechnician());
-            }
-            Space();Button("Back to shop crew",()=>SetPanel(ShopPanel.Staff));
-        }
-        void DrawTechnicianOrders()
-        {
-            Heading("Moss's recipe queue");
-            Small("Top recipe starts first. Queue numbers count future starts, not desired stock levels. Collect its full recipe with your siphon; keep the incubator empty and at least one lab rack compartment free.");
-            if (Laboratory.ActiveSpecimenId!=null)
-                Text("Already started: "+Model.GetSpecies(Laboratory.ActiveSpeciesId).DisplayName+" / moves to a rack when ready");
-            var queue=Laboratory.Queue;
-            if (queue.Length==0) Text("No waiting recipe starts.");
-            for (int i=0;i<queue.Length;i++)
-            {
-                var order=queue[i];string id=order.speciesId;
-                Space();Text((i+1)+". "+Model.GetSpecies(id).DisplayName+" / "+order.count+" starts left");
-                GUILayout.BeginHorizontal();
-                StaffButton("Earlier",i>0,()=>MoveTechnicianPriority(id,-1));
-                StaffButton("Later",i+1<queue.Length,()=>MoveTechnicianPriority(id,1));
-                StaffButton("Remove waiting",true,()=>RemoveTechnicianRecipe(id));
-                GUILayout.EndHorizontal();
-            }
-            Space();Text("Add one known recipe start");
-            foreach(string species in Model.DiscoveredSpeciesIds)
-            {
-                int count=0;foreach(var order in queue) if(order.speciesId==species) count=order.count;
-                StaffButton("+ "+Model.GetSpecies(species).DisplayName,count<ShopLaboratory.MaximumOrderCount,()=>QueueTechnicianRecipe(species));
-            }
-            Small("Up to 9 waiting starts per species. Reordering affects waiting work. Pause permits manual work. Clearing assignments leaves any growing or ready creature safe in the incubator for you to collect.");
-            StaffButton("Clear assignments / leave batch in incubator",queue.Length>0 || Laboratory.ActiveSpecimenId!=null,()=>CancelTechnicianAssignments());
-            Button("Back to Moss",()=>SetPanel(ShopPanel.Technician));
-        }
     }
 }

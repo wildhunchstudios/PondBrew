@@ -12,7 +12,7 @@ namespace EvolutionShop
         IEnumerator ToolkitUiScenario()
         {
             limitations.Add("UX-02 foundation route: stations open through ShopSession.Interact after a scripted aim, and the card's Close button is activated with a UI Toolkit navigation submit event. Physical mouse clicks on the card are a separate hands-on check.");
-            limitations.Add("The card is a frame only; station controls move into it in UX-04/UX-05. With the preview on, the classic IMGUI panel for that station is hidden.");
+            limitations.Add("The card is checked here as the UX-02 frame (title strip, anchoring, close paths); its controls are the UX-04 and UX-05 routes' to check.");
             var ui = shop.ToolkitUi;
             Check(ui != null && ui.Ready, "UI Toolkit root loads theme, tokens and card template" + (ui != null && ui.LoadProblem != null ? " / " + ui.LoadProblem : ""));
             if (ui == null || !ui.Ready) yield break;
@@ -20,8 +20,7 @@ namespace EvolutionShop
                 Mathf.Approximately(ui.Settings.match, ShopUiRoot.ScreenMatch) && ui.Settings.themeStyleSheet != null,
                 "Panel scales from a 1920x1080 reference with match 0.5 and the shop theme");
             Check(ui.Strings.Count >= 11 && ui.Strings.Has("card.close") && ui.Strings.Has("card.hint"), "UI string table loaded (" + ui.Strings.Count + " entries)");
-            Check(shop.Panel == ShopPanel.None && !ui.Active, "Preview starts off in validation without -evolutionToolkitUi");
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitUiActive, "Preview turns on");
+            Check(shop.Panel == ShopPanel.None && shop.ToolkitUiActive && ui.Active, "The UI Toolkit UI is on from start-up; since UX-09 it is the only UI");
             yield return null; yield return null;
 
             var root = ui.Root;
@@ -91,11 +90,10 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(!card.IsShown, "Card hides when the session closes the panel (Escape path)");
 
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
             yield return ToolkitOpen(incubator, ShopPanel.Incubator);
-            Check(shop.Panel == ShopPanel.Incubator && !card.IsShown, "With the preview off the classic panel owns the incubator again");
+            Check(shop.Panel == ShopPanel.Incubator && card.IsShown, "Reopening the incubator shows its card again; no other UI draws the station");
             yield return UiSettled();
-            yield return Capture("ux02-classic-fallback");
             shop.SetPanel(ShopPanel.None);
             yield return null;
         }

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace EvolutionShop
 {
     // UX-03: what the UI Toolkit HUD reads from the session. Reads only; every change still goes through the
-    // session's existing commands. With the preview off the IMGUI HUD draws exactly as before.
+    // session's existing commands.
     public sealed partial class ShopSession
     {
         Transform comedySpeaker;
@@ -13,11 +13,11 @@ namespace EvolutionShop
         readonly Dictionary<string, float> hudPatience = new Dictionary<string, float>();
         readonly List<string> hudPatienceSeen = new List<string>();
 
-        /// <summary>True while the UI Toolkit HUD replaces the IMGUI HUD (the UX preview is on).</summary>
+        /// <summary>True once the UI Toolkit HUD has loaded (since UX-09 it is the only HUD).</summary>
         public bool ToolkitHudActive => ToolkitUiActive;
 
-        /// <summary>The code-drawn icon the IMGUI theme already owns; null until the first OnGUI has made the theme.</summary>
-        internal Texture2D HudIcon(ShopUiTheme.Symbol symbol) => hudTheme != null ? hudTheme.IconTexture(symbol) : null;
+        /// <summary>The code-drawn icon the UI root owns (ShopUiRoot.Icons); null before it loads.</summary>
+        internal Texture2D HudIcon(ShopUiTheme.Symbol symbol) => ToolkitUi != null ? ToolkitUi.Icon(symbol) : null;
 
         /// <summary>Fills the HUD snapshot for this frame. Allocation is limited to strings that changed state needs.</summary>
         public void FillHudState(ShopHudState s, ShopUiStrings strings)
@@ -33,13 +33,13 @@ namespace EvolutionShop
             s.Day = Cycle.DayNumber;
             s.SecondsLeft = Cycle.SecondsRemaining;
             s.Currency = Model.Currency;
-            s.MoneySequence = (int)nativeUiMoneySequence;
-            s.MoneyDelta = nativeUiDelta;
+            s.MoneySequence = (int)uiMoneySequence;
+            s.MoneyDelta = uiMoneyDelta;
             s.Reputation = Reputation.Points;
             s.Appeal = Appeal.Points;
             s.Tutorial = Tutorial.Mode == TutorialMode.Active;
             s.Objective = Objective();
-            s.Reduced = NativeUiReduced;
+            s.Reduced = UiFeedbackReduced;
             s.SalesToday = Reports != null ? Reports.CurrentSales : 0;
             s.SalesDay = Reports != null ? Reports.CurrentDayNumber : 0;
             var counter = ToolkitAnchorFor(ShopPanel.Counter);

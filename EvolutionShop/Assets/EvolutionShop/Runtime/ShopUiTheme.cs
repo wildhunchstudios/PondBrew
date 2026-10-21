@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace EvolutionShop
 {
-    // Original, code-authored UI art. This owner never reads or changes game state.
+    // Original, code-authored UI palette and icons (coin, star, sun and moon, the four cultures, flask and leaf). Since UX-09 the
+    // UI Toolkit root owns the one instance (ShopUiRoot.Icons) and disposes it; this owner never reads or changes game state.
     internal sealed class ShopUiTheme : IDisposable
     {
         internal enum Symbol { Bloom, Flow, Spark, Mist, Sun, Moon, Coin, Star, Flask, Leaf }
@@ -14,136 +15,16 @@ namespace EvolutionShop
         internal static readonly Color Coral = new Color(.84f, .38f, .27f);
         internal static readonly Color Muted = new Color(.34f, .43f, .39f);
         internal static readonly Color Honey = new Color(.98f, .78f, .37f);
-        internal readonly GUISkin Skin;
-        internal readonly GUIStyle Card, DarkCard, Shadow, Inset, Accent, Button, PrimaryButton, DangerButton;
-        internal readonly Texture2D FxDisc, FxRing;
         readonly List<Texture2D> textures = new List<Texture2D>();
         readonly Dictionary<Symbol, Texture2D> icons = new Dictionary<Symbol, Texture2D>();
-        readonly Dictionary<GUIStyle, GUIStyle> compactSurfaces = new Dictionary<GUIStyle, GUIStyle>();
 
-        internal ShopUiTheme(GUISkin source)
+        internal ShopUiTheme()
         {
-            Skin = UnityEngine.Object.Instantiate(source);
-            Skin.name = "Owned Evolution Shop UI skin";
-            Skin.hideFlags = HideFlags.HideAndDontSave;
-            Card = Surface(Paper, new Color(.75f, .69f, .53f, .72f));
-            DarkCard = Surface(Teal, new Color(.08f, .24f, .23f));
-            Shadow = Surface(new Color(.025f, .08f, .07f, .22f), Color.clear);
-            Inset = Surface(new Color(.91f, .92f, .83f), new Color(.74f, .79f, .69f, .65f));
-            Accent = Surface(Color.white, Color.clear);
-            Button = MakeButton(source.button, new Color(.84f, .90f, .81f), new Color(.92f, .95f, .85f), new Color(.71f, .81f, .71f), Ink);
-            PrimaryButton = MakeButton(source.button, Teal, new Color(.18f, .45f, .41f), new Color(.08f, .29f, .28f), Paper);
-            DangerButton = MakeButton(source.button, new Color(.98f, .81f, .67f), new Color(1f, .87f, .73f), new Color(.90f, .66f, .53f), Ink);
-            Skin.button = Button;
-            Skin.label.normal.textColor = Ink;
-            Skin.horizontalSlider = new GUIStyle(source.horizontalSlider);
-            Skin.horizontalSlider.normal.background = Rounded(new Color(.64f, .74f, .66f), Color.clear);
-            Skin.horizontalSlider.border = new RectOffset(4, 4, 0, 0);
-            Skin.horizontalSliderThumb = new GUIStyle(source.horizontalSliderThumb);
-            SetStates(Skin.horizontalSliderThumb, Rounded(Teal, Paper), Rounded(Coral, Paper), Rounded(Teal, Paper), Ink);
-            Skin.horizontalSliderThumb.border = new RectOffset(0, 0, 0, 0);
-            Skin.horizontalSliderThumb.fixedWidth = 16;
-            Skin.horizontalSliderThumb.fixedHeight = 16;
-            Skin.verticalScrollbar = new GUIStyle(source.verticalScrollbar);
-            Skin.verticalScrollbar.normal.background = Rounded(new Color(.87f, .88f, .78f), Color.clear);
-            Skin.verticalScrollbar.border = new RectOffset(8, 8, 8, 8);
-            Skin.verticalScrollbarThumb = new GUIStyle(source.verticalScrollbarThumb);
-            SetStates(Skin.verticalScrollbarThumb, Rounded(new Color(.42f, .62f, .52f), Color.clear), Rounded(Teal, Color.clear), Rounded(Teal, Color.clear), Ink);
-            Skin.verticalScrollbarThumb.border = new RectOffset(8, 8, 8, 8);
-            // Track/scrollbar anchors retain their native metrics; the slider thumb is
-            // explicitly sized so it remains visible instead of collapsing into a sliver.
-            Skin.verticalScrollbarUpButton = ScrollArrow(source.verticalScrollbarUpButton, true);
-            Skin.verticalScrollbarDownButton = ScrollArrow(source.verticalScrollbarDownButton, false);
             foreach (Symbol symbol in Enum.GetValues(typeof(Symbol))) icons.Add(symbol, MakeIcon(symbol));
-            FxDisc=MakeFxMask(false);FxRing=MakeFxMask(true);
         }
 
-        /// <summary>The owned icon texture, shared with the UI Toolkit HUD (UX-03); null for an unknown symbol.</summary>
+        /// <summary>The owned icon texture the UI Toolkit draws (HUD, cards, notebook); null for an unknown symbol.</summary>
         internal Texture2D IconTexture(Symbol symbol) => icons.TryGetValue(symbol, out var texture) ? texture : null;
-
-        Texture2D MakeFxMask(bool ring)
-        {
-            const int size=48;var texture=Own(new Texture2D(size,size,TextureFormat.RGBA32,false));
-            texture.name=ring ? "Original dose ripple mask" : "Original dose bead mask";
-            var pixels=new Color[size*size];
-            for(int y=0;y<size;y++)for(int x=0;x<size;x++)
-            {
-                float radius=new Vector2((x+.5f)/size*2-1,(y+.5f)/size*2-1).magnitude;
-                float alpha=1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(.8f,1,radius));
-                if(ring)alpha*=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.55f,.72f,radius));
-                pixels[y*size+x]=new Color(1,1,1,alpha);
-            }
-            texture.SetPixels(pixels);texture.Apply(false,true);return texture;
-        }
-        GUIStyle ScrollArrow(GUIStyle source, bool up)
-        {
-            var style = new GUIStyle(source);
-            var arrow = Own(new Texture2D(32, 32, TextureFormat.RGBA32, false));
-            var pixels = new Color[32 * 32];
-            for (int y = 0; y < 32; y++)
-                for (int x = 0; x < 32; x++)
-                {
-                    Vector2 p = new Vector2((x + .5f) / 32f, (y + .5f) / 32f);
-                    float py = up ? p.y : 1 - p.y;
-                    pixels[y * 32 + x] = Triangle(new Vector2(p.x, py), new Vector2(.27f, .35f), new Vector2(.73f, .35f), new Vector2(.5f, .64f)) ? Teal : Color.clear;
-                }
-            arrow.SetPixels(pixels); arrow.Apply(false, true);
-            SetStates(style, arrow, arrow, arrow, Ink);
-            return style;
-        }
-
-        GUIStyle Surface(Color fill, Color outline)
-        {
-            var style = new GUIStyle { border = new RectOffset(14, 14, 14, 14) };
-            style.normal.background = Rounded(fill, outline);
-            var compact = new GUIStyle(style) { border = new RectOffset(8, 8, 8, 8) };
-            // The smaller texture radius fits entirely within its eight-pixel corner slices.
-            compact.normal.background = Rounded(fill, outline, 7.5f);
-            compactSurfaces.Add(style, compact);
-            return style;
-        }
-
-        GUIStyle MakeButton(GUIStyle source, Color normal, Color hover, Color active, Color text)
-        {
-            var style = new GUIStyle(source)
-            {
-                fontSize = 16, fontStyle = FontStyle.Bold, wordWrap = true,
-                padding = new RectOffset(14, 14, 10, 10), border = new RectOffset(14, 14, 14, 14)
-            };
-            SetStates(style, Rounded(normal, new Color(.18f, .33f, .27f, .33f)),
-                Rounded(hover, Honey), Rounded(active, Honey), text);
-            return style;
-        }
-
-        static void SetStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text)
-        {
-            style.normal.background = style.onNormal.background = normal;
-            style.hover.background = style.onHover.background = hover;
-            style.active.background = style.onActive.background = active;
-            style.focused.background = style.onFocused.background = hover;
-            style.normal.textColor = style.hover.textColor = style.active.textColor = style.focused.textColor = text;
-            style.onNormal.textColor = style.onHover.textColor = style.onActive.textColor = style.onFocused.textColor = text;
-        }
-
-        Texture2D Rounded(Color fill, Color outline, float radius = 11.5f)
-        {
-            const int size = 40;
-            var texture = Own(new Texture2D(size, size, TextureFormat.RGBA32, false));
-            var pixels = new Color[size * size];
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float innerExtent = size / 2f - .5f - radius;
-                    float dx = Mathf.Max(Mathf.Abs(x + .5f - size / 2f) - innerExtent, 0);
-                    float dy = Mathf.Max(Mathf.Abs(y + .5f - size / 2f) - innerExtent, 0);
-                    float distance = Mathf.Sqrt(dx * dx + dy * dy) - radius;
-                    Color color = outline.a > 0 ? Color.Lerp(fill, outline, Mathf.Clamp01(distance + 2)) : fill;
-                    color.a *= Mathf.Clamp01(.5f - distance);
-                    pixels[y * size + x] = color;
-                }
-            texture.SetPixels(pixels); texture.Apply(false, true);
-            return texture;
-        }
 
         Texture2D Own(Texture2D texture)
         {
@@ -252,31 +133,11 @@ namespace EvolutionShop
             return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
         }
 
-        internal void Draw(Rect rect, GUIStyle style, Color? tint = null)
-        {
-            if (Event.current.type != EventType.Repaint || rect.width <= 0 || rect.height <= 0) return;
-            Color before = GUI.color;
-            if (tint.HasValue) GUI.color = before * tint.Value;
-            // IMGUI preserves nine-slice corner sizes even when their sum exceeds the
-            // destination. Short cards use prebuilt compact corners; only tiny meters,
-            // tabs and the reticle stretch. No style mutation/allocation occurs on repaint.
-            if (rect.width < style.border.horizontal || rect.height < style.border.vertical)
-            {
-                if (rect.width >= 16 && rect.height >= 16 && compactSurfaces.TryGetValue(style, out var compact))
-                    compact.Draw(rect, GUIContent.none, false, false, false, false);
-                else
-                    GUI.DrawTexture(rect, style.normal.background, ScaleMode.StretchToFill, true);
-            }
-            else
-                style.Draw(rect, GUIContent.none, false, false, false, false);
-            GUI.color = before;
-        }
-        internal void Icon(Rect rect, Symbol symbol) => GUI.DrawTexture(rect, icons[symbol], ScaleMode.ScaleToFit, true);
         public void Dispose()
         {
-            foreach (var texture in textures) if (texture) UnityEngine.Object.Destroy(texture);
-            textures.Clear(); icons.Clear(); compactSurfaces.Clear();
-            if (Skin) UnityEngine.Object.Destroy(Skin);
+            // Destroy in play; edit-mode callers (EditMode tests) need DestroyImmediate.
+            foreach (var texture in textures) if (texture) { if (Application.isPlaying) UnityEngine.Object.Destroy(texture); else UnityEngine.Object.DestroyImmediate(texture); }
+            textures.Clear(); icons.Clear();
         }
     }
 }

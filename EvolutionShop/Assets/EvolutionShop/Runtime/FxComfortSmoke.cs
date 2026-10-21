@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.Profiling;
+using UnityEngine.UIElements;
 namespace EvolutionShop
 {
  public sealed partial class MilestoneSmoke
@@ -30,26 +31,52 @@ namespace EvolutionShop
   void ComfortFlush()
   {
    var ids=new List<string>();int tanks=0,storage=0;foreach(string id in shop.Model.TankIds)if(shop.Model.GetTank(id).HasValue){tanks++;ids.Add(shop.Model.GetTank(id).Value.Id);}foreach(string id in shop.Model.StorageIds)if(shop.Model.GetStorage(id).HasValue){storage++;ids.Add(shop.Model.GetStorage(id).Value.Id);}
-   File.WriteAllText(Path.Combine(evidence,"comfort.json"),JsonUtility.ToJson(new ComfortReceipt{frames=comfortFrames.ToArray(),ownedItems=shop.Layout.Items.Count,tankCapacity=shop.Model.TankIds.Length,storageCapacity=shop.Model.StorageIds.Length,occupiedTanks=tanks,occupiedStorage=storage,baselineOwnedItems=comfortItems,baselineOccupiedTanks=comfortTankCapacity,baselineOccupiedStorage=comfortStorageCapacity,baselineSpecimenIds=comfortOccupiedIds??Array.Empty<string>()},true));NativeUiFlush();
+   File.WriteAllText(Path.Combine(evidence,"comfort.json"),JsonUtility.ToJson(new ComfortReceipt{frames=comfortFrames.ToArray(),ownedItems=shop.Layout.Items.Count,tankCapacity=shop.Model.TankIds.Length,storageCapacity=shop.Model.StorageIds.Length,occupiedTanks=tanks,occupiedStorage=storage,baselineOwnedItems=comfortItems,baselineOccupiedTanks=comfortTankCapacity,baselineOccupiedStorage=comfortStorageCapacity,baselineSpecimenIds=comfortOccupiedIds??Array.Empty<string>()},true));
   }
   IEnumerator ComfortClip(string name,float seconds,IEnumerator action=null)
   {
-   nativeUiActionDone=action==null;nativeUiActionFailure=null;if(action!=null)StartCoroutine(NativeUiRunAction(action));
-   try{using(var r=new FxReviewRecorder(ShopSession.Arg("-evolutionFxReviewEncoder"),Path.Combine(evidence,name+".mp4"))){while(r.Age<seconds||!nativeUiActionDone){if(nativeUiActionFailure!=null)throw nativeUiActionFailure;if(r.Age>seconds+30)throw new TimeoutException(name);yield return new WaitForEndOfFrame();ComfortObserve(name);NativeUiObserve(name);r.Sample();if(r.Failure!=null)throw new InvalidOperationException(r.Failure);}float deadline=Time.realtimeSinceStartup+3;while(r.Pending>0){if(Time.realtimeSinceStartup>deadline)throw new TimeoutException(name+" drain");yield return null;}var receipt=r.Finish();File.WriteAllText(Path.Combine(evidence,name+"-frames.json"),JsonUtility.ToJson(receipt,true));Check(receipt.achievedFPS>=25&&receipt.missedSamples<=receipt.wallSeconds*5,"Actual comfort HUD video / "+name);}}
+   comfortActionDone=action==null;comfortActionFailure=null;if(action!=null)StartCoroutine(ComfortRunAction(action));
+   try{using(var r=new FxReviewRecorder(ShopSession.Arg("-evolutionFxReviewEncoder"),Path.Combine(evidence,name+".mp4"))){while(r.Age<seconds||!comfortActionDone){if(comfortActionFailure!=null)throw comfortActionFailure;if(r.Age>seconds+30)throw new TimeoutException(name);yield return new WaitForEndOfFrame();ComfortObserve(name);r.Sample();if(r.Failure!=null)throw new InvalidOperationException(r.Failure);}float deadline=Time.realtimeSinceStartup+3;while(r.Pending>0){if(Time.realtimeSinceStartup>deadline)throw new TimeoutException(name+" drain");yield return null;}var receipt=r.Finish();File.WriteAllText(Path.Combine(evidence,name+"-frames.json"),JsonUtility.ToJson(receipt,true));Check(receipt.achievedFPS>=25&&receipt.missedSamples<=receipt.wallSeconds*5,"Actual comfort HUD video / "+name);}}
    finally{ComfortFlush();}
   }
   void ComfortPolicy(bool reduced,bool low)
   {var s=shop.ComfortSnapshot;Check(shop.ReducedVisualMotion==reduced&&s.EffectiveReducedMotion==reduced&&s.LowDetail==low&&s.EffectiveLowDetail==low,"Saved preference reaches actual world policy");Check(s.ActionLimit==(low?24:64)&&s.AmbientLimit==(low?8:32)&&s.EmitterLimit==(low?6:12),"Existing bounded detail admission limits");Check(shop.Volume==.65f&&shop.HumorVolume==.37f&&shop.AmbienceVolume==.29f&&!shop.ReducedGags,"Visual settings preserve independent audio and gag preferences");}
-  // Screen rects are mapped through the pointer position in the scrolled panel; at a 1.5 GUI scale the
-  // mapping rounds differently when the pointer moves, so allow one device pixel. Layout itself is unchanged.
+  // A control's panel rectangle before and after it is pressed: switching a setting must not move or resize it.
   static bool ComfortSameBounds(Rect a,Rect b)=>Mathf.Abs(a.x-b.x)<=1&&Mathf.Abs(a.y-b.y)<=1&&Mathf.Abs(a.width-b.width)<=1&&Mathf.Abs(a.height-b.height)<=1;
-  IEnumerator ComfortNativeMode(bool reduced,bool low)
+  bool comfortActionDone;Exception comfortActionFailure;
+  // Runs the clip's action beside the recorder, flattening nested enumerators so a failed check stays visible to the recording owner.
+  IEnumerator ComfortRunAction(IEnumerator action)
   {
-   shop.SetPanel(ShopPanel.Pause);yield return null;
-   if(shop.ReducedVisualMotion!=reduced){string label="Reduced visual motion: "+(shop.ReducedVisualMotion?"On":"Off");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Reduced visual motion: "+(reduced?"On":"Off"));Check(ComfortSameBounds(nativeUiRect,before),"Comfort native toggle keeps its hit bounds within one device pixel / "+before+" / "+nativeUiRect);}
-   if((shop.EffectsDetail==FxEffectDetail.Low)!=low){string label="Effects detail: "+(shop.EffectsDetail==FxEffectDetail.Low?"Low":"Standard");yield return NativeUiFind(label);Rect before=nativeUiRect;yield return NativeUiClick(label);yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));Check(ComfortSameBounds(nativeUiRect,before),"Comfort detail native control keeps its hit bounds within one device pixel / "+before+" / "+nativeUiRect);}
-   yield return NativeUiFind("Effects detail: "+(low?"Low":"Standard"));
-   ComfortPolicy(reduced,low);Check(SaveStore.Read(shop.SavePath,shop.Config,out _,out var slot,out var error)&&slot.reducedVisualMotion==reduced&&slot.effectsDetail==(low?1:0),"Native controls persist selected policy / "+error);
+   var stack=new Stack<IEnumerator>();stack.Push(action);
+   while(stack.Count>0){object current=null;bool moved=false;try{moved=stack.Peek().MoveNext();if(moved)current=stack.Peek().Current;}catch(Exception e){comfortActionFailure=e;break;}if(!moved){stack.Pop();continue;}if(current is IEnumerator nested){stack.Push(nested);continue;}yield return current;}
+   comfortActionDone=true;
+  }
+  // UX-09: Pause opens the toolkit screen; its Comfort tab holds the reduced motion switch and the effects detail segments.
+  IEnumerator ComfortTab()
+  {
+   yield return HudFrames(3);var root=shop.ToolkitUi.Root;
+   if(!CardShown(root,PauseView.PageName(SettingsTab.Comfort)))yield return CardClick(root.Q<Button>(PauseView.TabName(SettingsTab.Comfort)),"Pause's Comfort tab");
+   Check(CardShown(root,PauseView.PageName(SettingsTab.Comfort)),"Pause shows its Comfort page");
+  }
+  // Stable: the press only changes the setting; a failed save instead shows Pause's error notice, which grows the centred card.
+  IEnumerator ComfortPress(string name,string label,bool stable=true)
+  {
+   var button=shop.ToolkitUi.Root.Q<Button>(name);Rect before=button!=null?button.worldBound:default;
+   yield return CardClick(button,label);
+   // UX-08 squashes a pressed button for 60 ms; measure once the UI is at rest.
+   yield return UiSettled();
+   if(stable)Check(button!=null&&ComfortSameBounds(button.worldBound,before),label+" keeps its bounds within one pixel when pressed / "+before+" / "+(button!=null?button.worldBound:default));
+   else Check(CardShown(shop.ToolkitUi.Root,PauseView.NoticeName)&&!string.IsNullOrEmpty(shop.ToolkitUi.Root.Q<Label>(PauseView.NoticeName).text),label+": Pause says the setting couldn't be saved / "+shop.ToolkitUi.Root.Q<Label>(PauseView.NoticeName)?.text);
+  }
+  IEnumerator ComfortUiMode(bool reduced,bool low)
+  {
+   shop.SetPanel(ShopPanel.Pause);yield return ComfortTab();var root=shop.ToolkitUi.Root;
+   if(shop.ReducedVisualMotion!=reduced)yield return ComfortPress(PauseView.ReducedMotionName,"Reduced motion switch");
+   if((shop.EffectsDetail==FxEffectDetail.Low)!=low)yield return ComfortPress(low?PauseView.DetailLowName:PauseView.DetailStandardName,"Effects detail "+(low?"Low":"Standard"));
+   yield return HudFrames(2);
+   var sw=root.Q<PlanSwitch>(PauseView.ReducedMotionName);var seg=root.Q<Button>(low?PauseView.DetailLowName:PauseView.DetailStandardName);
+   Check(sw!=null&&sw.On==reduced&&seg!=null&&seg.ClassListContains("es-plan-seg--on"),"The Comfort page shows the chosen motion and detail");
+   ComfortPolicy(reduced,low);Check(SaveStore.Read(shop.SavePath,shop.Config,out _,out var slot,out var error)&&slot.reducedVisualMotion==reduced&&slot.effectsDetail==(low?1:0),"Toolkit comfort controls persist selected policy / "+error);
   }
   string ComfortStock()
   {string value=shop.Model.Currency+"/"+shop.Model.Incubator.SpecimenId;foreach(string id in shop.Model.TankIds)value+="/"+id+":"+(shop.Model.GetTank(id).HasValue?shop.Model.GetTank(id).Value.Id:"empty");foreach(string id in shop.Model.StorageIds)value+="/"+id+":"+(shop.Model.GetStorage(id).HasValue?shop.Model.GetStorage(id).Value.Id:"empty");return value;}
@@ -111,7 +138,7 @@ namespace EvolutionShop
   IEnumerator ComfortLifecycle()
   {
    shop.SetPanel(ShopPanel.Pause);bool reduced=shop.ReducedVisualMotion;var detail=shop.EffectsDetail;string disk=File.ReadAllText(shop.SavePath),stock=ComfortStock();Check(!shop.SetComfortSettings(!reduced,(FxEffectDetail)2)&&File.ReadAllText(shop.SavePath)==disk&&shop.ReducedVisualMotion==reduced,"Invalid detail rejected without policy or durable mutation");Check(shop.SetComfortSettings(reduced,detail)&&File.ReadAllText(shop.SavePath)==disk,"Identical comfort request preserves durable bytes");TutorialBlockSave();
-   try{yield return ComfortClip("comfort-failed-setting",1.5f,NativeUiClick("Reduced visual motion: "+(reduced?"On":"Off")));Check(shop.SaveError!=null&&shop.ReducedVisualMotion==reduced&&shop.World.VisualMotionReduced==reduced&&shop.EffectsDetail==detail&&File.ReadAllText(shop.SavePath)==disk&&ComfortStock()==stock,"Failed actual GUI setting preserves live/world/durable mode and exact stock");}finally{TutorialUnblockSave();}
+   try{yield return ComfortTab();yield return ComfortClip("comfort-failed-setting",1.5f,ComfortPress(PauseView.ReducedMotionName,"Reduced motion switch while saving is blocked",false));Check(shop.SaveError!=null&&shop.ReducedVisualMotion==reduced&&shop.World.VisualMotionReduced==reduced&&shop.EffectsDetail==detail&&File.ReadAllText(shop.SavePath)==disk&&ComfortStock()==stock,"Failed actual GUI setting preserves live/world/durable mode and exact stock");}finally{TutorialUnblockSave();}
    Check(shop.SaveNow()&&shop.ReloadSaved(),"Comfort normal save/reload after failure");ComfortPolicy(reduced,detail==FxEffectDetail.Low);comfortRenderers=shop.World.GetComponentsInChildren<Renderer>(true);
    shop.ReducedGags=true;Check(shop.SaveNow()&&shop.ReloadSaved()&&shop.ReducedGags&&shop.ReducedVisualMotion==reduced&&shop.EffectsDetail==detail,"Reduced gag remains independently saved");shop.ReducedGags=false;
    foreach(string boundary in new[]{"pause","focus","arrange","disable"}){
@@ -123,12 +150,12 @@ namespace EvolutionShop
   }
   IEnumerator FxComfortScenario()
   {
-   limitations.Add("FX20 own-process HWND messages exercise native controls; not physical-human input. Explicit isolated cash/recipe seed only. Exact legal occupied layout and ordinary-frame actual cues; capture-time frame/managed-memory observations are not causal CPU/GPU or allocation-free claims. No listening/creative acceptance.");
+   limitations.Add("FX20 presses the toolkit pause screen's Comfort controls with its isolated synthetic Input System mouse (UX-09; the IMGUI controls it once reached by own-process window messages are gone); not physical-human input. Explicit isolated cash/recipe seed only. Exact legal occupied layout and ordinary-frame actual cues; capture-time frame/managed-memory observations are not causal CPU/GPU or allocation-free claims. No listening/creative acceptance.");
    yield return new WaitForSeconds(1);Check(shop.ValidationMode&&Path.GetFullPath(shop.SavePath)==Path.GetFullPath(Path.Combine(evidence,"smoke-save.json")),"FX20 isolated save only");
-   previousInputSettings=InputSystem.settings;smokeInputSettings=Instantiate(previousInputSettings);smokeInputSettings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;InputSystem.settings=smokeInputSettings;syntheticKeyboard=InputSystem.AddDevice<Keyboard>("FX20 isolated keyboard");cycleMouse=InputSystem.AddDevice<Mouse>("FX20 isolated mouse");syntheticKeyboard.MakeCurrent();cycleMouse.MakeCurrent();GrowerIsolateInputs("comfort-input-provenance.json");GateFresh();shop.Volume=.65f;shop.HumorVolume=.37f;shop.AmbienceVolume=.29f;shop.ReducedGags=false;Check(shop.SaveNow(),"Save independent comfort fixture preferences");
+   previousInputSettings=InputSystem.settings;smokeInputSettings=Instantiate(previousInputSettings);smokeInputSettings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;InputSystem.settings=smokeInputSettings;syntheticKeyboard=InputSystem.AddDevice<Keyboard>("FX20 isolated keyboard");cycleMouse=InputSystem.AddDevice<Mouse>("FX20 isolated mouse");cardMouse=cycleMouse;syntheticKeyboard.MakeCurrent();cycleMouse.MakeCurrent();GrowerIsolateInputs("comfort-input-provenance.json");GateFresh();shop.Volume=.65f;shop.HumorVolume=.37f;shop.AmbienceVolume=.29f;shop.ReducedGags=false;Check(shop.SaveNow(),"Save independent comfort fixture preferences");
    yield return ComfortBuildOccupied();comfortRenderers=shop.World.GetComponentsInChildren<Renderer>(true);comfortVoices=shop.GetComponent<ShopAudio>().GetComponents<AudioSource>();yield return new WaitForEndOfFrame();
    foreach(bool low in new[]{false,true})foreach(bool reduced in new[]{false,true}){
-    string mode=(low?"low":"standard")+"-"+(reduced?"reduced":"motion");yield return ComfortClip("comfort-settings-"+mode,2,ComfortNativeMode(reduced,low));shop.SetPanel(ShopPanel.None);GateAim(new Vector3(0,.2f,-3.5f),new Vector3(-2,1.2f,-1));yield return new WaitForSeconds(1);string before=ComfortStock();comfortFish=shop.World.PondletVisualForValidation("tank-a");Check(comfortFish,"Actual occupied Pondlet transform");comfortFishStart=comfortFish.localPosition;comfortFishRotation=comfortFish.localRotation;comfortFishTravel=comfortFishAngle=0;int trails=shop.World.AquariumTrailEmissionCount;yield return ComfortClip("comfort-occupied-"+mode,4);Check(reduced?comfortFishTravel<.00001f&&comfortFishAngle<.001f&&shop.World.AquariumTrailEmissionCount==trails:comfortFishTravel>.001f||comfortFishAngle>.1f,"Source-backed actual aquarium motion policy / "+mode);Check(ComfortStock()==before,"Quiet mode observation changes no specimen or economic authority / "+mode);yield return ComfortLabMode(mode);
+    string mode=(low?"low":"standard")+"-"+(reduced?"reduced":"motion");yield return ComfortClip("comfort-settings-"+mode,2,ComfortUiMode(reduced,low));shop.SetPanel(ShopPanel.None);GateAim(new Vector3(0,.2f,-3.5f),new Vector3(-2,1.2f,-1));yield return new WaitForSeconds(1);string before=ComfortStock();comfortFish=shop.World.PondletVisualForValidation("tank-a");Check(comfortFish,"Actual occupied Pondlet transform");comfortFishStart=comfortFish.localPosition;comfortFishRotation=comfortFish.localRotation;comfortFishTravel=comfortFishAngle=0;int trails=shop.World.AquariumTrailEmissionCount;yield return ComfortClip("comfort-occupied-"+mode,4);Check(reduced?comfortFishTravel<.00001f&&comfortFishAngle<.001f&&shop.World.AquariumTrailEmissionCount==trails:comfortFishTravel>.001f||comfortFishAngle>.1f,"Source-backed actual aquarium motion policy / "+mode);Check(ComfortStock()==before,"Quiet mode observation changes no specimen or economic authority / "+mode);yield return ComfortLabMode(mode);
    }
    yield return ComfortPreviewPolicies();yield return ComfortLifecycle();ComfortFlush();
   }

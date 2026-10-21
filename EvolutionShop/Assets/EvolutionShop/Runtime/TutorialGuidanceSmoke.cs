@@ -94,9 +94,10 @@ namespace EvolutionShop
             Check(shop.TryGetTutorialGuidance(out target) && target.Station.Kind == StationKind.Incubator,
                 "Full siphon directs the player to the incubator release control instead of an unusable grower");
             yield return CycleGoStation(StationKind.Incubator); yield return CycleTap(Key.E);
-            Check(shop.TutorialLocalCallout != null && shop.TutorialLocalCallout.Contains("Release") &&
+            // UX-09: the card's words (tut.fix.release: "release one Flow to make room for Bloom").
+            Check(shop.TutorialLocalCallout != null && shop.TutorialLocalCallout.IndexOf("release", StringComparison.OrdinalIgnoreCase) >= 0 &&
                 shop.TutorialLocalCallout.Contains("Flow") && shop.TutorialLocalCallout.Contains("Bloom"),
-                "Full-buffer local callout names the real excess release and missing culture");
+                "Full-buffer local callout names the real excess release and missing culture / " + shop.TutorialLocalCallout);
             yield return TutorialCapture("425-guidance-full-buffer");
             while (shop.Model.Available(CultureKind.Flow) > 1)
                 Check(shop.ReleaseCulture(CultureKind.Flow), "Guarded in-person release frees one ordinary culture slot");
@@ -115,8 +116,9 @@ namespace EvolutionShop
             yield return TutorialCapture("426-guidance-wrong-dose");
             Check(shop.ReturnCultureDose(CultureKind.Bloom) && shop.ReturnCultureDose(CultureKind.Bloom) && shop.DoseCulture(CultureKind.Flow),
                 "Real controls repair the mixture to the normal Pondlet recipe");
+            // UX-09: the card's Start (Start · 10s), which the IMGUI panel called Begin incubation.
             Check(shop.ActiveTutorialLesson == TutorialLesson.Grow && shop.TutorialLocalCallout != null &&
-                shop.TutorialLocalCallout.Contains("Begin"), "Valid preparation points to the actual incubation action");
+                shop.TutorialLocalCallout.Contains("Start"), "Valid preparation points to the actual incubation action / " + shop.TutorialLocalCallout);
             yield return TutorialCapture("427-guidance-begin-incubation");
             float began = Time.realtimeSinceStartup;
             Check(shop.BeginManualIncubation(), "Manual command starts the real tutorial specimen without accelerated production");

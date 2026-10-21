@@ -70,7 +70,7 @@ namespace EvolutionShop
             Motion.Tick(Reduced);
         }
 
-        /// <summary>Ends every animation and hides the tip, as when the preview turns off.</summary>
+        /// <summary>Ends every animation and hides the tip.</summary>
         public void Reset()
         {
             Motion.Finish();

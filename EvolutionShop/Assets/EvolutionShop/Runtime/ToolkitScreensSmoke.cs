@@ -13,8 +13,8 @@ namespace EvolutionShop
         // real walking, held collection, E and the station cards, with help (F1) at its steps and the tutorial's callouts
         // in the incubator, display and counter cards. Day one has the first sale and the practice sale, then closes early
         // into the guided receipt, whose Next night reaches the next goal; night two has the journal (TAB) and pause with its
-        // settings and New game step (Esc), then help's next goal, its Siphon page and the journal from help. Then the welcome for a finished opening, Reload and the preview
-        // off. Screen controls are pressed with the synthetic Input System mouse and keyboard (CardClick, ToolkitCardsSmoke.cs).
+        // settings and New game step (Esc), then help's next goal, its Siphon page and the journal from help. Then the welcome for a finished opening and
+        // Reload. Screen controls are pressed with the synthetic Input System mouse and keyboard (CardClick, ToolkitCardsSmoke.cs).
         IEnumerator ToolkitScreensScenario()
         {
             limitations.Add("UX-07 screens route: a real guided opening with synthetic WASD, mouse look, held collection, E, F1, TAB and Esc, and screen controls pressed with synthetic Input System devices, not physical hardware. Station cards open through the session's Interact after a scripted aim, as in the UX-04 route; cultures are dosed with the incubator's own commands. Customer arrivals are switched on only while waiting for each checkout; the practice sale is made the same day, and one labelled scripted visitor then walks in to empty displays so the receipt has a missed visitor. The finished-opening welcome is shown with a labelled SetPanel, as a restart would. Captures are screen-only.");
@@ -29,7 +29,7 @@ namespace EvolutionShop
             shop.enabled = true; shop.SetPanel(ShopPanel.None);
             CardInput();
             cycleStarted = Time.realtimeSinceStartup; cycleMetrics = new ContinuousMetrics();
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitUiActive, "Preview turns the screens on");
+            Check(shop.ToolkitUiActive && ui.Active, "The UI Toolkit UI is on from start-up; since UX-09 it is the only UI");
             yield return HudFrames(3);
 
             // ---------- welcome ----------
@@ -352,11 +352,14 @@ namespace EvolutionShop
             yield return HudFrames(3);
             Check(shop.Panel == ShopPanel.None && HudToastShownWith(root, s.Get("pause.reloaded")), "Reload reloads the save and says so in a toast");
 
-            // ---------- preview off ----------
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
+            // ---------- the development studies (UX-09: their IMGUI viewer is gone) ----------
+            yield return ScreensStudies(root, s);
+
+            // ---------- only UI (UX-09) ----------
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
             shop.SetPanel(ShopPanel.Pause);
             yield return HudFrames(3);
-            Check(shop.Panel == ShopPanel.Pause && !screens.IsShown, "With the preview off the classic pause panel owns Esc again");
+            Check(shop.Panel == ShopPanel.Pause && screens.IsShown, "Pause opens the toolkit screen again; no other UI draws it");
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
         }

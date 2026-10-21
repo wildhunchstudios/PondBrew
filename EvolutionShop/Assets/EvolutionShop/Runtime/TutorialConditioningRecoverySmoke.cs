@@ -69,27 +69,24 @@ namespace EvolutionShop
                 "Physical vat begins a real conditioning process for that exact Pondlet");
             Check(shop.Tutorial.FirstSpecimenId == first && shop.Model.GetConditioner(vat).Value.First.Value.Id == first,
                 "Processing retains the candidate identity while its Pondlet species remains unchanged");
-            shop.SetPanel(ShopPanel.None); yield return null;
-            Check(shop.Focused && shop.Focused.ConditionerItemId == vat &&
-                shop.FocusedStationHintForDisplay.Contains("s remaining") && shop.FocusedStationHintForDisplay.Contains("E manage vat"),
-                "Focused vat interaction card exposes the live countdown and management key even when it covers the physical readout");
-            string earlierCountdown = shop.FocusedStationHintForDisplay;
+            shop.SetPanel(ShopPanel.None); yield return PromptFrames();
+            Check(shop.Focused && shop.Focused.ConditionerItemId == vat && PromptCountdown() && HudPromptText("key") == HudString("hud.key.use"),
+                "Focused vat prompt exposes the live countdown and management key beside the crosshair / " + HudPrompt());
+            string earlierCountdown = HudPromptText("status");
             yield return new WaitForSeconds(1.1f);
-            Check(shop.FocusedStationHintForDisplay != earlierCountdown && shop.FocusedStationHintForDisplay.Contains("s remaining"),
-                "Focused countdown updates from the live batch while gameplay runs");
+            Check(HudPromptText("status") != earlierCountdown && PromptCountdown(),
+                "Focused countdown updates from the live batch while gameplay runs / " + earlierCountdown + " then " + HudPrompt());
             yield return TutorialCapture("485-conditioning-processing");
             Check(shop.TryGetTutorialGuidance(out var processTarget) && processTarget.Station &&
-                processTarget.Station.ConditionerItemId == vat && shop.TutorialObjectiveForDisplay.Contains("conditioning"),
+                processTarget.Station.ConditionerItemId == vat && shop.TutorialObjectiveForDisplay.Contains("vat"),
                 "Processing exact candidate points to its actual vat and wait/cancel recovery rather than unavailable display stock");
             yield return ConditioningPanel(vat);
             Check(shop.CancelSelectedConditioning() && shop.Model.GetConditioner(vat).Value.First.Value.SpeciesId == "pondlet" &&
                 shop.Model.GetConditioner(vat).Value.First.Value.Id == first && shop.Model.Available(CultureKind.Spark) == 1,
                 "Cancel returns unchanged Pondlet identity and one reserved Spark without creating stock");
-            shop.SetPanel(ShopPanel.None); yield return null;
-            Check(shop.Focused && shop.Focused.ConditionerItemId == vat &&
-                shop.FocusedStationHintForDisplay.Contains("1 ready / collect at a rack or display") &&
-                !shop.FocusedStationHintForDisplay.Contains("s remaining"),
-                "Canceled vat card replaces the countdown with the real unchanged output and its collection destination");
+            shop.SetPanel(ShopPanel.None); yield return PromptFrames();
+            Check(shop.Focused && shop.Focused.ConditionerItemId == vat && HudPromptText("status") == "· " + HudString("hud.status.readyCount", 1) && !PromptCountdown(),
+                "Canceled vat prompt replaces the countdown with the real unchanged output / " + HudPrompt());
             yield return TutorialCapture("486-conditioning-canceled-output");
             yield return SpecimenDisplayPanel("tank-a");
             int cash = shop.Model.Currency;
@@ -146,17 +143,18 @@ namespace EvolutionShop
                 loadedGame.GetTank("tank-a").Value.SpeciesId == "lanternfin" && loadedGame.Currency == cash + 6,
                 "Final full slot preserves recovered first sale and unqualified transformed practice stock / " + error);
             yield return ConditioningPanel(vat);
-            shop.SetPanel(ShopPanel.None); yield return null;
-            Check(shop.Focused && shop.Focused.ConditionerItemId == vat &&
-                shop.FocusedStationHintForDisplay == "Empty / add Pondlets\nE manage vat",
-                "After transfer the focused vat card reports empty without stale countdown or output");
+            shop.SetPanel(ShopPanel.None); yield return PromptFrames();
+            Check(shop.Focused && shop.Focused.ConditionerItemId == vat && HudPromptText("status") == "· " + HudString("hud.status.empty") &&
+                HudPromptText("key") == HudString("hud.key.use") && !HudPromptShown("key2"),
+                "After transfer the focused vat prompt reports empty without stale countdown or output / " + HudPrompt());
             yield return TutorialCapture("487-conditioning-empty");
             yield return ConditioningPanel(vat);
             Check(shop.ResearchMist(), "Labelled funded fixture purchases real Mist research for the dual-use prompt check");
-            shop.SetPanel(ShopPanel.None); yield return null;
+            shop.SetPanel(ShopPanel.None); yield return PromptFrames();
             Check(shop.TryStationCulture(shop.Focused, out var focusCulture) && focusCulture == CultureKind.Mist &&
-                shop.FocusedStationHintForDisplay == "Empty / add Pondlets\nHold left mouse for Mist / E manage vat",
-                "Researched vat keeps the live empty state and both collection and management controls readable");
+                HudPromptText("status") == "· " + HudString("hud.status.empty") && HudPromptText("key") == HudString("hud.key.use") &&
+                HudPromptShown("key2") && HudPromptText("key2") == HudString("hud.key.hold"),
+                "Researched vat keeps the live empty state and both collection and management keys readable / " + HudPrompt());
             yield return TutorialCapture("488-conditioning-mist-controls");
         }
 

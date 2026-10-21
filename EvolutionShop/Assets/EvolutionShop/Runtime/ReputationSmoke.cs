@@ -131,7 +131,8 @@ namespace EvolutionShop
             yield return Capture("63-reputation-day-report");
             shop.ShowDayReport();
             Check(shop.SaveNow() && shop.ReloadSaved() && shop.Reputation.Points == 30, "Report reopen and night reload do not score the completed day again");
-            shop.SetPanel(ShopPanel.Journal); shop.ScrollPanel(10000);
+            shop.SetPanel(ShopPanel.Journal);
+            yield return UiPress(JournalView.TabName(JournalTab.Shop), "The journal's Shop tab (reputation and appeal)");
             yield return Capture("64-reputation-journal");
             shop.SetPanel(ShopPanel.None);
 

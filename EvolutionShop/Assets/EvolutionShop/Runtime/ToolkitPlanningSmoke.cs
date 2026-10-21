@@ -11,7 +11,7 @@ namespace EvolutionShop
         // UX-06: the planning notebook through its real flows. From the counter: hire, schedule, pause and dismiss crew,
         // set Nori's displays and Moss's queue, and see Esc back out one level. Arrange: buy a wing, place, store and sell
         // furniture, and move equipment, with the key bar while placing. From the bench: the research path and the lab
-        // helper. Then the same crew by day, and the preview off. Controls are pressed with the synthetic Input System
+        // helper. Then the same crew by day. Controls are pressed with the synthetic Input System
         // mouse and keyboard (CardClick, ToolkitCardsSmoke.cs); stations open with a real E.
         IEnumerator ToolkitPlanningScenario()
         {
@@ -23,13 +23,13 @@ namespace EvolutionShop
             CardInput();
             StaffCreditFixture(600, "UX-06 planning");
             // Labelled fixture: Pondlet and Bubblebelly discovered (Ribbonfin stays undiscovered, for the research path). The
-            // model sales are saved before the preview starts, so the first money floater is the first real spend, not the
+            // model sales are saved before the notebook opens, so the first money floater is the first real spend, not the
             // fixture's earnings folded into it.
             foreach (string species in new[] { "pondlet", "bubblebelly" })
             { SpecimenProduce(species); Ok(shop.Model.TransferToTank("tank-a"), "Discovery fixture display"); Ok(shop.Model.SellFromTank("tank-a"), "Discovery fixture sale"); }
             shop.World.Refresh(shop.Model);
             Check(shop.SaveNow(), "Discovery fixture saved");
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitUiActive, "Preview turns the notebook on");
+            Check(shop.ToolkitUiActive && ui.Active, "The UI Toolkit UI is on from start-up; since UX-09 it is the only UI");
             var plan = ui.Planning;
             var card = ui.StationCard;
             var root = ui.Root;
@@ -382,10 +382,10 @@ namespace EvolutionShop
             yield return HudFrames(2);
             Check(shop.Stocking.Employee.Paused, "Pausing works by day too");
 
-            // ---------- preview off ----------
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
+            // ---------- only UI (UX-09) ----------
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
             yield return HudFrames(3);
-            Check(shop.Panel == ShopPanel.Staff && !plan.IsShown, "With the preview off the classic staff panel owns the crew again");
+            Check(shop.Panel == ShopPanel.Staff && plan.IsShown, "The crew stays in the notebook; no other UI draws it");
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
         }
@@ -399,10 +399,10 @@ namespace EvolutionShop
 
         string PlanMoneyCue(VisualElement root)
         {
-            var cue = shop.NativeUiFxSnapshot;
+            var cue = shop.UiFeedback;
             var shown = new System.Collections.Generic.List<string>();
             foreach (var floater in root.Query(className: "es-floater").ToList()) shown.Add(floater.Q<Label>(className: "es-floater__text")?.text);
-            return " (cue " + cue.MoneyKind + " " + cue.MoneyDelta + " #" + cue.MoneySequence + ", floaters [" + string.Join(", ", shown) + "])";
+            return " (cue " + cue.MoneyDelta + " #" + cue.MoneySequence + (cue.Visible ? "" : " hidden") + ", floaters [" + string.Join(", ", shown) + "])";
         }
 
         static bool PlanTabOpen(VisualElement root, PlanningTab tab) => root.Q<Button>(PlanningViewPresenter.TabName(tab)).enabledSelf;

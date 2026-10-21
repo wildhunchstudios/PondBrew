@@ -68,7 +68,7 @@ namespace EvolutionShop
             }
         }
 
-        /// <summary>Ends every animation at rest and runs their callbacks, as when the preview turns off.</summary>
+        /// <summary>Ends every animation at rest and runs their callbacks.</summary>
         public void Finish()
         {
             ended.Clear();

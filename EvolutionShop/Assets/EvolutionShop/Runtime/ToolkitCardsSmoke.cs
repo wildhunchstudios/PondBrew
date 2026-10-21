@@ -20,13 +20,12 @@ namespace EvolutionShop
         IEnumerator ToolkitCardsScenario()
         {
             limitations.Add("UX-04 cards route: collection is the session's timed scripted harvest; clicks, the wheel, Shift, hover, E and Esc come from synthetic Input System devices added by the route, not physical hardware. Customers are scripted spawns with arrivals off. Captures are screen-only.");
-            limitations.Add("The specimen rack, conditioning vat and research bench keep the UX-02 placeholder card until UX-05; with the preview off every station uses the classic panel.");
             var ui = shop.ToolkitUi;
             Check(ui != null && ui.Ready && ui.StationCard != null, "UI Toolkit root and station card load" + (ui != null && ui.LoadProblem != null ? " / " + ui.LoadProblem : ""));
             if (ui == null || !ui.Ready || ui.StationCard == null) yield break;
             GateFresh();
             CardInput();
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitUiActive, "Preview turns the station cards on");
+            Check(shop.ToolkitUiActive && ui.Active, "The UI Toolkit UI is on from start-up; since UX-09 it is the only UI");
             var card = ui.StationCard;
             var root = ui.Root;
             var s = ui.Strings;
@@ -238,6 +237,7 @@ namespace EvolutionShop
             CheckCard(card, "Counter, close-early confirm", 1);
             yield return CardClick(root.Q<Button>(CounterCardView.KeepName), "Keep trading");
             Check(!desk.Confirming && shop.Cycle.Phase == ShopDayPhase.Open && CardShown(root, CounterCardView.DayRowName), "Keep trading backs out and the day goes on");
+            yield return CardsCloseShopPanel(root, card);
             yield return CardClick(root.Q<Button>(CounterCardView.CloseEarlyName), "Close early");
             yield return CardClick(root.Q<Button>(CounterCardView.CloseNowName), "Close now");
             Check(shop.Cycle.Phase == ShopDayPhase.Closing, "Close now closes the shop");
@@ -247,7 +247,7 @@ namespace EvolutionShop
             deadline = Time.realtimeSinceStartup + 10f;
             while (shop.Cycle.Phase != ShopDayPhase.Night && Time.realtimeSinceStartup < deadline) yield return null;
             yield return HudFrames(3);
-            Check(shop.Cycle.Phase == ShopDayPhase.Night && shop.Panel == ShopPanel.DayReport && !card.IsShown, "Night falls and the day report (still a classic panel) replaces the card");
+            Check(shop.Cycle.Phase == ShopDayPhase.Night && shop.Panel == ShopPanel.DayReport && !card.IsShown, "Night falls and the day report replaces the card");
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
             yield return CardOpenCounter(counter);
@@ -261,10 +261,10 @@ namespace EvolutionShop
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
 
-            // ---------- preview off ----------
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
+            // ---------- only UI (UX-09) ----------
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
             yield return CardOpenIncubator(incubator);
-            Check(shop.Panel == ShopPanel.Incubator && !card.IsShown, "With the preview off the classic panel owns the incubator again");
+            Check(shop.Panel == ShopPanel.Incubator && card.IsShown, "Reopening the incubator shows its card again; no other UI draws the station");
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
         }

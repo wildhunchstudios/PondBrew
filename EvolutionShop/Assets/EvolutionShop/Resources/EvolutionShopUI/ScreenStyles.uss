@@ -1028,3 +1028,130 @@
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 15px;
 }
+
+/* UX-09: the development studies (presentation sample and comedy preview) over the undimmed world they show: a title strip
+   at the top and a control strip at the bottom. */
+.es-screen-study {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: space-between;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    padding-left: 32px;
+    padding-right: 32px;
+}
+
+.es-screen-study__strip {
+    background-color: var(--es-paper);
+    border-left-width: 6px;
+    border-color: var(--es-teal);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    padding-top: 14px;
+    padding-bottom: 16px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.es-screen-study__eyebrow {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-study__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 36px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-study__note {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    white-space: normal;
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-study__hint {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    white-space: normal;
+    margin: 6px 0 0 0;
+    padding: 0;
+}
+
+.es-screen-study__row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.es-screen-study__rotate {
+    flex-direction: row;
+    align-items: center;
+    width: 380px;
+    margin-right: 16px;
+}
+
+.es-screen-study__label {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    margin: 0 12px 0 0;
+    padding: 0;
+}
+
+.es-screen-study__slider {
+    flex-grow: 1;
+    margin: 0;
+}
+
+.es-screen-study__button {
+    font-size: 20px;
+    margin-right: 12px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.es-screen-study__button--on {
+    background-color: var(--es-teal);
+    color: var(--es-paper);
+}
+
+.es-screen-study__beats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.es-screen-study__beat {
+    width: 32%;
+    font-size: 20px;
+    margin: 4px 1% 4px 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.es-screen-study__nav {
+    margin-top: 14px;
+}
+
+.es-screen-study__spacer {
+    flex-grow: 1;
+}

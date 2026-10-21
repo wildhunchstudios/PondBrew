@@ -321,51 +321,5 @@ namespace EvolutionShop
             return true;
         }
 
-        void DrawArrangement()
-        {
-            if (pendingFurnitureSaleId != null) { DrawFurnitureSaleConfirmation(); return; }
-            Heading("Arrange your rooms / store tier " + (Layout.StoreTier + 1) + " of 3");
-            if (Cycle.Phase != ShopDayPhase.Night) { Text("Come back during preparation night."); return; }
-            int displayCount = 0, tableCount = 0;
-            foreach (var item in Layout.Items) if (ShopLayout.DefinitionSlotCount(item.DefinitionId) > 0) displayCount++; else if (item.DefinitionId == ShopLayout.TableDefinitionId) tableCount++;
-            Text("Store appeal " + Appeal.Points + " / 30  |  Decor " + Layout.DecorCount + " / " + ShopLayout.DecorLimit);
-            GUILayout.BeginHorizontal();
-            Button("Buy furniture", () => { showLabFacilities = false; showDecorCatalogue = false; showOwnedFurniture = false; panelScroll = Vector2.zero; });
-            Button("Decor + appeal", () => { showLabFacilities = false; showDecorCatalogue = true; showOwnedFurniture = false; panelScroll = Vector2.zero; });
-            Button("Owned / storage", () => { showLabFacilities = false; showOwnedFurniture = true; panelScroll = Vector2.zero; });
-            GUILayout.EndHorizontal();
-            Button("Lab / expand and move equipment", () => OpenLabMenu());
-            if (showLabFacilities) { DrawLabArrangement(); return; }
-            if (showOwnedFurniture) { DrawOwnedFurniture(); return; }
-            if (showDecorCatalogue) { DrawDecorCatalogue(); return; }
-            Text("Display furniture " + displayCount + " / " + Layout.DisplayLimit + " owned  |  Active creature slots " + Model.TankIds.Length);
-            if (Layout.StoreTier < 2)
-            {
-                Small("Add a 4 m west wing. Keep the front entrance and lab unchanged. Display limit becomes " + (Layout.DisplayLimit + 1) + (Layout.StoreTier == 0 ? "; unlock large displays." : "."));
-                Button("Expand store / " + Layout.NextExpansionPrice + " credits", () => BuyStoreExpansion());
-                Small("Expansion buys floor space; displays add capacity. Decor adds store appeal.");
-            }
-            else Small("Store fully expanded. Three purchased displays plus your two original tanks.");
-            Space(); Heading("Buy furniture");
-            if (displayCount < Layout.DisplayLimit)
-            {
-                Button("Small display / 1 creature / 24 credits", () => BeginPlacement(null, ShopLayout.SmallDisplayId));
-                if (Layout.StoreTier > 0) Button("Large display / 2 creatures / 40 credits", () => BeginPlacement(null, ShopLayout.LargeDisplayId));
-                else Small("Large displays unlock with your first expansion.");
-            }
-            if (tableCount < ShopLayout.MaxItems)
-                Button("Work table / no creature slots / 12 credits", () => BeginPlacement());
-            Small("Aim at the floor. R rotates; left click places; right click or Escape cancels. Green outline marks a valid footprint. Display fronts need customer access.");
-            Small("Use Owned / storage to move, store, place or sell furniture you already own.");
-        }
-
-        void DrawPlacementOverlay()
-        {
-            Box(new Rect(438, 505, 592, 140), ink);
-            Box(new Rect(637, 357, 6, 6), Color.white);
-            GUI.Label(new Rect(454, 516, 560, 26), movingFacilityId != null ? "MOVE " + ShopLayout.FacilityName(movingFacilityId).ToUpperInvariant() + " / FREE" : movingTableId == null ? "PLACE " + ShopLayout.DefinitionName(placementDefinition).ToUpperInvariant() + " / " + PlacementCost + " CREDITS" : "MOVE " + ShopLayout.DefinitionName(placementDefinition).ToUpperInvariant() + " / FREE", headingStyle);
-            GUI.Label(new Rect(454, 548, 560, 46), PlacementMessage, bodyStyle);
-            GUI.Label(new Rect(454, 603, 560, 27), "R rotate  |  LEFT CLICK place  |  RIGHT CLICK / ESC cancel", smallStyle);
-        }
     }
 }

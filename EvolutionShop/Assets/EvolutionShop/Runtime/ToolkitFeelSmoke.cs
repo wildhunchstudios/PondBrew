@@ -117,7 +117,7 @@ namespace EvolutionShop
             GateFresh();
             CardInput();
             Check(shop.SetComfortSettings(false, FxEffectDetail.Standard) && !feel.Reduced && !feel.Low, "Comfort starts at standard motion and detail");
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitUiActive, "Preview turns the toolkit UI on");
+            Check(shop.ToolkitUiActive && ui.Active, "The UI Toolkit UI is on from start-up; since UX-09 it is the only UI");
             yield return HudFrames(4);
             feelReceipt.screen = Screen.width + "x" + Screen.height + ", panel " + root.layout.size;
 
@@ -466,12 +466,12 @@ namespace EvolutionShop
             yield return HudFrames(2);
             Check(countingAtPress && shop.Panel == ShopPanel.None && !report.Counting, "Next night pressed mid-count goes to the night at once");
 
-            // ---------- preview off ----------
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
-            yield return HudFrames(3);
+            // ---------- at rest (UX-09: the toolkit is the only UI, so the route ends with it on) ----------
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
+            yield return UiSettled();
             Check(feel.Motion.Idle && !feel.TipShown && hud.CoinsShown == 0 && !Posed(card.Element) && !Posed(stamp) && !Posed(moneyChip) && !Posed(tank.PriceAmount),
-                "Every feel animation ends at rest with the preview off; the classic UI is untouched");
-            yield return HudShot("ux08-classic");
+                "Every feel animation ends at rest, with nothing left posed");
+            yield return HudShot("ux08-at-rest");
             SaveFeelSamples();
         }
 

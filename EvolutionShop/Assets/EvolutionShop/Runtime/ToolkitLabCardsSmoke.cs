@@ -21,7 +21,7 @@ namespace EvolutionShop
             GateFresh();
             CardInput();
             StaffCreditFixture(600, "UX-05 lab cards");
-            Check(shop.SetToolkitUiActive(true) && shop.ToolkitUiActive, "Preview turns the station cards on");
+            Check(shop.ToolkitUiActive && ui.Active, "The UI Toolkit UI is on from start-up; since UX-09 it is the only UI");
             var card = ui.StationCard;
             var root = ui.Root;
             var s = ui.Strings;
@@ -266,10 +266,10 @@ namespace EvolutionShop
             yield return HudShot("ux05-rack-full");
             CheckCard(card, "Rack, full", 1);
 
-            // Preview off: the classic panels are back.
-            Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
+            // Only UI (UX-09): reopening the rack shows its card again.
+            Check(NoImmediateModeGui(out string imgui), "No IMGUI path remains: nothing in the game assembly draws with OnGUI" + imgui);
             yield return SpecimenRackPanel(rack);
-            Check(shop.Panel == ShopPanel.StorageRack && !card.IsShown, "With the preview off the classic panel owns the rack again");
+            Check(shop.Panel == ShopPanel.StorageRack && card.IsShown, "Reopening the rack shows its card again; no other UI draws the station");
             shop.SetPanel(ShopPanel.None);
             yield return HudFrames(2);
         }

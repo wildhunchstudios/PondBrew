@@ -117,52 +117,9 @@ namespace EvolutionShop
             World.CaptureHabitatTransfers();World.Refresh(Model);World.PresentHabitatTransfers(true,NextFxSequence(),FxCueOrigin.Worker);Notify("Nori stocked "+Model.GetSpecies(result.SpeciesId).DisplayName+" / ready for customers.");
             return true;
         }
+
         string StockerPaymentLine() => Stocking.Employee.PaidDay==Cycle.DayNumber ?
             Stocking.Employee.PaidWage+" credits paid for preparation night + trading day "+Cycle.DayNumber+"." :
             "Off duty / "+ShopStaff.StockerWage+" credits needed at night. Manual stocking stays available.";
-
-        void DrawStockerPanel()
-        {
-            Heading("Nori / your stocker");
-            Small("Carries ready creatures from lab racks to your chosen displays. You or Moss can prepare the creatures and fill the racks.");
-            Text(ShopStaff.StockerWage+" credits per night + day / no hiring fee");
-            Small("Scheduled work repeats each new night when funded. Started periods are paid in full. With limited cash, Pip's scheduled wage is paid first.");
-            Space();Text(Stocker.Status);Small(StockerPaymentLine());
-            Button("Choose display targets",()=>SetPanel(ShopPanel.StockerTargets));
-            bool night=Cycle.Phase==ShopDayPhase.Night;var employee=Stocking.Employee;
-            if (!night) Small("Hire, schedule, dismiss and pay at night. Targets and pause can change now.");
-            if (!employee.Hired) StaffButton("Hire Nori / initially off schedule",night,()=>HireStocker());
-            else
-            {
-                StaffButton(employee.Scheduled ? "Stop recurring schedule" : employee.PaidDay==Cycle.DayNumber ?
-                    "Schedule Nori / this period already paid" : "Schedule Nori / pay "+ShopStaff.StockerWage+" credits",night,()=>SetStockerScheduled(!employee.Scheduled));
-                if (employee.Scheduled && employee.PaidDay!=Cycle.DayNumber)
-                    StaffButton("Pay "+ShopStaff.StockerWage+" credits / start duty",night && !employee.Paused && Model.Currency>=ShopStaff.StockerWage,()=>PayStockerDuty());
-                StaffButton(employee.Paused ? "Resume stocking" : "Pause stocking / release reserved stock",true,()=>SetStockerPaused(!employee.Paused));
-                StaffButton("Retry a blocked route",Stocker.Blocked,()=>RetryStocker());
-                StaffButton("Dismiss Nori / no wage refund",night,()=>DismissStocker());
-            }
-            Space();Button("Moss / lab technician",()=>OpenTechnicianMenu());
-            Button("Back to Pip / cashier",()=>SetPanel(ShopPanel.Staff));
-        }
-        void DrawStockerTargets()
-        {
-            Heading("Nori's display targets");
-            Small("Keep one creature in each enabled slot, in the order below. Only lab rack stock is used. Full displays wait; existing stock and customer reservations are never replaced.");
-            Small("Changing a target cancels the current delivery safely. Stored or sold display furniture loses its target; choose it again after redeploying.");
-            foreach (string tank in Model.TankIds)
-            {
-                Space();string selected=Stocking.GetTarget(tank);
-                Text(DisplaySlotName(tank)+" / "+(selected==null ? "off" : selected==ShopStocking.AnySpecies ? "any rack species" : Model.GetSpecies(selected).DisplayName));
-                GUILayout.BeginHorizontal();
-                StaffButton("Off",selected!=null,()=>SetStockingTarget(tank,null));
-                StaffButton("Any species",selected!=ShopStocking.AnySpecies,()=>SetStockingTarget(tank,ShopStocking.AnySpecies));
-                GUILayout.EndHorizontal();
-                foreach (string species in Model.DiscoveredSpeciesIds)
-                    StaffButton("Keep 1 "+Model.GetSpecies(species).DisplayName,selected!=species,()=>SetStockingTarget(tank,species));
-            }
-            Space();Button("Back to Nori",()=>SetPanel(ShopPanel.Stocker));
-        }
-        static string DisplaySlotName(string id) => id=="tank-a" ? "Display A" : id=="tank-b" ? "Display B" : "Display "+id.Replace("table-","#").Replace("-slot-"," / slot ");
     }
 }

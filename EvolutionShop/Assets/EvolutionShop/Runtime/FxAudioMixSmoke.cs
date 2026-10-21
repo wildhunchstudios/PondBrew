@@ -55,7 +55,7 @@ namespace EvolutionShop
   }
   IEnumerator AudioSettingsClip()
   {
-   shop.SetPanel(ShopPanel.Pause);shop.ScrollPanel(0);yield return null;
+   shop.SetPanel(ShopPanel.Pause);yield return null;
    if(Application.isEditor){yield return GateCapture("audio-pause-settings");}
    else using(var r=new FxReviewRecorder(ShopSession.Arg("-evolutionFxReviewEncoder"),Path.Combine(evidence,"audio-pause-settings.mp4"))){while(r.Age<2){yield return new WaitForEndOfFrame();r.Sample();if(r.Failure!=null)throw new InvalidOperationException(r.Failure);}float deadline=Time.realtimeSinceStartup+3;while(r.Pending>0){if(Time.realtimeSinceStartup>deadline)throw new TimeoutException("Audio settings capture drain");yield return null;}var receipt=r.Finish();File.WriteAllText(Path.Combine(evidence,"audio-pause-settings-frames.json"),JsonUtility.ToJson(receipt,true));Check(receipt.achievedFPS>=25&&receipt.missedSamples<=receipt.wallSeconds*5,"Actual ordinary HUD pause audio settings video");}
    shop.SetPanel(ShopPanel.None);

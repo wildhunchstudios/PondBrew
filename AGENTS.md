@@ -1,3 +1,5 @@
+**UX-09 technically complete — 2026-10-21; human playtest deferred.** The IMGUI path is gone: the UI Toolkit UI is the only UI, created at start-up in every build and always on, with no F9 toggle and no classic HUD, panels, placement overlay, marker, caption or FX-18 accents (about 2,400 lines removed). The code-drawn icons are owned by the UI root; the saved money change the HUD shows moved to `ShopUiFeedback`. The two panels only IMGUI drew have toolkit views: the development studies (presentation sample and comedy preview) and closing early (the counter card's confirm step). Every route was migrated or decided: the toolkit routes no longer switch a preview, FX-20 comfort presses the toolkit Pause, TUT-09 reads the toolkit prompt, the tutorial routes check the toolkit wording; the native GUI click probe and FX-18 native UI are retired with what they tested. A capture review found toasts and the next step clipping a wrapped second line (since UX-03), now fixed and checked. Revision `ux09-imgui-removed-2`. Actual **2,407 passed EditMode tests** and **31,078 final Windows checks**: the seven UI routes and the cycle at 1280×720, 1920×1080 and 2560×1080, every classic route that passes on UX-08's player at 1280×720 with the toolkit on throughout (tutorial, trading, gameplay, FX-04 to FX-20), and the 21-start TUT-10 restart chain; build 0 errors / 0 warnings. Seven classic routes already failing on UX-08's player stay out (integrated, pricing, reputation, presentation, FX-02 cue, FX-03 lab, FX-00 profile). The human playtest of the whole loop is the user's, and Comfort's UI scale (UX.8) waits for a save decision. Next: **FX-21** (integrated interruption QA) or AD-A if the user picks it. Evidence `Docs/Evidence/ux-09-VALIDATION.md`; playtest `Docs/Evidence/ux-09/PLAY.md`; local tag `ux09-imgui-removed-validated`.
+
 **UX-08 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), the UI now moves and sounds as UX.9 describes. **Cards** pop open in 120 ms from 94% with a slight overshoot and a soft paper (shop) or enamel (lab) click, and fade out in 80 ms without ever taking the next click. **Buttons** squash and tick when pressed; a disabled one shakes 2 px, thunks and says why (the card highlights its reason line; the price steps show a tip). **Price tag** rocks on a change and a face that changes its mind hops. **A sale** rings a ka-ching and sends five coins from Serve into the money chip, which counts up as they land. **The discovery stamp** comes down onto the HUD with the lab's first-hatch sound. **The receipt** counts up over 600 ms (any input skips; *Next night* acts at once), then its tip slides in. The notebook and screens fade in with a paper click. **Reduced motion** keeps fades only (numbers still count); **Low effects detail** drops the coins. Every animation follows the input or the saved result and never holds up the next command; gameplay, rules and saves are unchanged, and with the preview off the classic UI is untouched. Revision `ux08-feel-1`. Actual **2405 passed EditMode tests** and **6039 final Windows checks** (the feel route at three sizes plus 21 regressions: the UX-07 to UX-02 routes, the six tutorial routes, trading, slap, comedy, FX-20 comfort, FX-18 native UI, cycle and comedy gate) in one numbered run; build 0 errors / 0 warnings. Hands-on feel and sound remain open, and Comfort's UI scale (UX.8) waits for a save decision. Next: **UX-09** (remove the IMGUI path and full validation), unstarted. Evidence `Docs/Evidence/ux-08-VALIDATION.md`; controls `Docs/Evidence/ux-08/PLAY.md`; local tag `ux08-feel-validated`.
 
 **UX-06 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), crew, automation, arrange and research are one planning notebook over the dimmed world: tabs along the top (a tab you can't use from where you stand says *At the counter*, *At the lab bench* or *At night*), *Back* (Esc backs out one level) and a footer line for what just happened. **Crew** (counter card → *Crew*): Pip, Nori and Moss as portrait cards with a status chip, the wage, an **On duty** switch that pays tonight's wage, a *•••* menu (Pause, Retry route, Dismiss… that asks first), and pages for Nori's display targets and Moss's recipe queue. **Automation** (bench card → *Culture prep*, the *Lab helper*): choose one known recipe, then Keep − N +, *Into* a display, the Keep stock switch and **Prepare one batch**, with the collector and doser switches beside the recipes. **Arrange**: Furniture / Decor / Owned / Lab catalogue tiles that say why they can't be used; placing hands over to the existing placement mode with a bottom key bar. **Research** (bench card → *Research path*): Bloom, Flow, Spark and Mist on a path with stamps and one **Research Spark · 48**; Siphon MK II as equipment. Every control calls the classic panel's session command. UX-03's toolkit HUD took any new game model as a reload, so it dropped every wage's money floater; its generation now changes only on a reload or New game. With the preview off every classic panel is unchanged. Revision `ux06-planning-2`. Actual **2379 passed EditMode tests** and **3208 final Windows checks** (the planning route at three sizes plus 15 regressions: the UX-05 lab cards, UX-04 cards, UX-02 card, UX-03 HUD, and the staff, stocker, technician, automation, research, placement, storage, decor, lab, cycle and comedy-gate routes); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-07 journal, day report, pause and help**, unstarted. Evidence `Docs/Evidence/ux-06-VALIDATION.md`; controls `Docs/Evidence/ux-06/PLAY.md`; local tag `ux06-planning-validated`.
@@ -522,7 +524,7 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-06 Planning views: technically complete 2026-10-21; hands-on review deferred (see UX.17).
 - [x] UX-07 Screens (journal, day report, pause, help, welcome, tutorial callouts): technically complete 2026-10-21; hands-on review deferred (see UX.18).
 - [x] UX-08 Feel pass (motion, UI sounds, coin fly, receipt count-up, reduced-motion and Low variants): technically complete 2026-10-21; hands-on review deferred (see UX.19).
-- [ ] UX-09 IMGUI removal, UI test migration and full validation.
+- [x] UX-09 IMGUI removal, UI test migration and full validation: technically complete 2026-10-21; human playtest deferred (see UX.20).
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -592,6 +594,23 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-09 technically complete; human playtest deferred (2026-10-21, Claude)
+
+**State:** UX-00 to UX-09 are done: the UI redesign milestone is technically complete, and the UI Toolkit UI is the only UI. UX-09 was validated in two numbered runs, the second final, after seven numbered scratch builds and a baseline of every older route on UX-08's player (record in UX.20 and `Docs/Evidence/ux-09-VALIDATION.md`). Local tag `ux09-imgui-removed-validated`; checkpoint `Docs/Evidence/ux-09/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux09-imgui-removed-2`. Open human gates: the playtest of the whole loop (`Docs/Evidence/ux-09/PLAY.md`), which closes the UX milestone gate (UX.12); UX-08's feel and sound, UX-07's to UX-03's play notes and UX-02's mouse check.
+
+**Exact next action:** FX-21 Integrated interruption/ownership QA (FX.10), which now follows UX-09 (UX.11), unless the user picks AD-A or asks for something else. Things to know first:
+- **Comfort's UI scale (90–130%, UX.8)** is still unbuilt: it needs a new saved setting. Ask the user before changing the save.
+- **Seven classic routes fail on HEAD** and were already failing on UX-08's player (`Docs/Evidence/ux-09/baseline-ux08-*`): the integrated route (FX-21 already lists its reset fixture), pricing and reputation (save-migration checks), presentation (its original Blender kit audit), FX-02 cue (prewarmed pool count), FX-03 lab (line-of-sight intake cancel) and the FX-00 profile (the occupied Pondlet's trail). FX-21 is the natural place to bring them back.
+- **Every route now runs with the toolkit UI on.** `Docs/Evidence/ux-09/Invoke-UX09.ps1` runs them all (`-Run N`; `-Player`, `-Out` and `-Only` rerun chosen steps against a scratch player); copy it for FX-21.
+
+**Learned in UX-09, apply to what follows:**
+
+- **Baseline before migrating.** A run of every older route on the previous final player (`Invoke-UX09-Baseline.ps1`) told stale routes from ones the change broke, and two it reported failing (Airfin, FX-06R-03 dose) only lacked their seed save. Rerun a baseline failure alone before calling it stale: runs beside a build can disturb timing.
+- **One player at a time.** Two players running at once lose synthetic UI clicks in the one without focus; routes that don't isolate their synthetic input can also lose a walk or an aim to a physical mouse or keyboard event (UX-09's lab and specimen routes, once; both passed alone and in the final runs).
+- **Seeded routes:** Airfin, FX-06R-03 dose and the R05.5 lab gate read a frozen v15 save from `seed-v15.json` in their folder (the test fixtures' `V15Conditioning.json`).
+- **A wrapping label in a shrink-to-fit card can clip its last line:** laid out a fraction of a pixel narrower than its one-line width, it wraps while the card keeps one line's height. Give such labels an explicit width (`HudPresenter.FitWrapping`), and check wrapped text against its box (`MeasureTextSize` at its width), not only against the screen.
+- **A press squashes for 60 ms (UX-08):** a check that a control keeps its bounds waits for the UI to settle.
+
 ### Current handoff — UX-08 technically complete; hands-on review deferred (2026-10-21, Claude)
 
 **State:** UX-00 to UX-08 are done. UX-08 was validated in one numbered run, which is final, after five numbered scratch builds (record in UX.19 and `Docs/Evidence/ux-08-VALIDATION.md`). Local tag `ux08-feel-validated`; checkpoint `Docs/Evidence/ux-08/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux08-feel-1`. Open human gates: hands-on feel and sound with F9 (`Docs/Evidence/ux-08/PLAY.md`), UX-07's to UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
@@ -3714,7 +3733,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-06 (technically complete 2026-10-21; hands-on review deferred; see UX.17) Planning views: crew, automation, arrange, research.
 - [x] UX-07 (technically complete 2026-10-21; hands-on review deferred; see UX.18) Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
 - [x] UX-08 (technically complete 2026-10-21; hands-on review deferred; see UX.19) Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
-- [ ] UX-09 Delete the IMGUI path, finish UI test migration, full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop.
+- [x] UX-09 (technically complete 2026-10-21; human playtest deferred; see UX.20) Delete the IMGUI path, finish UI test migration, full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop.
 
 Milestone gate: a new player can run a full night/day loop without reading a paragraph; every station is used without covering it; the HUD shows at most three persistent elements; all gameplay, save and staff tests still pass; the user reports the UI as clear and comfortable.
 
@@ -4178,3 +4197,46 @@ Full record: `Docs/Evidence/ux-08-VALIDATION.md`; file hashes as built: `Docs/Ev
 - Hands-on feel and sound with physical input and speakers (`Docs/Evidence/ux-08/PLAY.md`).
 - Comfort's UI scale (UX.8): needs a new saved setting and the user's decision.
 - Found, outside UX-08: the HUD's next-step card can show a new objective wrapped onto a clipped second line for a moment after it changes.
+
+### UX.20 — UX-09 IMGUI removal and full validation record (2026-10-21, validated)
+
+**Decisions (Claude, within UX.10 and UX.12):**
+
+- **One UI in every build:** `ShopUiRoot` is created at start-up in release and development builds and is on once it loads (`Active` is `Ready`). There is no preview switch on the root or the session, and F9 toggles nothing.
+- **Deleted:** `ShopHud`'s OnGUI, the classic HUD and the IMGUI panel form, and every panel draw method (13 session files, plus `ShopAutomationUi.cs`); `ShopDosePanelFx.cs`, `ShopResearchAutomationFxUi.cs` and `ShopTutorialGuidanceHud.cs` (the FX-03 dose strip, the FX-10 research strip, the IMGUI tutorial marker and callout); the FX-18 native UI accents and diagnostics (`ShopNativeUiFx`) with `Presentation/FxNativeUiMotion.cs` and its 6 EditMode tests; `ShopUiTheme`'s GUISkin, styles and dose masks; the native GUI click probe (`UiClickSmoke.cs`) and the FX-18 route (`FxNativeUiSmoke.cs`).
+- **Kept, with an owner of their own:** the saved money change the HUD floats (`ShopUiFeedback.cs`, renamed from `ShopNativeUiFx.cs`); the next-step words and the last report (`ShopHud.cs`); the code-drawn icons (`ShopUiTheme`, now palette and icons only, made and disposed by `ShopUiRoot.Icons`).
+- **Toolkit views for the last IMGUI-only panels:** the development studies (`UI/StudyPresenter.cs`, its own layer over the undimmed world; words in `study.*`), and closing early (`ShopPanel.CloseShop` is the counter card at its confirm step, `StationCardPresenter.CardPanel`).
+- **Fixed, found in the capture review:** a toast or the next step could show a clipped second line (since UX-03): the label is laid out a fraction of a pixel narrower than its one-line width, wraps, and keeps one line's height. `HudPresenter.FitWrapping` sizes those labels explicitly (one-line width rounded up, or the card's limit).
+- **Strings:** 711 → 743 (the studies); the card hint lost *F9 classic*.
+
+**Routes, decided one by one** (UX.10: rule, save, ledger and staff tests untouched):
+- **Migrated:** the seven UI Toolkit routes (no preview switch: the UI is on from start-up, and nothing draws with OnGUI); UX-07 screens and UX-04 cards also cover the studies and closing early; FX-20 comfort presses the toolkit Pause with its synthetic mouse; TUT-09 conditioning recovery reads the toolkit prompt; the guidance, recovery and conditioning recovery routes check the toolkit's wording; customer types and reputation use the journal's tabs where they scrolled; the tutorial's and counter's scrolled captures and FX-19's scroll reset are gone; FX-06R-01's fixture caption is a toolkit label.
+- **Retired with IMGUI:** the native GUI click probe and FX-18 native UI.
+- **Left out, already failing on UX-08's player** (`Docs/Evidence/ux-09/baseline-ux08-*`): integrated, pricing, reputation, presentation, FX-02 cue, FX-03 lab and the FX-00 profile.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/UI/StudyPresenter.cs`; `Runtime/ToolkitStudySmoke.cs` (the studies and closing early, for the screens and cards routes); `Runtime/UiRouteHelpers.cs` (the no-OnGUI check, toolkit presses, the prompt reader, the fixture caption); `Tests/RuntimeEditMode/ImguiRemovalTests.cs` (8 tests).
+
+**Validation, 2026-10-21 (Claude Opus 5.5).** `Docs/Evidence/ux-09/Invoke-UX09.ps1 -Run N` runs:
+- the EditMode suite and a development build;
+- the seven UI routes and the cycle at 1280×720, 1920×1080 and 2560×1080;
+- every classic route that passes on UX-08's player, at 1280×720, with the toolkit on throughout;
+- the TUT-10 restart chain (21 start-ups).
+
+| Step | Result |
+|---|---:|
+| EditMode | **2,407 passed** |
+| Build | **0 errors / 0 warnings** |
+| Route steps (75) and the restart chain | **31,078 checks** |
+
+Full record and per-route table: `Docs/Evidence/ux-09-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-09/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| Baseline | 47 older routes on UX-08's player, then the lab gate and the restart chain: 7 stale and the native GUI probe failing, 2 only lacking their v15 seed; the lab gate and chain passed | Stale routes left out; seeds copied by the runner |
+| Scratch builds 1–4 | Found the clicks lost when two players run at once; the tutorial routes' IMGUI wording; FX-20's bounds check mid-squash and its blocked-save case; the lab and specimen routes losing a walk and an aim once (passed alone) | Toolkit wording; settle before measuring; the blocked case checks the notice |
+| 1 | Everything passed; the capture review then found clipped toast and next-step lines (since UX-03) | `FitWrapping` and a HUD check, seen to fail on scratch build 5 and pass on 7 |
+| 2 | Final: everything passed | — |
+
+**Still open:**
+- The human playtest of the whole loop (`Docs/Evidence/ux-09/PLAY.md`) and the UX milestone gate.
+- Comfort's UI scale (UX.8): needs a new saved setting and the user's decision.

@@ -26,9 +26,11 @@ namespace EvolutionShop.Tests
                 Assert.That(PlanningViewPresenter.Handles(panel), Is.False, panel + " is not a notebook page");
                 Assert.That(StationCardPresenter.Handles(panel), Is.False, panel + " is not a station card");
             }
-            // The development presentation sample and the classic close confirm stay with IMGUI.
+            // UX-09: the development studies have a view of their own, and closing early is the counter card's confirm step.
             Assert.That(ScreenPresenter.Handles(ShopPanel.Presentation), Is.False);
+            Assert.That(StudyPresenter.Handles(ShopPanel.Presentation), Is.True);
             Assert.That(ScreenPresenter.Handles(ShopPanel.CloseShop), Is.False);
+            Assert.That(StationCardPresenter.Handles(ShopPanel.CloseShop), Is.True);
         }
 
         [Test] public void TheReceiptListsOnlyTheReasonsThatHappenedInAFixedOrder()

@@ -25,7 +25,10 @@ namespace EvolutionShop
         static readonly int[] BubbleSlots = { 2, 0, 1, 3 };
         static readonly int[] MarkerSlots = { 0, 1, 2, 3 };
 
-        sealed class Toast { public VisualElement Element; public Label Text; public VisualElement Icon; public string Key; public float Until, Started; public bool Pending; public float Height = 64f; }
+        sealed class Toast { public VisualElement Element; public Label Text; public VisualElement Icon; public string Key; public float Until, Started; public bool Pending; public float Height = 64f; public Fit Fit; }
+        // What a wrapping label was last sized for (FitWrapping): its text and the font size it was measured at.
+        sealed class Fit { public string Text; public float FontSize; }
+        readonly Fit nextFit = new Fit();
         sealed class Floater { public VisualElement Element; public Label Text; public VisualElement Icon; public float Born; }
         sealed class Arrow { public VisualElement Element; public HudArrowGlyph Glyph; public Label Label; }
 
@@ -464,6 +467,7 @@ namespace EvolutionShop
         void ShowToastText(Toast toast, string text, ShopUiTheme.Symbol symbol)
         {
             SetText(toast.Text, text);
+            FitWrapping(toast.Text, toast.Fit ?? (toast.Fit = new Fit()), ToastTextMaxWidth);
             if (toast.Icon.style.backgroundImage.value.texture == null)
             {
                 var tex = Shop.HudIcon(symbol);
@@ -534,6 +538,7 @@ namespace EvolutionShop
             if (f1) objectiveSince = now;
             bool show = !state.PanelOpen && !state.Placement && !string.IsNullOrEmpty(text) && ShopHudRules.NextStepVisible(now, objectiveSince, state.Tutorial);
             SetText(nextText, text);
+            FitWrapping(nextText, nextFit, NextTextMaxWidth);
             SetShown(nextHelp, state.Tutorial);
             SetShown(nextCard.parent, !state.PanelOpen && !state.Placement);
             float opacity = show ? 1f : 0f;
@@ -744,6 +749,33 @@ namespace EvolutionShop
                 if (v.ClassListContains("es-hud") && v.name == RootName) break;
             }
             return e.panel != null;
+        }
+
+        /// <summary>Widest a toast's text may be: the toast's 640 less its padding, icon and an error border (HudStyles.uss).</summary>
+        public const float ToastTextMaxWidth = 548f;
+        /// <summary>Widest the next step's text may be: the card's 1000 less its padding, icon and the F1 key.</summary>
+        public const float NextTextMaxWidth = 820f;
+
+        /// <summary>
+        /// UX-09: a wrapping label in a card that shrinks to fit its text was laid out a fraction of a pixel narrower than its
+        /// one-line width, so its last word wrapped while the card kept a one-line height, a clipped second line. The label gets
+        /// an explicit width instead: its one-line width rounded up, or the card's limit for longer text, which then wraps with
+        /// the height it needs. Measured again only when the text or its font size changes.
+        /// </summary>
+        static void FitWrapping(Label label, Fit fit, float maxWidth)
+        {
+            if (label == null || label.panel == null) return;
+            float fontSize = label.resolvedStyle.fontSize;
+            if (fit.Text == label.text && Mathf.Approximately(fit.FontSize, fontSize)) return;
+            float width = 0;
+            if (!string.IsNullOrEmpty(label.text))
+            {
+                var natural = label.MeasureTextSize(label.text, 0, VisualElement.MeasureMode.Undefined, 0, VisualElement.MeasureMode.Undefined);
+                if (float.IsNaN(natural.x) || natural.x <= 0) return;
+                width = Mathf.Min(Mathf.Ceil(natural.x) + 2, maxWidth);
+            }
+            label.style.width = width;
+            fit.Text = label.text; fit.FontSize = fontSize;
         }
 
         static void SetText(Label label, string text)

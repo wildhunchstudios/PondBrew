@@ -12,11 +12,12 @@ namespace EvolutionShop
 {
     public sealed partial class MilestoneSmoke
     {
-        string vocabularyCaption;
-        void OnGUI()
+        string vocabularyCaptionText;
+        // The fixture's caption; since UX-09 a UI Toolkit label (FixtureCaption) instead of an IMGUI box.
+        string vocabularyCaption
         {
-            if (string.IsNullOrEmpty(vocabularyCaption)) return;
-            GUI.Box(new Rect(Screen.width / 2 - 270, 70, 540, 48), "FX-06R-01 / PARTICLE VOCABULARY FIXTURE\n" + vocabularyCaption);
+            get => vocabularyCaptionText;
+            set { vocabularyCaptionText = value; FixtureCaption(string.IsNullOrEmpty(value) ? null : "FX-06R-01 / PARTICLE VOCABULARY FIXTURE\n" + value); }
         }
         [Serializable] sealed class VocabularyRaster
         {
