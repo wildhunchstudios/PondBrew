@@ -1,0 +1,1030 @@
+/* UX-07 screens: welcome, help, journal, day report and pause over the dimmed world (UX.6), after the approved day
+   report and pause mockups. Sizes are for the 1920x1080 reference panel; the 2560x1080 panel is 926 high. Help and the
+   journal reuse the planning notebook's sheet classes; every class defined here starts with es-screen (ScreenViewTests
+   checks it), apart from Unity's own slider parts styled inside .es-screen-slider. */
+
+.es-screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    padding-top: 126px;
+    padding-bottom: 30px;
+}
+
+/* The receipt is narrow and centred, clear of the corner chips, so it may use the full height. */
+.es-screen--tall {
+    padding-top: 22px;
+    padding-bottom: 22px;
+}
+
+.es-screen__dim {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(8, 26, 24, 0.76);
+}
+
+.es-screen__book {
+    flex-grow: 1;
+    width: 82%;
+    max-width: 1640px;
+    flex-direction: column;
+}
+
+.es-screen__stage {
+    flex-grow: 1;
+    align-self: stretch;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.es-screen-view {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.es-screen-view--sheet {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.es-screen-tabs {
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+/* ---------- shared pieces ---------- */
+
+.es-screen-card {
+    background-color: var(--es-paper);
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    border-bottom-left-radius: 26px;
+    border-bottom-right-radius: 26px;
+    border-bottom-width: 8px;
+    border-color: var(--es-paper-lip);
+    padding: 34px 40px 28px 40px;
+    flex-direction: column;
+}
+
+.es-screen-card__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 50px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-card__line {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    margin: 4px 0 4px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-eyebrow {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--es-muted);
+    margin: 0 0 4px 0;
+    padding: 0;
+}
+
+.es-screen-notice {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 14px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-notice--error {
+    color: var(--es-coral-ink);
+}
+
+.es-screen-link--danger {
+    color: var(--es-coral-ink);
+}
+
+.es-screen-callout {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    white-space: normal;
+    background-color: #E3EFE6;
+    border-left-width: 5px;
+    border-color: var(--es-teal);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 8px 14px 8px 14px;
+    margin: 0 0 12px 0;
+}
+
+.es-screen-keys {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 22px;
+}
+
+.es-screen-key {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 24px 8px 0;
+}
+
+.es-screen-key__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 0 0 0 8px;
+    padding: 0;
+}
+
+.es-screen-glyph {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.es-screen-coin {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    margin-right: 6px;
+}
+
+.es-screen-bar {
+    height: 18px;
+    margin-top: 10px;
+    background-color: #ECE4CB;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+    border-bottom-left-radius: 9px;
+    border-bottom-right-radius: 9px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.es-screen-bar--thin {
+    height: 10px;
+    margin-top: 8px;
+}
+
+.es-screen-bar__fill {
+    height: 100%;
+    background-color: var(--es-honey);
+}
+
+.es-screen-bar--leaf .es-screen-bar__fill {
+    background-color: #7FB98A;
+}
+
+.es-screen-bar__mark {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    margin-left: -2px;
+    background-color: var(--es-ink);
+}
+
+.es-screen-chip--bloom {
+    border-left-width: 6px;
+    border-color: var(--es-bloom);
+}
+
+.es-screen-chip--flow {
+    border-left-width: 6px;
+    border-color: var(--es-flow);
+}
+
+.es-screen-chip--spark {
+    border-left-width: 6px;
+    border-color: var(--es-spark);
+}
+
+.es-screen-chip--mist {
+    border-left-width: 6px;
+    border-color: var(--es-mist);
+}
+
+/* ---------- welcome ---------- */
+
+.es-screen-welcome {
+    width: 980px;
+}
+
+.es-screen-welcome__section {
+    margin-top: 22px;
+    padding: 22px 26px 20px 26px;
+    background-color: var(--es-paper-deep);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.es-screen-welcome__heads {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-screen-welcome__head {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 32px;
+    color: var(--es-ink);
+    margin: 0 14px 0 0;
+    padding: 0;
+}
+
+.es-screen-welcome__buttons {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.es-screen-welcome__primary {
+    font-size: 24px;
+    padding: 12px 28px 14px 28px;
+    margin: 0 14px 0 0;
+}
+
+.es-screen-welcome__secondary {
+    font-size: 22px;
+    padding: 10px 24px 12px 24px;
+    margin: 0;
+}
+
+/* ---------- help ---------- */
+
+.es-screen-help {
+    flex-direction: row;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.es-screen-help__steps {
+    width: 330px;
+    flex-shrink: 0;
+    margin-right: 26px;
+    flex-direction: column;
+}
+
+.es-screen-step {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 3px 12px 3px 8px;
+    margin: 0 0 2px 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.es-screen-step:hover {
+    background-color: #F1E6C6;
+}
+
+.es-screen-step--on,
+.es-screen-step--on:hover {
+    background-color: #E3EFE6;
+    border-color: var(--es-teal);
+}
+
+.es-screen-step--controls {
+    margin-top: 8px;
+}
+
+.es-screen-step__number {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+    color: var(--es-ink);
+    background-color: #EFE7CF;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    margin: 0 12px 0 0;
+    padding: 0;
+}
+
+.es-screen-step--now .es-screen-step__number {
+    background-color: var(--es-teal);
+    color: var(--es-paper);
+}
+
+.es-screen-step__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 19px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+.es-screen-help__page {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    flex-direction: column;
+    background-color: #FFFDF5;
+    border-width: 2px;
+    border-color: #EBDDB8;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    padding: 24px 30px 20px 30px;
+}
+
+.es-screen-help__section {
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.es-screen-help__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 40px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-help__do {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 24px;
+    color: var(--es-ink);
+    margin: 6px 0 8px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-help__tips {
+    flex-direction: column;
+}
+
+.es-screen-help__tip {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 19px;
+    color: var(--es-muted);
+    margin: 3px 0 3px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-help__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 14px;
+}
+
+.es-screen-help__actions .es-button {
+    margin-right: 14px;
+}
+
+.es-screen-help__now {
+    flex-direction: column;
+    flex-shrink: 0;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top-width: 2px;
+    border-color: #EBDDB8;
+}
+
+.es-screen-help__chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.es-screen-help__chips > Label {
+    margin: 0 8px 6px 0;
+}
+
+.es-screen-help__keys {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+
+.es-screen-help__keys .es-screen-key {
+    width: 48%;
+    margin: 0 0 12px 0;
+}
+
+.es-screen-help__skip {
+    align-self: flex-start;
+    margin-top: 10px;
+}
+
+/* ---------- journal ---------- */
+
+.es-screen-journal__page {
+    flex-grow: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.es-screen-journal__grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.es-screen-creature {
+    width: 274px;
+    margin: 0 16px 16px 0;
+    padding: 16px 18px 16px 18px;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-shrink: 0;
+    background-color: #FFFDF5;
+    border-width: 2px;
+    border-color: #EBDDB8;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.es-screen-creature--unknown {
+    background-color: var(--es-paper-deep);
+}
+
+.es-screen-creature__glyph {
+    width: 150px;
+    height: 88px;
+    align-self: center;
+    margin-bottom: 10px;
+}
+
+.es-screen-creature__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    color: var(--es-ink);
+    margin: 0 0 4px 0;
+    padding: 0;
+}
+
+.es-screen-creature__price {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.es-screen-creature__amount {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 26px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-creature__tag {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-muted);
+    margin: 0 0 0 10px;
+    padding: 0;
+}
+
+.es-screen-creature__clue {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 4px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-customer {
+    width: 340px;
+    margin: 0 16px 16px 0;
+    padding: 18px 20px 18px 20px;
+    flex-direction: column;
+    flex-shrink: 0;
+    background-color: #FFFDF5;
+    border-width: 2px;
+    border-color: #EBDDB8;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.es-screen-customer__face {
+    width: 96px;
+    height: 96px;
+    align-self: center;
+}
+
+.es-screen-customer__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+    color: var(--es-ink);
+    align-self: center;
+    margin: 4px 0 6px 0;
+    padding: 0;
+}
+
+.es-screen-stat {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.es-screen-stat__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 0 0 0 8px;
+    padding: 0;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+.es-screen-customer__favorites {
+    flex-direction: row;
+    margin-left: 8px;
+}
+
+.es-screen-customer__favorite {
+    width: 44px;
+    height: 26px;
+    margin-right: 4px;
+}
+
+.es-screen-journal__shop {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+}
+
+.es-screen-panel {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: column;
+    margin: 0 20px 16px 0;
+    padding: 22px 26px 22px 26px;
+    background-color: #FFFDF5;
+    border-width: 2px;
+    border-color: #EBDDB8;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.es-screen-panel__head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-screen-panel__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    color: var(--es-ink);
+    margin: 0 12px 0 0;
+    padding: 0;
+}
+
+.es-screen-panel__value {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 40px;
+    color: var(--es-teal);
+    margin: 8px 0 0 0;
+    padding: 0;
+}
+
+.es-screen-panel__line {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 19px;
+    color: var(--es-ink);
+    margin: 14px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-panel__small {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 17px;
+    color: var(--es-muted);
+    margin: 8px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-journal__now {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 19px;
+    color: var(--es-ink);
+    width: 100%;
+    margin: 4px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+/* ---------- day report receipt ---------- */
+
+.es-screen-receipt {
+    width: 690px;
+    flex-direction: column;
+}
+
+.es-screen-receipt__paper {
+    background-color: #FFFDF5;
+    padding: 26px 44px 18px 44px;
+    flex-direction: column;
+}
+
+.es-screen-receipt__tear {
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.es-screen-receipt__head {
+    flex-direction: column;
+    align-items: center;
+}
+
+.es-screen-receipt__eyebrow {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    letter-spacing: 3px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-receipt__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 42px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-receipt__rule {
+    height: 3px;
+    background-color: #B7AE92;
+    margin: 10px 0 14px 0;
+    flex-shrink: 0;
+}
+
+.es-screen-receipt__body {
+    flex-direction: column;
+}
+
+.es-screen-receipt__income {
+    flex-direction: column;
+    align-items: center;
+}
+
+.es-screen-receipt__income-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-screen-receipt__coin {
+    width: 60px;
+    height: 60px;
+    margin-right: 12px;
+}
+
+.es-screen-receipt__amount {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 80px;
+    color: var(--es-teal);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-receipt__muted {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-receipt__stats {
+    flex-direction: row;
+    margin-top: 12px;
+}
+
+.es-screen-receipt__stat {
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+    padding: 8px 6px 8px 6px;
+    margin: 0 5px 0 5px;
+    background-color: #F3EEDD;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.es-screen-receipt__stat-value {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 40px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-receipt__reasons {
+    margin-top: 10px;
+}
+
+.es-screen-receipt__reasons-text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-coral-ink);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-receipt__line {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: 12px;
+}
+
+.es-screen-receipt__mono {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 21px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-receipt__dots {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #B7AE92;
+    margin: 0 8px 7px 8px;
+}
+
+/* Over the lines below the profit row, so hovering never moves the centred receipt (and the row out from under the pointer). */
+.es-screen-receipt__details {
+    position: absolute;
+    left: 0;
+    right: 0;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 17px;
+    color: var(--es-ink);
+    background-color: var(--es-paper-deep);
+    border-left-width: 1px; border-right-width: 1px; border-top-width: 1px; border-bottom-width: 1px;
+    border-left-color: var(--es-paper-lip); border-right-color: var(--es-paper-lip); border-top-color: var(--es-paper-lip); border-bottom-color: var(--es-paper-lip);
+    border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+    margin: 0;
+    padding: 10px 14px 10px 14px;
+    white-space: normal;
+}
+
+.es-screen-receipt__rep {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.es-screen-receipt__rep-text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 26px;
+    color: var(--es-ink);
+    margin: 0 0 0 8px;
+    padding: 0;
+    flex-grow: 1;
+}
+
+.es-screen-receipt__tier {
+    align-self: center;
+}
+
+.es-screen-receipt__tip {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 14px;
+    padding: 12px 16px 12px 16px;
+    background-color: #EAF3EC;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.es-screen-receipt__tip-text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 19px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+.es-screen-receipt__next {
+    font-size: 26px;
+    margin-top: 16px;
+    padding: 10px 18px 12px 18px;
+}
+
+/* ---------- pause ---------- */
+
+.es-screen-pause {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.es-screen-pause__menu {
+    width: 450px;
+    margin-right: 36px;
+}
+
+.es-screen-pause__nav {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 24px;
+    padding: 10px 20px 12px 20px;
+    margin: 12px 0 0 0;
+}
+
+.es-screen-pause__nav--on {
+    background-color: #E3EFE6;
+    border-color: var(--es-teal);
+}
+
+.es-screen-pause__nav-text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 26px;
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-pause__nav-key {
+    margin: 0;
+}
+
+.es-screen-pause__file {
+    margin-top: 24px;
+    padding-top: 14px;
+    border-top-width: 2px;
+    border-color: #D9CFAF;
+}
+
+.es-screen-pause__status {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 2px 0 6px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-pause__status--error {
+    color: var(--es-coral-ink);
+}
+
+.es-screen-pause__dev {
+    margin-top: 18px;
+}
+
+.es-screen-pause__settings {
+    width: 1074px;
+    min-height: 600px;
+}
+
+.es-screen-pause__page {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.es-screen-pause__tab {
+    flex-direction: column;
+    margin-top: 24px;
+}
+
+.es-screen-pause__footer {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: auto 0 0 0;
+    padding: 16px 0 0 0;
+    white-space: normal;
+}
+
+.es-screen-pause__reset-buttons {
+    margin-top: 22px;
+}
+
+.es-screen-setting {
+    flex-direction: column;
+    margin-bottom: 24px;
+}
+
+.es-screen-setting__head {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.es-screen-setting__label {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-setting__value {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 24px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.es-screen-setting__value-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.es-screen-setting__keycap {
+    font-size: 22px;
+    min-width: 46px;
+    height: 40px;
+    -unity-text-align: middle-center;
+    margin: 0 14px 0 0;
+}
+
+.es-screen-setting__button {
+    font-size: 20px;
+    padding: 6px 18px 8px 18px;
+    margin: 0;
+}
+
+.es-screen-setting__hint {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 6px 0 0 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.es-screen-slider {
+    margin: 8px 0 0 0;
+    height: 34px;
+}
+
+.es-screen-slider .unity-base-slider__tracker {
+    height: 12px;
+    margin-top: -6px;
+    background-color: #EFE7CF;
+    border-width: 0;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.es-screen-slider .unity-base-slider__dragger {
+    width: 30px;
+    height: 30px;
+    margin-top: -15px;
+    background-color: var(--es-teal);
+    border-width: 3px;
+    border-color: var(--es-paper);
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}

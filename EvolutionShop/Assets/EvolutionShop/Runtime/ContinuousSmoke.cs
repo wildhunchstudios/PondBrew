@@ -58,6 +58,8 @@ namespace EvolutionShop
         void CycleFxCheckpoint(string stage)
         {
             var world = shop.World; var pool = world.FxPool;
+            // UX-07: the tutorial and trading routes share CycleTransfer, but only the continuous route created the record.
+            if (cycleFx == null) cycleFx = new CycleFxRecords();
             Check(pool.OwnedCount == 96 && pool.OwnedMeshCount == 5 && pool.OwnedMaterialCount == 1 &&
                 pool.Root.GetComponentsInChildren<Renderer>(true).Length == 96 &&
                 pool.Root.GetComponentsInChildren<Collider>(true).Length == 0 && shop.GetComponents<AudioSource>().Length == 5,

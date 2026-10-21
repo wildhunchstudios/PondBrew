@@ -61,7 +61,7 @@ namespace EvolutionShop
             var lesson = TutorialGuidanceLesson;
             if (TutorialNeedsReportRecovery)
             {
-                recovery = "The older day report was replaced. Press F1 to review your saved guided-sale receipts and finish preparation.";
+                recovery = TutText("tut.fix.receipts", "The older day report was replaced. Press F1 to review your saved guided-sale receipts and finish preparation.");
                 return false;
             }
             Station station = null;
@@ -72,96 +72,96 @@ namespace EvolutionShop
                 (Customers.NextToServe != null && Customers.NextToServe.Phase == CustomerPhase.Queued ||
                  Customers.Visit != null && Customers.Visit.Phase == CustomerPhase.ToCounter);
             if (urgent)
-            { station = TutorialStation(StationKind.Counter); action = "E / serve at the counter"; }
+            { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.serve", "E / serve at the counter"); }
             else if (TutorialProcessingConditioner() is string processingId)
             {
                 foreach (var item in World.Stations)
                     if (TutorialStationLive(item) && item.ConditionerItemId == processingId) { station = item; break; }
-                action = "E / wait or cancel conditioning";
-                recovery = "Your creature is conditioning in the lab vat. Wait for it, or use E at that vat to cancel and recover the unchanged creature.";
+                action = TutText("tut.act.vat", "E / wait or cancel conditioning");
+                recovery = TutText("tut.fix.vat", "Your creature is conditioning in the lab vat. Wait for it, or use E at that vat to cancel and recover the unchanged creature.");
             }
             else if ((recovery = TutorialStockRecovery()) != null)
-            { station = TutorialStation(StationKind.Counter); action = "E / Staff / pause the reserved work"; }
+            { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.pauseWork", "E / Staff / pause the reserved work"); }
             else switch (lesson)
             {
                 case TutorialLesson.Orient:
                     if (playerInLab) return false; // Movement/look still have their real input predicates.
-                    doorOnly = true; action = "Approach to enter your lab";
+                    doorOnly = true; action = TutText("tut.act.enterLab", "Approach to enter your lab");
                     break;
                 case TutorialLesson.Collect:
                 case TutorialLesson.Prepare:
                 case TutorialLesson.Grow:
                     if (Model.IsIncubatorReservedForTechnician)
-                    { station = TutorialStation(StationKind.Counter); action = "E / Staff / pause lab work"; }
+                    { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.pauseLab", "E / Staff / pause lab work"); }
                     else
                     {
                         var needed = TutorialNeededCulture();
                         if (needed.HasValue)
                         {
                             station = TutorialStation(needed == CultureKind.Bloom ? StationKind.Bloom : StationKind.Flow);
-                            action = "Aim + hold left mouse / " + needed.Value;
+                            action = TutText("tut.act.collect", "Aim + hold left mouse / " + needed.Value, needed.Value);
                         }
                         else
                         {
                             station = TutorialStation(StationKind.Incubator);
-                            action = Model.Incubator.Phase == IncubatorPhase.Incubating ? "Growing / output waits here" :
-                                Model.Incubator.Phase == IncubatorPhase.Ready ? "Ready / stock an empty display" : "E / prepare or repair doses";
+                            action = Model.Incubator.Phase == IncubatorPhase.Incubating ? TutText("tut.act.growing", "Growing / output waits here") :
+                                Model.Incubator.Phase == IncubatorPhase.Ready ? TutText("tut.act.ready", "Ready / stock an empty display") : TutText("tut.act.prepare", "E / prepare or repair doses");
                         }
                     }
                     break;
                 case TutorialLesson.Display:
-                    station = TutorialEmptyDisplay(); action = "E / stock your ready creature";
+                    station = TutorialEmptyDisplay(); action = TutText("tut.act.stock", "E / stock your ready creature");
                     if (!station && !TutorialHasEmptyDisplay())
-                    { station = TutorialStation(StationKind.Counter); action = "E / make room through sales"; }
+                    { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.makeRoom", "E / make room through sales"); }
                     break;
                 case TutorialLesson.PriceAndOpen:
                     // Prices follow the actual manually stocked specimen, including relocated displays.
                     station = TutorialFirstStockDisplay();
                     if (!station)
                     {
-                        station = TutorialEmptyDisplay(); action = "E / restock your creature";
+                        station = TutorialEmptyDisplay(); action = TutText("tut.act.restock", "E / restock your creature");
                         if (!station && !TutorialHasEmptyDisplay())
-                        { station = TutorialStation(StationKind.Counter); action = "E / open or serve to make room"; }
+                        { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.openRoom", "E / open or serve to make room"); }
                     }
                     else if (!TutorialPracticeGuidanceRequested && (Tutorial.Facts & TutorialFacts.PriceViewed) == 0)
-                        action = "E / inspect its price tag";
+                        action = TutText("tut.act.price", "E / inspect its price tag");
                     else
-                    { station = TutorialStation(StationKind.Counter); action = "E / open for the day"; }
+                    { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.open", "E / open for the day"); }
                     break;
                 case TutorialLesson.Serve:
                     // Prior manual display remains learned if the exact creature is stored again.
                     // Other saleable stock must not conceal the required restock.
                     if (!TutorialTrackedCreatureIsDisplayed())
                     {
-                        station = TutorialEmptyDisplay(); action = "E / restock your creature";
+                        station = TutorialEmptyDisplay(); action = TutText("tut.act.restock", "E / restock your creature");
                         if (!station && !TutorialHasEmptyDisplay())
-                        { station = TutorialStation(StationKind.Counter); action = "E / make room through sales"; }
+                        { station = TutorialStation(StationKind.Counter); action = TutText("tut.act.makeRoom", "E / make room through sales"); }
                         break;
                     }
                     station = TutorialStation(StationKind.Counter);
-                    action = Cycle.Phase == ShopDayPhase.Night ? "E / open for the day" : "E / serve accepted orders";
+                    action = Cycle.Phase == ShopDayPhase.Night ? TutText("tut.act.open", "E / open for the day") : TutText("tut.act.serveOrders", "E / serve accepted orders");
                     break;
                 case TutorialLesson.CloseAndReview:
                     station = TutorialStation(StationKind.Counter);
-                    action = Cycle.Phase == ShopDayPhase.Night ? "E / review day results" : "E / close when ready";
+                    action = Cycle.Phase == ShopDayPhase.Night ? TutText("tut.act.review", "E / review day results") : TutText("tut.act.close", "E / close when ready");
                     break;
             }
             if (!doorOnly && !station)
             {
                 recovery = lesson == TutorialLesson.Display || lesson == TutorialLesson.PriceAndOpen
-                    ? "No usable display target is present. At the counter, arrange a reachable empty display, then stock your creature. F1 for help."
-                    : "The required station is unavailable. Check its placement from the counter and restore access; F1 keeps the lesson available.";
+                    ? TutText("tut.fix.noDisplay", "No usable display target is present. At the counter, arrange a reachable empty display, then stock your creature. F1 for help.")
+                    : TutText("tut.fix.noStation", "The required station is unavailable. Check its placement from the counter and restore access; F1 keeps the lesson available.");
                 return false;
             }
             bool targetInLab = station && World.transform.InverseTransformPoint(station.transform.position).z > TutorialDoorZ();
             if (doorOnly || targetInLab != playerInLab)
             {
                 if (!World.LabDoor || !World.LabDoor.isActiveAndEnabled)
-                { recovery = "The lab doorway is unavailable. Restore access between the rooms before continuing; F1 for help."; return false; }
+                { recovery = TutText("tut.fix.noDoor", "The lab doorway is unavailable. Restore access between the rooms before continuing; F1 for help."); return false; }
                 var door = World.LabDoor.transform;
                 bool goingToLab = doorOnly || targetInLab;
                 target = new TutorialGuidanceTarget(door, null, door.TransformPoint(new Vector3(0, 1.8f, goingToLab ? -.13f : .13f)), true,
-                    goingToLab ? "LAB DOOR" : "SHOP DOOR", goingToLab ? "Approach / go through to the lab" : "Approach / go through to the shop");
+                    goingToLab ? TutText("tut.door.lab", "LAB DOOR") : TutText("tut.door.shop", "SHOP DOOR"), goingToLab ? TutText("tut.act.toLab", "Approach / go through to the lab") : TutText("tut.act.toShop", "Approach / go through to the shop"));
                 return true;
             }
             target = new TutorialGuidanceTarget(station.transform, station, station.transform.TransformPoint(new Vector3(0, 1.45f, 0)), false,
@@ -231,15 +231,15 @@ namespace EvolutionShop
             if (!string.IsNullOrEmpty(id))
             {
                 if (Model.Incubator.SpecimenId == id && Model.IsIncubatorReservedForTechnician)
-                    return "Moss reserved your ready creature. At Counter > Staff, pause lab work before stocking it yourself.";
+                    return TutText("tut.fix.mossStock", "Moss reserved your ready creature. At Counter > Staff, pause lab work before stocking it yourself.");
                 foreach (string rack in Model.StorageIds)
                     if (Model.GetStorage(rack) is SpecimenView stored && stored.Id == id && Model.IsStorageReservedForStocking(rack))
-                        return "Nori reserved your stored creature. At Counter > Staff, pause stocking before displaying it yourself.";
+                        return TutText("tut.fix.noriStock", "Nori reserved your stored creature. At Counter > Staff, pause stocking before displaying it yourself.");
             }
             if (!TutorialHasEmptyDisplay())
                 foreach (string tank in Model.TankIds)
                     if (!Model.GetTank(tank).HasValue && Model.IsTankReservedForStocking(tank))
-                        return "Nori reserved the empty displays. Wait for stocking, or pause stocking at Counter > Staff to free a destination.";
+                        return TutText("tut.fix.noriDisplays", "Nori reserved the empty displays. Wait for stocking, or pause stocking at Counter > Staff to free a destination.");
             return null;
         }
 
@@ -271,24 +271,24 @@ namespace EvolutionShop
                 {
                     string recovery = TutorialPreparationRecovery(TutorialGuidanceLesson);
                     if (!string.IsNullOrEmpty(recovery)) return recovery;
-                    if (Model.Incubator.Phase == IncubatorPhase.Ready) return "Your creature waits here. Close this panel and press E at an empty front display to stock it.";
-                    if (Model.Incubator.Phase == IncubatorPhase.Incubating) return "Your batch is growing normally. It keeps growing with this panel open; F1 help pauses it.";
-                    return "Stage " + TutorialStarterRecipe() + " with the + controls below. Use - to return extras, then Begin incubation.";
+                    if (Model.Incubator.Phase == IncubatorPhase.Ready) return TutText("tut.call.incReady", "Your creature waits here. Close this panel and press E at an empty front display to stock it.");
+                    if (Model.Incubator.Phase == IncubatorPhase.Incubating) return TutText("tut.call.incGrowing", "Your batch is growing normally. It keeps growing with this panel open; F1 help pauses it.");
+                    return TutText("tut.call.incDose", "Stage " + TutorialStarterRecipe() + " with the + controls below. Use - to return extras, then Begin incubation.", TutorialStarterRecipe());
                 }
                 if (Panel == ShopPanel.Tank)
                     return Model.GetTank(selectedTank).HasValue
-                        ? "Check the price tag and buyer reactions below. Keeping the standard price is fine; open at the counter when ready."
-                        : "Choose your ready or stored creature below. Stocking transfers it directly into this display.";
+                        ? TutText("tut.call.tankPrice", "Check the price tag and buyer reactions below. Keeping the standard price is fine; open at the counter when ready.")
+                        : TutText("tut.call.tankEmpty", "Choose your ready or stored creature below. Stocking transfers it directly into this display.");
                 if (Panel == ShopPanel.Counter && Customers != null && Customers.NextToServe != null && Customers.NextToServe.Phase == CustomerPhase.Queued)
-                    return "Serve the waiting order below before patience runs out. Its exact creature is paid only after successful checkout.";
+                    return TutText("tut.call.counterServe", "Serve the waiting order below before patience runs out. Its exact creature is paid only after successful checkout.");
                 if (Panel == ShopPanel.Counter && TutorialStockRecovery() is string stockRecovery) return stockRecovery;
                 if (Panel == ShopPanel.Counter && ActiveTutorialLesson == TutorialLesson.CloseAndReview)
-                    return Cycle.Phase == ShopDayPhase.Night ? "Review your completed day results below, then choose Continue preparation." :
-                        "Use Close for the night below, then confirm. Accepted orders still follow ordinary closing rules.";
+                    return Cycle.Phase == ShopDayPhase.Night ? TutText("tut.call.counterReview", "Review your completed day results below, then choose Continue preparation.") :
+                        TutText("tut.call.counterClose", "Use Close for the night below, then confirm. Accepted orders still follow ordinary closing rules.");
                 if (Panel == ShopPanel.Counter)
-                    return Model.IsIncubatorReservedForTechnician ? "Choose Staff, then pause Moss's lab work to prepare this batch yourself." :
-                        Cycle.Phase == ShopDayPhase.Night ? "Stock your displays, then use Open for day below. The trading clock starts when you open." :
-                        "Serve a waiting order here. A reservation becomes income only after successful checkout.";
+                    return Model.IsIncubatorReservedForTechnician ? TutText("tut.call.counterMoss", "Choose Staff, then pause Moss's lab work to prepare this batch yourself.") :
+                        Cycle.Phase == ShopDayPhase.Night ? TutText("tut.call.counterNight", "Stock your displays, then use Open for day below. The trading clock starts when you open.") :
+                        TutText("tut.call.counterDay", "Serve a waiting order here. A reservation becomes income only after successful checkout.");
                 return null;
             }
         }

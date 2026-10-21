@@ -26,13 +26,14 @@ namespace EvolutionShop
         public const string CloseName = "es-card-close";
         public const string KeycapName = "es-card-keycap";
         public const string HintName = "es-card-hint";
+        public const string CalloutName = "es-card-callout";
         public const string ShopStripClass = "es-card__strip--shop";
         public const string TagCardClass = "es-card--tag";
         public const string ClipboardCardClass = "es-card--clipboard";
         public const string PrimaryClass = "es-button--primary";
 
         VisualElement strip, viewSlot, afterSlot;
-        Label title, status, body, reason, keycap, hint;
+        Label title, status, body, reason, keycap, hint, callout;
         Button close, primary;
         int shownFrame = -1;
         readonly Dictionary<ShopPanel, StationCardView> views = new Dictionary<ShopPanel, StationCardView>();
@@ -42,6 +43,8 @@ namespace EvolutionShop
         public ShopUiCardPlacement Placement { get; private set; }
         public Vector2 AnchorPanelPoint { get; private set; }
         public string Title => title != null ? title.text : "";
+        /// <summary>The tutorial callout showing at the top of the card (UX-07), or empty.</summary>
+        public string Callout => callout != null && callout.style.display != DisplayStyle.None ? callout.text : "";
         public bool ShopStyled => strip != null && strip.ClassListContains(ShopStripClass);
         /// <summary>The content view for the shown panel; null for stations still on the placeholder.</summary>
         public StationCardView CurrentView { get; private set; }
@@ -90,6 +93,14 @@ namespace EvolutionShop
             if (primary != null) primary.clicked += PressPrimary;
             if (keycap != null) keycap.text = Strings.Get("card.keycap.back");
             if (hint != null) hint.text = Strings.Get("card.hint");
+            // UX-07: the guided opening's callout for this station, in the cards' own words, at the top of the content.
+            var content = Element.Q<VisualElement>("es-card-content");
+            if (content != null)
+            {
+                callout = new Label { name = CalloutName };
+                callout.AddToClassList("es-card__callout");
+                content.Insert(0, callout);
+            }
             if (viewSlot != null && afterSlot != null)
             {
                 AddView(ShopPanel.Incubator, new IncubatorCardView(Shop, Strings));
@@ -160,6 +171,9 @@ namespace EvolutionShop
 
         void RefreshContent()
         {
+            string tip = Shop.TutorialLocalCallout;
+            SetText(callout, tip);
+            SetShown(callout, !string.IsNullOrEmpty(tip));
             var view = CurrentView;
             if (view == null)
             {

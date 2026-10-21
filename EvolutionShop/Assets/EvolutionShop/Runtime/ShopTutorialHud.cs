@@ -97,7 +97,7 @@ namespace EvolutionShop
             if (lesson == TutorialLesson.Practice)
             {
                 if (!TutorialPracticeGuidanceRequested)
-                    return "Grow and sell another creature yourself. F1 opens help if you need it.";
+                    return TutText("tut.obj.practice", "Grow and sell another creature yourself. F1 opens help if you need it.");
                 lesson = TutorialGuidanceLesson;
             }
             string recovery = TutorialGuidanceRecovery;
@@ -107,41 +107,41 @@ namespace EvolutionShop
             switch (lesson)
             {
                 case TutorialLesson.Orient:
-                    return "Find your back lab. WASD to move, mouse to look. Approach the lab door to open it.";
+                    return TutText("tut.obj.orient", "Find your back lab. WASD to move, mouse to look. Approach the lab door to open it.");
                 case TutorialLesson.Collect:
-                    return "Collect " + TutorialCollectionTarget() + ". Aim at its grower and hold left mouse.";
+                    return TutText("tut.obj.collect", "Collect " + TutorialCollectionTarget() + ". Aim at its grower and hold left mouse.", TutorialCollectionTarget());
                 case TutorialLesson.Prepare:
-                    return "Press E at the incubator. Add " + TutorialStarterRecipe() + ".";
+                    return TutText("tut.obj.prepare", "Press E at the incubator. Add " + TutorialStarterRecipe() + ".", TutorialStarterRecipe());
                 case TutorialLesson.Grow:
                     if (Model.Incubator.Phase == IncubatorPhase.Incubating)
-                        return TutorialIncubatorName() + " is growing / " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s. It will wait in the incubator.";
+                        return TutText("tut.obj.growing", TutorialIncubatorName() + " is growing / " + Mathf.CeilToInt(Model.Incubator.SecondsRemaining) + "s. It will wait in the incubator.", TutorialIncubatorName(), Mathf.CeilToInt(Model.Incubator.SecondsRemaining));
                     if (Model.Incubator.Phase == IncubatorPhase.Ready)
-                        return "The incubator is occupied. Stock its ready creature, then start your own batch. F1 for help.";
-                    return "At the incubator, prepare a recipe and choose Begin incubation.";
+                        return TutText("tut.obj.occupied", "The incubator is occupied. Stock its ready creature, then start your own batch. F1 for help.");
+                    return TutText("tut.obj.grow", "At the incubator, prepare a recipe and choose Begin incubation.");
                 case TutorialLesson.Display:
                     if (!TutorialHasEmptyDisplay())
-                        return Cycle.Phase == ShopDayPhase.Night ? "Your displays are full. Open at the front counter to make room through sales." : "Your displays are full. Serve a sale to free a tank; the ready creature can wait.";
+                        return Cycle.Phase == ShopDayPhase.Night ? TutText("tut.obj.fullNight", "Your displays are full. Open at the front counter to make room through sales.") : TutText("tut.obj.fullDay", "Your displays are full. Serve a sale to free a tank; the ready creature can wait.");
                     return Model.Incubator.Phase == IncubatorPhase.Ready && StoredSpecimenCount == 0 && ReadyConditionedCount == 0
-                        ? "Press E at an empty front display to transfer your ready creature directly from the incubator."
-                        : "Press E at an empty front display. If stock choices appear, select your ready or stored creature.";
+                        ? TutText("tut.obj.displayDirect", "Press E at an empty front display to transfer your ready creature directly from the incubator.")
+                        : TutText("tut.obj.display", "Press E at an empty front display. If stock choices appear, select your ready or stored creature.");
                 case TutorialLesson.PriceAndOpen:
                     if (!TutorialTrackedCreatureIsDisplayed() && !TutorialHasEmptyDisplay())
-                        return "Your displays are full. Open at the front counter and sell existing stock to make room for your creature.";
+                        return TutText("tut.obj.fullPrice", "Your displays are full. Open at the front counter and sell existing stock to make room for your creature.");
                     return (Tutorial.Facts & TutorialFacts.PriceViewed) != 0
-                        ? "Press E at the front counter, then choose Open for day."
-                        : "Press E at a stocked display to check its price. Then open at the front counter.";
+                        ? TutText("tut.obj.open", "Press E at the front counter, then choose Open for day.")
+                        : TutText("tut.obj.price", "Press E at a stocked display to check its price. Then open at the front counter.");
                 case TutorialLesson.Serve:
                     if (!TutorialTrackedCreatureIsDisplayed())
                         return TutorialHasEmptyDisplay()
-                            ? "Restock your creature from its rack or output into an empty display, then return to the counter."
-                            : "Your creature is waiting off display. Open or serve at the counter to free a tank, then stock it yourself.";
+                            ? TutText("tut.obj.restock", "Restock your creature from its rack or output into an empty display, then return to the counter.")
+                            : TutText("tut.obj.offDisplay", "Your creature is waiting off display. Open or serve at the counter to free a tank, then stock it yourself.");
                     if (Cycle.Phase == ShopDayPhase.Night)
-                        return "Open at the front counter when your display is stocked. Then serve its customer yourself.";
-                    return "Let a customer choose a creature. Serve their order at the front counter yourself.";
+                        return TutText("tut.obj.serveNight", "Open at the front counter when your display is stocked. Then serve its customer yourself.");
+                    return TutText("tut.obj.serve", "Let a customer choose a creature. Serve their order at the front counter yourself.");
                 case TutorialLesson.CloseAndReview:
-                    return Cycle.Phase == ShopDayPhase.Night ? "Review your trading results at the front counter, then continue preparation." : "Close for the night at the front counter when ready. Review the day's results.";
+                    return Cycle.Phase == ShopDayPhase.Night ? TutText("tut.obj.review", "Review your trading results at the front counter, then continue preparation.") : TutText("tut.obj.close", "Close for the night at the front counter when ready. Review the day's results.");
                 case TutorialLesson.NextPlan:
-                    return "Choose your next goal at the front counter or with F1, then continue running your shop.";
+                    return TutText("tut.obj.nextPlan", "Choose your next goal at the front counter or with F1, then continue running your shop.");
                 default: return null;
             }
         }
@@ -150,7 +150,7 @@ namespace EvolutionShop
         {
             if (lesson != TutorialLesson.Collect && lesson != TutorialLesson.Prepare && lesson != TutorialLesson.Grow) return null;
             if (Model.IsIncubatorReservedForTechnician)
-                return "Moss reserved the incubator. Pause lab work at Counter > Staff to grow this creature yourself.";
+                return TutText("tut.fix.mossIncubator", "Moss reserved the incubator. Pause lab work at Counter > Staff to grow this creature yourself.");
             var starter = Model.GetSpecies("pondlet");
             var inc = Model.Incubator;
             if (starter == null || inc.Phase != IncubatorPhase.Dosing) return null;
@@ -158,7 +158,7 @@ namespace EvolutionShop
             foreach (var recipe in Config.Species)
                 if (recipe.Bloom == inc.Bloom && recipe.Flow == inc.Flow && recipe.Spark == inc.Spark && recipe.Mist == inc.Mist &&
                     (recipe.Spark == 0 || Model.SparkResearchUnlocked) && (recipe.Mist == 0 || Model.MistResearchUnlocked))
-                    return lesson == TutorialLesson.Collect ? null : recipe.DisplayName + " recipe ready. Choose Begin incubation at the incubator.";
+                    return lesson == TutorialLesson.Collect ? null : TutText("tut.fix.recipeReady", recipe.DisplayName + " recipe ready. Choose Begin incubation at the incubator.", recipe.DisplayName);
 
             CultureKind? missing = null;
             for (int i = 0; i < 4; i++)
@@ -174,8 +174,8 @@ namespace EvolutionShop
                     var kind = (CultureKind)i;
                     if (Model.Available(kind) + Model.Staged(kind) <= TutorialRecipeDose(starter, kind)) continue;
                     if (Model.Available(kind) > 0)
-                        return "Siphon full. At the incubator, choose Release 1 " + kind + " to make room for " + missing.Value + ", then collect it.";
-                    return "Siphon full. At the incubator, press - " + kind + " once, then Release 1 " + kind + " to make room for " + missing.Value + ". Returning alone keeps the slot full.";
+                        return TutText("tut.fix.release", "Siphon full. At the incubator, choose Release 1 " + kind + " to make room for " + missing.Value + ", then collect it.", kind, missing.Value);
+                    return TutText("tut.fix.returnRelease", "Siphon full. At the incubator, press - " + kind + " once, then Release 1 " + kind + " to make room for " + missing.Value + ". Returning alone keeps the slot full.", kind, missing.Value);
                 }
             }
             if (inc.Bloom + inc.Flow + inc.Spark + inc.Mist == 0) return null;
@@ -184,7 +184,7 @@ namespace EvolutionShop
                 var kind = (CultureKind)i;
                 int extra = Model.Staged(kind) - TutorialRecipeDose(starter, kind);
                 if (extra > 0)
-                    return "This mixture needs a repair. Press - " + kind + " " + extra + (extra == 1 ? " time" : " times") + " to return the excess. Aim for " + TutorialStarterRecipe() + ".";
+                    return TutText("tut.fix.excess", "This mixture needs a repair. Press - " + kind + " " + extra + (extra == 1 ? " time" : " times") + " to return the excess. Aim for " + TutorialStarterRecipe() + ".", kind, extra, TutorialStarterRecipe());
             }
             for (int i = 0; i < 4; i++)
             {
@@ -193,8 +193,8 @@ namespace EvolutionShop
                 if (needed <= 0) continue;
                 int collect = needed - Model.Available(kind);
                 return collect > 0
-                    ? "Your mixture needs " + kind + ". Collect " + collect + " " + kind + ", then use + " + kind + " at the incubator."
-                    : "Your mixture needs " + needed + " more " + kind + ". Press + " + kind + " " + needed + (needed == 1 ? " time" : " times") + " at the incubator.";
+                    ? TutText("tut.fix.collect", "Your mixture needs " + kind + ". Collect " + collect + " " + kind + ", then use + " + kind + " at the incubator.", kind, collect)
+                    : TutText("tut.fix.dose", "Your mixture needs " + needed + " more " + kind + ". Press + " + kind + " " + needed + (needed == 1 ? " time" : " times") + " at the incubator.", needed, kind);
             }
             return null;
         }

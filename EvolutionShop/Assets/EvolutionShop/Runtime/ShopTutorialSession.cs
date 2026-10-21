@@ -131,11 +131,13 @@ namespace EvolutionShop
                 // An unwritable fresh slot must still offer recovery/settings/quit.
                 if (Tutorial.Mode == TutorialMode.Offered && !string.IsNullOrEmpty(SaveError))
                 { SetPanel(ShopPanel.Pause); return; }
-                if (!ContinueGuidedOpening()) Notify("Choose Start guided opening or Play without guidance.");
+                if (!ContinueGuidedOpening()) Notify(TutText("tut.choose", "Choose Start guided opening or Play without guidance."));
                 return;
             }
             // UX-06: in the UI Toolkit notebook Esc backs out one level instead of closing it.
             if (PlanningBack()) return;
+            // UX-07: the New game step backs out to Pause.
+            if (ScreenBack()) return;
             SetPanel(Panel == ShopPanel.Presentation ? ShopPanel.Pause : Panel == ShopPanel.None ? ShopPanel.Pause : ShopPanel.None);
         }
 

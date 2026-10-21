@@ -47,7 +47,7 @@ namespace EvolutionShop
         public bool Gameplay;
         public bool PanelOpen;
         public bool Placement;
-        /// <summary>The UX-06 planning notebook is up: its footer shows notices, so toasts and the queue strip wait.</summary>
+        /// <summary>A full-screen view is up (the UX-06 notebook or a UX-07 screen): it shows notices itself, so toasts and the queue strip wait.</summary>
         public bool Planning;
         public bool Paused;
         public HudDayPhase Phase;

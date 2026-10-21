@@ -905,3 +905,20 @@
     border-color: var(--es-teal);
     background-color: #EAF3EC;
 }
+
+/* UX-07: the guided opening's callout at the top of a card, in the cards' own words. */
+.es-card__callout {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-ink);
+    white-space: normal;
+    background-color: #E3EFE6;
+    border-left-width: 5px;
+    border-color: var(--es-teal);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 7px 12px 7px 12px;
+    margin: 0 0 10px 0;
+}

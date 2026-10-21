@@ -1,3 +1,5 @@
+**UX-07 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), the welcome, help, journal, day report and pause are UI Toolkit screens over the dimmed world, and the tutorial's callouts sit in the station cards. **Welcome:** *Start guided opening* or *Play without guidance* (or *Continue*, *Continue my shop*, *Save recovery*). **Help (F1):** the ten Opening Night steps beside one page with what to do, **Show me the way** and *Your shop right now*; Controls; the next-goal page with the journal and Siphon MK II. **Journal (TAB):** Creatures, Customers and Shop tabs. **Day receipt:** earned today, sold / visitors / walked out with why, profit after wages (hover for details), reputation and one tip, then **Next night**. **Pause (Esc):** Resume, Settings (Controls, Sound, Comfort), Help, Save & quit, and *Reload…* / *New game…* / *Skip guidance…*, which ask on the right-hand card. With the preview on, the tutorial's next step, callouts and recovery lines name the cards' controls; with it off every classic panel and string is unchanged, and no lesson, fact or save changed. UX-07 also found that the classic tutorial, guidance, handoff and trading routes had stopped on a null checkpoint record since 2026-10-14; the harness creates it now and they pass. Revision `ux07-screens-2`. Actual **2390 passed EditMode tests** and **6096 final Windows checks** (the screens route at three sizes plus 20 regressions: the UX-06 to UX-02 routes, the six tutorial routes, trading, slap, comedy, FX-20 comfort, FX-18 native UI, cycle and comedy-gate); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-08 feel pass**, unstarted. Evidence `Docs/Evidence/ux-07-VALIDATION.md`; controls `Docs/Evidence/ux-07/PLAY.md`; local tag `ux07-screens-validated`.
+
 **UX-06 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), crew, automation, arrange and research are one planning notebook over the dimmed world: tabs along the top (a tab you can't use from where you stand says *At the counter*, *At the lab bench* or *At night*), *Back* (Esc backs out one level) and a footer line for what just happened. **Crew** (counter card → *Crew*): Pip, Nori and Moss as portrait cards with a status chip, the wage, an **On duty** switch that pays tonight's wage, a *•••* menu (Pause, Retry route, Dismiss… that asks first), and pages for Nori's display targets and Moss's recipe queue. **Automation** (bench card → *Culture prep*, the *Lab helper*): choose one known recipe, then Keep − N +, *Into* a display, the Keep stock switch and **Prepare one batch**, with the collector and doser switches beside the recipes. **Arrange**: Furniture / Decor / Owned / Lab catalogue tiles that say why they can't be used; placing hands over to the existing placement mode with a bottom key bar. **Research** (bench card → *Research path*): Bloom, Flow, Spark and Mist on a path with stamps and one **Research Spark · 48**; Siphon MK II as equipment. Every control calls the classic panel's session command. UX-03's toolkit HUD took any new game model as a reload, so it dropped every wage's money floater; its generation now changes only on a reload or New game. With the preview off every classic panel is unchanged. Revision `ux06-planning-2`. Actual **2379 passed EditMode tests** and **3208 final Windows checks** (the planning route at three sizes plus 15 regressions: the UX-05 lab cards, UX-04 cards, UX-02 card, UX-03 HUD, and the staff, stocker, technician, automation, research, placement, storage, decor, lab, cycle and comedy-gate routes); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-07 journal, day report, pause and help**, unstarted. Evidence `Docs/Evidence/ux-06-VALIDATION.md`; controls `Docs/Evidence/ux-06/PLAY.md`; local tag `ux06-planning-validated`.
 
 **UX-05 technically complete — 2026-10-20; hands-on review deferred.** With the UI Toolkit preview on (F9), the specimen rack, conditioning vat and research bench open UX.5 cards beside the station, and the collector and doser are installed and switched in the bench's card. The bench lists Spark culture (with *Need Ribbonfin* stamps), Siphon MK II, Collector and Doser, each with its own small button, and its one primary is always the next thing to get, then to switch on: **Research Spark · 48**, **Buy Siphon MK II · 24**, **Install collector · 36**, **Turn on collector**. The rack shows its compartments and what's ready to store (from the incubator or the vat) as tiles, with **Store Pondlet**. The vat lists stored Pondlets to pick, **Start vat · 12s** with the Spark reason, a lantern ring while glowing, *Cancel batch…* that asks first and returns the Pondlets and the Spark, and the Lanternfins to collect; *Research Mist · 40* sits under it. UX-04's card `.es-pip` had collapsed the HUD discovery stamp's recipe pips: the card classes are renamed, and an EditMode test now fails if the HUD and card stylesheets share a class name. The UX-02 placeholder is gone; with the preview off every classic panel is unchanged. Revision `ux05-lab-cards-5`. Actual **2368 passed EditMode tests** and **1845 final Windows checks** (the lab route at three sizes plus the UX-04 cards, UX-02 card, UX-03 HUD, R08 automation, cycle and comedy-gate regressions); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-06 planning views**, unstarted. Evidence `Docs/Evidence/ux-05-VALIDATION.md`; controls `Docs/Evidence/ux-05/PLAY.md`; local tag `ux05-lab-cards-validated`.
@@ -518,7 +520,8 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-04 Core station cards: technically complete 2026-10-20; hands-on review deferred (see UX.15).
 - [x] UX-05 Remaining station cards: technically complete 2026-10-20; hands-on review deferred (see UX.16).
 - [x] UX-06 Planning views: technically complete 2026-10-21; hands-on review deferred (see UX.17).
-- [ ] UX-07–UX-09 journal/report/pause, feel pass, IMGUI removal and full validation.
+- [x] UX-07 Screens (journal, day report, pause, help, welcome, tutorial callouts): technically complete 2026-10-21; hands-on review deferred (see UX.18).
+- [ ] UX-08–UX-09 feel pass, IMGUI removal and full validation.
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -588,6 +591,29 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-07 technically complete; hands-on review deferred (2026-10-21, Claude)
+
+**State:** UX-00 to UX-07 are done. UX-07 was validated in two numbered runs, the second final, after 13 numbered scratch builds (record in UX.18 and `Docs/Evidence/ux-07-VALIDATION.md`). Local tag `ux07-screens-validated`; checkpoint `Docs/Evidence/ux-07/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux07-screens-2`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-07/PLAY.md`), UX-06's, UX-05's, UX-04's and UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
+
+**Exact next action:** UX-08 feel pass (UX.9, acceptance in UX.12). The things to add:
+- card open and close motion, button squash and the disabled shake;
+- the price tag wiggle, and the sale's coin fly into the money chip;
+- the discovery stamp;
+- the receipt's count-up over 600 ms (any input skips), then the tip sliding in;
+- UI sounds.
+
+All of it reuses the FX ownership rule (after the authoritative result, never delaying the next command). Reduced motion keeps fades only, and Low effects detail has no UI particles. Comfort's UI scale (90–130%, UX.8) is still missing and fits here. Copy `Docs/Evidence/ux-07/Invoke-UX07.ps1` to `ux-08` (it takes `-Run N`) and keep its regressions.
+
+**Learned in UX-07, apply to the rest of UX:**
+
+- **Baseline first.** Before adding a classic route to a runner, run it on the previous task's final player. Three of UX-07's first picks were stale (reputation's format-five migration, the old-welcome native GUI probe, the old-art presentation audit), and four had a harness null since FX (`CycleTransfer`'s checkpoint record). `Invoke-UX07-Baseline.ps1` is the pattern.
+- **Some routes need arguments or time:** the FX comfort and FX native UI routes need `-evolutionIsolateSyntheticInput` and `-evolutionFxReviewEncoder <ffmpeg>` (`.tooling/fx06-media`), and trading plays three eight-minute days (45-minute limit).
+- **Hover popovers never resize a centred card.** A hovered row that grows its centred card moves out from under the pointer and flickers. Draw details as an absolute popover, last among its siblings so it paints on top.
+- **Questions stay in the containment check.** `es-plan-confirm` is absolutely positioned at its parent's bottom; in a short column use `es-plan-confirm--inline`, or put the question in a card of its own. The containment check can't see one sibling covering another, so look at the 2560×1080 captures for overlaps.
+- **Tutorial rule:** acknowledging the first-sale receipt counts as the review, so only a receipt before that acknowledgement is guided. A route that wants the guided receipt makes the practice sale the same day.
+- **A screen stylesheet must not style another sheet's classes, even in a descendant selector** (`.x .es-plan-chip`); the style test catches it.
+- **Run the mutated tests unmutated first;** set 1's baseline found two real problems.
+
 ### Current handoff — UX-06 technically complete; hands-on review deferred (2026-10-21, Claude)
 
 **State:** UX-00 to UX-06 are done. UX-06 was validated in two numbered runs, the second final, after 17 numbered scratch builds (record in UX.17 and `Docs/Evidence/ux-06-VALIDATION.md`). Local tag `ux06-planning-validated`; checkpoint `Docs/Evidence/ux-06/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux06-planning-2`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-06/PLAY.md`), UX-05's, UX-04's and UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
@@ -3665,7 +3691,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-04 (technically complete 2026-10-20; hands-on review deferred; see UX.15) Core station cards: incubator, display tank price tag, counter. Accept: full manual loop (collect → dose → start → place → price → open → serve → close) playable with new UI; no scroll at 1280×720; one primary button per card.
 - [x] UX-05 (technically complete 2026-10-20; hands-on review deferred; see UX.16) Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
 - [x] UX-06 (technically complete 2026-10-21; hands-on review deferred; see UX.17) Planning views: crew, automation, arrange, research.
-- [ ] UX-07 Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
+- [x] UX-07 (technically complete 2026-10-21; hands-on review deferred; see UX.18) Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
 - [ ] UX-08 Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
 - [ ] UX-09 Delete the IMGUI path, finish UI test migration, full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop.
 
@@ -3996,3 +4022,74 @@ Full record: `Docs/Evidence/ux-06-VALIDATION.md`; file hashes as built: `Docs/Ev
 - Some session notices in the footer still use the retired ` / ` and *his* for Moss (UX.7 copy).
 - A duplicated `<summary>` line above `PlanningNotice` in `ShopToolkitPlanning.cs`, left as built; remove it first in UX-07.
 - UX-05's lab card route shows a −22 floater at the bench: its unsaved starter sales fold into Spark's −48, the fixture artifact UX-06 fixed in its own route. Route evidence only; saving that fixture before the preview tidies it.
+
+### UX.18 — UX-07 screens implementation record (2026-10-21, validated)
+
+**Decisions (Claude, within UX.6, UX.7 and UX.10):**
+
+- **One presenter for the screens.** `ScreenPresenter` draws the dim and either the notebook sheet (help and the journal: title, *Back*, tabs and footer) or a stage (the welcome card, the receipt slip and the two pause cards). It registers `WelcomeView`, `HelpView`, `JournalView`, `ReportView` and `PauseView` (Pause and Reset). Views read snapshots the session fills (`FillWelcome`, `FillHelp`, `FillJournal`, `FillReport`, `FillPause` in `ShopToolkitScreens.cs`) and call the existing commands, with thin wrappers where a classic button did more (`ScreenNextNight`, `ScreenResume`, `ScreenReload`, `ScreenSetVolumes`). Pure rules (`ScreenRules`) carry the EditMode tests:
+  - missed reasons in a fixed order;
+  - tonight's tip in the classic report's order;
+  - lesson numbers;
+  - tier effects as the game sets them.
+- **Tutorial wording, TUT logic unchanged:** `TutText(key, classic, args)` gives the string-table wording only while the preview is on; the classic text stays in each of the 65 calls, byte for byte. No lesson, fact, reward, target or save changed.
+- **Callouts in the cards:** the station card shows `TutorialLocalCallout` as a teal note at its top.
+- **Esc:** from the New game question back to Pause (`ScreenBack`); otherwise the classic rule.
+- **Notices** belong to the screen they were raised on, as in the notebook.
+- **Pause questions** (*Reload…*, *Skip guidance…*, *New game…*) ask on the right-hand card; the skip link keeps its line while hidden so the cards don't jump. Comfort saves at once; the rest on resume, as before.
+- **The receipt's details** are a popover over the lines below the profit row, so hovering never moves the centred slip.
+- **Copy:** *Show me the way* (UX.7's four-word buttons); the classic panel keeps *Show me where to go*.
+- **Styles:** `ScreenStyles.uss` classes start `es-screen`; the style test covers it with the HUD, card and planning sheets.
+- **Strings:** 383 → 709 entries.
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/ShopToolkitScreens.cs`, `Runtime/ShopTutorialText.cs`; `Runtime/UI/ScreenModel.cs`, `ScreenElements.cs`, `ScreenPresenter.cs`, `ScreenTutorialViews.cs`, `ScreenJournalView.cs`, `ScreenReportView.cs`, `ScreenPauseView.cs`; `Resources/EvolutionShopUI/ScreenStyles.uss`; `Runtime/ToolkitScreensSmoke.cs` (`-evolutionToolkitScreensSmoke`); `Tests/RuntimeEditMode/ScreenViewTests.cs` (11 tests). Edited: `ShopTutorialHud.cs`, `ShopTutorialGuidance.cs`, `ShopTutorialSession.cs`, `ShopToolkitHud.cs`, `ShopToolkitPlanning.cs` (UX-06's duplicated summary line removed), `ContinuousSmoke.cs`, `ShopToolkitUi.cs`, `MilestoneSmoke.cs`, `UI/ShopUiRoot.cs`, `UI/ShopHudModel.cs`, `UI/StationCardPresenter.cs`, `CardStyles.uss`, `strings.en.json`.
+
+**Correction (found in UX-07):** since `7760c7b0` (2026-10-14), `CycleTransfer` records an FX checkpoint that only the continuous route created, so the classic tutorial, guidance, handoff and trading routes stopped with a null reference. UX-06's final player fails them identically (`Docs/Evidence/ux-07/baseline-ux06-*`). The checkpoint now creates its record; all four pass (trading's three full days: 1935 checks).
+
+**Validation, 2026-10-21 (Claude Opus 5.5).** `Docs/Evidence/ux-07/Invoke-UX07.ps1 -Run N` runs, in order:
+- the EditMode suite and a development build;
+- the screens route at three sizes;
+- the UX-06 planning, UX-05 lab cards, UX-04 cards, UX-02 card and UX-03 HUD routes;
+- the six tutorial routes, trading, slap, comedy, FX-20 comfort, FX-18 native UI, cycle and comedy-gate.
+
+The route plays a real guided opening at each size: welcome, help, the callouts, the first and practice sales, the guided receipt, the journal, pause and settings, the next goal and the finished welcome. It presses controls with a synthetic Input System mouse and keyboard. Run 2 is final:
+
+| Step | Result |
+|---|---:|
+| EditMode | **2390/2390** |
+| Build | **0 errors / 0 warnings** |
+| Screens route, each size | **396/396** |
+| UX-06 planning | **302/302** |
+| UX-05 lab cards | **283/283** |
+| UX-04 cards | **166/166** |
+| UX-02 card | **28/28** |
+| UX-03 HUD | **74/74** |
+| Tutorial | **128/128** |
+| Guidance | **59/59** |
+| First customer | **58/58** |
+| Handoff | **112/112** |
+| Recovery | **56/56** |
+| Conditioning recovery | **86/86** |
+| Trading | **1935/1935** |
+| Slap | **60/60** |
+| Comedy | **155/155** |
+| FX-20 comfort | **589/589** |
+| FX-18 native UI | **424/424** |
+| Cycle | **123/123** |
+| Comedy gate | **270/270** |
+
+Full record: `Docs/Evidence/ux-07-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-07/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| Scratch builds 1–13 | Brought the route up; found receipt numbers outside their rows, a hover flicker, a popover under the lines below it, a short key cap, pause questions covering the menu, an overlong help list and a question covering chips at 2560×1080, and a route expecting a guided receipt the tutorial doesn't show | Margins, popover, key cap, questions on the right-hand card, compact list, question in place of the chips; practice sale the same day |
+| Mutation set 1 | Its baseline failed on a five-word button and a notebook class in the screen sheet | *Show me the way*; type selector. Set 2: each break fails exactly its test |
+| 1 | EditMode, build and the screens route at all sizes passed; 8 of 20 regressions failed | Baseline on UX-06's player: 7 already failed there; the comfort route lacked its arguments. Checkpoint record fixed; 3 stale routes dropped, FX arguments added, trading given 45 minutes |
+| 2 | Final: everything passed | — |
+
+**Still open:**
+- Hands-on play with physical input (`Docs/Evidence/ux-07/PLAY.md`).
+- The welcome's mid-opening *Continue* and save-recovery modes, and help's earlier-receipts page, are not reached by the route.
+- Comfort's UI scale (UX.8); the receipt's count-up and every screen's motion and sounds (UX-08).
+- Session notices on the screens and the HUD's non-tutorial next step keep their classic wording (UX.7).
+- Found, outside UX-07, failing on UX-06's player too: the reputation route's format-five save migration check, the native GUI probe (it expects the *Enter your shop* welcome), and the presentation route's original Blender kit audit.

@@ -100,7 +100,6 @@ namespace EvolutionShop
             return true;
         }
 
-        /// <summary>The save error, else the current notice: the notebook's footer shows command feedback itself.</summary>
         /// <summary>The notebook footer's notice: a save error always; otherwise the current message, unless it was raised
         /// before <paramref name="since"/> (the page it belongs to was left) or is the generic "Done." acknowledgement,
         /// which the page itself already shows.</summary>
