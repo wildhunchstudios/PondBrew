@@ -19,6 +19,7 @@ namespace EvolutionShop
         public const string NextName = "es-hud-next-card", PromptName = "es-hud-prompt", SlapName = "es-hud-slap";
         public const string DiscoveryName = "es-hud-discovery", BubbleName = "es-hud-bubble", MarkerName = "es-hud-marker";
         public const string CrosshairName = "es-hud-crosshair";
+        public const string CoinLayerName = "es-hud-coins", CoinName = "es-hud-coin";
         const float Margin = 20f;
         static readonly float[] Gaps = { 28f, ShopHudRules.CrosshairHalf + 20f };
         static readonly int[] BubbleSlots = { 2, 0, 1, 3 };
@@ -50,6 +51,15 @@ namespace EvolutionShop
         int moneySequence, reputation, appeal;
         object generation;
 
+        // UX-08 money feel: the chip counts to the saved amount; a sale also rings and sends coins from the counter.
+        VisualElement coinLayer;
+        readonly List<VisualElement> coins = new List<VisualElement>();
+        long moneyShown, tickFrom, tickTo;
+        float tickStart, coinsStart, bumpAt;
+        bool ticking, coinsFlying, bumpPending, stampDropped;
+        int coinCount, cueSales, cueDay;
+        Vector2 coinFrom, coinTo;
+
         public ShopHudState State => state;
         /// <summary>Where the last frame put the world-anchored pieces; NaN when hidden (for validation).</summary>
         public Rect BubbleRect { get; private set; }
@@ -62,6 +72,18 @@ namespace EvolutionShop
         public int ToastsHeldBack { get; private set; }
         public int FloatersShown => floaters.Count;
         public bool NextStepShown { get; private set; }
+        /// <summary>UX-08: the amount the money chip shows this frame (it counts up to the saved credits).</summary>
+        public long MoneyShown => moneyShown;
+        public bool MoneyTicking => ticking;
+        public int SaleCues { get; private set; }
+        public int CoinFlights { get; private set; }
+        public int CoinsLaunched { get; private set; }
+        public int CoinsShown { get; private set; }
+        public Vector2 LastCoinOrigin { get; private set; }
+        public Vector2 LastCoinTarget { get; private set; }
+        public int StampDrops { get; private set; }
+        /// <summary>No coins in the air and the money chip at the saved amount.</summary>
+        public bool FeelSettled => !coinsFlying && !ticking && !bumpPending;
 
         protected override VisualElement Build(VisualTreeAsset template) => Extract(template, RootName);
 
@@ -85,6 +107,9 @@ namespace EvolutionShop
             queueMore = new Label { name = "es-hud-queue-more" };
             queueMore.AddToClassList("es-queue__more");
             queue.Add(queueMore);
+            coinLayer = new VisualElement { name = CoinLayerName, pickingMode = PickingMode.Ignore };
+            coinLayer.AddToClassList("es-hud");
+            e.Add(coinLayer);
             saveToast = MakeToast("es-hud-toast-save", true);
             noticeToast = MakeToast("es-hud-toast-notice", false);
             for (int i = 0; i < ShopHudRules.MaxToasts; i++) pingToasts.Add(MakeToast("es-hud-toast-ping-" + i, false));
@@ -104,6 +129,7 @@ namespace EvolutionShop
             {
                 if (IsShown) Hide();
                 baselined = false;
+                StopMoneyFeel();
                 return;
             }
             if (!IsShown) { Show(); baselined = false; pingTracker.Reset(); }
@@ -124,7 +150,7 @@ namespace EvolutionShop
 
         public override void Unbind()
         {
-            faces.Clear(); pingToasts.Clear(); floaters.Clear(); arrows.Clear();
+            faces.Clear(); pingToasts.Clear(); floaters.Clear(); arrows.Clear(); coins.Clear();
             base.Unbind();
         }
 
@@ -141,9 +167,11 @@ namespace EvolutionShop
 
         void UpdateMoneyAndFloaters(float now)
         {
-            SetText(moneyAmount, state.Currency.ToString("N0"));
             // Money comes from the saved-result cue (FX-18 rule: presentation follows the authoritative result).
-            if (baselined && state.MoneySequence != moneySequence && state.MoneyDelta != 0)
+            bool cue = baselined && state.MoneySequence != moneySequence && state.MoneyDelta != 0;
+            UpdateMoneyFeel(cue);
+            SetText(moneyAmount, moneyShown.ToString("N0"));
+            if (cue)
                 AddFloater(ShopHudRules.Signed(state.MoneyDelta), ShopUiTheme.Symbol.Coin, state.MoneyDelta < 0, now);
             // Points that change while paused are a new baseline, not news; a reload or New game swaps the model
             // (a new Generation). Placement counts: committing decor changes appeal while neither in play nor in a panel.
@@ -163,6 +191,113 @@ namespace EvolutionShop
                 f.Element.style.opacity = alpha;
                 f.Element.style.translate = new Translate(0, -rise);
             }
+        }
+
+        // ---------- UX-08 money feel ----------
+
+        void UpdateMoneyFeel(bool cue)
+        {
+            var feel = Feel;
+            if (!baselined || feel == null)
+            {
+                // A new baseline (shown, reload, New game) is not news: the chip shows the amount as it is.
+                StopMoneyFeel();
+                cueSales = state.SalesToday; cueDay = state.SalesDay;
+                return;
+            }
+            float clock = feel.Now;
+            if (cue) StartMoney(feel, clock);
+            // Credits that changed with no saved cue (a failed save is undone the same way) are shown as they are.
+            else if (state.Currency != tickTo) { ticking = false; moneyShown = tickTo = state.Currency; }
+            if (ticking)
+            {
+                moneyShown = UiMotion.CountUp(tickFrom, tickTo, clock - tickStart, UiMotion.MoneyTickSeconds);
+                if (clock - tickStart >= UiMotion.MoneyTickSeconds) { ticking = false; moneyShown = tickTo; }
+            }
+            if (bumpPending && clock >= bumpAt) { bumpPending = false; feel.Motion.Play(money, UiMotionKind.ChipBump); }
+            CoinsShown = 0;
+            if (!coinsFlying) return;
+            float age = clock - coinsStart;
+            for (int i = 0; i < coins.Count; i++)
+            {
+                var coin = coins[i];
+                Vector2 at = default; float scale = 1;
+                bool on = i < coinCount && UiMotion.CoinAt(coinFrom, coinTo, i, age, out at, out scale);
+                SetShown(coin, on);
+                if (!on) continue;
+                CoinsShown++;
+                float half = coin.layout.width > 1 && !float.IsNaN(coin.layout.width) ? coin.layout.width * .5f : 17f;
+                coin.style.left = at.x - half;
+                coin.style.top = at.y - half;
+                coin.style.scale = new Scale(new Vector3(scale, scale, 1));
+            }
+            if (age >= UiMotion.CoinTotalSeconds) { coinsFlying = false; foreach (var c in coins) SetShown(c, false); CoinsShown = 0; }
+        }
+
+        void StartMoney(UiFeel feel, float clock)
+        {
+            // A sale is a gain that came with a new sale in today's ledger since the last cue.
+            bool sale = state.MoneyDelta > 0 && state.SalesToday > (state.SalesDay == cueDay ? cueSales : 0);
+            cueSales = state.SalesToday; cueDay = state.SalesDay;
+            tickFrom = moneyShown; tickTo = state.Currency; tickStart = clock;
+            ticking = tickFrom != tickTo;
+            if (!sale) return;
+            SaleCues++;
+            feel.Sounds.Play(UiSound.KaChing);
+            int count = UiMotion.CoinCount(feel.Reduced, feel.Low);
+            Vector2 target = moneyIcon.worldBound.center;
+            if (count > 0 && !float.IsNaN(target.x) && TryCoinOrigin(out Vector2 origin))
+            {
+                EnsureCoins();
+                coinFrom = origin; coinTo = target; coinCount = count; coinsStart = clock; coinsFlying = true;
+                CoinFlights++; CoinsLaunched += count;
+                LastCoinOrigin = origin; LastCoinTarget = target;
+                // The chip counts up and bumps as the first coin lands.
+                tickStart = clock + UiMotion.CoinFlightSeconds;
+            }
+            if (!feel.Reduced) { bumpPending = true; bumpAt = tickStart; }
+        }
+
+        /// <summary>The counter card's Serve button when the card is open, else the counter on screen; false when neither shows.</summary>
+        bool TryCoinOrigin(out Vector2 origin)
+        {
+            origin = default;
+            var card = Shop.ToolkitUi != null ? Shop.ToolkitUi.StationCard : null;
+            if (card != null && card.ShownPanel == ShopPanel.Counter)
+            {
+                Rect r = card.PrimaryRect;
+                if (!float.IsNaN(r.x)) { origin = r.center; return true; }
+            }
+            var camera = Shop.Player != null ? Shop.Player.View : Camera.main;
+            if (!state.HasCounter || camera == null || Element.panel == null) return false;
+            if (camera.WorldToViewportPoint(state.CounterWorld).z <= 0) return false;
+            Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(Element.panel, state.CounterWorld, camera);
+            Vector2 size = Element.layout.size;
+            if (float.IsNaN(p.x) || p.x < 0 || p.y < 0 || p.x > size.x || p.y > size.y) return false;
+            origin = p;
+            return true;
+        }
+
+        void EnsureCoins()
+        {
+            var tex = Shop.HudIcon(ShopUiTheme.Symbol.Coin);
+            while (coins.Count < UiMotion.Coins)
+            {
+                var coin = new VisualElement { name = CoinName, pickingMode = PickingMode.Ignore };
+                coin.AddToClassList("es-coin");
+                coin.style.display = DisplayStyle.None;
+                coinLayer.Add(coin);
+                coins.Add(coin);
+            }
+            if (tex) foreach (var c in coins) if (c.style.backgroundImage.value.texture != tex) c.style.backgroundImage = new StyleBackground(tex);
+        }
+
+        void StopMoneyFeel()
+        {
+            ticking = coinsFlying = bumpPending = false;
+            moneyShown = tickTo = state.Currency;
+            foreach (var c in coins) SetShown(c, false);
+            CoinsShown = 0;
         }
 
         void AddFloater(string text, ShopUiTheme.Symbol symbol, bool loss, float now)
@@ -258,6 +393,11 @@ namespace EvolutionShop
             }
             bool stamp = !string.IsNullOrEmpty(state.DiscoveryName);
             SetShown(discovery, stamp);
+            // UX-08: the stamp comes down onto the HUD as it appears, with the first-hatch sound the lab already plays.
+            if (stamp && !stampDropped && !state.Planning) { StampDrops++; Feel?.Motion.Play(discovery, UiMotionKind.StampDown); }
+            // It drops once per reveal: hidden by an open panel it comes back as it was; only a reveal that ended drops again.
+            if (stamp && !state.Planning) stampDropped = true;
+            else if (!stamp && !state.PanelOpen) stampDropped = false;
             if (stamp)
             {
                 SetText(discoveryName, state.DiscoveryName);

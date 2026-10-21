@@ -86,6 +86,13 @@ namespace EvolutionShop
             if (element.enabledSelf != enabled) element.SetEnabled(enabled);
         }
 
+        /// <summary>Why a disabled control can't be used, shown in a tip when it is pressed anyway (UX-08); empty when it can be.</summary>
+        protected static void Tooltip(VisualElement element, string why)
+        {
+            why = why ?? "";
+            if (element.tooltip != why) element.tooltip = why;
+        }
+
         protected static bool ShiftHeld => Keyboard.current != null && Keyboard.current.shiftKey.isPressed;
 
         protected static string CultureClass(CultureKind kind) => "es-culture--" + kind.ToString().ToLowerInvariant();
@@ -344,14 +351,22 @@ namespace EvolutionShop
         public static string StockTileName(int index) => "es-tank-stock-" + index;
 
         public readonly TankCardState State = new TankCardState();
-        readonly VisualElement tag, stock, stockGrid, faceRow, priceRow;
+        readonly VisualElement tag, stock, stockGrid, faceRow, priceRow, priceAmount;
         readonly Label species, price, buyers, detail, standardChip, delivering;
         readonly Button lower, raise, useStandard, backToRack;
         readonly List<Face> faces = new List<Face>();
         readonly List<StockButton> stockTiles = new List<StockButton>();
         int hovered = -1;
+        // UX-08: the price and moods last shown, so a change wiggles the tag or bounces the face (not the first fill).
+        bool priceKnown;
+        string priceSpecies;
+        int priceShown;
 
-        sealed class Face { public VisualElement Box; public MoodFace Mood; public Label Word; public string ArchetypeId; }
+        public int Wiggles { get; private set; }
+        public int Bounces { get; private set; }
+        public VisualElement PriceAmount => priceAmount;
+
+        sealed class Face { public VisualElement Box; public MoodFace Mood; public Label Word; public string ArchetypeId; public bool HasMood; public BuyerMood LastMood; }
         sealed class StockButton { public Button Button; public CreatureGlyph Glyph; public Label Name, Where; }
 
         public TankCardView(ShopSession shop, ShopUiStrings strings) : base(shop, strings, ViewName)
@@ -362,7 +377,8 @@ namespace EvolutionShop
             species = NewLabel(tag, SpeciesName, "es-tag__species");
             priceRow = NewBox(tag, "es-tag__price-row");
             lower = NewButton(priceRow, LowerName, "es-step", Strings.Get("card.tank.lower"), () => StepPrice(-1));
-            var amount = NewBox(priceRow, "es-tag__amount");
+            var amount = NewBox(priceRow, "es-tag__amount", "es-tank-amount");
+            priceAmount = amount;
             NewCoin(amount, "es-tag__coin");
             price = NewLabel(amount, PriceName, "es-tag__price");
             raise = NewButton(priceRow, RaiseName, "es-step", Strings.Get("card.tank.raise"), () => StepPrice(1));
@@ -390,7 +406,12 @@ namespace EvolutionShop
             });
         }
 
-        public override void Opened() => hovered = -1;
+        public override void Opened()
+        {
+            hovered = -1;
+            priceKnown = false;
+            foreach (var face in faces) face.HasMood = false;
+        }
 
         public override void Refresh()
         {
@@ -407,14 +428,24 @@ namespace EvolutionShop
                 Shown(delivering, s.StockerDelivering);
                 RefreshStock(s);
                 Shown(backToRack, false);
+                priceKnown = false;
                 return;
             }
             Status = Strings.Get(s.Reserved ? "card.tank.status.reserved" : "card.tank.status.sale");
             Line = s.Reserved ? Strings.Format("card.tank.line.reserved", s.ReservedPrice) : Strings.Format("card.tank.line.tag", s.SpeciesName);
             SetText(species, s.SpeciesName);
             SetText(price, s.Price.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (priceKnown && priceSpecies == s.SpeciesId && priceShown != s.Price)
+            {
+                Wiggles++;
+                Shop.ToolkitUi?.Feel?.Motion.Play(priceAmount, UiMotionKind.PriceWiggle);
+            }
+            priceKnown = true; priceSpecies = s.SpeciesId; priceShown = s.Price;
             Enabled(lower, s.Price > s.Minimum);
             Enabled(raise, s.Price < s.Maximum);
+            // A press on a step at its limit says why (UX-08 disabled press).
+            Tooltip(lower, s.Price > s.Minimum ? "" : Strings.Get("card.tank.why.min"));
+            Tooltip(raise, s.Price < s.Maximum ? "" : Strings.Get("card.tank.why.max"));
             bool standard = s.Price == s.Standard;
             Shown(standardChip, standard);
             Shown(useStandard, !standard);
@@ -444,8 +475,16 @@ namespace EvolutionShop
                 Shown(face.Box, on);
                 if (!on) continue;
                 var data = s.Faces[i];
-                if (face.ArchetypeId != data.ArchetypeId) { face.ArchetypeId = data.ArchetypeId; face.Box.name = FaceName(data.ArchetypeId); }
+                bool same = face.ArchetypeId == data.ArchetypeId;
+                if (!same) { face.ArchetypeId = data.ArchetypeId; face.Box.name = FaceName(data.ArchetypeId); }
                 var mood = StationCardRules.MoodFor(data.Reaction, data.OverBudget);
+                // UX-08: a face whose mood swaps bounces (fades in with reduced motion).
+                if (same && face.HasMood && face.LastMood != mood)
+                {
+                    Bounces++;
+                    Shop.ToolkitUi?.Feel?.Motion.Play(face.Mood, UiMotionKind.FaceBounce);
+                }
+                face.HasMood = true; face.LastMood = mood;
                 face.Mood.Set(mood, data.ArchetypeId, HudPresenter.ArchetypeColor(data.ArchetypeId));
                 SetText(face.Word, Strings.Get(StationCardRules.MoodWordKey(data.Reaction, data.OverBudget)));
                 face.Word.EnableInClassList("es-face-word--buys", StationCardRules.WillBuy(mood) && mood == BuyerMood.Happy);

@@ -90,6 +90,8 @@
         { "key": "card.tank.useStandard", "text": "Use standard ({0})" },
         { "key": "card.tank.buyers", "text": "{0} of {1} will buy" },
         { "key": "card.tank.shift", "text": "Shift ±5 · wheel" },
+        { "key": "card.tank.why.min", "text": "This is the lowest price for it." },
+        { "key": "card.tank.why.max", "text": "This is the highest price for it." },
         { "key": "card.tank.word.bargain", "text": "Bargain!" },
         { "key": "card.tank.word.fair", "text": "Fair" },
         { "key": "card.tank.word.pricey", "text": "Pricey" },

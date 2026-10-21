@@ -53,6 +53,7 @@ namespace EvolutionShop
             Check(titleProblem == null, "Incubator title fits its strip at the width it is drawn" + (titleProblem != null ? " / " + titleProblem : ""));
             float oneLineTitle = titleLabel != null ? titleLabel.layout.height : 0;
             Check(Cursor.visible && Cursor.lockState == CursorLockMode.None && !shop.Player.InputEnabled, "Card frees the cursor and pauses movement");
+            yield return UiSettled();
             yield return Capture("ux02-incubator-card");
 
             var close = ShopUiTestDriver.Find<Button>(root, StationCardPresenter.CloseName);
@@ -69,6 +70,7 @@ namespace EvolutionShop
             Check(!card.Placement.CoversAnchor && ShopUiTestDriver.FullyInside(card.Element, root), "Counter card sits beside the counter and on screen");
             titleProblem = TitleProblem(root);
             Check(titleProblem == null, "Counter title fits its strip at the width it is drawn" + (titleProblem != null ? " / " + titleProblem : ""));
+            yield return UiSettled();
             yield return Capture("ux02-counter-card");
 
             // Run 4's 2560x1080 capture showed "Sales counter" wrapping out of its strip. Station names get longer
@@ -81,6 +83,7 @@ namespace EvolutionShop
                 "A long station name wraps inside its strip (" + (titleLabel.layout.height / Mathf.Max(1, oneLineTitle)).ToString("0.0") + "x one line" +
                 (titleProblem != null ? " / " + titleProblem : "") + ")");
             Check(ShopUiTestDriver.FullyInside(card.Element, root), "The taller card stays on screen");
+            yield return UiSettled();
             yield return Capture("ux02-long-title");
             titleLabel.text = shownTitle;
             yield return null;
@@ -91,6 +94,7 @@ namespace EvolutionShop
             Check(shop.SetToolkitUiActive(false) && !shop.ToolkitUiActive, "Preview turns off");
             yield return ToolkitOpen(incubator, ShopPanel.Incubator);
             Check(shop.Panel == ShopPanel.Incubator && !card.IsShown, "With the preview off the classic panel owns the incubator again");
+            yield return UiSettled();
             yield return Capture("ux02-classic-fallback");
             shop.SetPanel(ShopPanel.None);
             yield return null;

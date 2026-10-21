@@ -95,7 +95,7 @@ namespace EvolutionShop
             if (Element == null || Shop == null) return;
             var root = Shop.ToolkitUi;
             if (root == null || !root.Active || !Handles(Shop.Panel) || !views.TryGetValue(Shop.Panel, out var view)) { HideAll(); return; }
-            if (!IsShown) Show();
+            if (!IsShown) { Show(); FadeIn(); }
             // As in the notebook, a notice belongs to the screen it was raised on (or one opened by the same action).
             if (Shop.Panel != lastPanel) { lastPanel = Shop.Panel; noticeFloor = Time.unscaledTime; }
             if (!ReferenceEquals(view, CurrentView))

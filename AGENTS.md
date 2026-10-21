@@ -1,4 +1,4 @@
-**UX-07 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), the welcome, help, journal, day report and pause are UI Toolkit screens over the dimmed world, and the tutorial's callouts sit in the station cards. **Welcome:** *Start guided opening* or *Play without guidance* (or *Continue*, *Continue my shop*, *Save recovery*). **Help (F1):** the ten Opening Night steps beside one page with what to do, **Show me the way** and *Your shop right now*; Controls; the next-goal page with the journal and Siphon MK II. **Journal (TAB):** Creatures, Customers and Shop tabs. **Day receipt:** earned today, sold / visitors / walked out with why, profit after wages (hover for details), reputation and one tip, then **Next night**. **Pause (Esc):** Resume, Settings (Controls, Sound, Comfort), Help, Save & quit, and *Reload…* / *New game…* / *Skip guidance…*, which ask on the right-hand card. With the preview on, the tutorial's next step, callouts and recovery lines name the cards' controls; with it off every classic panel and string is unchanged, and no lesson, fact or save changed. UX-07 also found that the classic tutorial, guidance, handoff and trading routes had stopped on a null checkpoint record since 2026-10-14; the harness creates it now and they pass. Revision `ux07-screens-2`. Actual **2390 passed EditMode tests** and **6096 final Windows checks** (the screens route at three sizes plus 20 regressions: the UX-06 to UX-02 routes, the six tutorial routes, trading, slap, comedy, FX-20 comfort, FX-18 native UI, cycle and comedy-gate); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-08 feel pass**, unstarted. Evidence `Docs/Evidence/ux-07-VALIDATION.md`; controls `Docs/Evidence/ux-07/PLAY.md`; local tag `ux07-screens-validated`.
+**UX-08 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), the UI now moves and sounds as UX.9 describes. **Cards** pop open in 120 ms from 94% with a slight overshoot and a soft paper (shop) or enamel (lab) click, and fade out in 80 ms without ever taking the next click. **Buttons** squash and tick when pressed; a disabled one shakes 2 px, thunks and says why (the card highlights its reason line; the price steps show a tip). **Price tag** rocks on a change and a face that changes its mind hops. **A sale** rings a ka-ching and sends five coins from Serve into the money chip, which counts up as they land. **The discovery stamp** comes down onto the HUD with the lab's first-hatch sound. **The receipt** counts up over 600 ms (any input skips; *Next night* acts at once), then its tip slides in. The notebook and screens fade in with a paper click. **Reduced motion** keeps fades only (numbers still count); **Low effects detail** drops the coins. Every animation follows the input or the saved result and never holds up the next command; gameplay, rules and saves are unchanged, and with the preview off the classic UI is untouched. Revision `ux08-feel-1`. Actual **2405 passed EditMode tests** and **6039 final Windows checks** (the feel route at three sizes plus 21 regressions: the UX-07 to UX-02 routes, the six tutorial routes, trading, slap, comedy, FX-20 comfort, FX-18 native UI, cycle and comedy gate) in one numbered run; build 0 errors / 0 warnings. Hands-on feel and sound remain open, and Comfort's UI scale (UX.8) waits for a save decision. Next: **UX-09** (remove the IMGUI path and full validation), unstarted. Evidence `Docs/Evidence/ux-08-VALIDATION.md`; controls `Docs/Evidence/ux-08/PLAY.md`; local tag `ux08-feel-validated`.
 
 **UX-06 technically complete — 2026-10-21; hands-on review deferred.** With the UI Toolkit preview on (F9), crew, automation, arrange and research are one planning notebook over the dimmed world: tabs along the top (a tab you can't use from where you stand says *At the counter*, *At the lab bench* or *At night*), *Back* (Esc backs out one level) and a footer line for what just happened. **Crew** (counter card → *Crew*): Pip, Nori and Moss as portrait cards with a status chip, the wage, an **On duty** switch that pays tonight's wage, a *•••* menu (Pause, Retry route, Dismiss… that asks first), and pages for Nori's display targets and Moss's recipe queue. **Automation** (bench card → *Culture prep*, the *Lab helper*): choose one known recipe, then Keep − N +, *Into* a display, the Keep stock switch and **Prepare one batch**, with the collector and doser switches beside the recipes. **Arrange**: Furniture / Decor / Owned / Lab catalogue tiles that say why they can't be used; placing hands over to the existing placement mode with a bottom key bar. **Research** (bench card → *Research path*): Bloom, Flow, Spark and Mist on a path with stamps and one **Research Spark · 48**; Siphon MK II as equipment. Every control calls the classic panel's session command. UX-03's toolkit HUD took any new game model as a reload, so it dropped every wage's money floater; its generation now changes only on a reload or New game. With the preview off every classic panel is unchanged. Revision `ux06-planning-2`. Actual **2379 passed EditMode tests** and **3208 final Windows checks** (the planning route at three sizes plus 15 regressions: the UX-05 lab cards, UX-04 cards, UX-02 card, UX-03 HUD, and the staff, stocker, technician, automation, research, placement, storage, decor, lab, cycle and comedy-gate routes); build 0 errors / 0 warnings. Hands-on play and the copy pass (UX.7) remain open. Next: **UX-07 journal, day report, pause and help**, unstarted. Evidence `Docs/Evidence/ux-06-VALIDATION.md`; controls `Docs/Evidence/ux-06/PLAY.md`; local tag `ux06-planning-validated`.
 
@@ -521,7 +521,8 @@ Requested by the user on 2026-10-19 for every screen. The authoritative decision
 - [x] UX-05 Remaining station cards: technically complete 2026-10-20; hands-on review deferred (see UX.16).
 - [x] UX-06 Planning views: technically complete 2026-10-21; hands-on review deferred (see UX.17).
 - [x] UX-07 Screens (journal, day report, pause, help, welcome, tutorial callouts): technically complete 2026-10-21; hands-on review deferred (see UX.18).
-- [ ] UX-08–UX-09 feel pass, IMGUI removal and full validation.
+- [x] UX-08 Feel pass (motion, UI sounds, coin fly, receipt count-up, reduced-motion and Low variants): technically complete 2026-10-21; hands-on review deferred (see UX.19).
+- [ ] UX-09 IMGUI removal, UI test migration and full validation.
 
 Gate: a full night/day loop is playable without reading paragraphs, stations are never covered while used, the HUD keeps at most three persistent elements, gameplay/save tests still pass, and the user reports the UI as clear and comfortable.
 
@@ -591,6 +592,26 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — UX-08 technically complete; hands-on review deferred (2026-10-21, Claude)
+
+**State:** UX-00 to UX-08 are done. UX-08 was validated in one numbered run, which is final, after five numbered scratch builds (record in UX.19 and `Docs/Evidence/ux-08-VALIDATION.md`). Local tag `ux08-feel-validated`; checkpoint `Docs/Evidence/ux-08/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux08-feel-1`. Open human gates: hands-on feel and sound with F9 (`Docs/Evidence/ux-08/PLAY.md`), UX-07's to UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
+
+**Exact next action:** UX-09 (UX.12): delete the IMGUI path, finish the UI test migration, then full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop. Things to settle first:
+- **Comfort's UI scale (90–130%, UX.8)** is still unbuilt: it needs a new saved setting, and UX tasks have left the save format alone (UX.10). Ask the user before changing the save.
+- **The classic validation routes** drive IMGUI panels and coordinates; with IMGUI gone they need the toolkit (the UX-02 to UX-08 routes show how) or retirement, each decided route by route.
+- **Found, not fixed:** the HUD's next-step card (UX-03) can wrap a new objective onto a clipped second line for a moment after it changes (the feel route's captures about 0.3 s after a hatch; fine 0.5 s after).
+
+Copy `Docs/Evidence/ux-08/Invoke-UX08.ps1` (it takes `-Run N`) as the start of UX-09's runner.
+
+**Learned in UX-08, apply to the rest of UX:**
+
+- **A capture stalls the frame after it.** Writing a 2560×1080 PNG can hold a frame for 40 to 90 ms, so frame-sampled timing checks need room for the gap their own samples show (`FeelTrace.Took`); first views after a teleport stall too.
+- **Animations change what layout checks measure.** Older routes capture through a settle wait (`UiSettled`, `ShopUiRoot.Settled`), and full-screen views only fade, never move. A check that measures mid-animation is a check to adapt on purpose, with the reason in its comment.
+- **Measure a duration from the thing's own start** (`ReportView.CountStart`), not from when the route started watching.
+- **E on an empty display places a ready hatch** instead of opening its card (the game's rule); a route wanting the price tag presses E twice.
+- **A card moves once its new content is laid out** (it is placed from its size), so aim a press a frame after switching views.
+- **The shop's five voices are counted by many FX routes** (`GetComponents<AudioSource>() == 5`): new sound goes on a voice of its own off the shop object.
+
 ### Current handoff — UX-07 technically complete; hands-on review deferred (2026-10-21, Claude)
 
 **State:** UX-00 to UX-07 are done. UX-07 was validated in two numbered runs, the second final, after 13 numbered scratch builds (record in UX.18 and `Docs/Evidence/ux-07-VALIDATION.md`). Local tag `ux07-screens-validated`; checkpoint `Docs/Evidence/ux-07/checkpoint.json`; player `Builds/Windows-6000.3.21f1-ux07-screens-2`. Open human gates: hands-on play with F9 (`Docs/Evidence/ux-07/PLAY.md`), UX-06's, UX-05's, UX-04's and UX-03's play notes and UX-02's mouse check. AD-A stays unblocked if the user picks it.
@@ -3692,7 +3713,7 @@ FX-21–23 (integrated interruption, native visual/input/performance validation 
 - [x] UX-05 (technically complete 2026-10-20; hands-on review deferred; see UX.16) Remaining station cards: specimen rack, conditioning vat, research bench, collector and doser.
 - [x] UX-06 (technically complete 2026-10-21; hands-on review deferred; see UX.17) Planning views: crew, automation, arrange, research.
 - [x] UX-07 (technically complete 2026-10-21; hands-on review deferred; see UX.18) Journal, day report, pause/settings, help, welcome and tutorial callouts ported. TUT logic unchanged.
-- [ ] UX-08 Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
+- [x] UX-08 (technically complete 2026-10-21; hands-on review deferred; see UX.19) Feel pass: motion, UI sounds, coin fly, report count-up, reduced-motion and Low variants.
 - [ ] UX-09 Delete the IMGUI path, finish UI test migration, full EditMode plus Windows player routes at 1280×720, 1920×1080 and 2560×1080, and a human playtest of the whole loop.
 
 Milestone gate: a new player can run a full night/day loop without reading a paragraph; every station is used without covering it; the HUD shows at most three persistent elements; all gameplay, save and staff tests still pass; the user reports the UI as clear and comfortable.
@@ -4093,3 +4114,67 @@ Full record: `Docs/Evidence/ux-07-VALIDATION.md`; file hashes as built: `Docs/Ev
 - Comfort's UI scale (UX.8); the receipt's count-up and every screen's motion and sounds (UX-08).
 - Session notices on the screens and the HUD's non-tutorial next step keep their classic wording (UX.7).
 - Found, outside UX-07, failing on UX-06's player too: the reputation route's format-five save migration check, the native GUI probe (it expects the *Enter your shop* welcome), and the presentation route's original Blender kit audit.
+
+### UX.19 — UX-08 feel pass implementation record (2026-10-21, validated)
+
+**Decisions (Claude, within UX.9 and UX.10):**
+
+- **Pure motion rules** (`UiMotion`): each animation's duration and pose at an age, standard and reduced, plus the count-up and the coin arc; EditMode tests pin the numbers (card open 120 ms from 0.94 to about 1.009; close 80 ms to 0.96; press 60 ms at 1.04 × 0.92; disabled shake 2 px for 200 ms; price wiggle 6° and 8% for 280 ms; face hop 14% for 220 ms; stamp from 160% and -9° to its stylesheet's -2° in 260 ms; receipt tally 600 ms; coins about 450 ms; tip slide 18 px).
+- **Reduced motion** keeps timing but replaces scale, shake, slide, tilt and flight with fades; numbers still count and every sound plays. **Low effects detail** only drops the coins (the UI's one particle effect).
+- **One animator** (`UiAnimator`) applies inline opacity, scale, translate and rotate, one animation per element, and clears them when done so stylesheet values come back exactly; it runs on a feel clock advanced once per frame (capped at 0.25 s) before the presenters.
+- **Closing never blocks:** a card is closed at once and every element in it ignores the pointer while it fades; E on another station mid-fade opens that card on the spot.
+- **Sounds** (`ShopUiSounds`): five generated clips (paper, enamel, tick, thunk, ka-ching; 22050 Hz, deterministic, peaks 0.11 to 0.30) on one voice of the UI's own under the UI root, so the shop's five game voices (FX-19) are untouched. The stamp uses the lab's existing first-hatch sound.
+- **Disabled presses** are picked by the feel itself (UI Toolkit may not deliver them); enabled presses come from a trickle-down handler on the root. The card's main button reuses its reason line; other buttons carry their reason as `tooltip`, which the feel draws as a tip.
+- **Coins** start at the counter card's Serve button, else the counter on screen, and fly to the money chip's coin; a gain is a sale when today's ledger has a new sale since the last money cue (`ShopTradeLedger.CurrentSales`, read-only).
+- **The receipt counts once per day**; **full-screen views only fade** (moving would change the UX-06 and UX-07 layout checks); **the classic dose strip** is not copied into the card, since the card never covers the incubator (FX-03's reason for the strip).
+- **Strings:** 709 → 711 (the price steps' reasons).
+
+**New files (EvolutionShop/Assets/EvolutionShop/):** `Runtime/UI/UiMotion.cs`, `UiAnimator.cs`, `UiFeel.cs`, `ShopUiSounds.cs`; `Runtime/ToolkitFeelSmoke.cs` (`-evolutionToolkitFeelSmoke`); `Tests/RuntimeEditMode/UiFeelTests.cs` (15 tests). Edited: `UI/ShopUiRoot.cs`, `UI/ShopUiPresenter.cs`, `UI/StationCardPresenter.cs`, `UI/StationCardViews.cs`, `UI/HudPresenter.cs`, `UI/ShopHudModel.cs`, `UI/ScreenReportView.cs`, `UI/ScreenPresenter.cs`, `UI/PlanningViewPresenter.cs`, `ShopToolkitHud.cs`, `ShopToolkitUi.cs`, `Core/ShopTradeLedger.cs` (two read-only counts), `ShopTokens.uss`, `CardStyles.uss`, `HudStyles.uss`, `strings.en.json`, `MilestoneSmoke.cs`, `ToolkitHudSmoke.cs`, `ToolkitScreensSmoke.cs`, `ToolkitUiSmoke.cs`.
+
+**Older routes, adapted:** the UX-02 to UX-07 routes' captures wait for the UI to settle (`UiSettled`, at most 3 s); UX-03's first discovery layout check waits for the stamp to land and UX-07's receipt numbers for the count-up. No check was removed or loosened.
+
+**Validation, 2026-10-21 (Claude Opus 5.5).** `Docs/Evidence/ux-08/Invoke-UX08.ps1 -Run N` runs, in order:
+- the EditMode suite and a development build;
+- the feel route at three sizes;
+- the UX-07 screens, UX-06 planning, UX-05 lab cards, UX-04 cards, UX-02 card and UX-03 HUD routes;
+- the six tutorial routes, trading, slap, comedy, FX-20 comfort, FX-18 native UI, cycle and comedy gate.
+
+The feel route plays an unguided fresh game over four short trading days, presses with a synthetic Input System mouse and keyboard, reads every animation frame by frame from the inline styles (saved to `feel-samples.json`), and takes 22 captures. Run 1 is final:
+
+| Step | Result |
+|---|---:|
+| EditMode | **2405/2405** |
+| Build | **0 errors / 0 warnings** |
+| Feel route, each size | **245/245** |
+| UX-07 screens | **396/396** |
+| UX-06 planning | **302/302** |
+| UX-05 lab cards | **283/283** |
+| UX-04 cards | **166/166** |
+| UX-02 card | **28/28** |
+| UX-03 HUD | **74/74** |
+| Tutorial | **128/128** |
+| Guidance | **59/59** |
+| First customer | **58/58** |
+| Handoff | **112/112** |
+| Recovery | **56/56** |
+| Conditioning recovery | **86/86** |
+| Trading | **1935/1935** |
+| Slap | **60/60** |
+| Comedy | **155/155** |
+| FX-20 comfort | **589/589** |
+| FX-18 native UI | **424/424** |
+| Cycle | **123/123** |
+| Comedy gate | **270/270** |
+
+Full record: `Docs/Evidence/ux-08-VALIDATION.md`; file hashes as built: `Docs/Evidence/ux-08/source-hashes.json`.
+
+| Run | Outcome | Fix that followed |
+|---|---|---|
+| Scratch builds 1–5 | Brought the route up; found the route expecting a card where E places a hatch, the stamp dropping again after a card, a press aimed before the card settled, the receipt skip a hair short under float rounding, late or zero-crossing captures, and frame-sampled timing failing at 1920×1080 and 2560×1080 where captures stall a frame | E twice; once per reveal; a frame's wait; skip a second past; tenth-speed and re-timed captures; gap-aware timing checks. Build 4 passed the six older toolkit routes, build 5 the feel route at all sizes |
+| Mutation set 1 | Baseline 15/15; each break (reduced motion that grows, Low that sends coins, an unclamped count-up) fails exactly its test | — |
+| 1 | Final: everything passed | — |
+
+**Still open:**
+- Hands-on feel and sound with physical input and speakers (`Docs/Evidence/ux-08/PLAY.md`).
+- Comfort's UI scale (UX.8): needs a new saved setting and the user's decision.
+- Found, outside UX-08: the HUD's next-step card can show a new objective wrapped onto a clipped second line for a moment after it changes.

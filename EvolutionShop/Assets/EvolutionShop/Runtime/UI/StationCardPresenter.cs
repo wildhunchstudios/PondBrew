@@ -31,12 +31,14 @@ namespace EvolutionShop
         public const string TagCardClass = "es-card--tag";
         public const string ClipboardCardClass = "es-card--clipboard";
         public const string PrimaryClass = "es-button--primary";
+        public const string ReasonFlashClass = "es-card__reason--flash";
 
         VisualElement strip, viewSlot, afterSlot;
         Label title, status, body, reason, keycap, hint, callout;
         Button close, primary;
         int shownFrame = -1;
         readonly Dictionary<ShopPanel, StationCardView> views = new Dictionary<ShopPanel, StationCardView>();
+        readonly List<KeyValuePair<VisualElement, PickingMode>> closingPicking = new List<KeyValuePair<VisualElement, PickingMode>>();
 
         public Station AnchorStation { get; private set; }
         public ShopPanel ShownPanel { get; private set; }
@@ -54,6 +56,12 @@ namespace EvolutionShop
         public RackCardView RackView => views.TryGetValue(ShopPanel.StorageRack, out var v) ? (RackCardView)v : null;
         public VatCardView VatView => views.TryGetValue(ShopPanel.Conditioning, out var v) ? (VatCardView)v : null;
         public BenchCardView BenchView => views.TryGetValue(ShopPanel.Upgrade, out var v) ? (BenchCardView)v : null;
+        /// <summary>UX-08: the card is closed (not shown) but still drawn for its 80 ms fade, taking no clicks.</summary>
+        public bool Closing { get; private set; }
+        public int Opens { get; private set; }
+        public int ReasonFlashes { get; private set; }
+        /// <summary>The primary button's rectangle while the card shows it; NaN otherwise (where a sale's coins start).</summary>
+        public Rect PrimaryRect => IsShown && primary != null && HudPresenter.Visible(primary) ? primary.worldBound : new Rect(float.NaN, float.NaN, 0, 0);
 
         /// <summary>Panels that belong to a physical station and therefore use a world-anchored card.</summary>
         public static bool Handles(ShopPanel panel)
@@ -137,9 +145,14 @@ namespace EvolutionShop
             if (Element == null || Shop == null) return;
             var root = Shop.ToolkitUi;
             ShopPanel panel = Shop.Panel;
-            if (root == null || !root.Active || !Handles(panel)) { if (IsShown) Hide(); return; }
+            if (root == null || !root.Active || !Handles(panel))
+            {
+                if (IsShown) { if (root != null && root.Active) BeginClose(); else Hide(); }
+                return;
+            }
             if (!IsShown || panel != ShownPanel)
             {
+                EndClose();
                 AnchorStation = Shop.ToolkitAnchorFor(panel);
                 ShownPanel = panel;
                 string fallback = Strings.Get("card.title." + panel);
@@ -157,6 +170,14 @@ namespace EvolutionShop
                 view?.Opened();
                 shownFrame = Time.frameCount;
                 Show();
+                Opens++;
+                // UX-08: the card opens with a slight overshoot and a soft paper (shop) or enamel (lab) click.
+                var feel = Feel;
+                if (feel != null)
+                {
+                    feel.Motion.Play(Element, UiMotionKind.CardOpen);
+                    feel.Sounds.Play(IsShopPanel(panel) ? UiSound.CardPaper : UiSound.CardEnamel);
+                }
             }
             RefreshContent();
             // A view may name the card itself: a tank names its slot (the session's selected tank, not the last station
@@ -196,6 +217,9 @@ namespace EvolutionShop
             {
                 SetText(primary, view.PrimaryText);
                 if (primary.enabledSelf != view.PrimaryEnabled) primary.SetEnabled(view.PrimaryEnabled);
+                // A press on the disabled primary flashes the reason line (UX-08); the tooltip carries it for the record.
+                string why = view.PrimaryEnabled ? "" : view.Reason ?? "";
+                if (primary.tooltip != why) primary.tooltip = why;
             }
             bool hasReason = !string.IsNullOrEmpty(view.Reason);
             SetShown(reason, hasReason);
@@ -239,8 +263,52 @@ namespace EvolutionShop
             AnchorPanelPoint = anchor;
         }
 
+        /// <summary>
+        /// A press on the disabled primary: its reason line, already above it, flashes. False when the button isn't this card's
+        /// primary or there is no reason showing, so the caller can show the button's own tip.
+        /// </summary>
+        public bool FlashReason(Button button)
+        {
+            if (button == null || button != primary || !IsShown || reason == null || !HudPresenter.Visible(reason)) return false;
+            ReasonFlashes++;
+            reason.AddToClassList(ReasonFlashClass);
+            var feel = Feel;
+            if (feel != null) feel.Motion.Play(reason, UiMotionKind.ReasonFlash, () => reason?.RemoveFromClassList(ReasonFlashClass));
+            else reason.RemoveFromClassList(ReasonFlashClass);
+            return true;
+        }
+
+        // UX-08: closing fades the card out over 80 ms. It is closed at once (IsShown is false, the session has moved on) and
+        // nothing in it takes a click while it fades, so the next command is never held up or caught by the old card.
+        void BeginClose()
+        {
+            MarkHidden();
+            var feel = Feel;
+            if (feel == null) { Hide(); return; }
+            Closing = true;
+            closingPicking.Clear();
+            foreach (var e in Element.Query<VisualElement>().ToList())
+            {
+                closingPicking.Add(new KeyValuePair<VisualElement, PickingMode>(e, e.pickingMode));
+                e.pickingMode = PickingMode.Ignore;
+            }
+            feel.Motion.Play(Element, UiMotionKind.CardClose, () => { if (Closing) Hide(); });
+        }
+
+        void EndClose()
+        {
+            if (!Closing) return;
+            Closing = false;
+            foreach (var pair in closingPicking) if (pair.Key != null) pair.Key.pickingMode = pair.Value;
+            closingPicking.Clear();
+            Feel?.Motion.Stop(Element);
+        }
+
+        protected override void OnHidden() => EndClose();
+
         public override void Unbind()
         {
+            EndClose();
             if (close != null) close.clicked -= CloseCard;
             if (primary != null) primary.clicked -= PressPrimary;
             views.Clear();

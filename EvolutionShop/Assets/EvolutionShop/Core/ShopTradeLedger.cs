@@ -58,6 +58,9 @@ namespace EvolutionShop
         public TradeDaySave Current => Copy(current);
         public TradeDaySave Last => Copy(last);
         public int LastDayNumber => last == null ? 0 : last.dayNumber;
+        /// <summary>Today's sales and day number without copying the day (read every frame by the UX-08 HUD); 0 with no day open.</summary>
+        public int CurrentSales => current == null ? 0 : current.sales;
+        public int CurrentDayNumber => current == null ? 0 : current.dayNumber;
         public bool HasPending => pending.Count > 0;
         public int PendingCount => pending.Count;
         public bool IsPending(string id) => id != null && pending.Contains(id);

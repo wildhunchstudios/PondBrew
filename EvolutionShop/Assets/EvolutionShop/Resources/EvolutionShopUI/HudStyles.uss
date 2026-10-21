@@ -146,6 +146,14 @@
     color: var(--es-coral-ink);
 }
 
+/* UX-08: the coins a sale sends from the counter into the money chip (placed from code, never picked). */
+.es-coin {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
 /* Toasts and the discovery stamp share one top-centre column, so they stack instead of overlapping. */
 .es-hud-top {
     position: absolute;

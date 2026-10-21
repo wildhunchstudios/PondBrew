@@ -40,6 +40,11 @@ namespace EvolutionShop
             s.Tutorial = Tutorial.Mode == TutorialMode.Active;
             s.Objective = Objective();
             s.Reduced = NativeUiReduced;
+            s.SalesToday = Reports != null ? Reports.CurrentSales : 0;
+            s.SalesDay = Reports != null ? Reports.CurrentDayNumber : 0;
+            var counter = ToolkitAnchorFor(ShopPanel.Counter);
+            s.HasCounter = counter;
+            s.CounterWorld = counter ? ShopUiLayout.AnchorPoint(counter) : Vector3.zero;
             if (!string.IsNullOrEmpty(SaveError)) s.SaveError = SaveError;
             if (!string.IsNullOrEmpty(message) && Time.unscaledTime < messageUntil) s.Notice = message;
 

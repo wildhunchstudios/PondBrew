@@ -378,6 +378,8 @@ namespace EvolutionShop
             float until = Time.realtimeSinceStartup + 20f;
             while (shop.Cycle.Phase != ShopDayPhase.Night && Time.realtimeSinceStartup < until) yield return null;
             yield return HudFrames(4);
+            // UX-08: the receipt's tallies count up first; its numbers are read once they have.
+            yield return UiSettled();
         }
 
         /// <summary>A real click at a fraction of an element's width, at its middle: a slider's track.</summary>

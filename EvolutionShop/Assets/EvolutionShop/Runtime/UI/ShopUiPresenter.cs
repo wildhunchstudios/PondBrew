@@ -49,7 +49,26 @@ namespace EvolutionShop
             if (Element == null) return;
             Element.style.display = DisplayStyle.None;
             IsShown = false;
+            OnHidden();
         }
+
+        /// <summary>Called after Hide; a presenter whose close animates (UX-08) ends it here.</summary>
+        protected virtual void OnHidden() { }
+
+        /// <summary>Marks the presenter closed while its element stays drawn for a closing animation.</summary>
+        protected void MarkHidden() { IsShown = false; }
+
+        /// <summary>UX-08: a notebook page or screen comes up with a short fade (never a move) and a soft paper click.</summary>
+        protected void FadeIn()
+        {
+            var feel = Feel;
+            if (feel == null || Element == null) return;
+            feel.Motion.Play(Element, UiMotionKind.ViewOpen);
+            feel.Sounds.Play(UiSound.CardPaper);
+        }
+
+        /// <summary>The root's feel (UX-08), or null before the root is ready.</summary>
+        protected UiFeel Feel => Shop != null && Shop.ToolkitUi != null ? Shop.ToolkitUi.Feel : null;
 
         /// <summary>Takes the first element with the given name out of a template instance.</summary>
         protected static VisualElement Extract(VisualTreeAsset template, string name)

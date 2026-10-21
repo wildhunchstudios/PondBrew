@@ -25,6 +25,7 @@ namespace EvolutionShop
         public const string HudLayerName = "es-hud-layer";
         public const string PlanningLayerName = "es-plan-layer";
         public const string ScreenLayerName = "es-screen-layer";
+        public const string FeelLayerName = "es-feel-layer";
         public static readonly Vector2Int ReferenceResolution = new Vector2Int(1920, 1080);
         public const float ScreenMatch = 0.5f;
         public const int SortingOrder = 100;
@@ -42,6 +43,10 @@ namespace EvolutionShop
         public HudPresenter Hud { get; private set; }
         public PlanningViewPresenter Planning { get; private set; }
         public ScreenPresenter Screens { get; private set; }
+        /// <summary>UX-08 feel: animations, UI sounds, button presses and the disabled-press tip.</summary>
+        public UiFeel Feel { get; private set; }
+        /// <summary>No feel animation, coin flight, money count or receipt count-up is running (validation waits on this).</summary>
+        public bool Settled => Feel == null || (Feel.Motion.Idle && (Hud == null || Hud.FeelSettled) && (Screens == null || Screens.Report == null || !Screens.Report.Counting));
         public VisualElement Root => document != null ? document.rootVisualElement : null;
         public PanelSettings Settings => settings;
 
@@ -103,6 +108,11 @@ namespace EvolutionShop
             var layer = new VisualElement { name = LayerName, pickingMode = PickingMode.Ignore };
             layer.AddToClassList("es-layer");
             root.Add(layer);
+            // UX-08: the disabled-press tip goes over everything, including the station card it explains.
+            var feelLayer = new VisualElement { name = FeelLayerName, pickingMode = PickingMode.Ignore };
+            feelLayer.AddToClassList("es-layer");
+            root.Add(feelLayer);
+            Feel = new UiFeel(shop, this, root, feelLayer);
 
             Hud = new HudPresenter();
             Hud.Bind(shop, hudLayer, hudTemplate, Strings);
@@ -122,6 +132,7 @@ namespace EvolutionShop
             if (!Active)
             {
                 StationCard?.Hide(); Hud?.Hide(); Planning?.Hide(); Screens?.Hide();
+                Feel?.Reset();
                 // The research path exists only in the notebook; without it the bench's classic panel holds research.
                 if (shop != null && shop.Panel == ShopPanel.Research) shop.SetPanel(ShopPanel.Upgrade);
             }
@@ -138,10 +149,13 @@ namespace EvolutionShop
             var keyboard = Keyboard.current;
             if (!shop.ValidationMode && keyboard != null && keyboard.f9Key.wasPressedThisFrame) SetActive(!Active);
 #endif
+            // The feel clock moves first, so whatever a presenter starts this frame starts at this frame's time.
+            Feel.Advance(Time.unscaledDeltaTime);
             Hud.Refresh();
             Planning.Refresh();
             Screens.Refresh();
             StationCard.Refresh();
+            Feel.Tick();
         }
 
         void OnDestroy()
@@ -154,6 +168,8 @@ namespace EvolutionShop
             Planning = null;
             Screens?.Unbind();
             Screens = null;
+            Feel?.Unbind();
+            Feel = null;
             if (documentObject) Destroy(documentObject);
             if (settings) Destroy(settings);
             Ready = false; Active = false;

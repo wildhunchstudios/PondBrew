@@ -164,7 +164,7 @@ namespace EvolutionShop
             }
             SetPlacementBar(false);
             if (!Handles(Shop.Panel) || !views.TryGetValue(Shop.Panel, out var view)) { HideAll(); return; }
-            if (!IsShown) Show();
+            if (!IsShown) { Show(); FadeIn(); }
             SetShown(dim, true); SetShown(book, true);
             // A notice belongs to the page it was raised on: moving to another page drops an older one, while a notice
             // raised in the same frame as the move (a placement committed back to Arrange) still shows.

@@ -17,7 +17,7 @@ namespace EvolutionShop
             // Existing validation routes keep their exact object set; only UI routes create the preview root.
             if (ValidationMode && !requested && Arg("-evolutionToolkitUiSmoke") == null && Arg("-evolutionToolkitHudSmoke") == null &&
                 Arg("-evolutionToolkitCardsSmoke") == null && Arg("-evolutionToolkitLabCardsSmoke") == null &&
-                Arg("-evolutionToolkitPlanningSmoke") == null && Arg("-evolutionToolkitScreensSmoke") == null) return;
+                Arg("-evolutionToolkitPlanningSmoke") == null && Arg("-evolutionToolkitScreensSmoke") == null && Arg("-evolutionToolkitFeelSmoke") == null) return;
             ToolkitUi = gameObject.AddComponent<ShopUiRoot>();
             ToolkitUi.Initialize(this, requested);
 #endif
@@ -32,6 +32,15 @@ namespace EvolutionShop
         }
 
         bool ToolkitOwnsPanel(ShopPanel panel) => ToolkitUi != null && ToolkitUi.OwnsPanel(panel);
+
+        /// <summary>UX-08: the comfort settings the UI feel follows, as the world applies them (FX-20).</summary>
+        public bool ToolkitReducedMotion => NativeUiReduced;
+        public bool ToolkitLowDetail => World ? World.EffectsLow : EffectsDetail == FxEffectDetail.Low;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Validation only (UX-08 feel route): shows the discovery stamp for a species already found, as its first hatch did.</summary>
+        internal void RevealDiscoveryForValidation(string speciesId) { revealedSpecies = speciesId; revealUntil = Time.unscaledTime + 3.5f; }
+#endif
 
         void NoteToolkitStation(Station station) { toolkitStation = station; }
 

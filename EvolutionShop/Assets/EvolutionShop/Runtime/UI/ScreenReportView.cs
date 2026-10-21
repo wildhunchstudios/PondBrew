@@ -1,3 +1,5 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace EvolutionShop
@@ -5,7 +7,8 @@ namespace EvolutionShop
     /// <summary>
     /// The day report (UX.6) as a receipt slip, after the approved mockup: the day's income large, three stats (sold,
     /// visitors, walked out), why people walked out (only the reasons that happened), profit after wages with the details
-    /// on hover, reputation, one tip for tonight, and the one primary, Next night.
+    /// on hover, reputation, one tip for tonight, and the one primary, Next night. UX-08: the first time a day's receipt shows,
+    /// its tallies count up over 600 ms (any key or click skips to the end; Next night still acts at once), then the tip slides in.
     /// </summary>
     public sealed class ReportView : ScreenView
     {
@@ -18,11 +21,22 @@ namespace EvolutionShop
         readonly ReportState state = new ReportState();
         readonly VisualElement full, empty, profitRow, reasonsRow;
         readonly Label title, income, sold, visitors, missed, reasons, profitValue, details, reputation, tier, tip, guided, partial, notice;
-        readonly VisualElement repFill;
+        readonly VisualElement repFill, tipBox;
         bool hovering;
+        int countedDay = -1;
+        float countStart;
+        bool counting, tipShown;
 
         public ReportState State => state;
         public bool DetailsShown => hovering;
+        /// <summary>The tallies are still counting up on the shown receipt (UX-08); a receipt closed mid-count is not counting.</summary>
+        public bool Counting => counting && Shop != null && Shop.ToolkitUiActive && Shop.Panel == ShopPanel.DayReport;
+        /// <summary>When this day's count began, on the feel clock (validation measures the count from it).</summary>
+        public float CountStart => countStart;
+        public int CountsStarted { get; private set; }
+        public int CountsSkipped { get; private set; }
+        public int TipSlides { get; private set; }
+        public VisualElement TipBox => tipBox;
 
         public ReportView(ShopSession shop, ShopUiStrings strings) : base(shop, strings, SlipName)
         {
@@ -62,7 +76,7 @@ namespace EvolutionShop
             tier = NewLabel(rep, TierName, "es-plan-chip es-plan-chip--on es-screen-receipt__tier");
             var bar = NewBox(full, "es-screen-bar es-screen-bar--thin", "es-report-rep-bar");
             repFill = NewBox(bar, "es-screen-bar__fill", "es-report-rep-fill");
-            var tipBox = NewBox(full, "es-screen-receipt__tip", "es-report-tip-box");
+            tipBox = NewBox(full, "es-screen-receipt__tip", "es-report-tip-box");
             tip = NewLabel(tipBox, TipName, "es-screen-receipt__tip-text");
             // Last in the body, so the popover draws over the lines below the profit row.
             details.BringToFront();
@@ -93,10 +107,12 @@ namespace EvolutionShop
             SetText(title, state.Has ? Strings.Format("report.title", state.Day) : Strings.Get("report.title.none"));
             if (!state.Has) return;
             Shown(guided, state.Guided);
-            SetText(income, (state.Revenue >= 0 ? "+" : "") + state.Revenue.ToString("N0"));
-            SetText(sold, state.Sales.ToString());
-            SetText(visitors, state.Visitors.ToString());
-            SetText(missed, state.Missed.ToString());
+            float age = CountAge();
+            long revenue = UiMotion.CountUp(0, state.Revenue, age, UiMotion.CountUpSeconds);
+            SetText(income, (revenue >= 0 ? "+" : "") + revenue.ToString("N0"));
+            SetText(sold, UiMotion.CountUp(0, state.Sales, age, UiMotion.CountUpSeconds).ToString());
+            SetText(visitors, UiMotion.CountUp(0, state.Visitors, age, UiMotion.CountUpSeconds).ToString());
+            SetText(missed, UiMotion.CountUp(0, state.Missed, age, UiMotion.CountUpSeconds).ToString());
             Shown(reasonsRow, state.Reasons.Count > 0);
             if (state.Reasons.Count > 0)
             {
@@ -104,7 +120,7 @@ namespace EvolutionShop
                 for (int i = 0; i < parts.Length; i++) parts[i] = Strings.Format(state.Reasons[i].Key, state.Reasons[i].Count);
                 SetText(reasons, Strings.Format("report.walked", string.Join(" · ", parts)));
             }
-            SetText(profitValue, state.Profit.ToString("N0"));
+            SetText(profitValue, UiMotion.CountUp(0, state.Profit, age, UiMotion.CountUpSeconds).ToString("N0"));
             SetText(details, Strings.Format("report.details", state.Revenue.ToString("N0"), state.Wages, state.Cash.ToString("N0"), state.StockedOpen, state.Restocked, state.StockedClose));
             Shown(details, hovering);
             if (hovering) details.style.top = profitRow.layout.yMax + 6f;
@@ -113,6 +129,40 @@ namespace EvolutionShop
             SetText(tier, state.TierName);
             repFill.style.width = Length.Percent(100f * ScreenRules.Fill(state.Reputation, ShopReputation.MaxPoints));
             SetText(tip, Strings.Format("report.tonight", Strings.Format(state.TipKey, state.TipArgs)));
+            // The tip waits for the tallies, then slides in (a fade with reduced motion).
+            if (counting) tipBox.style.opacity = 0;
+            else if (!tipShown)
+            {
+                tipShown = true;
+                TipSlides++;
+                tipBox.style.opacity = StyleKeyword.Null;
+                Shop.ToolkitUi?.Feel?.Motion.Play(tipBox, UiMotionKind.TipSlide);
+            }
+        }
+
+        /// <summary>Seconds into this day's count-up; past its length once it has counted (or was skipped) before.</summary>
+        float CountAge()
+        {
+            var feel = Shop.ToolkitUi != null ? Shop.ToolkitUi.Feel : null;
+            float clock = feel != null ? feel.Now : Time.unscaledTime;
+            if (state.Day != countedDay)
+            {
+                countedDay = state.Day; countStart = clock; counting = true; tipShown = false;
+                CountsStarted++;
+            }
+            // Skipped: well past the end, so float rounding can never leave it a hair short of the totals.
+            if (counting && AnyInput()) { countStart = clock - UiMotion.CountUpSeconds - 1f; CountsSkipped++; }
+            float age = clock - countStart;
+            if (counting && age >= UiMotion.CountUpSeconds) counting = false;
+            return counting ? age : UiMotion.CountUpSeconds;
+        }
+
+        static bool AnyInput()
+        {
+            var keyboard = Keyboard.current;
+            var mouse = Mouse.current;
+            return (keyboard != null && keyboard.anyKey.wasPressedThisFrame) ||
+                (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame));
         }
 
         public override void ShowNotice(string text, bool error) => FillNotice(notice, text, error);

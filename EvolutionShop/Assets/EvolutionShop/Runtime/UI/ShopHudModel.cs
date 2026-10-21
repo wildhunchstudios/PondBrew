@@ -74,6 +74,12 @@ namespace EvolutionShop
         public HudPrompt Prompt;
         public HudPrompt SlapPrompt;
         public bool Reduced;
+        /// <summary>UX-08: today's sales so far and the day they belong to; a money cue that comes with a new sale is a sale.</summary>
+        public int SalesToday;
+        public int SalesDay;
+        /// <summary>Where the counter is, for the coins a sale sends to the money chip.</summary>
+        public bool HasCounter;
+        public Vector3 CounterWorld;
         public readonly List<HudQueueEntry> Queue = new List<HudQueueEntry>();
         public readonly List<HudPing> Pings = new List<HudPing>();
 

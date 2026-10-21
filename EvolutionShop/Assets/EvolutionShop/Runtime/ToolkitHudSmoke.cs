@@ -74,6 +74,8 @@ namespace EvolutionShop
             Check(pingShown || hud.ToastsHeldBack > 0, "Ready ping toast " + (pingShown ? "shows" : "waits for room under the stamp (" + hud.ToastsHeldBack + " held back)") + ": " + pingText);
             Check(hud.ArrowsShown >= 1, "Edge arrow points to the off-screen incubator (" + hud.ArrowsShown + " shown)");
             Check(hud.LastArrowDirection.y > 0.3f, "The arrow points down, behind the player, towards the incubator (" + hud.LastArrowDirection + ")");
+            // UX-08: the stamp comes down from above (larger) for a quarter second; its layout is checked once it has landed.
+            yield return UiSettled();
             CheckHudLayout(hud, "Discovery and ready ping");
             yield return new WaitForSecondsRealtime(.5f);
             CheckHudLayout(hud, "Discovery and ready ping, settled");
@@ -215,9 +217,19 @@ namespace EvolutionShop
 
         static IEnumerator HudFrames(int count) { for (int i = 0; i < count; i++) yield return null; }
 
+        /// <summary>UX-08: waits, at most three seconds, until no feel animation, coin flight, money count or receipt count-up runs.</summary>
+        IEnumerator UiSettled()
+        {
+            var ui = shop.ToolkitUi;
+            float until = Time.realtimeSinceStartup + 3f;
+            while (ui != null && ui.Ready && ui.Active && !ui.Settled && Time.realtimeSinceStartup < until) yield return null;
+        }
+
         IEnumerator HudShot(string name)
         {
-            // Screen-only: the HUD is what is reviewed, and a camera render would not show it.
+            // Screen-only: the HUD is what is reviewed, and a camera render would not show it. UX-08: a capture shows the
+            // settled state, not a card mid-open or coins mid-flight (the feel route captures those on purpose).
+            yield return UiSettled();
             yield return null;
             ScreenCapture.CaptureScreenshot(Path.Combine(evidence, name + "-screen.png"));
             yield return new WaitForSecondsRealtime(.25f);

@@ -41,6 +41,16 @@
     padding: 5px 10px;
 }
 
+/* UX-08: a press on the disabled primary highlights the reason above it, like a marker; its size never changes. */
+.es-card__reason--flash {
+    color: var(--es-ink);
+    background-color: var(--es-honey);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
 .es-card__primary {
     margin: 0 0 2px 0;
 }

@@ -145,6 +145,9 @@
     border-top-width: 0;
     border-bottom-width: 0;
     -unity-text-align: middle-center;
+    /* UX-08: buttons ease into their hover and pressed colours (the FX-18 hover accent); nothing moves under the pointer. */
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.1s;
 }
 
 .es-button--primary {
@@ -200,6 +203,25 @@
 
 .es-button:disabled {
     opacity: 0.5;
+}
+
+/* UX-08: why a disabled button can't be used, in a small tip over it when it is pressed anyway. */
+.es-press-tip {
+    position: absolute;
+    max-width: 420px;
+    padding: 8px 14px 8px 14px;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    color: var(--es-paper);
+    background-color: var(--es-ink);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-bottom-width: 3px;
+    border-color: var(--es-teal-dark);
+    white-space: normal;
+    -unity-text-align: middle-center;
 }
 
 .es-keycap {
