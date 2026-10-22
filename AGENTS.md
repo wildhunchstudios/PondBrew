@@ -537,8 +537,9 @@ Gate: a full night/day loop is playable without reading paragraphs, stations are
 User-approved art, effects and gameplay redesign. Authoritative decisions, collection scope, visual direction, effects language, gameplay changes and tasks are in **AD.1–AD.7 at the end of this file**. Runs after UX-02; AD-A is a human-reviewed art slice before any rollout.
 
 - [x] AD-A Art slice (display corner + incubator) and in-game review: technically complete 2026-10-22 (AD.8); the user approved it in game on 2026-10-22.
-- [ ] AD-B Creatures: technically complete 2026-10-22 (AD.9); the user's look at the creatures in game is pending.
-- [ ] AD-C–AD-D Characters, rooms and effects rollout.
+- [x] AD-B Creatures: technically complete 2026-10-22 (AD.9); the user approved them in game on 2026-10-22.
+- [ ] AD-C Characters: in progress since 2026-10-22 (Claude).
+- [ ] AD-D Rooms and effects rollout.
 - [ ] AD-E Gameplay prototype (wishes, forecast, checkout, stars, tank themes) and playtest.
 - [ ] AD-F Content expansion to 24 species / 96 entries within R09.
 
@@ -602,6 +603,8 @@ The game is finished when the launch-scope features, complete progression/ending
 ### Current handoff — AD-B technically complete; the user's look at the creatures comes before AD-C (2026-10-22, Claude)
 
 **State:** The user approved AD-A in game on 2026-10-22, which passed AD.7's gate, and asked for the next AD task. AD-B, the creature families, is technically complete: validated in numbered run 2 (60 of its 63 route steps; the other three passed rerun alone on the same player, after losing window focus to a game being played), after thirteen numbered scratch players, one of them a mutation player (record in AD.9 and `Docs/Evidence/ad-b-VALIDATION.md`). Delivery commit `0c68e643`, local tag `adb-creatures-validated`; checkpoint `Docs/Evidence/ad-b/checkpoint.json`; nothing pushed. Player `Builds/Windows-6000.3.21f1-adb-creatures-2`; the scratch players are deleted.
+
+**Update 2026-10-22:** the user approved the creatures in game ("check it good continue with the next AD"); AD-C (characters) is in progress.
 
 **Exact next action:** the user looks at the creatures in game (`Docs/Evidence/ad-b/PLAY.md`: the creature study shows all five species, their colours and tricks; F10 compares with the classic look). AD.7 sets no hard gate on AD-B, but as with AD-A, AD-C (characters: one humanoid rig, four customer bodies, three crew, hands, four reactions each) should follow the user's verdict, or the revision they ask for. FX-21 stays set aside. Things to know first:
 - **Adding a species** (AD-F) is a row in `DioramaSpecies`, a builder in `create_diorama_kit.py` on the family rig, four rows in the variant atlas (24 species fit), a trick and habit in `DioramaTricks`, and its tank and incubator sizes from `EveryTrickStaysInsideTheTankGlass`, which drives the real creature through its trick and prints the largest size that fits.
@@ -3843,7 +3846,7 @@ The user wants far more than 15 collectables and a long completion. Claude's tun
 UX-02–UX-09 (approved UI redesign) run first. AD-A can start once UX-02 (UI Toolkit foundation) is in.
 
 - [ ] AD-A Art slice: display corner + incubator at final quality: toon shading, outlines, bloom, room Volumes, shop window lighting keys, redesigned Pondlet and Casual visitor, full hatch moment, measured cost on the user's PC. **Gate: user reviews it in game before AD-B.** *Technically complete 2026-10-22, revision `ada-slice-1` (AD.8); the user approved it in game on 2026-10-22.*
-- [ ] AD-B Creatures: family rigs, the five existing species redone, face shape keys, signature tricks, water tints, variant material atlas. *Technically complete 2026-10-22, revision `adb-creatures-2` (AD.9); the user's look at the creatures in game is pending.*
+- [ ] AD-B Creatures: family rigs, the five existing species redone, face shape keys, signature tricks, water tints, variant material atlas. *Technically complete 2026-10-22, revision `adb-creatures-2` (AD.9); the user approved them in game on 2026-10-22.*
 - [ ] AD-C Characters: one humanoid rig, four customer bodies, three crew, hands, four reactions each.
 - [ ] AD-D Rooms and effects: tier set pieces, lab pipe network, slim siphon, flipbook effects and sounds everywhere.
 - [ ] AD-E Gameplay prototype: wishes, forecast, hands-on checkout, stars, tank themes, day length test. **Gate: user playtest.**
