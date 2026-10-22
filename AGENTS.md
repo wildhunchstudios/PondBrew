@@ -544,7 +544,7 @@ User-approved art, effects and gameplay redesign. Authoritative decisions, colle
 - [x] AD-B Creatures: technically complete 2026-10-22 (AD.9); the user approved them in game on 2026-10-22.
 - [x] AD-C Characters: technically complete 2026-10-22 (AD.10); the user approved them in game on 2026-10-22.
 - [x] AD-D Rooms and effects rollout: technically complete 2026-10-22 (AD.11); the user's look at them in game comes before AD-E.
-- [ ] AD-E Gameplay prototype (wishes, forecast, checkout, stars, tank themes) and playtest.
+- [ ] AD-E Gameplay prototype (wishes, forecast, checkout, stars, tank themes) and playtest: in progress since 2026-10-22 (Claude).
 - [ ] AD-F Content expansion to 24 species / 96 entries within R09.
 
 Gate: the slice is approved in game before bulk art; gameplay changes are playtested before they replace current behaviour.
@@ -607,6 +607,8 @@ The game is finished when the launch-scope features, complete progression/ending
 ### Current handoff — AD-D technically complete; the user's look at the rooms and effects comes before AD-E (2026-10-22, Claude)
 
 **State:** The user approved the characters (AD-C) in game on 2026-10-22 and asked for the next AD task. AD-D, rooms and effects, is technically complete: validated in numbered run 1 (all 67 route steps), after six numbered scratch players, two mutation players and three EditMode mutations (record in AD.11 and `Docs/Evidence/ad-d-VALIDATION.md`). Delivery commit `f1735c21`, local tag `add-rooms-validated`; checkpoint `Docs/Evidence/ad-d/checkpoint.json`; nothing pushed. Player `Builds/Windows-6000.3.21f1-add-rooms-1`; the scratch players are deleted.
+
+**Update 2026-10-22:** the user asked to go on ("Continue") without a verdict on AD-D yet; AD-E (gameplay prototype) is in progress. AD-D's in-game look stays open.
 
 **Exact next action:** the user looks at the rooms and effects in game (`Docs/Evidence/ad-d/PLAY.md`: buy the wings at night to see the set pieces; F10 compares with the classic look). AD-E (gameplay prototype: wishes, forecast, hands-on checkout, stars, tank themes, day length) follows the user's verdict, or the revision they ask for; AD.7 gates AD-E itself on the user's playtest. FX-21 stays set aside. Things to know first:
 - **The look on the whole world** (`Presentation/ShopWorldDioramaRooms.cs`, rules in `DioramaRoomRules.cs`): every classic lit material the world and the siphon show is converted in place (toon, or the look's glass for transparent ones) and recorded; switching the look off restores each exactly. The sweep runs when the world's hierarchy changes and once a second, so new wings and placed items take the look. Leave creatures, characters, text, particles, AD-A's own swaps and the placement ghosts alone. Game code reads `Material.color` (sign and label tints): the look's shaders carry a hidden `_Color` holding the classic main colour.
