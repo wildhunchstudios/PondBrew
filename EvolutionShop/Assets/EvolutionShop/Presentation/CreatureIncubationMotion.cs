@@ -13,6 +13,7 @@ namespace EvolutionShop
             if (!FxParticleRequest.Finite(time)) time = 0;
             effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
             if (species == "pondlet") { AnimatePondlet(time, effort, reduced, -1, hatchAge, firstHatch); return; }
+            if (IsDiorama) { AnimateDioramaSpecies(time, effort, reduced, hatchAge, firstHatch); return; }
 
             // Sample each species' existing stroke, then attenuate it as the young fish uncurls.
             // Re-sampling first prevents accumulated rotations on refresh, reset or a reused resident.

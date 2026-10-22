@@ -19,12 +19,9 @@ namespace EvolutionShop
         public void Build(string speciesId)
         {
             species = speciesId;
-            if (speciesId == "pondlet")
-            {
-                // AD-A: with the diorama look on, the kit Pondlet replaces the classic one wherever a Pondlet appears.
-                if (DioramaLook.Active && BuildDioramaPondlet()) { Animate(0); return; }
-                BuildPondlet(); CaptureExpressions(); Animate(0); return;
-            }
+            // AD-A/AD-B: with the diorama look on, the kit creature replaces the classic one wherever it appears.
+            if (DioramaLook.Active && DioramaSpecies.TryGet(speciesId, out _) && BuildDioramaCreature(speciesId)) { Animate(0); return; }
+            if (speciesId == "pondlet") { BuildPondlet(); CaptureExpressions(); Animate(0); return; }
             if (speciesId == "lanternfin") { BuildLanternfin(); CaptureExpressions(); Animate(0); return; }
             if (speciesId == "driftwing") { BuildDriftwing(); CaptureExpressions(); Animate(0); return; }
 
@@ -121,6 +118,7 @@ namespace EvolutionShop
             if (!FxParticleRequest.Finite(time)) time = 0;
             effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
             if (species == "pondlet") { AnimatePondlet(time, effort, reduced); return; }
+            if (IsDiorama) { AnimateDioramaSpecies(time, effort, reduced); return; }
             if (MimicPoseActive && !reduced) time = Mathf.Floor(mimicTime * 2f) * .25f;
             AnimateExpression(time, reduced);
             float t = time + pondletIdentityPhase;

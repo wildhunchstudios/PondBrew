@@ -122,7 +122,7 @@ namespace EvolutionShop
                 var display = pair.Value;
                 if (!display.Status) continue;
                 var resident = model.GetTank(pair.Key);
-                SetCreature(display, resident.HasValue ? resident.Value.SpeciesId : null, resident.HasValue ? resident.Value.Id : null);
+                ShowResident(pair.Key, resident.HasValue ? resident.Value.SpeciesId : null, resident.HasValue ? resident.Value.Id : null);
                 display.Status.text = !resident.HasValue ? "EMPTY / 1 SPACE" : SpeciesName(resident.Value.SpeciesId).ToUpperInvariant() +
                     (model.GetReservation(pair.Key).HasValue ? " / RESERVED" : " / " + model.GetPrice(resident.Value.SpeciesId).Value.Price + " CREDITS");
             }

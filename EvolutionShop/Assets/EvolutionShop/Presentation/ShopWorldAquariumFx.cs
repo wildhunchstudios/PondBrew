@@ -32,6 +32,7 @@ namespace EvolutionShop
             public Renderer[] FishRenderers;
         }
         static readonly int AquariumColorId = Shader.PropertyToID("_BaseColor");
+        static readonly int DioramaFarSideId = Shader.PropertyToID("_FarSide"), DioramaGlowId = Shader.PropertyToID("_EmissionColor");
         bool aquariumLow, habitatTransferCaptured;
         Station aquariumFocus;
         Display aquariumWakeFirst, aquariumWakeSecond;
@@ -102,6 +103,7 @@ namespace EvolutionShop
         {
             display.PondletClock=0;display.PondletPhase=CreatureMotion.IdentityPhase(display.FxSpecimenId);
             display.PondletFocus=display.PondletCooldown=0;display.PondletPlacedAge=display.PondletGlanceAge=-1;
+            display.DioramaTrickAge=-1;display.DioramaTrickCooldown=0;
             display.PondletSequence=0;if(display.Creature) display.Creature.SetPondletIdentity(display.FxSpecimenId);
             ResetAquariumHero(display.Habitat);
         }
@@ -168,6 +170,8 @@ namespace EvolutionShop
         void TickResident(Display display, float dt)
         {
             if (display.SpeciesId == "pondlet" && display.Habitat != null && display.Habitat.FullDisplay) { TickPondlet(display, dt); return; }
+            // AD-B: the other kit species swim with their own idle habit and signature trick.
+            if (display.Creature && display.Creature.IsDiorama && display.SpeciesId != "pondlet") { TickDioramaResident(display, dt); return; }
             if (fxEnabled && fxPolicy == FxViewPolicy.Visible && !fxReducedMotion && display.Root.gameObject.activeInHierarchy)
                 display.PondletClock += Mathf.Max(0, dt);
             PoseResident(display, display.PondletClock, fxReducedMotion || !fxEnabled);
@@ -198,7 +202,7 @@ namespace EvolutionShop
             if (display.Creature.IsDiorama)
             {
                 bool calm = fxReducedMotion || !fxEnabled;
-                if (display.DioramaLarge) pose.Position *= CreatureVisual.DioramaSwimAmplitude;
+                if (display.DioramaLarge) pose.Position *= display.Creature.DioramaSwim;
                 // Idle habit: between darts it bobs nose-down.
                 if (!calm) pose.Angles.x -= (1 - pose.Effort) * (5 + 3 * Mathf.Sin(display.PondletClock * 2.3f));
                 bool trick = display.PondletGlanceAge >= 0;
@@ -251,7 +255,7 @@ namespace EvolutionShop
         {
             if(fxCues==null || !owner.IsDefined) return;
             foreach(var d in displays.Values) if(d.Habitat!=null && owner.Equals(fxCues.Find(d.Habitat.TankId))) {
-                ResetAquariumHero(d.Habitat);d.PondletPlacedAge=d.PondletGlanceAge=-1;return;
+                ResetAquariumHero(d.Habitat);d.PondletPlacedAge=d.PondletGlanceAge=d.DioramaTrickAge=-1;return;
             }
         }
         Bounds AquariumFishBounds(Display d)
@@ -278,7 +282,13 @@ namespace EvolutionShop
                 var pose=FxAquariumMotion.Habitat(h.Clock,h.Seed,occupied,!moving,h.ResponseAge);
                 float strength=h.FullDisplay?1:.35f;
                 h.Water.localScale=new Vector3(h.WaterRest.x,h.WaterRest.y*(1+(pose.WaterScale-1)*strength),h.WaterRest.z);
-                h.WaterProperties.SetColor(AquariumColorId,Color.Lerp(h.WaterColor,new Color(.35f,.83f,.88f,h.WaterColor.a),pose.WaterTint*strength));
+                // AD-B: with the diorama look on, the water takes its resident's family tint (AD.4).
+                Color water=dioramaActive?DioramaWaterTint(d,dt,h.WaterColor):h.WaterColor;
+                Color lifted=dioramaActive?new Color(Mathf.Lerp(water.r,1,.25f),Mathf.Lerp(water.g,1,.25f),Mathf.Lerp(water.b,1,.25f),water.a):new Color(.35f,.83f,.88f,h.WaterColor.a);
+                h.WaterProperties.Clear();
+                h.WaterProperties.SetColor(AquariumColorId,Color.Lerp(water,lifted,pose.WaterTint*strength));
+                // AD-B: the water's far side carries the family tint, and the night glow takes the family's colour too.
+                if(dioramaActive) {h.WaterProperties.SetFloat(DioramaFarSideId,DioramaWater.FarSide);h.WaterProperties.SetColor(DioramaGlowId,new Color(water.r,water.g,water.b)*(DioramaWater.GlowShare*dioramaTankGlowLevel));}
                 h.WaterRenderer.SetPropertyBlock(h.WaterProperties);
                 for(int i=0;i<h.Plants.Length;i++) if(h.Plants[i]) h.Plants[i].localRotation=h.PlantRest[i]*Quaternion.Euler(0,0,i==0?pose.PlantLeft:pose.PlantRight);
                 for(int i=0;i<h.Bubbles.Length;i++) {

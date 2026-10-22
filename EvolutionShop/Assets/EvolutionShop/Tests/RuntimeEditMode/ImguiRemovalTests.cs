@@ -116,7 +116,15 @@ namespace EvolutionShop.Tests
         {
             string json = File.ReadAllText(Path.Combine(Assets, "Resources/EvolutionShopUI/strings.en.json"));
             Assert.That(json.Contains("F9"), Is.False, "F9 toggled the classic UI, which is gone");
-            Assert.That(Regex.IsMatch(json, @"\bclassic\b", RegexOptions.IgnoreCase), Is.False, "no string names the classic UI");
+            // Every entry's key and text, except AD.3's colour variant named Classic: a creature colour (AD-B's creature study).
+            var entries = Regex.Matches(json, @"""key"":\s*""([^""]+)"",\s*""text"":\s*""((?:[^""\\]|\\.)*)""");
+            Assert.That(entries.Count, Is.EqualTo(Regex.Matches(json, @"""key"":").Count), "every string entry is read");
+            foreach (Match entry in entries)
+            {
+                if (entry.Groups[1].Value.StartsWith("study.variant.")) continue;
+                Assert.That(Regex.IsMatch(entry.Groups[1].Value + " " + entry.Groups[2].Value, @"\bclassic\b", RegexOptions.IgnoreCase), Is.False,
+                    "no string names the classic UI / " + entry.Groups[1].Value);
+            }
         }
     }
 }

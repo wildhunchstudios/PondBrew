@@ -1,5 +1,5 @@
-// AD-A Pocket Aquarium Diorama: two-step soft toon lighting with a rim light, an optional thin outline
-// (creatures and characters only), optional moving caustics (tank floors and walls) and HDR emission for bloom.
+// AD-A Pocket Aquarium Diorama: two-step soft toon lighting with a rim light, an optional thin outline (creatures and
+// characters only), optional moving caustics (tank floors and walls), HDR emission for bloom and AD-B's iridescent sheen.
 // Original project shader; built on URP's own lighting includes, no other source.
 Shader "EvolutionShop/Diorama Toon"
 {
@@ -17,6 +17,8 @@ Shader "EvolutionShop/Diorama Toon"
         [HDR]_EmissionColor("Emission", Color) = (0,0,0,1)
         _CausticStrength("Caustics", Range(0,2)) = 0
         _CausticScale("Caustic scale", Float) = 3.4
+        _SheenColor("Sheen (Shimmer variants)", Color) = (1,1,1,1)
+        _SheenStrength("Sheen strength", Range(0,1)) = 0
         _OutlineColor("Outline colour", Color) = (0.07,0.17,0.17,1)
         _OutlineWidth("Outline width (pixels)", Range(0,6)) = 0
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("Cull", Float) = 2
@@ -28,9 +30,9 @@ Shader "EvolutionShop/Diorama Toon"
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
-            half4 _BaseColor, _ShadeColor, _RimColor, _EmissionColor, _OutlineColor;
+            half4 _BaseColor, _ShadeColor, _RimColor, _EmissionColor, _OutlineColor, _SheenColor;
             half _ShadeStep, _ShadeSoftness, _AmbientStrength, _RimStrength, _RimWidth, _GlossStrength;
-            half _CausticStrength, _CausticScale, _OutlineWidth, _Cull;
+            half _CausticStrength, _CausticScale, _OutlineWidth, _Cull, _SheenStrength;
         CBUFFER_END
         ENDHLSL
 
@@ -133,6 +135,13 @@ Shader "EvolutionShop/Diorama Toon"
                     float2 p = float2(positionWS.x + positionWS.y * .6, positionWS.z + positionWS.y * .6) * _CausticScale;
                     half caustic = max(CausticLines(p, t), CausticLines(p * 1.37 + 3.1, t * 1.21) * .7);
                     color += half3(.72, .95, 1) * caustic * _CausticStrength * (.35 + .65 * keyLuma);
+                }
+                if (_SheenStrength > 0)
+                {
+                    // AD-B Shimmer: an iridescent rim whose hue turns with the viewing angle and height.
+                    half facing = 1 - saturate(dot(n, viewDir));
+                    half3 hue = .5 + .5 * cos(6.2831853 * (facing * 1.4 + positionWS.y * .7 + half3(0, .33, .67)));
+                    color += lerp(_SheenColor.rgb, hue, .5) * smoothstep(.15, .9, facing) * _SheenStrength;
                 }
                 // A soft knee on reflected light: a surface under several lamps keeps its hue and never passes the
                 // bloom threshold, so only emission (lamps, glows, the hatch) blooms and labels stay readable.

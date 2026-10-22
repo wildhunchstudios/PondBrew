@@ -27,6 +27,10 @@ namespace EvolutionShop
         Volume dioramaShopVolume, dioramaLabVolume;
         VolumeProfile dioramaShopProfile, dioramaLabProfile;
         Material dioramaWindowMaterial, dioramaTankWater, dioramaIncubatorFluid, dioramaDome;
+        // AD-B: the night key's water glow level, and the incubator fluid's family glow plus the hatch's own glow on top.
+        float dioramaTankGlowLevel;
+        Color dioramaFluidGlow, dioramaFluidHatchGlow;
+        static Color DioramaFluidGlow(Color fluid) => new Color(fluid.r, fluid.g, fluid.b) * DioramaWater.FluidGlowShare;
         Texture2D dioramaStreetMask;
         Light dioramaTankGlow, dioramaHatchLight, dioramaPortholeFill;
         readonly List<(MeshFilter filter, Mesh classic)> dioramaWaterFilters = new List<(MeshFilter, Mesh)>();
@@ -99,7 +103,7 @@ namespace EvolutionShop
                 if (roomLightsInitialized) RestoreRoomPhase(roomTargetPhase);
                 if (lastModel != null) RefreshHatcheryLamp(lastModel.Incubator.Phase);
             }
-            RebuildDioramaPondlets();
+            RebuildDioramaCreatures();
         }
 
         /// <summary>The presentation clock of the look: day phase and how far the trading day has run (0..1).</summary>
@@ -109,12 +113,14 @@ namespace EvolutionShop
             dioramaPhase = phase; dioramaOpenProgress = openProgress; dioramaViewer = viewer;
         }
 
-        void RebuildDioramaPondlets()
+        void RebuildDioramaCreatures()
         {
             bool any = false;
             foreach (var display in displays.Values)
             {
-                if (display.SpeciesId != "pondlet") continue;
+                // Every kit species (AD-B), not only the Pondlet (AD-A), is rebuilt as the look switches.
+                if (string.IsNullOrEmpty(display.SpeciesId) || !DioramaSpecies.TryGet(display.SpeciesId, out _)) continue;
+                display.DioramaWaterSet = false;
                 if (display.Incubator && fxCues != null) CancelFxOwner(fxCues.Find("incubator"));
                 SetCreature(display, null); any = true;
             }
@@ -174,7 +180,9 @@ namespace EvolutionShop
             }
             dioramaIncubatorFluid = DioramaMaterial(water, DioramaLook.Style.Prop, 1);
             dioramaIncubatorFluid.SetColor("_BaseColor", new Color(.35f, .85f, .9f, .2f));
-            dioramaIncubatorFluid.SetColor("_EmissionColor", new Color(.04f, .2f, .22f));
+            dioramaIncubatorFluid.SetFloat("_FarSide", DioramaWater.FarSide);
+            dioramaFluidGlow = DioramaFluidGlow(DioramaWater.Fluid(DioramaFamily.Brookkin)); dioramaFluidHatchGlow = Color.black;
+            dioramaIncubatorFluid.SetColor("_EmissionColor", dioramaFluidGlow);
             var fluid = incubator.Find("Incubator fluid");
             foreach (var swap in dioramaSwaps)
                 if (swap.Renderer && fluid && swap.Renderer.transform == fluid)
@@ -399,7 +407,8 @@ namespace EvolutionShop
             dioramaWindowMaterial.SetColor("_Silhouette", k.Silhouette); dioramaWindowMaterial.SetColor("_LampColor", k.Lamp);
             dioramaWindowMaterial.SetColor("_StarColor", k.Stars);
             if (dioramaTankGlow) dioramaTankGlow.intensity = 1.8f * k.TankGlow;
-            if (dioramaTankWater) dioramaTankWater.SetColor("_EmissionColor", new Color(.05f, .45f, .55f) * (k.TankGlow * 1.6f));
+            dioramaTankGlowLevel = k.TankGlow * 1.6f;
+            if (dioramaTankWater) dioramaTankWater.SetColor("_EmissionColor", new Color(.05f, .45f, .55f) * dioramaTankGlowLevel);
             DioramaLabWeight = DioramaLighting.LabWeight(dioramaViewer);
             dioramaLabVolume.weight = DioramaLabWeight; dioramaShopVolume.weight = 1;
             DioramaGrade(dioramaShopProfile, k.Bloom, k.ShopFilter, k.ShopTemperature, k.ShopExposure, k.ShopSaturation);
@@ -411,6 +420,7 @@ namespace EvolutionShop
             if (!dioramaActive) return;
             TickDioramaLight(dt);
             TickDioramaHatch(dt);
+            TickDioramaIncubatorFluid(dt);
         }
 
         void DisposeDiorama()

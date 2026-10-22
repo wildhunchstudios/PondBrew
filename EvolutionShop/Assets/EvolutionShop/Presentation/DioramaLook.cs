@@ -77,15 +77,31 @@ namespace EvolutionShop
             return m;
         }
 
-        /// <summary>The kit's DK_* slot colours (sRGB), as authored in Tools/Art/create_diorama_kit.py.</summary>
+        /// <summary>The kit's shared DK_* slot colours (sRGB), as authored in Tools/Art/create_diorama_kit.py. A species' own
+        /// colour slots (DK_<Species>Body, Fin, Belly, Accent, Blush) come from the variant atlas instead.</summary>
         public static readonly IReadOnlyDictionary<string, string> KitPalette = new Dictionary<string, string>
         {
-            { "DK_PondletCoral", "FF6F57" }, { "DK_PondletFin", "FF9E6E" }, { "DK_PondletBelly", "FFD9A0" }, { "DK_PondletLip", "FF8FA0" },
             { "DK_Blush", "FF9EA0" }, { "DK_EyeWhite", "FFFFFF" }, { "DK_Pupil", "1B413E" }, { "DK_Glint", "FFFFFF" },
             { "DK_CasualKnit", "F08A3C" }, { "DK_Collar", "FFF6DF" }, { "DK_Trousers", "2B3B4F" }, { "DK_Shoes", "3B2A22" },
             { "DK_Skin", "B9774E" }, { "DK_Beret", "1B2B33" }, { "DK_Nub", "D66145" }, { "DK_Tote", "E9D6A8" }, { "DK_Hair", "3B2A22" },
             { "DK_Mouth", "5A1F22" }, { "DK_Button", "D66145" },
         };
+
+        /// <summary>Slots that glow (bloom) as well as being lit: the Sparkline's lantern.</summary>
+        public static bool GlowSlot(string slot) => slot == "DK_LanternfinAccent";
+
+        /// <summary>A kit slot's colour: shared slots from the palette, a species' own slots from the atlas's Classic row.</summary>
+        public static bool TryGetSlotColor(string slot, out Color color)
+        {
+            if (KitPalette.TryGetValue(slot, out var code)) { color = Hex(code); return true; }
+            if (DioramaVariants.TryParse(slot, out var species, out int column) && DioramaVariants.Ready)
+            {
+                color = DioramaVariants.Color(species.Index, DioramaVariant.Classic, column); color.a = 1;
+                return true;
+            }
+            color = default;
+            return false;
+        }
 
         /// <summary>Instantiates a kit model and gives every slot its own toon material (released by the caller).</summary>
         public static Transform InstantiateKit(string asset, Transform parent, Style style, List<Material> owned)
@@ -104,8 +120,9 @@ namespace EvolutionShop
                     string slot = slots[i] ? slots[i].name.Replace(" (Instance)", "") : "";
                     if (!made.TryGetValue(slot, out var material))
                     {
-                        if (!KitPalette.TryGetValue(slot, out var code)) throw new InvalidOperationException("Unmapped diorama kit slot: " + slot);
-                        material = Toon(slot, Hex(code), slot == "DK_Glint" ? Style.Glint : style);
+                        if (!TryGetSlotColor(slot, out var color)) throw new InvalidOperationException("Unmapped diorama kit slot: " + slot);
+                        material = Toon(slot, color, slot == "DK_Glint" ? Style.Glint : style);
+                        if (GlowSlot(slot)) material.SetColor("_EmissionColor", color * .9f);
                         made.Add(slot, material); owned?.Add(material);
                     }
                     slots[i] = material;

@@ -49,12 +49,52 @@ COLLECTION = scene.collection
 # Slot names only. Unity maps each DK_* slot to its own toon material (ShopDioramaPalette); the hex values
 # here are the same sRGB colours, for the review renders and the manifest.
 PALETTE = {
-    'DK_PondletCoral': 'FF6F57', 'DK_PondletFin': 'FF9E6E', 'DK_PondletBelly': 'FFD9A0', 'DK_PondletLip': 'FF8FA0',
     'DK_Blush': 'FF9EA0', 'DK_EyeWhite': 'FFFFFF', 'DK_Pupil': '1B413E', 'DK_Glint': 'FFFFFF',
     'DK_CasualKnit': 'F08A3C', 'DK_Collar': 'FFF6DF', 'DK_Trousers': '2B3B4F', 'DK_Shoes': '3B2A22',
     'DK_Skin': 'B9774E', 'DK_Beret': '1B2B33', 'DK_Nub': 'D66145', 'DK_Tote': 'E9D6A8', 'DK_Hair': '3B2A22',
     'DK_Mouth': '5A1F22', 'DK_Button': 'D66145',
 }
+
+# AD-B: the creature families and the colour variant atlas. Species keep their order here forever (the atlas rows and the
+# game's DioramaSpecies table follow it; AD-F appends the rest of the 24). Each species has five colour slots, named
+# DK_<Species><Slot>, and a sheen (Shimmer's iridescent rim; its alpha is the strength). Variants are colour swaps only.
+FAMILIES = {'Brookkin': 'river fish: pouty lips, round fins', 'Sparkline': 'Spark: a glowing lantern on a stalk',
+            'Airfin': 'Mist: wide gliding sails', 'Mistling': 'reserved for AD-F'}
+SLOTS = ['Body', 'Fin', 'Belly', 'Accent', 'Blush', 'Sheen']
+VARIANT_NAMES = ['Classic', 'Sunny', 'Deep', 'Shimmer']
+ATLAS_SPECIES_CAPACITY = 24
+SPECIES = [  # id, kit asset, family, {variant: [Body, Fin, Belly, Accent, Blush, Sheen(rgb+alpha)]}
+    ('pondlet', 'DioramaPondlet', 'Brookkin', {
+        'Classic': ['FF6F57', 'FF9E6E', 'FFD9A0', 'FF8FA0', 'FF9EA0', 'FFFFFF00'],
+        'Sunny':   ['FFA94D', 'FFD27A', 'FFF0B8', 'FF9F8A', 'FFB0A0', 'FFFFFF00'],
+        'Deep':    ['C7364A', 'E2665E', 'F2C49A', 'D9577A', 'E58A96', 'FFFFFF00'],
+        'Shimmer': ['FFB3A6', 'FFD8C8', 'FFF4E6', 'FFB6C8', 'FFC2CC', 'B8F0FF59']}),
+    ('bubblebelly', 'DioramaBubblebelly', 'Brookkin', {
+        'Classic': ['FFB83D', 'FFD98A', 'FFF1D0', 'E8862A', 'FF9EA0', 'FFFFFF00'],
+        'Sunny':   ['FFD34D', 'FFEA9A', 'FFF8DC', 'F0A030', 'FFB0A0', 'FFFFFF00'],
+        'Deep':    ['E07A1F', 'F0A35A', 'F5D7A8', 'B85A18', 'E58A80', 'FFFFFF00'],
+        'Shimmer': ['FFE3A0', 'FFF2CC', 'FFFBEA', 'F5C070', 'FFC8C0', 'FFD6F559']}),
+    ('ribbonfin', 'DioramaRibbonfin', 'Brookkin', {
+        'Classic': ['2FC4C8', 'FF8FB1', 'E8FFF7', '1A8A93', 'FF9EB0', 'FFFFFF00'],
+        'Sunny':   ['5FD9A8', 'FFB36B', 'F4FFEA', '2E9E78', 'FFB0A0', 'FFFFFF00'],
+        'Deep':    ['1E7FA8', 'D8487E', 'CFEFF5', '135A7A', 'E07A9A', 'FFFFFF00'],
+        'Shimmer': ['A8F0EC', 'FFD0E4', 'FFFFFF', '6CC9CC', 'FFC8DA', 'FFE6A859']}),
+    ('lanternfin', 'DioramaLanternfin', 'Sparkline', {
+        'Classic': ['5B5BD6', '9D8CF0', 'F2E9FF', 'FFD24A', 'FF9EC8', 'FFFFFF00'],
+        'Sunny':   ['8A6BE8', 'C2A8FF', 'FFF2DC', 'FFE07A', 'FFB0C8', 'FFFFFF00'],
+        'Deep':    ['30307E', '5E52B8', 'CFC6F2', 'FFB63A', 'D07AB0', 'FFFFFF00'],
+        'Shimmer': ['B9B6FF', 'DCD6FF', 'FFFFFF', 'FFF0A8', 'FFC8E8', 'A8FFE666']}),
+    ('driftwing', 'DioramaDriftwing', 'Airfin', {
+        'Classic': ['D8A6F2', 'BFF5E6', 'FFF1E8', 'A06FD1', 'FF9EC0', 'FFFFFF00'],
+        'Sunny':   ['F5B6D8', 'FFF0B0', 'FFF8EC', 'D97AB0', 'FFB0B0', 'FFFFFF00'],
+        'Deep':    ['8F5CC9', '7FD9C4', 'EDE0F5', '5E3A99', 'D088C0', 'FFFFFF00'],
+        'Shimmer': ['F0DCFF', 'E6FFF8', 'FFFFFF', 'C9A8F0', 'FFD0E8', 'FFF0A866']}),
+]
+def slot_name(species_id, slot):
+    return 'DK_' + species_id[:1].upper() + species_id[1:] + slot
+for sid, _, _, variants in SPECIES:
+    for k, slot in enumerate(SLOTS[:5]):  # the species' own five material slots, Classic colours in the review renders
+        PALETTE[slot_name(sid, slot)] = variants['Classic'][k]
 MAT = {}
 def srgb_linear(v):
     return v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4
@@ -160,16 +200,29 @@ def loft_z(part, z0, z1, rings, seg, profile, material, belly=None, yoff=lambda 
         faces.append((last + s, end, last + (s + 1) % seg))
     rng = part.add(verts, faces, material)
     if belly:
-        # Faces whose ring angle points low enough (and away from the very ends) take the belly slot.
+        # Faces pointing low enough (and away from the very ends) take the belly slot. The test uses the face's angle
+        # around the body, which is constant along a segment, so the edge follows the mesh lines instead of a staircase.
         bslot = part.slot(belly[0])
         first_face = len(part.faces) - len(faces)
         for fi, f in enumerate(faces):
-            ys = [verts[i][1] - yoff(0) for i in f]
             zs = [verts[i][2] for i in f]
             tmid = (sum(zs) / len(zs) - z0) / (z1 - z0)
-            if belly[1](sum(ys) / len(ys), tmid):
+            mx = sum(verts[i][0] for i in f) / len(f)
+            my = sum(verts[i][1] for i in f) / len(f) - yoff(tmid)
+            if belly[1](math.sin(math.atan2(my, mx)), tmid):
                 part.slots[first_face + fi] = bslot
     return rng
+
+def paint(part, first_face, center, radii, slot, test):
+    """Give faces from first_face on the slot when test(direction) holds; direction is the face centre's unit vector in the
+    ellipsoid's own frame, so tests on its y (latitude) or its angle about Y (longitude) follow the grid lines."""
+    index = part.slot(slot)
+    for fi in range(first_face, len(part.faces)):
+        vs = [part.verts[i] for i in part.faces[fi]]
+        c = Vector((sum(v.x for v in vs), sum(v.y for v in vs), sum(v.z for v in vs))) / len(vs)
+        n = Vector(((c.x - center[0]) / radii[0], (c.y - center[1]) / radii[1], (c.z - center[2]) / radii[2]))
+        if n.length > 1e-6 and test(n.normalized()):
+            part.slots[fi] = index
 
 def shell(part, center, radii, material, euler, phi_max, thickness=.012, seg=24, rows=8):
     """A cap of an ellipsoid from its top pole down to phi_max (radians), with thickness. Returns (indices, builder)."""
@@ -303,10 +356,72 @@ def stats(root, kind):
                 mins[k] = min(mins[k], w[k]); maxs[k] = max(maxs[k], w[k])
     return {'triangles': tris, 'vertices': verts, 'bounds_unity_m': {'min': mins, 'max': maxs, 'size': [maxs[k] - mins[k] for k in range(3)]}}
 
-# ================================================================ Pondlet (front -Z)
-def pondlet():
-    root = empty('DioramaPondlet')
+# ================================================================ creatures (front -Z): the family rigs
+# Every creature shares one rig: Body (Puffed), Eyes, Pupils, Glints, Lids (Blink, Happy), Blush and Lips (Happy, Surprised),
+# and the four pivots the game's swim code drives (Left fin pivot, Right fin pivot, Tail pivot, Crest pivot). A family adds
+# its signature part (Sparkline: Lantern pivot). Species differ by body, fins, colours and that feature.
+
+def creature_root(asset):
+    root = empty(asset)
     root['front'] = 'creature local -Z'
+    return root
+
+def creature_face(root, sid, eye_c, eye_r, eye_yaw, blush_c, blush_r, blush_yaw, lip_c, lip_major=.046, lip_minor=.025,
+                  lip_scale=(1.22, .82, 1.0), pupil_k=.6, smile=.03):
+    """Eyes a third of the head's height with pupils, glints and lids, blush, and pouty lips with a dark mouth."""
+    S = lambda slot: slot_name(sid, slot)
+    eyes, pupils, glints, lids, blush = Part('Eyes'), Part('Pupils'), Part('Glints'), Part('Lids'), Part('Blush')
+    lid_builders = []
+    for side in (-1, 1):
+        c = (side * eye_c[0], eye_c[1], eye_c[2])
+        yaw = -side * eye_yaw  # positive Unity yaw turns -Z toward -X, so the right eye (+X) takes a negative yaw
+        ellipsoid(eyes, c, eye_r, 'DK_EyeWhite', (0, yaw, 0), 24, 14)
+        fwd = rot((0, 0, -1), (0, yaw, 0))
+        pr = (eye_r[0] * pupil_k, eye_r[1] * pupil_k * 1.06, eye_r[2] * .5)
+        pc = Vector(c) + fwd * (eye_r[2] * .72) + Vector((0, -.004, 0))
+        ellipsoid(pupils, pc, pr, 'DK_Pupil', (0, yaw, 0), 20, 12)
+        gc = Vector(c) + fwd * (eye_r[2] * 1.15) + Vector((-side * .006 - eye_r[0] * .16, eye_r[1] * .29, 0))
+        ellipsoid(glints, gc, (eye_r[0] * .22, eye_r[1] * .2, eye_r[2] * .17), 'DK_Glint', (0, yaw, 0), 12, 8)
+        lid_r = (eye_r[0] * 1.07, eye_r[1] * 1.06, eye_r[2] * 1.08)
+        idx, build = shell(lids, c, lid_r, S('Body'), (0, yaw, 0), math.radians(24), .010, 24, 8)
+        lid_builders.append((idx, build))
+        ellipsoid(blush, (side * blush_c[0], blush_c[1], blush_c[2]), blush_r, S('Blush'), (0, -side * blush_yaw, 0), 16, 8)
+    for p in (eyes, pupils, glints, blush):
+        make_object(p, root)
+    lids_obj = make_object(lids, root)
+    for name, angle in (('Blink', 104), ('Happy', 58)):
+        moved = {}
+        for idx, build in lid_builders:
+            for i, v in zip(idx, build(math.radians(angle))):
+                moved[i] = v
+        shape_key(lids_obj, lids, name, lambda i, v, moved=moved: moved[i])
+    lips = Part('Lips')
+    lc = Vector(lip_c)
+    torus(lips, lc, lip_major, lip_minor, S('Accent') if sid == 'pondlet' else S('Blush'), lip_scale, 32, 12)
+    ellipsoid(lips, lc + Vector((0, 0, lip_minor * .5)), (lip_major * .83, lip_minor * .96, .012), 'DK_Mouth', (0, 0, 0), 16, 8)
+    lips_obj = make_object(lips, root)
+    def happy(i, v):
+        d = Vector(v) - lc
+        return lc + Vector((d.x * 1.18, d.y * .8 + smile * (d.x / (lip_major * 1.5)) ** 2 - .006, d.z))
+    def surprised(i, v):
+        d = Vector(v) - lc
+        return lc + Vector((d.x * 1.05, d.y * 1.55, d.z))
+    shape_key(lips_obj, lips, 'Happy', happy)
+    shape_key(lips_obj, lips, 'Surprised', surprised)
+
+def puff_key(body_obj, body, z0, z1, gain=.16, yoff=lambda t: 0, center_y=None):
+    def puffed(i, v):
+        t = (v[2] - z0) / (z1 - z0)
+        g = 1 + gain * math.sin(math.pi * min(1, max(0, t)) ** .8)
+        if center_y is not None:
+            return (v[0] * g, center_y + (v[1] - center_y) * g, v[2] * (1 + (g - 1) * .35))
+        return (v[0] * g, yoff(t) + (v[1] - yoff(t)) * g, v[2])
+    shape_key(body_obj, body, 'Puffed', puffed)
+
+# ---------------------------------------------------------------- Brookkin: Pondlet (the AD-A model, unchanged)
+def pondlet():
+    sid = 'pondlet'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaPondlet')
     Z0, Z1 = -.37, .38
     def prof(t):
         if t < .42:
@@ -317,80 +432,200 @@ def pondlet():
         return .27 * f, .245 * f, .215 * f
     yoff = lambda t: .015 * t * t
     body = Part('Body')
-    loft_z(body, Z0, Z1, 30, 36, prof, 'DK_PondletCoral',
-           belly=('DK_PondletBelly', lambda y, t: y < -.105 and .06 < t < .86), yoff=yoff)
+    loft_z(body, Z0, Z1, 30, 36, prof, S('Body'), belly=(S('Belly'), lambda sn, t: sn < -.5 and .06 < t < .86), yoff=yoff)
     body_obj = make_object(body, root)
-    def puffed(i, v):
-        t = (v[2] - Z0) / (Z1 - Z0)
-        g = 1 + .16 * math.sin(math.pi * min(1, max(0, t)) ** .8)
-        return (v[0] * g, yoff(t) + (v[1] - yoff(t)) * g, v[2])
-    shape_key(body_obj, body, 'Puffed', puffed)
-
-    # Big glossy eyes: a third of the head's height, set forward on the sides.
-    eyes, pupils, glints, lids, blush = Part('Eyes'), Part('Pupils'), Part('Glints'), Part('Lids'), Part('Blush')
-    lid_builders = []
-    for side in (-1, 1):
-        c = (side * .132, .072, -.262)
-        yaw = -side * 32  # positive Unity yaw turns -Z toward -X, so the right eye (+X) takes a negative yaw
-        ellipsoid(eyes, c, (.088, .104, .072), 'DK_EyeWhite', (0, yaw, 0), 24, 14)
-        fwd = rot((0, 0, -1), (0, yaw, 0))
-        pc = Vector(c) + fwd * .052 + Vector((0, -.004, 0))
-        ellipsoid(pupils, pc, (.052, .066, .036), 'DK_Pupil', (0, yaw, 0), 20, 12)
-        gc = Vector(c) + fwd * .083 + Vector((-side * .006 - .014, .03, 0))
-        ellipsoid(glints, gc, (.019, .021, .012), 'DK_Glint', (0, yaw, 0), 12, 8)
-        idx, build = shell(lids, c, (.094, .110, .078), 'DK_PondletCoral', (0, yaw, 0), math.radians(24), .010, 24, 8)
-        lid_builders.append((idx, build))
-        ellipsoid(blush, (side * .208, -.03, -.228), (.046, .028, .016), 'DK_Blush', (0, -side * 52, 0), 16, 8)
-    for p in (eyes, pupils, glints, blush):
-        make_object(p, root)
-    lids_obj = make_object(lids, root)
-    closed = {}
-    for idx, build in lid_builders:
-        for i, v in zip(idx, build(math.radians(104))):
-            closed[i] = v
-    shape_key(lids_obj, lids, 'Blink', lambda i, v: closed[i])
-    happy_lid = {}
-    for idx, build in lid_builders:
-        for i, v in zip(idx, build(math.radians(58))):
-            happy_lid[i] = v
-    shape_key(lids_obj, lids, 'Happy', lambda i, v: happy_lid[i])
-
-    # Pouty lips on the nose with a dark mouth inside; shape keys open them into a smile or an O.
-    lips = Part('Lips')
-    lc = Vector((0, -.032, -.382))
-    torus(lips, lc, .046, .025, 'DK_PondletLip', (1.22, .82, 1.0), 32, 12)
-    inside = ellipsoid(lips, lc + Vector((0, 0, .012)), (.038, .024, .012), 'DK_Mouth', (0, 0, 0), 16, 8)
-    lips_obj = make_object(lips, root)
-    def smile(i, v):
-        d = Vector(v) - lc
-        x = d.x * 1.18
-        y = d.y * .8 + .03 * (d.x / .07) ** 2 - .006
-        return lc + Vector((x, y, d.z))
-    def surprised(i, v):
-        d = Vector(v) - lc
-        return lc + Vector((d.x * 1.05, d.y * 1.55, d.z))
-    shape_key(lips_obj, lips, 'Happy', smile)
-    shape_key(lips_obj, lips, 'Surprised', surprised)
-
-    # Chunky fins; each fin mesh is the pivot the swim code already rotates.
+    puff_key(body_obj, body, Z0, Z1, .16, yoff)
+    creature_face(root, sid, (.132, .072, -.262), (.088, .104, .072), 32, (.208, -.03, -.228), (.046, .028, .016), 52,
+                  (0, -.032, -.382))
     for side, label in ((-1, 'Left'), (1, 'Right')):
         pivot = (side * .205, -.07, -.04)
         fin = Part(label + ' fin')
-        ellipsoid(fin, (pivot[0] + side * .05, pivot[1] - .045, pivot[2] + .09), (.034, .078, .13), 'DK_PondletFin',
-                  (0, side * 18, side * -38), 20, 12)
+        ellipsoid(fin, (pivot[0] + side * .05, pivot[1] - .045, pivot[2] + .09), (.034, .078, .13), S('Fin'), (0, side * 18, side * -38), 20, 12)
         make_object(fin, root, pivot, label + ' fin pivot')
     tail_pivot = (0, .012, .33)
     tail = Part('Tail')
-    ellipsoid(tail, (0, tail_pivot[1], tail_pivot[2] + .03), (.05, .07, .08), 'DK_PondletFin', (0, 0, 0), 16, 10)
+    ellipsoid(tail, (0, tail_pivot[1], tail_pivot[2] + .03), (.05, .07, .08), S('Fin'), (0, 0, 0), 16, 10)
     for side in (-1, 1):
-        ellipsoid(tail, (0, tail_pivot[1] + side * .105, tail_pivot[2] + .165), (.042, .155, .19), 'DK_PondletFin',
-                  (side * 36, 0, 0), 22, 14)
+        ellipsoid(tail, (0, tail_pivot[1] + side * .105, tail_pivot[2] + .165), (.042, .155, .19), S('Fin'), (side * 36, 0, 0), 22, 14)
     make_object(tail, root, tail_pivot, 'Tail pivot')
     crest_pivot = (0, .2, -.01)
     crest = Part('Crest')
-    ellipsoid(crest, (0, crest_pivot[1] + .045, crest_pivot[2] + .07), (.034, .085, .155), 'DK_PondletFin', (24, 0, 0), 20, 12)
+    ellipsoid(crest, (0, crest_pivot[1] + .045, crest_pivot[2] + .07), (.034, .085, .155), S('Fin'), (24, 0, 0), 20, 12)
     make_object(crest, root, crest_pivot, 'Crest pivot')
     return root
+
+# ---------------------------------------------------------------- Brookkin: Bubblebelly, a round ball with a freckled belly
+def bubblebelly():
+    sid = 'bubblebelly'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaBubblebelly')
+    body = Part('Body')
+    R = (.38, .36, .40)
+    first = len(body.faces)
+    ellipsoid(body, (0, 0, 0), R, S('Body'), (0, 0, 0), 40, 26)
+    # The belly: the lower part of the ball, all round, takes the cream slot.
+    paint(body, first, (0, 0, 0), R, S('Belly'), lambda n: n.y < -.22)
+    # Three freckles on the belly, just proud of the surface.
+    for k in (-1, 0, 1):
+        a, e = math.radians(k * 22), math.radians(-34)
+        n = Vector((math.sin(a) * math.cos(e), math.sin(e), -math.cos(a) * math.cos(e)))
+        p = Vector((n.x * R[0], n.y * R[1], n.z * R[2])) * 1.004
+        ellipsoid(body, tuple(p), (.034, .036, .012), S('Accent'), (math.degrees(e) * .9, math.degrees(-a), 0), 14, 8)
+    body_obj = make_object(body, root)
+    def puffed(i, v):
+        # Its trick: a balloon belly, rounder and a fifth bigger, swelling most below the middle.
+        g = 1.2 + (.08 if v.y < 0 else 0) * min(1, -v.y / .3)
+        return (v.x * g, v.y * (g + .02), v.z * g)
+    shape_key(body_obj, body, 'Puffed', puffed)
+    creature_face(root, sid, (.15, .1, -.31), (.098, .118, .078), 28, (.25, -.035, -.30), (.05, .03, .016), 46,
+                  (0, -.045, -.405), .036, .021, (1.15, .95, 1.0), .62, .024)
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .35, -.09, -.02)
+        fin = Part(label + ' fin')
+        ellipsoid(fin, (pivot[0] + side * .035, pivot[1] - .02, pivot[2] + .06), (.03, .07, .1), S('Fin'), (0, side * 20, side * -30), 18, 10)
+        make_object(fin, root, pivot, label + ' fin pivot')
+    tail_pivot = (0, .0, .37)
+    tail = Part('Tail')
+    ellipsoid(tail, (0, 0, tail_pivot[2] + .02), (.045, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
+    for side in (-1, 1):
+        ellipsoid(tail, (0, side * .07, tail_pivot[2] + .1), (.036, .1, .12), S('Fin'), (side * 32, 0, 0), 18, 12)
+    make_object(tail, root, tail_pivot, 'Tail pivot')
+    crest_pivot = (0, .34, -.02)
+    crest = Part('Crest')
+    # A little curl of a topknot.
+    ellipsoid(crest, (0, crest_pivot[1] + .045, crest_pivot[2] + .02), (.03, .07, .08), S('Fin'), (-18, 0, 0), 16, 10)
+    ellipsoid(crest, (0, crest_pivot[1] + .095, crest_pivot[2] + .065), (.026, .045, .05), S('Fin'), (40, 0, 0), 14, 8)
+    make_object(crest, root, crest_pivot, 'Crest pivot')
+    return root
+
+# ---------------------------------------------------------------- Brookkin: Ribbonfin, slender with long ribbons
+def ribbonfin():
+    sid = 'ribbonfin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaRibbonfin')
+    Z0, Z1 = -.44, .36
+    def prof(t):
+        if t < .36:
+            f = math.sqrt(max(0, 1 - (1 - t / .36) ** 2))
+        else:
+            s = (t - .36) / .64
+            f = 1 - .72 * (s * s * (3 - 2 * s))
+        return .2 * f, .225 * f, .19 * f
+    body = Part('Body')
+    # Two dark bands across the back are its markings: whole rings of the loft (rings 15-16 and 21-22 of 32), above the belly.
+    def mark(sn, t):
+        return sn < -.48 and .07 < t < .84
+    loft_z(body, Z0, Z1, 32, 32, prof, S('Body'), belly=(S('Belly'), mark))
+    band = body.slot(S('Accent'))
+    for fi, f in enumerate(body.faces):
+        if body.slots[fi] != body.slot(S('Body')):
+            continue
+        t = (sum(body.verts[i].z for i in f) / len(f) - Z0) / (Z1 - Z0)
+        if .455 < t < .52 or .64 < t < .705:
+            body.slots[fi] = band
+    body_obj = make_object(body, root)
+    puff_key(body_obj, body, Z0, Z1, .14)
+    creature_face(root, sid, (.112, .075, -.29), (.076, .092, .062), 30, (.16, -.03, -.29), (.04, .024, .014), 50,
+                  (0, -.035, -.445), .036, .02, (1.2, .85, 1.0), .6, .026)
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .17, -.07, -.06)
+        fin = Part(label + ' fin')
+        ellipsoid(fin, (pivot[0] + side * .03, pivot[1] - .05, pivot[2] + .14), (.022, .05, .17), S('Fin'), (12, side * 14, side * -32), 18, 12)
+        make_object(fin, root, pivot, label + ' fin pivot')
+    tail_pivot = (0, .01, .33)
+    tail = Part('Tail')
+    ellipsoid(tail, (0, .01, tail_pivot[2] + .02), (.035, .05, .06), S('Fin'), (0, 0, 0), 14, 8)
+    for side in (-1, 1):
+        ellipsoid(tail, (0, .01 + side * .085, tail_pivot[2] + .28), (.026, .07, .32), S('Fin'), (side * 16, 0, 0), 20, 14)
+    make_object(tail, root, tail_pivot, 'Tail pivot')
+    crest_pivot = (0, .205, -.12)
+    crest = Part('Crest')
+    ellipsoid(crest, (0, crest_pivot[1] + .06, crest_pivot[2] + .22), (.022, .07, .3), S('Fin'), (14, 0, 0), 20, 14)
+    make_object(crest, root, crest_pivot, 'Crest pivot')
+    return root
+
+# ---------------------------------------------------------------- Sparkline: Lanternfin, compact with a glowing lantern
+def lanternfin():
+    sid = 'lanternfin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaLanternfin')
+    body = Part('Body')
+    first = len(body.faces)
+    ellipsoid(body, (0, 0, 0), (.29, .27, .39), S('Body'), (0, 0, 0), 36, 22, 2.5)
+    paint(body, first, (0, 0, 0), (.29, .27, .39), S('Belly'), lambda n: n.y < -.42)
+    body_obj = make_object(body, root)
+    def puffed(i, v):
+        return (v.x * 1.13, v.y * 1.15, v.z * 1.05)
+    shape_key(body_obj, body, 'Puffed', puffed)
+    creature_face(root, sid, (.185, .075, -.25), (.094, .112, .074), 34, (.24, -.06, -.24), (.046, .027, .015), 54,
+                  (0, -.075, -.402), .034, .02, (1.25, .8, 1.0), .6, .03)
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .26, -.03, .0)
+        fin = Part(label + ' fin')
+        # Rounded wing fins that lift outward.
+        ellipsoid(fin, (pivot[0] + side * .1, pivot[1] + .03, pivot[2] + .04), (.15, .03, .17), S('Fin'), (0, side * 10, side * 24), 22, 12)
+        make_object(fin, root, pivot, label + ' fin pivot')
+    tail_pivot = (0, 0, .36)
+    tail = Part('Tail')
+    ellipsoid(tail, (0, 0, tail_pivot[2] + .1), (.035, .13, .13), S('Fin'), (0, 0, 0), 18, 12)
+    make_object(tail, root, tail_pivot, 'Tail pivot')
+    crest_pivot = (0, .245, .08)
+    crest = Part('Crest')
+    ellipsoid(crest, (0, crest_pivot[1] + .04, crest_pivot[2] + .06), (.026, .065, .11), S('Fin'), (20, 0, 0), 16, 10)
+    make_object(crest, root, crest_pivot, 'Crest pivot')
+    # The family's signature: a stalk curling up and forward to a glowing bulb.
+    lantern_pivot = (0, .245, -.17)
+    lantern = Part('Lantern')
+    pts = [(0, .245 + .25 * math.sin(math.radians(a)) - .02, -.17 - .16 * (1 - math.cos(math.radians(a)))) for a in range(0, 101, 10)]
+    tube(lantern, pts, .02, S('Body'), 10)
+    bulb = Vector(pts[-1]) + Vector((0, .02, -.065))
+    ellipsoid(lantern, tuple(bulb), (.08, .085, .08), S('Accent'), (0, 0, 0), 24, 14)
+    ellipsoid(lantern, tuple(bulb + Vector((-.025, .035, -.055))), (.022, .02, .014), 'DK_Glint', (0, 0, 0), 10, 6)
+    make_object(lantern, root, lantern_pivot, 'Lantern pivot')
+    return root
+
+# ---------------------------------------------------------------- Airfin: Driftwing, a lilac glider with pearl sails
+def driftwing():
+    sid = 'driftwing'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaDriftwing')
+    Z0, Z1 = -.36, .36
+    def prof(t):
+        if t < .4:
+            f = math.sqrt(max(0, 1 - (1 - t / .4) ** 2))
+        else:
+            s = (t - .4) / .6
+            f = 1 - .8 * (s * s * (3 - 2 * s))
+        return .24 * f, .23 * f, .19 * f
+    body = Part('Body')
+    loft_z(body, Z0, Z1, 30, 32, prof, S('Body'), belly=(S('Belly'), lambda sn, t: sn < -.48 and .08 < t < .84))
+    body_obj = make_object(body, root)
+    puff_key(body_obj, body, Z0, Z1, .15)
+    creature_face(root, sid, (.118, .075, -.24), (.082, .098, .066), 32, (.18, -.03, -.235), (.043, .025, .014), 50,
+                  (0, -.04, -.37), .034, .019, (1.2, .8, 1.0), .6, .026)
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .2, .03, -.03)
+        sail = Part(label + ' fin')
+        c = Vector((pivot[0] + side * .25, pivot[1] + .03, pivot[2] + .05))
+        first = len(sail.faces)
+        ellipsoid(sail, tuple(c), (.27, .03, .19), S('Fin'), (0, side * -8, side * 10), 36, 16)
+        # The sail's rim, round its edge, in the accent colour (the grid's equator rings, so the band is clean).
+        rim = sail.slot(S('Accent'))
+        rows, seg = 16, 36
+        for fi in range(first, len(sail.faces)):
+            ring = 0 if fi - first < seg else 1 + (fi - first - seg) // seg
+            if 6 <= ring <= 9:
+                sail.slots[fi] = rim
+        make_object(sail, root, pivot, label + ' fin pivot')
+    tail_pivot = (0, .02, .32)
+    tail = Part('Tail')
+    for side in (-1, 1):
+        ellipsoid(tail, (side * .06, .02, tail_pivot[2] + .2), (.03, .06, .24), S('Fin'), (0, side * 12, 0), 18, 12)
+    make_object(tail, root, tail_pivot, 'Tail pivot')
+    crest_pivot = (0, .2, -.02)
+    crest = Part('Crest')
+    ellipsoid(crest, (0, crest_pivot[1] + .06, crest_pivot[2] + .1), (.02, .095, .16), S('Accent'), (26, 0, 0), 20, 12)
+    make_object(crest, root, crest_pivot, 'Crest pivot')
+    return root
+
+CREATURE_BUILDERS = {'pondlet': pondlet, 'bubblebelly': bubblebelly, 'ribbonfin': ribbonfin, 'lanternfin': lanternfin,
+                     'driftwing': driftwing}
 
 # ================================================================ Casual visitor (front +Z)
 def catmull(points, t):
@@ -626,9 +861,49 @@ def flipbook():
     img.save()
     return path, W, H
 
+# ================================================================ the colour variant atlas
+def variant_atlas():
+    """One texel per (species, variant) row and slot column, sRGB; rows species_index * 4 + variant, top row first.
+    The game reads it to colour every variant; rows past the five species are empty until AD-F fills them."""
+    W, H = len(SLOTS), ATLAS_SPECIES_CAPACITY * len(VARIANT_NAMES)
+    px = np.zeros((H, W, 4))
+    for s_index, (sid, _, _, variants) in enumerate(SPECIES):
+        for v_index, vname in enumerate(VARIANT_NAMES):
+            row = s_index * len(VARIANT_NAMES) + v_index
+            for k, code in enumerate(variants[vname]):
+                rgb = [int(code[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+                alpha = int(code[6:8], 16) / 255 if len(code) == 8 else 1.0
+                px[row, k] = (*rgb, alpha)
+    img = bpy.data.images.new('DioramaVariantAtlas', W, H, alpha=True, float_buffer=False)
+    img.colorspace_settings.name = 'sRGB'
+    img.pixels.foreach_set(np.flipud(px).astype(np.float32).ravel())
+    path = EXPORT / 'DioramaVariantAtlas.png'
+    img.filepath_raw = str(path); img.file_format = 'PNG'
+    img.save()
+    # A big swatch sheet of the same colours for people to read (not used by the game).
+    cell = 36
+    sheet = np.ones((len(SPECIES) * len(VARIANT_NAMES) * cell, W * cell, 4))
+    for row in range(len(SPECIES) * len(VARIANT_NAMES)):
+        for k in range(W):
+            c = px[row, k].copy()
+            if k == W - 1:  # the sheen: shown over white by its strength
+                c[:3] = 1 - (1 - c[:3]) * max(c[3], .1)
+            c[3] = 1
+            sheet[row * cell:(row + 1) * cell, k * cell:(k + 1) * cell] = c
+            sheet[row * cell:(row + 1) * cell, k * cell] = (.1, .2, .2, 1)
+        sheet[row * cell] = (.1, .2, .2, 1)
+    simg = bpy.data.images.new('DioramaVariantSwatches', sheet.shape[1], sheet.shape[0], alpha=True, float_buffer=False)
+    simg.colorspace_settings.name = 'sRGB'
+    simg.pixels.foreach_set(np.flipud(sheet).astype(np.float32).ravel())
+    spath = SOURCE / 'DioramaKit_VariantSwatches.png'
+    simg.filepath_raw = str(spath); simg.file_format = 'PNG'
+    simg.save()
+    return path, W, H, spath
+
 # ================================================================ build, export, review renders, manifest
 assets = {}
-for name, build in (('DioramaPondlet', pondlet), ('DioramaCasualVisitor', casual)):
+BUILDS = [(asset, CREATURE_BUILDERS[sid]) for sid, asset, _, _ in SPECIES] + [('DioramaCasualVisitor', casual)]
+for name, build in BUILDS:
     # Blender object names are global, so each asset is built and exported before the next one is made; its parts
     # are then renamed with its id, freeing the shared names (Eyes, Lids, Body...) for the next asset.
     root = assets[name] = build()
@@ -657,6 +932,7 @@ for name, build in (('DioramaPondlet', pondlet), ('DioramaCasualVisitor', casual
         child.name = name + ' / ' + child.name
 
 sheet_path, sheet_w, sheet_h = flipbook()
+atlas_path, atlas_w, atlas_h, swatch_path = variant_atlas()
 
 renders = []
 if not args.no_render:
@@ -671,7 +947,10 @@ if not args.no_render:
     scene.render.film_transparent = False
     scene.world = bpy.data.worlds.new('Review sky') if scene.world is None else scene.world
     scene.world.color = (.85, .78, .62)
-    assets['DioramaCasualVisitor'].location = u((1.3, 0, 0))
+    lineup = [asset for _, asset, _, _ in SPECIES]
+    for k, asset in enumerate(lineup):
+        assets[asset].location = u(((k - 2) * 1.25, 0, 0))
+    assets['DioramaCasualVisitor'].location = u((1.3, 0, 3.5))
     camdata = bpy.data.cameras.new('Diorama review camera'); cam = bpy.data.objects.new('Diorama review camera', camdata)
     COLLECTION.objects.link(cam); scene.camera = cam; camdata.lens = 50
     def shot(fname, pos, target):
@@ -680,16 +959,31 @@ if not args.no_render:
         scene.render.filepath = str(SOURCE / fname)
         bpy.ops.render.render(write_still=True)
         renders.append(str((SOURCE / fname).relative_to(REPO)).replace('\\', '/'))
-    shot('DioramaKit_Pondlet_Front.png', (-1.25, .35, -1.55), (0, .02, 0))
-    shot('DioramaKit_Pondlet_Side.png', (-2.0, .1, .02), (0, .02, .06))
-    shot('DioramaKit_Casual_Front.png', (1.3 + .9, 1.25, 3.4), (1.3, .86, 0))
-    shot('DioramaKit_Casual_Face.png', (1.3 + .25, 1.35, 1.3), (1.3, 1.28, 0))
-    assets['DioramaCasualVisitor'].location = u((0, 0, 0))
+    scene.render.resolution_x, scene.render.resolution_y = 1800, 700
+    shot('DioramaKit_Creatures_Front.png', (-1.2, 1.6, -8.5), (0, .1, 0))
+    shot('DioramaKit_Creatures_Back.png', (1.6, 1.6, 8.5), (0, .1, 0))
+    scene.render.resolution_x, scene.render.resolution_y = 1200, 800
+    for k, asset in enumerate(lineup):
+        x = (k - 2) * 1.25
+        for other in assets.values():
+            for o in [other] + list(other.children_recursive):
+                o.hide_render = other is not assets[asset]
+        shot(asset.replace('Diorama', 'DioramaKit_') + '_Front.png', (x - 1.25, .35, -1.55), (x, .02, 0))
+        shot(asset.replace('Diorama', 'DioramaKit_') + '_Side.png', (x - 2.0, .1, .02), (x, .02, .06))
+    for other in assets.values():
+        for o in [other] + list(other.children_recursive):
+            o.hide_render = other is not assets['DioramaCasualVisitor']
+    shot('DioramaKit_Casual_Front.png', (1.3 + .9, 1.25, 3.5 + 3.4), (1.3, .86, 3.5))
+    shot('DioramaKit_Casual_Face.png', (1.3 + .25, 1.35, 3.5 + 1.3), (1.3, 1.28, 3.5))
+    for asset in assets.values():
+        asset.location = u((0, 0, 0))
+        for o in [asset] + list(asset.children_recursive):
+            o.hide_render = False
 
 blend = SOURCE / 'EvolutionShop_DioramaKit.blend'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice)',
+    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families)',
     'origin': {'author': 'Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)',
                'external_sources': [], 'license': 'Original project work; no third-party source or asset license',
                'paid_generation': False, 'external_uploads': False},
@@ -697,7 +991,14 @@ manifest = {
     'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'blend_source': str(blend.relative_to(REPO)).replace('\\', '/'),
     'scale': '1 unit = 1 metre', 'up': 'Unity +Y',
-    'front': {'DioramaPondlet': 'local -Z (creature)', 'DioramaCasualVisitor': 'local +Z (character)'},
+    'front': {**{asset: 'local -Z (creature)' for _, asset, _, _ in SPECIES}, 'DioramaCasualVisitor': 'local +Z (character)'},
+    'families': FAMILIES,
+    'species': [{'id': sid, 'asset': asset, 'family': family, 'atlas_rows': [k * len(VARIANT_NAMES), k * len(VARIANT_NAMES) + len(VARIANT_NAMES) - 1],
+                 'variants': {v: dict(zip(SLOTS, codes)) for v, codes in variants.items()}}
+                for k, (sid, asset, family, variants) in enumerate(SPECIES)],
+    'rig': {'pivots': ['Left fin pivot', 'Right fin pivot', 'Tail pivot', 'Crest pivot'], 'family_pivots': {'Sparkline': ['Lantern pivot']},
+            'face': {'Body': ['Puffed'], 'Lids': ['Blink', 'Happy'], 'Lips': ['Happy', 'Surprised']},
+            'parts': ['Body', 'Eyes', 'Pupils', 'Glints', 'Lids', 'Blush', 'Lips']},
     'export_settings': {'format': 'FBX', 'forward': '-Z', 'up': 'Y', 'global_scale': 1, 'bake_space_transform': True,
                         'animations': False, 'shape_keys': True, 'modifiers': 'none (shape keys require unmodified meshes)',
                         'axis_mapping': 'Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly',
@@ -710,9 +1011,15 @@ manifest = {
                  'cell_px': CELL, 'columns': COLS, 'rows_top_to_bottom': SHEET_ROWS,
                  'sha256': hashlib.sha256(sheet_path.read_bytes()).hexdigest(),
                  'drawing': 'White fills and dark ink outline drawn from wobbled signed-distance shapes, 3x supersampled; particles tint the fill.'},
+    'variant_atlas': {'export': str(atlas_path.relative_to(REPO)).replace('\\', '/'), 'size': [atlas_w, atlas_h],
+                      'columns': SLOTS, 'variants': VARIANT_NAMES, 'species_capacity': ATLAS_SPECIES_CAPACITY,
+                      'row': 'species index * 4 + variant index, counted from the top', 'colour_space': 'sRGB',
+                      'sheen': "the Sheen column is Shimmer's iridescent rim; its alpha is the strength (0 for the other variants)",
+                      'sha256': hashlib.sha256(atlas_path.read_bytes()).hexdigest(),
+                      'review_swatches': str(swatch_path.relative_to(REPO)).replace('\\', '/')},
     'renders': renders,
     'validation_limits': ['Workbench review renders show shape and colour only, not the in-game toon shading, outline or bloom.',
-                          'In-game scale, fit inside containers and posing are verified by the AD-A route, not here.'],
+                          'In-game scale, fit inside containers and posing are verified by the AD-A and AD-B routes, not here.'],
 }
 (SOURCE / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 print('DIORAMA_KIT_COMPLETE ' + json.dumps([{'id': r['id'], 'triangles': r['triangles'], 'size': r['bounds_unity_m']['size']} for r in RECORDS]))

@@ -11,6 +11,11 @@ namespace EvolutionShop
         CreatureVisual studyFish;
         ShopCharacterVisual studyCustomer, studyEmployee;
         int sampleView;
+        // AD-B: the creature study shows any species and variant once the diorama look is on, and plays its trick.
+        string studySpecies = "pondlet";
+        DioramaVariant studyVariant;
+        bool studyBuiltDiorama;
+        float studyTrickAge = -1, studyLastTime;
 
         Material SampleMaterial(string name, Color color)
         {
@@ -93,9 +98,7 @@ namespace EvolutionShop
             var oak=SampleMaterial("study platform",new Color(.65f,.41f,.20f));
             Shape(sampleStage,"Study plinth",PrimitiveType.Cylinder,new Vector3(0,.06f,0),new Vector3(1.56f,.06f,1.56f),oak);
             sampleFigure=Group("Turntable",sampleStage,new Vector3(0,.12f,0));
-            pondletStudy=Group("Pondlet study (not inventory)",sampleFigure,new Vector3(0,1.04f,0));
-            studyFish=pondletStudy.gameObject.AddComponent<CreatureVisual>();studyFish.Build("pondlet");
-            pondletStudy.localScale=Vector3.one*1.5f;
+            RebuildStudyCreature();
             fishPedestal=Shape(sampleFigure,"Specimen study pedestal",PrimitiveType.Cylinder,new Vector3(0,.20f,0),new Vector3(.80f,.20f,.80f),dark);
             customerStudy=Group("Casual customer study",sampleFigure,Vector3.zero);
             customerStudy.localRotation=Quaternion.Euler(0,180,0);
@@ -105,9 +108,52 @@ namespace EvolutionShop
             studyEmployee=employeeStudy.gameObject.AddComponent<ShopCharacterVisual>();studyEmployee.Build(true);
             sampleStage.gameObject.SetActive(false);
         }
+        void RebuildStudyCreature()
+        {
+            if(pondletStudy) {pondletStudy.gameObject.SetActive(false);Destroy(pondletStudy.gameObject);}
+            pondletStudy=Group((studySpecies=="pondlet"?"Pondlet":"Creature")+" study (not inventory)",sampleFigure,new Vector3(0,1.04f,0));
+            studyFish=pondletStudy.gameObject.AddComponent<CreatureVisual>();studyFish.Build(studySpecies);
+            studyBuiltDiorama=studyFish.IsDiorama;
+            float scale=1.5f;
+            if(studyFish.IsDiorama)
+            {
+                // Every kit species fits the plinth: the longest side about as long as the Pondlet's.
+                var bounds=new Bounds(pondletStudy.position,Vector3.zero);
+                foreach(var renderer in pondletStudy.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(renderer.bounds);
+                float longest=Mathf.Max(bounds.size.x,Mathf.Max(bounds.size.y,bounds.size.z));
+                if(longest>.01f) scale=Mathf.Clamp(1.5f*.97f/longest,.8f,1.5f);
+                studyFish.SetDioramaVariant(studyVariant);
+            }
+            pondletStudy.localScale=Vector3.one*scale;
+            studyTrickAge=-1;
+        }
+        /// <summary>AD-B: the creature study's species and variant (the variant shows only on kit creatures, with the look on).</summary>
+        public void SetStudyCreature(string species,DioramaVariant variant)
+        {
+            if(string.IsNullOrEmpty(species)) return;
+            BuildSampleStage();
+            bool rebuild=species!=studySpecies || studyBuiltDiorama!=DioramaLook.Active || !studyFish;
+            studySpecies=species;studyVariant=variant;
+            if(rebuild){RebuildStudyCreature();pondletStudy.gameObject.SetActive(sampleStage.gameObject.activeSelf && sampleView==2);}
+            else if(studyFish.IsDiorama) studyFish.SetDioramaVariant(variant);
+        }
+        /// <summary>AD-B: play the study creature's signature trick (kit creatures, with the look on and motion playing).</summary>
+        public bool PlayStudyTrick()
+        {
+            if(!studyFish || !studyFish.IsDiorama || fxReducedMotion || sampleView!=2) return false;
+            studyTrickAge=0;
+            if(studySpecies=="pondlet" && dioramaCamera) DioramaTrickBubble(studyFish,dioramaCamera.transform.position);
+            return true;
+        }
+        public string StudySpeciesForValidation => studySpecies;
+        public CreatureVisual StudyCreatureForValidation => studyFish;
+        public float StudyTrickAgeForValidation => studyTrickAge;
+
         public void ShowPresentationSample(int index,Camera camera)
         {
             BuildSampleStage();sampleView=Mathf.Clamp(index,0,4);
+            // The creature study follows the look: the kit creature while it is on, the classic Pondlet while it is off.
+            if(sampleView==2 && studyBuiltDiorama!=DioramaLook.Active) SetStudyCreature(DioramaLook.Active?studySpecies:"pondlet",studyVariant);
             sampleStage.gameObject.SetActive(sampleView>=2);
             pondletStudy.gameObject.SetActive(sampleView==2);fishPedestal.gameObject.SetActive(sampleView==2);
             customerStudy.gameObject.SetActive(sampleView==3);employeeStudy.gameObject.SetActive(sampleView==4);
@@ -125,9 +171,30 @@ namespace EvolutionShop
             if(!sampleStage || !sampleStage.gameObject.activeSelf) return;
             if(fxReducedMotion) time=0;
             sampleFigure.localRotation=Quaternion.Euler(0,angle,0);
-            if(sampleView==2) studyFish.Animate(time);
+            if(sampleView==2) AnimateStudyCreature(time);
             else if(sampleView==3) studyCustomer.Pose(pose,time);
             else if(sampleView==4) studyEmployee.Pose(pose,time);
+        }
+        void AnimateStudyCreature(float time)
+        {
+            float dt=Mathf.Clamp(time-studyLastTime,0,.25f);studyLastTime=time;
+            if(!studyFish.IsDiorama){studyFish.Animate(time);return;}
+            // The kit creature's idle habit, and its trick when asked (both still in Reduced motion, where time stays 0).
+            float before=studyTrickAge;
+            float duration=studySpecies=="pondlet"?.6f:DioramaTricks.Duration(studySpecies);
+            if(studyTrickAge>=0){studyTrickAge+=dt;if(studyTrickAge>=duration) studyTrickAge=-1;}
+            bool tricking=studyTrickAge>=0 && !fxReducedMotion;
+            var idle=fxReducedMotion?default:DioramaTricks.Idle(studySpecies,time,0,time-dt);
+            var trick=tricking && studySpecies!="pondlet"?DioramaTricks.Trick(studySpecies,studyTrickAge,before):default;
+            if(tricking && studySpecies=="pondlet"){trick.Happy=.75f;trick.Puffed=.3f;}
+            studyFish.SetDioramaFace(tricking?Mathf.Max(.2f,trick.Happy):.2f,Mathf.Max(idle.Surprised,trick.Surprised),Mathf.Max(idle.Puffed,trick.Puffed));
+            studyFish.SetDioramaAction(idle.Glow+trick.Glow,idle.Tail+trick.Tail,idle.Fins+trick.Fins);
+            if(dioramaCamera) studyFish.SetLookTarget(dioramaCamera.transform.position);
+            pondletStudy.localPosition=new Vector3(0,1.04f+(idle.Lift+trick.Lift)*2,0);
+            pondletStudy.localRotation=Quaternion.Euler(idle.Pitch+trick.Pitch,idle.Yaw+trick.Yaw,idle.Roll+trick.Roll);
+            studyFish.Animate(time);
+            if(!fxReducedMotion && studySpecies!="pondlet" && (trick.Release || idle.Release) && dioramaCamera)
+                DioramaCreatureBurst(studyFish,trick.Release,dioramaCamera.transform.position);
         }
         public void HidePresentationSample(){if(sampleStage) sampleStage.gameObject.SetActive(false);}
         void DisposeSamplePresentation(){foreach(var material in sampleMaterials) if(material) Destroy(material);}

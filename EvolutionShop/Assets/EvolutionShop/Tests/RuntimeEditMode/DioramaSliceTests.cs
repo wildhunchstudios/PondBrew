@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -189,7 +190,9 @@ namespace EvolutionShop.Tests
             // left is -X, and every part is a direct child of the root with no rest rotation.
             var pondlet = Resources.Load<GameObject>(DioramaLook.KitPath + "DioramaPondlet").transform;
             var visitor = Resources.Load<GameObject>(DioramaLook.KitPath + "DioramaCasualVisitor").transform;
-            foreach (var root in new[] { pondlet, visitor })
+            var kits = new List<Transform> { visitor };
+            foreach (var spec in DioramaSpecies.All) kits.Add(Resources.Load<GameObject>(DioramaLook.KitPath + spec.Kit).transform);
+            foreach (var root in kits)
             {
                 Assert.That(Quaternion.Angle(root.localRotation, Quaternion.identity), Is.LessThan(.01f), root.name);
                 Assert.That(Vector3.Distance(root.localScale, Vector3.one), Is.LessThan(.001f), root.name);
@@ -226,7 +229,7 @@ namespace EvolutionShop.Tests
 
         [Test] public void EveryKitSlotHasAPaletteColour()
         {
-            foreach (var asset in new[] { "DioramaPondlet", "DioramaCasualVisitor" })
+            foreach (var asset in new[] { "DioramaPondlet", "DioramaBubblebelly", "DioramaRibbonfin", "DioramaLanternfin", "DioramaDriftwing", "DioramaCasualVisitor" })
             {
                 var root = new GameObject("kit test").transform;
                 var owned = new System.Collections.Generic.List<Material>();
@@ -268,8 +271,9 @@ namespace EvolutionShop.Tests
                 kit.AnimatePondlet(1, .5f, false);
                 Assert.That(kit.DioramaWeightForValidation("Blink"), Is.EqualTo(100).Within(.01f));
                 Assert.That(kit.DioramaWeightForValidation("Happy"), Is.EqualTo(100).Within(.01f));
+                // AD-B redesigned the other four species too; DioramaCreatureTests covers them.
                 var other = new GameObject("bubblebelly").AddComponent<CreatureVisual>(); other.Build("bubblebelly");
-                Assert.That(other.IsDiorama, Is.False, "Only the Pondlet is redesigned in AD-A");
+                Assert.That(other.IsDiorama && other.DioramaSpecies.Id == "bubblebelly", Is.True, "Every species has its kit model since AD-B");
                 UnityEngine.Object.DestroyImmediate(other.gameObject);
                 DioramaLook.Active = false;
                 var classic = new GameObject("classic").AddComponent<CreatureVisual>(); classic.Build("pondlet");
@@ -311,7 +315,8 @@ namespace EvolutionShop.Tests
             Assert.That(manifest, Does.Contain("\"paid_generation\": false"));
             Assert.That(manifest, Does.Contain("\"external_sources\": []"));
             using (var sha = SHA256.Create())
-                foreach (var file in new[] { "DioramaPondlet.fbx", "DioramaCasualVisitor.fbx", "DioramaFlipbook.png" })
+                foreach (var file in new[] { "DioramaPondlet.fbx", "DioramaBubblebelly.fbx", "DioramaRibbonfin.fbx", "DioramaLanternfin.fbx",
+                    "DioramaDriftwing.fbx", "DioramaCasualVisitor.fbx", "DioramaFlipbook.png", "DioramaVariantAtlas.png" })
                 {
                     var bytes = File.ReadAllBytes(Path.Combine(Application.dataPath, "EvolutionShop", "Resources", "Art", "DioramaKit", file));
                     string hash = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();

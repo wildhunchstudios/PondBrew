@@ -16,14 +16,15 @@ namespace EvolutionShop
         public const string RootName = "es-study", TopName = "es-study-top", EyebrowName = "es-study-eyebrow", TitleName = "es-study-title",
             BottomName = "es-study-bottom", NoteName = "es-study-note", HintName = "es-study-hint", ControlsName = "es-study-controls",
             RotateName = "es-study-rotate", MotionName = "es-study-motion", BeatsName = "es-study-beats", SkipName = "es-study-skip",
-            PreviousName = "es-study-previous", NextName = "es-study-next", BackName = "es-study-back";
+            PreviousName = "es-study-previous", NextName = "es-study-next", BackName = "es-study-back",
+            CreaturesName = "es-study-creatures", SpeciesName = "es-study-species", VariantName = "es-study-variant", TrickName = "es-study-trick";
         public static string PoseName(CharacterSamplePose pose) => "es-study-pose-" + pose.ToString().ToLowerInvariant();
         public static string BeatName(ComedyKind kind) => "es-study-beat-" + kind.ToString().ToLowerInvariant();
 
         Label eyebrow, title, note, hint;
-        VisualElement controls, rotateRow, poses, beats;
+        VisualElement controls, rotateRow, poses, beats, creatures;
         Slider rotate;
-        Button motion, skip, previous, next;
+        Button motion, skip, previous, next, species, variant, trick;
 
         /// <summary>True while the comedy preview, rather than the presentation sample, is shown.</summary>
         public bool ShowsComedy { get; private set; }
@@ -56,6 +57,13 @@ namespace EvolutionShop
                 NewButton(poses, PoseName(pose), "es-button--secondary es-screen-study__button", () => Shop.SetPresentationPose(which)).text =
                     Strings.Get("study.pose." + pose);
             }
+            // AD-B: with the diorama look on, the creature study shows every species, its colour variants and its trick.
+            creatures = Box(bottom, "es-screen-study__row", CreaturesName);
+            species = NewButton(creatures, SpeciesName, "es-button--secondary es-screen-study__button", () => Shop.SelectPresentationSpecies(Shop.PresentationSpecies + 1));
+            species.text = Strings.Get("study.species");
+            variant = NewButton(creatures, VariantName, "es-button--secondary es-screen-study__button", () => Shop.SelectPresentationVariant((int)Shop.PresentationVariant + 1));
+            trick = NewButton(creatures, TrickName, "es-button--secondary es-screen-study__button", () => Shop.PlayPresentationTrick());
+            trick.text = Strings.Get("study.trick");
             beats = Box(bottom, "es-screen-study__beats", BeatsName);
             foreach (ComedyKind kind in Enum.GetValues(typeof(ComedyKind)))
             {
@@ -92,9 +100,14 @@ namespace EvolutionShop
             bool comedy = ShowsComedy;
             int view = Mathf.Clamp(Shop.PresentationView, 0, ShopSession.PresentationViews - 1);
             SetText(eyebrow, comedy ? Strings.Get("study.comedy.eyebrow") : Strings.Format("study.eyebrow", view + 1, ShopSession.PresentationViews));
-            SetText(title, comedy ? Strings.Get("study.comedy." + Shop.ComedyPreviewKind) : Strings.Get("study.title." + view));
+            bool kit = Shop.PresentationCreatures;
+            string variantName = Strings.Get("study.variant." + Shop.PresentationVariant);
+            SetText(title, comedy ? Strings.Get("study.comedy." + Shop.ComedyPreviewKind) :
+                kit ? Strings.Format("study.creature.title", Strings.Get("study.species." + Shop.PresentationSpeciesId), variantName) :
+                Strings.Get("study.title." + view));
             var preview = Shop.PreviewComedy;
-            SetText(note, comedy ? (preview != null && preview.Active ? preview.Caption : Strings.Get("study.comedy.pick")) : Strings.Get("study.note." + view));
+            SetText(note, comedy ? (preview != null && preview.Active ? preview.Caption : Strings.Get("study.comedy.pick")) :
+                kit ? Strings.Get("study.creature.note." + Shop.PresentationSpeciesId) : Strings.Get("study.note." + view));
             SetText(hint, comedy ? Strings.Get("study.comedy.note") : view >= 2 ? "" : Strings.Get("study.lookOnly"));
             SetShown(hint, !string.IsNullOrEmpty(hint.text));
             // The turntable, motion and poses only exist for the living studies (Pondlet on; poses from the customer on).
@@ -107,6 +120,8 @@ namespace EvolutionShop
                 foreach (CharacterSamplePose pose in Enum.GetValues(typeof(CharacterSamplePose)))
                     poses.Q<Button>(PoseName(pose))?.EnableInClassList("es-screen-study__button--on", Shop.PresentationPose == pose);
             }
+            SetShown(creatures, kit);
+            if (kit) SetText(variant, Strings.Format("study.variant", variantName));
             SetShown(beats, comedy);
             SetShown(previous, !comedy);
             SetShown(next, !comedy);

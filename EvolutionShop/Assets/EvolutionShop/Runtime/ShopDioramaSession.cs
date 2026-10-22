@@ -15,7 +15,7 @@ namespace EvolutionShop
         void InitializeDiorama()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            bool asked = Arg("-evolutionDiorama") != null || Arg("-evolutionDioramaSliceSmoke") != null;
+            bool asked = Arg("-evolutionDiorama") != null || Arg("-evolutionDioramaSliceSmoke") != null || Arg("-evolutionDioramaCreaturesSmoke") != null;
             bool refused = Arg("-evolutionDioramaOff") != null;
             if (!refused && (asked || !ValidationMode)) SetDioramaLook(true);
 #endif

@@ -7,6 +7,26 @@ namespace EvolutionShop
         public int PresentationView { get; private set; }
         public CharacterSamplePose PresentationPose { get; private set; }
         public bool PresentationMotion { get; private set; }=true;
+        /// <summary>AD-B: the creature study's species (index in DioramaSpecies.All) and colour variant, with the diorama look on.</summary>
+        public int PresentationSpecies { get; private set; }
+        public DioramaVariant PresentationVariant { get; private set; }
+        public string PresentationSpeciesId => DioramaSpecies.All[Mathf.Clamp(PresentationSpecies,0,DioramaSpecies.All.Count-1)].Id;
+        /// <summary>Whether the creature study offers every species, its variants and its trick (the look is on, the creature shown).</summary>
+        public bool PresentationCreatures => Panel==ShopPanel.Presentation && !ComedyPreview && PresentationView==2 && DioramaLookOn;
+        void ApplyPresentationCreature() => World.SetStudyCreature(DioramaLookOn?PresentationSpeciesId:"pondlet",PresentationVariant);
+        public void SelectPresentationSpecies(int index)
+        {
+            if(!PresentationCreatures) return;
+            int count=DioramaSpecies.All.Count;PresentationSpecies=((index%count)+count)%count;sampleClock=0;
+            ApplyPresentationCreature();
+        }
+        public void SelectPresentationVariant(int index)
+        {
+            if(!PresentationCreatures) return;
+            PresentationVariant=(DioramaVariant)(((index%4)+4)%4);
+            ApplyPresentationCreature();
+        }
+        public bool PlayPresentationTrick() => PresentationCreatures && World.PlayStudyTrick();
         /// <summary>The studies the viewer shows (store corner, grower, Pondlet, customer, employee); their words are the UI's (study.*).</summary>
         public const int PresentationViews = 5;
         Vector3 sampleCameraPosition;
@@ -23,6 +43,7 @@ namespace EvolutionShop
             sampleToolVisible=World.ToolRoot.gameObject.activeSelf;
             World.ToolRoot.gameObject.SetActive(false);
             PresentationView=0;PresentationPose=CharacterSamplePose.Idle;PresentationMotion=true;sampleClock=0;sampleAngle=0;
+            PresentationSpecies=0;PresentationVariant=DioramaVariant.Classic;ApplyPresentationCreature();
             World.ShowPresentationSample(0,Player.View);
         }
         void EndPresentationView()
@@ -38,6 +59,7 @@ namespace EvolutionShop
         {
             if(Panel!=ShopPanel.Presentation) return;
             PresentationView=Mathf.Clamp(index,0,4);sampleAngle=0;sampleClock=0;
+            if(PresentationView==2) ApplyPresentationCreature();
             World.ShowPresentationSample(PresentationView,Player.View);
             World.AnimatePresentationSample(PresentationPose,sampleClock,sampleAngle);
         }

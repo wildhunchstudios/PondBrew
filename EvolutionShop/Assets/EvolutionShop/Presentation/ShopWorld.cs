@@ -56,8 +56,13 @@ namespace EvolutionShop
             public float PondletPlacedAge = -1, PondletGlanceAge = -1;
             public uint PondletSequence;
             public bool Incubator;
-            /// <summary>AD-A: the two fixed display tanks show the kit Pondlet larger; other containers keep its classic size.</summary>
+            /// <summary>AD-A: the two fixed display tanks show the kit creatures larger; other containers keep their classic size.</summary>
             public bool DioramaLarge;
+            /// <summary>AD-B: a kit species' signature trick (seconds into it, -1 when none) and its rest before the next.</summary>
+            public float DioramaTrickAge = -1, DioramaTrickCooldown;
+            /// <summary>AD-B: the family water tint shown while the look is on, easing toward the resident's family.</summary>
+            public Color DioramaWater;
+            public bool DioramaWaterSet;
             public TextMesh Status;
             public TextMesh StorageStatus;
             public HashSet<Material> StorageMaterials;
@@ -570,7 +575,7 @@ namespace EvolutionShop
             RefreshSparkModule(model);
             var incubation = model.Incubator;
             status[StationKind.Incubator].text = incubation.Phase == IncubatorPhase.Incubating ? "GROWING  /  " + Mathf.CeilToInt((float)incubation.SecondsRemaining) + "s" : incubation.Phase == IncubatorPhase.Ready ? "READY  /  DISPLAY OR STORE" : incubation.Bloom + " BLOOM  +  " + incubation.Flow + " FLOW" + (model.SparkResearchUnlocked ? "  +  " + incubation.Spark + " SPARK" : "") + (model.MistResearchUnlocked ? "  +  " + incubation.Mist + " MIST" : "");
-            SetCreature(displays["incubator"], incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId, incubation.SpecimenId);
+            ShowResident("incubator", incubation.Phase == IncubatorPhase.Dosing ? null : incubation.SpeciesId, incubation.SpecimenId);
             RefreshHatcheryLamp(incubation.Phase);
             RefreshTank(model, "tank-a", StationKind.TankA);
             RefreshTank(model, "tank-b", StationKind.TankB);
@@ -607,9 +612,10 @@ namespace EvolutionShop
         void RefreshTank(GameModel model, string id, StationKind kind)
         {
             var tank = model.GetTank(id);
-            SetCreature(displays[id], tank.HasValue ? tank.Value.SpeciesId : null, tank.HasValue ? tank.Value.Id : null);
+            ShowResident(id, tank.HasValue ? tank.Value.SpeciesId : null, tank.HasValue ? tank.Value.Id : null);
             // The world label is the visible price tag; a reserved order keeps its agreed price instead.
-            status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() +
+            if (PreviewLabel(id, out var preview)) status[kind].text = preview;
+            else status[kind].text = !tank.HasValue ? "EMPTY  /  1 SPACE" : SpeciesName(tank.Value.SpeciesId).ToUpperInvariant() +
                 (model.GetReservation(id).HasValue ? "  /  RESERVED" : "  /  " + model.GetPrice(tank.Value.SpeciesId).Value.Price + " CREDITS");
         }
 

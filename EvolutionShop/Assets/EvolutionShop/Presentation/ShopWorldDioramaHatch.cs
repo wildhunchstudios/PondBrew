@@ -167,7 +167,8 @@ namespace EvolutionShop
                 dioramaHatchLight.intensity = glow * (fxReducedMotion ? 1.2f : 3.6f);
             }
             if (dioramaDome) dioramaDome.SetColor("_EmissionColor", new Color(.2f, .55f, .5f) * (glow * (fxReducedMotion ? .35f : .7f)));
-            if (dioramaIncubatorFluid) dioramaIncubatorFluid.SetColor("_EmissionColor", new Color(.04f, .2f, .22f) + new Color(.25f, .75f, .6f) * (glow * 1.1f));
+            dioramaFluidHatchGlow = new Color(.25f, .75f, .6f) * (glow * 1.1f);
+            if (dioramaIncubatorFluid) dioramaIncubatorFluid.SetColor("_EmissionColor", dioramaFluidGlow + dioramaFluidHatchGlow);
             if (dioramaDomeTransform)
             {
                 float squash = hatching ? pose.Squash : 0;
@@ -217,7 +218,8 @@ namespace EvolutionShop
             if (dioramaDomeTransform) dioramaDomeTransform.localScale = dioramaDomeRest;
             if (dioramaFrameVisual) dioramaFrameVisual.localPosition = dioramaFrameRest;
             if (dioramaDome) dioramaDome.SetColor("_EmissionColor", Color.black);
-            if (dioramaIncubatorFluid) dioramaIncubatorFluid.SetColor("_EmissionColor", new Color(.04f, .2f, .22f));
+            dioramaFluidHatchGlow = Color.black;
+            if (dioramaIncubatorFluid) dioramaIncubatorFluid.SetColor("_EmissionColor", dioramaFluidGlow);
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

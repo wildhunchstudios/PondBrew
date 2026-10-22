@@ -45,6 +45,15 @@ namespace EvolutionShop.Editor
             importer.filterMode = FilterMode.Bilinear;
             importer.mipmapEnabled = true;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
+            if (assetPath.EndsWith("/DioramaVariantAtlas.png"))
+            {
+                // AD-B: the colour variant atlas is data, one texel per slot: read by the game on the CPU, exactly as authored.
+                importer.sRGBTexture = false;
+                importer.isReadable = true;
+                importer.mipmapEnabled = false;
+                importer.filterMode = FilterMode.Point;
+                importer.alphaIsTransparency = false;
+            }
         }
     }
 }

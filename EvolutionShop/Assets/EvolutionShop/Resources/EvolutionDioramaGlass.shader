@@ -12,6 +12,7 @@ Shader "EvolutionShop/Diorama Glass"
         [HDR]_EmissionColor("Glow", Color) = (0,0,0,1)
         _WobbleAmount("Surface wobble (m)", Range(0,0.05)) = 0
         _WobbleTop("Surface starts at local y", Float) = 0.45
+        _FarSide("Far side opacity (times the tint's)", Float) = 1
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("Cull", Float) = 0
     }
     SubShader
@@ -32,7 +33,7 @@ Shader "EvolutionShop/Diorama Glass"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor, _RimColor, _EmissionColor;
-                half _RimStrength, _GlossStrength, _WobbleAmount, _WobbleTop, _Cull;
+                half _RimStrength, _GlossStrength, _WobbleAmount, _WobbleTop, _FarSide, _Cull;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; half3 normalWS : TEXCOORD1; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -69,7 +70,8 @@ Shader "EvolutionShop/Diorama Glass"
                 // container up without veiling what swims in it.
                 half3 glow = _EmissionColor.rgb * lerp(1, .3, front);
                 color += half3(1, 1, 1) * glint + glow;
-                half alpha = saturate(_BaseColor.a + fresnel * _RimStrength + glint * .8 + max(glow.r, max(glow.g, glow.b)) * lerp(.15, .04, front));
+                // Water can carry its tint on the far side (behind what swims in it) more strongly than on the near side.
+                half alpha = saturate(_BaseColor.a * lerp(_FarSide, 1, front) + fresnel * _RimStrength + glint * .8 + max(glow.r, max(glow.g, glow.b)) * lerp(.15, .04, front));
                 return half4(color, alpha);
             }
             ENDHLSL
