@@ -1,3 +1,5 @@
+**GR (grow-from-nothing redesign) specified — 2026-10-23; next: GR-01.** The user described seven long-standing problems (creatures too big with one per tank, automation and helpers too easy and too early, only two cultures, too few creatures and no feel of discovery, corridor-like rooms, stations that start maxed) and accepted all twenty recommendations based on market research (*A Game About Digging a Hole*, leaf and needle games, *TCG Card Shop Simulator*, *Megaquarium*, *Fish Tycoon*, *Palworld*, *Little Alchemy*). **GR.1–GR.18 at the end of this file** is now the authoritative design for the core loop: five eras from a back room to the Grand Exhibition; tanks measured in spaces (4 to start) with small, medium and large creatures; seven cultures; never-fail mixing for founders and Palworld-style breeding for hybrids (about 36 species, 144 entries); automation built up through power and pipes (T0–T4); helpers earned by stars plus an achievement; every station with 3–5 levels; a real square shop and back-room lab that grow by opening walls. It replaces AD-F and absorbs AD-E. Next: **GR-01** (roster, tables and a pacing simulator, reviewed by the user), then the GR-02 greybox and its playtest. AD-E's playtest and AD-D's look are still open and feed GR-02.
+
 **AD-E technically complete — 2026-10-23; its gate is the user's playtest.** The user asked to go on ("Continue", 2026-10-22) without a verdict on AD-D's rooms and effects, which stays open. AD-E prototypes AD.6's gameplay changes with placeholder art behind a development-only switch (on when a development build is played, **F9** to switch; off in every validation route unless asked; never in release builds; paused during the guided opening): **shop stars** (a 1–5 star sign over the reputation rules, each star unlocking a visitor type, bigger budgets or the named Exhibition), **wishes** (a bubble over every visitor; an exact match tips 25% and earns a reputation point, a close one haggles 15% off), the **hands-on checkout** (hold the left mouse on the counter for a second; Serve replaced, Pip unchanged), **tank themes** (decor within 3 m themes a display; matching creatures sell for more and draw a visitor type), a **5:30 day with one rush** (measured into `prototype-days.jsonl`) and **tomorrow's forecast** on the night receipt. Switched off, the game is exactly the classic one; no save format change. Revision `ade-proto-1`. Actual **2,463 passed EditMode tests** and **42,562 final Windows checks** in 69 route steps in one numbered run; build 0 errors / 0 warnings. Next: **the user playtests the prototype** (`Docs/Evidence/ad-e/PLAY.md`) and decides what to keep, change or drop; AD-D's in-game look is also still open. Evidence `Docs/Evidence/ade-VALIDATION.md`; local tag `ade-prototype-validated`.
 
 **AD-C technically complete — 2026-10-22; the user's look at the characters comes before AD-D.** The user approved the creatures (AD-B) in game on 2026-10-22 ("check it good continue with the next AD"). Every person in the shop is now redone in the Pocket Aquarium Diorama look on one humanoid rig (about 2.5 heads tall, mitten hands with a thumb, the AD-A face): the four customer types with AD.4's body types (the round Casual visitor, the tall, thin Bargain hunter, the pear-shaped Collector, the Big spender in a wide coat), never in teal, and the three crew always in shop teal (Pip on a step stool behind the counter, Nori with a carry crate, Moss in a lab coat), four reactions each (customers haggle, are pleased, shocked and slapped, each its own way; the crew concentrate, are pleased, are caught out and greet). The crew rebuild in place when the look switches; the character studies (Pause → Presentation sample, studies 4 and 5) show every character and reaction with Next type / Next crew and Reaction. Still the development preview (F10), never in release builds; gameplay, rules and saves unchanged. Revision `adc-characters-1`. Actual **2,447 passed EditMode tests** and **41,283 final Windows checks** in 65 route steps in one numbered run; build 0 errors / 0 warnings. Next: **the user looks at the characters in game** (`Docs/Evidence/ad-c/PLAY.md`), then AD-D (rooms and effects rollout). Evidence `Docs/Evidence/ad-c-VALIDATION.md`; local tag `adc-characters-validated`.
@@ -174,11 +176,11 @@ This ties together discovery, store quality, service, staffing, and automation. 
 Provisional implementation contract:
 
 - The objective board shows progress from the first few days; the ending must not appear as a surprise late requirement.
-- Unlock the event after reaching the final planned store and lab tiers, discovering 18 of the 24 species across all four families (AD.3; previously 9 of 12 across three) (including the three signature species), and completing one ordinary shift with a working automated production-to-sale route. Identify those signature targets early on the objective board.
+- Unlock the event after reaching the final planned store and lab tiers, discovering 18 of the 24 species across all four families (AD.3; previously 9 of 12 across three) (including the three signature species) [**superseded 2026-10-23 by GR.12:** 24 of 36 species across all six families and any 3 of the 6 crown species], and completing one ordinary shift with a working automated production-to-sale route. Identify those signature targets early on the objective board.
 - Prepare three designated signature species, one from each family, in protected exhibition displays. Their acquisition is deterministic through research clues and known processes; they cannot be accidentally sold by a worker.
 - Prepare for six clearly listed exhibition purchases using species already unlocked. These are preannounced ordinary customer purchases through the existing queue and checkout, not a new quest-delivery system. Targets and counts are tunable; the event introduces no new service mechanic that day.
 - Complete all six purchases while keeping the three exhibition specimens on display. Failures affect only this attempt: retain upgrades, discoveries, remaining unsold stock, and legitimately earned money; release unpaid reservations. Completed sales stay committed: never restore sold specimens while retaining their payment. Show why the attempt failed and allow another preparation night. No campaign restart or irreversible failure.
-- Completion is awarded once and survives save/load. Free play keeps the upgraded shop and lab. Completing all 96 journal entries (AD.3), optional customer requests, alternate layouts, and efficiency challenges are extra goals, not prerequisites for the main ending.
+- Completion is awarded once and survives save/load. Free play keeps the upgraded shop and lab. Completing all 96 journal entries (AD.3; 144 under GR.7), optional customer requests, alternate layouts, and efficiency challenges are extra goals, not prerequisites for the main ending.
 
 Validate this goal with a rough, shortened playable version before building all final content. If business-oriented players find it too collection-heavy, reduce the discovery requirement; if collectors find business steps excessive, shorten those gates. Preserve a clear finish rather than expanding requirements indefinitely.
 
@@ -189,17 +191,17 @@ The following numbers are **planning ceilings and tuning defaults**, not promise
 | Area | Proposed first finished release |
 |---|---|
 | Platform | Offline, single-player Windows PC, keyboard/mouse; one shop and adjoining lab |
-| Room growth | Three store tiers and three lab tiers, including the starting tier; modular extensions of the same location |
-| Discoveries | **Superseded 2026-10-19 (AD.3):** 24 species in four families with four deterministic colour variants each (96 journal entries), including the existing five; four culture types total. Earlier ceiling: 12 species in three families |
-| Production | Culture growing, incubation, and one later conditioning process; a small set of upgrades and automation modules |
-| Shop furniture | Small/large display tables or tank stands, counter, storage; approximately eight reusable décor items |
+| Room growth | Three store tiers and three lab tiers, including the starting tier; modular extensions of the same location. **Superseded 2026-10-23 (GR.11):** a square 8 × 8 m shop and back room growing by opened walls to units A–C, a lab annex and a workshop |
+| Discoveries | **Superseded 2026-10-19 (AD.3):** 24 species in four families with four deterministic colour variants each (96 journal entries), including the existing five; four culture types total. Earlier ceiling: 12 species in three families. **Superseded 2026-10-23 (GR.7):** 36 species in six families, 144 entries, seven cultures, mixing and breeding |
+| Production | Culture growing, incubation, and one later conditioning process; a small set of upgrades and automation modules. **Superseded 2026-10-23 (GR.8–GR.9):** stations with 3–5 levels, a breeding tank, and automation built through power and pipes (T0–T4) |
+| Shop furniture | Small/large display tables or tank stands, counter, storage; approximately eight reusable décor items. **Superseded 2026-10-23 (GR.5):** Starter, Large and Show tanks measured in spaces |
 | Customers | Four behavior archetypes with shared navigation/transaction systems and varied presentation |
-| Employees | Three roles: cashier, stocker, lab technician; at most one active employee per role initially |
+| Employees | Three roles: cashier, stocker, lab technician; at most one active employee per role initially. **GR.10 (2026-10-23):** each earned by stars plus an achievement, with levels and training |
 | Humor | Six short reusable incident types with cooldowns and reaction variants |
 | Campaign | One progression path and one Grand Exhibition ending; optional continuation afterward |
 | Content standard | One approved visual/audio sample before bulk production; readable, coherent assets rather than many rough variants |
 
-Out of scope unless the user expands the contract: multiplayer, combat/dungeons, another explorable town, several shops, land-animal systems, realistic water chemistry, creature death/feeding chores, complex genetics, breeding pedigrees, random shiny hunting, conveyor physics, loans/debt simulation, offline income, real-time waiting, subscriptions, cloud accounts, and paid acceleration. Decorations and lab machines must use the same small placement system rather than separate editors.
+Out of scope unless the user expands the contract: multiplayer, combat/dungeons, another explorable town, several shops, land-animal systems, realistic water chemistry, creature death/feeding chores, complex genetics, breeding pedigrees, random shiny hunting, conveyor physics (GR, 2026-10-23: two-parent breeding with deterministic results and logical pipes without fluid physics are in scope; pedigrees, genetics simulation and physics stay out), loans/debt simulation, offline income, real-time waiting, subscriptions, cloud accounts, and paid acceleration. Decorations and lab machines must use the same small placement system rather than separate editors.
 
 ## 6. System specifications and design rules
 
@@ -207,7 +209,7 @@ Out of scope unless the user expands the contract: multiplayer, combat/dungeons,
 
 - Begin a new game with a guided preparation night. Use the existing simple recipe to prepare the first shop stock, then let the player open the store.
 - Model explicit phases: **Night preparation → Open day → Closing → Night preparation**. Store day index, phase, clock, transition state, and any once-per-day payments/rewards. Transition commands must be safe under rapid input and reload.
-- Start testing with an 8-minute trading day and an untimed preparation night. Allow the player to finish preparation when ready. These are hypotheses; measure workload and waiting before choosing final timings.
+- *(GR, 2026-10-23: 5:30 days from AD-E pending its measured playtest; GR.3.)* Start testing with an 8-minute trading day and an untimed preparation night. Allow the player to finish preparation when ready. These are hypotheses; measure workload and waiting before choosing final timings.
 - The simulation advances during active gameplay and ordinary station panels. Pause/settings stop it. Closed application time does not advance it. Night is a production/planning space, not mandatory idle waiting.
 - Growers and incubation run during both active phases. Daytime lab access is allowed: the cost is attention to customers. Staff later make that tradeoff easier. Do not arbitrarily lock the lab door.
 - Closing stops new arrivals. Complete existing accepted transactions or cancel them safely after a clearly signaled grace period; release reservations and never pay for an unfinished sale. No customer pathfinding error may prevent the next night forever.
@@ -246,7 +248,7 @@ Out of scope unless the user expands the contract: multiplayer, combat/dungeons,
 
 ### 6.5 Research and laboratory growth
 
-- Preserve the proven exact-integer recipe model and convenient known-recipe selection. First discoveries should give a visible new silhouette/behavior, a journal entry, and a useful production or market choice.
+- *(Superseded 2026-10-23 by GR.7: never-fail mixing resolves any mix to the nearest founder, and breeding makes hybrids; known-recipe selection stays.)* Preserve the proven exact-integer recipe model and convenient known-recipe selection. First discoveries should give a visible new silhouette/behavior, a journal entry, and a useful production or market choice.
 - Add culture types and one new processing method gradually. Use purchasable research/facility unlocks and journal clues so experimentation is directed. No required discovery depends on an unbounded random roll.
 - Higher recipes may require a processing stage as well as culture amounts. Keep the UI clear about ingredients, facility, time, destination, and expected result for known recipes. Do not turn this into a genetic simulation.
 - Separate unique specimen identity from species definition. Model stock locations such as incubator output, lab storage, display, customer reservation, and sold. Movement changes ownership once; presentation objects are not authoritative inventory.
@@ -255,7 +257,7 @@ Out of scope unless the user expands the contract: multiplayer, combat/dungeons,
 
 ### 6.6 Staff and automation
 
-- Automate chores only after the manual version is understandable and useful. Give the first helper one clear job before building a general assignment system.
+- *(GR.8 and GR.10, 2026-10-23: automation is built through power and pipes, and helpers are earned by stars plus an achievement.)* Automate chores only after the manual version is understandable and useful. Give the first helper one clear job before building a general assignment system.
 - Cashier: serve valid queued transactions. Stocker: move explicitly available stock to configured displays. Lab technician: perform assigned known production work. Machines provide predictable processing; staff handle interaction/transport and service.
 - Every job has a stable ID, one owner, reserved resources/destination, a state, and an understandable blocked reason. Assign priorities and allow pause/reassignment. Avoid two actors claiming the same specimen, slot, or sale.
 - On dismissal, path failure, room editing, cancellation, or load, finish or safely release ownership/reservations. Retry with a bounded policy and visible status; never silently discard a job or retry forever while consuming resources.
@@ -545,17 +547,40 @@ User-approved art, effects and gameplay redesign. Authoritative decisions, colle
 - [x] AD-C Characters: technically complete 2026-10-22 (AD.10); the user approved them in game on 2026-10-22.
 - [x] AD-D Rooms and effects rollout: technically complete 2026-10-22 (AD.11); the user asked to go on without a verdict, so their look at them in game stays open.
 - [x] AD-E Gameplay prototype (wishes, forecast, checkout, stars, tank themes, day length): technically complete 2026-10-23 (AD.12); the user's playtest is its gate.
-- [ ] AD-F Content expansion to 24 species / 96 entries within R09.
+- [ ] AD-F Content expansion to 24 species / 96 entries within R09. *Superseded 2026-10-23 by GR-12 (36 species, 144 entries; see GR.7).*
 
 Gate: the slice is approved in game before bulk art; gameplay changes are playtested before they replace current behaviour.
+
+### GR — Grow-from-nothing redesign (selected 2026-10-23)
+
+Requested by the user on 2026-10-23: a redesign of the core loop so the game starts tiny and grows toward one clear goal. The authoritative problem statement, research basis, pillars, eras, creatures and tanks, cultures, discovery (mixing and breeding), automation tiers, station levels, helpers, spaces, economy, edge cases, technical plan, risks and decisions are in **GR.1–GR.18 at the end of this file**. Runs next; replaces AD-F and folds in R09.1–R09.3. Build alongside the current game and cut over at GR-14.
+
+- [x] GR-00 Specification (documentation only, 2026-10-23).
+- [ ] GR-01 Content and pacing model: 36-species roster, culture, station, cost and gate tables, era gates, Core-only pacing simulator and report. **Gate: the user reviews the roster and the curve.** *Next.*
+- [ ] GR-02 Greybox core prototype on the new ruleset: unit A and back room, 4-space tanks with schools and peek, never-fail mixing, L1–L2 stations, stars gating. **Gate: user playtest.**
+- [ ] GR-03 Size classes, Large and Show tanks, tank levels, comfort tags, per-specimen reservations and browsing, performance budget.
+- [ ] GR-04 Seven data-driven cultures, supplier catalog, new growers, journal Cultures page.
+- [ ] GR-05 Breeding tank, breeding values, special pairs, deterministic colour, pair log, research points.
+- [ ] GR-06 Station upgrade framework and every station's levels.
+- [ ] GR-07 Power and pipes (T1–T2), buffers, auto-doser; R08 modules re-homed. **Gate: user playtest.**
+- [ ] GR-08 Hatchery line (T3) and analyzer and planner (T4).
+- [ ] GR-09 Helpers rework: gates, fees, levels and training, wages.
+- [ ] GR-10 Spaces: units A–C, back room, annex, workshop, expansion reveals, set pieces moved.
+- [ ] GR-11 Objective board, eras and gates, exhibition requirements (R09.2 folded in).
+- [ ] GR-12 Content waves (absorbs AD-F): families completed to 36 species, colours, crowns. **Gate: user look per wave.**
+- [ ] GR-13 Interface for every new system in the UX style (with GR-03–GR-11).
+- [ ] GR-14 Cut-over: GR becomes the game; classic ruleset and routes retired or rewritten; tutorial rewritten; fresh-start save policy.
+- [ ] GR-15 Full playthrough and tuning to GR.3's targets (R08.5 measurement folded in). **Gate: user playthrough.**
+
+Gate: a new player starts with one small tank and two cultures, grows the shop and lab through five eras by upgrades they can feel, discovers creatures by mixing and breeding without failing or luck, builds automation that repeats only what they know, and reaches the Grand Exhibition in about four hours; the user accepts it in a playthrough.
 
 ### R09 — Complete progression, collection, and ending
 
 Depends on: R06 tone/sample and R08 reliable loop. Output: a complete rough campaign from new game to credits/free play.
 
-- [ ] R09.1 Build a dependency graph for room tiers, research, facilities, customers, staff, and automation. Give every required unlock a reachable source of funds/resources and a clear objective.
-- [ ] R09.2 Prototype the objective board and shortened exhibition using existing species/placeholders before completing the roster. Prove eligibility, protected displays, six ordinary purchases, retry, once-only completion, and post-ending continuation; evaluate the proposed goal.
-- [ ] R09.3 After the rough ending works, complete the bounded 12-species/three-family roster and needed décor/customer variations. Validate recipes, visual distinction, animation bounds, market role, and provenance; finish the exhibition's final targets, celebration, and presentation.
+- [ ] R09.1 *(Folded into GR-01 and GR-11, 2026-10-23.)* Build a dependency graph for room tiers, research, facilities, customers, staff, and automation. Give every required unlock a reachable source of funds/resources and a clear objective.
+- [ ] R09.2 *(Folded into GR-11, 2026-10-23.)* Prototype the objective board and shortened exhibition using existing species/placeholders before completing the roster. Prove eligibility, protected displays, six ordinary purchases, retry, once-only completion, and post-ending continuation; evaluate the proposed goal.
+- [ ] R09.3 *(Superseded by GR-12, 2026-10-23: 36 species in six families.)* After the rough ending works, complete the bounded 12-species/three-family roster and needed décor/customer variations. Validate recipes, visual distinction, animation bounds, market role, and provenance; finish the exhibition's final targets, celebration, and presentation.
 - [ ] R09.4 Complete onboarding in the actual rooms and explain phase transitions, pricing, placements, staffing, automation, and the ending when each becomes relevant. The initial manual-loop opening is pulled forward into TUT; this task remains open for later contextual/campaign lessons and their integration.
 - [ ] R09.5 Play through the main path without development cheats; separately use seeded/test saves to exercise late edge cases. Test ending/retry/reload and optional collect-all completion.
 
@@ -604,6 +629,15 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
+### Current handoff — GR specified; next GR-01 (2026-10-23, Claude)
+
+**State:** After AD-E was delivered, the user raised seven long-standing problems with the game (creature size and one-per-tank, automation and helpers too easy and early, two cultures, few creatures and no discovery feel, corridor rooms, maxed stations), asked for recommendations based on market research, accepted all twenty, and asked for a detailed spec and next tasks. GR.1–GR.18 (end of this file) is that spec; the GR block in §9 lists GR-00–GR-15. §4, §5, §6.1, §6.5, §6.6, AD-F and R09.1–R09.3 are marked where GR supersedes them. Documentation only: no code, build or test changed.
+
+**Exact next action:** GR-01, the content and pacing model: the 36-species roster (family, size, founder recipe or special pair, breeding value, comfort tags, provisional names), the culture, station, cost, gate and era tables as data, and a deterministic Core-only pacing simulator with its first report against GR.3's targets; then the user reviews the roster and the curve before GR-02 (greybox). Still open with the user: the AD-E playtest (`Docs/Evidence/ad-e/PLAY.md`; its stars, wishes, themes, hands-on checkout, forecast and measured days feed GR-02) and the look at AD-D's rooms and effects. Things to know first:
+- GR is built **alongside** the current game behind a development switch with its own save line (GR.15), as AD-E was; the classic game and its validation suite stay intact until the GR-14 cut-over. Classic saves are never overwritten or migrated (user decision: fresh start).
+- Keep the rules that GR.3.1 lists as staying (customers, reservations, ledger, pricing, staff job ownership, placement validation, save safety, comfort); GR changes what the player builds and discovers, not those guarantees.
+- Every GR number is a first-pass default: GR-01's simulator sets them, playtests change them, and changes are recorded in GR.
+
 ### Current handoff — AD-E technically complete; the user's playtest is its gate (2026-10-23, Claude)
 
 **State:** The user asked to go on ("Continue", 2026-10-22) without a verdict on AD-D; AD-E, the gameplay prototype, is technically complete: validated in numbered run 1 (all 69 route steps), after two numbered scratch players, two mutation players and three EditMode mutations (record in AD.12 and `Docs/Evidence/ade-VALIDATION.md`). Delivery commit `4e2454c6`, local tag `ade-prototype-validated`; checkpoint `Docs/Evidence/ad-e/checkpoint.json`; nothing pushed. Player `Builds/Windows-6000.3.21f1-ade-proto-1`; the scratch players are deleted.
@@ -3912,7 +3946,7 @@ UX-02–UX-09 (approved UI redesign) run first. AD-A can start once UX-02 (UI To
 - [ ] AD-C Characters: one humanoid rig, four customer bodies, three crew, hands, four reactions each. *Technically complete 2026-10-22, revision `adc-characters-1` (AD.10); the user approved them in game on 2026-10-22.*
 - [ ] AD-D Rooms and effects: tier set pieces, lab pipe network, slim siphon, flipbook effects and sounds everywhere. *Technically complete 2026-10-22, revision `add-rooms-1` (AD.11); the user's look at them in game comes before AD-E.*
 - [ ] AD-E Gameplay prototype: wishes, forecast, hands-on checkout, stars, tank themes, day length test. **Gate: user playtest.** *Technically complete 2026-10-23, revision `ade-proto-1` (AD.12); the user's playtest is its gate.*
-- [ ] AD-F Content expansion: remaining species to 24 across four families and all 96 variant entries, folded into R09.3 and R09 progression gating.
+- [ ] AD-F Content expansion: remaining species to 24 across four families and all 96 variant entries, folded into R09.3 and R09 progression gating. *Superseded 2026-10-23 by GR-12.*
 
 Rules: original art only (Blender, local; no paid generation or bought assets without authorization); gameplay code stays authoritative; every phase ends in a playable build with real 1280×720 and 1920×1080 captures; performance is measured before effects spread; comfort settings scale every new moment.
 
@@ -4539,3 +4573,339 @@ The user asked to go on ("Continue", 2026-10-22) without a verdict on AD-D's roo
 | `Runtime/PrototypeSmoke.cs`, `MilestoneSmoke.cs` | The AD-E route (`-evolutionPrototypeSmoke`) |
 | `Tests/EditMode/ShopPrototypeTests.cs` | Stars, wishes, the classic visit unchanged, haggling and tips, themes, the day, wish points |
 | `Docs/Evidence/ad-e/Invoke-ADE.ps1`, `PLAY.md` (repo root) | The validation runner and the playtest guide |
+
+
+## GR — Grow-from-nothing redesign: start tiny, grow huge (2026-10-23)
+
+Requested by the user on 2026-10-23, after AD-E was delivered. The user described seven long-standing problems, asked for recommendations grounded in market research and comparable games, and accepted all twenty ("Those look great"), asking for a detailed design spec here and for its tasks to be the next ones. This section is the authoritative design for the core loop, progression, creatures, production, automation, staff and spaces. Where it conflicts with §4–§6, AD.3 or AD.6, **GR wins** (the conflicting lines elsewhere are marked). Numbers are first-pass tuning defaults, to be set by GR-01's pacing model and changed only with playtest evidence.
+
+### GR.1 — The problem, in the user's words, and what it means
+
+| # | The user (2026-10-23, condensed) | Verified in the current game | Root cause |
+|---|---|---|---|
+| 1 | Creatures are too big; they are fish, several should fit in a tank; bigger creatures should come with progress and need bigger tanks. | A fixed tank and a small display hold **one** creature each, a large display two; AD.4 made creatures about twice their old size. | No capacity axis; a tank is a single slot. |
+| 2 | Automation should feel like *A Game About Digging a Hole* / the leaf and needle games: a weak tool, a clear goal, slowly building up to "electricity" that does the work; ours is too easy with all the helpers. | Collector (36) and doser (24) modules and three helpers are available almost at once. | Automation is a purchase, not a built-up capability. |
+| 3 | Only two kinds of culture (the red and blue); the player should buy or research more. | Bloom and Flow; Spark and Mist only after research, and hard to notice. | Too few ingredients, hidden progression. |
+| 4 | The creature selection is small and feels stuck; the player doesn't know how much to put in or what combinations exist; breeding games feel endless: put any two in, get something. | 5 species; recipes are exact integer counts; a mix that matches nothing uses nothing and gives nothing. | No discovery space and no feedback when experimenting. |
+| 5 | The shop and lab feel like two small corridors, not a shop and a lab. | Store about 14 × 6 m, expanding sideways to 22 × 6 m; lab about 14 × 5 m, deepening by 4 m a tier. | Proportions and density, not just size. |
+| 6 | Helpers come too early and the game turns to slop. | Hiring is free at the counter on the first night; wages 4 credits a duty period. | No gates. |
+| 7 | Every station comes maxed out; no development; it feels empty. | Only upgrade: Siphon MK II (24 credits). | No station progression. |
+
+**Diagnosis:** the game has no growth curve. Its references (*A Game About Digging a Hole*, leaf and needle games, *TCG Card Shop Simulator*, *Fish Tycoon*) start the player weak, give one clear goal, and make every upgrade visibly change how you play. GR rebuilds the game around that spine.
+
+### GR.2 — Market research basis (2026-10-23)
+
+- **Goal-and-upgrade games are short and live or die on pacing.** *A Game About Digging a Hole* (Feb 2025) reportedly reached over 250,000 players in its first week; dig, sell, upgrade (shovel to drill, inventory, battery, jetpack); 40 minutes to about 2 hours; its main criticism is being fully upgraded "before you've made much of a dent". Leaf games upgrade both tools and storage bins (*Leafscape*). Needle games change *how* you search per tier (hay bags, pitchfork, dynamite, vacuum; a plastic stick to radar). → Every upgrade must change the verb, not only a number; capacity is its own axis; protect the curve from being outrun.
+- **Shop sims gate staff and space behind a shop level.** *TCG Card Shop Simulator*: experience from sales, workers from shop level 10 and more every 5 levels, expansions by level. *Supermarket Simulator* (per a player guide): cashiers at store levels 10/20/30/50 plus checkout counts. → Helpers and expansions are earned.
+- **Aquarium games make size a spatial puzzle.** *Megaquarium*: bigger tanks hold bigger fish, social species need groups, tank capacity planned as count × size. *Fish Tycoon*: 21 bodies × 21 fins make over 400 fish, breeding is the only way to discover them all, the goal is 7 magic fish. → Capacity in spaces, size classes, and a breeding-driven collection with a clear finish.
+- **Combination games feel endless when every pair yields something.** *Palworld*: hidden breeding values average to the nearest species, so any pair is predictable, with hand-authored special pairs. *Little Alchemy 2*: 4 elements grow to about 700 by pairs, no penalty for failure. *Potion Craft*: ingredients steer across a fogged map. *My Singing Monsters*' random chance and dead-end pairs are the model to avoid for required content.
+- **Automation feels earned when power is a milestone** (*Factorio*'s burner-to-electric, *Satisfactory*'s early hand-fuelling); players split on how long the manual phase should last → keep it satisfying and short.
+- **Competitors** (*Aquatic Store Simulator*, *Aquarist*, *Fishkeeper*, *Biotope*, upcoming breeding shop sims) are realistic fish-shop sims. **Evolution Shop's position:** invent whimsical creatures and grow from a back room to a showpiece aquarium shop; no competitor combines invention with the start-tiny curve.
+
+Sources: Steam pages, reviews and community guides found 2026-10-23 (reported in the session; secondary sources, not official data).
+
+### GR.3 — Pillars and targets
+
+1. **Start tiny, grow huge, toward one goal.** The goal is the collection (discover every creature), and the Grand Exhibition is the finish line. The shop is the money engine that funds discovery.
+2. **Every upgrade changes how you play.** An upgrade must add a verb, a capacity step the player feels, or a visual change; never an invisible percentage alone.
+3. **Hands first, machines later, discovery always yours.** The player does each chore by hand until it is understood, then builds the machine that does it. Machines and helpers only ever repeat what is known; choosing new mixes and pairs is never automated.
+4. **Readable abundance.** Tanks fill with small creatures; the shop looks alive and full.
+5. **Never fail, never luck.** Every mix and every pair makes a creature. No required entry depends on a random roll (AD.3 rule kept). No death, feeding or breakdown chores (§5 kept).
+
+| Target (first-pass, to be measured) | Value |
+|---|---|
+| First upgrade affordable | within 5 minutes |
+| Something new (creature, unlock, upgrade) | every 10–15 minutes at most |
+| First helper | no earlier than about 60 minutes |
+| First powered automation | about 1:30–2:00 |
+| Grand Exhibition available | about 3:30; main ending about 4:00 |
+| Collect-all (144 entries) | 8–12 hours |
+| Starting tank | 4 spaces |
+| Day | 5:30 (AD-E prototype) pending the AD-E playtest's measured days; night untimed |
+
+#### GR.3.1 — What stays and what goes
+
+**Stays:** the day/night rhythm (§6.1); customers, queue, one reservation per specimen, the trade ledger and fair-price rules (§6.2); prices set by the player; AD-E's stars, wishes, themes, hands-on checkout and forecast; comedy and the slap (§6.7); the AD look, characters and creature rigs (scaled); the UI Toolkit interface (UX); staff job ownership, blocked reasons and recovery (§6.6); the placement system and its validation (§6.4); save safety (§7).
+
+**Goes:** single-creature tanks and the fixed tank-a/tank-b; exact-recipe mixing that can make nothing; free hiring on the first night; stations that start maxed; the strip-shaped rooms and sideways-only expansion; automation bought as two modules.
+
+### GR.4 — The progression spine (eras)
+
+Five eras, each with a visible goal on the objective board (GR.12). Times are targets for a first-time player playing normally.
+
+| Era | Time | Stars | Spaces | New verbs and systems | Cultures | Creatures | Helpers and machines | Era goal shown |
+|---|---|---|---|---|---|---|---|---|
+| 1 Back room | 0:00–0:30 | 1 | Shop unit A (8 × 8 m), back room (6 × 5 m) | Siphon by hand, mixing in the incubator, selling at the counter by hand, first station upgrades | Bloom, Flow | Brookkin founders (small) | None | "Discover 3 creatures and buy your second tank" |
+| 2 Real shop | 0:30–1:15 | 2 | Unit B opens (shop 16 × 8 m) | Breeding tank, supplier catalog, Large tank, colour tints | + Ember (catalog) | First hybrids; Sparkline (with Spark research) | Pip (cashier) from about 1:00 | "Breed your first hybrid; reach 3 stars" |
+| 3 Plumbing | 1:15–2:15 | 3 | Lab annex (8 × 8 m) | Hand pump, pipes, generator (power), culture buffers | + Spark, Mist | Airfin, Cinderling (medium) | Nori (stocker); powered pumps | "Power the lab; fill a Large tank" |
+| 4 Machines | 2:15–3:15 | 4 | Unit C (shop 16 × 12 m), workshop | Auto-doser, incubator clutches, hatchling sorter, analyzer, Show tank | + Brine | Reefback (large) | Moss (technician); hatchery line | "Run a full day on the line; discover a large creature" |
+| 5 Exhibition | 3:15–4:00+ | 5 | Final tiers | Crown species, exhibition displays | + Dusk | Gloamer (large), crowns | Full automation of known lines | "Host the Grand Exhibition" |
+| Free play | after | 5 | — | Collect-all, all colours, optional challenges | all | all 36 species × 4 colours | — | "Journal: n / 144" |
+
+Rules: an era's systems are introduced one at a time with a short contextual hint (R09.4); nothing from a later era is purchasable early, but its locked silhouette is visible (journal, catalog, station upgrade tabs) so the player sees what is coming. Money alone never skips an era: era gates are stars plus one concrete achievement.
+
+#### GR.4.1 — The first ten minutes (beat sheet)
+
+1. 0:00 Wake in the back room: two small growers (Bloom, Flow), a small incubator, a rack, a pinboard. One goal: "Make your first creature."
+2. 0:30 Hold the siphon on a grower, dose 2 cultures, incubate (12 s). A Pondlet hatches with its NEW moment (AD-A). Carry it to the shop.
+3. 1:30 The shop: an 8 × 8 m room, a front window, one Starter tank (4 spaces) and an empty stand, a counter by the door. Put the Pondlet in the tank.
+4. 2:00 Make two more creatures; any mix gives something; one is a Bubblebelly (new), one a repeat Pondlet. The tank fills: three little fish swimming together.
+5. 3:00 Open the shop. A Casual visitor with a wish bubble buys one. Hold to bag at the counter.
+6. 5:00 First upgrade affordable: the siphon's bigger bulb (L2), or the grower's second shelf. The player chooses.
+7. 7:00 Close; the receipt shows tomorrow's visitors and the next goal: the second tank.
+8. 10:00 Second night: the journal shows Brookkin silhouettes with culture icons; the player tries a mix "close to something new" and finds the Ribbonfin.
+
+### GR.5 — Creatures, sizes and tanks
+
+**Size classes** (a species property):
+
+| Class | Spaces | World body length | Families (GR.7) |
+|---|---|---|---|
+| Small | 1 | 6–9 cm | Brookkin, Sparkline |
+| Medium | 2 | 12–18 cm | Airfin, Cinderling |
+| Large | 4 | 25–40 cm | Reefback, Gloamer |
+
+**Containers** (each a placed item; footprints on the 0.5 m grid):
+
+| Container | Spaces (by level) | Footprint | Holds | Unlock |
+|---|---|---|---|---|
+| Starter tank | 4 → 6 → 8 | 1.5 × 1 m | Small, Medium | Era 1 (two at start of play: one placed, one to buy) |
+| Large tank | 8 → 12 → 16 | 2.5 × 1 m | Small–Large | Era 2, 2★ |
+| Show tank | 16 → 24 | 3 × 1.5 m (wall or island) | All; lit, +appeal | Era 4, 4★ |
+| Breeding tank | 2 parents (1 pair) → 2 pairs | 1.5 × 1 m, lab | Any class that fits (Large needs L2) | Era 2 |
+| Lab rack | 4 → 8 → 12 spaces | 1.5 × 1 m, lab | Holding stock | Era 1 |
+
+- A container holds any mix of species while their spaces fit. Each creature is still one specimen with one owner (§6.5 kept): containers hold an ordered list of specimens, not one slot.
+- **Schools:** three or more of the same species in one container form a school: they swim together, and visitors accept 15 tolerance points more for that species there (capped, additive with themes, GR.10). Schools are the reason to keep several of one kind.
+- **Comfort tags (Era 3+, optional):** each species has a temperament (calm or lively) and a water (fresh, brine or warm, set by a tank upgrade). A container whose occupants all agree gets +appeal (a "harmony" glow); disagreement only means no bonus. Never sickness, death or a sale blocked.
+- **On-screen readability at the new scale:** looking at a container within 1.6 m eases the view into a **peek** (field of view 70° → 45° over 0.25 s; instant with Reduced motion; can be switched off). In peek, the creature under the reticle shows its name, colour and price, and can be picked (to move or to see a visitor's reservation). AD-B faces and glow carry over; small species gain a 1.3× head-to-body ratio for readability.
+- **Swimming:** each container runs a bounded flocking swim (separation, alignment within a school, wall avoidance), with each species' AD-B idle habit and signature trick kept. Creatures never leave bounds (§6.7 kept).
+- **Performance budget** (to be measured in GR-03): up to 180 creatures on screen at the final layout. Creatures beyond 6 m or out of view drop face blend shapes and use a cheaper swim; skinned meshes beyond 12 m freeze to a pose; per-container update spread across frames. Record frame times like AD-D.
+- **Moving creatures:** the hand net (GR.9 siphon line) picks one creature in peek; a container card lists occupants as space icons; "Move all of a species" for mastered stock. Staff move by species targets as Nori does today.
+
+### GR.6 — Cultures and the supplier
+
+Seven cultures (names provisional; colours follow AD.4, only cultures and creatures fully saturated):
+
+| Culture | Colour | Source | Unlock |
+|---|---|---|---|
+| Bloom | coral red | Grower (start) | Start |
+| Flow | aqua blue | Grower (start) | Start |
+| Ember | warm orange | Grower, from the supplier catalog | Era 2, 2★ |
+| Spark | gold | Research bench (research) | Era 2–3, research points |
+| Mist | opal lilac | Conditioning vat (research) | Era 3, research points |
+| Brine | sea green | Grower, from the supplier catalog | Era 4, 4★ |
+| Dusk | deep indigo | Research (analyzer) | Era 5 |
+
+- Every culture is renewable once unlocked (§6.3 starter rule kept: Bloom and Flow are always free).
+- The journal's **Cultures page** shows all seven from the start: owned ones with their source and level, locked ones as silhouettes with "Where to get it".
+- **Supplier catalog** at the counter (a catalog book/phone station): orders placed at night arrive at the next opening. Sells containers, growers, decor and culture starter vials (a one-off vial lets the player try a culture before owning its grower). Catalog pages unlock by stars. No timers, no real-time waiting.
+
+### GR.7 — Discovery: mixing and breeding
+
+**Roster structure** (content made by family waves, GR-12): six families × six species = **36 species**, each with **4 colours** (AD.3: Classic, Sunny, Deep, Shimmer) = **144 journal entries**. Per family: 2–3 **founders** (made by mixing), 2–3 **hybrids** (made by breeding), 1 **crown** (a special pair). The existing five keep their roles: Pondlet, Bubblebelly, Ribbonfin (Brookkin founders), Lanternfin (Sparkline founder), Driftwing (Airfin founder, now Medium).
+
+| Family | Size | Lead culture | Era |
+|---|---|---|---|
+| Brookkin | Small | Bloom, Flow | 1 |
+| Sparkline | Small | Spark | 2 |
+| Airfin | Medium | Mist | 3 |
+| Cinderling (provisional) | Medium | Ember | 2–3 |
+| Reefback (provisional) | Large | Brine | 4 |
+| Gloamer (provisional) | Large | Dusk | 5 |
+
+The model's family data must match this table (the Lanternfin is recorded as a Brookkin today; AD-E maps Spark species to Sparkline meanwhile).
+
+#### GR.7.1 — Mixing (founders), never fails
+
+- A mix is a multiset of culture doses. Its size is limited by the incubator level (L1: 2–3 doses, L2: up to 4, L3: up to 6).
+- **Resolution:** an exact founder recipe makes that founder. Any other mix makes the founder whose recipe is **nearest** (sum of differences in each culture's count), among founders whose cultures the player owns; ties go to the lower era, then the journal order. So every mix makes a creature, and nearby mixes teach the space.
+- **"Close to something new":** when a mix lands one dose from an undiscovered founder's recipe, the result card says so (always on). The microscope (research bench L2) shows how many doses away the nearest undiscovered founder is, a warmer/colder meter: the needle game's scanner.
+- **Mix log:** every distinct mix tried and its result is kept in the journal; the incubator card offers known recipes in one click (§6.5 convenience kept).
+- **Hints:** each undiscovered founder's silhouette shows which cultures it uses (icons, not counts) once the player owns those cultures.
+
+#### GR.7.2 — Breeding (hybrids and crowns), any pair works
+
+- The **breeding tank** (lab, Era 2) takes two creatures. After its timer (L1 60 s, L2 40 s, L3 two pairs) it produces one offspring (L3 clutch: two of the same) into its own output space; the parents stay (no consumption, no death).
+- **Species result:** every species has a hidden **breeding value**. The offspring is the species whose value is nearest the parents' average, among non-crown species (*Palworld* model); a same-species pair breeds true. Hand-authored **special pairs** override the average and are the only way to the six crowns. Every pair, including across families, yields something predictable. With 36 species there are 666 different pairs.
+- **Colour:** deterministic. Tinting the breeding water with a culture dose sets the offspring's colour (Bloom → Sunny, Flow → Deep, Mist → Shimmer); untinted offspring take the higher-order parent colour (Classic < Sunny < Deep < Shimmer). Founders hatch Classic unless the incubator is tinted (incubator L3).
+- **Pair log and chart:** the journal records every pair tried; a family chart fills in as hybrids are found. The breeding planner (research bench L4) predicts the offspring of any two known species.
+- **Breeding as production:** breeding two known creatures is a cheap way to make more stock without cultures, a real economic choice against mixing.
+- **Research points (RP):** first discovery of a founder 5 RP, hybrid 8 RP, crown 20 RP, a new colour 2 RP. RP buy research (cultures, the breeding tank, analyzer levels, blueprints). Credits buy physical things. Sales never give RP; discoveries never give credits directly.
+
+### GR.8 — Automation: building up to "electricity"
+
+| Tier | Era | What the player builds | What it does | Power |
+|---|---|---|---|---|
+| T0 Hands | 1 | Siphon, hand dosing, carrying, counter | Everything by hand | — |
+| T1 Hand pump | 2–3 | A hand-cranked pump on a grower, a culture buffer tank by the incubator, pipe segments laid on the lab grid | Hold to crank: fills the buffer in bulk instead of per dose | Muscle |
+| T2 Power | 3 | Generator (hand crank → bubble turbine → twin turbine → tide engine), electric pumps, the auto-doser | Growers feed buffers by themselves; the incubator doses a known recipe from buffers | 1–12 units |
+| T3 Hatchery line | 4 | Incubator clutches, hatchling chute and sorter, rack routing | Hatchlings go by species rules to racks and tanks | Units |
+| T4 Analyzer | 4–5 | Analyzer and planner (research bench L3–L4) | Points at undiscovered mixes and pairs; the player still chooses | Units |
+
+- **Power** is a simple budget: generators supply units, each running machine draws units, a panel shows supply and draw. Over budget, machines run slower in a set priority (shown), never stop silently or break. No fuel chores after the hand crank.
+- **Pipes** are a logical graph laid with the existing placement system on the lab grid (no fluid physics; §5 kept): a grower's tap → pump → buffer → incubator port. AD-D's glowing culture pipes become these pipes.
+- **Staff layer on top** (GR.10): Pip serves, Nori stocks, Moss runs known recipes and known breeding pairs. Neither machines nor staff ever choose an undiscovered mix or pair.
+- **The R08 systems are re-homed, not lost:** the collector module becomes T2 pumps and buffers; the doser module becomes the auto-doser; desired stock targets (R08.3) drive the T3 line and Moss. Job ownership, reservations, blocked reasons and recovery (§6.6) stay as they are.
+- **End state:** a known creature can go from free cultures through the line to a paid sale for a whole shift without repeated clicks (§6.6 goal kept), and the analyzer points the player at what to discover next.
+
+### GR.9 — Stations and upgrades
+
+Every station has levels. Each level changes its look and adds a capability, a capacity step or a verb. Upgrades are bought on the station's card (an Upgrade tab, showing the next level's change, cost and gate); they install at once when the station is idle. Costs: credits (physical) and sometimes RP (research-led); first-pass cost curve base × 2.5 per level, set in GR-01.
+
+| Station | L1 | L2 | L3 | L4 |
+|---|---|---|---|---|
+| Siphon / net (tool) | Hand bulb: 3 doses, hold 0.8 s each; picks creatures in peek | Bigger bulb: 6 doses, 0.6 s | Twin chamber: 10, collects 2 at a time | Vacuum: 16, pulls from every grower in range while held |
+| Growers (each culture) | Capacity 4, refill 3 s | 6, 2 s | 10, 1.5 s; tap for a pipe | 16, 1 s; feeds two pipes |
+| Incubator | 1 creature, 12 s, mixes of 2–3 | 8 s, mixes up to 4, mix-log screen | Clutch of 2, mixes up to 6, tint port | Clutch of 3, auto-doser port (needs power) |
+| Breeding tank | 1 pair, 60 s | 40 s, tint port, Large parents | 2 pairs | Planner link |
+| Starter / Large / Show tank | GR.5 capacities by level | Filter (+spaces) | Lid / water type (comfort) | Show spotlight (Show tank) |
+| Lab rack | 4 spaces | 8 | 12 | — |
+| Counter | Bell: hold 1.2 s to bag | Bag dispenser: 0.8 s | Card reader: 0.5 s, queue of 3 | Second till (Pip serves while you do too) |
+| Research bench | Notes: culture icons on silhouettes | Microscope: distance meter | Analyzer: one undiscovered reachable mix or pair a day | Planner: predicts any known pair |
+| Conditioning vat | Mist process (as today) | Double batch | Faster; Shimmer tint | — |
+| Generator | Hand crank (1 unit while cranked) | Bubble turbine (3) | Twin turbine (6) | Tide engine (12) |
+| Pumps | Hand pump | Electric pump (1 unit, slow) | Fast pump (2 units) | — |
+
+The AD-E hands-on checkout becomes the counter's L1; Serve-by-button stays retired once the counter is a station with levels.
+
+### GR.10 — Shop level, stars, customers and helpers
+
+- **Stars** (AD-E): 1–5 from reputation (thresholds rescaled to the new length in GR-01). Reputation rises with sales and granted wishes, falls with refusals, impatience and slaps (§6.2 kept). Stars gate expansions, catalog pages, customer types and helpers.
+- **Customers** (AD-E kept): types unlock by stars; wishes (species, trait, now also "a pair" or "a school of three" from 3★); themes (decor near a container); Big spenders favour Medium and Large creatures. Visitors browse a container and choose a specimen; one reservation per specimen.
+- **Helpers are earned** (gate = stars + one achievement), start at level 1 and train:
+
+| Helper | Gate | Level 1 | Training (credits, at night) |
+|---|---|---|---|
+| Pip (cashier) | 2★ and 40 sales | Serves in 3 s | L2 2 s, L3 1.2 s and calls the next visitor |
+| Nori (stocker) | 3★ and a Large tank owned | Moves one creature at a time | L2 two at a time, L3 follows schools |
+| Moss (technician) | 3★ and a powered generator | Runs one known recipe | L2 known breeding pairs, L3 two jobs |
+
+  Each helper has a hire fee and a wage that rises with level (first pass: fee 40/60/80, wages 6–12 a duty period; GR-01). Wages keep §6.3's paid-duty rules.
+
+#### GR.10.1 — Economy, first pass (GR-01 replaces with modelled values)
+
+| Item | First-pass value |
+|---|---|
+| Standard price by size | Small 6–14, Medium 24–40, Large 70–140 credits (family and era raise it) |
+| Starter / Large / Show tank | 20 / 90 / 300 credits; levels base × 2.5 |
+| Shop units B / C | 150 / 600 credits plus the star gate |
+| Lab annex / workshop | 250 / 700 credits plus the star gate |
+| Station upgrades | L2 about 15–40, L3 about 60–150, L4 about 250–500 credits; research-led levels also cost RP |
+| Research | Spark 10 RP, breeding tank 5 RP, Mist 25 RP, analyzer L3 30 RP, Dusk 40 RP |
+| Visitors at once | 2 (unit A), 3 (B), 4 (C), 5 (final); counter queue 3 |
+| Schools and themes | +15 and +25 tolerance points, capped together at +40 |
+| Helpers | Hire 40 / 60 / 80; wage 6 at L1 rising to 12 at L3 a duty period |
+
+The first-hour economy must make the first upgrade affordable within 5 minutes and the second tank within about 15, with every era reachable from a zero-money start using free Bloom and Flow (§6.3 kept).
+
+### GR.11 — Spaces and level design
+
+The rooms are rebuilt as a real shop and a real lab: deep rather than wide, dense, with front-to-back meaning.
+
+```
+Era 1 (unit A + back room)                          +z (north)
++--------------------------[ door ]------------------+   back room 6 x 5 m:
+| [tank wall: 2 starter tank places]                 |   growers on the left wall,
+|                                                    |   incubator centre, rack,
+|        [centre island place]                       |   research pinboard
+|                                                    |
+| [supplies shelf]                 [counter][queue]  |
++----[window display]---------[ entrance ]-----------+   -z (street)
+            shop unit A: 8 x 8 m
+```
+
+| Tier | Shop | Lab | Container places (approx.) |
+|---|---|---|---|
+| 1 (start) | Unit A 8 × 8 m | Back room 6 × 5 m | 4 tank places, 2 rack places |
+| 2 (2★) | + Unit B east: 16 × 8 m, wall opened with an arch | Back room | 8 tank places |
+| 3 (3★) | 16 × 8 m | + Lab annex 8 × 8 m behind (power room corner) | 8, plus lab racks and breeding |
+| 4 (4★) | + Unit C north-east: L-shape 16 × 12 m | + Workshop 8 × 6 m (generator, line) | 14, incl. Show tank walls |
+| 5 (5★) | Exhibition hall finish (lighting, banners) | Final | 16 + exhibition displays |
+
+- **Proportions:** ceilings 3.2 m (shop) and 3.6 m (lab, for overhead pipes). Rooms no shallower than 6 m. Main aisle 1.6 m (two visitors abreast); browse access 1.2 m in front of every container; counter queue 3 places within the shop.
+- **Readability:** from the entrance, the counter and a feature wall are visible; every container's front faces an aisle; containers sit at 0.9–1.6 m for looking in. The shop has shelves of supplies, price cards, a window display and a feature wall; the lab has benches, wall plumbing, a power board and a pinboard. AD-D's look (toon, set pieces, pipes) carries over; its set pieces move into the new units.
+- **Expansions** are "open the wall into the next unit" moments at night (a short reveal), not stretching one strip. The AD-D set pieces become unit features (bay window bench in unit B, feature tank on unit C's wall, pipe gallery in the annex, dome in the workshop).
+- **Navigation and placement rules** (§6.4) are kept: snapped footprints, access points, validated paths, no trapped actors; the placement system lays containers, decor, racks, machines and pipes.
+
+### GR.12 — Objective board and the ending
+
+- The **objective board** (a pinboard in the back room, mirrored in the journal) always shows the current era's goal, the next unlock and its gate, and the long goal: "Discover creatures: n / 36 · Journal: n / 144 · Exhibition: requirements".
+- **Grand Exhibition** (§4 kept, numbers updated): available after the final shop and lab tiers, **24 of 36 species** across all six families, **any 3 of the 6 crowns**, and one full shift with a working line from cultures to sale. Exhibition displays, six announced purchases, retry without loss and free play afterwards are kept from §4.
+
+### GR.13 — Interface changes (UX.x rules apply)
+
+Container card (occupant grid of space icons, schools, comfort), peek labels, incubator card (dose slots by level, mix log, "close to something new", distance meter), breeding tank card (parents, timer, tint, predicted result with the planner), Upgrade tab on every station card, power board (supply vs draw, priorities), pipe placement mode, supplier catalog, objective board, journal pages (Cultures, Families with silhouettes and hints, Mix log, Pair log and chart, colours). All in the UI Toolkit system (UX-02–UX-09) and the cozy style; the HUD keeps at most three persistent elements.
+
+### GR.14 — Art and audio
+
+- Scale AD-B creatures to their size class (small ones about half today's size) and add the 1.3× head ratio; check readability in peek.
+- New family rigs for Cinderling, Reefback and Gloamer (Blender, local, original; AD rules), species meshes per family, colour atlas per AD-B.
+- Container models per tier and level (filters, lids, spotlights), station models per level (3–4 looks each), generator and pump models, pipe pieces; units A–C and the lab annex and workshop rebuilt in the AD look.
+- Sounds: cranking, pumps, generator hum (ambience bus), breeding "pop", school swish; comfort settings scale every new moment (AD.7 rule).
+
+### GR.15 — Technical plan
+
+- **Build alongside, then cut over.** GR is built as a new ruleset in the same project behind a development switch (as AD-E), with its own fresh save line, so the current game and its validation stay intact until GR reaches parity (GR-14), when the classic ruleset and the routes that encode it retire.
+- **Saves:** a new save format version for GR. A save from the classic game is never overwritten: GR offers a new shop and keeps the old slot as a backup (§7 save contract kept). No migration of classic saves (user decision, GR.17).
+- **Core data model** (pure, tested without scenes; §7 kept):
+  - `CultureDefinition` list (id, colour, source, unlock), replacing the fixed `CultureKind` enum.
+  - `SpeciesDefinition` gains size class, breeding value, founder recipe (multiset) or special pair, temperament and water.
+  - Containers hold ordered specimen lists with space accounting; reservations per specimen (no longer per tank).
+  - Station levels (`StationUpgrades`), power grid (supply, draw, priorities), pipe graph (nodes on the lab grid), breeding tank, research points, supplier orders, objective state, helper levels.
+- **Definitions as data:** tuning and content tables (cultures, species, costs, gates, eras) in one place, loaded at start and validated (unknown IDs, unreachable unlocks, cost overflow).
+- **Pacing simulator** (GR-01): a deterministic, Core-only bot that plays the economy at accelerated time with simple policies, reporting when each unlock and era is reached, money and RP over time, and dead ends. Every tuning change reruns it; its report is evidence.
+- **Validation:** EditMode tests for every rule (mix resolution, breeding, capacity, schools, power, pipes, gates, upgrades, saves); Windows routes per era from fixture saves at 1280 × 720 and 1920 × 1080 (captures reviewed); performance routes for the densest layout; human playtest gates (GR.16).
+
+#### GR.15.1 — Rules and edge cases (each needs a test)
+
+- **Capacity:** a hatchling or offspring waits in its machine's output until there is space (output reserved before cultures are used, §6.5 kept); the card says which containers have room. A container never accepts a creature that does not fit, from the player, staff or the line.
+- **Reservations:** visitors reserve one specimen each; a wish for a pair or school reserves several at once, all or none; moving or selling a reserved specimen is refused with its reason; closing releases them.
+- **Breeding:** parents in the breeding tank are not for sale and can be taken out at any time (the timer resets); offspring never replace stock; a pair whose result would not fit waits.
+- **Mixing:** an empty mix is refused; a mix larger than the incubator's level allows is refused before doses are used; owning a culture is checked when dosing, and the nearest-founder search only considers owned cultures.
+- **Power and pipes:** a disconnected or blocked pipe, an empty buffer or a full destination shows a blocked reason and pauses that line only; removing a pipe or machine at night releases its jobs safely; a save mid-job restores the job or releases it, never duplicates culture or creatures.
+- **Upgrades:** an upgrade installs only when its station is idle, keeps every creature and culture inside it, and never lowers capacity below what the station holds.
+- **Expansions and placement:** rearranging at night only (§6.1 kept); a stocked container moves with its occupants in one validated transaction (§6.4 kept).
+- **Gates:** every gate shows its requirement and progress; nothing required for the ending can become unreachable (sold the last of a species → breeding or mixing can always make it again).
+- **Comfort:** peek, schools and new moments follow Reduced motion and Low detail; peek can be switched off.
+
+### GR.16 — Risks and mitigations
+
+| Risk | Mitigation |
+|---|---|
+| Art scope (36 species, 3 new rigs, station levels) | Family rigs, species by mesh and colour (AD.3), placeholder-first greybox, content in waves |
+| Many creatures on screen | GR.5 budget, LOD and update spreading, measured early in GR-03 |
+| Pipes and power become fiddly | Logical pipes only, short lab grid, auto-routing suggestion; power is a budget, not a simulation |
+| The curve is outrun (the hole game's criticism) | Era gates are stars plus an achievement, not money alone; pacing simulator; playtests |
+| Small creatures unreadable | Peek, names on focus, head ratio, schools; checked in GR-02 |
+| Test churn | Build alongside; classic routes retire only at cut-over |
+| Grind | Never-fail mixing, deterministic breeding, analyzer hints, RP from discovery |
+
+### GR.17 — Decisions (accepted by the user, 2026-10-23)
+
+1. Goal: the collection; the shop funds it. 2. Length: about 4 h to the ending, 8–12 h for everything. 3. Fresh start for the redesign. 4. Starting tank 4 spaces, upgradable to 6 and 8; schools sell better. 5. Three size classes (1, 2 and 4 spaces) and three tank types. 6. Mixing allowed; comfort bonuses later, never failures. 7. Smaller creatures with a peek view. 8. Automation through power and pipes, tiers T0–T4. 9. Automation order: collection, then dosing, then moving, then checkout; discovery never. 10. The player ends as inventor and director. 11. Seven cultures from growers, the catalog and research, locked slots visible. 12. Both mixing (founders) and breeding (hybrids). 13. A fixed authored collection (about 36 species, 144 entries) with Palworld-style predictable pairs and special pairs; no luck for required entries. 14. Never fail; hints and a distance meter. 15. Proportions are the main problem of the rooms. 16. References: *TCG Card Shop Simulator*, *Supermarket Simulator*, real pet shops. 17. Start in a small square shop with a back-room lab; expand by opening walls. 18. Helpers earned by stars plus an achievement, starting slow and trainable; first after about an hour. 19. Every station has 3–5 levels that change look and capability. 20. GR replaces AD-F and absorbs AD-E (stars as shop level, wishes, themes, hands-on checkout, forecast; day length pending the AD-E playtest).
+
+Open for the user later (not blocking GR-01): final names (cultures, families, species), the exact numbers (set by GR-01 and playtests), whether juvenile growth stages are wanted (out of scope now: they add waiting), and the exhibition's final shape.
+
+### GR.18 — Tasks, order and gates
+
+| Task | Content | Depends on | Gate |
+|---|---|---|---|
+| GR-00 | This specification | — | Documentation only (done) |
+| GR-01 | Content and pacing model: roster table (36 species: family, size, founder recipe or special pair, breeding value, comfort tags, provisional names), culture and station tables with costs and gates, era gates, the Core-only pacing simulator and its first report | GR-00 | User reviews the roster and the curve |
+| GR-02 | Greybox core prototype on the new ruleset (development switch, fresh save line): shop unit A and the back room with real proportions; Starter tanks with 4 spaces and occupant lists; small-scale placeholder creatures with schools and peek; never-fail mixing with "close to something new" and the mix log; siphon, grower, incubator and counter at L1–L2; stars gating unit B | GR-01 | **User playtest:** does starting tiny feel right; are small creatures readable |
+| GR-03 | Size classes, Large and Show tanks, tank levels, comfort tags, per-specimen reservations, visitor browsing of multi-creature containers, performance budget measured | GR-02 | Routes + captures; densest-layout timings |
+| GR-04 | Data-driven cultures (seven), supplier catalog with night orders, new growers, journal Cultures page | GR-02 | Routes |
+| GR-05 | Breeding tank, breeding values and special pairs, deterministic colour, pair log and family chart, research points | GR-03, GR-04 | Routes; EditMode covers every pair resolution |
+| GR-06 | Station upgrade framework and every station's levels (logic, cards, placeholder looks) | GR-02 | Routes |
+| GR-07 | Power and pipes T1–T2: hand pump, generator levels, pipe placement and graph, buffers, auto-doser; R08 modules re-homed | GR-06 | **User playtest:** does building up to power feel earned |
+| GR-08 | Hatchery line T3 and analyzer T4 (clutches, sorter, routing, analyzer and planner) | GR-05, GR-07 | Routes |
+| GR-09 | Helpers rework: gates, hire fees, levels and training, wages; Moss on known pairs | GR-07 | Routes |
+| GR-10 | Spaces: units A–C, back room, annex, workshop, expansion reveals, set pieces moved, final proportions and navigation | GR-03 | Routes + captures; user look |
+| GR-11 | Objective board, eras and gates, exhibition requirements on the new roster (R09.2 folded in) | GR-05, GR-09 | Routes |
+| GR-12 | Content waves (absorbs AD-F): wave 1 Brookkin, Sparkline, Airfin completed to 6 species each; wave 2 Cinderling; wave 3 Reefback and Gloamer; colours; crowns | GR-05 (wave 1 can start after GR-01) | Per wave: user look in game |
+| GR-13 | Interface for every new system (GR.13) in the UX style | runs with GR-03–GR-11 | UX gates |
+| GR-14 | Cut-over: GR becomes the game; classic ruleset and its routes retired or rewritten; tutorial rewritten for the new opening (TUT, R09.4); fresh-start save policy | GR-02–GR-13 | Full validation run |
+| GR-15 | Full playthrough and tuning to the GR.3 targets with the pacing simulator and the day log; feeds R10 | GR-14 | **User playthrough** |
+
+Superseded or folded in: AD-F → GR-12; R09.1 → GR-01 and GR-11; R09.2 → GR-11; R09.3 → GR-12; R08.5 measurement → GR-15. R09.4 (contextual onboarding) and R09.5 (full playthrough) stay and follow GR-14. AD-E's playtest stays open and feeds GR-02 (stars, wishes, themes, hands-on checkout, forecast, day length).
