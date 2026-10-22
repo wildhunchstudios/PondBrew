@@ -556,7 +556,7 @@ Gate: the slice is approved in game before bulk art; gameplay changes are playte
 Requested by the user on 2026-10-23: a redesign of the core loop so the game starts tiny and grows toward one clear goal. The authoritative problem statement, research basis, pillars, eras, creatures and tanks, cultures, discovery (mixing and breeding), automation tiers, station levels, helpers, spaces, economy, edge cases, technical plan, risks and decisions are in **GR.1–GR.18 at the end of this file**. Runs next; replaces AD-F and folds in R09.1–R09.3. Build alongside the current game and cut over at GR-14.
 
 - [x] GR-00 Specification (documentation only, 2026-10-23).
-- [ ] GR-01 Content and pacing model: 36-species roster, culture, station, cost and gate tables, era gates, Core-only pacing simulator and report. **Gate: the user reviews the roster and the curve.** *Next.*
+- [~] GR-01 Content and pacing model: 36-species roster, culture, station, cost and gate tables, era gates, Core-only pacing simulator and report. **Gate: the user reviews the roster and the curve.** *In progress since 2026-10-23 (Claude).*
 - [ ] GR-02 Greybox core prototype on the new ruleset: unit A and back room, 4-space tanks with schools and peek, never-fail mixing, L1–L2 stations, stars gating. **Gate: user playtest.**
 - [ ] GR-03 Size classes, Large and Show tanks, tank levels, comfort tags, per-specimen reservations and browsing, performance budget.
 - [ ] GR-04 Seven data-driven cultures, supplier catalog, new growers, journal Cultures page.
