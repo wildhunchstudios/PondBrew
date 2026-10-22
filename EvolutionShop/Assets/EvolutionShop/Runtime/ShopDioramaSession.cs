@@ -14,9 +14,11 @@ namespace EvolutionShop
 
         void InitializeDiorama()
         {
+            // AD-D: the diorama moments' sounds play on the existing comedy voice, at the humour volume.
+            if (World) World.DioramaSoundCue = cue => { if (sound) sound.DioramaCue(cue, HumorVolume); };
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             bool asked = Arg("-evolutionDiorama") != null || Arg("-evolutionDioramaSliceSmoke") != null || Arg("-evolutionDioramaCreaturesSmoke") != null ||
-                Arg("-evolutionDioramaCharactersSmoke") != null;
+                Arg("-evolutionDioramaCharactersSmoke") != null || Arg("-evolutionDioramaRoomsSmoke") != null;
             bool refused = Arg("-evolutionDioramaOff") != null;
             if (!refused && (asked || !ValidationMode)) SetDioramaLook(true);
 #endif

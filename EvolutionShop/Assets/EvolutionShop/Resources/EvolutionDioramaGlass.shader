@@ -14,6 +14,8 @@ Shader "EvolutionShop/Diorama Glass"
         _WobbleTop("Surface starts at local y", Float) = 0.45
         _FarSide("Far side opacity (times the tint's)", Float) = 1
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("Cull", Float) = 0
+        // AD-D: the classic colour of a world material the look converts in place (game code reads Material.color).
+        [HideInInspector]_Color("Classic colour", Color) = (1,1,1,1)
     }
     SubShader
     {

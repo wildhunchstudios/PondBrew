@@ -83,11 +83,19 @@ namespace EvolutionShop
                 dioramaShopVolume.enabled = dioramaLabVolume.enabled = true;
                 dioramaRoot.gameObject.SetActive(true);
                 dioramaKeyKnown = false;
+                // AD-D: every other room, station and the siphon take the look too; the siphon slims down; the open wings
+                // show their set pieces and the culture pipes run to the incubator.
+                RefreshDioramaSetPieces();
+                ShowDioramaPipes();
+                SweepDioramaMaterials();
+                ApplyToolLook();
                 TickDioramaLight(0);
             }
             else
             {
                 ClearDioramaHatch();
+                ClearDioramaMoments();
+                RestoreDioramaMaterials();
                 dioramaActive = false; DioramaLook.Active = false;
                 foreach (var swap in dioramaSwaps) if (swap.Renderer) swap.Renderer.sharedMaterials = swap.Classic;
                 foreach (var (filter, classic) in dioramaWaterFilters) if (filter) filter.sharedMesh = classic;
@@ -100,6 +108,9 @@ namespace EvolutionShop
                 if (dioramaCamera) dioramaCamera.GetUniversalAdditionalCameraData().renderPostProcessing = dioramaClassicPost;
                 dioramaShopVolume.enabled = dioramaLabVolume.enabled = false;
                 dioramaRoot.gameObject.SetActive(false);
+                ApplyToolLook();
+                RefreshDioramaSetPieces();
+                ShowDioramaPipes();
                 if (roomLightsInitialized) RestoreRoomPhase(roomTargetPhase);
                 if (lastModel != null) RefreshHatcheryLamp(lastModel.Incubator.Phase);
             }
@@ -137,8 +148,9 @@ namespace EvolutionShop
         Material DioramaMaterial(Material classic, DioramaLook.Style style, int caustic)
         {
             if (dioramaMaterialMap.TryGetValue((classic, caustic), out var made)) return made;
-            Color color = classic.HasProperty("_BaseColor") ? classic.GetColor("_BaseColor") : classic.color;
-            if (classic.renderQueue >= 3000)
+            // AD-D may have converted the classic material in place; its classic state is kept with the conversion.
+            ClassicState(classic, out var color, out bool emissive, out var emission, out int queue);
+            if (queue >= 3000)
             {
                 bool watery = classic == water;
                 made = DioramaLook.Glass(classic.name, watery ? new Color(.3f, .78f, .88f, .14f) : new Color(.78f, .95f, 1f, .05f),
@@ -148,8 +160,7 @@ namespace EvolutionShop
             {
                 color.a = 1;
                 made = DioramaLook.Toon(classic.name, color, style);
-                if (classic.IsKeywordEnabled("_EMISSION") && classic.HasProperty("_EmissionColor"))
-                    made.SetColor("_EmissionColor", classic.GetColor("_EmissionColor") * 2.2f);
+                if (emissive) made.SetColor("_EmissionColor", emission * 2.2f);
                 if (caustic > 0) made.SetFloat("_CausticStrength", caustic * .25f);
             }
             dioramaMaterialMap.Add((classic, caustic), made);
@@ -239,7 +250,7 @@ namespace EvolutionShop
                     diorama[i] = lit ? DioramaMaterial(m, room ? DioramaLook.Style.Room : DioramaLook.Style.Prop, m.renderQueue >= 3000 ? 0 : caustic) : m;
                     changed |= lit;
                 }
-                if (changed) dioramaSwaps.Add(new DioramaSwap { Renderer = renderer, Classic = classic, Diorama = diorama });
+                if (changed) { dioramaSwaps.Add(new DioramaSwap { Renderer = renderer, Classic = classic, Diorama = diorama }); dioramaSwapRenderers.Add(renderer); }
             }
         }
 
@@ -419,6 +430,8 @@ namespace EvolutionShop
         {
             if (!dioramaActive) return;
             TickDioramaLight(dt);
+            TickDioramaRooms(dt);
+            TickDioramaMoments(dt);
             TickDioramaHatch(dt);
             TickDioramaIncubatorFluid(dt);
         }

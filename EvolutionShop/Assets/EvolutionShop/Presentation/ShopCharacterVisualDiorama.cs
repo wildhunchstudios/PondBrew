@@ -222,6 +222,7 @@ namespace EvolutionShop
 
         void ReleaseDiorama()
         {
+            ReleaseDioramaHat();
             foreach (var material in dioramaMaterials)
                 if (material) { if (Application.isPlaying) Destroy(material); else DestroyImmediate(material); }
             dioramaMaterials.Clear();

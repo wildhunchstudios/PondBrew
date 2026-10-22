@@ -46,6 +46,8 @@ namespace EvolutionShop
             if(kind==FxWorkerEvent.Dose && displays.TryGetValue("incubator",out var incubator)&&incubator.Root){
                 source=incubator.Root.parent;point=new Vector3(0,1.48f,-.46f);
             }
+            // AD-D: with the look on, the flipbook moment replaces the pool's accent.
+            if(PresentDioramaWorkerEvent(kind,source,point,owner,sequence))return true;
             bool refused=kind==FxWorkerEvent.Refused,pickup=kind==FxWorkerEvent.Pickup;
             Color color=refused?new Color(.95f,.58f,.43f,.7f):kind==FxWorkerEvent.Checkout?
                 new Color(1,.81f,.42f,.78f):new Color(.59f,.91f,.84f,.75f);

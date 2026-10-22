@@ -69,7 +69,12 @@ namespace EvolutionShop
             bool hatch = id == FxCueId.HatchFirst || id == FxCueId.HatchRepeat;
             if (hatch && fxPolicy != FxViewPolicy.Visible) return false;
             bool module = id == FxCueId.ModuleCollected || id == FxCueId.ModuleDosed;
-            if (module) return origin == FxCueOrigin.Module && BeginModuleFx(id == FxCueId.ModuleDosed, sequence, culture);
+            if (module)
+            {
+                bool began = origin == FxCueOrigin.Module && BeginModuleFx(id == FxCueId.ModuleDosed, sequence, culture);
+                if (began && id == FxCueId.ModuleDosed) PulseDioramaPipe(culture);
+                return began;
+            }
             if (origin != FxCueOrigin.Manual) return false;
             var token = fxCues.Find("incubator");
             float duration = id == FxCueId.HatchFirst ? FxHatchChoreography.FirstDuration : id == FxCueId.HatchRepeat ? FxHatchChoreography.RepeatDuration : FxDosePour.Duration;
@@ -78,6 +83,7 @@ namespace EvolutionShop
             if (id == FxCueId.DoseCommitted || id == FxCueId.DoseReturned)
             {
                 BeginDoseFx(token,sequence,id,culture);
+                if (id == FxCueId.DoseCommitted) PulseDioramaPipe(culture);
             }
             if (id == FxCueId.HatchFirst || id == FxCueId.HatchRepeat)
             {

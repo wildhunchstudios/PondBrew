@@ -44,6 +44,13 @@ namespace EvolutionShop
         {
             var m = new Material(ToonShader) { name = "Diorama / " + name };
             m.SetColor("_BaseColor", color);
+            ApplyToonStyle(m, style);
+            return m;
+        }
+
+        /// <summary>Sets a toon material's shading for its style (AD-D converts the world's own materials with it).</summary>
+        public static void ApplyToonStyle(Material m, Style style)
+        {
             bool alive = style == Style.Creature || style == Style.Character;
             // Creatures and characters keep a lighter shadow side, so a face turned from the key light still reads.
             m.SetColor("_ShadeColor", style == Style.Room ? new Color(.62f, .6f, .74f) : alive ? new Color(.7f, .62f, .8f) : new Color(.52f, .5f, .68f));
@@ -55,7 +62,6 @@ namespace EvolutionShop
             m.SetColor("_OutlineColor", Ink);
             m.SetShaderPassEnabled(OutlinePass, alive);
             if (style == Style.Glint) m.SetColor("_EmissionColor", new Color(.45f, .45f, .45f));
-            return m;
         }
 
         public static Material Glass(string name, Color tint, float edge = .35f, float glint = .6f)

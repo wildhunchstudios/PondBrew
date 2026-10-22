@@ -52,6 +52,8 @@ namespace EvolutionShop
             fxPool?.Cancel(owner);
             if(!actor.PlayCustomerReaction(reaction)){fxCues.Cancel(owner);return false;}
             if(checkout)CustomerCheckoutAccentCount++;else CustomerPriceAccentCount++;
+            // AD-D: with the look on, the flipbook moment replaces the pool's accent.
+            if(PresentDioramaCustomerReaction(actor,reaction,owner,sequence))return true;
             bool refused=reaction==FxCustomerReaction.Refused;
             Color color=checkout?new Color(1,.80f,.35f,.88f):refused?new Color(1,.59f,.45f,.78f):new Color(.55f,.94f,.82f,.82f);
             // Chest-side accents stay below the price/caption sign and within the visitor.
@@ -150,6 +152,13 @@ namespace EvolutionShop
             if (id == FxCueId.HandRefused) { fxPool?.Cancel(token); if (fxPolicy == FxViewPolicy.Modal) ShowLabRefusal(culture); }
             Transform source = atVessel && displays.TryGetValue("incubator", out var vessel) ? vessel.Root.parent : id == FxCueId.CollectedUnit ? ToolChamber : toolBody;
             var point = atVessel ? new Vector3(0, 1.48f, -.46f) : id == FxCueId.CollectedUnit ? new Vector3(0, -.02f, -.13f) : new Vector3(.085f, -.129f, -.195f);
+            // AD-D: with the look on, a refusal is only a small grey puff (and the siphon's shake).
+            if (id == FxCueId.HandRefused && dioramaActive && dioramaRoot && source)
+            {
+                if (atVessel) DioramaGreyPuff(source.TransformPoint(point), token, false); else PresentDioramaToolRefusal(source, point, token);
+                if (!atVessel) AcceptHandPose(id, duration);
+                return true;
+            }
             Material accent = id == FxCueId.HandRefused ? gold : culture == CultureKind.Flow ? flowMat : culture == CultureKind.Spark ? sparkMat : culture == CultureKind.Mist ? mistMat : bloomMat;
             // Missing attachment/material/pool falls back to the existing committed text/audio.
             fxPool?.Emit(fxCues, token, source, point, accent, duration, fxReducedMotion ? .025f : .055f);
@@ -158,6 +167,7 @@ namespace EvolutionShop
         }
         public void CancelFxOwner(FxOwnerToken owner)
         {
+            CancelDioramaMoments(owner);
             if(fxCues!=null && fxCues.IsValid(owner) && fxBindings[owner.Slot].Customer)
                 fxBindings[owner.Slot].Customer.CancelCustomerPresentation();
             if(fxCues!=null && fxCues.IsValid(owner) && fxBindings[owner.Slot].Worker)
@@ -185,6 +195,7 @@ namespace EvolutionShop
             CancelPlayerInteraction();
             CancelComedyFx();
             CancelRoomAtmosphere();
+            ClearDioramaMoments();
             fxCues?.CancelAll(); fxPool?.CancelAll(); CancelLabFx(); CancelHandsPose(); CancelAquariumTransient(); ResetAdvancedLabFx(); ResetResearchAutomationFx();
             // The inherited intake remains in FX-02, but cannot leave stale particles at a boundary.
             for (int i = particles.Count - 1; i >= 0; i--) if (particles[i].Root)

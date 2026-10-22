@@ -652,8 +652,8 @@ namespace EvolutionShop
         {
             upgraded = value;
             if (!ToolChamber) return;
-            ToolChamber.localScale = value ? new Vector3(1.35f, 1.48f, 1.35f) : Vector3.one;
-            ToolChamber.localPosition = new Vector3(0, value ? .067f : .02f, .025f);
+            // AD-D: the slim siphon's chamber while the look is on (ApplyToolLook keeps the classic sizes otherwise).
+            ApplyToolLook();
             toolUpgradeBand.gameObject.SetActive(value);
             // The authored reservoir cap shares this chamber's transform at both capacities.
         }

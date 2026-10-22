@@ -184,6 +184,7 @@ namespace EvolutionShop
             slapRemaining = 0f;
             if(upperBody)upperBody.localRotation=Quaternion.identity;
             if (slapStars) slapStars.gameObject.SetActive(false);
+            if (dioramaVisitor) dioramaVisitor.RestDioramaHat();
             if (!body) return;
             body.localScale = bodyBaseScale;
             body.localPosition = Vector3.zero;
@@ -201,8 +202,11 @@ namespace EvolutionShop
             if(upperBody)upperBody.localRotation=Quaternion.Euler(pose.UpperEuler+pose.HeadEuler*.35f);
             bool stars=!reducedSlap && elapsed>=FxComedyMotion.SlapContactSeconds(false);
             if(slapStars)slapStars.gameObject.SetActive(stars);
-            if(!stars)return;
+            if(!stars){if(dioramaVisitor)dioramaVisitor.RestDioramaHat();return;}
             float age=elapsed-FxComedyMotion.SlapContactSeconds(false);
+            // AD-D: the kit visitor's birds circle with the stars and its hat spins.
+            PoseDioramaBirds(age);
+            if(dioramaVisitor)dioramaVisitor.PoseDioramaHat(age);
             for(int i=0;i<slapStarNodes.Length;i++){
                 float angle=age*5.5f+i*Mathf.PI*2f/slapStarNodes.Length;
                 var star=slapStarNodes[i];
@@ -282,8 +286,9 @@ namespace EvolutionShop
             {
                 slapRemaining = Mathf.Max(0f, slapRemaining - dt);
                 if (!IsSlapReacting && slapStars) slapStars.gameObject.SetActive(false);
+                if (!IsSlapReacting && dioramaVisitor) dioramaVisitor.RestDioramaHat();
             }
-            ApplyBodyPose(0, 0);
+            ApplyBodyPose(DioramaHopNow(reduced), 0);
             if (dioramaVisitor) dioramaVisitor.TickDioramaFace(DioramaMood, dt, reduced);
         }
 
@@ -518,6 +523,7 @@ namespace EvolutionShop
                 renderer.receiveShadows = false;
             }
             slapStars.gameObject.SetActive(false);
+            if (dioramaVisitor) BuildDioramaBirds();
         }
 
         void FontAtlasRebuilt(Font rebuilt)

@@ -56,6 +56,8 @@ namespace EvolutionShop
             var cue=comedyFxKind==ComedyKind.Slap?FxCueId.ComedyContact:FxCueId.ComedyBeat;
             if(!fxCues.Play(comedyFxOwner,cue,comedyFxSequence,FxCueOrigin.Manual,.65f,1))return;
             comedyFxCount++;comedyFxBeatFrame=Time.frameCount;comedyFxBeatRealtime=Time.realtimeSinceStartup;
+            // AD-D: with the look on, the beat's flipbook replaces the pool's puffs.
+            if(PresentDioramaComedy(comedyFxKind,comedyFxVariant,comedyFxSource,comedyFxPoint,comedyFxReduced,comedyFxOwner))return;
             bool slap=comedyFxKind==ComedyKind.Slap,lab=comedyFxKind==ComedyKind.Belch||
                 comedyFxKind==ComedyKind.WorkerCelebration&&comedyFxSource.position.z>.4f;
             Color color=slap?new Color(1,.84f,.57f,.82f):lab?new Color(.60f,.91f,.80f,.72f):new Color(.91f,.85f,.63f,.67f);

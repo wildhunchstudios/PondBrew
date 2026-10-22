@@ -22,6 +22,9 @@ Shader "EvolutionShop/Diorama Toon"
         _OutlineColor("Outline colour", Color) = (0.07,0.17,0.17,1)
         _OutlineWidth("Outline width (pixels)", Range(0,6)) = 0
         [Enum(UnityEngine.Rendering.CullMode)]_Cull("Cull", Float) = 2
+        // AD-D: a world material the look converts in place keeps its classic colour here, so game code reading
+        // Material.color (text tints, labels) reads what it always did. The shader never uses it.
+        [HideInInspector]_Color("Classic colour", Color) = (1,1,1,1)
     }
     SubShader
     {

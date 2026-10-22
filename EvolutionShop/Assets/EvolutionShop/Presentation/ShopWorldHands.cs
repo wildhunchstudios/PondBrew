@@ -142,7 +142,7 @@ namespace EvolutionShop
             handPriority = 0; handPositionKnown = false; handPreviewFrozen = handPreviewCollecting = false;
             if (fxCues != null) fxCues.Cancel(fxCues.Find("hands"));
             RestoreHandRest();
-            if (ToolRoot) { ToolRoot.localPosition = new Vector3(.33f, -.16f, .58f); ToolRoot.localRotation = Quaternion.Euler(-5, -7, -5); }
+            if (ToolRoot) { ToolRoot.localPosition = ToolRest; ToolRoot.localRotation = ToolTurn; }
             if (handsVisual) handsVisual.gameObject.SetActive(HandsVisible);
         }
         void RestoreHandRest()
@@ -168,8 +168,8 @@ namespace EvolutionShop
                 var move = FxHandPose.Move(handMovePhase, handMoveWeight, fxReducedMotion);
                 pose.ToolOffset += move.ToolOffset; pose.ToolAngles += move.ToolAngles;
             }
-            var rotation = Quaternion.Euler(-5, -7, -5);
-            ToolRoot.localPosition = new Vector3(.33f, -.16f, .58f) + rotation * pose.ToolOffset * .62f;
+            var rotation = ToolTurn;
+            ToolRoot.localPosition = ToolRest + rotation * pose.ToolOffset * ToolScale + DioramaToolShakeOffset;
             ToolRoot.localRotation = rotation * Quaternion.Euler(pose.ToolAngles);
             if (toolNozzle) toolNozzle.localRotation = Quaternion.identity;
             if (!handsRigValid) return; // Imported rest remains usable if any rigid pivot is absent.

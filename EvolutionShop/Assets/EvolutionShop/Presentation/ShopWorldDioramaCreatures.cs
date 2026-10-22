@@ -54,6 +54,7 @@ namespace EvolutionShop
             creature.transform.localRotation = Quaternion.Euler(pose.Angles) *
                 Quaternion.Euler(idle.Pitch + trick.Pitch, idle.Yaw + trick.Yaw, idle.Roll + trick.Roll);
             creature.AnimateSpecies(display.PondletClock, pose.Effort, calm);
+            TickDioramaBubbleTrail(display.Root, creature, dt, visible && !calm);
             if (visible && !calm && (trick.Release || idle.Release))
                 DioramaCreatureBurst(creature, trick.Release, dioramaCamera ? dioramaCamera.transform.position : creature.transform.position);
         }
