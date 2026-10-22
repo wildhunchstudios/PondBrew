@@ -540,8 +540,8 @@ User-approved art, effects and gameplay redesign. Authoritative decisions, colle
 
 - [x] AD-A Art slice (display corner + incubator) and in-game review: technically complete 2026-10-22 (AD.8); the user approved it in game on 2026-10-22.
 - [x] AD-B Creatures: technically complete 2026-10-22 (AD.9); the user approved them in game on 2026-10-22.
-- [x] AD-C Characters: technically complete 2026-10-22 (AD.10); the user's look at them in game comes before AD-D.
-- [ ] AD-D Rooms and effects rollout.
+- [x] AD-C Characters: technically complete 2026-10-22 (AD.10); the user approved them in game on 2026-10-22.
+- [ ] AD-D Rooms and effects rollout: in progress since 2026-10-22 (Claude).
 - [ ] AD-E Gameplay prototype (wishes, forecast, checkout, stars, tank themes) and playtest.
 - [ ] AD-F Content expansion to 24 species / 96 entries within R09.
 
@@ -605,6 +605,8 @@ The game is finished when the launch-scope features, complete progression/ending
 ### Current handoff — AD-C technically complete; the user's look at the characters comes before AD-D (2026-10-22, Claude)
 
 **State:** The user approved the creatures (AD-B) in game on 2026-10-22 and asked for the next AD task. AD-C, the characters, is technically complete: validated in numbered run 1 (all 65 route steps), after eight numbered scratch players and two mutation players (record in AD.10 and `Docs/Evidence/ad-c-VALIDATION.md`). Delivery commit `95c3755a`, local tag `adc-characters-validated`; checkpoint `Docs/Evidence/ad-c/checkpoint.json`; nothing pushed. Player `Builds/Windows-6000.3.21f1-adc-characters-1`; the scratch players are deleted.
+
+**Update 2026-10-22:** the user approved the characters in game ("check it good continue with the next AD"); AD-D (rooms and effects rollout) is in progress.
 
 **Exact next action:** the user looks at the characters in game (`Docs/Evidence/ad-c/PLAY.md`: the customer and employee studies show every character and its four reactions; F10 compares with the classic look). As with AD-A and AD-B, AD-D (rooms and effects rollout) should follow the user's verdict, or the revision they ask for. FX-21 stays set aside. Things to know first:
 - **Adding a character** is a role in `DioramaRoles` (`Presentation/DioramaCharacters.cs`: its kit, crew or not, shoulder and head-top heights from the kit, its squint and brow tilt) and a spec for `humanoid` in `create_diorama_kit.py`; `TheRoleTableMatchesTheKit` checks the heights against the exported kit.
@@ -3867,7 +3869,7 @@ UX-02–UX-09 (approved UI redesign) run first. AD-A can start once UX-02 (UI To
 
 - [ ] AD-A Art slice: display corner + incubator at final quality: toon shading, outlines, bloom, room Volumes, shop window lighting keys, redesigned Pondlet and Casual visitor, full hatch moment, measured cost on the user's PC. **Gate: user reviews it in game before AD-B.** *Technically complete 2026-10-22, revision `ada-slice-1` (AD.8); the user approved it in game on 2026-10-22.*
 - [ ] AD-B Creatures: family rigs, the five existing species redone, face shape keys, signature tricks, water tints, variant material atlas. *Technically complete 2026-10-22, revision `adb-creatures-2` (AD.9); the user approved them in game on 2026-10-22.*
-- [ ] AD-C Characters: one humanoid rig, four customer bodies, three crew, hands, four reactions each. *Technically complete 2026-10-22, revision `adc-characters-1` (AD.10); the user's look at them in game comes before AD-D.*
+- [ ] AD-C Characters: one humanoid rig, four customer bodies, three crew, hands, four reactions each. *Technically complete 2026-10-22, revision `adc-characters-1` (AD.10); the user approved them in game on 2026-10-22.*
 - [ ] AD-D Rooms and effects: tier set pieces, lab pipe network, slim siphon, flipbook effects and sounds everywhere.
 - [ ] AD-E Gameplay prototype: wishes, forecast, hands-on checkout, stars, tank themes, day length test. **Gate: user playtest.**
 - [ ] AD-F Content expansion: remaining species to 24 across four families and all 96 variant entries, folded into R09.3 and R09 progression gating.
