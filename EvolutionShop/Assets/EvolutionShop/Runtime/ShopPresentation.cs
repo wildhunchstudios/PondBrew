@@ -27,6 +27,47 @@ namespace EvolutionShop
             ApplyPresentationCreature();
         }
         public bool PlayPresentationTrick() => PresentationCreatures && World.PlayStudyTrick();
+        /// <summary>AD-C: the character studies' customer type and crew member (indices in DioramaRoles), and the reaction they
+        /// hold (0 none, then the role's four), with the diorama look on.</summary>
+        public int PresentationCustomer { get; private set; }
+        public int PresentationCrew { get; private set; }
+        public int PresentationReaction { get; private set; }
+        public bool PresentationCharacters => Panel==ShopPanel.Presentation && !ComedyPreview && (PresentationView==3 || PresentationView==4) && DioramaLookOn;
+        public bool PresentationCrewView => PresentationView==4;
+        public string PresentationRoleId => PresentationView==4
+            ? DioramaRoles.CrewRoles[Mathf.Clamp(PresentationCrew,0,DioramaRoles.CrewRoles.Count-1)]
+            : DioramaRoles.Customers[Mathf.Clamp(PresentationCustomer,0,DioramaRoles.Customers.Count-1)];
+        public DioramaVisitorMood PresentationMood
+        {
+            get
+            {
+                if(PresentationReaction<=0 || !DioramaRoles.TryGet(PresentationRoleId,out var role)) return DioramaVisitorMood.Content;
+                var reactions=DioramaRoles.Reactions(role);
+                return reactions[Mathf.Clamp(PresentationReaction-1,0,reactions.Count-1)];
+            }
+        }
+        void ApplyPresentationCharacter()
+        {
+            if(PresentationView!=3 && PresentationView!=4) return;
+            bool crew=PresentationView==4;
+            World.SetStudyCharacter(crew,DioramaLookOn?PresentationRoleId:crew?"cashier":"casual",DioramaLookOn?PresentationMood:DioramaVisitorMood.Content);
+        }
+        public void SelectPresentationCharacter(int index)
+        {
+            if(!PresentationCharacters) return;
+            int count=PresentationCrewView?DioramaRoles.CrewRoles.Count:DioramaRoles.Customers.Count;
+            int value=((index%count)+count)%count;
+            if(PresentationCrewView) PresentationCrew=value; else PresentationCustomer=value;
+            PresentationReaction=0;sampleClock=0;
+            ApplyPresentationCharacter();
+        }
+        /// <summary>Steps the character study through its role's four reactions and back to none.</summary>
+        public void CyclePresentationReaction()
+        {
+            if(!PresentationCharacters) return;
+            PresentationReaction=(PresentationReaction+1)%5;
+            ApplyPresentationCharacter();
+        }
         /// <summary>The studies the viewer shows (store corner, grower, Pondlet, customer, employee); their words are the UI's (study.*).</summary>
         public const int PresentationViews = 5;
         Vector3 sampleCameraPosition;
@@ -44,6 +85,7 @@ namespace EvolutionShop
             World.ToolRoot.gameObject.SetActive(false);
             PresentationView=0;PresentationPose=CharacterSamplePose.Idle;PresentationMotion=true;sampleClock=0;sampleAngle=0;
             PresentationSpecies=0;PresentationVariant=DioramaVariant.Classic;ApplyPresentationCreature();
+            PresentationCustomer=PresentationCrew=PresentationReaction=0;
             World.ShowPresentationSample(0,Player.View);
         }
         void EndPresentationView()
@@ -60,6 +102,16 @@ namespace EvolutionShop
             if(Panel!=ShopPanel.Presentation) return;
             PresentationView=Mathf.Clamp(index,0,4);sampleAngle=0;sampleClock=0;
             if(PresentationView==2) ApplyPresentationCreature();
+            if(PresentationView==3 || PresentationView==4){PresentationReaction=0;ApplyPresentationCharacter();}
+            World.ShowPresentationSample(PresentationView,Player.View);
+            World.AnimatePresentationSample(PresentationPose,sampleClock,sampleAngle);
+        }
+        /// <summary>AD-C: after the look switches with a study open, its figure or creature rebuilds as the kit or classic one.</summary>
+        void RefreshPresentationForLook()
+        {
+            if(Panel!=ShopPanel.Presentation || ComedyPreview) return;
+            if(PresentationView==2) ApplyPresentationCreature();
+            if(PresentationView==3 || PresentationView==4){if(!DioramaLookOn) PresentationReaction=0;ApplyPresentationCharacter();}
             World.ShowPresentationSample(PresentationView,Player.View);
             World.AnimatePresentationSample(PresentationPose,sampleClock,sampleAngle);
         }

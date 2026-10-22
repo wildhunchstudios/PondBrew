@@ -407,7 +407,8 @@ namespace EvolutionShop
             root.SetParent(transform, false);
             root.position = new Vector3(0, 0, 3.2f);
             Actor = root.gameObject.AddComponent<ShopCharacterVisual>();
-            Actor.Build(true);
+            // AD-C: the crew member's kit figure while the diorama look is on (always shop teal), else the classic one.
+            Actor.BuildForRole("stocker", true);
             Actor.ConfigureWorker(shop.World,ShopStaff.StockerId);
             var label = new GameObject("Nori / depth-tested name").transform;
             label.SetParent(root, false);

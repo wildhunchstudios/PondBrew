@@ -23,6 +23,7 @@ namespace EvolutionShop
         TextMesh caption;
         Renderer captionRenderer;
         Material captionMaterial, backingMaterial;
+        Transform dutySign;
         Font font;
         float elapsed, poseTime;
         bool shown;
@@ -191,6 +192,14 @@ namespace EvolutionShop
             FontAtlasRebuilt(font);
         }
 
+        /// <summary>AD-C: the duty sign rides above the figure: Pip on the step stool stands taller than the classic cashier.</summary>
+        public void FitSignToActor()
+        {
+            if (!dutySign) return;
+            float height = Actor && Actor.IsDiorama && Actor.DioramaRole != null ? Mathf.Max(2.07f, Actor.DioramaRole.HeadTop + .3f) : 2.07f;
+            dutySign.localPosition = new Vector3(0, height, .045f);
+        }
+
         void BuildActor()
         {
             // The fixed counter faces local -Z. This full-size stationary rig stands behind it,
@@ -200,12 +209,14 @@ namespace EvolutionShop
             actorRoot.position = counter.transform.TransformPoint(new Vector3(0, 0, .97f));
             actorRoot.rotation = counter.transform.rotation * Quaternion.Euler(0, 180, 0);
             Actor = actorRoot.gameObject.AddComponent<ShopCharacterVisual>();
-            Actor.Build(true);
+            // AD-C: the crew member's kit figure while the diorama look is on (always shop teal), else the classic one.
+            Actor.BuildForRole("cashier", true);
             Actor.ConfigureWorker(shop.World,ShopStaff.CashierId);
 
             var sign = new GameObject("Cashier duty sign").transform;
             sign.SetParent(actorRoot, false);
-            sign.localPosition = new Vector3(0, 2.07f, .045f);
+            dutySign = sign;
+            FitSignToActor();
             sign.localRotation = Quaternion.Euler(0, 180, 0);
             backingMaterial = ShopWorld.MakeMaterial("Cashier / sign teal", new Color(.045f, .14f, .19f));
             ShopWorld.Shape(sign, "Duty sign backing", PrimitiveType.Cube, new Vector3(0, 0, .018f),

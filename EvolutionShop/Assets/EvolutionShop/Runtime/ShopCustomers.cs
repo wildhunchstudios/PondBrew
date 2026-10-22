@@ -68,6 +68,14 @@ namespace EvolutionShop
             set => baseEffects = shop != null && shop.ValidationMode && value;
         }
         public float NextArrivalSeconds => baseEffects ? rules.NextArrivalSeconds : shop.Appeal.ArrivalSeconds(shop.Reputation);
+        bool holdVisits;
+        /// <summary>Validation only (AD-C): every visit holds its phase and timers while set, so a reaction can be shown and read
+        /// before the visit moves on; the visitors keep animating.</summary>
+        public bool HoldVisitsForValidation
+        {
+            get => holdVisits;
+            set => holdVisits = shop != null && shop.ValidationMode && value;
+        }
         void RefreshReputation()
         {
             if (effectiveCatalog != null && cachedReputation == shop.Reputation && cachedTier == shop.Reputation.Tier && cachedAppealPoints == shop.Appeal.Points && cachedBaseEffects == baseEffects) return;
@@ -137,7 +145,7 @@ namespace EvolutionShop
 
         public void Tick(float seconds)
         {
-            if (!Ready || shop.Paused || float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0) return;
+            if (!Ready || shop.Paused || float.IsNaN(seconds) || float.IsInfinity(seconds) || seconds <= 0 || holdVisits) return;
             foreach (var visitor in visitors.ToArray()) AdvanceVisitor(visitor, seconds);
             RefreshLine();
             StaggerCaptions();
@@ -453,6 +461,20 @@ namespace EvolutionShop
         }
 
         public void SetPaused(bool paused) { foreach (var visitor in visitors) if (visitor.Actor) visitor.Actor.SetPaused(paused); }
+
+        /// <summary>Validation only (AD-C): sends every visitor away now, each recorded as the shop closing on them, as the day's
+        /// report and reputation record an ordinary visit (ResetVisitors, for reloads, leaves the day's ledger to be replaced).</summary>
+        public void SendVisitorsAwayForValidation()
+        {
+            if (shop == null || !shop.ValidationMode) return;
+            foreach (var visitor in visitors.ToArray())
+            {
+                if (visitor.Visit != null && visitor.Visit.Outcome == CustomerOutcome.None) visitor.Visit.Cancel(CustomerOutcome.Closed);
+                RecordOutcome(visitor, false);
+                Remove(visitor);
+            }
+            untilArrival = rules.ArrivalDelaySeconds;
+        }
 
         public void ResetVisitors()
         {

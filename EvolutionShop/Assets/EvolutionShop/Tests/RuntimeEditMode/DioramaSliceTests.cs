@@ -316,7 +316,8 @@ namespace EvolutionShop.Tests
             Assert.That(manifest, Does.Contain("\"external_sources\": []"));
             using (var sha = SHA256.Create())
                 foreach (var file in new[] { "DioramaPondlet.fbx", "DioramaBubblebelly.fbx", "DioramaRibbonfin.fbx", "DioramaLanternfin.fbx",
-                    "DioramaDriftwing.fbx", "DioramaCasualVisitor.fbx", "DioramaFlipbook.png", "DioramaVariantAtlas.png" })
+                    "DioramaDriftwing.fbx", "DioramaCasualVisitor.fbx", "DioramaBargainVisitor.fbx", "DioramaCollectorVisitor.fbx",
+                    "DioramaPremiumVisitor.fbx", "DioramaCrewCashier.fbx", "DioramaCrewStocker.fbx", "DioramaCrewTechnician.fbx", "DioramaFlipbook.png", "DioramaVariantAtlas.png" })
                 {
                     var bytes = File.ReadAllBytes(Path.Combine(Application.dataPath, "EvolutionShop", "Resources", "Art", "DioramaKit", file));
                     string hash = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant();

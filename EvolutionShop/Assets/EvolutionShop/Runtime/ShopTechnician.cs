@@ -488,7 +488,8 @@ namespace EvolutionShop
             root.SetParent(transform, false);
             root.position = new Vector3(0, 0, 4.4f);
             Actor = root.gameObject.AddComponent<ShopCharacterVisual>();
-            Actor.Build(true);
+            // AD-C: the crew member's kit figure while the diorama look is on (always shop teal), else the classic one.
+            Actor.BuildForRole("technician", true);
             Actor.ConfigureWorker(shop.World,ShopStaff.TechnicianId);
             var label = new GameObject("Moss / depth-tested name").transform;
             label.SetParent(root, false);

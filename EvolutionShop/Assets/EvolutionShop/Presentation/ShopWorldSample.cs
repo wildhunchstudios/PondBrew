@@ -100,12 +100,8 @@ namespace EvolutionShop
             sampleFigure=Group("Turntable",sampleStage,new Vector3(0,.12f,0));
             RebuildStudyCreature();
             fishPedestal=Shape(sampleFigure,"Specimen study pedestal",PrimitiveType.Cylinder,new Vector3(0,.20f,0),new Vector3(.80f,.20f,.80f),dark);
-            customerStudy=Group("Casual customer study",sampleFigure,Vector3.zero);
-            customerStudy.localRotation=Quaternion.Euler(0,180,0);
-            studyCustomer=customerStudy.gameObject.AddComponent<ShopCharacterVisual>();studyCustomer.Build(false);
-            employeeStudy=Group("Employee study / no jobs or wages",sampleFigure,Vector3.zero);
-            employeeStudy.localRotation=Quaternion.Euler(0,180,0);
-            studyEmployee=employeeStudy.gameObject.AddComponent<ShopCharacterVisual>();studyEmployee.Build(true);
+            RebuildStudyCharacter(false);
+            RebuildStudyCharacter(true);
             sampleStage.gameObject.SetActive(false);
         }
         void RebuildStudyCreature()
@@ -145,6 +141,35 @@ namespace EvolutionShop
             if(studySpecies=="pondlet" && dioramaCamera) DioramaTrickBubble(studyFish,dioramaCamera.transform.position);
             return true;
         }
+        // AD-C: the character studies show every customer type and crew member with the look on, holding a chosen reaction.
+        string studyCustomerRole="casual",studyCrewRole="cashier";
+        DioramaVisitorMood studyMood;
+        float studyFaceTime;
+        void RebuildStudyCharacter(bool crew)
+        {
+            var old=crew?employeeStudy:customerStudy;
+            bool shown=old && old.gameObject.activeSelf;
+            if(old){old.gameObject.SetActive(false);Destroy(old.gameObject);}
+            var group=Group(crew?"Employee study / no jobs or wages":(studyCustomerRole=="casual"?"Casual customer study":"Customer study"),sampleFigure,Vector3.zero);
+            group.localRotation=Quaternion.Euler(0,180,0);
+            var figure=group.gameObject.AddComponent<ShopCharacterVisual>();
+            figure.BuildForRole(crew?studyCrewRole:studyCustomerRole,crew);
+            if(crew){employeeStudy=group;studyEmployee=figure;}else{customerStudy=group;studyCustomer=figure;}
+            group.gameObject.SetActive(shown);
+        }
+        /// <summary>AD-C: the character study's role (a customer type, or a crew member) and the reaction it holds.</summary>
+        public void SetStudyCharacter(bool crew,string role,DioramaVisitorMood mood)
+        {
+            if(string.IsNullOrEmpty(role)) return;
+            BuildSampleStage();
+            var figure=crew?studyEmployee:studyCustomer;
+            bool rebuild=role!=(crew?studyCrewRole:studyCustomerRole) || !figure || figure.IsDiorama!=DioramaLook.Active;
+            if(crew) studyCrewRole=role; else studyCustomerRole=role;
+            studyMood=mood;
+            if(rebuild) RebuildStudyCharacter(crew);
+        }
+        public ShopCharacterVisual StudyCharacterForValidation(bool crew)=>crew?studyEmployee:studyCustomer;
+        public DioramaVisitorMood StudyMoodForValidation=>studyMood;
         public string StudySpeciesForValidation => studySpecies;
         public CreatureVisual StudyCreatureForValidation => studyFish;
         public float StudyTrickAgeForValidation => studyTrickAge;
@@ -156,6 +181,9 @@ namespace EvolutionShop
             if(sampleView==2 && studyBuiltDiorama!=DioramaLook.Active) SetStudyCreature(DioramaLook.Active?studySpecies:"pondlet",studyVariant);
             sampleStage.gameObject.SetActive(sampleView>=2);
             pondletStudy.gameObject.SetActive(sampleView==2);fishPedestal.gameObject.SetActive(sampleView==2);
+            // The character studies follow the look too: the role's kit figure while it is on, the first ones while it is off.
+            if(sampleView==3 && studyCustomer && studyCustomer.IsDiorama!=DioramaLook.Active) RebuildStudyCharacter(false);
+            if(sampleView==4 && studyEmployee && studyEmployee.IsDiorama!=DioramaLook.Active) RebuildStudyCharacter(true);
             customerStudy.gameObject.SetActive(sampleView==3);employeeStudy.gameObject.SetActive(sampleView==4);
             Vector3 eye,look;
             if(sampleView==0){eye=sampleTank.TransformPoint(new Vector3(-.7f,1.90f,-3.65f));look=sampleTank.TransformPoint(new Vector3(0,1.16f,.3f));}
@@ -172,8 +200,13 @@ namespace EvolutionShop
             if(fxReducedMotion) time=0;
             sampleFigure.localRotation=Quaternion.Euler(0,angle,0);
             if(sampleView==2) AnimateStudyCreature(time);
-            else if(sampleView==3) studyCustomer.Pose(pose,time);
-            else if(sampleView==4) studyEmployee.Pose(pose,time);
+            else if(sampleView==3 || sampleView==4)
+            {
+                var figure=sampleView==3?studyCustomer:studyEmployee;
+                figure.Pose(pose,time);
+                float dt=Mathf.Clamp(time-studyFaceTime,0,.25f);studyFaceTime=time;
+                if(figure.IsDiorama) figure.TickDioramaFace(studyMood,dt<=0?Time.unscaledDeltaTime:dt,fxReducedMotion);
+            }
         }
         void AnimateStudyCreature(float time)
         {

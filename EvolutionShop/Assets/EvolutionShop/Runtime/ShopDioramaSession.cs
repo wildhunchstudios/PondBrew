@@ -15,7 +15,8 @@ namespace EvolutionShop
         void InitializeDiorama()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            bool asked = Arg("-evolutionDiorama") != null || Arg("-evolutionDioramaSliceSmoke") != null || Arg("-evolutionDioramaCreaturesSmoke") != null;
+            bool asked = Arg("-evolutionDiorama") != null || Arg("-evolutionDioramaSliceSmoke") != null || Arg("-evolutionDioramaCreaturesSmoke") != null ||
+                Arg("-evolutionDioramaCharactersSmoke") != null;
             bool refused = Arg("-evolutionDioramaOff") != null;
             if (!refused && (asked || !ValidationMode)) SetDioramaLook(true);
 #endif
@@ -26,6 +27,12 @@ namespace EvolutionShop
         {
             if (!World || !Player) return;
             World.SetDioramaLook(on, Player.View);
+            // AD-C: the crew stay in the shop, so they rebuild in place as the kit or the classic figure (customers already
+            // in the shop keep the look they arrived with until they leave).
+            foreach (var actor in new[] { Cashier ? Cashier.Actor : null, Stocker ? Stocker.Actor : null, Technician ? Technician.Actor : null })
+                if (actor) actor.RebuildForLook();
+            if (Cashier) Cashier.FitSignToActor();
+            RefreshPresentationForLook();
             TickDioramaClock();
         }
 

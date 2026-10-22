@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families)",
+  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters)",
   "origin": {
     "author": "Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)",
     "external_sources": [],
@@ -10,7 +10,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_diorama_kit.py",
-  "source_script_sha256": "f2e88133063a5ade726b8f0c50b4b3a389d1ec7f61f161ae564b3a0bc01ea6f1",
+  "source_script_sha256": "f14f5943e3c7e05179808d37b3d32ffdd3c9c7d2ec967d9d9fcefb4d915c61b6",
   "blend_source": "ArtSource/DioramaKit/EvolutionShop_DioramaKit.blend",
   "scale": "1 unit = 1 metre",
   "up": "Unity +Y",
@@ -20,7 +20,92 @@
     "DioramaRibbonfin": "local -Z (creature)",
     "DioramaLanternfin": "local -Z (creature)",
     "DioramaDriftwing": "local -Z (creature)",
-    "DioramaCasualVisitor": "local +Z (character)"
+    "DioramaCasualVisitor": "local +Z (character)",
+    "DioramaBargainVisitor": "local +Z (character)",
+    "DioramaCollectorVisitor": "local +Z (character)",
+    "DioramaPremiumVisitor": "local +Z (character)",
+    "DioramaCrewCashier": "local +Z (character)",
+    "DioramaCrewStocker": "local +Z (character)",
+    "DioramaCrewTechnician": "local +Z (character)"
+  },
+  "characters": [
+    {
+      "role": "casual",
+      "asset": "DioramaCasualVisitor",
+      "crew": false
+    },
+    {
+      "role": "bargain",
+      "asset": "DioramaBargainVisitor",
+      "crew": false
+    },
+    {
+      "role": "collector",
+      "asset": "DioramaCollectorVisitor",
+      "crew": false
+    },
+    {
+      "role": "premium",
+      "asset": "DioramaPremiumVisitor",
+      "crew": false
+    },
+    {
+      "role": "cashier",
+      "asset": "DioramaCrewCashier",
+      "crew": true
+    },
+    {
+      "role": "stocker",
+      "asset": "DioramaCrewStocker",
+      "crew": true
+    },
+    {
+      "role": "technician",
+      "asset": "DioramaCrewTechnician",
+      "crew": true
+    }
+  ],
+  "humanoid_rig": {
+    "joints": [
+      "Left hip",
+      "Right hip",
+      "Left shoulder",
+      "Right shoulder",
+      "Head pivot"
+    ],
+    "head_parts": [
+      "Head",
+      "Eyes",
+      "Pupils",
+      "Glints",
+      "Lids",
+      "Blush",
+      "Mouth",
+      "Left brow pivot",
+      "Right brow pivot"
+    ],
+    "face": {
+      "Lids": [
+        "Blink"
+      ],
+      "Mouth": [
+        "Happy",
+        "Haggle",
+        "Shocked",
+        "Ouch"
+      ]
+    },
+    "parts": [
+      "Body"
+    ],
+    "crew_parts": [
+      "Carry crate"
+    ],
+    "cashier_parts": [
+      "Step stool"
+    ],
+    "step_stool_m": 0.3,
+    "notes": "One rig and one builder for every character; roles differ by proportions, outfit, props and colours. Crew wear shop teal; customers never do."
   },
   "families": {
     "Brookkin": "river fish: pouty lips, round fins",
@@ -290,7 +375,7 @@
     "shape_keys": true,
     "modifiers": "none (shape keys require unmodified meshes)",
     "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly",
-    "hierarchy": "every part directly under the asset root and its own pivot; the visitor face parts are reparented onto Head pivot in game"
+    "hierarchy": "every part directly under the asset root and its own pivot; the characters' head parts are reparented onto Head pivot, and the crew's Carry crate onto the parcel socket, in game"
   },
   "unity_import_expected": {
     "globalScale": 1,
@@ -345,6 +430,138 @@
     },
     "DK_Button": {
       "srgb_hex": "#D66145"
+    },
+    "DK_Gold": {
+      "srgb_hex": "#D9B04A"
+    },
+    "DK_Lens": {
+      "srgb_hex": "#CFEFF2"
+    },
+    "DK_BargainKnit": {
+      "srgb_hex": "#6E9B4A"
+    },
+    "DK_BargainScarf": {
+      "srgb_hex": "#E8B83A"
+    },
+    "DK_BargainTrousers": {
+      "srgb_hex": "#6B4E32"
+    },
+    "DK_BargainShoes": {
+      "srgb_hex": "#3A2A1E"
+    },
+    "DK_BargainSkin": {
+      "srgb_hex": "#E3AE88"
+    },
+    "DK_BargainHair": {
+      "srgb_hex": "#8C5A2B"
+    },
+    "DK_BargainCap": {
+      "srgb_hex": "#C98F3A"
+    },
+    "DK_BargainPurse": {
+      "srgb_hex": "#C8553D"
+    },
+    "DK_CollectorCoat": {
+      "srgb_hex": "#7A4A8C"
+    },
+    "DK_CollectorTrousers": {
+      "srgb_hex": "#2E2638"
+    },
+    "DK_CollectorShoes": {
+      "srgb_hex": "#1E1A22"
+    },
+    "DK_CollectorSkin": {
+      "srgb_hex": "#7A4E33"
+    },
+    "DK_CollectorHair": {
+      "srgb_hex": "#D8D2C8"
+    },
+    "DK_CollectorHat": {
+      "srgb_hex": "#2A2230"
+    },
+    "DK_CollectorBow": {
+      "srgb_hex": "#C9473F"
+    },
+    "DK_CollectorHandle": {
+      "srgb_hex": "#6B3F2A"
+    },
+    "DK_PremiumCoat": {
+      "srgb_hex": "#EDE3CC"
+    },
+    "DK_PremiumTrim": {
+      "srgb_hex": "#2B2B33"
+    },
+    "DK_PremiumTrousers": {
+      "srgb_hex": "#1E1E24"
+    },
+    "DK_PremiumShoes": {
+      "srgb_hex": "#141418"
+    },
+    "DK_PremiumSkin": {
+      "srgb_hex": "#C08A63"
+    },
+    "DK_PremiumHair": {
+      "srgb_hex": "#2B2118"
+    },
+    "DK_PremiumHat": {
+      "srgb_hex": "#18181C"
+    },
+    "DK_PremiumBag": {
+      "srgb_hex": "#E8C25A"
+    },
+    "DK_PremiumFlower": {
+      "srgb_hex": "#E8628C"
+    },
+    "DK_CrewTeal": {
+      "srgb_hex": "#1F7A72"
+    },
+    "DK_CrewCream": {
+      "srgb_hex": "#F4E9CF"
+    },
+    "DK_CrewBadge": {
+      "srgb_hex": "#E8664F"
+    },
+    "DK_CrewTrousers": {
+      "srgb_hex": "#33404D"
+    },
+    "DK_CrewShoes": {
+      "srgb_hex": "#3B2A22"
+    },
+    "DK_PipSkin": {
+      "srgb_hex": "#D09466"
+    },
+    "DK_PipHair": {
+      "srgb_hex": "#3B2A22"
+    },
+    "DK_Pencil": {
+      "srgb_hex": "#F2C14E"
+    },
+    "DK_Stool": {
+      "srgb_hex": "#C98F52"
+    },
+    "DK_NoriSkin": {
+      "srgb_hex": "#8A5A3C"
+    },
+    "DK_NoriHair": {
+      "srgb_hex": "#1E1612"
+    },
+    "DK_NoriGlove": {
+      "srgb_hex": "#C9A06A"
+    },
+    "DK_MossSkin": {
+      "srgb_hex": "#F0C8A0"
+    },
+    "DK_MossHair": {
+      "srgb_hex": "#5E8F3A"
+    },
+    "DK_MossGoggle": {
+      "srgb_hex": "#2B3B4F"
+    },
+    "DK_Crate": {
+      "srgb_hex": "#C99A62"
+    },
+    "DK_CrateSlat": {
+      "srgb_hex": "#A87A48"
     },
     "DK_PondletBody": {
       "srgb_hex": "#FF6F57"
@@ -445,7 +662,7 @@
       },
       "id": "DioramaPondlet",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaPondlet.fbx",
-      "sha256": "16081f4d146e7a583a3b62b02b55f64add56887857634aa2c7e8887e698773d6",
+      "sha256": "645f4935483cd0f33862d8d416566900455e7057d8c10f1d5fdc603f11659cee",
       "bytes": 224284,
       "objects": [
         "Blush",
@@ -507,7 +724,7 @@
       },
       "id": "DioramaBubblebelly",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaBubblebelly.fbx",
-      "sha256": "76f69cc4b4d2d126bf595d338684a0123bb01872dfd5f32fe9ae06ee60523d7f",
+      "sha256": "2052945da21d1aac6e953a9975b6d2b51d5e543b3ed5999cd2c13539d47b76b9",
       "bytes": 220972,
       "objects": [
         "Blush",
@@ -569,7 +786,7 @@
       },
       "id": "DioramaRibbonfin",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaRibbonfin.fbx",
-      "sha256": "74d5ea0f2356ab51e01b88f409f357353a794cd0d558d70eb2eb049e2497692b",
+      "sha256": "d3f6f96cf3f0f344fca743e4f3659ea235e4e374df67449b97f07a190418a1ed",
       "bytes": 220892,
       "objects": [
         "Blush",
@@ -631,7 +848,7 @@
       },
       "id": "DioramaLanternfin",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaLanternfin.fbx",
-      "sha256": "33a1ed4b83ca4351f2dbc387016c3697eb820dbc8e7acb80f33b59dd4919c2bb",
+      "sha256": "5b1d6c711f1500fa669a28ad13b037b44d02bf97ea699b2821789a2838db9b18",
       "bytes": 209708,
       "objects": [
         "Blush",
@@ -694,7 +911,7 @@
       },
       "id": "DioramaDriftwing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaDriftwing.fbx",
-      "sha256": "08f801dadf1501e8d58deebc9459f9f97a14164fa44757b4a1bf869ac40d29cf",
+      "sha256": "e67ec7f8fcfa0c4978bf0f09928e9629c26148f0e3740ce092cb9e4c9d9c329d",
       "bytes": 234380,
       "objects": [
         "Blush",
@@ -756,7 +973,7 @@
       },
       "id": "DioramaCasualVisitor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCasualVisitor.fbx",
-      "sha256": "0ca5d95d69b41bb5e07cb0400d6677d49156957d4b3b2e2e731edf5628549987",
+      "sha256": "fef44805242ed5c8f76c72d4b6d8efa79968c0987976b5079e3dee23320e6560",
       "bytes": 298332,
       "objects": [
         "Blush",
@@ -802,6 +1019,431 @@
         "DK_Skin",
         "DK_Tote",
         "DK_Trousers"
+      ]
+    },
+    {
+      "triangles": 17788,
+      "vertices": 8970,
+      "bounds_unity_m": {
+        "min": [
+          -0.3850000202655792,
+          0.0,
+          -0.3700000047683716
+        ],
+        "max": [
+          0.3850000202655792,
+          1.8450000286102295,
+          0.39873480796813965
+        ],
+        "size": [
+          0.7700000405311584,
+          1.8450000286102295,
+          0.7687348127365112
+        ]
+      },
+      "id": "DioramaBargainVisitor",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaBargainVisitor.fbx",
+      "sha256": "ad75ef68fe31fae2d75215b9c9e347ffd262491ccf1818975a8f527ef5cd110f",
+      "bytes": 314108,
+      "objects": [
+        "Blush",
+        "Body",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_BargainCap",
+        "DK_BargainHair",
+        "DK_BargainKnit",
+        "DK_BargainPurse",
+        "DK_BargainScarf",
+        "DK_BargainShoes",
+        "DK_BargainSkin",
+        "DK_BargainTrousers",
+        "DK_Blush",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 19096,
+      "vertices": 9638,
+      "bounds_unity_m": {
+        "min": [
+          -0.4099999964237213,
+          0.0,
+          -0.38999998569488525
+        ],
+        "max": [
+          0.4099999964237213,
+          1.71999990940094,
+          0.38999998569488525
+        ],
+        "size": [
+          0.8199999928474426,
+          1.71999990940094,
+          0.7799999713897705
+        ]
+      },
+      "id": "DioramaCollectorVisitor",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCollectorVisitor.fbx",
+      "sha256": "de840f9e91805ab80901ff418359c2d0e7392e35cf77944239d727aae3fbd10e",
+      "bytes": 332028,
+      "objects": [
+        "Blush",
+        "Body",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_Blush",
+        "DK_Collar",
+        "DK_CollectorBow",
+        "DK_CollectorCoat",
+        "DK_CollectorHair",
+        "DK_CollectorHandle",
+        "DK_CollectorHat",
+        "DK_CollectorShoes",
+        "DK_CollectorSkin",
+        "DK_CollectorTrousers",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Lens",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 18576,
+      "vertices": 9382,
+      "bounds_unity_m": {
+        "min": [
+          -0.4880000054836273,
+          0.0,
+          -0.3700000047683716
+        ],
+        "max": [
+          0.5049999952316284,
+          1.9300000667572021,
+          0.3539971113204956
+        ],
+        "size": [
+          0.9930000007152557,
+          1.9300000667572021,
+          0.7239971160888672
+        ]
+      },
+      "id": "DioramaPremiumVisitor",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaPremiumVisitor.fbx",
+      "sha256": "914b692f9c2a206945f8880baa2bfc0b93b6ff732018bcd881bb3fef6c9b5668",
+      "bytes": 322348,
+      "objects": [
+        "Blush",
+        "Body",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_Blush",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Mouth",
+        "DK_PremiumBag",
+        "DK_PremiumCoat",
+        "DK_PremiumFlower",
+        "DK_PremiumHair",
+        "DK_PremiumHat",
+        "DK_PremiumShoes",
+        "DK_PremiumSkin",
+        "DK_PremiumTrim",
+        "DK_PremiumTrousers",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 18104,
+      "vertices": 9144,
+      "bounds_unity_m": {
+        "min": [
+          -0.3930000066757202,
+          -2.086162576020456e-09,
+          -0.375
+        ],
+        "max": [
+          0.3930000066757202,
+          1.9600000381469727,
+          0.45399996638298035
+        ],
+        "size": [
+          0.7860000133514404,
+          1.9600000402331352,
+          0.8289999663829803
+        ]
+      },
+      "id": "DioramaCrewCashier",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCrewCashier.fbx",
+      "sha256": "5b9138fe901e1f85931d6ab27f14364fb429868c3a6693afbefeef38683659d8",
+      "bytes": 320588,
+      "objects": [
+        "Blush",
+        "Body",
+        "Carry crate",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder",
+        "Step stool"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_Blush",
+        "DK_Crate",
+        "DK_CrateSlat",
+        "DK_CrewBadge",
+        "DK_CrewCream",
+        "DK_CrewShoes",
+        "DK_CrewTeal",
+        "DK_CrewTrousers",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pencil",
+        "DK_PipHair",
+        "DK_PipSkin",
+        "DK_Pupil",
+        "DK_Stool"
+      ]
+    },
+    {
+      "triangles": 16800,
+      "vertices": 8486,
+      "bounds_unity_m": {
+        "min": [
+          -0.42800000309944153,
+          -0.0020000040531158447,
+          -0.3762499988079071
+        ],
+        "max": [
+          0.42800000309944153,
+          1.7549998760223389,
+          0.45399996638298035
+        ],
+        "size": [
+          0.8560000061988831,
+          1.7569998800754547,
+          0.8302499651908875
+        ]
+      },
+      "id": "DioramaCrewStocker",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCrewStocker.fbx",
+      "sha256": "9ff96599113b7584de3e196d3eeeab6904ff5f6d63e2735738dc58549355ff3f",
+      "bytes": 298828,
+      "objects": [
+        "Blush",
+        "Body",
+        "Carry crate",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_Blush",
+        "DK_Crate",
+        "DK_CrateSlat",
+        "DK_CrewBadge",
+        "DK_CrewCream",
+        "DK_CrewShoes",
+        "DK_CrewTeal",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_NoriGlove",
+        "DK_NoriHair",
+        "DK_NoriSkin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 18904,
+      "vertices": 9550,
+      "bounds_unity_m": {
+        "min": [
+          -0.3850000202655792,
+          0.0,
+          -0.3649999797344208
+        ],
+        "max": [
+          0.3850000202655792,
+          1.8200000524520874,
+          0.45399996638298035
+        ],
+        "size": [
+          0.7700000405311584,
+          1.8200000524520874,
+          0.8189999461174011
+        ]
+      },
+      "id": "DioramaCrewTechnician",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCrewTechnician.fbx",
+      "sha256": "8e532b5e46c00cd2e749ed0adcb9883801f8efbdbc2ef05487bc0e12a0fd6b0e",
+      "bytes": 331884,
+      "objects": [
+        "Blush",
+        "Body",
+        "Carry crate",
+        "Eyes",
+        "Glints",
+        "Head",
+        "Head pivot",
+        "Left brow pivot",
+        "Left hip",
+        "Left shoulder",
+        "Lids",
+        "Mouth",
+        "Pupils",
+        "Right brow pivot",
+        "Right hip",
+        "Right shoulder"
+      ],
+      "shape_keys": {
+        "Lids": [
+          "Blink"
+        ],
+        "Mouth": [
+          "Happy",
+          "Haggle",
+          "Shocked",
+          "Ouch"
+        ]
+      },
+      "material_slots": [
+        "DK_Blush",
+        "DK_Crate",
+        "DK_CrateSlat",
+        "DK_CrewBadge",
+        "DK_CrewCream",
+        "DK_CrewShoes",
+        "DK_CrewTeal",
+        "DK_CrewTrousers",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Lens",
+        "DK_MossGoggle",
+        "DK_MossHair",
+        "DK_MossSkin",
+        "DK_Mouth",
+        "DK_Pupil"
       ]
     }
   ],
@@ -864,11 +1506,24 @@
     "ArtSource/DioramaKit/DioramaKit_Lanternfin_Side.png",
     "ArtSource/DioramaKit/DioramaKit_Driftwing_Front.png",
     "ArtSource/DioramaKit/DioramaKit_Driftwing_Side.png",
+    "ArtSource/DioramaKit/DioramaKit_Characters_Front.png",
     "ArtSource/DioramaKit/DioramaKit_Casual_Front.png",
-    "ArtSource/DioramaKit/DioramaKit_Casual_Face.png"
+    "ArtSource/DioramaKit/DioramaKit_Casual_Face.png",
+    "ArtSource/DioramaKit/DioramaKit_Bargain_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Bargain_Face.png",
+    "ArtSource/DioramaKit/DioramaKit_Collector_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Collector_Face.png",
+    "ArtSource/DioramaKit/DioramaKit_Premium_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Premium_Face.png",
+    "ArtSource/DioramaKit/DioramaKit_CrewCashier_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_CrewCashier_Face.png",
+    "ArtSource/DioramaKit/DioramaKit_CrewStocker_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_CrewStocker_Face.png",
+    "ArtSource/DioramaKit/DioramaKit_CrewTechnician_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_CrewTechnician_Face.png"
   ],
   "validation_limits": [
     "Workbench review renders show shape and colour only, not the in-game toon shading, outline or bloom.",
-    "In-game scale, fit inside containers and posing are verified by the AD-A and AD-B routes, not here."
+    "In-game scale, fit inside containers and posing are verified by the AD-A, AD-B and AD-C routes, not here."
   ]
 }

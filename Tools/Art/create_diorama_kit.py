@@ -1,9 +1,10 @@
-"""Original Evolution Shop Pocket Aquarium Diorama kit (AD-A). Blender 5.0, no external assets or add-ons.
+"""Original Evolution Shop Pocket Aquarium Diorama kit (AD-A to AD-C). Blender 5.0, no external assets or add-ons.
 
 Run: blender --background --factory-startup --python create_diorama_kit.py -- --repo C:/dev/DumbVideoGameStudio
 
-Builds the redesigned Pondlet and Casual visitor as rigid parts on named pivots (so the game's existing
-pose code drives them) with face shape keys, plus the six hand-drawn effect shapes as one flipbook sheet.
+Builds the five creature species on their family rigs (AD-B) and the seven characters on one humanoid rig (AD-C: the four
+customer types and the three crew) as rigid parts on named pivots (so the game's existing pose code drives them) with face
+shape keys, plus the six hand-drawn effect shapes as one flipbook sheet and the creatures' colour variant atlas.
 Everything is generated from the numbers below; nothing is imported.
 
 Authoring helpers take Unity coordinates (X right, Y up, Z forward, left-handed) and reflect them into
@@ -52,7 +53,20 @@ PALETTE = {
     'DK_Blush': 'FF9EA0', 'DK_EyeWhite': 'FFFFFF', 'DK_Pupil': '1B413E', 'DK_Glint': 'FFFFFF',
     'DK_CasualKnit': 'F08A3C', 'DK_Collar': 'FFF6DF', 'DK_Trousers': '2B3B4F', 'DK_Shoes': '3B2A22',
     'DK_Skin': 'B9774E', 'DK_Beret': '1B2B33', 'DK_Nub': 'D66145', 'DK_Tote': 'E9D6A8', 'DK_Hair': '3B2A22',
-    'DK_Mouth': '5A1F22', 'DK_Button': 'D66145',
+    'DK_Mouth': '5A1F22', 'DK_Button': 'D66145', 'DK_Gold': 'D9B04A', 'DK_Lens': 'CFEFF2',
+    # AD-C: the other three customers (never teal) and the crew (always shop teal).
+    'DK_BargainKnit': '6E9B4A', 'DK_BargainScarf': 'E8B83A', 'DK_BargainTrousers': '6B4E32', 'DK_BargainShoes': '3A2A1E',
+    'DK_BargainSkin': 'E3AE88', 'DK_BargainHair': '8C5A2B', 'DK_BargainCap': 'C98F3A', 'DK_BargainPurse': 'C8553D',
+    'DK_CollectorCoat': '7A4A8C', 'DK_CollectorTrousers': '2E2638', 'DK_CollectorShoes': '1E1A22', 'DK_CollectorSkin': '7A4E33',
+    'DK_CollectorHair': 'D8D2C8', 'DK_CollectorHat': '2A2230', 'DK_CollectorBow': 'C9473F', 'DK_CollectorHandle': '6B3F2A',
+    'DK_PremiumCoat': 'EDE3CC', 'DK_PremiumTrim': '2B2B33', 'DK_PremiumTrousers': '1E1E24', 'DK_PremiumShoes': '141418',
+    'DK_PremiumSkin': 'C08A63', 'DK_PremiumHair': '2B2118', 'DK_PremiumHat': '18181C', 'DK_PremiumBag': 'E8C25A',
+    'DK_PremiumFlower': 'E8628C',
+    'DK_CrewTeal': '1F7A72', 'DK_CrewCream': 'F4E9CF', 'DK_CrewBadge': 'E8664F', 'DK_CrewTrousers': '33404D', 'DK_CrewShoes': '3B2A22',
+    'DK_PipSkin': 'D09466', 'DK_PipHair': '3B2A22', 'DK_Pencil': 'F2C14E', 'DK_Stool': 'C98F52',
+    'DK_NoriSkin': '8A5A3C', 'DK_NoriHair': '1E1612', 'DK_NoriGlove': 'C9A06A',
+    'DK_MossSkin': 'F0C8A0', 'DK_MossHair': '5E8F3A', 'DK_MossGoggle': '2B3B4F',
+    'DK_Crate': 'C99A62', 'DK_CrateSlat': 'A87A48',
 }
 
 # AD-B: the creature families and the colour variant atlas. Species keep their order here forever (the atlas rows and the
@@ -300,6 +314,7 @@ def tube(part, points, radius, material, sides=10):
 
 # ---------------------------------------------------------------- objects, pivots and shape keys
 RECORDS = []
+LIFT = Vector((0, 0, 0))
 
 def make_object(part, root, pivot=(0, 0, 0), name=None):
     """Mesh object directly under the root whose origin is the pivot (Unity space); vertices are in root space."""
@@ -318,7 +333,7 @@ def make_object(part, root, pivot=(0, 0, 0), name=None):
     obj = bpy.data.objects.new(name or part.name, me)
     COLLECTION.objects.link(obj)
     obj.parent = root
-    obj.location = u(px)
+    obj.location = u(px + LIFT)
     return obj
 
 def empty(name, pivot=(0, 0, 0), root=None):
@@ -328,7 +343,7 @@ def empty(name, pivot=(0, 0, 0), root=None):
     obj.empty_display_size = .05
     if root is not None:
         obj.parent = root
-    obj.location = u(Vector(pivot))
+    obj.location = u(Vector(pivot) + (LIFT if root is not None else Vector((0, 0, 0))))
     return obj
 
 def shape_key(obj, part, name, fn, indices=None, pivot=(0, 0, 0)):
@@ -627,7 +642,14 @@ def driftwing():
 CREATURE_BUILDERS = {'pondlet': pondlet, 'bubblebelly': bubblebelly, 'ribbonfin': ribbonfin, 'lanternfin': lanternfin,
                      'driftwing': driftwing}
 
-# ================================================================ Casual visitor (front +Z)
+# ================================================================ AD-C: the humanoid rig (front +Z)
+# One rig for every character, customers and crew alike: Left/Right hip (a leg and its shoe), Body (the torso and its outfit),
+# Left/Right shoulder (a sleeve, a mitten hand with a thumb, and anything held), Head pivot, and the head's parts: Head (with its
+# hair, hat and face props), Eyes, Pupils, Glints, Lids (Blink), Blush, Mouth (Happy, Haggle, Shocked, Ouch) and the Left/Right
+# brow pivots. The game reparents the head's parts onto Head pivot (ShopCharacterVisual.DioramaHeadParts) and drives every role
+# through the same joints, face and poses. Roles differ by proportions, outfit, props and colours (AD.4: Casual round, Bargain
+# tall and thin, Collector pear, Big spender a wide coat); the Casual is AD-A's visitor, built from the same numbers. Crew always
+# wear shop teal and carry a Carry crate on the parcel socket; customers never wear teal.
 def catmull(points, t):
     """Piecewise Catmull-Rom through (y, r) points, sampled at normalized t."""
     n = len(points) - 1
@@ -635,79 +657,86 @@ def catmull(points, t):
     p0 = points[max(i - 1, 0)][1]; p1 = points[i][1]; p2 = points[i + 1][1]; p3 = points[min(i + 2, n)][1]
     return .5 * ((2 * p1) + (-p0 + p2) * s + (2 * p0 - 5 * p1 + 4 * p2 - p3) * s * s + (-p0 + 3 * p1 - 3 * p2 + p3) * s ** 3)
 
-def casual():
-    root = empty('DioramaCasualVisitor')
-    root['front'] = 'character local +Z'
-    # Short trousered legs; each leg mesh is the hip joint the walk code swings.
+def char_legs(root, s, slots):
+    """Short trousered legs; each leg mesh is the hip joint the walk code swings."""
     for side, label in ((-1, 'Left'), (1, 'Right')):
-        hip = (side * .11, .40, 0)
+        hip = (side * s['hip_x'], s['hip_y'], 0)
         leg = Part(label + ' leg')
-        ellipsoid(leg, (hip[0], hip[1] - .15, 0), (.095, .175, .10), 'DK_Trousers', (0, 0, 0), 20, 12)
-        ellipsoid(leg, (hip[0], hip[1] - .33, .045), (.105, .072, .155), 'DK_Shoes', (0, 0, 0), 20, 10, 1.6)
+        dy, r = s['thigh']
+        ellipsoid(leg, (hip[0], hip[1] + dy, 0), r, slots['trousers'], (0, 0, 0), 20, 12)
+        dy, r, dz = s['shoe']
+        ellipsoid(leg, (hip[0], hip[1] + dy, dz), r, slots['shoes'], (0, 0, 0), 20, 10, 1.6)
         make_object(leg, root, hip, label + ' hip')
-    # Round knit body: an egg with a cream collar, coral buttons and a patch pocket.
+
+def char_body(root, s, slots, outfit):
+    """The torso, lathed from a (y, radius) profile and squashed front to back by depth; outfit(body, first_face, front)
+    adds collars, buttons and the rest, front(y) being the surface's distance in front of the axis at height y."""
     body = Part('Body')
-    radius = [(.30, .02), (.33, .2), (.40, .285), (.50, .32), (.62, .325), (.74, .30), (.85, .25), (.93, .17), (.97, .07)]
-    y0, y1 = .30, .98
+    radius, (y0, y1), depth = s['profile'], s['body_y'], s.get('depth', .8)
     seg, rings = 36, 28
     verts = [(0, y0, 0)]
     for r in range(1, rings):
         t = r / rings
         y = y0 + (y1 - y0) * t
         rr = catmull(radius, (y - radius[0][0]) / (radius[-1][0] - radius[0][0]))
-        for s in range(seg):
-            a = math.tau * s / seg
-            verts.append((rr * math.cos(a), y, rr * .8 * math.sin(a)))
+        for k in range(seg):
+            a = math.tau * k / seg
+            verts.append((rr * math.cos(a), y, rr * depth * math.sin(a)))
     verts.append((0, y1, 0))
     faces = []
-    for s in range(seg):
-        faces.append((0, 1 + (s + 1) % seg, 1 + s))
+    for k in range(seg):
+        faces.append((0, 1 + (k + 1) % seg, 1 + k))
     for r in range(rings - 2):
         a, b = 1 + r * seg, 1 + (r + 1) * seg
-        for s in range(seg):
-            t = (s + 1) % seg
-            faces.append((a + s, a + t, b + t, b + s))
+        for k in range(seg):
+            t = (k + 1) % seg
+            faces.append((a + k, a + t, b + t, b + k))
     last, end = 1 + (rings - 2) * seg, len(verts) - 1
-    for s in range(seg):
-        faces.append((last + s, last + (s + 1) % seg, end))
-    body.add(verts, faces, 'DK_CasualKnit')
-    ellipsoid(body, (0, .925, 0), (.205, .07, .175), 'DK_Collar', (0, 0, 0), 28, 10)
-    for i in range(3):
-        by = .80 - i * .12
-        front = catmull(radius, (by - radius[0][0]) / (radius[-1][0] - radius[0][0])) * .8
-        ellipsoid(body, (0, by, front + .004), (.026, .026, .014), 'DK_Button', (0, 0, 0), 12, 8)
-    ellipsoid(body, (-.165, .52, .205), (.06, .05, .012), 'DK_Collar', (0, -34, 0), 16, 8, 2.4)
+    for k in range(seg):
+        faces.append((last + k, last + (k + 1) % seg, end))
+    body.add(verts, faces, slots['body'])
+    def front(y):
+        return catmull(radius, (y - radius[0][0]) / (radius[-1][0] - radius[0][0])) * depth
+    outfit(body, 0, front)
     make_object(body, root)
-    # Arms with mitten hands (thumb forward); the tote hangs from the right hand.
+
+def paint_where(part, first_face, last_face, slot, test):
+    """Give faces in [first_face, last_face) the slot where test(face centre) holds (Unity space)."""
+    index = part.slot(slot)
+    for fi in range(first_face, last_face):
+        vs = [part.verts[i] for i in part.faces[fi]]
+        c = Vector((sum(v.x for v in vs), sum(v.y for v in vs), sum(v.z for v in vs))) / len(vs)
+        if test(c):
+            part.slots[fi] = index
+
+def char_arms(root, s, slots, held=None):
+    """Arms with mitten hands (thumb forward); held(arm, side, hand) adds what that hand carries."""
+    k = s.get('arm', 1.0)
     for side, label in ((-1, 'Left'), (1, 'Right')):
-        sh = (side * .27, .86, 0)
+        sh = (side * s['shoulder'][0], s['shoulder'][1], 0)
         arm = Part(label + ' arm')
-        ellipsoid(arm, (sh[0] + side * .025, sh[1] - .14, 0), (.082, .175, .086), 'DK_CasualKnit', (0, 0, side * 9), 20, 12)
-        torus(arm, (sh[0] + side * .046, sh[1] - .285, 0), .06, .022, 'DK_Collar', (1, 1, 1), 24, 8, (90, 0, 0))
-        hand = (sh[0] + side * .05, sh[1] - .36, .012)
-        ellipsoid(arm, hand, (.074, .084, .062), 'DK_Skin', (0, 0, 0), 18, 10)
-        ellipsoid(arm, (hand[0] - side * .045, hand[1] + .012, hand[2] + .042), (.03, .046, .03), 'DK_Skin', (-30, 0, side * 20), 12, 8)
-        if side > 0:
-            bag = (hand[0] + .012, hand[1] - .23, hand[2] + .01)
-            ellipsoid(arm, bag, (.065, .15, .15), 'DK_Tote', (0, 0, 0), 20, 12, 3.2)
-            for dz in (-.05, .05):
-                tube(arm, [(bag[0], bag[1] + .12, bag[2] + dz), (hand[0] + .01, hand[1] - .03, hand[2] + dz * .6),
-                           (hand[0] + .004, hand[1] + .02, hand[2] + dz * .3)], .011, 'DK_Tote', 8)
+        ellipsoid(arm, (sh[0] + side * .025, sh[1] - .14 * k, 0), (s.get('sleeve_x', .082), .175 * k, s.get('sleeve_z', .086)),
+                  slots['sleeve'], (0, 0, side * 9), 20, 12)
+        torus(arm, (sh[0] + side * .046, sh[1] - .285 * k, 0), .06, .022, slots['cuff'], (1, 1, 1), 24, 8, (90, 0, 0))
+        hand = (sh[0] + side * .05, sh[1] - .36 * k, .012)
+        ellipsoid(arm, hand, (.074, .084, .062), slots['hand'], (0, 0, 0), 18, 10)
+        ellipsoid(arm, (hand[0] - side * .045, hand[1] + .012, hand[2] + .042), (.03, .046, .03), slots['hand'], (-30, 0, side * 20), 12, 8)
+        if held:
+            held(arm, side, hand, sh)
         make_object(arm, root, sh, label + ' shoulder')
-    # Head on its pivot: big face, eyes with lids, brows, button nose, open mouth, blush and a beret. Every face
-    # part has its origin at the head pivot (the brows at their own pivots); the game reparents them onto it.
-    hp = (0, .95, 0)
+
+def char_head(root, s, slots, headwear):
+    """Head on its pivot: big face, eyes with lids, brows, button nose, open mouth, blush, and the role's hair, hat and face
+    props (headwear). Every face part has its origin at the head pivot (the brows at their own pivots)."""
+    hp = (0, s['head_y'], 0)
     empty('Head pivot', hp, root)
     hc = Vector((0, hp[1] + .33, .01))
     head = Part('Head')
-    ellipsoid(head, hc, (.34, .32, .31), 'DK_Skin', (0, 0, 0), 36, 22)
+    ellipsoid(head, hc, (.34, .32, .31), slots['skin'], (0, 0, 0), 36, 22)
     for side in (-1, 1):
-        ellipsoid(head, hc + Vector((side * .335, -.02, -.01)), (.05, .075, .06), 'DK_Skin', (0, 0, 0), 14, 8)
-    ellipsoid(head, hc + Vector((0, -.06, .305)), (.046, .04, .04), 'DK_Skin', (0, 0, 0), 14, 8)
-    ellipsoid(head, hc + Vector((0, .14, -.05)), (.345, .25, .32), 'DK_Hair', (0, 0, 0), 32, 16)
-    beret = hc + Vector((-.03, .29, -.02))
-    ellipsoid(head, beret, (.335, .078, .305), 'DK_Beret', (0, 0, 8), 36, 14)
-    ellipsoid(head, beret + Vector((-.012, .085, 0)), (.034, .034, .034), 'DK_Nub', (0, 0, 0), 12, 8)
+        ellipsoid(head, hc + Vector((side * .335, -.02, -.01)), (.05, .075, .06), slots['skin'], (0, 0, 0), 14, 8)
+    ellipsoid(head, hc + Vector((0, -.06, .305)), (.046, .04, .04), slots['skin'], (0, 0, 0), 14, 8)
+    headwear(head, hc)
     make_object(head, root, hp)
     eyes, pupils, glints, lids, blush = Part('Eyes'), Part('Pupils'), Part('Glints'), Part('Lids'), Part('Blush')
     lid_builders = []
@@ -716,7 +745,7 @@ def casual():
         ellipsoid(eyes, c, (.082, .098, .05), 'DK_EyeWhite', (0, 0, 0), 22, 12)
         ellipsoid(pupils, c + Vector((side * .004, -.008, .034)), (.044, .058, .026), 'DK_Pupil', (0, 0, 0), 18, 10)
         ellipsoid(glints, c + Vector((side * .004 - .016, .016, .056)), (.014, .016, .008), 'DK_Glint', (0, 0, 0), 10, 6)
-        idx, build = shell(lids, c, (.088, .104, .056), 'DK_Skin', (0, 0, 0), math.radians(18), .008, 22, 8)
+        idx, build = shell(lids, c, (.088, .104, .056), slots['skin'], (0, 0, 0), math.radians(18), .008, 22, 8)
         lid_builders.append((idx, build))
         ellipsoid(blush, hc + Vector((side * .2, -.08, .225)), (.05, .028, .016), 'DK_Blush', (0, side * 34, 0), 14, 8)
     for p in (eyes, pupils, glints, blush):
@@ -730,7 +759,7 @@ def casual():
     for side, label in ((-1, 'Left'), (1, 'Right')):
         brow = Part(label + ' brow')
         bc = hc + Vector((side * .118, .16, .262))
-        ellipsoid(brow, bc, (.06, .017, .02), 'DK_Hair', (0, 0, -side * 8), 14, 8)
+        ellipsoid(brow, bc, (.06, .017, .02), slots['brow'], (0, 0, -side * 8), 14, 8)
         make_object(brow, root, tuple(bc), label + ' brow pivot')
     mouth = Part('Mouth')
     mc = hc + Vector((0, -.16, .272))
@@ -742,7 +771,264 @@ def casual():
     shape_key(mouth_obj, mouth, 'Haggle', m(lambda d: Vector((d.x * .9 + .018, d.y * .28 + .012 * d.x / .072, d.z))), pivot=hp)
     shape_key(mouth_obj, mouth, 'Shocked', m(lambda d: Vector((d.x * .62, d.y * 1.75 - .01, d.z))), pivot=hp)
     shape_key(mouth_obj, mouth, 'Ouch', m(lambda d: Vector((d.x * 1.1, d.y * .42 + .009 * math.sin(d.x * 70), d.z))), pivot=hp)
+
+def carry_crate(root, slots, centre):
+    """Crew: the crate the game hangs on its parcel socket while carrying (the classic rig's preview parcel)."""
+    crate = Part('Carry crate')
+    c = Vector(centre)
+    ellipsoid(crate, c, (.17, .11, .125), slots['crate'], (0, 0, 0), 20, 12, 4)
+    for dy in (-.05, .05):
+        ellipsoid(crate, c + Vector((0, dy, .126)), (.165, .018, .008), slots['slat'], (0, 0, 0), 12, 6, 4)
+        ellipsoid(crate, c + Vector((0, dy, -.126)), (.165, .018, .008), slots['slat'], (0, 0, 0), 12, 6, 4)
+    make_object(crate, root, centre, 'Carry crate')
+
+def humanoid(asset, s, slots, outfit, headwear, held=None, extra=None):
+    root = empty(asset)
+    root['front'] = 'character local +Z'
+    char_legs(root, s, slots)
+    char_body(root, s, slots, outfit)
+    char_arms(root, s, slots, held)
+    char_head(root, s, slots, headwear)
+    if extra:
+        extra(root)
     return root
+
+# ---------------------------------------------------------------- the four customers
+CASUAL = {'hip_x': .11, 'hip_y': .40, 'thigh': (-.15, (.095, .175, .10)), 'shoe': (-.33, (.105, .072, .155), .045),
+          'profile': [(.30, .02), (.33, .2), (.40, .285), (.50, .32), (.62, .325), (.74, .30), (.85, .25), (.93, .17), (.97, .07)],
+          'body_y': (.30, .98), 'depth': .8, 'shoulder': (.27, .86), 'head_y': .95}
+CASUAL_SLOTS = {'trousers': 'DK_Trousers', 'shoes': 'DK_Shoes', 'body': 'DK_CasualKnit', 'sleeve': 'DK_CasualKnit',
+                'cuff': 'DK_Collar', 'hand': 'DK_Skin', 'skin': 'DK_Skin', 'brow': 'DK_Hair'}
+
+def casual():
+    """Round knit body: an egg with a cream collar, coral buttons and a patch pocket; a tote in the right hand; a beret."""
+    def outfit(body, first, front):
+        ellipsoid(body, (0, .925, 0), (.205, .07, .175), 'DK_Collar', (0, 0, 0), 28, 10)
+        for i in range(3):
+            by = .80 - i * .12
+            ellipsoid(body, (0, by, front(by) + .004), (.026, .026, .014), 'DK_Button', (0, 0, 0), 12, 8)
+        ellipsoid(body, (-.165, .52, .205), (.06, .05, .012), 'DK_Collar', (0, -34, 0), 16, 8, 2.4)
+    def held(arm, side, hand, sh):
+        if side > 0:
+            bag = (hand[0] + .012, hand[1] - .23, hand[2] + .01)
+            ellipsoid(arm, bag, (.065, .15, .15), 'DK_Tote', (0, 0, 0), 20, 12, 3.2)
+            for dz in (-.05, .05):
+                tube(arm, [(bag[0], bag[1] + .12, bag[2] + dz), (hand[0] + .01, hand[1] - .03, hand[2] + dz * .6),
+                           (hand[0] + .004, hand[1] + .02, hand[2] + dz * .3)], .011, 'DK_Tote', 8)
+    def headwear(head, hc):
+        ellipsoid(head, hc + Vector((0, .14, -.05)), (.345, .25, .32), 'DK_Hair', (0, 0, 0), 32, 16)
+        beret = hc + Vector((-.03, .29, -.02))
+        ellipsoid(head, beret, (.335, .078, .305), 'DK_Beret', (0, 0, 8), 36, 14)
+        ellipsoid(head, beret + Vector((-.012, .085, 0)), (.034, .034, .034), 'DK_Nub', (0, 0, 0), 12, 8)
+    return humanoid('DioramaCasualVisitor', CASUAL, CASUAL_SLOTS, outfit, headwear, held)
+
+def bargain():
+    """Tall and thin: a green sweater with a mustard scarf and elbow patches, a flat cap, a coin purse in the right hand."""
+    s = {'hip_x': .095, 'hip_y': .52, 'thigh': (-.20, (.078, .235, .085)), 'shoe': (-.455, (.095, .065, .16), .05),
+         'profile': [(.42, .02), (.45, .16), (.55, .205), (.68, .215), (.82, .21), (.95, .195), (1.05, .165), (1.12, .11), (1.16, .045)],
+         'body_y': (.42, 1.16), 'depth': .82, 'shoulder': (.215, 1.04), 'arm': 1.15, 'sleeve_x': .07, 'sleeve_z': .074, 'head_y': 1.13}
+    slots = {'trousers': 'DK_BargainTrousers', 'shoes': 'DK_BargainShoes', 'body': 'DK_BargainKnit', 'sleeve': 'DK_BargainKnit',
+             'cuff': 'DK_BargainScarf', 'hand': 'DK_BargainSkin', 'skin': 'DK_BargainSkin', 'brow': 'DK_BargainHair'}
+    def outfit(body, first, front):
+        torus(body, (0, .47, 0), .2, .028, 'DK_BargainKnit', (1, .82, 1), 36, 8, (90, 0, 0))
+        torus(body, (0, 1.115, 0), .125, .045, 'DK_BargainScarf', (1, .9, 1), 32, 10, (90, 0, 0))
+        ellipsoid(body, (.055, .98, front(.98) + .025), (.045, .12, .02), 'DK_BargainScarf', (0, 0, -8), 14, 8, 1.6)
+        for i in range(2):
+            by = .86 - i * .14
+            ellipsoid(body, (0, by, front(by) + .004), (.022, .022, .012), 'DK_BargainTrousers', (0, 0, 0), 12, 8)
+    def held(arm, side, hand, sh):
+        # Elbow patches, and a coin purse with a gold clasp in the right hand.
+        ellipsoid(arm, (sh[0] + side * .03, sh[1] - .2, -.06), (.045, .055, .02), 'DK_BargainTrousers', (0, 0, 0), 14, 8)
+        if side > 0:
+            purse = (hand[0] + .01, hand[1] - .1, hand[2] + .03)
+            ellipsoid(arm, purse, (.055, .045, .03), 'DK_BargainPurse', (0, 0, 0), 16, 10)
+            torus(arm, (purse[0], purse[1] + .045, purse[2]), .03, .008, 'DK_Gold', (1, 1, 1), 16, 6, (90, 0, 0))
+    def headwear(head, hc):
+        ellipsoid(head, hc + Vector((0, .12, -.07)), (.345, .24, .31), 'DK_BargainHair', (0, 0, 0), 32, 16)
+        ellipsoid(head, hc + Vector((0, .265, -.02)), (.335, .095, .315), 'DK_BargainCap', (6, 0, 0), 36, 14)
+        ellipsoid(head, hc + Vector((0, .23, .26)), (.24, .024, .13), 'DK_BargainCap', (-8, 0, 0), 24, 8, 2)
+        ellipsoid(head, hc + Vector((0, .355, -.02)), (.03, .03, .03), 'DK_BargainPurse', (0, 0, 0), 12, 8)
+    return humanoid('DioramaBargainVisitor', s, slots, outfit, headwear, held)
+
+def collector():
+    """Pear-shaped: a plum coat with a bow tie, grey hair and moustache, a bowler, round gold spectacles and a magnifier."""
+    s = {'hip_x': .12, 'hip_y': .38, 'thigh': (-.14, (.10, .165, .105)), 'shoe': (-.31, (.105, .07, .15), .045),
+         'profile': [(.28, .02), (.31, .26), (.38, .35), (.47, .37), (.58, .345), (.70, .29), (.80, .23), (.89, .16), (.95, .06)],
+         'body_y': (.28, .95), 'depth': .82, 'shoulder': (.21, .83), 'arm': .95, 'head_y': .92}
+    slots = {'trousers': 'DK_CollectorTrousers', 'shoes': 'DK_CollectorShoes', 'body': 'DK_CollectorCoat', 'sleeve': 'DK_CollectorCoat',
+             'cuff': 'DK_Collar', 'hand': 'DK_CollectorSkin', 'skin': 'DK_CollectorSkin', 'brow': 'DK_CollectorHair'}
+    def outfit(body, first, front):
+        ellipsoid(body, (0, .895, 0), (.17, .065, .145), 'DK_Collar', (0, 0, 0), 28, 10)
+        bow = (0, .86, front(.86) + .02)
+        for side in (-1, 1):
+            ellipsoid(body, (bow[0] + side * .045, bow[1], bow[2]), (.045, .03, .018), 'DK_CollectorBow', (0, 0, side * 12), 14, 8)
+        ellipsoid(body, bow, (.018, .018, .02), 'DK_CollectorBow', (0, 0, 0), 10, 6)
+        for i in range(3):
+            by = .72 - i * .13
+            ellipsoid(body, (0, by, front(by) + .004), (.024, .024, .013), 'DK_Gold', (0, 0, 0), 12, 8)
+        ellipsoid(body, (-.15, .70, front(.70) - .03), (.05, .035, .012), 'DK_CollectorBow', (0, -30, 0), 14, 8, 2.4)
+    def held(arm, side, hand, sh):
+        if side > 0:
+            handle = (hand[0] + .005, hand[1] - .02, hand[2] + .06)
+            tube(arm, [handle, (handle[0], handle[1] + .05, handle[2] + .12)], .018, 'DK_CollectorHandle', 10)
+            lens = (handle[0], handle[1] + .12, handle[2] + .2)
+            torus(arm, lens, .08, .014, 'DK_Gold', (1, 1, 1), 28, 8, (-40, 0, 0))
+            ellipsoid(arm, lens, (.074, .074, .007), 'DK_Lens', (-40, 0, 0), 20, 6)
+    def headwear(head, hc):
+        ellipsoid(head, hc + Vector((0, .04, -.10)), (.35, .22, .27), 'DK_CollectorHair', (0, 0, 0), 32, 16)
+        ellipsoid(head, hc + Vector((0, .30, -.01)), (.30, .17, .29), 'DK_CollectorHat', (0, 0, 0), 32, 14)
+        ellipsoid(head, hc + Vector((0, .20, -.01)), (.41, .024, .39), 'DK_CollectorHat', (0, 0, 0), 36, 8)
+        ellipsoid(head, hc + Vector((0, .235, -.01)), (.305, .035, .295), 'DK_Gold', (0, 0, 0), 32, 6)
+        for side in (-1, 1):
+            torus(head, hc + Vector((side * .118, .035, .325)), .1, .01, 'DK_Gold', (1, 1.05, 1), 28, 8)
+            ellipsoid(head, hc + Vector((side * .05, -.105, .292)), (.06, .024, .02), 'DK_CollectorHair', (0, 0, side * -15), 14, 8)
+        tube(head, [hc + Vector((-.02, .05, .33)), hc + Vector((0, .06, .335)), hc + Vector((.02, .05, .33))], .008, 'DK_Gold', 8)
+    return humanoid('DioramaCollectorVisitor', s, slots, outfit, headwear, held)
+
+def premium():
+    """The big spender: a wide cream coat with dark lapels, gold buttons and a pink carnation, a top hat, a gold gift bag."""
+    s = {'hip_x': .13, 'hip_y': .42, 'thigh': (-.16, (.10, .18, .11)), 'shoe': (-.35, (.11, .07, .16), .05),
+         'profile': [(.20, .03), (.24, .33), (.34, .39), (.48, .41), (.62, .40), (.76, .37), (.87, .30), (.95, .20), (1.0, .08)],
+         'body_y': (.20, 1.0), 'depth': .78, 'shoulder': (.36, .88), 'sleeve_x': .095, 'sleeve_z': .098, 'head_y': .97}
+    slots = {'trousers': 'DK_PremiumTrousers', 'shoes': 'DK_PremiumShoes', 'body': 'DK_PremiumCoat', 'sleeve': 'DK_PremiumCoat',
+             'cuff': 'DK_PremiumTrim', 'hand': 'DK_PremiumSkin', 'skin': 'DK_PremiumSkin', 'brow': 'DK_PremiumHair'}
+    def outfit(body, first, front):
+        ellipsoid(body, (0, .955, 0), (.2, .06, .17), 'DK_PremiumTrim', (0, 0, 0), 28, 10)
+        for side in (-1, 1):
+            ellipsoid(body, (side * .085, .83, front(.83) + .006), (.05, .13, .014), 'DK_PremiumTrim', (0, 0, side * 22), 16, 8, 1.8)
+        for by in (.66, .50):
+            ellipsoid(body, (0, by, front(by) + .006), (.032, .032, .016), 'DK_Gold', (0, 0, 0), 14, 8)
+        flower = (-.17, .80, front(.80) - .02)
+        for k in range(5):
+            a = math.tau * k / 5
+            ellipsoid(body, (flower[0] + .022 * math.cos(a), flower[1] + .022 * math.sin(a), flower[2] + .01), (.022, .022, .012), 'DK_PremiumFlower', (0, 0, 0), 10, 6)
+        ellipsoid(body, (flower[0], flower[1], flower[2] + .016), (.012, .012, .01), 'DK_Gold', (0, 0, 0), 8, 6)
+        torus(body, (0, .28, 0), .33, .024, 'DK_PremiumTrim', (1, .78, 1), 40, 8, (90, 0, 0))
+    def held(arm, side, hand, sh):
+        if side > 0:
+            bag = (hand[0] + .02, hand[1] - .2, hand[2] + .02)
+            ellipsoid(arm, bag, (.075, .12, .13), 'DK_PremiumBag', (0, 0, 0), 20, 12, 4)
+            for dz in (-.05, .05):
+                tube(arm, [(bag[0], bag[1] + .11, bag[2] + dz), (hand[0] + .012, hand[1] - .02, hand[2] + dz * .5),
+                           (hand[0] + .006, hand[1] + .02, hand[2] + dz * .3)], .01, 'DK_PremiumTrim', 8)
+            ellipsoid(arm, (bag[0] - .076, bag[1] + .02, bag[2]), (.006, .04, .04), 'DK_PremiumTrim', (0, 0, 0), 10, 6)
+    def headwear(head, hc):
+        ellipsoid(head, hc + Vector((0, .12, -.06)), (.345, .25, .32), 'DK_PremiumHair', (0, 0, 0), 32, 16)
+        ellipsoid(head, hc + Vector((0, .43, -.01)), (.205, .2, .205), 'DK_PremiumHat', (0, 0, 0), 32, 14, 4)
+        ellipsoid(head, hc + Vector((0, .245, -.01)), (.335, .022, .325), 'DK_PremiumHat', (0, 0, 0), 36, 8)
+        ellipsoid(head, hc + Vector((0, .29, -.01)), (.21, .036, .21), 'DK_Gold', (0, 0, 0), 32, 6, 4)
+    return humanoid('DioramaPremiumVisitor', s, slots, outfit, headwear, held)
+
+# ---------------------------------------------------------------- the three crew (always shop teal)
+STOOL_LIFT = .3
+
+def cashier():
+    """Pip: a teal shirt with a cream apron and a coral name badge, a teal visor, a pencil behind the ear; stands on a step
+    stool behind the counter, so its face and hands clear the countertop."""
+    global LIFT
+    s = {'hip_x': .11, 'hip_y': .40, 'thigh': (-.15, (.095, .175, .10)), 'shoe': (-.33, (.105, .072, .155), .045),
+         'profile': [(.30, .02), (.33, .19), (.40, .27), (.50, .30), (.62, .305), (.74, .285), (.85, .24), (.93, .165), (.97, .07)],
+         'body_y': (.30, .98), 'depth': .8, 'shoulder': (.265, .86), 'head_y': .95}
+    slots = {'trousers': 'DK_CrewTrousers', 'shoes': 'DK_CrewShoes', 'body': 'DK_CrewTeal', 'sleeve': 'DK_CrewTeal',
+             'cuff': 'DK_CrewCream', 'hand': 'DK_PipSkin', 'skin': 'DK_PipSkin', 'brow': 'DK_PipHair',
+             'crate': 'DK_Crate', 'slat': 'DK_CrateSlat'}
+    def outfit(body, first, front):
+        last = len(body.faces)
+        paint_where(body, first, last, 'DK_CrewCream', lambda c: c.z > .12 and c.y < .74)
+        ellipsoid(body, (0, .925, 0), (.2, .065, .17), 'DK_CrewCream', (0, 0, 0), 28, 10)
+        ellipsoid(body, (0, .56, front(.56) + .01), (.085, .055, .014), 'DK_CrewTeal', (0, 0, 0), 16, 8, 2.4)
+        ellipsoid(body, (-.13, .80, front(.80) + .006), (.04, .04, .012), 'DK_CrewBadge', (0, -20, 0), 14, 8)
+    def headwear(head, hc):
+        ellipsoid(head, hc + Vector((0, .13, -.06)), (.35, .25, .325), 'DK_PipHair', (0, 0, 0), 32, 16)
+        ellipsoid(head, hc + Vector((0, -.02, -.24)), (.13, .13, .11), 'DK_PipHair', (0, 0, 0), 20, 12)
+        torus(head, hc + Vector((0, .2, 0)), .315, .035, 'DK_CrewTeal', (1, .95, 1), 40, 8, (90, 0, 0))
+        ellipsoid(head, hc + Vector((0, .21, .29)), (.24, .022, .14), 'DK_CrewCream', (-10, 0, 0), 24, 8, 2)
+        tube(head, [hc + Vector((.31, .1, -.06)), hc + Vector((.355, .02, .1))], .012, 'DK_Pencil', 8)
+        ellipsoid(head, hc + Vector((.355, .02, .11)), (.013, .013, .016), 'DK_CrewBadge', (0, 0, 0), 8, 6)
+    def stool(root):
+        global LIFT
+        saved, LIFT = LIFT, Vector((0, 0, 0))
+        st = Part('Step stool')
+        ellipsoid(st, (0, STOOL_LIFT - .035, 0), (.3, .035, .24), 'DK_Stool', (0, 0, 0), 24, 8, 4)
+        for x in (-.22, .22):
+            for z in (-.16, .16):
+                ellipsoid(st, (x, (STOOL_LIFT - .07) / 2, z), (.032, (STOOL_LIFT - .07) / 2, .032), 'DK_Stool', (0, 0, 0), 12, 8, 3)
+        make_object(st, root, (0, 0, 0), 'Step stool')
+        LIFT = saved
+        carry_crate(root, slots, (0, .62, .32))
+    LIFT = Vector((0, STOOL_LIFT, 0))
+    try:
+        return humanoid('DioramaCrewCashier', s, slots, outfit, headwear, None, stool)
+    finally:
+        LIFT = Vector((0, 0, 0))
+
+def stocker():
+    """Nori: sturdy, in teal overalls over a cream shirt, work gloves and a teal beanie with a cream pompom."""
+    s = {'hip_x': .12, 'hip_y': .40, 'thigh': (-.15, (.105, .175, .11)), 'shoe': (-.33, (.115, .072, .16), .045),
+         'profile': [(.30, .02), (.33, .23), (.40, .32), (.50, .35), (.62, .35), (.74, .33), (.85, .28), (.93, .19), (.97, .07)],
+         'body_y': (.30, .98), 'depth': .8, 'shoulder': (.30, .86), 'sleeve_x': .09, 'sleeve_z': .092, 'head_y': .95}
+    slots = {'trousers': 'DK_CrewTeal', 'shoes': 'DK_CrewShoes', 'body': 'DK_CrewCream', 'sleeve': 'DK_CrewCream',
+             'cuff': 'DK_CrewTeal', 'hand': 'DK_NoriGlove', 'skin': 'DK_NoriSkin', 'brow': 'DK_NoriHair',
+             'crate': 'DK_Crate', 'slat': 'DK_CrateSlat'}
+    def outfit(body, first, front):
+        last = len(body.faces)
+        paint_where(body, first, last, 'DK_CrewTeal', lambda c: c.y < .55 or (abs(c.z) > .16 and c.y < .84 and abs(c.x) < .2))
+        for side in (-1, 1):
+            tube(body, [(side * .13, .82, front(.82) + .006), (side * .17, .95, .1), (side * .17, .97, -.05), (side * .14, .78, -.27)], .022, 'DK_CrewTeal', 8)
+            ellipsoid(body, (side * .12, .80, front(.80) + .012), (.022, .022, .012), 'DK_CrewCream', (0, 0, 0), 10, 6)
+        ellipsoid(body, (0, .66, front(.66) + .01), (.08, .06, .014), 'DK_CrewCream', (0, 0, 0), 16, 8, 2.4)
+        ellipsoid(body, (.11, .70, front(.70) + .02), (.03, .03, .012), 'DK_CrewBadge', (0, 0, 0), 12, 8)
+    def headwear(head, hc):
+        for side in (-1, 1):
+            ellipsoid(head, hc + Vector((side * .3, -.05, -.02)), (.06, .12, .09), 'DK_NoriHair', (0, 0, 0), 14, 8)
+        ellipsoid(head, hc + Vector((0, .17, -.03)), (.355, .23, .33), 'DK_CrewTeal', (0, 0, 0), 36, 16)
+        torus(head, hc + Vector((0, .1, -.03)), .335, .04, 'DK_CrewTeal', (1, .95, 1), 40, 8, (90, 0, 0))
+        ellipsoid(head, hc + Vector((0, .41, -.04)), (.07, .065, .07), 'DK_CrewCream', (0, 0, 0), 16, 10)
+    def extra(root):
+        carry_crate(root, slots, (0, .62, .32))
+    return humanoid('DioramaCrewStocker', s, slots, outfit, headwear, None, extra)
+
+def technician():
+    """Moss: a long teal lab coat over a cream collar, mossy green hair, goggles up on the forehead, a vial in the pocket."""
+    s = {'hip_x': .10, 'hip_y': .46, 'thigh': (-.175, (.085, .205, .09)), 'shoe': (-.39, (.10, .07, .155), .045),
+         'profile': [(.24, .03), (.28, .24), (.38, .27), (.52, .265), (.68, .25), (.82, .235), (.93, .20), (1.01, .13), (1.06, .05)],
+         'body_y': (.24, 1.06), 'depth': .8, 'shoulder': (.25, .95), 'arm': 1.08, 'head_y': 1.04}
+    slots = {'trousers': 'DK_CrewTrousers', 'shoes': 'DK_CrewShoes', 'body': 'DK_CrewTeal', 'sleeve': 'DK_CrewTeal',
+             'cuff': 'DK_CrewCream', 'hand': 'DK_MossSkin', 'skin': 'DK_MossSkin', 'brow': 'DK_MossHair',
+             'crate': 'DK_Crate', 'slat': 'DK_CrateSlat'}
+    def outfit(body, first, front):
+        ellipsoid(body, (0, 1.015, 0), (.16, .06, .135), 'DK_CrewCream', (0, 0, 0), 28, 10)
+        for side in (-1, 1):
+            ellipsoid(body, (side * .07, .93, front(.93) + .006), (.04, .1, .012), 'DK_CrewCream', (0, 0, side * 24), 14, 8, 1.8)
+        for by in (.82, .66, .50):
+            ellipsoid(body, (0, by, front(by) + .004), (.022, .022, .012), 'DK_CrewCream', (0, 0, 0), 12, 8)
+        pocket = (.13, .78, front(.78) + .008)
+        ellipsoid(body, pocket, (.055, .045, .012), 'DK_CrewCream', (0, 18, 0), 14, 8, 2.4)
+        tube(body, [(pocket[0] + .01, pocket[1] - .01, pocket[2] + .01), (pocket[0] + .01, pocket[1] + .1, pocket[2] + .012)], .016, 'DK_Lens', 10)
+        ellipsoid(body, (pocket[0] + .01, pocket[1] + .105, pocket[2] + .012), (.019, .016, .019), 'DK_CrewBadge', (0, 0, 0), 10, 6)
+        ellipsoid(body, (-.13, .86, front(.86) + .006), (.035, .035, .012), 'DK_CrewBadge', (0, 20, 0), 12, 8)
+    def headwear(head, hc):
+        ellipsoid(head, hc + Vector((0, .15, -.05)), (.35, .24, .325), 'DK_MossHair', (0, 0, 0), 32, 16)
+        for k, (dx, dy) in enumerate(((-.08, .33), (.02, .36), (.11, .32))):
+            ellipsoid(head, hc + Vector((dx, dy, .02)), (.07, .09, .07), 'DK_MossHair', (0, 0, (k - 1) * 25), 14, 8)
+        torus(head, hc + Vector((0, .2, 0)), .33, .022, 'DK_MossGoggle', (1, .95, 1), 40, 8, (90, 0, 0))
+        for side in (-1, 1):
+            g = hc + Vector((side * .1, .23, .27))
+            torus(head, g, .065, .016, 'DK_MossGoggle', (1, 1, 1), 24, 8, (-25, 0, 0))
+            ellipsoid(head, g, (.06, .06, .012), 'DK_Lens', (-25, 0, 0), 18, 6)
+    def extra(root):
+        carry_crate(root, slots, (0, .70, .32))
+    return humanoid('DioramaCrewTechnician', s, slots, outfit, headwear, None, extra)
+
+CHARACTERS = [  # role id, kit asset, builder, crew
+    ('casual', 'DioramaCasualVisitor', casual, False),
+    ('bargain', 'DioramaBargainVisitor', bargain, False),
+    ('collector', 'DioramaCollectorVisitor', collector, False),
+    ('premium', 'DioramaPremiumVisitor', premium, False),
+    ('cashier', 'DioramaCrewCashier', cashier, True),
+    ('stocker', 'DioramaCrewStocker', stocker, True),
+    ('technician', 'DioramaCrewTechnician', technician, True),
+]
 
 # ================================================================ hand-drawn effect sheet
 CELL, COLS = 128, 4
@@ -902,7 +1188,7 @@ def variant_atlas():
 
 # ================================================================ build, export, review renders, manifest
 assets = {}
-BUILDS = [(asset, CREATURE_BUILDERS[sid]) for sid, asset, _, _ in SPECIES] + [('DioramaCasualVisitor', casual)]
+BUILDS = [(asset, CREATURE_BUILDERS[sid]) for sid, asset, _, _ in SPECIES] + [(asset, build) for _, asset, build, _ in CHARACTERS]
 for name, build in BUILDS:
     # Blender object names are global, so each asset is built and exported before the next one is made; its parts
     # are then renamed with its id, freeing the shared names (Eyes, Lids, Body...) for the next asset.
@@ -950,7 +1236,9 @@ if not args.no_render:
     lineup = [asset for _, asset, _, _ in SPECIES]
     for k, asset in enumerate(lineup):
         assets[asset].location = u(((k - 2) * 1.25, 0, 0))
-    assets['DioramaCasualVisitor'].location = u((1.3, 0, 3.5))
+    cast = [asset for _, asset, _, _ in CHARACTERS]
+    for k, asset in enumerate(cast):
+        assets[asset].location = u(((k - 3) * 1.0, 0, 3.5))
     camdata = bpy.data.cameras.new('Diorama review camera'); cam = bpy.data.objects.new('Diorama review camera', camdata)
     COLLECTION.objects.link(cam); scene.camera = cam; camdata.lens = 50
     def shot(fname, pos, target):
@@ -972,9 +1260,21 @@ if not args.no_render:
         shot(asset.replace('Diorama', 'DioramaKit_') + '_Side.png', (x - 2.0, .1, .02), (x, .02, .06))
     for other in assets.values():
         for o in [other] + list(other.children_recursive):
-            o.hide_render = other is not assets['DioramaCasualVisitor']
-    shot('DioramaKit_Casual_Front.png', (1.3 + .9, 1.25, 3.5 + 3.4), (1.3, .86, 3.5))
-    shot('DioramaKit_Casual_Face.png', (1.3 + .25, 1.35, 3.5 + 1.3), (1.3, 1.28, 3.5))
+            o.hide_render = other not in [assets[a] for a in cast] or o.name.endswith('Carry crate')
+    scene.render.resolution_x, scene.render.resolution_y = 2000, 800
+    shot('DioramaKit_Characters_Front.png', (0, 1.45, 3.5 + 10.5), (0, .95, 3.5))
+    scene.render.resolution_x, scene.render.resolution_y = 1200, 800
+    for k, (role, asset, _, crew) in enumerate(CHARACTERS):
+        x = (k - 3) * 1.0
+        for other in assets.values():
+            for o in [other] + list(other.children_recursive):
+                o.hide_render = other is not assets[asset] or o.name.endswith('Carry crate')
+        name = 'Casual' if role == 'casual' else asset.replace('Diorama', '').replace('Visitor', '').replace('Crew', 'Crew')
+        top = assets[asset].children_recursive
+        head = next(o for o in top if o.name.endswith('Head pivot'))
+        hy = un(head.matrix_world.translation)[1] + .33
+        shot('DioramaKit_' + name + '_Front.png', (x + .9, 1.25 + hy - 1.28, 3.5 + 3.4), (x, .86 + hy - 1.28, 3.5))
+        shot('DioramaKit_' + name + '_Face.png', (x + .25, hy + .07, 3.5 + 1.3), (x, hy, 3.5))
     for asset in assets.values():
         asset.location = u((0, 0, 0))
         for o in [asset] + list(asset.children_recursive):
@@ -983,7 +1283,7 @@ if not args.no_render:
 blend = SOURCE / 'EvolutionShop_DioramaKit.blend'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families)',
+    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters)',
     'origin': {'author': 'Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)',
                'external_sources': [], 'license': 'Original project work; no third-party source or asset license',
                'paid_generation': False, 'external_uploads': False},
@@ -991,7 +1291,14 @@ manifest = {
     'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'blend_source': str(blend.relative_to(REPO)).replace('\\', '/'),
     'scale': '1 unit = 1 metre', 'up': 'Unity +Y',
-    'front': {**{asset: 'local -Z (creature)' for _, asset, _, _ in SPECIES}, 'DioramaCasualVisitor': 'local +Z (character)'},
+    'front': {**{asset: 'local -Z (creature)' for _, asset, _, _ in SPECIES}, **{asset: 'local +Z (character)' for _, asset, _, _ in CHARACTERS}},
+    'characters': [{'role': role, 'asset': asset, 'crew': crew} for role, asset, _, crew in CHARACTERS],
+    'humanoid_rig': {'joints': ['Left hip', 'Right hip', 'Left shoulder', 'Right shoulder', 'Head pivot'],
+                     'head_parts': ['Head', 'Eyes', 'Pupils', 'Glints', 'Lids', 'Blush', 'Mouth', 'Left brow pivot', 'Right brow pivot'],
+                     'face': {'Lids': ['Blink'], 'Mouth': ['Happy', 'Haggle', 'Shocked', 'Ouch']},
+                     'parts': ['Body'], 'crew_parts': ['Carry crate'], 'cashier_parts': ['Step stool'],
+                     'step_stool_m': STOOL_LIFT,
+                     'notes': 'One rig and one builder for every character; roles differ by proportions, outfit, props and colours. Crew wear shop teal; customers never do.'},
     'families': FAMILIES,
     'species': [{'id': sid, 'asset': asset, 'family': family, 'atlas_rows': [k * len(VARIANT_NAMES), k * len(VARIANT_NAMES) + len(VARIANT_NAMES) - 1],
                  'variants': {v: dict(zip(SLOTS, codes)) for v, codes in variants.items()}}
@@ -1002,7 +1309,7 @@ manifest = {
     'export_settings': {'format': 'FBX', 'forward': '-Z', 'up': 'Y', 'global_scale': 1, 'bake_space_transform': True,
                         'animations': False, 'shape_keys': True, 'modifiers': 'none (shape keys require unmodified meshes)',
                         'axis_mapping': 'Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly',
-                        'hierarchy': 'every part directly under the asset root and its own pivot; the visitor face parts are reparented onto Head pivot in game'},
+                        'hierarchy': 'every part directly under the asset root and its own pivot; the characters\' head parts are reparented onto Head pivot, and the crew\'s Carry crate onto the parcel socket, in game'},
     'unity_import_expected': {'globalScale': 1, 'useFileScale': True, 'importAnimation': False, 'addCollider': False,
                               'importBlendShapes': True, 'material_mapping': 'DK_* slot names map to runtime toon materials'},
     'materials': {name: {'srgb_hex': '#' + code} for name, code in PALETTE.items()},
@@ -1019,7 +1326,7 @@ manifest = {
                       'review_swatches': str(swatch_path.relative_to(REPO)).replace('\\', '/')},
     'renders': renders,
     'validation_limits': ['Workbench review renders show shape and colour only, not the in-game toon shading, outline or bloom.',
-                          'In-game scale, fit inside containers and posing are verified by the AD-A and AD-B routes, not here.'],
+                          'In-game scale, fit inside containers and posing are verified by the AD-A, AD-B and AD-C routes, not here.'],
 }
 (SOURCE / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 print('DIORAMA_KIT_COMPLETE ' + json.dumps([{'id': r['id'], 'triangles': r['triangles'], 'size': r['bounds_unity_m']['size']} for r in RECORDS]))

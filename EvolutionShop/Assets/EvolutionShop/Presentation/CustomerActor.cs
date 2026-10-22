@@ -391,17 +391,22 @@ namespace EvolutionShop
             var cream = Material("Visitor / cream collar", new Color(.95f, .91f, .74f));
             var gold = Material("Visitor / gold trim", new Color(1f, .74f, .26f), .7f);
             var eyes = Material("Visitor / dark eyes", new Color(.025f, .048f, .049f), .65f);
-            if (look == "casual")
+            if (look == "casual" || DioramaLook.Active)
             {
                 body = Group("Visitor appearance", transform, Vector3.zero);
                 var sample = body.gameObject.AddComponent<ShopCharacterVisual>();
-                // AD-A: with the diorama look on, the kit visitor replaces the classic Casual (same joints, same poses).
-                if (DioramaLook.Active && sample.BuildDioramaCasual()) dioramaVisitor = sample;
-                else sample.Build(false);
-                leftLeg=sample.LeftLeg; rightLeg=sample.RightLeg; leftArm=sample.LeftArm; rightArm=sample.RightArm;
-                bodyBaseScale=body.localScale;
+                // AD-A/AD-C: with the diorama look on, every customer type is its kit figure on the shared humanoid rig
+                // (the classic joint names, so the same walk, reactions and comedy poses drive it).
+                if (DioramaLook.Active && sample.BuildDioramaRole(look)) dioramaVisitor = sample;
+                else if (look == "casual") sample.Build(false);
+                else { body.gameObject.SetActive(false); Destroy(body.gameObject); body = null; }
+                if (body)
+                {
+                    leftLeg=sample.LeftLeg; rightLeg=sample.RightLeg; leftArm=sample.LeftArm; rightArm=sample.RightArm;
+                    bodyBaseScale=body.localScale;
+                }
             }
-            else
+            if (!body)
             {
             body = Group("Visitor appearance", transform, Vector3.zero);
             if (look == "premium") body.localScale = Vector3.one * 1.07f;
@@ -454,9 +459,11 @@ namespace EvolutionShop
                 ShopWorld.Shape(body, "Cardigan button", PrimitiveType.Sphere, new Vector3(0, 1.20f - i * .13f, .173f), Vector3.one * .034f, look == "premium" ? gold : cream);
 
             }
-            BuildSlapStars(gold, look == "premium" ? 2.03f : 1.82f);
+            BuildSlapStars(gold, dioramaVisitor ? dioramaVisitor.DioramaRole.StarHeight : look == "premium" ? 2.03f : 1.82f);
 
             captionBase = look == "premium" ? 2.36f : 2.03f;
+            // AD-C: a tall kit figure's sign rides clear of its hat and slap stars.
+            if (dioramaVisitor) captionBase = Mathf.Max(captionBase, dioramaVisitor.DioramaRole.StarHeight + .2f);
             captionRoot = Group("Visitor status sign", transform, new Vector3(0, captionBase, 0));
             ShopWorld.Shape(captionRoot, "Status backing", PrimitiveType.Cube, new Vector3(0, 0, .014f), new Vector3(1.58f, .245f, .025f), dark);
             caption = Group("Depth-tested visitor caption", captionRoot, new Vector3(0, 0, -.006f)).gameObject.AddComponent<TextMesh>();

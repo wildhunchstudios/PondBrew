@@ -41,15 +41,19 @@ namespace EvolutionShop
         {
             if(!built || string.IsNullOrEmpty(id))return;
             workerWorld=world;workerId=id;workerPrevious=transform.position;
-            if(leftWorkerPoints==null){
-                leftWorkerRest=LeftLeg.localPosition;rightWorkerRest=RightLeg.localPosition;
-                leftWorkerPoints=WorkerLegPoints(LeftLeg);rightWorkerPoints=WorkerLegPoints(RightLeg);
-                leftWorkerFloor=Mathf.Max(0,leftWorkerRest.y+WorkerLegMinimum(leftWorkerPoints,0));
-                rightWorkerFloor=Mathf.Max(0,rightWorkerRest.y+WorkerLegMinimum(rightWorkerPoints,0));
-            }
+            if(leftWorkerPoints==null)CacheWorkerLegs();
             workerOwner=world?world.BindWorkerPresentation(this,id):default;
             ApplyWorkerPose(FxWorkerMotion.Sample(FxWorkerActivity.Idle,0,0,0,0,FxWorkerEvent.None,0,false,true));
         }
+        void CacheWorkerLegs()
+        {
+            leftWorkerRest=LeftLeg.localPosition;rightWorkerRest=RightLeg.localPosition;
+            leftWorkerPoints=WorkerLegPoints(LeftLeg);rightWorkerPoints=WorkerLegPoints(RightLeg);
+            leftWorkerFloor=Mathf.Max(0,leftWorkerRest.y+WorkerLegMinimum(leftWorkerPoints,0));
+            rightWorkerFloor=Mathf.Max(0,rightWorkerRest.y+WorkerLegMinimum(rightWorkerPoints,0));
+        }
+        /// <summary>The carry socket's place: the classic one, scaled to a kit role's proportions.</summary>
+        Vector3 CarryPlace(Vector3 classic)=>IsDiorama&&DioramaRole!=null?classic*DioramaRole.CarryScale:classic;
         public void PoseWorker(FxWorkerActivity activity,float progress,float seconds,bool carrying,string jobId,string proxyIdentity,bool paused)
         {
             if(workerId==null || !built || !isActiveAndEnabled)return;
@@ -118,7 +122,7 @@ namespace EvolutionShop
             LeftLeg.localPosition=leftWorkerRest+Vector3.up*(leftWorkerFloor-leftWorkerRest.y-WorkerLegMinimum(leftWorkerPoints,pose.LeftLegEuler.x));
             RightLeg.localPosition=rightWorkerRest+Vector3.up*(rightWorkerFloor-rightWorkerRest.y-WorkerLegMinimum(rightWorkerPoints,pose.RightLegEuler.x));
             LeftArm.localRotation=Quaternion.Euler(pose.LeftArmEuler);RightArm.localRotation=Quaternion.Euler(pose.RightArmEuler);
-            head.localRotation=Quaternion.Euler(pose.HeadEuler);parcel.localPosition=pose.ParcelPosition;parcel.localRotation=Quaternion.identity;
+            head.localRotation=Quaternion.Euler(pose.HeadEuler);parcel.localPosition=CarryPlace(pose.ParcelPosition);parcel.localRotation=Quaternion.identity;
             parcel.gameObject.SetActive(pose.ProxyVisible);
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -126,6 +130,8 @@ namespace EvolutionShop
             FxWorkerEvent eventKind,float eventAge,bool carrying,bool reduced)
         {ApplyWorkerPose(FxWorkerMotion.Sample(activity,progress,gaitPhase,moving,idleTime,eventKind,eventAge,carrying,reduced));}
 #endif
+        // AD-C: a kit crew member's face follows what it is doing, once a frame.
+        void LateUpdate(){if(IsDiorama&&DioramaRole!=null&&DioramaRole.Crew&&workerId!=null)TickCrewFace(Time.deltaTime);}
         void OnEnable()
         {
             workerPrevious=transform.position;
@@ -155,7 +161,8 @@ namespace EvolutionShop
         public void Build(bool employee)
         {
             if (built) return;
-            built = true;
+            built = true; builtEmployee = employee;
+            var before = new HashSet<Transform>(); foreach (Transform child in transform) before.Add(child);
             var ink = Mat("deep teal", new Color(.035f,.12f,.15f));
             var cream = Mat("oat linen", new Color(.96f,.87f,.66f));
             var coral = Mat("coral stitch", new Color(.86f,.29f,.21f));
@@ -213,13 +220,15 @@ namespace EvolutionShop
             Part(parcel,"Empty delivery box",PrimitiveType.Cube,Vector3.zero,new Vector3(.47f,.29f,.33f),cream);
             Part(parcel,"Coral wrap",PrimitiveType.Cube,new Vector3(0,0,-.003f),new Vector3(.055f,.30f,.34f),coral);
             parcel.gameObject.SetActive(false);
+            RecordOwnedParts(before);
             Pose(CharacterSamplePose.Idle,0);
         }
 
         public void Pose(CharacterSamplePose pose,float time)
         {
             if(!built) return;
-            if(workerId!=null){LeftLeg.localPosition=leftWorkerRest;RightLeg.localPosition=rightWorkerRest;parcel.localPosition=new Vector3(0,.91f,.38f);}
+            if(workerId!=null){LeftLeg.localPosition=leftWorkerRest;RightLeg.localPosition=rightWorkerRest;parcel.localPosition=CarryPlace(new Vector3(0,.91f,.38f));}
+            if(pose==CharacterSamplePose.Greet)crewGreetUntil=Time.time+.3f;
             bool walking=pose==CharacterSamplePose.Walk || pose==CharacterSamplePose.Carry;
             float stride=walking?Mathf.Sin(time*7f):0;
             LeftLeg.localRotation=Quaternion.Euler(stride*23,0,0);
@@ -242,6 +251,7 @@ namespace EvolutionShop
             if(!built)return;
             // Scheduling still belongs to the session; an active work pose always wins.
             if(workerId!=null && workerJob!=null)return;
+            if(kind==ComedyKind.WorkerCelebration)crewCelebrateUntil=Time.time+.3f;
             Pose(CharacterSamplePose.Idle,0);
             ApplyComedyPose(FxComedyMotion.Sample(kind,elapsed,reduced,variant));
         }

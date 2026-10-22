@@ -62,6 +62,7 @@ namespace EvolutionShop
             bool toolkitFeel = ShopSession.Arg("-evolutionToolkitFeelSmoke") != null;
             bool dioramaSlice = ShopSession.Arg("-evolutionDioramaSliceSmoke") != null;
             bool dioramaCreatures = ShopSession.Arg("-evolutionDioramaCreaturesSmoke") != null;
+            bool dioramaCharacters = ShopSession.Arg("-evolutionDioramaCharactersSmoke") != null;
             bool fxAudioMix = ShopSession.Arg("-evolutionFxAudioMixSmoke") != null;
             bool fxRoomAtmosphere = ShopSession.Arg("-evolutionFxRoomAtmosphereSmoke") != null;
             bool fxComedy = ShopSession.Arg("-evolutionFxComedySmoke") != null;
@@ -142,7 +143,8 @@ namespace EvolutionShop
             if (toolkitFeel) { stack.Clear(); stack.Push(ToolkitFeelScenario()); }
             if (dioramaSlice) { stack.Clear(); stack.Push(DioramaSliceScenario()); }
             if (dioramaCreatures) { stack.Clear(); stack.Push(DioramaCreaturesScenario()); }
-            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (dioramaSlice || dioramaCreatures || continuous || fxGrowth || fxCollection || fxPlayerInteraction || fxSpecies || fxContainer || fxCustomer || fxWorker || fxComedy || fxRoomAtmosphere || fxAudioMix || fxComfort);
+            if (dioramaCharacters) { stack.Clear(); stack.Push(DioramaCharactersScenario()); }
+            bool isolateSelectedInputs = ShopSession.Arg("-evolutionIsolateSyntheticInput") != null && (dioramaSlice || dioramaCreatures || dioramaCharacters || continuous || fxGrowth || fxCollection || fxPlayerInteraction || fxSpecies || fxContainer || fxCustomer || fxWorker || fxComedy || fxRoomAtmosphere || fxAudioMix || fxComfort);
             bool failed = false;
             while (stack.Count > 0)
             {

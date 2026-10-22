@@ -84,7 +84,20 @@ namespace EvolutionShop
             { "DK_Blush", "FF9EA0" }, { "DK_EyeWhite", "FFFFFF" }, { "DK_Pupil", "1B413E" }, { "DK_Glint", "FFFFFF" },
             { "DK_CasualKnit", "F08A3C" }, { "DK_Collar", "FFF6DF" }, { "DK_Trousers", "2B3B4F" }, { "DK_Shoes", "3B2A22" },
             { "DK_Skin", "B9774E" }, { "DK_Beret", "1B2B33" }, { "DK_Nub", "D66145" }, { "DK_Tote", "E9D6A8" }, { "DK_Hair", "3B2A22" },
-            { "DK_Mouth", "5A1F22" }, { "DK_Button", "D66145" },
+            { "DK_Mouth", "5A1F22" }, { "DK_Button", "D66145" }, { "DK_Gold", "D9B04A" }, { "DK_Lens", "CFEFF2" },
+            // AD-C: the other three customers (never teal) and the crew (always shop teal).
+            { "DK_BargainKnit", "6E9B4A" }, { "DK_BargainScarf", "E8B83A" }, { "DK_BargainTrousers", "6B4E32" }, { "DK_BargainShoes", "3A2A1E" },
+            { "DK_BargainSkin", "E3AE88" }, { "DK_BargainHair", "8C5A2B" }, { "DK_BargainCap", "C98F3A" }, { "DK_BargainPurse", "C8553D" },
+            { "DK_CollectorCoat", "7A4A8C" }, { "DK_CollectorTrousers", "2E2638" }, { "DK_CollectorShoes", "1E1A22" }, { "DK_CollectorSkin", "7A4E33" },
+            { "DK_CollectorHair", "D8D2C8" }, { "DK_CollectorHat", "2A2230" }, { "DK_CollectorBow", "C9473F" }, { "DK_CollectorHandle", "6B3F2A" },
+            { "DK_PremiumCoat", "EDE3CC" }, { "DK_PremiumTrim", "2B2B33" }, { "DK_PremiumTrousers", "1E1E24" }, { "DK_PremiumShoes", "141418" },
+            { "DK_PremiumSkin", "C08A63" }, { "DK_PremiumHair", "2B2118" }, { "DK_PremiumHat", "18181C" }, { "DK_PremiumBag", "E8C25A" },
+            { "DK_PremiumFlower", "E8628C" },
+            { "DK_CrewTeal", "1F7A72" }, { "DK_CrewCream", "F4E9CF" }, { "DK_CrewBadge", "E8664F" }, { "DK_CrewTrousers", "33404D" }, { "DK_CrewShoes", "3B2A22" },
+            { "DK_PipSkin", "D09466" }, { "DK_PipHair", "3B2A22" }, { "DK_Pencil", "F2C14E" }, { "DK_Stool", "C98F52" },
+            { "DK_NoriSkin", "8A5A3C" }, { "DK_NoriHair", "1E1612" }, { "DK_NoriGlove", "C9A06A" },
+            { "DK_MossSkin", "F0C8A0" }, { "DK_MossHair", "5E8F3A" }, { "DK_MossGoggle", "2B3B4F" },
+            { "DK_Crate", "C99A62" }, { "DK_CrateSlat", "A87A48" },
         };
 
         /// <summary>Slots that glow (bloom) as well as being lit: the Sparkline's lantern.</summary>
