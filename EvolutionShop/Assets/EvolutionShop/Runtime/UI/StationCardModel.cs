@@ -127,6 +127,8 @@ namespace EvolutionShop
         public bool ShowNextGoal;
         public string Cashier;
         public float TradingSeconds;
+        /// <summary>AD-E prototype: orders are bagged by holding the mouse on the counter, not with Serve.</summary>
+        public bool HandsOn;
         public readonly List<OrderRow> Rows = new List<OrderRow>();
 
         public void Clear()

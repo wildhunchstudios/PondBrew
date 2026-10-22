@@ -123,6 +123,7 @@ namespace EvolutionShop
             ResetUiFeedback();
             InitializeToolkitUi();
             InitializeDiorama();
+            InitializePrototype();
             initialized = true;
             SetPanel(ValidationMode && !restartStartup ? ShopPanel.None : ShopPanel.Welcome);
             Debug.Log("EVOLUTION_RUNTIME " + Application.dataPath + " save=" + SavePath);
@@ -160,6 +161,7 @@ namespace EvolutionShop
             var keyboard = Keyboard.current;
             ApplyFxViewPolicy();
             TickDioramaInput(keyboard);
+            TickPrototype(keyboard);
             bool placementAtFrameStart = PlacementActive;
             bool gameplayAtFrameStart = Panel == ShopPanel.None && !placementAtFrameStart;
             if (placementAtFrameStart) HandlePlacementInput(keyboard);
@@ -213,6 +215,8 @@ namespace EvolutionShop
             if (held && grower)
                 Harvest(culture, Time.deltaTime);
             else StopHarvest();
+            // AD-E prototype: holding the mouse on the counter bags the waiting order.
+            TickCheckout(held && !grower, Time.deltaTime);
             World.SetGrowerCollectionIntent(Mouse.current != null && Mouse.current.leftButton.isPressed, Focused, SaveError != null);
             World.SetHarvesting(held && grower && HarvestProgress > 0, Focused);
             if (gameplayAtFrameStart && Panel == ShopPanel.None && fxHasFocus && keyboard != null && keyboard.eKey.wasPressedThisFrame && Focused != null)
@@ -243,6 +247,7 @@ namespace EvolutionShop
             if (phaseChanged && Cycle.Phase == ShopDayPhase.Night)
             {
                 Reports.FinishDay(DisplayedStockCount());
+                FinishPrototypeDay();
                 BeginScheduledStaffNight();
                 BeginScheduledStockerNight();
                 BeginScheduledTechnicianNight();
@@ -283,10 +288,11 @@ namespace EvolutionShop
             if (Paused || Cycle.Phase != ShopDayPhase.Night || Cycle.DayNumber == int.MaxValue) return false;
             if (!Reports.BeginDay(Cycle.DayNumber, DisplayedStockCount()))
             { Notify("The day report could not begin. Save and reload before opening."); return false; }
-            Cycle.OpenShop();
+            Cycle.OpenShop(TradingDaySeconds);
+            BeginPrototypeDay();
             Tutorial.ObserveOpened(true);
             World.TransitionDayPhase(Cycle.Phase);
-            Notify("Day " + Cycle.DayNumber + " is open. Serve the counter and keep your tanks stocked.");
+            Notify("Day " + Cycle.DayNumber + " is open. " + (PrototypeActive ? "Grant wishes, hold the mouse on the counter to bag orders, and watch for the rush." : "Serve the counter and keep your tanks stocked."));
             SaveNow();
             return true;
         }

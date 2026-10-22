@@ -101,7 +101,8 @@ namespace EvolutionShop
             s.Phase = Cycle.Phase == ShopDayPhase.Night ? HudDayPhase.Night : Cycle.Phase == ShopDayPhase.Open ? HudDayPhase.Open : HudDayPhase.Closing;
             s.Day = Cycle.DayNumber;
             s.SecondsLeft = Cycle.SecondsRemaining;
-            s.TradingSeconds = ShopDayCycle.DefaultTradingSeconds;
+            s.TradingSeconds = TradingDaySeconds;
+            s.HandsOn = PrototypeActive;
             s.AtCounter = IsAtCounter;
             var next = Customers ? Customers.NextToServe : null;
             s.CanServe = next != null && next.Phase == CustomerPhase.Queued && IsAtCounter && !Paused;

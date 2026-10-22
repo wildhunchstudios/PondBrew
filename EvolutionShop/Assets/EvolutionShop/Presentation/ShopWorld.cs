@@ -97,6 +97,7 @@ namespace EvolutionShop
             DisposeStoragePresentation();
             DisposePlacementPresentation();
             DisposeDiorama();
+            DisposePrototype();
             foreach (var material in fontMaterials.Values) if (material) Destroy(material);
         }
 

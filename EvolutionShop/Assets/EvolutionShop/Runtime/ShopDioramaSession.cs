@@ -18,7 +18,7 @@ namespace EvolutionShop
             if (World) World.DioramaSoundCue = cue => { if (sound) sound.DioramaCue(cue, HumorVolume); };
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             bool asked = Arg("-evolutionDiorama") != null || Arg("-evolutionDioramaSliceSmoke") != null || Arg("-evolutionDioramaCreaturesSmoke") != null ||
-                Arg("-evolutionDioramaCharactersSmoke") != null || Arg("-evolutionDioramaRoomsSmoke") != null;
+                Arg("-evolutionDioramaCharactersSmoke") != null || Arg("-evolutionDioramaRoomsSmoke") != null || Arg("-evolutionPrototypeSmoke") != null;
             bool refused = Arg("-evolutionDioramaOff") != null;
             if (!refused && (asked || !ValidationMode)) SetDioramaLook(true);
 #endif
@@ -43,7 +43,7 @@ namespace EvolutionShop
             if (!World || !World.DioramaActive || !Player || !Player.View) return;
             var phase = Cycle.Phase;
             float progress = phase == ShopDayPhase.Open
-                ? 1 - Mathf.Clamp01(Cycle.SecondsRemaining / ShopDayCycle.DefaultTradingSeconds) : 0;
+                ? 1 - Mathf.Clamp01(Cycle.SecondsRemaining / Cycle.DayLength) : 0;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (ValidationMode && DioramaTimeForValidation.HasValue) { phase = DioramaTimeForValidation.Value.phase; progress = DioramaTimeForValidation.Value.progress; }
 #endif

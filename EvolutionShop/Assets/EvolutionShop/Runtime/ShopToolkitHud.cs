@@ -163,6 +163,13 @@ namespace EvolutionShop
                         p.Status = Cycle.Phase == ShopDayPhase.Night ? strings.Get("hud.status.openShop") :
                             waiting > 0 ? strings.Format("hud.status.waiting", waiting) :
                             strings.Get(Cycle.Phase == ShopDayPhase.Open ? "hud.status.open" : "hud.status.closing");
+                        // AD-E prototype: the counter is worked by hand; hold to scoop and bag the order.
+                        if (CheckoutHoldAvailable)
+                        {
+                            p.Key = strings.Get("hud.key.hold");
+                            p.Status = strings.Format("proto.hud.bag", waiting);
+                            p.Progress = CheckoutProgress;
+                        }
                         break;
                     case StationKind.Upgrade:
                         if (!culture) p.Name = strings.Get("card.title.Upgrade");

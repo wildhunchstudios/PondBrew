@@ -178,6 +178,7 @@ namespace EvolutionShop
             s.Guided = Tutorial.Mode == TutorialMode.Active && ActiveTutorialLesson == TutorialLesson.CloseAndReview;
             s.Cash = Model.Currency;
             s.Reputation = Reputation.Points; s.Tier = Reputation.Tier; s.NextThreshold = Reputation.NextThreshold; s.TierName = Reputation.TierName;
+            FillPrototypeReport(s, report);
             if (report == null) { s.Reasons.Clear(); s.TipKey = ""; return; }
             s.Day = report.dayNumber; s.Partial = report.partial;
             s.Revenue = report.revenue; s.Sales = report.sales; s.Visitors = report.visitors;
@@ -191,6 +192,22 @@ namespace EvolutionShop
             var incubator = Model.Incubator;
             string readyName = incubator.Phase == IncubatorPhase.Ready ? Model.GetSpecies(incubator.SpeciesId)?.DisplayName : null;
             s.TipKey = ScreenRules.ReportTip(report, empty, incubator.Phase, readyName, Model.UpgradeOwned, Model.Currency, Config.UpgradeCost, out s.TipArgs);
+        }
+
+        void FillPrototypeReport(ReportState s, TradeDaySave report)
+        {
+            s.Prototype = PrototypeActive;
+            s.Forecast.Clear();
+            s.DayStats = null;
+            if (!s.Prototype) return;
+            int points = Reputation.Points;
+            s.Stars = ShopStars.Of(points);
+            s.StarFloor = ShopStars.Threshold(s.Stars);
+            s.NextStar = ShopStars.NextThreshold(points);
+            s.NextUnlock = ShopStars.Unlock(Mathf.Min(ShopStars.Max, s.Stars + 1));
+            s.Forecast.AddRange(Forecast());
+            var day = LastPrototypeDay;
+            if (day != null && report != null && day.day == report.dayNumber) s.DayStats = day;
         }
 
         /// <summary>The receipt's Next night: back to play, which acknowledges the report as the classic Continue does.</summary>

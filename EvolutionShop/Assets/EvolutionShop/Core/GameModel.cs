@@ -364,7 +364,19 @@ namespace EvolutionShop
         /// Claims the exact resident at its current tag, but only if the tag is at most maximumPrice.
         /// The agreed price is copied into the reservation; later repricing never changes it.
         /// </summary>
-        public ActionResult ReserveTank(string tankId, string customerId, int maximumPrice)
+        public ActionResult ReserveTank(string tankId, string customerId, int maximumPrice) => Reserve(tankId, customerId, maximumPrice, 0);
+
+        /// <summary>
+        /// AD-E prototype haggling: claims the resident if its tag is at most maximumPrice, at an agreed price at or below
+        /// the tag (a close match to a visitor's wish). Checkout, the ledger and release use the agreed price as usual.
+        /// </summary>
+        public ActionResult ReserveTank(string tankId, string customerId, int maximumPrice, int agreedPrice)
+        {
+            if (agreedPrice < 1) return ActionResult.Fail(FailureCode.InvalidPrice);
+            return Reserve(tankId, customerId, maximumPrice, agreedPrice);
+        }
+
+        ActionResult Reserve(string tankId, string customerId, int maximumPrice, int agreedPrice)
         {
             if (tankId == null || !tanks.TryGetValue(tankId, out var value)) return ActionResult.Fail(FailureCode.UnknownTank);
             if (!ValidCustomer(customerId)) return ActionResult.Fail(FailureCode.InvalidCustomer);
@@ -378,6 +390,7 @@ namespace EvolutionShop
             var specimen = value.Value;
             int price = CurrentPrice(specimen.SpeciesId);
             if (price > maximumPrice) return ActionResult.Fail(FailureCode.PriceTooHigh);
+            if (agreedPrice > 0) price = Math.Min(price, agreedPrice);
             reservations.Add(tankId, new ReservationView(tankId, customerId, specimen.Id, specimen.SpeciesId, price));
             return ActionResult.Ok(specimen.SpeciesId, specimen.Id);
         }
@@ -407,6 +420,15 @@ namespace EvolutionShop
             reservations.Remove(tankId);
             Currency += reservation.Price;
             return ActionResult.Ok(reservation.SpeciesId, reservation.SpecimenId);
+        }
+
+        /// <summary>AD-E prototype: a satisfied wish's tip, paid at checkout beside the agreed price.</summary>
+        public ActionResult ReceiveTip(int credits)
+        {
+            if (credits <= 0) return ActionResult.Fail(FailureCode.InvalidPrice);
+            if ((long)Currency + credits > int.MaxValue) return ActionResult.Fail(FailureCode.CurrencyOverflow);
+            Currency += credits;
+            return ActionResult.Ok();
         }
 
         /// <summary>Visit teardown releases unpaid claims without moving stock or granting payment.</summary>

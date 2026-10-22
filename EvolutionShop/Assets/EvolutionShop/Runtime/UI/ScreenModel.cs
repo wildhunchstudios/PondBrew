@@ -93,6 +93,12 @@ namespace EvolutionShop
         public readonly List<ReportReason> Reasons = new List<ReportReason>();
         public string TipKey = "";
         public object[] TipArgs = new object[0];
+        // AD-E prototype: stars in place of reputation, tomorrow's forecast and the day's measurements.
+        public bool Prototype;
+        public int Stars, NextStar, StarFloor;
+        public string NextUnlock = "";
+        public PrototypeDayStats DayStats;
+        public readonly List<PrototypeForecast> Forecast = new List<PrototypeForecast>();
     }
 
     // ---------- pause ----------

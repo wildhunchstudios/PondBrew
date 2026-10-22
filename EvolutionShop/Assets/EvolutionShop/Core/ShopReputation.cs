@@ -36,6 +36,10 @@ namespace EvolutionShop
             return true;
         }
 
+        /// <summary>AD-E prototype: a visitor's exact wish, matched at checkout, is worth a point beside the sale's.</summary>
+        public const int WishPoints = 1;
+        public void AwardWish() { points = Math.Max(0, Math.Min(MaxPoints, points + WishPoints)); }
+
         /// <summary>
         /// Adjust fresh copies of a validated base catalog. Always pass the base definitions, not
         /// a previously adjusted result, so refreshing previews never compounds the premium.

@@ -656,6 +656,12 @@ namespace EvolutionShop
                 PrimaryText = s.CanServe ? Strings.Format("card.counter.serve", s.ServePrice) : Strings.Get("card.counter.serveIdle");
                 PrimaryEnabled = s.CanServe;
                 if (!s.CanServe) Reason = Strings.Get(waiting == 0 ? "card.counter.why.nobody" : !s.AtCounter ? "card.counter.why.notAtCounter" : "card.counter.why.paused");
+                if (s.HandsOn)
+                {
+                    PrimaryText = Strings.Get("proto.card.handsOn");
+                    PrimaryEnabled = false;
+                    Reason = Strings.Get("proto.card.handsOnWhy"); ReasonIsWarning = false;
+                }
             }
             Shown(heading, !night);
             RefreshRows(s, night);

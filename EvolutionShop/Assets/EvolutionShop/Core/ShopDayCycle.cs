@@ -25,6 +25,8 @@ namespace EvolutionShop
         public int DayNumber { get; private set; }
         public ShopDayPhase Phase { get; private set; }
         public float SecondsRemaining { get; private set; }
+        /// <summary>How long the current (or last) day was opened for: the trading length unless a shorter one was asked for.</summary>
+        public float DayLength { get; private set; }
 
         public ShopDayCycle(float tradingSeconds = DefaultTradingSeconds,
             float closingSeconds = DefaultClosingSeconds)
@@ -35,14 +37,20 @@ namespace EvolutionShop
             this.closingSeconds = closingSeconds;
             DayNumber = 1;
             Phase = ShopDayPhase.Night;
+            DayLength = tradingSeconds;
         }
 
-        public bool OpenShop()
+        public bool OpenShop() => OpenShop(tradingSeconds);
+
+        /// <summary>AD-E prototype: opens for a day no longer than the trading length (saved days stay restorable).</summary>
+        public bool OpenShop(float seconds)
         {
             // Every accepted opening must be able to complete without overflowing the day counter.
             if (Phase != ShopDayPhase.Night || DayNumber == int.MaxValue) return false;
+            if (!PositiveFinite(seconds) || seconds > tradingSeconds) return false;
             Phase = ShopDayPhase.Open;
-            SecondsRemaining = tradingSeconds;
+            SecondsRemaining = seconds;
+            DayLength = seconds;
             return true;
         }
 

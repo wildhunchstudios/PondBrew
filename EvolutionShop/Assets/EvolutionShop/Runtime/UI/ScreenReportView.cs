@@ -21,7 +21,8 @@ namespace EvolutionShop
         readonly ReportState state = new ReportState();
         readonly VisualElement full, empty, profitRow, reasonsRow;
         readonly Label title, income, sold, visitors, missed, reasons, profitValue, details, reputation, tier, tip, guided, partial, notice;
-        readonly VisualElement repFill, tipBox;
+        readonly VisualElement repFill, tipBox, protoBox;
+        readonly Label protoDay, protoVisitors;
         bool hovering;
         int countedDay = -1;
         float countStart;
@@ -76,6 +77,11 @@ namespace EvolutionShop
             tier = NewLabel(rep, TierName, "es-plan-chip es-plan-chip--on es-screen-receipt__tier");
             var bar = NewBox(full, "es-screen-bar es-screen-bar--thin", "es-report-rep-bar");
             repFill = NewBox(bar, "es-screen-bar__fill", "es-report-rep-fill");
+            // AD-E prototype: the day's measurements and tomorrow's first visitors (placeholder layout).
+            protoBox = NewBox(full, "es-screen-receipt__reasons", "es-report-proto");
+            protoDay = NewLabel(protoBox, "es-report-proto-day", "es-screen-receipt__muted");
+            NewLabel(protoBox, "es-report-proto-forecast", "es-screen-receipt__rep-text", Strings.Get("proto.report.forecast"));
+            protoVisitors = NewLabel(protoBox, "es-report-proto-visitors", "es-screen-receipt__muted");
             tipBox = NewBox(full, "es-screen-receipt__tip", "es-report-tip-box");
             tip = NewLabel(tipBox, TipName, "es-screen-receipt__tip-text");
             // Last in the body, so the popover draws over the lines below the profit row.
@@ -128,6 +134,24 @@ namespace EvolutionShop
             SetText(reputation, Strings.Format("report.reputation", state.Reputation));
             SetText(tier, state.TierName);
             repFill.style.width = Length.Percent(100f * ScreenRules.Fill(state.Reputation, ShopReputation.MaxPoints));
+            Shown(protoBox, state.Prototype);
+            if (state.Prototype)
+            {
+                // The storefront stars replace the reputation number; the bar fills toward the next star.
+                SetText(reputation, Strings.Format("proto.report.stars", state.Stars, state.Reputation));
+                SetText(tier, state.NextStar < 0 ? Strings.Get("proto.report.max") : Strings.Format("proto.report.next", state.NextStar, state.NextUnlock));
+                float span = state.NextStar < 0 ? 1 : state.NextStar - state.StarFloor;
+                repFill.style.width = Length.Percent(state.NextStar < 0 ? 100f : 100f * ScreenRules.Fill(state.Reputation - state.StarFloor, (int)span));
+                var d = state.DayStats;
+                Shown(protoDay, d != null);
+                if (d != null) SetText(protoDay, Strings.Format("proto.report.day", ShopHudRules.Clock(d.length), ShopHudRules.Clock(d.rushStart), ShopHudRules.Clock(d.rushEnd),
+                    d.exact, d.wishes, d.close, d.tips, d.handsOnSales, d.sales));
+                var lines = new string[state.Forecast.Count];
+                for (int i = 0; i < lines.Length; i++)
+                    lines[i] = state.Forecast[i].Wish != null ? Strings.Format("proto.report.visitor", i + 1, state.Forecast[i].Archetype, state.Forecast[i].Wish)
+                        : Strings.Format("proto.report.visitorAny", i + 1, state.Forecast[i].Archetype);
+                SetText(protoVisitors, lines.Length > 0 ? string.Join("\n", lines) : Strings.Get("proto.report.none"));
+            }
             SetText(tip, Strings.Format("report.tonight", Strings.Format(state.TipKey, state.TipArgs)));
             // The tip waits for the tallies, then slides in (a fade with reduced motion).
             if (counting) tipBox.style.opacity = 0;

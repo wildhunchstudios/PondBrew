@@ -19,6 +19,9 @@ namespace EvolutionShop
             public int HeardRejections;
             public int BrowseSpot;
             public int QueuePlace = -1;
+            // AD-E prototype: arrived during the rush, and the wish bubble over the visitor.
+            public bool Rush;
+            public CustomerWishBubble Bubble;
         }
 
         ShopSession shop;
@@ -29,6 +32,9 @@ namespace EvolutionShop
         ShopReputation cachedReputation;
         int cachedTier = -1, cachedAppealPoints = -1;
         bool baseEffects, cachedBaseEffects;
+        // AD-E prototype: stars and tank themes adjust the catalog while the prototype is active.
+        bool cachedPrototype;
+        int cachedStars = -1, cachedThemes = -1, themeFrame = -1, themeSignature;
         int maxVisitors = 1;
         float untilArrival;
         bool introductoryStockUnavailable;
@@ -67,7 +73,7 @@ namespace EvolutionShop
             get => baseEffects;
             set => baseEffects = shop != null && shop.ValidationMode && value;
         }
-        public float NextArrivalSeconds => baseEffects ? rules.NextArrivalSeconds : shop.Appeal.ArrivalSeconds(shop.Reputation);
+        public float NextArrivalSeconds => baseEffects ? rules.NextArrivalSeconds : shop.InRush ? ShopDayPlan.RushArrivalSeconds : shop.Appeal.ArrivalSeconds(shop.Reputation);
         bool holdVisits;
         /// <summary>Validation only (AD-C): every visit holds its phase and timers while set, so a reaction can be shown and read
         /// before the visit moves on; the visitors keep animating.</summary>
@@ -78,9 +84,67 @@ namespace EvolutionShop
         }
         void RefreshReputation()
         {
-            if (effectiveCatalog != null && cachedReputation == shop.Reputation && cachedTier == shop.Reputation.Tier && cachedAppealPoints == shop.Appeal.Points && cachedBaseEffects == baseEffects) return;
+            bool prototype = !baseEffects && shop.PrototypeActive;
+            int stars = prototype ? ShopStars.Of(shop.Reputation.Points) : -1;
+            int themes = prototype ? ThemeSignature() : -1;
+            if (effectiveCatalog != null && cachedReputation == shop.Reputation && cachedTier == shop.Reputation.Tier && cachedAppealPoints == shop.Appeal.Points && cachedBaseEffects == baseEffects &&
+                cachedPrototype == prototype && cachedStars == stars && cachedThemes == themes) return;
             cachedReputation = shop.Reputation; cachedTier = shop.Reputation.Tier; cachedAppealPoints = shop.Appeal.Points; cachedBaseEffects = baseEffects;
+            cachedPrototype = prototype; cachedStars = stars; cachedThemes = themes;
             effectiveCatalog = baseEffects ? Array.ConvertAll(catalog, a => a.Copy()) : shop.Appeal.ApplyTo(catalog, shop.Reputation);
+            if (prototype) effectiveCatalog = ShopThemes.Attract(ShopStars.ApplyTo(effectiveCatalog, stars), MatchingThemes());
+        }
+
+        /// <summary>AD-E prototype: the displays whose resident matches their theme, as a small count per theme (once a frame).</summary>
+        int ThemeSignature()
+        {
+            if (themeFrame == Time.frameCount) return themeSignature;
+            themeFrame = Time.frameCount;
+            int reef = 0, glow = 0, sky = 0;
+            foreach (var theme in MatchingThemes())
+            {
+                if (theme == ShopTheme.Reef) reef = Math.Min(3, reef + 1);
+                else if (theme == ShopTheme.Glow) glow = Math.Min(3, glow + 1);
+                else if (theme == ShopTheme.Sky) sky = Math.Min(3, sky + 1);
+            }
+            return themeSignature = reef + 4 * glow + 16 * sky;
+        }
+
+        List<ShopTheme> MatchingThemes()
+        {
+            var result = new List<ShopTheme>();
+            if (shop.Layout == null) return result;
+            foreach (string tank in shop.Model.TankIds)
+            {
+                var stock = shop.Model.GetTank(tank);
+                if (!stock.HasValue) continue;
+                var species = shop.Model.GetSpecies(stock.Value.SpeciesId);
+                var theme = shop.Layout.ThemeOf(tank);
+                if (species != null && ShopThemes.Matches(theme, ShopWishes.Family(species))) result.Add(theme);
+            }
+            return result;
+        }
+
+        /// <summary>AD-E prototype: a visitor's wish, from the species the shop has discovered.</summary>
+        public ShopWish WishFor(int dayNumber, int visitorIndex, CustomerArchetype type)
+        {
+            if (type == null) return null;
+            var discovered = new List<SpeciesDefinition>();
+            foreach (string id in shop.Model.DiscoveredSpeciesIds) { var species = shop.Model.GetSpecies(id); if (species != null) discovered.Add(species); }
+            return ShopWishes.Pick(dayNumber, visitorIndex, type.Id, type.FavoriteSpecies, discovered, shop.Config.Species);
+        }
+
+        /// <summary>AD-E prototype: who arrives at this place in a day, as arrivals pick them now (scripted types aside).</summary>
+        public CustomerArchetype ForecastArchetype(int dayNumber, int visitorIndex)
+        {
+            RefreshReputation();
+            return IntroductoryArrivalsActive ? IntroductoryArchetype() : CustomerArchetypes.Pick(effectiveCatalog, dayNumber, visitorIndex);
+        }
+
+        int ThemeTolerance(string tankId, string speciesId)
+        {
+            var species = shop.Model.GetSpecies(speciesId);
+            return species == null || shop.Layout == null ? 0 : ShopThemes.ToleranceFor(shop.Layout.ThemeOf(tankId), ShopWishes.Family(species));
         }
         public float PremiumSharePercent
         {
@@ -152,6 +216,7 @@ namespace EvolutionShop
             if (shop.Cycle.Phase != ShopDayPhase.Open) { untilArrival = rules.ArrivalDelaySeconds; return; }
             // The timer pauses while the shop is full, so a freed place fills NextArrivalSeconds later.
             if (!ArrivalsEnabled || visitors.Count >= EffectiveMaxVisitors) return;
+            if (shop.InRush && untilArrival > ShopDayPlan.RushArrivalSeconds) untilArrival = ShopDayPlan.RushArrivalSeconds;
             untilArrival -= seconds;
             if (untilArrival > 0) return;
             // Failed introductory admission retries at the ordinary initial gap, not every frame.
@@ -217,9 +282,12 @@ namespace EvolutionShop
             else arrivalTanks = shop.Model.TankIds;
             introductoryStockUnavailable = false;
             var report = shop.Reports.Current;
-            var type = ChooseArchetype(report == null ? 0 : report.visitors);
+            int visitorIndex = report == null ? 0 : report.visitors;
+            var type = ChooseArchetype(visitorIndex);
             var entry = new Visitor();
-            var visit = new CustomerVisit(shop.Model, arrivalTanks, rules, type, tank => Contended(tank, entry));
+            var preference = !introductory && shop.PrototypeActive
+                ? new VisitPreference { Wish = WishFor(shop.Cycle.DayNumber, visitorIndex, type), ThemeTolerance = ThemeTolerance } : null;
+            var visit = new CustomerVisit(shop.Model, arrivalTanks, rules, type, tank => Contended(tank, entry), preference);
             if (!shop.Reports.BeginVisit(visit.Id))
             {
                 Debug.LogWarning("EVOLUTION_CUSTOMER_LEDGER the day report could not record a new visitor; arrival skipped.");
@@ -230,8 +298,11 @@ namespace EvolutionShop
             entry.Actor.Initialize(Navigation, type.PresentationId);
             entry.Actor.BindCustomerPresentation(shop.World,visit.Id);
             entry.Actor.SetPaused(shop.Paused);
+            entry.Rush = shop.InRush;
+            if (visit.Wish != null) entry.Bubble = CustomerWishBubble.Attach(entry.Actor, visit.Wish, () => shop.ReducedVisualMotion);
             visitors.Add(entry);
-            shop.Notify("A " + type.DisplayName.ToLowerInvariant() + " arrived. They will browse your front displays.");
+            if (preference != null) shop.PrototypeArrived(visit, entry.Rush);
+            shop.Notify("A " + type.DisplayName.ToLowerInvariant() + " arrived. " + (visit.Wish != null ? "They wish for " + visit.Wish.Label + "." : "They will browse your front displays."));
             ApplyDestination(entry);
             RefreshCaption(entry);
             shop.SaveNow();
@@ -519,7 +590,11 @@ namespace EvolutionShop
             var visit = visitor.Visit;
             if (visit == null || visit.Outcome == CustomerOutcome.None) return;
             int price = visit.Outcome == CustomerOutcome.Sold ? visit.Price : 0;
-            if (shop.Reputation.ResolveVisit(shop.Reports, visit.Id, visit.Outcome, price) && save && shop.Cycle.Phase != ShopDayPhase.Night)
+            bool resolved = shop.Reputation.ResolveVisit(shop.Reports, visit.Id, visit.Outcome, price);
+            // AD-E prototype: a matched wish tips and earns its point once, with the sale (by hand or by Pip).
+            if (resolved && visit.Outcome == CustomerOutcome.Sold) shop.PrototypeSold(visit, visitor.Rush);
+            else if (resolved) shop.PrototypeLeft(visit);
+            if (resolved && save && shop.Cycle.Phase != ShopDayPhase.Night)
                 shop.SaveNow(); // Night saves once after the report is finalized with the new day clock.
         }
 
@@ -533,6 +608,7 @@ namespace EvolutionShop
             bool upset = visit.Outcome == CustomerOutcome.TooExpensive ||
                 (visit.Phase == CustomerPhase.Arriving && visit.PriceRejections > 0);
             visitor.Actor.Present(visit.Phase, caption, upset);
+            if (visitor.Bubble) visitor.Bubble.Present(visit.Phase, visit.WishMatch, visit.Outcome);
         }
 
         public string Caption => CaptionOf(Visit);
@@ -542,6 +618,14 @@ namespace EvolutionShop
             if (visit == null) return "";
             switch (visit.Phase)
             {
+                case CustomerPhase.Arriving when visit.Wish != null && visit.PriceRejections == 0:
+                    return "Looking for " + visit.Wish.Label;
+                case CustomerPhase.ToCounter when visit.WishMatch == WishMatch.Exact:
+                    return "My wish! " + visit.Price + " is fair!";
+                case CustomerPhase.ToCounter when visit.WishMatch == WishMatch.Close:
+                    return visit.Haggled ? "Close enough... " + visit.Price + ", not " + visit.TagPrice + "?" : "Close enough. I'll take it";
+                case CustomerPhase.Paid when visit.WishMatch == WishMatch.Exact:
+                    return "My wish came true! +" + ShopWishes.Tip(visit.Price) + " tip";
                 case CustomerPhase.Arriving:
                     if (visit.PriceRejections == 0) return "Taking a look";
                     return visit.RefusedOverBudget ? "Over my budget! What else?" : "Too pricey! What else is here?";

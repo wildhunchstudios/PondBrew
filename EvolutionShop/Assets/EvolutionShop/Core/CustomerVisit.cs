@@ -33,6 +33,7 @@ namespace EvolutionShop
         private readonly HashSet<string> rejectedTanks = new HashSet<string>(StringComparer.Ordinal);
         private readonly CustomerArchetype archetype;
         private readonly Func<string, bool> contended;
+        private readonly VisitPreference preference;
         private float phaseSeconds;
 
         public string Id { get; }
@@ -57,6 +58,15 @@ namespace EvolutionShop
         public string QuotedSpeciesId { get; private set; }
         public int QuotedPrice { get; private set; }
         public int PriceRejections { get; private set; }
+        /// <summary>AD-E prototype: the visitor's wish, or null (always null without a preference).</summary>
+        public ShopWish Wish => preference?.Wish;
+        /// <summary>AD-E prototype: how the agreed creature matches the wish; None until agreed, and without a wish.</summary>
+        public WishMatch WishMatch { get; private set; }
+        /// <summary>AD-E prototype: the agreed price was haggled down from the tag (a close match).</summary>
+        public bool Haggled { get; private set; }
+        /// <summary>AD-E prototype: the tag the visitor saw when it haggled, and the theme points behind the agreed limit.</summary>
+        public int TagPrice { get; private set; }
+        public int ThemePoints { get; private set; }
         public float QueueSecondsRemaining => Phase == CustomerPhase.Queued ? Math.Max(0f, phaseSeconds) : 0f;
         public bool CanBeSlapped => Outcome == CustomerOutcome.None &&
             (Phase == CustomerPhase.Arriving || Phase == CustomerPhase.Browsing ||
@@ -65,8 +75,9 @@ namespace EvolutionShop
         /// <param name="archetype">The visitor's type; null means the shared rules' standard customer.</param>
         /// <param name="contended">Whether another visitor is already heading to or browsing a display.
         /// Used only to spread visitors out; claims are still settled by the model.</param>
+        /// <param name="preference">AD-E prototype: a wish and tank themes; null keeps the classic visit exactly.</param>
         public CustomerVisit(GameModel model, string[] tankIds, CustomerRules rules = null,
-            CustomerArchetype archetype = null, Func<string, bool> contended = null)
+            CustomerArchetype archetype = null, Func<string, bool> contended = null, VisitPreference preference = null)
         {
             this.model = model ?? throw new ArgumentNullException(nameof(model));
             this.rules = CopyRules(rules ?? new CustomerRules());
@@ -75,6 +86,7 @@ namespace EvolutionShop
             if (problem != null) throw new ArgumentException(problem, nameof(archetype));
             this.archetype = type.Copy();
             this.contended = contended;
+            this.preference = preference;
             if (tankIds == null || tankIds.Length == 0) throw new ArgumentException("At least one display tank is required.", nameof(tankIds));
             var known = new HashSet<string>(StringComparer.Ordinal);
             foreach (var tank in model.CaptureSave().tanks) known.Add(tank.tankId);
@@ -179,7 +191,17 @@ namespace EvolutionShop
             var stock = model.GetTank(TargetTankId);
             var tag = stock.HasValue ? model.GetPrice(stock.Value.SpeciesId) : null;
             int limit = tag.HasValue ? archetype.AcceptableLimit(tag.Value.SpeciesId, tag.Value.Standard) : int.MaxValue;
-            var reserved = model.ReserveTank(TargetTankId, Id, limit);
+            var match = WishMatch.None;
+            int theme = 0;
+            if (preference != null && tag.HasValue)
+            {
+                match = preference.Wish != null ? preference.Wish.Match(tag.Value.SpeciesId) : WishMatch.None;
+                theme = preference.ThemeTolerance != null ? Math.Max(0, preference.ThemeTolerance(TargetTankId, tag.Value.SpeciesId)) : 0;
+                if (theme > 0) limit = Math.Min(archetype.Budget, ShopPricing.AcceptableLimit(tag.Value.Standard, Tolerance(tag.Value.SpeciesId, theme)));
+            }
+            var reserved = match == WishMatch.Close
+                ? model.ReserveTank(TargetTankId, Id, limit, ShopWishes.Haggled(tag.Value.Price))
+                : model.ReserveTank(TargetTankId, Id, limit);
             if (!reserved.Success)
             {
                 if (reserved.Failure == FailureCode.PriceTooHigh && tag.HasValue)
@@ -204,10 +226,18 @@ namespace EvolutionShop
             Price = reservation.Value.Price;
             QuotedSpeciesId = SpeciesId;
             QuotedPrice = Price;
+            WishMatch = match;
+            Haggled = match == WishMatch.Close && tag.HasValue && Price < tag.Value.Price;
+            TagPrice = tag.HasValue ? tag.Value.Price : Price;
+            ThemePoints = theme;
             var agreed = model.GetPrice(SpeciesId);
-            Reaction = agreed.HasValue ? archetype.Judge(SpeciesId, Price, agreed.Value.Standard) : PriceReaction.Fair;
+            Reaction = !agreed.HasValue ? PriceReaction.Fair : theme > 0
+                ? (archetype.OverBudget(Price) ? PriceReaction.TooExpensive : ShopPricing.Judge(Price, agreed.Value.Standard, archetype.BargainPercent, Tolerance(SpeciesId, theme)))
+                : archetype.Judge(SpeciesId, Price, agreed.Value.Standard);
             SetPhase(CustomerPhase.ToCounter, rules.TravelTimeoutSeconds);
         }
+
+        private int Tolerance(string speciesId, int themePoints) => Math.Min(1000, archetype.ToleranceFor(speciesId) + themePoints);
 
         private bool OwnsExpectedReservation()
         {
@@ -239,6 +269,11 @@ namespace EvolutionShop
                 var stock = model.GetTank(tankId);
                 if (!stock.HasValue || model.GetReservation(tankId).HasValue) continue;
                 int score = (archetype.Likes(stock.Value.SpeciesId) ? 2 : 0) + (contended != null && contended(tankId) ? 0 : 1);
+                if (preference?.Wish != null)
+                {
+                    var match = preference.Wish.Match(stock.Value.SpeciesId);
+                    score += match == WishMatch.Exact ? ShopWishes.ExactScore : match == WishMatch.Close ? ShopWishes.CloseScore : 0;
+                }
                 if (score > bestScore) { best = tankId; bestScore = score; }
             }
             return best;
