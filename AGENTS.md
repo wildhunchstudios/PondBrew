@@ -558,8 +558,8 @@ Gate: the slice is approved in game before bulk art; gameplay changes are playte
 Requested by the user on 2026-10-23: a redesign of the core loop so the game starts tiny and grows toward one clear goal. The authoritative problem statement, research basis, pillars, eras, creatures and tanks, cultures, discovery (mixing and breeding), automation tiers, station levels, helpers, spaces, economy, edge cases, technical plan, risks and decisions are in **GR.1–GR.18 at the end of this file**. Runs next; replaces AD-F and folds in R09.1–R09.3. Build alongside the current game and cut over at GR-14.
 
 - [x] GR-00 Specification (documentation only, 2026-10-23).
-- [x] GR-01 Content and pacing model: species roster, culture, station, cost and gate tables, era gates, Core-only pacing simulator and report: technically complete 2026-10-23 (GR.19). At the review the user chose 72 species (nine families of eight) and accepted the rest; **the user's look at the 72-species roster is its gate** (`Docs/Evidence/gr-01/REVIEW.md`).
-- [ ] GR-02 Greybox core prototype on the new ruleset: unit A and back room, 4-space tanks with schools and peek, never-fail mixing, L1–L2 stations, stars gating. **Gate: user playtest.**
+- [x] GR-01 Content and pacing model: species roster, culture, station, cost and gate tables, era gates, Core-only pacing simulator and report: technically complete 2026-10-23 (GR.19). At the review the user chose 72 species (nine families of eight) and accepted the rest; the user approved the 72-species roster on 2026-10-23 ("That's good continue for gr-02"): **gate passed**.
+- [~] GR-02 Greybox core prototype on the new ruleset: unit A and back room, 4-space tanks with schools and peek, never-fail mixing, L1–L2 stations, stars gating. **Gate: user playtest.** *In progress since 2026-10-23 (Claude), at the user's word after approving GR-01's roster.*
 - [ ] GR-03 Size classes, Large and Show tanks, tank levels, comfort tags, per-specimen reservations and browsing, performance budget.
 - [ ] GR-04 Seven data-driven cultures, supplier catalog, new growers, journal Cultures page.
 - [ ] GR-05 Breeding tank, breeding values, special pairs, deterministic colour, pair log, research points.
@@ -4940,6 +4940,8 @@ Superseded or folded in: AD-F → GR-12; R09.1 → GR-01 and GR-11; R09.2 → GR
 #### GR.19.0 — The user's review (2026-10-23)
 
 The first roster had 36 species. The user: "About the roster 36 seems like a small number, the rest seems ok"; asked how many, chose **72 species: nine families of eight** (recommended over 60, 72 in six bigger families, and 100+). Each family: three founders, four hybrids, one crown; three small, three medium and three large families. New families: **Dewling** (small, Mist, era 3), **Saltscale** (medium, Brine, era 4), **Cometail** (large, Spark and Dusk, era 5); the six others gained a founder and a hybrid each (Brookkin two hybrids). Each family has its own breeding-value band, the bands in era order (Brookkin 40–160 up to Cometail 1630–1800), and the first hybrid of each family is bred from the family before it (for example Kelpgrazer = Mistlet × Shellback). The curve, the mixing clarification (GR.19.2) and the late-game numbers stand as accepted. Still open: the user's look at the 72-species roster (new families and names).
+
+The user approved the 72-species roster and the new families on 2026-10-23 ("That's good continue for gr-02"): GR-01's gate passed.
 
 #### GR.19.1 — Modelled values that replace GR's first pass
 
