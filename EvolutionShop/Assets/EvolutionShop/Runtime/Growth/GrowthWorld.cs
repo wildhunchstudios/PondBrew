@@ -85,7 +85,7 @@ namespace EvolutionShop
         /// <summary>GR-05: the breeding tank against the back room's south wall, west of the door, facing the incubator (GR.7.2).
         /// Its glass is 1.06 m wide: the pair's compartment, and a nursery behind a divider at its east end.</summary>
         public static readonly Vector3 BreedingPosition = new Vector3(-0.5f, 0, 4.42f);
-        public const float BreedingWaterY = 1.0f, BreedingDivider = 0.22f;
+        public const float BreedingWaterY = 1.0f, BreedingDivider = 0.22f, SecondPairDivider = -0.145f;
 
         GrowthSession session;
         Material floorWood, floorTile, floorB, wall, wallLab, trim, stand, glass, water, waterBrine, waterWarm, gravel, counterMat, cabinet, paper, marker, partition, sign, dome, harmony, lightBar;
@@ -113,13 +113,24 @@ namespace EvolutionShop
         GameObject unitBWall, unitBSign;
         Light unitBLight, incubatorGlow;
         Transform incubatorRoot, tanksRoot, visitorsRoot;
-        GrowthCreatureView hatchlingView, highlighted;
+        GrowthCreatureView highlighted;
+        /// <summary>GR-06: the incubator's clutch on its tray (one to three).</summary>
+        readonly List<GrowthCreatureView> hatchlingViews = new List<GrowthCreatureView>();
+        /// <summary>GR-06: each station's level parts (its placeholder look by level), rebuilt when the level changes.</summary>
+        readonly Dictionary<string, int> builtLevels = new Dictionary<string, int>();
+        readonly Dictionary<string, Transform> levelParts = new Dictionary<string, Transform>();
+        Transform benchRoot, counterRoot;
+        Renderer incubatorDome;
+        readonly Dictionary<string, Material> tintedDome = new Dictionary<string, Material>();
         GrowthPhase phase;
         Light sun;
 
         public IReadOnlyDictionary<string, TankView> Tanks => tanks;
         public IReadOnlyDictionary<int, GrowthVisitorView> VisitorViews => visitors;
-        public GrowthCreatureView HatchlingView => hatchlingView;
+        public GrowthCreatureView HatchlingView => hatchlingViews.Count > 0 ? hatchlingViews[0] : null;
+        public IReadOnlyList<GrowthCreatureView> HatchlingViews => hatchlingViews;
+        /// <summary>GR-06 (validation): the level each station's look was last built at.</summary>
+        public int LookLevel(string key) => builtLevels.TryGetValue(key, out int lv) ? lv : 0;
         public bool UnitBWallStanding => unitBWall != null && unitBWall.activeSelf;
 
         // ---------------------------------------------------------------- building
@@ -349,7 +360,7 @@ namespace EvolutionShop
             incubatorRoot = new GameObject("Incubator").transform; incubatorRoot.SetParent(root, false);
             incubatorRoot.localPosition = IncubatorPosition;
             Box(incubatorRoot, "Base", new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.9f, 0.7f), cabinet, true);
-            ShopWorld.Shape(incubatorRoot, "Dome", PrimitiveType.Sphere, new Vector3(0, 1.05f, 0), new Vector3(0.6f, 0.45f, 0.55f), dome);
+            incubatorDome = ShopWorld.Shape(incubatorRoot, "Dome", PrimitiveType.Sphere, new Vector3(0, 1.05f, 0), new Vector3(0.6f, 0.45f, 0.55f), dome).GetComponent<Renderer>();
             ShopWorld.Shape(incubatorRoot, "Tray", PrimitiveType.Cylinder, new Vector3(0, 0.91f, -0.22f), new Vector3(0.3f, 0.02f, 0.2f), paper);
             for (int i = 0; i < 6; i++)
             {
@@ -364,7 +375,7 @@ namespace EvolutionShop
             Target(incubatorRoot.gameObject, GrowthTargetKind.Incubator, "incubator");
             AddCollider(incubatorRoot.gameObject, new Vector3(0, 0.7f, 0), new Vector3(0.95f, 1.4f, 0.8f));
 
-            var counter = new GameObject("Counter").transform; counter.SetParent(root, false);
+            var counter = counterRoot = new GameObject("Counter").transform; counter.SetParent(root, false);
             counter.localPosition = CounterPosition;
             Box(counter, "Counter body", new Vector3(0, 0.5f, 0), new Vector3(2.0f, 1.0f, 0.6f), counterMat, true);
             Box(counter, "Counter top", new Vector3(0, 1.02f, 0), new Vector3(2.1f, 0.05f, 0.7f), trim);
@@ -372,7 +383,7 @@ namespace EvolutionShop
             Target(counter.gameObject, GrowthTargetKind.Counter, "counter");
             AddCollider(counter.gameObject, new Vector3(0, 0.6f, 0), new Vector3(2.1f, 1.2f, 0.75f));
 
-            var bench = new GameObject("Tool bench").transform; bench.SetParent(root, false);
+            var bench = benchRoot = new GameObject("Research bench").transform; bench.SetParent(root, false);
             bench.localPosition = WorkbenchPosition; bench.localRotation = Quaternion.Euler(0, -90, 0);
             Box(bench, "Bench top", new Vector3(0, 0.88f, 0), new Vector3(1.3f, 0.06f, 0.6f), counterMat, true);
             Box(bench, "Bench legs", new Vector3(0, 0.43f, 0), new Vector3(1.2f, 0.84f, 0.5f), stand, true);
@@ -437,8 +448,9 @@ namespace EvolutionShop
             tanks.Clear();
             foreach (var v in visitors.Values) Destroy(v.gameObject);
             visitors.Clear();
-            if (hatchlingView) Destroy(hatchlingView.gameObject);
-            hatchlingView = null;
+            foreach (var h in hatchlingViews) if (h) Destroy(h.gameObject);
+            hatchlingViews.Clear();
+            foreach (var key in builtLevels.Keys.Where(k => k.StartsWith("grower:")).ToList()) { builtLevels.Remove(key); levelParts.Remove(key); }
             foreach (var kv in sources) { Destroy(kv.Value.Root.gameObject); slots[kv.Key].SetActive(true); }
             sources.Clear();
             if (breedingTank) Destroy(breedingTank);
@@ -485,14 +497,29 @@ namespace EvolutionShop
                 if (on) doseBlobs[i].GetComponent<Renderer>().sharedMaterial = culture[shop.Chamber[i]];
             }
             SyncBreeding(shop);
-            incubatorGlow.intensity = shop.Incubating ? 0.45f : shop.Hatchling != null ? 0.3f : 0;
-            if (shop.Hatchling != null && (hatchlingView == null || hatchlingView.SpecimenId != shop.Hatchling.Id))
+            // A soft glow while it works; dimmer once the clutch is out, so the hatchlings on the tray read (GR-06).
+            incubatorGlow.intensity = shop.Incubating ? 0.45f : shop.Hatchling != null ? 0.12f : 0;
+            // GR-06: the clutch sits on the tray, side by side.
+            if (hatchlingViews.Count != shop.Hatchlings.Count || hatchlingViews.Where((v, i) => v == null || v.SpecimenId != shop.Hatchlings[i].Id).Any())
             {
-                if (hatchlingView) Destroy(hatchlingView.gameObject);
-                hatchlingView = GrowthCreatureView.Create(shop.Hatchling, incubatorRoot);
-                hatchlingView.transform.localPosition = new Vector3(0, 0.98f, -0.22f);
+                foreach (var h in hatchlingViews) if (h) Destroy(h.gameObject);
+                hatchlingViews.Clear();
+                for (int i = 0; i < shop.Hatchlings.Count; i++)
+                {
+                    var view = GrowthCreatureView.Create(shop.Hatchlings[i], incubatorRoot);
+                    view.transform.localPosition = new Vector3((i - (shop.Hatchlings.Count - 1) * 0.5f) * 0.11f, 0.98f, -0.22f);
+                    hatchlingViews.Add(view);
+                }
             }
-            else if (shop.Hatchling == null && hatchlingView) { Destroy(hatchlingView.gameObject); hatchlingView = null; }
+            // The tint port colours the dome while a dose is in it.
+            Material domeWant = dome;
+            if (shop.IncubatorTint != null && !tintedDome.TryGetValue(shop.IncubatorTint, out domeWant))
+            {
+                var tint = Hex(GrowthContent.Culture(shop.IncubatorTint).Hex); tint.a = 0.3f;
+                tintedDome[shop.IncubatorTint] = domeWant = Transparent("GR incubator dome " + shop.IncubatorTint, tint);
+            }
+            if (incubatorDome.sharedMaterial != domeWant) incubatorDome.sharedMaterial = domeWant;
+            SyncLevelLooks(shop);
             SyncVisitors(shop);
         }
 
@@ -508,6 +535,8 @@ namespace EvolutionShop
             Box(root, "Glass", new Vector3(0, BreedingWaterY, 0), new Vector3(1.06f, 0.44f, 0.46f), glass);
             breedingWater = Box(root, "Water", new Vector3(0, BreedingWaterY - 0.02f, 0), new Vector3(1.0f, 0.36f, 0.42f), water).GetComponent<Renderer>();
             Box(root, "Divider", new Vector3(BreedingDivider, BreedingWaterY, 0), new Vector3(0.015f, 0.4f, 0.44f), trim);
+            // GR-06: level 3's second pair has a compartment of its own beside the first.
+            if (level >= 3) Box(root, "Pair divider", new Vector3(SecondPairDivider, BreedingWaterY, 0), new Vector3(0.012f, 0.4f, 0.44f), glass);
             Box(root, "Gravel", new Vector3(0, 0.8f, 0), new Vector3(1.0f, 0.03f, 0.42f), gravel);
             Box(root, "Label", new Vector3(0, 0.55f, 0.255f), new Vector3(0.56f, 0.14f, 0.02f), paper);
             Box(root, "Heart", new Vector3(-0.2f, 0.55f, 0.267f), new Vector3(0.08f, 0.08f, 0.01f), sign);
@@ -549,8 +578,7 @@ namespace EvolutionShop
                 tintedWater[shop.Tint] = want = Transparent("GR breeding water " + shop.Tint, tint);
             }
             if (breedingWater.sharedMaterial != want) breedingWater.sharedMaterial = want;
-            var inside = shop.Parents.ToList();
-            if (shop.Offspring != null) inside.Add(shop.Offspring);
+            var inside = shop.AllParents.Concat(shop.AllOffspring).ToList();
             foreach (var s in inside)
                 if (!breedingViews.ContainsKey(s.Id)) breedingViews[s.Id] = GrowthCreatureView.Create(s, breedingTank.transform);
             foreach (var id in breedingViews.Keys.Where(k => inside.All(s => s.Id != k)).ToList()) { Destroy(breedingViews[id].gameObject); breedingViews.Remove(id); }
@@ -560,10 +588,28 @@ namespace EvolutionShop
         void AnimateBreeding(float t, GrowthShop shop)
         {
             if (breedingTank == null) return;
-            float left = -0.5f, right = BreedingDivider - 0.01f;
-            for (int i = 0; i < shop.Parents.Count; i++)
+            for (int k = 0; k < shop.Pairs.Length; k++)
             {
-                if (!breedingViews.TryGetValue(shop.Parents[i].Id, out var v) || v == null) continue;
+                var pair = shop.Pairs[k];
+                // One compartment for the pair below level 3; at level 3 each pair has half of it.
+                float left = breedingLevel >= 3 && k == 1 ? SecondPairDivider + 0.01f : -0.5f;
+                float right = breedingLevel >= 3 && k == 0 ? SecondPairDivider - 0.01f : BreedingDivider - 0.01f;
+                for (int i = 0; i < pair.Parents.Count; i++)
+                    SwimParent(pair.Parents[i], i, left, right, t);
+                if (pair.Offspring != null && breedingViews.TryGetValue(pair.Offspring.Id, out var o) && o != null)
+                {
+                    float nursery = (BreedingDivider + 0.5f) * 0.5f, z = breedingLevel >= 3 ? (k == 0 ? -0.09f : 0.09f) : 0;
+                    o.transform.localPosition = new Vector3(nursery, BreedingWaterY + 0.03f * Mathf.Sin(t * 1.7f + k), z + 0.04f * Mathf.Sin(t * 0.9f + k));
+                    o.transform.localRotation = Quaternion.Euler(0, 90 + 25f * Mathf.Sin(t * 0.6f + k), 0);
+                    o.Tick(t);
+                }
+            }
+        }
+
+        void SwimParent(GrowthSpecimen parent, int i, float left, float right, float t)
+        {
+            {
+                if (!breedingViews.TryGetValue(parent.Id, out var v) || v == null) return;
                 float L = v.Length;
                 float hx = Mathf.Max(0.02f, (right - left) * 0.5f - L * 0.6f), cx = (left + right) * 0.5f, hz = Mathf.Max(0.02f, 0.21f - L * 0.5f);
                 float speed = L > 0.2f ? 0.45f : L > 0.1f ? 0.6f : 0.8f, phase = i * Mathf.PI;
@@ -574,12 +620,112 @@ namespace EvolutionShop
                 if (dir.sqrMagnitude > 1e-6f) v.transform.localRotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
                 v.Tick(t);
             }
-            if (shop.Offspring != null && breedingViews.TryGetValue(shop.Offspring.Id, out var o) && o != null)
+        }
+
+        // ---------------------------------------------------------------- station levels (GR-06)
+
+        /// <summary>GR.9: each level changes a station's look; these placeholder parts show the level at a glance.</summary>
+        void SyncLevelLooks(GrowthShop shop)
+        {
+            Look("siphon", benchRoot, shop.Level("siphon"), SiphonParts);
+            Look("bench", benchRoot, shop.Level("bench"), BenchParts);
+            Look("incubator", incubatorRoot, shop.Level("incubator"), IncubatorParts);
+            Look("counter", counterRoot, shop.Level("counter"), CounterParts);
+            foreach (var kv in sources)
             {
-                float nursery = (BreedingDivider + 0.5f) * 0.5f;
-                o.transform.localPosition = new Vector3(nursery, BreedingWaterY + 0.03f * Mathf.Sin(t * 1.7f), 0.04f * Mathf.Sin(t * 0.9f));
-                o.transform.localRotation = Quaternion.Euler(0, 90 + 25f * Mathf.Sin(t * 0.6f), 0);
-                o.Tick(t);
+                bool vat = GrowthContent.Culture(kv.Key).Source == CultureSource.Vat;
+                Look("grower:" + kv.Key, kv.Value.Root, vat ? shop.Level("vat") : shop.Level("grower"), vat ? (System.Action<Transform, int>)VatParts : GrowerParts);
+            }
+        }
+
+        void Look(string key, Transform root, int level, System.Action<Transform, int> build)
+        {
+            if (root == null) return;
+            if (builtLevels.TryGetValue(key, out int built) && built == level && levelParts.TryGetValue(key, out var have) && have != null) return;
+            if (levelParts.TryGetValue(key, out var old) && old) Destroy(old.gameObject);
+            var parts = new GameObject("Level " + level + " parts (" + key + ")").transform; parts.SetParent(root, false);
+            build(parts, level);
+            levelParts[key] = parts; builtLevels[key] = level;
+        }
+
+        /// <summary>The siphon on the research bench: a bigger bulb (2), a twin chamber (3), the vacuum's canister and hose (4).</summary>
+        void SiphonParts(Transform p, int level)
+        {
+            if (level >= 2) ShopWorld.Shape(p, "Bigger bulb", PrimitiveType.Sphere, new Vector3(0.38f, 0.98f, 0.12f), Vector3.one * 0.12f, culture["flow"]);
+            if (level >= 3) ShopWorld.Shape(p, "Twin chamber", PrimitiveType.Sphere, new Vector3(0.38f, 0.98f, -0.12f), Vector3.one * 0.12f, culture["bloom"]);
+            if (level >= 4)
+            {
+                Box(p, "Vacuum canister", new Vector3(0.52f, 1.02f, 0), new Vector3(0.16f, 0.22f, 0.2f), trim);
+                ShopWorld.Shape(p, "Hose", PrimitiveType.Cylinder, new Vector3(0.3f, 0.93f, 0), new Vector3(0.04f, 0.2f, 0.04f), stand).localRotation = Quaternion.Euler(0, 0, 90);
+            }
+        }
+
+        /// <summary>The research bench: notes (1), a microscope (2); the analyzer and planner wait for GR-08.</summary>
+        void BenchParts(Transform p, int level)
+        {
+            Box(p, "Notes", new Vector3(-0.15f, 0.915f, 0.1f), new Vector3(0.22f, 0.01f, 0.16f), paper);
+            if (level >= 2)
+            {
+                Box(p, "Microscope base", new Vector3(-0.42f, 0.93f, 0), new Vector3(0.16f, 0.04f, 0.14f), stand);
+                ShopWorld.Shape(p, "Microscope arm", PrimitiveType.Cylinder, new Vector3(-0.42f, 1.06f, -0.03f), new Vector3(0.04f, 0.11f, 0.04f), stand);
+                ShopWorld.Shape(p, "Microscope tube", PrimitiveType.Cylinder, new Vector3(-0.42f, 1.18f, 0.02f), new Vector3(0.05f, 0.07f, 0.05f), marker).localRotation = Quaternion.Euler(20, 0, 0);
+            }
+        }
+
+        /// <summary>The incubator: the mix log screen (2), the tint port and a wider tray for clutches (3), the auto-doser port (4, power with GR-07).</summary>
+        void IncubatorParts(Transform p, int level)
+        {
+            if (level >= 2) Box(p, "Mix log screen", new Vector3(0.3f, 0.66f, -0.36f), new Vector3(0.22f, 0.15f, 0.02f), Glow("GR screen", new Color(0.55f, 0.85f, 0.78f), 0.25f));
+            if (level >= 3)
+            {
+                ShopWorld.Shape(p, "Tint port", PrimitiveType.Cylinder, new Vector3(0.22f, 1.32f, 0.1f), new Vector3(0.09f, 0.05f, 0.09f), counterMat);
+                ShopWorld.Shape(p, "Clutch tray", PrimitiveType.Cylinder, new Vector3(0, 0.905f, -0.22f), new Vector3(0.42f, 0.01f, 0.24f), paper);
+            }
+            if (level >= 4)
+            {
+                Box(p, "Auto-doser port", new Vector3(-0.5f, 0.62f, 0), new Vector3(0.1f, 0.24f, 0.24f), trim);
+                ShopWorld.Shape(p, "Port pipe stub", PrimitiveType.Cylinder, new Vector3(-0.6f, 0.62f, 0), new Vector3(0.06f, 0.06f, 0.06f), stand).localRotation = Quaternion.Euler(0, 0, 90);
+            }
+        }
+
+        /// <summary>The counter: a bag dispenser (2), a card reader (3); the second till waits for helpers (GR-09).</summary>
+        void CounterParts(Transform p, int level)
+        {
+            if (level >= 2) Box(p, "Bag dispenser", new Vector3(-0.7f, 1.16f, 0.1f), new Vector3(0.26f, 0.24f, 0.2f), paper);
+            if (level >= 3)
+            {
+                var reader = Box(p, "Card reader", new Vector3(0.15f, 1.1f, 0.12f), new Vector3(0.12f, 0.05f, 0.18f), trim);
+                reader.localRotation = Quaternion.Euler(-20, 0, 0);
+                Box(p, "Card reader light", new Vector3(0.15f, 1.13f, 0.17f), new Vector3(0.03f, 0.01f, 0.03f), Glow("GR reader light", new Color(0.5f, 0.95f, 0.6f), 0.4f));
+            }
+        }
+
+        /// <summary>A grower: a second shelf ring (2), a tap for a pipe (3), two taps and a lid (4); the pipes come with GR-07.</summary>
+        void GrowerParts(Transform p, int level)
+        {
+            if (level >= 2) ShopWorld.Shape(p, "Shelf ring", PrimitiveType.Cylinder, new Vector3(0, 1.12f, 0), new Vector3(0.47f, 0.015f, 0.47f), trim);
+            if (level >= 3) Tap(p, 1);
+            if (level >= 4) { Tap(p, -1); ShopWorld.Shape(p, "Jar lid", PrimitiveType.Cylinder, new Vector3(0, 1.62f, 0), new Vector3(0.44f, 0.02f, 0.44f), trim); }
+        }
+
+        void Tap(Transform p, int side)
+        {
+            ShopWorld.Shape(p, "Tap", PrimitiveType.Cylinder, new Vector3(side * 0.44f, 0.55f, 0.2f), new Vector3(0.05f, 0.06f, 0.05f), stand).localRotation = Quaternion.Euler(0, 0, 90);
+            Box(p, "Tap valve", new Vector3(side * 0.5f, 0.6f, 0.2f), new Vector3(0.03f, 0.06f, 0.03f), sign);
+        }
+
+        /// <summary>The conditioning vat: a second batch tank (2), a stirrer for faster batches (3).</summary>
+        void VatParts(Transform p, int level)
+        {
+            if (level >= 2)
+            {
+                ShopWorld.Shape(p, "Second batch", PrimitiveType.Cylinder, new Vector3(0.48f, 0.45f, -0.18f), new Vector3(0.26f, 0.3f, 0.26f), glass);
+                ShopWorld.Shape(p, "Second batch culture", PrimitiveType.Cylinder, new Vector3(0.48f, 0.38f, -0.18f), new Vector3(0.22f, 0.22f, 0.22f), culture["mist"]);
+            }
+            if (level >= 3)
+            {
+                Box(p, "Stirrer motor", new Vector3(0, 1.36f, 0), new Vector3(0.2f, 0.12f, 0.2f), trim);
+                ShopWorld.Shape(p, "Stirrer", PrimitiveType.Cylinder, new Vector3(0, 1.1f, 0), new Vector3(0.03f, 0.25f, 0.03f), stand);
             }
         }
 
@@ -633,6 +779,13 @@ namespace EvolutionShop
         }
 
         public bool HasSource(string culture) => sources.ContainsKey(culture);
+
+        /// <summary>GR-06: the owned sources within reach of a point on the floor (the vacuum's range), nearest first.</summary>
+        public List<string> SourcesNear(Vector3 point, float range)
+        {
+            float Flat(Vector3 d) => new Vector2(d.x, d.z).magnitude;
+            return sources.Where(kv => Flat(kv.Value.Root.position - point) <= range).OrderBy(kv => Flat(kv.Value.Root.position - point)).Select(kv => kv.Key).ToList();
+        }
 
         TankView BuildTank(GrowthContainer c)
         {
@@ -738,7 +891,8 @@ namespace EvolutionShop
                 if (detail == 0 || detail == 1 && (Time.frameCount + index) % 3 == 0) tank.Animate(t, session.ReducedMotion, detail == 0);
                 index++;
             }
-            if (hatchlingView) { hatchlingView.transform.localRotation = Quaternion.Euler(0, t * 40f, 0); hatchlingView.Tick(t); }
+            for (int i = 0; i < hatchlingViews.Count; i++)
+                if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
             if (session.Shop != null) AnimateBreeding(t, session.Shop);
             foreach (var v in visitors.Values) v.Tick(dt);
         }

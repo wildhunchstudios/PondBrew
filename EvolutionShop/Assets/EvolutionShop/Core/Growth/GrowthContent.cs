@@ -317,7 +317,7 @@ namespace EvolutionShop.Growth
                 L(1, 0, "Hand bulb: 3 doses, hold 0.8 s each; picks creatures in peek", 1, 1, 0, ("capacity", 3), ("holdSeconds", .8f), ("perHold", 1)),
                 L(2, 15, "Bigger bulb: 6 doses, 0.6 s", 1, 1, 0, ("capacity", 6), ("holdSeconds", .6f), ("perHold", 1)),
                 L(3, 150, "Twin chamber: 10 doses, collects 2 at a time", 2, 2, 0, ("capacity", 10), ("holdSeconds", .6f), ("perHold", 2)),
-                L(4, 900, "Vacuum: 16 doses, pulls from every grower in range", 3, 3, 0, ("capacity", 16), ("holdSeconds", .5f), ("perHold", 4)),
+                L(4, 900, "Vacuum: 16 doses, pulls from every grower in range", 3, 3, 0, ("capacity", 16), ("holdSeconds", .5f), ("perHold", 4), ("vacuum", 1)),
             }},
             new StationDef { Id = "grower", Name = "Grower (each culture)", Levels = new[]
             {

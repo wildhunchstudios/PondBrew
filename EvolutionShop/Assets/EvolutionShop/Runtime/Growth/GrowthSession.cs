@@ -16,12 +16,12 @@ namespace EvolutionShop
     {
         public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
             TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke",
-            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke";
+            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
-            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : null;
+            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" : null;
         public static bool Requested
         {
             get
@@ -49,7 +49,7 @@ namespace EvolutionShop
     public sealed class GrowthSession : MonoBehaviour
     {
         public const string SaveFileName = "growth-gr02.json";
-        public const float InteractRange = 3.2f, PeekRange = 1.6f, NormalFov = 68f, PeekFov = 45f, PeekEase = 0.25f;
+        public const float InteractRange = 3.2f, PeekRange = 1.6f, NormalFov = 68f, PeekFov = 45f, PeekEase = 0.25f, VacuumRange = 2.2f;
         public GrowthShop Shop { get; private set; }
         public GrowthWorld World { get; private set; }
         public ShopPlayer Player { get; private set; }
@@ -316,8 +316,8 @@ namespace EvolutionShop
         bool BreedingShortcut()
         {
             if (!Shop.HasBreedingTank) return false;
-            if (Shop.Parents.Count < GrowthShop.PairSize && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None)) { Act(() => Shop.PutParent()); return true; }
-            if (Shop.Offspring != null && Shop.Carried.Count < GrowthShop.CarryLimit) { Act(Shop.TakeOffspring); return true; }
+            if (Shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize) && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None)) { Act(() => Shop.PutParent()); return true; }
+            if (Shop.Offspring != null && Shop.Carried.Count < GrowthShop.CarryLimit) { Act(() => Shop.TakeOffspring()); return true; }
             return false;
         }
 
@@ -329,7 +329,8 @@ namespace EvolutionShop
             CollectingNow = ServingNow = false;
             if (held && Focused != null && Focused.Kind == GrowthTargetKind.Grower)
             {
-                var r = Shop.Collect(Focused.Id, dt);
+                // GR-06: the vacuum (siphon level 4) also pulls from the growers within reach.
+                var r = Shop.Collect(Focused.Id, dt, Shop.Vacuum ? World.SourcesNear(Player.transform.position, VacuumRange) : null);
                 CollectingNow = r.Success;
                 if (!r.Success && (r.Failure == GrowthFailure.SiphonFull || r.Failure == GrowthFailure.GrowerEmpty)) Ui.Hint(Explain(r));
             }
@@ -388,7 +389,7 @@ namespace EvolutionShop
             switch (Focused.Kind)
             {
                 case GrowthTargetKind.Grower:
-                    status = Mathf.FloorToInt(Shop.GrowerUnits.TryGetValue(Focused.Id, out float units) ? units : 0) + "/" + Shop.GrowerCapacity + " · hold mouse to collect · E details";
+                    status = Mathf.FloorToInt(Shop.GrowerUnits.TryGetValue(Focused.Id, out float units) ? units : 0) + "/" + Shop.GrowerCapacityOf(Focused.Id) + " · hold mouse to collect · E details";
                     return GrowthContent.Culture(Focused.Id).Source == CultureSource.Vat ? "Conditioning vat (" + GrowthShop.Name(Focused.Id) + ")" : GrowthShop.Name(Focused.Id) + " grower";
                 case GrowthTargetKind.Vial:
                     status = (Shop.Vials.TryGetValue(Focused.Id, out int left) ? left : 0) + " doses · hold mouse to collect";
@@ -397,7 +398,7 @@ namespace EvolutionShop
                     status = (Shop.Phase == GrowthPhase.Night ? "E order" : "E browse · orders at night") + (Shop.Orders.Count > 0 ? " · " + Shop.Orders.Count + " on order" : "");
                     return "Supplier catalog";
                 case GrowthTargetKind.Incubator:
-                    status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left" : Shop.Hatchling != null ? "A hatchling is ready · E" : Shop.Chamber.Count + "/" + Shop.MaxDoses + " doses · E to mix";
+                    status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left" : Shop.Hatchlings.Count > 1 ? "A clutch of " + Shop.Hatchlings.Count + " is ready · E" : Shop.Hatchling != null ? "A hatchling is ready · E" : Shop.Chamber.Count + "/" + Shop.MaxDoses + " doses · E to mix";
                     return "Incubator";
                 case GrowthTargetKind.Tank:
                     var c = Shop.Container(Focused.Id);
@@ -424,7 +425,7 @@ namespace EvolutionShop
                     var v = Shop.FrontOfQueue;
                     status = v == null ? "No one waiting" : "Hold mouse to bag a sale (" + Shop.Queue.Count() + " waiting)";
                     return "Counter";
-                case GrowthTargetKind.Workbench: status = "E upgrade the siphon"; return "Tool bench";
+                case GrowthTargetKind.Workbench: status = "level " + Shop.Level("bench") + " · E the siphon and the bench"; return "Research bench";
                 case GrowthTargetKind.UnitBWall: status = Shop.UnitB ? "Open" : "E see what it needs"; return "Shop unit B";
                 case GrowthTargetKind.Board: status = "E goals"; return "Pinboard";
                 case GrowthTargetKind.Breeding:
@@ -434,10 +435,13 @@ namespace EvolutionShop
                         status = "era " + first.Era + " · " + first.Credits + " credits and " + first.Rp + " RP · E see what it needs";
                         return "Breeding tank (not bought)";
                     }
-                    bool canPut = Shop.Parents.Count < GrowthShop.PairSize && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None);
-                    status = Shop.Offspring != null ? Named(Shop.Offspring) + " in the nursery · " + (canPut ? "E put in" : Shop.Carried.Count < GrowthShop.CarryLimit ? "E take it" : "hands full") :
+                    bool canPut = Shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize) && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None);
+                    // What E does here first: put a creature in, then take an offspring, else open the card.
+                    var waiting = Shop.Pairs.FirstOrDefault(p => p.Offspring != null);
+                    status = canPut ? Shop.AllParents.Count() + "/" + GrowthShop.PairSize * Shop.PairPlaces + " parents · E put in" :
+                        waiting != null ? Named(waiting.Offspring) + " in the nursery · " + (Shop.Carried.Count < GrowthShop.CarryLimit ? "E take it" : "hands full") :
                         Shop.Breeding ? Mathf.CeilToInt(Shop.BreedingLeft) + " s to the offspring · E details" :
-                        Shop.Parents.Count + "/" + GrowthShop.PairSize + " parents · " + (canPut ? "E put in" : "E open");
+                        Shop.AllParents.Count() + "/" + GrowthShop.PairSize * Shop.PairPlaces + " parents · E open";
                     return "Breeding tank";
             }
             return null;

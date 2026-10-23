@@ -65,8 +65,8 @@ namespace EvolutionShop.Tests
             Assert.That(shop.LargeParents || shop.TintPort, Is.False, "level 1: one pair, no tint port, no Large parents");
             Assert.That(shop.Upgrade("breeding").Success, Is.True, "level 2 for 200 credits");
             Assert.That((shop.Level("breeding"), shop.Credits, shop.BreedSeconds, shop.LargeParents, shop.TintPort), Is.EqualTo((2, 240, 40f, true, true)));
-            Assert.That(shop.UpgradeCheck("breeding", out _, out why), Is.EqualTo(GrowthFailure.MaxLevel));
-            Assert.That(why, Is.EqualTo("Highest level in the greybox"), "its second pair (level 3) waits for GR-06");
+            Assert.That(shop.UpgradeCheck("breeding", out _, out why), Is.EqualTo(GrowthFailure.Locked));
+            Assert.That(why, Is.EqualTo("Needs era 4"), "GR-06: its second pair (level 3) comes in era 4");
             Assert.That(GrowthShop.GreyboxStations, Does.Not.Contain("breeding"), "the stations a shop starts with are unchanged");
         }
 

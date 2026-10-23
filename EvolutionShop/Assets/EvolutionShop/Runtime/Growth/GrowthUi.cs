@@ -240,7 +240,7 @@ namespace EvolutionShop
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null;
             if (which == GrowthCard.None) return;
             bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause;
-            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board ? 540 : 470);
+            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower ? 540 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
             Fill(which, target);
@@ -348,7 +348,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum());
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum());
         }
 
         string LiveText()
@@ -356,9 +356,9 @@ namespace EvolutionShop
             var shop = s.Shop;
             switch (s.Card)
             {
-                case GrowthCard.Incubator: return shop.Incubating ? "Incubating… " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : shop.Hatchling != null ? "A hatchling is ready." : "Idle.";
+                case GrowthCard.Incubator: return shop.Incubating ? "Incubating… " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : shop.Hatchlings.Count > 1 ? "A clutch of " + shop.Hatchlings.Count + " is ready." : shop.Hatchling != null ? "A hatchling is ready." : "Idle.";
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + ShopClock(shop.DaySecondsLeft) + " left." : "Closed for the night.";
-                case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacity + " doses ready";
+                case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacityOf(s.CardTarget) + " doses ready";
                 case GrowthCard.Breeding: return !shop.HasBreedingTank ? "" : shop.Offspring != null ? "An offspring is in the nursery." : shop.Breeding ? "Breeding… " + Mathf.CeilToInt(shop.BreedingLeft) + " s" : "Waiting for a pair.";
                 default: return "";
             }
@@ -393,30 +393,44 @@ namespace EvolutionShop
             }
         }
 
-        void UpgradeSection(VisualElement body, string station)
+        static string Cost(LevelDef l) => l.Credits + " cr" + (l.Rp > 0 ? " and " + l.Rp + " RP" : "");
+
+        /// <summary>
+        /// GR-06's upgrade framework on every station card (GR.9, GR.13): the station's levels as a ladder, those it has ticked,
+        /// the rest with their change, cost and gate or what they wait for, and the next level's button when it can be bought.
+        /// </summary>
+        void UpgradeSection(VisualElement body, string station, string title = null)
         {
             var shop = s.Shop;
             var def = GrowthContent.Station(station);
+            int now = shop.Level(station);
             var section = new VisualElement(); section.style.marginTop = 12; section.style.borderTopWidth = 2; section.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); section.style.paddingTop = 8;
-            section.Add(Text("Upgrade · now level " + shop.Level(station) + ": " + shop.LevelDef(station).Change, "es-text--muted"));
-            var failure = shop.UpgradeCheck(station, out var next, out string why);
-            if (next == null) section.Add(Text(why, "es-text--muted"));
-            else
+            var head = Text((title ?? def.Name) + " · level " + now + " of " + def.Levels.Length); head.style.unityFontStyleAndWeight = FontStyle.Bold;
+            section.Add(head);
+            foreach (var l in def.Levels)
             {
-                section.Add(Text("Level " + next.Level + ": " + next.Change + " · " + next.Credits + " credits"));
-                section.Add(Button(failure == GrowthFailure.None ? "Upgrade for " + next.Credits + " cr" : why, () => s.Act(() => shop.Upgrade(station)), true, failure == GrowthFailure.None));
+                if (l.Level <= now) { section.Add(Text("✓ " + l.Level + ". " + l.Change, "es-req--done")); continue; }
+                string waits = GrowthShop.WaitsFor(station, l.Level);
+                section.Add(Text("· " + l.Level + ". " + l.Change + " · " + (waits ?? Cost(l) + ", era " + l.Era + ", " + l.Stars + "★"), "es-text--muted"));
             }
+            var failure = shop.UpgradeCheck(station, out var next, out string why);
+            if (next != null && GrowthShop.WaitsFor(station, next.Level) == null)
+                section.Add(Button(failure == GrowthFailure.None ? "Upgrade to level " + next.Level + " for " + Cost(next) : why, () => s.Act(() => shop.Upgrade(station)), true, failure == GrowthFailure.None));
+            else if (next == null) section.Add(Text("Highest level.", "es-text--muted"));
             body.Add(section);
         }
 
         void FillGrower(string culture)
         {
             var shop = s.Shop;
-            var body = Head(GrowthContent.Culture(culture).Source == CultureSource.Vat ? "Conditioning vat (" + GrowthShop.Name(culture) + ")" : GrowthShop.Name(culture) + " grower", "level " + shop.Level("grower"));
+            bool vat = GrowthContent.Culture(culture).Source == CultureSource.Vat;
+            var body = Head(vat ? "Conditioning vat (" + GrowthShop.Name(culture) + ")" : GrowthShop.Name(culture) + " grower", vat ? "vat level " + shop.Level("vat") : "level " + shop.Level("grower"));
             Live(body);
-            body.Add(Text("Hold the left mouse on a grower to fill the siphon: one dose every " + shop.HoldSeconds.ToString("0.0") + " s. It refills one dose every " + shop.RefillSeconds.ToString("0.#") + " s by itself."));
+            body.Add(Text("Hold the left mouse on a grower to fill the siphon: " + (shop.PerHold > 1 ? shop.PerHold + " doses" : "one dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s. It holds " + shop.GrowerCapacityOf(culture) +
+                " and refills one dose every " + shop.RefillSecondsOf(culture).ToString("0.#") + " s by itself."));
             body.Add(Text("Siphon: " + shop.Held.Count + "/" + shop.SiphonCapacity + " doses.", "es-text--muted"));
-            UpgradeSection(body, "grower");
+            if (vat) UpgradeSection(body, "vat", "The vat");
+            UpgradeSection(body, "grower", "Every grower");
             Footer(body, "One upgrade covers every grower.");
         }
 
@@ -427,9 +441,10 @@ namespace EvolutionShop
             Live(body);
             if (shop.Hatchling != null)
             {
-                var h = shop.Hatchling.Def;
-                body.Add(Text("Out came a " + h.Name + (shop.LastMix != null && shop.LastMix.WasNew ? " — new to your journal!" : ".")));
-                body.Add(Button("Take the " + h.Name + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(shop.TakeHatchling), true, shop.Carried.Count < GrowthShop.CarryLimit));
+                string name = GrowthSession.Named(shop.Hatchling);
+                int clutch = shop.Hatchlings.Count;
+                body.Add(Text((clutch > 1 ? "Out came a clutch of " + clutch + ": " + GrowthShop.Plural(name) : "Out came a " + name) + (shop.LastMix != null && shop.LastMix.WasNew ? " — new to your journal!" : ".")));
+                body.Add(Button("Take " + (clutch > 1 ? "a " : "the ") + name + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(shop.TakeHatchling), true, shop.Carried.Count < GrowthShop.CarryLimit));
             }
             // The siphon's doses, each pressed into the chamber.
             body.Add(Text("In the siphon (press to add):", "es-text--muted"));
@@ -468,7 +483,12 @@ namespace EvolutionShop
             if (shop.Chamber.Count > 0 && !shop.Incubating)
             {
                 var preview = shop.Preview();
-                if (preview.CloseToNew) body.Add(Text("Hmm… this is one dose from something new.", "es-card__reason"));
+                if (preview.CloseToNew && !shop.Microscope) body.Add(Text("Hmm… this is one dose from something new.", "es-card__reason"));
+                // GR-06: the research bench's microscope measures every mix: warmer as it nears something new.
+                if (shop.Microscope)
+                    body.Add(Text("Microscope: " + (preview.DistanceToNew < 0 ? "nothing new left to find with these cultures" : preview.DistanceToNew == 0 ? "this mix is something new" :
+                        preview.DistanceToNew + " dose" + (preview.DistanceToNew == 1 ? "" : "s") + " from something new" + (preview.DistanceToNew <= 1 ? " (hot)" : preview.DistanceToNew <= 2 ? " (warm)" : " (cold)")),
+                        preview.CloseToNew ? "es-card__reason" : "es-text"));
             }
             body.Add(Button(shop.Incubating ? "Incubating…" : "Mix and incubate (" + shop.IncubationSeconds.ToString("0") + " s)", () => s.Act(shop.StartIncubation), true,
                 !shop.Incubating && shop.Hatchling == null && shop.Chamber.Count > 0));
@@ -490,6 +510,32 @@ namespace EvolutionShop
                     row.Add(Button("Use", () => s.Act(() => shop.FillRecipe(species)), false, !shop.Incubating));
                 }
                 body.Add(row);
+            }
+            // GR-06: the tint port (level 3) colours the next clutch, as the breeding tank's water does.
+            if (shop.IncubatorTintPort)
+            {
+                var tintBox = new VisualElement(); tintBox.style.marginTop = 8;
+                if (shop.IncubatorTint != null)
+                {
+                    tintBox.Add(Text("Tinted with " + GrowthShop.Name(shop.IncubatorTint) + ": the next clutch is " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.IncubatorTint) + "."));
+                    tintBox.Add(Button("Take the tint back", () => s.Act(shop.ClearIncubatorTint), false, shop.Held.Count < shop.SiphonCapacity));
+                }
+                else
+                {
+                    tintBox.Add(Text("Tint port: a dose from the siphon colours the next clutch.", "es-text--muted"));
+                    var tints = Row();
+                    foreach (var culture in GrowthShop.TintCultures)
+                    {
+                        string c = culture;
+                        var f = shop.IncubatorTintCheck(c, out string why);
+                        var b = Button(GrowthShop.Name(c) + " → " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, c), () => s.Act(() => shop.TintIncubator(c)), false, f == GrowthFailure.None,
+                            f == GrowthFailure.NoDose ? "Collect " + GrowthShop.Name(c) + " first" : why);
+                        b.style.borderLeftWidth = 8; b.style.borderLeftColor = CultureColour(c);
+                        tints.Add(b);
+                    }
+                    tintBox.Add(tints);
+                }
+                body.Add(tintBox);
             }
             UpgradeSection(body, "incubator");
             Footer(body);
@@ -674,7 +720,7 @@ namespace EvolutionShop
             }
             else
             {
-                body.Add(Text("Hold the left mouse on the counter to bag a sale: " + shop.ServeSeconds.ToString("0.0") + " s each."));
+                body.Add(Text("Hold the left mouse on the counter to bag a sale: " + shop.ServeSeconds.ToString("0.0") + " s each. The queue holds " + shop.QueueLength + " (" + shop.Queue.Count() + " now); others wait by the tanks."));
                 foreach (var v in shop.Queue.OrderByDescending(x => x.Clock).ThenBy(x => x.Id))
                 {
                     var spec = shop.Stock.FirstOrDefault(x => x.Id == v.SpecimenId);
@@ -691,9 +737,13 @@ namespace EvolutionShop
         void FillWorkbench()
         {
             var shop = s.Shop;
-            var body = Head("Tool bench", "siphon level " + shop.Level("siphon"));
-            body.Add(Text("Your siphon holds " + shop.SiphonCapacity + " doses and takes " + shop.HoldSeconds.ToString("0.0") + " s for each."));
-            UpgradeSection(body, "siphon");
+            var body = Head("Research bench", "bench level " + shop.Level("bench") + " · siphon level " + shop.Level("siphon"));
+            body.Add(Text("Your siphon holds " + shop.SiphonCapacity + " doses and takes " + (shop.PerHold > 1 ? shop.PerHold + " doses" : "one dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s" +
+                (shop.Vacuum ? "; the vacuum keeps pulling from the next grower in reach when the one you aim at runs dry." : ".")));
+            UpgradeSection(body, "siphon", "The siphon");
+            body.Add(Text(shop.Microscope ? "The microscope: the incubator card says how many doses each mix is from something new." :
+                "Notes: undiscovered founders show the cultures they use in the journal. The microscope (level 2) measures how far a mix is from something new.", "es-text--muted"));
+            UpgradeSection(body, "bench", "The research bench");
             Footer(body);
         }
 
@@ -809,22 +859,27 @@ namespace EvolutionShop
             }
             var body = Head("Breeding tank", "level " + shop.Level("breeding") + " · a pair every " + shop.BreedSeconds.ToString("0") + " s");
             Live(body);
-            if (shop.Offspring != null)
+            for (int k = 0; k < shop.PairPlaces; k++)
             {
-                var o = shop.Offspring;
-                body.Add(Text("In the nursery: a " + GrowthSession.Named(o) + (shop.OffspringWasNew ? " — new to your journal!" : "."), shop.OffspringWasNew ? "es-card__reason" : "es-text"));
-                body.Add(Button("Take the " + GrowthSession.Named(o) + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(shop.TakeOffspring), true, shop.Carried.Count < GrowthShop.CarryLimit));
+            var pairState = shop.Pairs[k];
+            int pairIndex = k;
+            if (pairState.Offspring != null)
+            {
+                var o = pairState.Offspring;
+                body.Add(Text("In the nursery: a " + GrowthSession.Named(o) + (pairState.OffspringWasNew ? " — new to your journal!" : "."), pairState.OffspringWasNew ? "es-card__reason" : "es-text"));
+                body.Add(Button("Take the " + GrowthSession.Named(o) + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(() => shop.TakeOffspring(pairIndex)), true, shop.Carried.Count < GrowthShop.CarryLimit));
             }
-            body.Add(Text("The pair (" + shop.Parents.Count + "/" + GrowthShop.PairSize + ", press one to take it out at any time):", "es-text--muted"));
+            string pairName = shop.PairPlaces > 1 ? "Pair " + (k + 1) : "The pair";
+            body.Add(Text(pairName + " (" + pairState.Parents.Count + "/" + GrowthShop.PairSize + ", press one to take it out at any time)" + (shop.PairPlaces > 1 && pairState.Breeding ? " · " + Mathf.CeilToInt(pairState.Left) + " s" : "") + ":", "es-text--muted"));
             var pair = Row();
-            foreach (var p in shop.Parents.ToList())
+            foreach (var p in pairState.Parents.ToList())
             {
                 int id = p.Id;
                 var b = Button(GrowthSession.Named(p), () => s.Act(() => shop.TakeParent(id)), false, shop.Carried.Count < GrowthShop.CarryLimit, "Take it out");
                 b.style.borderLeftWidth = 10; b.style.borderLeftColor = GrowthCreatureView.ColourOf(p.Def, p.Colour);
                 pair.Add(b);
             }
-            for (int i = shop.Parents.Count; i < GrowthShop.PairSize; i++)
+            for (int i = pairState.Parents.Count; i < GrowthShop.PairSize; i++)
             {
                 var empty = new VisualElement(); empty.style.width = 110; empty.style.height = 30; empty.style.marginTop = 6; empty.style.marginRight = 6;
                 empty.style.borderTopWidth = empty.style.borderBottomWidth = empty.style.borderLeftWidth = empty.style.borderRightWidth = 2;
@@ -833,7 +888,17 @@ namespace EvolutionShop
                 pair.Add(empty);
             }
             body.Add(pair);
-            if (shop.Parents.Count < GrowthShop.PairSize)
+            if (pairState.Parents.Count >= GrowthShop.PairSize)
+            {
+                // What the pair makes: the pair log knows a pair once tried (the planner, research bench level 4, predicts any pair).
+                var known = shop.PairEntry(pairState.Parents[0].Species, pairState.Parents[1].Species);
+                var next = shop.NextColourOf(pairState);
+                string colour = next == Colour.Classic ? "" : " Its colour: " + next + (shop.Tint != null ? " (the " + GrowthShop.Name(shop.Tint) + " tint)." : " (the higher parent colour).");
+                body.Add(Text((known != null ? "This pair makes a " + GrowthContent.Get(known.Species).Name + " (bred ×" + known.Count + " so far)." : "A pair you have not tried: every pair makes something.") + colour,
+                    known == null ? "es-card__reason" : "es-text"));
+            }
+            }
+            if (shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize))
             {
                 if (shop.Carried.Count == 0) body.Add(Text("Bring creatures from a tank (peek and E takes one), then E here puts them in.", "es-text--muted"));
                 var put = Row();
@@ -844,14 +909,6 @@ namespace EvolutionShop
                     put.Add(Button(f == GrowthFailure.None ? "Put in " + GrowthSession.Named(spec) : GrowthSession.Named(spec) + ": " + why, () => s.Act(() => shop.PutParent(spec.Id)), true, f == GrowthFailure.None));
                 }
                 body.Add(put);
-            }
-            else
-            {
-                // What the pair makes: the pair log knows a pair once tried (the planner, research bench level 4, predicts any pair).
-                var known = shop.PairEntry(shop.Parents[0].Species, shop.Parents[1].Species);
-                string colour = shop.NextColour == Colour.Classic ? "" : " Its colour: " + shop.NextColour + (shop.Tint != null ? " (the " + GrowthShop.Name(shop.Tint) + " tint)." : " (the higher parent colour).");
-                body.Add(Text((known != null ? "This pair makes a " + GrowthContent.Get(known.Species).Name + " (bred ×" + known.Count + " so far)." : "A pair you have not tried: every pair makes something.") + colour,
-                    known == null ? "es-card__reason" : "es-text"));
             }
             // Tinting the water (level 2): Bloom makes Sunny offspring, Flow Deep, Mist Shimmer.
             var tint = new VisualElement(); tint.style.marginTop = 10; tint.style.borderTopWidth = 2; tint.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); tint.style.paddingTop = 6;

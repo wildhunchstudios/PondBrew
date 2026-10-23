@@ -92,7 +92,7 @@ namespace EvolutionShop
                 "The same pair breeds true to its result again: a second Puddlepup, no more research points (breeding as production)");
 
             // A Reedwhisker from a Pondlet and a Ribbonfin.
-            Ok(s.Act(shop.TakeOffspring), "Take the second Puddlepup");
+            Ok(s.Act(() => shop.TakeOffspring()), "Take the second Puddlepup");
             var puddle2 = shop.Offspring == null ? shop.Carried.Last() : null;
             Ok(s.Act(() => shop.TakeParent(bubble.Id)), "Take the Bubblebelly out (the card's button)");
             Ok(s.Act(() => shop.PutIn(starter.Id, bubble.Id)), "Put it back in the Starter tank");
@@ -103,7 +103,7 @@ namespace EvolutionShop
             Check(shop.Offspring?.Species == "reedwhisker" && shop.Rp == rp + GrowthContent.RpHybrid, "Pondlet × Ribbonfin: a new Reedwhisker (accelerated)");
 
             // The Brookkin special pair: Puddlepup × Reedwhisker, the crown.
-            Ok(s.Act(shop.TakeOffspring), "Take the Reedwhisker");
+            Ok(s.Act(() => shop.TakeOffspring()), "Take the Reedwhisker");
             var reed = shop.Carried.Last();
             Ok(s.Act(() => shop.TakeParent(pondletA.Id)), "Take the Pondlet out");
             Ok(s.Act(() => shop.PutIn(starter.Id, pondletA.Id)), "Put it back in the Starter tank");
@@ -152,7 +152,7 @@ namespace EvolutionShop
             Check(shop.Objectives().Any(o => o.text.StartsWith("Fill a Large tank")) && shop.EraGoal == GrowthContent.Eras[2].Goal, "The goal is era 3's");
 
             // Level 2: the tint port. The crown goes to the Large tank, a Bloom dose tints the water, and two Pondlets breed Sunny.
-            Ok(s.Act(shop.TakeOffspring), "Take the Brook Monarch");
+            Ok(s.Act(() => shop.TakeOffspring()), "Take the Brook Monarch");
             var crown = shop.Carried.Last();
             var large = shop.ContainerAt("a3");
             Ok(s.Act(() => shop.PutIn(large.Id, crown.Id)), "Put the Brook Monarch in the Large tank");

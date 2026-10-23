@@ -313,7 +313,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Credits, Is.EqualTo(185));
             Assert.That(shop.SiphonCapacity, Is.EqualTo(6));
             Assert.That(shop.HoldSeconds, Is.EqualTo(0.6f).Within(0.001f));
-            Assert.That(shop.Upgrade("siphon").Failure, Is.EqualTo(GrowthFailure.MaxLevel), "level 3 waits for a later task");
+            Assert.That(shop.Upgrade("siphon").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-06: level 3 waits for era 2");
             Assert.That(shop.Upgrade("grower").Success, Is.True);
             Assert.That(shop.GrowerCapacity, Is.EqualTo(6));
             Assert.That(shop.Upgrade("counter").Success, Is.True);
@@ -324,7 +324,8 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Upgrade("incubator").Success, Is.True);
             Assert.That(shop.MaxDoses, Is.EqualTo(4));
             Assert.That(shop.IncubationSeconds, Is.EqualTo(8));
-            Assert.That(shop.Upgrade("bench").Failure, Is.EqualTo(GrowthFailure.MaxLevel), "not in the greybox");
+            Assert.That(shop.Upgrade("generator").Failure, Is.EqualTo(GrowthFailure.MaxLevel), "not in the greybox (power is GR-07)");
+            Assert.That(shop.Upgrade("bench").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-06: the microscope waits for era 2");
             Assert.That(shop.Upgrade("breeding").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-05: the breeding tank waits for era 2");
         }
 
@@ -354,7 +355,7 @@ namespace EvolutionShop.Tests
             bad = JsonUtility.FromJson<GrowthSave>(json);
             bad.containers[1].occupants = Enumerable.Range(0, 5).Select(i => new GrowthSave.Specimen { id = 500 + i, species = "pondlet", colour = "Classic" }).ToArray();
             Assert.That(GrowthShop.Restore(bad, out problem), Is.Null); Assert.That(problem, Does.Contain("fits"));
-            bad = JsonUtility.FromJson<GrowthSave>(json); bad.levels[0] = 3;
+            bad = JsonUtility.FromJson<GrowthSave>(json); bad.levels[0] = 5; // the siphon has four levels (GR-06)
             Assert.That(GrowthShop.Restore(bad, out problem), Is.Null); Assert.That(problem, Does.Contain("level"));
         }
 
