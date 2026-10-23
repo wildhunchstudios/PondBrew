@@ -14,7 +14,12 @@ namespace EvolutionShop
     /// </summary>
     public static class GrowthGreybox
     {
-        public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox";
+        public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
+            TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke";
+
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), or null.</summary>
+        public static string SmokeRoute =>
+            ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" : null;
         public static bool Requested
         {
             get
@@ -23,7 +28,7 @@ namespace EvolutionShop
 #if UNITY_EDITOR
                 if (UnityEditor.SessionState.GetBool(EditorFlag, false)) return true;
 #endif
-                return ShopSession.Arg(Argument) != null || ShopSession.Arg(SmokeArgument) != null;
+                return ShopSession.Arg(Argument) != null || SmokeRoute != null;
 #else
                 return false;
 #endif
@@ -31,7 +36,7 @@ namespace EvolutionShop
         }
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -95,7 +100,7 @@ namespace EvolutionShop
             SetCard(ValidationMode ? GrowthCard.None : GrowthCard.Welcome);
             Debug.Log("EVOLUTION_GROWTH_GREYBOX " + Application.dataPath + " save=" + SavePath);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            if (ValidationMode && ShopSession.Arg(GrowthGreybox.SmokeArgument) != null) gameObject.AddComponent<GrowthSmoke>();
+            if (ValidationMode && GrowthGreybox.SmokeRoute != null) gameObject.AddComponent<GrowthSmoke>();
 #endif
         }
 
@@ -151,6 +156,16 @@ namespace EvolutionShop
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));
             SaveNow();
             SetCard(GrowthCard.Welcome);
+        }
+
+        /// <summary>Validation: puts a labelled fixture shop in play and saves it (the routes say which fixtures they use).</summary>
+        public void LoadFixture(GrowthShop fixture)
+        {
+            Shop = fixture;
+            Shop.TakeEvents();
+            World.ResetForNewShop();
+            World.Sync(Shop, 0);
+            SaveNow();
         }
 
         /// <summary>Reloads the saved slot (validation: a restart from the file).</summary>
@@ -223,7 +238,7 @@ namespace EvolutionShop
                 case GrowthFailure.HatchlingWaiting: return "Take the hatchling out first.";
                 case GrowthFailure.HandsFull: return "Your hands are full (" + r.Detail + ").";
                 case GrowthFailure.HandsEmpty: return "You are not carrying a creature.";
-                case GrowthFailure.DoesNotFit: return "It does not fit: " + r.Detail + ".";
+                case GrowthFailure.DoesNotFit: return r.Detail.StartsWith("Too big") ? r.Detail + "." : "It does not fit: " + r.Detail + ".";
                 case GrowthFailure.Reserved: return "A visitor is buying that one.";
                 case GrowthFailure.NotAtNight: return "That waits for the night.";
                 case GrowthFailure.NotEnoughCredits: return r.Detail + ".";
@@ -243,6 +258,9 @@ namespace EvolutionShop
             {
                 if (Card == GrowthCard.None) SetCard(GrowthCard.Pause); else SetCard(GrowthCard.None);
             }
+            // GR-03 (development): F8 opens the crate of every species, for looking at sizes and families.
+            else if (keyboard != null && keyboard.f8Key.wasPressedThisFrame && (Card == GrowthCard.None || Card == GrowthCard.Crate))
+                SetCard(Card == GrowthCard.Crate ? GrowthCard.None : GrowthCard.Crate);
             else if (keyboard != null && keyboard.tabKey.wasPressedThisFrame && (Card == GrowthCard.None || Card == GrowthCard.Journal))
                 SetCard(Card == GrowthCard.Journal ? GrowthCard.None : GrowthCard.Journal);
             Player.Sensitivity = Sensitivity;
@@ -320,7 +338,8 @@ namespace EvolutionShop
             float step = ReducedMotion ? 1 : dt / PeekEase;
             peekBlend = Mathf.MoveTowards(peekBlend, want ? 1 : 0, step);
             Player.View.fieldOfView = Mathf.Lerp(NormalFov, PeekFov, Mathf.SmoothStep(0, 1, peekBlend));
-            PeekCreature = Peeking ? World.CreatureNearCentre(Focused.Id, Player.View) : null;
+            // While peek eases out after the reticle left the tank there is nothing to read (GR-03 found this throwing).
+            PeekCreature = Peeking && want ? World.CreatureNearCentre(Focused.Id, Player.View) : null;
             World.Highlight(PeekCreature);
         }
 
@@ -351,13 +370,20 @@ namespace EvolutionShop
                     if (PeekCreature != null)
                     {
                         var s = c.Occupants.FirstOrDefault(o => o.Id == PeekCreature.SpecimenId);
-                        if (s != null) { status = s.Colour + " · " + Shop.Price(s.Species) + " cr" + (c.InSchool(s.Species) ? " · school" : "") + (s.ReservedBy != 0 ? " · reserved" : " · E take"); return s.Def.Name; }
+                        if (s != null)
+                        {
+                            status = s.Def.Size.ToString().ToLowerInvariant() + " · " + s.Colour + " · " + Shop.Price(s.Species) + " cr" + (c.InSchool(s.Species) ? " · school" : "") +
+                                (Shop.Era >= GrowthContent.ComfortEra ? " · " + s.Def.Temperament.ToString().ToLowerInvariant() + ", " + s.Def.Water.ToString().ToLowerInvariant() : "") +
+                                (s.ReservedBy != 0 ? " · reserved" : " · E take");
+                            return s.Def.Name;
+                        }
                     }
-                    status = c.Used + "/" + c.Spaces + " spaces" + (Shop.Carried.Count > 0 ? " · E put in" : " · E open");
-                    return "Starter tank";
+                    status = c.Used + "/" + c.Spaces + " spaces" + (Shop.Harmony(c) ? " · in harmony" : "") + (Shop.Carried.Count > 0 ? " · E put in" : " · E open");
+                    return c.Def.Name;
                 case GrowthTargetKind.Place:
-                    status = Shop.Phase == GrowthPhase.Night ? "E buy a Starter tank (20 cr)" : "Tanks are placed at night";
-                    return "Empty place";
+                    var spot = GrowthShop.Place(Focused.Id);
+                    status = Shop.Phase == GrowthPhase.Night ? "E buy or move a tank here" : "Tanks are placed at night";
+                    return "Empty " + (spot?.Size ?? "") + " place";
                 case GrowthTargetKind.Counter:
                     if (Shop.Phase == GrowthPhase.Night) { status = "E open the shop"; return "Counter"; }
                     var v = Shop.FrontOfQueue;

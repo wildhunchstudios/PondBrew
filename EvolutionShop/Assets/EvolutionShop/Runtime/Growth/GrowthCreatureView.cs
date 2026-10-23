@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using EvolutionShop.Growth;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
     /// <summary>
     /// GR-02's placeholder creature at its size class (GR.5: a small one is 6-9 cm, a medium 12-18, a large 25-40), with a
     /// head 1.3 times the usual size for small species (GR.14 readability), eyes, a tail and a fin; colour from its recipe's
-    /// cultures. Each of the Brookkin founders has a shape of its own so they can be told apart in a school.
+    /// cultures. Each of the Brookkin founders has a shape of its own so they can be told apart in a school, and (GR-03) each
+    /// family a feature of its own: a lantern, dew beads, wings, spikes, a stripe, a shell, a lure or a comet tail.
+    /// Creatures cast no shadows (GR.5's budget: up to 180 on screen).
     /// </summary>
     public sealed class GrowthCreatureView : MonoBehaviour
     {
@@ -60,6 +63,18 @@ namespace EvolutionShop
             return m;
         }
 
+        /// <summary>A softly glowing accent (lanterns and lures), under the bloom threshold.</summary>
+        static Material GlowMat(string key, Color c)
+        {
+            if (!materials.TryGetValue("glow " + key, out var m) || m == null)
+            {
+                materials["glow " + key] = m = ShopWorld.MakeMaterial("GR creature glow " + key, c, 0, 0.6f);
+                m.EnableKeyword("_EMISSION");
+                m.SetColor("_EmissionColor", c * 0.75f);
+            }
+            return m;
+        }
+
         public static GrowthCreatureView Create(GrowthSpecimen specimen, Transform parent)
         {
             var def = specimen.Def;
@@ -77,6 +92,8 @@ namespace EvolutionShop
             Vector3 bodyScale = new Vector3(0.42f, 0.42f, 0.72f) * L, tailScale = new Vector3(0.04f, 0.34f, 0.3f) * L;
             if (def.Id == "bubblebelly") bodyScale = new Vector3(0.58f, 0.56f, 0.66f) * L;
             if (def.Id == "ribbonfin") { bodyScale = new Vector3(0.34f, 0.36f, 0.8f) * L; tailScale = new Vector3(0.03f, 0.26f, 0.62f) * L; }
+            if (def.Family == "saltscale") bodyScale = new Vector3(0.34f, 0.56f, 0.72f) * L;
+            if (def.Family == "cometail") tailScale = new Vector3(0.03f, 0.24f, 0.7f) * L;
             ShopWorld.Shape(root.transform, "Body", PrimitiveType.Sphere, Vector3.zero, bodyScale, bodyMat);
             ShopWorld.Shape(root.transform, "Belly", PrimitiveType.Sphere, new Vector3(0, -0.08f * L, 0.02f * L), Vector3.Scale(bodyScale, new Vector3(0.8f, 0.6f, 0.85f)), bellyMat);
             var h = ShopWorld.Shape(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0, 0.03f * L, 0.36f * L), Vector3.one * (0.42f * L * head), bodyMat);
@@ -91,11 +108,56 @@ namespace EvolutionShop
             view.tail.localPosition = new Vector3(0, 0, -0.34f * L);
             ShopWorld.Shape(view.tail, "Tail", PrimitiveType.Cube, new Vector3(0, 0, -tailScale.z * 0.5f), tailScale, finMat);
             ShopWorld.Shape(root.transform, "Fin", PrimitiveType.Cube, new Vector3(0, 0.22f * L, -0.05f * L), new Vector3(0.03f, 0.16f, 0.22f) * L, finMat);
+            Family(view, root.transform, def, L, head, bodyScale, body, fin);
             // A small honey tag over a creature a visitor is buying.
             view.reservedTag = ShopWorld.Shape(root.transform, "Reserved tag", PrimitiveType.Cube, new Vector3(0, 0.45f * L, 0), new Vector3(0.18f, 0.12f, 0.02f) * L * 1.6f, Mat("reserved", new Color(0.98f, 0.78f, 0.37f)));
             view.reservedTag.gameObject.SetActive(false);
             view.wag = specimen.Id * 0.73f;
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
             return view;
+        }
+
+        /// <summary>Each family's feature, so sizes and families read apart at a glance (placeholders for GR.14's rigs).</summary>
+        static void Family(GrowthCreatureView view, Transform root, SpeciesDef def, float L, float head, Vector3 bodyScale, Color body, Color fin)
+        {
+            var finMat = Mat(def.Id + "-fin", fin);
+            switch (def.Family)
+            {
+                case "sparkline":
+                    ShopWorld.Shape(root, "Lantern", PrimitiveType.Sphere, new Vector3(0, 0.26f * L * head, 0.46f * L), Vector3.one * 0.13f * L, GlowMat("spark", new Color(1f, 0.85f, 0.35f)));
+                    break;
+                case "dewling":
+                    foreach (int side in new[] { -1, 1 })
+                        ShopWorld.Shape(root, "Dew bead", PrimitiveType.Sphere, new Vector3(side * 0.09f * L, 0.24f * L, -0.04f * L), Vector3.one * 0.11f * L, Mat("dew", new Color(0.92f, 0.95f, 1f)));
+                    break;
+                case "airfin":
+                    foreach (int side in new[] { -1, 1 })
+                    {
+                        var wing = ShopWorld.Shape(root, "Wing", PrimitiveType.Cube, new Vector3(side * 0.36f * L, 0.03f * L, 0.02f * L), new Vector3(0.42f, 0.02f, 0.3f) * L, finMat);
+                        wing.localRotation = Quaternion.Euler(0, 0, side * 14f);
+                    }
+                    break;
+                case "cinderling":
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var spike = ShopWorld.Shape(root, "Spike", PrimitiveType.Cube, new Vector3(0, 0.25f * L, (0.14f - 0.14f * i) * L), new Vector3(0.06f, 0.06f, 0.06f) * L, finMat);
+                        spike.localRotation = Quaternion.Euler(45, 0, 0);
+                    }
+                    break;
+                case "saltscale":
+                    ShopWorld.Shape(root, "Stripe", PrimitiveType.Sphere, Vector3.zero, Vector3.Scale(bodyScale, new Vector3(1.04f, 0.22f, 0.92f)), Mat("stripe", new Color(0.95f, 0.97f, 0.96f)));
+                    break;
+                case "reefback":
+                    ShopWorld.Shape(root, "Shell", PrimitiveType.Sphere, new Vector3(0, 0.17f * L, -0.04f * L), new Vector3(0.5f, 0.3f, 0.62f) * L, Mat(def.Id + "-shell", Color.Lerp(fin, new Color(0.45f, 0.36f, 0.28f), 0.5f)));
+                    break;
+                case "gloamer":
+                    ShopWorld.Shape(root, "Lure stalk", PrimitiveType.Cube, new Vector3(0, 0.3f * L, 0.38f * L), new Vector3(0.025f, 0.2f, 0.025f) * L, finMat);
+                    ShopWorld.Shape(root, "Lure", PrimitiveType.Sphere, new Vector3(0, 0.42f * L, 0.44f * L), Vector3.one * 0.09f * L, GlowMat("lure", new Color(0.6f, 0.95f, 1f)));
+                    break;
+                case "cometail":
+                    ShopWorld.Shape(root, "Comet glow", PrimitiveType.Sphere, new Vector3(0, 0, -0.42f * L), new Vector3(0.18f, 0.18f, 0.3f) * L, GlowMat("comet", Color.Lerp(body, Color.white, 0.5f)));
+                    break;
+            }
         }
 
         public void Tick(float t)
@@ -115,6 +177,7 @@ namespace EvolutionShop
         int queueIndex = -1;
         bool wasQueued;
         const float Speed = 1.5f;
+        static readonly Dictionary<string, Material> visitorMaterials = new Dictionary<string, Material>();
 
         static Color TypeColour(string type)
         {
@@ -133,8 +196,8 @@ namespace EvolutionShop
             root.transform.SetParent(parent, false);
             var view = root.AddComponent<GrowthVisitorView>();
             view.VisitorId = v.Id;
-            var body = ShopWorld.MakeMaterial("GR visitor " + v.Type, TypeColour(v.Type), 0, 0.3f);
-            var skin = ShopWorld.MakeMaterial("GR visitor skin", new Color(0.93f, 0.78f, 0.64f), 0, 0.3f);
+            if (!visitorMaterials.TryGetValue(v.Type, out var body) || body == null) visitorMaterials[v.Type] = body = ShopWorld.MakeMaterial("GR visitor " + v.Type, TypeColour(v.Type), 0, 0.3f);
+            if (!visitorMaterials.TryGetValue("skin", out var skin) || skin == null) visitorMaterials["skin"] = skin = ShopWorld.MakeMaterial("GR visitor skin", new Color(0.93f, 0.78f, 0.64f), 0, 0.3f);
             ShopWorld.Shape(root.transform, "Body", PrimitiveType.Capsule, new Vector3(0, 0.75f, 0), new Vector3(0.45f, 0.62f, 0.32f), body);
             ShopWorld.Shape(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0, 1.55f, 0), Vector3.one * 0.3f, skin);
             ShopWorld.Shape(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0, 1.55f, 0.15f), Vector3.one * 0.07f, skin);
@@ -149,7 +212,8 @@ namespace EvolutionShop
             path.Clear();
             switch (v.State)
             {
-                case GrowthVisitorState.Browsing: path.AddRange(GrowthWorld.RouteTo(target)); place = target; break;
+                // GR-03: a visitor who found nothing walks on to the next container in their plan.
+                case GrowthVisitorState.Browsing: path.AddRange(State == GrowthVisitorState.Browsing && place != null ? GrowthWorld.RouteBetween(place, target) : GrowthWorld.RouteTo(target)); place = target; break;
                 case GrowthVisitorState.Queued:
                     if (State == GrowthVisitorState.Queued) path.Add(GrowthWorld.QueueSpots[Mathf.Clamp(index, 0, GrowthWorld.QueueSpots.Length - 1)]);
                     else path.AddRange(GrowthWorld.RouteToQueue(place, index));

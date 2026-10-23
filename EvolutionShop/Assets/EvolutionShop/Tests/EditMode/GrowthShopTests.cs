@@ -381,7 +381,10 @@ namespace EvolutionShop.Tests
             shop.Era = 2;
             Assert.That(shop.Objectives().Single().text, Does.StartWith("Open shop unit B"));
             shop.UnitB = true;
-            Assert.That(shop.Objectives().Single().done, Is.True);
+            // GR-03: then a Large tank for a long place, and the greybox ends.
+            Assert.That(shop.Objectives().Select(l => l.text).First(), Does.StartWith("Buy a Large tank"));
+            Assert.That(shop.Objectives().First().done, Is.False);
+            Assert.That(shop.Objectives().Last().done, Is.True);
         }
     }
 }

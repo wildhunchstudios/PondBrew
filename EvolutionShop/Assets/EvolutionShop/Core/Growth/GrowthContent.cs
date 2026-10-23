@@ -393,6 +393,18 @@ namespace EvolutionShop.Growth
             }},
         };
 
+        /// <summary>
+        /// GR.5 comfort, from era 3: a container's water (fresh, brine or warm) is set with a water kit, and a container whose
+        /// occupants (two or more) share one temperament and the container's water is in harmony (+1 appeal). Never sickness,
+        /// death or a sale blocked: disagreement only means no bonus.
+        /// </summary>
+        public const int ComfortEra = 3, WaterKitCredits = 150;
+        /// <summary>
+        /// GR.10.1 tolerance: how far over budget a visitor will go for a creature in a school (+15%) and for each point of its
+        /// container's appeal (+10%: a lit Show tank, harmony), capped together at +40%.
+        /// </summary>
+        public const float SchoolTolerance = 0.15f, AppealTolerance = 0.10f, ToleranceCap = 0.40f;
+
         public static ContainerDef Container(string id)
         {
             foreach (var c in Containers) if (c.Id == id) return c;

@@ -5,6 +5,10 @@ using System.Linq;
 namespace EvolutionShop.Growth
 {
     // GR-02 (GR.18): the greybox ruleset of the grow-from-nothing redesign, the first era and the step into the second.
+    // GR-03 adds the containers of GR.5: places sized for them, Starter, Large and Show tanks with their levels, moving and
+    // selling them, size classes (small 1, medium 2, large 4 spaces), water and harmony (comfort, era 3), appeal, visitors
+    // who browse one container at a time and choose a specimen from it, Collectors who reserve a pair (all or none) and
+    // Big spenders who favour bigger creatures.
     // Pure and engine-free, read by GrowthSession (Runtime) and tested in EditMode. Numbers come from GrowthContent; this
     // class holds the state and the rules: growers and the siphon, the incubator's never-fail mixing with its mix log and
     // "one dose from something new", carrying hatchlings, Starter tanks of 4 spaces with occupant lists and schools,
@@ -18,6 +22,7 @@ namespace EvolutionShop.Growth
         None, NotAtNight, NotDuringDay, UnknownCulture, NotOwned, SiphonFull, GrowerEmpty, NoDose, ChamberFull, ChamberEmpty,
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
+        TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer,
     }
 
     public readonly struct GrowthResult
@@ -41,10 +46,20 @@ namespace EvolutionShop.Growth
         public SpeciesDef Def => GrowthContent.Get(Species);
     }
 
+    /// <summary>A place on the shop floor for a container (GR.11): its unit and the largest footprint it takes.</summary>
+    public sealed class GrowthPlace
+    {
+        public string Id, Unit, Size;
+        public float Width, Depth;
+        public bool Takes(ContainerDef c) => c.Width <= Width + 0.001f && c.Depth <= Depth + 0.001f;
+    }
+
     public sealed class GrowthContainer
     {
         public string Id, Kind, Place;
         public int Level = 1;
+        /// <summary>GR.5: the water the container keeps (fresh unless a water kit changed it, era 3).</summary>
+        public Water Water = Water.Fresh;
         public readonly List<GrowthSpecimen> Occupants = new List<GrowthSpecimen>();
         public ContainerDef Def => GrowthContent.Container(Kind);
         public int Spaces => (int)Def.Levels[Level - 1].Stat("spaces");
@@ -64,10 +79,15 @@ namespace EvolutionShop.Growth
         public int Budget;
         public GrowthVisitorState State;
         public GrowthVisitOutcome Outcome;
-        public int SpecimenId;
-        /// <summary>The container the visitor browses and, once decided, holds its specimen.</summary>
+        /// <summary>What the visitor reserved: one specimen, or a pair all or none (GR.15.1); empty until they decide.</summary>
+        public readonly List<int> SpecimenIds = new List<int>();
+        public int SpecimenId => SpecimenIds.Count > 0 ? SpecimenIds[0] : 0;
+        /// <summary>The container the visitor browses now and, once decided, the one that holds their choice.</summary>
         public string ContainerId;
-        public float Clock, Patience;
+        /// <summary>GR-03: the containers this visitor means to browse, in order (most appealing first), and how far along.</summary>
+        public readonly List<string> Plan = new List<string>();
+        public int Browsed;
+        public float Clock, Patience, BrowseFor = GrowthShop.BrowseSeconds;
     }
 
     public sealed class GrowthMixEntry
@@ -80,7 +100,7 @@ namespace EvolutionShop.Growth
         public int Count = 1;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold }
 
     public sealed class GrowthEvent
     {
@@ -101,8 +121,29 @@ namespace EvolutionShop.Growth
         public const int CarryLimit = 3, SchoolSize = 3, GreyboxMaxLevel = 2, RepPerImpatient = -1;
         /// <summary>A visit: walking in and browsing, waiting in the queue, walking out. A visitor counts toward the shop's
         /// "visitors at once" until they have walked out, so a small shop serves a few people at a time (GR.10.1).</summary>
-        public const float BrowseSeconds = 6f, QueuePatience = 40f, LeaveSeconds = 8f, SchoolBudgetBonus = 1.15f;
-        public static readonly string[] UnitAPlaces = { "a1", "a2", "a3", "a4" }, UnitBPlaces = { "b1", "b2", "b3", "b4" };
+        public const float BrowseSeconds = 6f, QueuePatience = 40f, LeaveSeconds = 8f, SchoolBudgetBonus = 1f + GrowthContent.SchoolTolerance;
+        /// <summary>GR-03: a visitor looks into at most three containers, about 5 s for each after the first.</summary>
+        public const int MostBrowsed = 3;
+        public const double BigSpenderSizeWeight = 0.5;
+        public const float NextBrowseSeconds = 5f;
+        /// <summary>
+        /// GR-03's floor places (GR.11): "long" places along walls and islands take Starter and Large tanks (2.5 x 1 m),
+        /// "standard" ones a Starter tank (1.5 x 1 m), and unit B's east wall one feature place for a Show tank (3 x 1.5 m).
+        /// </summary>
+        public static readonly GrowthPlace[] Places =
+        {
+            new GrowthPlace { Id = "a1", Unit = "unit-a", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "a2", Unit = "unit-a", Size = "standard", Width = 1.5f, Depth = 1f },
+            new GrowthPlace { Id = "a3", Unit = "unit-a", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "a4", Unit = "unit-a", Size = "standard", Width = 1.5f, Depth = 1f },
+            new GrowthPlace { Id = "b1", Unit = "unit-b", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "b2", Unit = "unit-b", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "b3", Unit = "unit-b", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "b4", Unit = "unit-b", Size = "feature", Width = 3f, Depth = 1.5f },
+        };
+        public static readonly string[] UnitAPlaces = Places.Where(p => p.Unit == "unit-a").Select(p => p.Id).ToArray(), UnitBPlaces = Places.Where(p => p.Unit == "unit-b").Select(p => p.Id).ToArray();
+        /// <summary>The shop containers a player buys on the floor (the lab rack comes with the lab, later).</summary>
+        public static readonly string[] ShopKinds = { "starter", "large", "show" };
         /// <summary>The stations the greybox has (GR-02: siphon, growers, incubator and counter at levels 1-2).</summary>
         public static readonly string[] GreyboxStations = { "siphon", "grower", "incubator", "counter" };
 
@@ -165,6 +206,23 @@ namespace EvolutionShop.Growth
         public int Price(string species) => GrowthContent.Get(species).Price;
         public bool InSchool(GrowthSpecimen s) { var c = Containers.FirstOrDefault(x => x.Occupants.Contains(s)); return c != null && c.InSchool(s.Species); }
         public GrowthContainer HolderOf(int specimenId) => Containers.FirstOrDefault(c => c.Occupants.Any(s => s.Id == specimenId));
+        public static GrowthPlace Place(string id) => Places.FirstOrDefault(p => p.Id == id);
+
+        /// <summary>GR.5 harmony (era 3): two or more occupants, one temperament, all at home in the container's water.</summary>
+        public bool Harmony(GrowthContainer c) =>
+            Era >= GrowthContent.ComfortEra && c.Occupants.Count >= 2 && c.Occupants.All(s => s.Def.Water == c.Water) &&
+            c.Occupants.Select(s => s.Def.Temperament).Distinct().Count() == 1;
+
+        /// <summary>A container's appeal: +1 for a lit Show tank, +1 for harmony. Visitors look at appealing containers first.</summary>
+        public int Appeal(GrowthContainer c) => (c.Kind == "show" ? 1 : 0) + (Harmony(c) ? 1 : 0);
+
+        /// <summary>How far over budget a visitor goes for a species in this container (GR.10.1: school +15%, appeal +10% a point, at most +40%).</summary>
+        public float Tolerance(GrowthContainer c, string species) =>
+            1f + Math.Min(GrowthContent.ToleranceCap, (c.InSchool(species) ? GrowthContent.SchoolTolerance : 0f) + Appeal(c) * GrowthContent.AppealTolerance);
+
+        /// <summary>Credits paid for a container: its purchase and every level since; selling an empty one returns half.</summary>
+        public static int Paid(GrowthContainer c) => c.Def.Levels.Take(c.Level).Sum(l => l.Credits);
+        public static int SellValue(GrowthContainer c) => Paid(c) / 2;
 
         /// <summary>GR.4's era 2 gate: 2 stars, 3 creatures discovered, 2 tanks.</summary>
         public bool EraTwoGateMet => Stars >= 2 && Discovered.Count >= 3 && ShopContainers.Count() >= 2;
@@ -307,7 +365,9 @@ namespace EvolutionShop.Growth
             var candidates = specimenId == 0 ? Carried : Carried.Where(s => s.Id == specimenId).ToList();
             if (specimenId != 0 && candidates.Count == 0) return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen);
             var fits = candidates.FirstOrDefault(s => GrowthRules.Fits(c.Def, c.Level, c.Occupants.Select(o => o.Species), s.Species));
-            if (fits == null) return GrowthResult.Fail(GrowthFailure.DoesNotFit, c.Free + " of " + c.Spaces + " spaces free");
+            if (fits == null)
+                return GrowthResult.Fail(GrowthFailure.DoesNotFit, candidates.All(x => (int)x.Def.Size > (int)c.Def.Largest)
+                    ? "Too big for a " + c.Def.Name : c.Free + " of " + c.Spaces + " spaces free");
             Carried.Remove(fits);
             c.Occupants.Add(fits);
             return GrowthResult.Ok(fits.Species);
@@ -327,18 +387,189 @@ namespace EvolutionShop.Growth
         }
 
         /// <summary>Buys a Starter tank for an empty place in an open unit (layout changes happen at night, §6.1).</summary>
-        public GrowthResult BuyTank(string place)
+        public GrowthResult BuyTank(string place) => BuyContainer("starter", place);
+
+        /// <summary>Why a container of this kind cannot be bought for the place now (None when it can), with a sentence.</summary>
+        public GrowthFailure BuyCheck(string kind, string place, out string why)
         {
-            if (Phase != GrowthPhase.Night) return GrowthResult.Fail(GrowthFailure.NotAtNight);
-            if (!OwnedPlaces.Contains(place)) return GrowthResult.Fail(GrowthFailure.NoSuchPlace, place);
-            if (ContainerAt(place) != null) return GrowthResult.Fail(GrowthFailure.PlaceTaken, place);
-            int cost = GrowthContent.Container("starter").Levels[0].Credits;
-            if (Credits < cost) return GrowthResult.Fail(GrowthFailure.NotEnoughCredits, cost + " credits");
+            why = null;
+            if (!ShopKinds.Contains(kind)) { why = "Not a shop container"; return GrowthFailure.UnknownContainer; }
+            var def = GrowthContent.Container(kind);
+            var level = def.Levels[0];
+            var spot = Place(place);
+            if (spot == null || !OwnedPlaces.Contains(place)) { why = "Not an open place"; return GrowthFailure.NoSuchPlace; }
+            if (ContainerAt(place) != null) { why = "The place is taken"; return GrowthFailure.PlaceTaken; }
+            if (!spot.Takes(def)) { why = def.Name + " is " + Footprint(def) + "; this place takes " + spot.Width.ToString("0.#") + " × " + spot.Depth.ToString("0.#") + " m"; return GrowthFailure.TooBigForPlace; }
+            if (level.Era > Era) { why = "Needs era " + level.Era; return GrowthFailure.Locked; }
+            if (level.Stars > Stars) { why = "Needs " + level.Stars + " stars"; return GrowthFailure.Locked; }
+            if (Phase != GrowthPhase.Night) { why = "Containers are placed at night"; return GrowthFailure.NotAtNight; }
+            if (Credits < level.Credits) { why = "Needs " + level.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
+            return GrowthFailure.None;
+        }
+
+        public static string Footprint(ContainerDef def) => def.Width.ToString("0.#") + " × " + def.Depth.ToString("0.#") + " m";
+
+        /// <summary>Buys a Starter, Large or Show tank for an empty place it fits (GR.5, GR.11).</summary>
+        public GrowthResult BuyContainer(string kind, string place)
+        {
+            var failure = BuyCheck(kind, place, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var def = GrowthContent.Container(kind);
+            int cost = def.Levels[0].Credits;
             Credits -= cost;
-            Containers.Add(new GrowthContainer { Id = "tank-" + nextId++, Kind = "starter", Place = place });
-            Raise(GrowthEventKind.Bought, "Starter tank placed", amount: cost);
+            Containers.Add(new GrowthContainer { Id = "tank-" + nextId++, Kind = kind, Place = place });
+            Raise(GrowthEventKind.Bought, def.Name + " placed", amount: cost);
             CheckEra();
             return GrowthResult.Ok();
+        }
+
+        /// <summary>Why a container cannot go to its next level now (None when it can), with the level and a sentence.</summary>
+        public GrowthFailure ContainerUpgradeCheck(string containerId, out LevelDef next, out string why)
+        {
+            next = null; why = null;
+            var c = Container(containerId);
+            if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
+            if (c.Level >= c.Def.Levels.Length) { why = "Highest level"; return GrowthFailure.MaxLevel; }
+            next = c.Def.Levels[c.Level];
+            if (next.Era > Era) { why = "Needs era " + next.Era; return GrowthFailure.Locked; }
+            if (next.Stars > Stars) { why = "Needs " + next.Stars + " stars"; return GrowthFailure.Locked; }
+            if (Phase != GrowthPhase.Night) { why = "Fitted at night"; return GrowthFailure.NotAtNight; }
+            if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>A container's next level: more spaces; every creature stays in it (GR.15.1).</summary>
+        public GrowthResult UpgradeContainer(string containerId)
+        {
+            var failure = ContainerUpgradeCheck(containerId, out var next, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var c = Container(containerId);
+            Credits -= next.Credits;
+            c.Level = next.Level;
+            Raise(GrowthEventKind.Upgraded, c.Def.Name + " level " + next.Level + ": " + next.Change, amount: next.Credits);
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>Why a container cannot move to the place now (None when it can).</summary>
+        public GrowthFailure MoveCheck(string containerId, string place, out string why)
+        {
+            why = null;
+            var c = Container(containerId);
+            if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
+            var spot = Place(place);
+            if (spot == null || !OwnedPlaces.Contains(place)) { why = "Not an open place"; return GrowthFailure.NoSuchPlace; }
+            if (ContainerAt(place) != null) { why = "The place is taken"; return GrowthFailure.PlaceTaken; }
+            if (!spot.Takes(c.Def)) { why = c.Def.Name + " is " + Footprint(c.Def) + "; this place takes " + spot.Width.ToString("0.#") + " × " + spot.Depth.ToString("0.#") + " m"; return GrowthFailure.TooBigForPlace; }
+            if (Phase != GrowthPhase.Night) { why = "Containers are moved at night"; return GrowthFailure.NotAtNight; }
+            if (c.Occupants.Any(s => s.ReservedBy != 0)) { why = "A visitor is buying from it"; return GrowthFailure.Reserved; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Moves a container with everything in it to another free place in one step (GR.15.1, §6.4).</summary>
+        public GrowthResult MoveContainer(string containerId, string place)
+        {
+            var failure = MoveCheck(containerId, place, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var c = Container(containerId);
+            c.Place = place;
+            Raise(GrowthEventKind.Moved, c.Def.Name + " moved");
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>Why a container cannot be sold now (None when it can): only empty ones, never the last tank in the shop.</summary>
+        public GrowthFailure SellCheck(string containerId, out string why)
+        {
+            why = null;
+            var c = Container(containerId);
+            if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
+            if (c.Occupants.Count > 0) { why = "Take its creatures out first"; return GrowthFailure.NotEmpty; }
+            if (!c.Def.Lab && ShopContainers.Count() <= 1) { why = "The shop keeps at least one tank"; return GrowthFailure.LastContainer; }
+            if (Phase != GrowthPhase.Night) { why = "Containers are sold at night"; return GrowthFailure.NotAtNight; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Sells an empty container back for half what it cost (GR.19.4: a full floor must never block a bigger tank).</summary>
+        public GrowthResult SellContainer(string containerId)
+        {
+            var failure = SellCheck(containerId, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var c = Container(containerId);
+            int value = SellValue(c);
+            Containers.Remove(c);
+            Credits += value;
+            Raise(GrowthEventKind.Sold, c.Def.Name + " sold for " + value + " credits", amount: value);
+            return GrowthResult.Ok(value.ToString());
+        }
+
+        /// <summary>Why a container's water cannot be set now (None when it can).</summary>
+        public GrowthFailure WaterCheck(string containerId, Water water, out string why)
+        {
+            why = null;
+            var c = Container(containerId);
+            if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
+            if (c.Water == water) { why = "Already " + water.ToString().ToLowerInvariant(); return GrowthFailure.SameWater; }
+            if (Era < GrowthContent.ComfortEra) { why = "Needs era " + GrowthContent.ComfortEra; return GrowthFailure.Locked; }
+            if (Phase != GrowthPhase.Night) { why = "Water is changed at night"; return GrowthFailure.NotAtNight; }
+            if (Credits < GrowthContent.WaterKitCredits) { why = "Needs " + GrowthContent.WaterKitCredits + " credits"; return GrowthFailure.NotEnoughCredits; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>A water kit sets a container's water (GR.5 comfort); its creatures stay, whatever their water.</summary>
+        public GrowthResult SetWater(string containerId, Water water)
+        {
+            var failure = WaterCheck(containerId, water, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var c = Container(containerId);
+            Credits -= GrowthContent.WaterKitCredits;
+            c.Water = water;
+            Raise(GrowthEventKind.Upgraded, c.Def.Name + ": " + water.ToString().ToLowerInvariant() + " water", amount: GrowthContent.WaterKitCredits);
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>
+        /// Development and validation only: a creature of any species straight into the hands, as if hatched elsewhere. It
+        /// is not a discovery. The greybox's development crate and the routes' labelled fixtures use it.
+        /// </summary>
+        public GrowthResult DevelopmentGive(string species)
+        {
+            if (GrowthContent.Get(species) == null) return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen, species);
+            if (Carried.Count >= CarryLimit) return GrowthResult.Fail(GrowthFailure.HandsFull, "carry up to " + CarryLimit);
+            Carried.Add(new GrowthSpecimen { Id = nextId++, Species = species });
+            return GrowthResult.Ok(species);
+        }
+
+        /// <summary>Development and validation only: a new specimen straight into a container if it fits (no discovery).</summary>
+        public GrowthResult DevelopmentStock(string containerId, string species)
+        {
+            var c = Container(containerId);
+            if (c == null) return GrowthResult.Fail(GrowthFailure.NoSuchContainer, containerId);
+            if (!GrowthRules.Fits(c.Def, c.Level, c.Occupants.Select(o => o.Species), species)) return GrowthResult.Fail(GrowthFailure.DoesNotFit, species);
+            c.Occupants.Add(new GrowthSpecimen { Id = nextId++, Species = species });
+            return GrowthResult.Ok(species);
+        }
+
+        /// <summary>
+        /// GR-03's densest layout (validation): unit B open, era 4 and 4 stars, every place holding the largest container it
+        /// takes at its highest level, filled to the last space with small creatures of 21 species, three of each in turn (schools).
+        /// </summary>
+        public static GrowthShop Densest(int stars = 4)
+        {
+            var shop = new GrowthShop { Era = 4, UnitB = true, Credits = 0, Reputation = GrowthContent.StarThresholds[Math.Max(0, stars - 1)] };
+            shop.Containers.Clear();
+            var small = GrowthContent.Species.Where(s => s.Size == SizeClass.Small && s.Kind != SpeciesKind.Crown).Select(s => s.Id).ToList();
+            int k = 0;
+            foreach (var place in Places)
+            {
+                var def = GrowthContent.Containers.Where(d => !d.Lab && place.Takes(d)).OrderByDescending(d => d.Levels.Last().Stat("spaces")).First();
+                var c = new GrowthContainer { Id = "tank-" + shop.nextId++, Kind = def.Id, Place = place.Id, Level = def.Levels.Length };
+                shop.Containers.Add(c);
+                while (c.Free > 0)
+                {
+                    string species = small[(k++ / 3) % small.Count];
+                    c.Occupants.Add(new GrowthSpecimen { Id = shop.nextId++, Species = species });
+                }
+            }
+            return shop;
         }
 
         // ---------------------------------------------------------------- upgrades and spaces
@@ -453,7 +684,7 @@ namespace EvolutionShop.Growth
             foreach (var v in Visitors.ToList())
             {
                 v.Clock += seconds;
-                if (v.State == GrowthVisitorState.Browsing && v.Clock >= BrowseSeconds) Decide(v);
+                if (v.State == GrowthVisitorState.Browsing && v.Clock >= v.BrowseFor) Decide(v);
                 else if (v.State == GrowthVisitorState.Queued && (v.Patience -= seconds) <= 0) Leave(v, GrowthVisitOutcome.TiredOfWaiting);
             }
             if (DaySecondsLeft <= 0) CloseShop();
@@ -470,51 +701,90 @@ namespace EvolutionShop.Growth
             int roll = (int)(Hash(Day * 7919 + visitorsToday * 104729) % (uint)total);
             var type = types[0];
             foreach (var t in types) { if (roll < t.Weights[star]) { type = t; break; } roll -= t.Weights[star]; }
-            var shop = ShopContainers.ToList();
-            var v = new GrowthVisitor
-            {
-                Id = nextId++, Type = type.Id, Budget = type.Budgets[star], State = GrowthVisitorState.Browsing,
-                ContainerId = shop.Count == 0 ? null : shop[(int)(Hash(nextId * 31 + Day) % (uint)shop.Count)].Id,
-            };
+            var v = new GrowthVisitor { Id = nextId++, Type = type.Id, Budget = type.Budgets[star], State = GrowthVisitorState.Browsing };
+            // GR-03: the visitor looks into the stocked containers one at a time, the most appealing first, then in an
+            // order of their own; at most three.
+            v.Plan.AddRange(ShopContainers.Where(c => c.Occupants.Count > 0)
+                .OrderByDescending(Appeal).ThenBy(c => Hash(v.Id * 977 + StableHash(c.Id))).Take(MostBrowsed).Select(c => c.Id));
+            v.ContainerId = v.Plan.Count > 0 ? v.Plan[0] : null;
             visitorsToday++;
             if (Today != null) Today.Visitors++;
             Visitors.Add(v);
         }
 
         /// <summary>
-        /// A visitor picks the creature in stock they like best within budget: the dearer the better, a school's species
-        /// is worth 15% more budget (GR.5), and a small fixed variety per visitor; then reserves it and queues.
+        /// A visitor picks, from the container they are looking into, the creature they like best within budget: the dearer
+        /// the better, a school's species and an appealing container stretch the budget (GR.10.1), Big spenders favour bigger
+        /// creatures, and a small fixed variety per visitor. Collectors from 3 stars take a pair of one species when they can
+        /// (reserved together, all or none). Nothing here: on to the next container in their plan, or they leave.
         /// </summary>
         void Decide(GrowthVisitor v)
         {
-            GrowthSpecimen best = null; GrowthContainer holder = null; double bestScore = double.MinValue;
-            foreach (var c in ShopContainers)
-                foreach (var s in c.Occupants)
+            var c = v.ContainerId == null ? null : Container(v.ContainerId);
+            var chosen = c == null ? null : PickFrom(v, c);
+            if (chosen == null || chosen.Count == 0)
+            {
+                v.Browsed++;
+                if (v.Browsed < v.Plan.Count)
                 {
-                    if (s.ReservedBy != 0) continue;
-                    bool school = c.InSchool(s.Species);
-                    int price = Price(s.Species);
-                    if (price > v.Budget * (school ? SchoolBudgetBonus : 1)) continue;
-                    double score = price + (school ? 3 : 0) + Hash(v.Id * 131 + s.Id) % 3 + (c.Id == v.ContainerId ? 0.5 : 0);
-                    if (score > bestScore) { best = s; holder = c; bestScore = score; }
+                    v.ContainerId = v.Plan[v.Browsed];
+                    v.BrowseFor = NextBrowseSeconds;
+                    v.Clock = 0;
+                    return;
                 }
-            if (best == null) { Leave(v, GrowthVisitOutcome.NothingAffordable); return; }
-            best.ReservedBy = v.Id;
-            v.SpecimenId = best.Id;
-            v.ContainerId = holder.Id;
+                Leave(v, GrowthVisitOutcome.NothingAffordable);
+                return;
+            }
+            if (!ReserveAll(v, chosen)) { Leave(v, GrowthVisitOutcome.NothingAffordable); return; }
             v.State = GrowthVisitorState.Queued;
             v.Patience = QueuePatience;
             v.Clock = 0;
         }
 
+        /// <summary>What a visitor would take from one container: a pair (Collectors, 3 stars), one specimen, or nothing.</summary>
+        public List<GrowthSpecimen> PickFrom(GrowthVisitor v, GrowthContainer c)
+        {
+            var free = c.Occupants.Where(s => s.ReservedBy == 0).ToList();
+            if (v.Type == "collector" && Stars >= 3)
+            {
+                var pair = free.GroupBy(s => s.Species).Where(g => g.Count() >= 2 && 2 * Price(g.Key) <= v.Budget * Tolerance(c, g.Key))
+                    .OrderByDescending(g => Price(g.Key)).ThenBy(g => g.Key).FirstOrDefault();
+                if (pair != null) return pair.Take(2).ToList();
+            }
+            GrowthSpecimen best = null; double bestScore = double.MinValue;
+            foreach (var s in free)
+            {
+                int price = Price(s.Species);
+                if (price > v.Budget * Tolerance(c, s.Species)) continue;
+                // Big spenders weigh a medium creature 1.5 times and a large one 2.5 times its price (GR.10).
+                double weight = v.Type == "premium" ? 1 + BigSpenderSizeWeight * ((int)s.Def.Size - 1) : 1;
+                double score = price * weight + (c.InSchool(s.Species) ? 3 : 0) + Hash(v.Id * 131 + s.Id) % 3;
+                if (score > bestScore) { best = s; bestScore = score; }
+            }
+            return best == null ? null : new List<GrowthSpecimen> { best };
+        }
+
+        /// <summary>Reserves every specimen for the visitor or none of them (GR.15.1: a pair or a school is all or none).</summary>
+        public bool ReserveAll(GrowthVisitor v, IList<GrowthSpecimen> specimens)
+        {
+            if (specimens.Count == 0 || specimens.Any(s => s.ReservedBy != 0) || specimens.Select(s => s.Id).Distinct().Count() != specimens.Count) return false;
+            var holder = HolderOf(specimens[0].Id);
+            if (holder == null || specimens.Any(s => HolderOf(s.Id) != holder)) return false;
+            foreach (var s in specimens) s.ReservedBy = v.Id;
+            v.SpecimenIds.Clear();
+            v.SpecimenIds.AddRange(specimens.Select(s => s.Id));
+            v.ContainerId = holder.Id;
+            return true;
+        }
+
         void Leave(GrowthVisitor v, GrowthVisitOutcome outcome)
         {
-            if (v.SpecimenId != 0)
+            foreach (int id in v.SpecimenIds)
             {
-                var s = Stock.FirstOrDefault(x => x.Id == v.SpecimenId);
+                var s = Stock.FirstOrDefault(x => x.Id == id);
                 if (s != null && s.ReservedBy == v.Id) s.ReservedBy = 0;
             }
-            if (outcome != GrowthVisitOutcome.Bought) v.SpecimenId = 0;
+            if (outcome != GrowthVisitOutcome.Bought) v.SpecimenIds.Clear();
             v.State = GrowthVisitorState.Leaving;
             v.Outcome = outcome;
             v.Clock = 0;
@@ -544,19 +814,24 @@ namespace EvolutionShop.Growth
             ServeProgress += seconds;
             if (ServeProgress < ServeSeconds) return GrowthResult.Ok("bagging");
             ServeProgress = 0;
-            var holder = HolderOf(v.SpecimenId);
-            var s = holder?.Occupants.First(o => o.Id == v.SpecimenId);
-            if (holder == null) { Leave(v, GrowthVisitOutcome.TiredOfWaiting); return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen); }
-            holder.Occupants.Remove(s);
-            int price = Price(s.Species), starsBefore = Stars;
+            var bought = v.SpecimenIds.Select(id => HolderOf(id)?.Occupants.First(o => o.Id == id)).Where(s => s != null).ToList();
+            if (bought.Count == 0) { Leave(v, GrowthVisitOutcome.TiredOfWaiting); return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen); }
+            int price = 0, starsBefore = Stars;
+            foreach (var s in bought)
+            {
+                HolderOf(s.Id).Occupants.Remove(s);
+                price += Price(s.Species);
+                Reputation = Math.Min(GrowthContent.ReputationMax, Reputation + GrowthContent.RepPerSale);
+                SalesTotal++;
+                if (Today != null) { Today.Sales++; Today.ReputationGained += GrowthContent.RepPerSale; }
+            }
             Credits += price;
-            Reputation = Math.Min(GrowthContent.ReputationMax, Reputation + GrowthContent.RepPerSale);
-            SalesTotal++;
-            if (Today != null) { Today.Sales++; Today.Revenue += price; Today.ReputationGained += GrowthContent.RepPerSale; }
+            if (Today != null) Today.Revenue += price;
             v.State = GrowthVisitorState.Leaving;
             v.Outcome = GrowthVisitOutcome.Bought;
             v.Clock = 0;
-            Raise(GrowthEventKind.Sale, "Sold " + s.Def.Name + " for " + price + " credits", s.Species, price);
+            var first = bought[0];
+            Raise(GrowthEventKind.Sale, "Sold " + (bought.Count > 1 ? "a pair of " + first.Def.Name + "s" : first.Def.Name) + " for " + price + " credits", first.Species, price);
             if (Stars > starsBefore) Raise(GrowthEventKind.StarUp, "The shop has " + Stars + " stars!", amount: Stars);
             CheckEra();
             return GrowthResult.Ok("sold");
@@ -596,7 +871,12 @@ namespace EvolutionShop.Growth
                 var unit = GrowthContent.Expansions.First(e => e.Id == "unit-b");
                 list.Add(("Open shop unit B (" + Math.Min(Credits, unit.Credits) + "/" + unit.Credits + " credits, at night)", false));
             }
-            else list.Add(("The greybox ends here: breeding and the rest of era 2 come with GR-05", true));
+            else
+            {
+                bool large = ShopContainers.Any(c => c.Kind != "starter");
+                list.Add(("Buy a Large tank for a long place (" + GrowthContent.Container("large").Levels[0].Credits + " credits, at night)", large));
+                list.Add(("The greybox ends here: breeding and the rest of era 2 come with GR-05", true));
+            }
             return list;
         }
 
@@ -608,6 +888,9 @@ namespace EvolutionShop.Growth
         public List<GrowthEvent> TakeEvents() { var e = new List<GrowthEvent>(Events); Events.Clear(); return e; }
 
         public static string Name(string culture) => GrowthContent.Cultures[GrowthContent.CultureIndex(culture)].Name;
+
+        /// <summary>A string hash that is the same on every runtime (string.GetHashCode is not).</summary>
+        static int StableHash(string s) { unchecked { int h = 17; foreach (char ch in s) h = h * 31 + ch; return h; } }
 
         static uint Hash(int x)
         {
@@ -630,7 +913,7 @@ namespace EvolutionShop.Growth
             held = Held.ToArray(), chamber = Chamber.ToArray(), incubating = Incubating, incubationLeft = IncubationLeft, pending = Pending ?? "",
             hatchling = Hatchling == null ? new GrowthSave.Specimen[0] : new[] { GrowthSave.Specimen.Of(Hatchling) },
             carried = Carried.Select(GrowthSave.Specimen.Of).ToArray(),
-            containers = Containers.Select(c => new GrowthSave.Box { id = c.Id, kind = c.Kind, place = c.Place, level = c.Level, occupants = c.Occupants.Select(GrowthSave.Specimen.Of).ToArray() }).ToArray(),
+            containers = Containers.Select(c => new GrowthSave.Box { id = c.Id, kind = c.Kind, place = c.Place, level = c.Level, water = c.Water.ToString(), occupants = c.Occupants.Select(GrowthSave.Specimen.Of).ToArray() }).ToArray(),
             discovered = Discovered.ToArray(),
             mixLog = MixLog.Select(m => new GrowthSave.Mix { doses = m.Doses, species = m.Species, exact = m.Exact, wasNew = m.WasNew, distanceToNew = m.DistanceToNew, count = m.Count }).ToArray(),
         };
@@ -640,7 +923,8 @@ namespace EvolutionShop.Growth
         {
             problem = null;
             if (s == null) { problem = "No save"; return null; }
-            if (s.version != GrowthSave.CurrentVersion) { problem = "Unknown GR save version " + s.version; return null; }
+            // Version 1 (GR-02) had no water; its containers keep fresh water.
+            if (s.version < 1 || s.version > GrowthSave.CurrentVersion) { problem = "Unknown GR save version " + s.version; return null; }
             bool Known(string species) => GrowthContent.Get(species) != null;
             var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0])).ToList();
             if (all.Any(x => !Known(x.species))) { problem = "Unknown species in the save"; return null; }
@@ -671,6 +955,9 @@ namespace EvolutionShop.Growth
             {
                 var c = new GrowthContainer { Id = b.id, Kind = b.kind, Place = b.place, Level = Math.Max(1, b.level) };
                 try { if (c.Level > c.Def.Levels.Length) throw new ArgumentException(); } catch (ArgumentException) { problem = "Unknown container " + b.kind; return null; }
+                if (!string.IsNullOrEmpty(b.water)) { if (!Enum.TryParse<Water>(b.water, out var w)) { problem = "Unknown water " + b.water; return null; } c.Water = w; }
+                if (!c.Def.Lab && Place(c.Place) == null) { problem = "Unknown place " + c.Place; return null; }
+                if (shop.Containers.Any(x => x.Place == c.Place) || shop.Containers.Any(x => x.Id == c.Id)) { problem = "Two containers in one place"; return null; }
                 c.Occupants.AddRange((b.occupants ?? new GrowthSave.Specimen[0]).Select(x => x.ToSpecimen()));
                 if (c.Used > c.Spaces) { problem = "A container holds more than it fits"; return null; }
                 shop.Containers.Add(c);
@@ -689,7 +976,8 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        public const int CurrentVersion = 1;
+        /// <summary>2: GR-03 (container water). Version 1 saves load with fresh water.</summary>
+        public const int CurrentVersion = 2;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -721,7 +1009,7 @@ namespace EvolutionShop.Growth
 
         [Serializable] public sealed class Box
         {
-            public string id, kind, place;
+            public string id, kind, place, water;
             public int level;
             public Specimen[] occupants;
         }

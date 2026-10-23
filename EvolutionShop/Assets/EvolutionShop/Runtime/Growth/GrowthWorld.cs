@@ -24,30 +24,42 @@ namespace EvolutionShop
     public sealed class GrowthWorld : MonoBehaviour
     {
         public static readonly Vector3 Spawn = new Vector3(0.6f, 0.05f, 5.4f);
+        public const float FullDistance = 6f, FreezeDistance = 12f;
 
         /// <summary>A container place: where the tank stands, which way its front faces, and where a visitor stands to browse it.</summary>
         public struct Place
         {
             public Vector3 Position, Browse;
-            public float Yaw;
+            public float Yaw, Width, Depth;
             public Vector3[] Route;
         }
 
         static readonly Vector3 Outside = new Vector3(-0.5f, 0, -5.8f), Door = new Vector3(-0.5f, 0, -3.3f), Hub = new Vector3(-0.5f, 0, -1.6f),
-            West = new Vector3(-2.6f, 0, -1.3f), NorthWest = new Vector3(-2.6f, 0, 1.8f), East = new Vector3(1.5f, 0, -1.0f), NorthEast = new Vector3(1.5f, 0, 1.8f),
-            ArchWest = new Vector3(3.3f, 0, 0), ArchEast = new Vector3(4.7f, 0, 0), UnitBNorth = new Vector3(8.0f, 0, 1.7f);
+            West = new Vector3(-2.2f, 0, -1.2f), NorthWest = new Vector3(-2.2f, 0, 2.0f), East = new Vector3(1.5f, 0, -1.0f),
+            ArchWest = new Vector3(3.3f, 0, 0), ArchEast = new Vector3(4.7f, 0, 0), UnitBNorth = new Vector3(8.0f, 0, 1.7f), UnitBSouth = new Vector3(5.6f, 0, -1.4f);
 
+        /// <summary>
+        /// GR-03's places (GR.11): long places on the north walls and the islands take Starter and Large tanks, standard ones
+        /// on unit A's west wall a Starter tank, and unit B's east wall the feature place for a Show tank. Sizes come from
+        /// GrowthShop.Places; each tank stands centred on its place with its front (local +z) to the aisle.
+        /// </summary>
         public static readonly Dictionary<string, Place> Places = new Dictionary<string, Place>
         {
-            ["a1"] = new Place { Position = new Vector3(-2.4f, 0, 3.35f), Yaw = 180, Browse = new Vector3(-2.4f, 0, 2.2f), Route = new[] { West, NorthWest } },
-            ["a2"] = new Place { Position = new Vector3(-0.6f, 0, 3.35f), Yaw = 180, Browse = new Vector3(-0.6f, 0, 2.2f), Route = new[] { East, NorthEast } },
-            ["a3"] = new Place { Position = new Vector3(-0.4f, 0, 0.2f), Yaw = 180, Browse = new Vector3(-0.4f, 0, -0.95f), Route = new Vector3[0] },
-            ["a4"] = new Place { Position = new Vector3(-3.35f, 0, -0.6f), Yaw = 90, Browse = new Vector3(-2.2f, 0, -0.6f), Route = new[] { West } },
-            ["b1"] = new Place { Position = new Vector3(5.6f, 0, 3.35f), Yaw = 180, Browse = new Vector3(5.6f, 0, 2.2f), Route = new[] { East, ArchWest, ArchEast } },
-            ["b2"] = new Place { Position = new Vector3(8.6f, 0, 3.35f), Yaw = 180, Browse = new Vector3(8.6f, 0, 2.2f), Route = new[] { East, ArchWest, ArchEast } },
-            ["b3"] = new Place { Position = new Vector3(8.0f, 0, -0.2f), Yaw = 180, Browse = new Vector3(8.0f, 0, -1.35f), Route = new[] { East, ArchWest, ArchEast } },
-            ["b4"] = new Place { Position = new Vector3(11.35f, 0, 0.2f), Yaw = -90, Browse = new Vector3(10.2f, 0, 0.2f), Route = new[] { East, ArchWest, ArchEast, UnitBNorth } },
+            ["a1"] = P("a1", new Vector3(-2.2f, 0, 3.35f), 180, new Vector3(-2.2f, 0, 2.2f), West, NorthWest),
+            ["a2"] = P("a2", new Vector3(-3.35f, 0, 0.9f), 90, new Vector3(-2.2f, 0, 0.9f), West),
+            ["a3"] = P("a3", new Vector3(-0.4f, 0, 0.2f), 180, new Vector3(-0.4f, 0, -0.95f)),
+            ["a4"] = P("a4", new Vector3(-3.35f, 0, -1.6f), 90, new Vector3(-2.2f, 0, -1.6f), West),
+            ["b1"] = P("b1", new Vector3(5.6f, 0, 3.35f), 180, new Vector3(5.6f, 0, 2.2f), East, ArchWest, ArchEast),
+            ["b2"] = P("b2", new Vector3(8.6f, 0, 3.35f), 180, new Vector3(8.6f, 0, 2.2f), East, ArchWest, ArchEast),
+            ["b3"] = P("b3", new Vector3(7.6f, 0, -0.2f), 180, new Vector3(7.6f, 0, -1.35f), East, ArchWest, ArchEast, UnitBSouth),
+            ["b4"] = P("b4", new Vector3(11.15f, 0, 0.2f), -90, new Vector3(9.8f, 0, 0.2f), East, ArchWest, ArchEast, UnitBNorth),
         };
+
+        static Place P(string id, Vector3 position, float yaw, Vector3 browse, params Vector3[] route)
+        {
+            var spot = GrowthShop.Place(id);
+            return new Place { Position = position, Yaw = yaw, Browse = browse, Route = route, Width = spot.Width, Depth = spot.Depth };
+        }
 
         /// <summary>Queue spots in front of the counter, first in line nearest it.</summary>
         public static readonly Vector3[] QueueSpots = { new Vector3(2.8f, 0, -1.7f), new Vector3(2.8f, 0, -0.95f), new Vector3(2.8f, 0, -0.2f), new Vector3(2.05f, 0, -0.2f), new Vector3(1.3f, 0, -0.2f) };
@@ -57,7 +69,9 @@ namespace EvolutionShop
         public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 7.7f), BoardPosition = new Vector3(-1.6f, 1.55f, 8.86f), UnitBWallPosition = new Vector3(4f, 0, 0);
 
         GrowthSession session;
-        Material floorWood, floorTile, floorB, wall, wallLab, trim, stand, glass, water, gravel, counterMat, cabinet, paper, marker, partition, sign, dome;
+        Material floorWood, floorTile, floorB, wall, wallLab, trim, stand, glass, water, waterBrine, waterWarm, gravel, counterMat, cabinet, paper, marker, partition, sign, dome, harmony, lightBar;
+        /// <summary>GR.5's update levels in the last frame: full, cheaper (beyond 6 m or out of view) and frozen (beyond 12 m).</summary>
+        public readonly int[] DetailCounts = new int[3];
         readonly Dictionary<string, Material> culture = new Dictionary<string, Material>();
         readonly Dictionary<string, TankView> tanks = new Dictionary<string, TankView>();
         readonly Dictionary<string, GameObject> markers = new Dictionary<string, GameObject>();
@@ -90,6 +104,10 @@ namespace EvolutionShop
             stand = ShopWorld.MakeMaterial("GR tank stand", new Color(0.24f, 0.27f, 0.30f), 0, 0.4f);
             glass = Transparent("GR glass", new Color(0.75f, 0.92f, 0.96f, 0.16f));
             water = Transparent("GR water", new Color(0.30f, 0.62f, 0.75f, 0.22f));
+            waterBrine = Transparent("GR brine water", new Color(0.22f, 0.66f, 0.56f, 0.26f));
+            waterWarm = Transparent("GR warm water", new Color(0.80f, 0.60f, 0.32f, 0.22f));
+            harmony = Glow("GR harmony glow", new Color(0.55f, 0.92f, 0.70f), 0.7f);
+            lightBar = Glow("GR show light bar", new Color(0.95f, 0.88f, 0.72f), 0.3f);
             dome = Transparent("GR dome", new Color(0.85f, 0.95f, 0.92f, 0.22f));
             gravel = ShopWorld.MakeMaterial("GR gravel", new Color(0.86f, 0.80f, 0.64f), 0, 0.1f);
             counterMat = ShopWorld.MakeMaterial("GR counter", new Color(0.55f, 0.36f, 0.22f), 0, 0.35f);
@@ -136,6 +154,15 @@ namespace EvolutionShop
         }
 
         static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out var c) ? c : Color.magenta;
+
+        /// <summary>A softly glowing material, kept under the bloom threshold (AD's rule for lit surfaces).</summary>
+        static Material Glow(string name, Color color, float strength)
+        {
+            var m = ShopWorld.MakeMaterial(name, color, 0, 0.4f);
+            m.EnableKeyword("_EMISSION");
+            m.SetColor("_EmissionColor", color * strength);
+            return m;
+        }
 
         static Material Transparent(string name, Color color)
         {
@@ -299,23 +326,25 @@ namespace EvolutionShop
             root.transform.SetParent(transform, false);
             root.transform.localPosition = place.Position;
             root.transform.localRotation = Quaternion.Euler(0, place.Yaw, 0);
-            // A dashed outline of the tank's footprint, and a plus sign to buy one.
-            for (int i = 0; i < 6; i++)
+            // A dashed outline of the place's footprint (long, standard or feature), and a plus sign to buy a container.
+            float hw = place.Width * 0.5f, hd = place.Depth * 0.5f;
+            int along = Mathf.Max(2, Mathf.RoundToInt(place.Width / 0.24f)), across = Mathf.Max(2, Mathf.RoundToInt(place.Depth / 0.24f));
+            for (int i = 0; i < along; i++)
             {
-                float x = -0.6f + 0.24f * i;
-                Box(root.transform, "Dash", new Vector3(x, 0.01f, 0.48f), new Vector3(0.12f, 0.01f, 0.04f), marker);
-                Box(root.transform, "Dash", new Vector3(x, 0.01f, -0.48f), new Vector3(0.12f, 0.01f, 0.04f), marker);
+                float x = -hw + 0.12f + (place.Width - 0.24f) * i / (along - 1);
+                Box(root.transform, "Dash", new Vector3(x, 0.01f, hd - 0.02f), new Vector3(0.12f, 0.01f, 0.04f), marker);
+                Box(root.transform, "Dash", new Vector3(x, 0.01f, -hd + 0.02f), new Vector3(0.12f, 0.01f, 0.04f), marker);
             }
-            for (int i = 0; i < 4; i++)
+            for (int i = 1; i < across - 1; i++)
             {
-                float z = -0.36f + 0.24f * i;
-                Box(root.transform, "Dash", new Vector3(0.73f, 0.01f, z), new Vector3(0.04f, 0.01f, 0.12f), marker);
-                Box(root.transform, "Dash", new Vector3(-0.73f, 0.01f, z), new Vector3(0.04f, 0.01f, 0.12f), marker);
+                float z = -hd + place.Depth * i / (across - 1);
+                Box(root.transform, "Dash", new Vector3(hw - 0.02f, 0.01f, z), new Vector3(0.04f, 0.01f, 0.12f), marker);
+                Box(root.transform, "Dash", new Vector3(-hw + 0.02f, 0.01f, z), new Vector3(0.04f, 0.01f, 0.12f), marker);
             }
             Box(root.transform, "Plus", new Vector3(0, 0.45f, 0), new Vector3(0.3f, 0.07f, 0.07f), marker);
             Box(root.transform, "Plus", new Vector3(0, 0.45f, 0), new Vector3(0.07f, 0.3f, 0.07f), marker);
             Target(root, GrowthTargetKind.Place, id);
-            AddCollider(root, new Vector3(0, 0.45f, 0), new Vector3(1.5f, 0.9f, 1.0f));
+            AddCollider(root, new Vector3(0, 0.45f, 0), new Vector3(place.Width, 0.9f, place.Depth));
             root.SetActive(false);
             return root;
         }
@@ -340,8 +369,9 @@ namespace EvolutionShop
             // Tanks follow the shop's containers; each keeps its creatures in step with its occupants.
             foreach (var c in shop.ShopContainers)
             {
-                if (!tanks.TryGetValue(c.Id, out var view)) tanks[c.Id] = view = BuildTank(c);
-                view.Sync(c, this);
+                if (tanks.TryGetValue(c.Id, out var view) && view.Signature != TankView.SignatureOf(c)) { Destroy(view.Root.gameObject); tanks.Remove(c.Id); view = null; }
+                if (view == null) tanks[c.Id] = view = BuildTank(c);
+                view.Sync(c, shop);
             }
             foreach (var id in tanks.Keys.Where(k => shop.Container(k) == null).ToList()) { Destroy(tanks[id].Root.gameObject); tanks.Remove(id); }
             var free = new HashSet<string>(shop.FreePlaces);
@@ -371,22 +401,54 @@ namespace EvolutionShop
             SyncVisitors(shop);
         }
 
+        /// <summary>Stand and glass heights by container: the Starter tank at 0.9 m, the Large tank lower and taller, the Show tank lowest and tallest.</summary>
+        static (float stand, float glass) Proportions(string kind) => kind == "show" ? (0.55f, 1.0f) : kind == "large" ? (0.8f, 0.75f) : (0.9f, 0.62f);
+
+        Material plant;
+
         TankView BuildTank(GrowthContainer c)
         {
             var place = Places[c.Place];
-            var root = new GameObject("Tank " + c.Id + " at " + c.Place).transform;
+            var def = c.Def;
+            var (standH, glassH) = Proportions(c.Kind);
+            float W = def.Width, D = def.Depth, top = standH + glassH, waterH = glassH - 0.12f, waterY = standH + 0.05f + waterH * 0.5f;
+            var root = new GameObject("Tank " + c.Id + " (" + c.Kind + " L" + c.Level + ") at " + c.Place).transform;
             root.SetParent(tanksRoot, false);
             root.localPosition = place.Position;
             root.localRotation = Quaternion.Euler(0, place.Yaw, 0);
-            Box(root, "Stand", new Vector3(0, 0.45f, 0), new Vector3(1.5f, 0.9f, 1.0f), stand, true);
-            Box(root, "Gravel", new Vector3(0, 0.93f, 0), new Vector3(1.44f, 0.05f, 0.94f), gravel);
-            Box(root, "Water", new Vector3(0, 1.18f, 0), new Vector3(1.44f, 0.5f, 0.94f), water);
-            Box(root, "Glass", new Vector3(0, 1.21f, 0), new Vector3(1.5f, 0.62f, 1.0f), glass);
-            Box(root, "Rim", new Vector3(0, 1.53f, 0), new Vector3(1.52f, 0.03f, 1.02f), trim);
-            Box(root, "Plant", new Vector3(0.55f, 1.05f, 0.3f), new Vector3(0.05f, 0.2f, 0.05f), ShopWorld.MakeMaterial("GR plant", new Color(0.35f, 0.62f, 0.38f), 0, 0.3f));
-            var target = Target(root.gameObject, GrowthTargetKind.Tank, c.Id);
-            AddCollider(root.gameObject, new Vector3(0, 0.77f, 0), new Vector3(1.5f, 1.54f, 1.0f));
-            return new TankView { Root = root, ContainerId = c.Id, Place = c.Place };
+            if (plant == null) plant = ShopWorld.MakeMaterial("GR plant", new Color(0.35f, 0.62f, 0.38f), 0, 0.3f);
+            Box(root, "Stand", new Vector3(0, standH * 0.5f, 0), new Vector3(W, standH, D), stand, true);
+            Box(root, "Gravel", new Vector3(0, standH + 0.03f, 0), new Vector3(W - 0.06f, 0.05f, D - 0.06f), gravel);
+            Box(root, "Water", new Vector3(0, waterY, 0), new Vector3(W - 0.06f, waterH, D - 0.06f), c.Water == Water.Brine ? waterBrine : c.Water == Water.Warm ? waterWarm : water);
+            Box(root, "Glass", new Vector3(0, standH + glassH * 0.5f, 0), new Vector3(W, glassH, D), glass);
+            Box(root, "Rim", new Vector3(0, top + 0.015f, 0), new Vector3(W + 0.02f, 0.03f, D + 0.02f), trim);
+            for (int i = 0; i < Mathf.Max(1, Mathf.RoundToInt(W)); i++)
+                Box(root, "Plant", new Vector3(W * 0.5f - 0.2f - i * 0.9f, standH + 0.15f, -D * 0.5f + 0.15f), new Vector3(0.05f, 0.22f + 0.06f * (i % 2), 0.05f), plant);
+            // Its level shows: a filter on the back at level 2, a lid at level 3 (GR.14: one look a level).
+            if (c.Level >= 2) Box(root, "Filter", new Vector3(W * 0.5f - 0.3f, top - 0.12f, -D * 0.5f + 0.07f), new Vector3(0.24f, 0.22f, 0.1f), trim);
+            if (c.Level >= 3) Box(root, "Lid", new Vector3(0, top + 0.05f, 0), new Vector3(W + 0.02f, 0.03f, D + 0.02f), stand);
+            // A Show tank is lit: a light bar along its top front and a lamp inside; level 2 adds a spotlight above.
+            Light showLight = null;
+            if (c.Kind == "show")
+            {
+                Box(root, "Light bar", new Vector3(0, top + 0.06f, D * 0.5f - 0.08f), new Vector3(W - 0.2f, 0.05f, 0.08f), lightBar);
+                showLight = new GameObject("Show tank lamp").AddComponent<Light>();
+                showLight.transform.SetParent(root, false);
+                showLight.transform.localPosition = new Vector3(0, top - 0.1f, 0.1f);
+                showLight.type = LightType.Point; showLight.range = 2.2f; showLight.intensity = c.Level >= 2 ? 0.6f : 0.4f;
+                showLight.color = new Color(1f, 0.95f, 0.85f); showLight.shadows = LightShadows.None;
+                if (c.Level >= 2) Box(root, "Spotlight", new Vector3(0, 2.7f, D * 0.5f + 0.2f), new Vector3(0.18f, 0.14f, 0.18f), lightBar);
+            }
+            // GR.5 harmony: a soft green frame around the rim while the occupants agree (era 3).
+            var frame = Box(root, "Harmony frame", new Vector3(0, top + 0.02f, 0), new Vector3(W + 0.06f, 0.02f, D + 0.06f), harmony).gameObject;
+            frame.SetActive(false);
+            Target(root.gameObject, GrowthTargetKind.Tank, c.Id);
+            AddCollider(root.gameObject, new Vector3(0, top * 0.5f, 0), new Vector3(W, top, D));
+            return new TankView
+            {
+                Root = root, ContainerId = c.Id, Place = c.Place, Signature = TankView.SignatureOf(c), HarmonyFrame = frame, ShowLight = showLight,
+                Inner = new Vector3(W - 0.06f, waterH, D - 0.06f), WaterY = waterY, Width = W, Depth = D, Top = top,
+            };
         }
 
         // ---------------------------------------------------------------- peek and creatures
@@ -396,7 +458,7 @@ namespace EvolutionShop
         {
             if (!tanks.TryGetValue(containerId, out var view)) return float.MaxValue;
             Vector3 local = view.Root.InverseTransformPoint(eye);
-            float dx = Mathf.Max(0, Mathf.Abs(local.x) - 0.75f), dz = Mathf.Max(0, Mathf.Abs(local.z) - 0.5f);
+            float dx = Mathf.Max(0, Mathf.Abs(local.x) - view.Width * 0.5f), dz = Mathf.Max(0, Mathf.Abs(local.z) - view.Depth * 0.5f);
             return Mathf.Sqrt(dx * dx + dz * dz);
         }
 
@@ -423,9 +485,31 @@ namespace EvolutionShop
             if (highlighted) highlighted.Highlighted = true;
         }
 
+        readonly Plane[] frustum = new Plane[6];
+
         public void Animate(float t, float dt)
         {
-            foreach (var tank in tanks.Values) tank.Animate(t, session.ReducedMotion);
+            // GR.5's budget: full swimming near and in view, a cheaper swim beyond 6 m or out of view (every third frame,
+            // spread across tanks), and frozen beyond 12 m.
+            var cam = session.Player != null ? session.Player.View : null;
+            if (cam != null) GeometryUtility.CalculateFrustumPlanes(cam, frustum);
+            DetailCounts[0] = DetailCounts[1] = DetailCounts[2] = 0;
+            int index = 0;
+            foreach (var tank in tanks.Values)
+            {
+                int detail = 0;
+                if (cam != null)
+                {
+                    Vector3 centre = tank.Root.TransformPoint(new Vector3(0, tank.WaterY, 0));
+                    float distance = Vector3.Distance(cam.transform.position, centre);
+                    bool visible = GeometryUtility.TestPlanesAABB(frustum, new Bounds(centre, new Vector3(tank.Width, tank.Inner.y, tank.Width)));
+                    detail = distance >= FreezeDistance ? 2 : visible && distance < FullDistance ? 0 : 1;
+                }
+                tank.Detail = detail;
+                DetailCounts[detail] += tank.Creatures.Count;
+                if (detail == 0 || detail == 1 && (Time.frameCount + index) % 3 == 0) tank.Animate(t, session.ReducedMotion, detail == 0);
+                index++;
+            }
             if (hatchlingView) { hatchlingView.transform.localRotation = Quaternion.Euler(0, t * 40f, 0); hatchlingView.Tick(t); }
             foreach (var v in visitors.Values) v.Tick(dt);
         }
@@ -456,6 +540,21 @@ namespace EvolutionShop
             return r;
         }
 
+        /// <summary>The walk from one container's browse spot to another's, through the waypoints their routes share (GR-03).</summary>
+        public static List<Vector3> RouteBetween(string fromPlace, string toPlace)
+        {
+            if (fromPlace == null || !Places.TryGetValue(fromPlace, out var from)) return RouteTo(toPlace);
+            var r = new List<Vector3>();
+            if (toPlace == null || !Places.TryGetValue(toPlace, out var to)) return r;
+            int shared = 0;
+            while (shared < from.Route.Length && shared < to.Route.Length && from.Route[shared] == to.Route[shared]) shared++;
+            for (int i = from.Route.Length - 1; i >= shared; i--) r.Add(from.Route[i]);
+            if (shared == 0) r.Add(Hub); else r.Add(from.Route[shared - 1]);
+            for (int i = shared; i < to.Route.Length; i++) r.Add(to.Route[i]);
+            r.Add(to.Browse);
+            return r;
+        }
+
         public static List<Vector3> RouteToQueue(string fromPlace, int index)
         {
             var r = new List<Vector3>();
@@ -478,54 +577,86 @@ namespace EvolutionShop
         public sealed class TankView
         {
             public Transform Root;
-            public string ContainerId, Place;
+            public string ContainerId, Place, Signature;
+            /// <summary>The water's inside size (width, height, depth), its centre height, the tank's footprint and top.</summary>
+            public Vector3 Inner;
+            public float WaterY, Width, Depth, Top;
+            public GameObject HarmonyFrame;
+            public Light ShowLight;
+            /// <summary>The update level last frame: 0 full, 1 cheaper, 2 frozen.</summary>
+            public int Detail;
             public readonly Dictionary<int, GrowthCreatureView> Creatures = new Dictionary<int, GrowthCreatureView>();
             readonly Dictionary<string, int> speciesCount = new Dictionary<string, int>();
+            readonly List<GrowthCreatureView> order = new List<GrowthCreatureView>();
+            readonly Dictionary<string, int> rank = new Dictionary<string, int>();
 
-            public void Sync(GrowthContainer c, GrowthWorld world)
+            public static string SignatureOf(GrowthContainer c) => c.Kind + "|" + c.Level + "|" + c.Water + "|" + c.Place;
+
+            public void Sync(GrowthContainer c, GrowthShop shop)
             {
+                bool changed = false;
                 foreach (var s in c.Occupants)
-                    if (!Creatures.ContainsKey(s.Id)) Creatures[s.Id] = GrowthCreatureView.Create(s, Root);
-                foreach (var id in Creatures.Keys.Where(k => c.Occupants.All(o => o.Id != k)).ToList()) { Object.Destroy(Creatures[id].gameObject); Creatures.Remove(id); }
+                    if (!Creatures.ContainsKey(s.Id)) { Creatures[s.Id] = GrowthCreatureView.Create(s, Root); changed = true; }
+                // Creatures with negative ids are validation's view-only extras (the density stress); they stay.
+                foreach (var id in Creatures.Keys.Where(k => k > 0 && c.Occupants.All(o => o.Id != k)).ToList()) { Object.Destroy(Creatures[id].gameObject); Creatures.Remove(id); changed = true; }
                 speciesCount.Clear();
                 foreach (var s in c.Occupants)
                 {
                     speciesCount[s.Species] = speciesCount.TryGetValue(s.Species, out int n) ? n + 1 : 1;
                     Creatures[s.Id].Reserved = s.ReservedBy != 0;
                 }
+                bool harmony = shop.Harmony(c);
+                if (HarmonyFrame.activeSelf != harmony) HarmonyFrame.SetActive(harmony);
+                if (changed || order.Count != Creatures.Count) { order.Clear(); order.AddRange(Creatures.Values.OrderBy(v => v.SpecimenId)); }
             }
 
             public bool InSchool(string species) => speciesCount.TryGetValue(species, out int n) && n >= GrowthShop.SchoolSize;
 
-            public void Animate(float t, bool reduced)
+            /// <summary>Validation only: view-only creatures to stress the frame budget past what the places hold.</summary>
+            public void AddStressCreature(GrowthSpecimen fake)
             {
-                var rank = new Dictionary<string, int>();
-                foreach (var creature in Creatures.Values.OrderBy(c => c.SpecimenId))
+                Creatures[fake.Id] = GrowthCreatureView.Create(fake, Root);
+                order.Clear(); order.AddRange(Creatures.Values.OrderBy(v => v.SpecimenId));
+            }
+
+            public void Animate(float t, bool reduced, bool full)
+            {
+                rank.Clear();
+                foreach (var creature in order)
                 {
+                    if (creature == null) continue;
                     bool school = InSchool(creature.Species);
                     int k = rank.TryGetValue(creature.Species, out int r) ? r : 0;
                     rank[creature.Species] = k + 1;
-                    float speed = reduced ? 0.5f : 1f;
+                    float L = creature.Length;
+                    // Bounds inside the water for this creature's size; the path fills them.
+                    float hx = Mathf.Max(0.02f, Inner.x * 0.5f - L * 0.6f - 0.03f), hz = Mathf.Max(0.02f, Inner.z * 0.5f - L * 0.6f - 0.03f), hy = Mathf.Max(0.01f, Inner.y * 0.5f - L * 0.4f - 0.03f);
+                    float speed = (reduced ? 0.5f : 1f) * (L > 0.2f ? 0.6f : L > 0.1f ? 0.8f : 1f) * Mathf.Clamp(1.4f / Mathf.Max(0.5f, Inner.x), 0.45f, 1f);
                     // A school shares its leader's path and keeps a loose formation behind it; others wander alone.
-                    float phase = school ? (creature.Species.GetHashCode() & 1023) * 0.01f : creature.SpecimenId * 1.37f;
+                    int hash = Stable(creature.Species);
+                    float phase = school ? (hash & 1023) * 0.01f : creature.SpecimenId * 1.37f;
+                    float layer = ((hash >> 3) % 5 - 2) * 0.22f * hy;
                     float time = t * speed;
-                    Vector3 Path(float tt) => new Vector3(0.48f * Mathf.Sin(0.31f * tt + phase), 0.07f * Mathf.Sin(0.57f * tt + phase * 2f), 0.22f * Mathf.Sin(0.63f * tt + phase * 0.7f));
+                    Vector3 Path(float tt) => new Vector3(hx * Mathf.Sin(0.31f * tt + phase), layer + 0.35f * hy * Mathf.Sin(0.57f * tt + phase * 2f), 0.8f * hz * Mathf.Sin(0.63f * tt + phase * 0.7f));
                     Vector3 pos = Path(time), ahead = Path(time + 0.2f);
                     if (school)
                     {
                         Vector3 back = (pos - ahead).normalized;
                         Vector3 side = Vector3.Cross(Vector3.up, back).normalized;
                         float row = Mathf.Floor((k + 1) / 2f), lane = k == 0 ? 0 : (k % 2 == 0 ? 1 : -1);
-                        pos += back * (0.09f * row) + side * (0.065f * lane * Mathf.Max(1, row * 0.6f)) + Vector3.up * (0.02f * Mathf.Sin(t * 2.1f + k));
-                        ahead += back * (0.09f * row) + side * (0.065f * lane * Mathf.Max(1, row * 0.6f));
+                        Vector3 offset = back * (1.2f * L * row) + side * (0.9f * L * lane * Mathf.Max(1, row * 0.6f));
+                        pos += offset + Vector3.up * (0.25f * L * Mathf.Sin(t * 2.1f + k));
+                        ahead += offset;
                     }
-                    pos.x = Mathf.Clamp(pos.x, -0.62f, 0.62f); pos.z = Mathf.Clamp(pos.z, -0.36f, 0.36f); pos.y = Mathf.Clamp(pos.y, -0.18f, 0.18f);
-                    creature.transform.localPosition = new Vector3(pos.x, 1.18f + pos.y, pos.z);
+                    pos.x = Mathf.Clamp(pos.x, -hx, hx); pos.z = Mathf.Clamp(pos.z, -hz, hz); pos.y = Mathf.Clamp(pos.y, -hy, hy);
+                    creature.transform.localPosition = new Vector3(pos.x, WaterY + pos.y, pos.z);
                     Vector3 dir = ahead - pos; dir.y *= 0.3f;
                     if (dir.sqrMagnitude > 1e-6f) creature.transform.localRotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
-                    creature.Tick(t);
+                    if (full) creature.Tick(t);
                 }
             }
+
+            static int Stable(string s) { unchecked { int h = 17; foreach (char ch in s) h = h * 31 + ch; return h & 0x7fffffff; } }
         }
     }
 }

@@ -18,7 +18,7 @@ namespace EvolutionShop
     /// real visitors served by a held mouse at the counter, and its receipt; a second tank; era 2 and unit B's wall
     /// opening; a station upgrade; save and reload; comfort; captures of each, in smoke-result.json like the classic routes.
     /// </summary>
-    public sealed class GrowthSmoke : MonoBehaviour
+    public sealed partial class GrowthSmoke : MonoBehaviour
     {
         [Serializable] sealed class Report
         {
@@ -45,12 +45,13 @@ namespace EvolutionShop
             start = Time.realtimeSinceStartup;
             Application.logMessageReceived += Log;
             bool failed = false;
-            var steps = Scenario();
+            string route = GrowthGreybox.SmokeRoute;
+            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : Scenario();
             while (true)
             {
                 object current;
                 try { if (!steps.MoveNext()) break; current = steps.Current; }
-                catch (Exception e) { errors.Add("GR-02 route stopped: " + e); failed = true; break; }
+                catch (Exception e) { errors.Add("GR route stopped: " + e); failed = true; break; }
                 yield return current;
             }
             RestoreInput();
@@ -59,7 +60,8 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = "GR-02 greybox: fresh shop, grower collection by a held mouse, never-fail mixing and the mix log, hatch, carry, tank and school, peek, a day of visitors served at the counter, the receipt, a second tank, era 2 and unit B, an upgrade, save and reload, comfort",
+                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText :
+                    "GR-02 greybox: fresh shop, grower collection by a held mouse, never-fail mixing and the mix log, hatch, carry, tank and school, peek, a day of visitors served at the counter, the receipt, a second tank, era 2 and unit B, an upgrade, save and reload, comfort",
                 context = Application.isEditor ? "Unity Editor Play mode (automated)" : "Windows standalone development player (automated)",
                 unityVersion = Application.unityVersion, graphics = SystemInfo.graphicsDeviceName, processor = SystemInfo.processorType, savePath = s.SavePath,
                 checks = checks.ToArray(), runtimeErrors = errors.ToArray(), limitations = limitations.ToArray(),
@@ -178,11 +180,9 @@ namespace EvolutionShop
             Ok(shop.TakeHatchling(), "Take fixture hatchling");
         }
 
-        // ---------------------------------------------------------------- the route
-
-        IEnumerator Scenario()
+        /// <summary>Every route's first checks: the greybox replaced the classic session, saves in the evidence folder only, at the requested size.</summary>
+        IEnumerator Opening()
         {
-            limitations.Add("GR-02 greybox route: the shop's own actions drive most steps (what the card buttons call); a synthetic mouse is held on the grower and the counter and a synthetic E pressed at the tanks, through the session's real input; some creatures are made by labelled accelerated incubation and the day is advanced by the shop's own clock; star and credit fixtures are labelled save edits. UI Toolkit buttons are not clicked (the classic routes cover that path). Placeholder art; the user's playtest is the gate.");
             yield return new WaitForSeconds(1);
             Check(!FindObjectsByType<ShopSession>(FindObjectsSortMode.None).Any(), "The greybox replaced the classic session (no ShopSession in the scene)");
             Check(Path.GetFullPath(s.SavePath) == Path.GetFullPath(Path.Combine(evidence, GrowthSession.SaveFileName)), "The greybox saves to its own isolated file in the evidence folder");
@@ -192,17 +192,18 @@ namespace EvolutionShop
                 int width = int.Parse(ShopSession.Arg("-screen-width")), height = int.Parse(ShopSession.Arg("-screen-height"));
                 Check(Screen.width == width && Screen.height == height, "Actual requested Windows resolution " + width + "x" + height);
             }
-            var shop = s.Shop;
-            Check(shop.Phase == GrowthPhase.Night && shop.Day == 1 && shop.Credits == GrowthContent.StartingCredits && shop.Containers.Count == 1 && shop.Containers[0].Spaces == 4,
-                "A fresh greybox shop: night 1, " + GrowthContent.StartingCredits + " credits, one 4-space Starter tank");
-            Check(s.World.Tanks.Count == 1 && s.World.UnitBWallStanding, "One tank in the world and unit B behind its wall");
+        }
+
+        /// <summary>The route's own mouse and keyboard; the real ones are switched off in this player until the end.</summary>
+        void TakeInput()
+        {
             previousSettings = InputSystem.settings; smokeSettings = Instantiate(previousSettings);
             smokeSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
 #if UNITY_EDITOR
             smokeSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
 #endif
             InputSystem.settings = smokeSettings;
-            keyboard = InputSystem.AddDevice<Keyboard>("GR-02 keyboard"); mouse = InputSystem.AddDevice<Mouse>("GR-02 mouse");
+            keyboard = InputSystem.AddDevice<Keyboard>("GR keyboard"); mouse = InputSystem.AddDevice<Mouse>("GR mouse");
             // The real mouse and keyboard are switched off in this player's input system for the route, so a hand on the
             // desk cannot turn the view or release a held button; they are switched back on at the end.
             foreach (var device in InputSystem.devices.ToArray())
@@ -210,6 +211,19 @@ namespace EvolutionShop
             limitations.Add("The route's synthetic mouse and keyboard are the only pointer and keyboard while it runs: " + isolated.Count + " other device(s) are switched off in this player's input system and switched back on at the end.");
             keyboard.MakeCurrent(); mouse.MakeCurrent();
             s.AllowValidationInput = true;
+        }
+
+        // ---------------------------------------------------------------- the route
+
+        IEnumerator Scenario()
+        {
+            limitations.Add("GR-02 greybox route: the shop's own actions drive most steps (what the card buttons call); a synthetic mouse is held on the grower and the counter and a synthetic E pressed at the tanks, through the session's real input; some creatures are made by labelled accelerated incubation and the day is advanced by the shop's own clock; star and credit fixtures are labelled save edits. UI Toolkit buttons are not clicked (the classic routes cover that path). Placeholder art; the user's playtest is the gate.");
+            yield return Opening();
+            var shop = s.Shop;
+            Check(shop.Phase == GrowthPhase.Night && shop.Day == 1 && shop.Credits == GrowthContent.StartingCredits && shop.Containers.Count == 1 && shop.Containers[0].Spaces == 4,
+                "A fresh greybox shop: night 1, " + GrowthContent.StartingCredits + " credits, one 4-space Starter tank");
+            Check(s.World.Tanks.Count == 1 && s.World.UnitBWallStanding, "One tank in the world and unit B behind its wall");
+            TakeInput();
 
             s.SetCard(GrowthCard.Welcome); yield return Shot("00-welcome"); s.SetCard(GrowthCard.None);
             Stand(GrowthWorld.Spawn, -90, 8); yield return Shot("01-back-room");
@@ -286,7 +300,7 @@ namespace EvolutionShop
             s.PeekOn = true; s.ReducedMotion = true; yield return null; yield return null;
             Check(s.Player.View.fieldOfView < 50, "Reduced motion: peek is instant");
             s.ReducedMotion = false;
-            LookAt(a1.Browse + new Vector3(-0.8f, 0, -1.0f), a1.Position + new Vector3(0, 1.1f, 0)); yield return Shot("08-school");
+            LookAt(a1.Browse + new Vector3(0.8f, 0, -1.0f), a1.Position + new Vector3(0, 1.1f, 0)); yield return Shot("08-school");
             s.SetCard(GrowthCard.Tank, tank.Id); yield return Shot("09-tank-card"); s.SetCard(GrowthCard.None);
 
             // The mix log and "close to something new": two Bloom is one Flow from the Bubblebelly... now known, so try
