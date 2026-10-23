@@ -370,6 +370,7 @@ namespace EvolutionShop.Growth
             Rp -= next.Rp;
             Levels[station] = next.Level;
             Raise(GrowthEventKind.Upgraded, GrowthContent.Station(station).Name + " level " + next.Level + ": " + next.Change, amount: next.Credits);
+            CheckEra();
             return GrowthResult.Ok();
         }
 
@@ -678,6 +679,8 @@ namespace EvolutionShop.Growth
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             shop.nextId = Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1);
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
+            shop.CheckEra();
+            shop.Events.Clear();
             return shop;
         }
     }

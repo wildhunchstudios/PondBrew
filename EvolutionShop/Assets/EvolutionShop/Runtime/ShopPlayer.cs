@@ -54,6 +54,12 @@ namespace EvolutionShop
             bool looked = Quaternion.Angle(beforeLook, View.transform.rotation) > .001f;
             if (moved || looked) ControlledMotion?.Invoke(moved, looked, transform.position.z > .8f);
         }
+        /// <summary>The camera's pitch in degrees (clamped as mouse looking is); GR-02's validation route aims with it.</summary>
+        public float Pitch
+        {
+            get => pitch;
+            set { pitch = Mathf.Clamp(value, -75, 75); if (View) View.transform.localRotation = Quaternion.Euler(pitch, 0, 0); }
+        }
         public void Teleport(Vector3 position, Quaternion rotation)
         {
             body.enabled = false;
