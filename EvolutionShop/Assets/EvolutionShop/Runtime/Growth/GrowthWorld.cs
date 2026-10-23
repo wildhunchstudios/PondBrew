@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -34,35 +34,24 @@ namespace EvolutionShop
             public Vector3[] Route;
         }
 
-        static readonly Vector3 Outside = new Vector3(-0.5f, 0, -5.8f), Door = new Vector3(-0.5f, 0, -3.3f), Hub = new Vector3(-0.5f, 0, -1.6f),
-            West = new Vector3(-2.2f, 0, -1.2f), NorthWest = new Vector3(-2.2f, 0, 2.0f), East = new Vector3(1.5f, 0, -1.0f),
-            ArchWest = new Vector3(3.3f, 0, 0), ArchEast = new Vector3(4.7f, 0, 0), UnitBNorth = new Vector3(8.0f, 0, 1.7f), UnitBSouth = new Vector3(5.6f, 0, -1.4f);
+        static Vector3 V((float x, float z) p) => new Vector3(p.x, 0, p.z);
+        static Vector3 Point(string name) => V(GrowthSpaces.Points[name]);
+        static readonly Vector3 Outside = Point("Outside"), Door = Point("Door"), Hub = Point("Hub"), East = Point("East");
 
         /// <summary>
-        /// GR-03's places (GR.11): long places on the north walls and the islands take Starter and Large tanks, standard ones
-        /// on unit A's west wall a Starter tank, and unit B's east wall the feature place for a Show tank. Sizes come from
-        /// GrowthShop.Places; each tank stands centred on its place with its front (local +z) to the aisle.
+        /// The container places (GR.11), from GrowthSpaces (GR-10): long places along walls and on islands take Starter and
+        /// Large tanks, standard ones a Starter tank, feature places a Show tank (unit B's east wall, unit C's feature wall);
+        /// unit C adds six and the exhibition hall finish two. Sizes come from GrowthShop.Places; each tank stands centred on
+        /// its place with its front (local +z) to the aisle, and visitors walk to its browse spot along its route.
         /// </summary>
-        public static readonly Dictionary<string, Place> Places = new Dictionary<string, Place>
+        public static readonly Dictionary<string, Place> Places = GrowthSpaces.Spots.ToDictionary(s => s.Id, s =>
         {
-            ["a1"] = P("a1", new Vector3(-2.2f, 0, 3.35f), 180, new Vector3(-2.2f, 0, 2.2f), West, NorthWest),
-            ["a2"] = P("a2", new Vector3(-3.35f, 0, 0.9f), 90, new Vector3(-2.2f, 0, 0.9f), West),
-            ["a3"] = P("a3", new Vector3(-0.4f, 0, 0.2f), 180, new Vector3(-0.4f, 0, -0.95f)),
-            ["a4"] = P("a4", new Vector3(-3.35f, 0, -1.6f), 90, new Vector3(-2.2f, 0, -1.6f), West),
-            ["b1"] = P("b1", new Vector3(5.6f, 0, 3.35f), 180, new Vector3(5.6f, 0, 2.2f), East, ArchWest, ArchEast),
-            ["b2"] = P("b2", new Vector3(8.6f, 0, 3.35f), 180, new Vector3(8.6f, 0, 2.2f), East, ArchWest, ArchEast),
-            ["b3"] = P("b3", new Vector3(7.6f, 0, -0.2f), 180, new Vector3(7.6f, 0, -1.35f), East, ArchWest, ArchEast, UnitBSouth),
-            ["b4"] = P("b4", new Vector3(11.15f, 0, 0.2f), -90, new Vector3(9.8f, 0, 0.2f), East, ArchWest, ArchEast, UnitBNorth),
-        };
-
-        static Place P(string id, Vector3 position, float yaw, Vector3 browse, params Vector3[] route)
-        {
-            var spot = GrowthShop.Place(id);
-            return new Place { Position = position, Yaw = yaw, Browse = browse, Route = route, Width = spot.Width, Depth = spot.Depth };
-        }
+            var spot = GrowthShop.Place(s.Id);
+            return new Place { Position = V(s.Centre), Yaw = s.Yaw, Browse = V(s.Browse), Route = s.Route.Select(Point).ToArray(), Width = spot.Width, Depth = spot.Depth };
+        });
 
         /// <summary>Queue spots in front of the counter, first in line nearest it.</summary>
-        public static readonly Vector3[] QueueSpots = { new Vector3(2.8f, 0, -1.7f), new Vector3(2.8f, 0, -0.95f), new Vector3(2.8f, 0, -0.2f), new Vector3(2.05f, 0, -0.2f), new Vector3(1.3f, 0, -0.2f) };
+        public static readonly Vector3[] QueueSpots = GrowthSpaces.QueueSpots.Select(V).ToArray();
         public static readonly Vector3 CounterPosition = new Vector3(2.8f, 0, -2.6f);
         public static readonly Vector3 IncubatorPosition = new Vector3(GrowthLab.Incubator.x, 0, GrowthLab.Incubator.z);
         /// <summary>
@@ -128,7 +117,7 @@ namespace EvolutionShop
         public IReadOnlyList<GrowthCreatureView> HatchlingViews => hatchlingViews;
         /// <summary>GR-06 (validation): the level each station's look was last built at.</summary>
         public int LookLevel(string key) => builtLevels.TryGetValue(key, out int lv) ? lv : 0;
-        public bool UnitBWallStanding => unitBWall != null && unitBWall.activeSelf;
+        public bool UnitBWallStanding => Standing("unit-b");
 
         // ---------------------------------------------------------------- building
 
@@ -180,6 +169,14 @@ namespace EvolutionShop
             WorkshopRoom();
             LineStations();
             StaffBoard();
+            // GR-10: the rooms' openings (their partitions come down when bought), unit C, the set pieces and the hall finish.
+            SpaceMaterials();
+            AddOpening("unit-b", unitBWall, 3.25f, unitBLight);
+            AddOpening("annex", annexWall, 2.85f, annexLight);
+            AddOpening("workshop", workshopWall, 2.85f, workshopLight);
+            UnitCRoom();
+            SetPieces();
+            HallFinish();
             tanksRoot = new GameObject("Tanks").transform; tanksRoot.SetParent(transform, false);
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
@@ -284,9 +281,10 @@ namespace EvolutionShop
             // Shop unit B, 8 x 8 m to the east.
             Box(rooms, "Unit B floor", new Vector3(8, -0.05f, 0), new Vector3(8, 0.1f, 8), floorB, true);
             Box(rooms, "Unit B ceiling", new Vector3(8, 3.25f, 0), new Vector3(8, 0.1f, 8), wall);
-            Wall("Unit B north wall", new Vector2(4, 4), new Vector2(12, 4), 3.2f, wall);
+            // GR-10: an arch at the north wall's east end into unit C, and the bay window in the front wall (GrowthWorldSpaces).
+            Wall("Unit B north wall (arch to unit C)", new Vector2(4, 4), new Vector2(12, 4), 3.2f, wall, new Vector2(5.9f, 7.85f));
             Wall("Unit B east wall", new Vector2(12, -4), new Vector2(12, 4), 3.2f, wall);
-            Wall("Unit B front wall", new Vector2(4, -4), new Vector2(12, -4), 3.2f, wall);
+            Wall("Unit B front wall (bay window)", new Vector2(4, -4), new Vector2(12, -4), 3.2f, wall, new Vector2(3.1f, 4.9f));
             // The street outside the entrance.
             Box(rooms, "Pavement", new Vector3(0, -0.06f, -6.5f), new Vector3(10, 0.1f, 5), ShopWorld.MakeMaterial("GR pavement", new Color(0.55f, 0.56f, 0.55f), 0, 0.2f), true);
             // The temporary partition that closes the arch until unit B is bought.
@@ -462,6 +460,7 @@ namespace EvolutionShop
             ResetLab();
             ResetLine();
             ResetHelpers();
+            ResetSpaces();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -479,8 +478,6 @@ namespace EvolutionShop
             foreach (var id in tanks.Keys.Where(k => shop.Container(k) == null).ToList()) { Destroy(tanks[id].Root.gameObject); tanks.Remove(id); }
             var free = new HashSet<string>(shop.FreePlaces);
             foreach (var m in markers) { bool show = MarkerShows(shop, m.Key, free); if (m.Value.activeSelf != show) m.Value.SetActive(show); }
-            if (unitBWall.activeSelf == shop.UnitB) unitBWall.SetActive(!shop.UnitB);
-            unitBLight.enabled = shop.UnitB;
             foreach (var c in shop.Cultures)
                 if (!sources.ContainsKey(c) && GrowerPositions.ContainsKey(c)) { sources[c] = BuildSource(c); slots[c].SetActive(false); }
             foreach (var kv in sources)
@@ -530,6 +527,7 @@ namespace EvolutionShop
             SyncLine(shop);
             SyncVisitors(shop);
             SyncHelpers(shop);
+            SyncSpaces(shop);
         }
 
         // ---------------------------------------------------------------- the breeding tank (GR-05)
@@ -932,6 +930,7 @@ namespace EvolutionShop
             for (int i = 0; i < hatchlingViews.Count; i++)
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
             if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t); }
+            AnimateOpenings(dt);
             foreach (var v in visitors.Values) v.Tick(dt);
         }
 

@@ -40,7 +40,7 @@ namespace EvolutionShop
         Material chuteMat;
         int sorterLevel = -1;
         readonly List<Vector3> chutePath = new List<Vector3>();
-        public bool WorkshopWallStanding => workshopWall != null && workshopWall.activeSelf;
+        public bool WorkshopWallStanding => Standing("workshop");
         public int SorterLookLevel => sorterLevel;
         public int BuiltRacks => tanks.Values.Count(t => t.Place != null && RackPlaces.ContainsKey(t.Place));
         public bool ChuteBuilt => chutePath.Count > 0;
@@ -97,8 +97,6 @@ namespace EvolutionShop
 
         void SyncLine(GrowthShop shop)
         {
-            if (workshopWall.activeSelf == shop.Workshop) workshopWall.SetActive(!shop.Workshop);
-            workshopLight.enabled = shop.Workshop;
             int level = shop.Level("sorter");
             if (level != sorterLevel) BuildSorter(level);
             if (outlet.activeSelf != shop.HasSorter) outlet.SetActive(shop.HasSorter);

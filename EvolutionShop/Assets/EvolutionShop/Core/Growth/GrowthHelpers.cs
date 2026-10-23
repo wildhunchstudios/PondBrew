@@ -16,24 +16,28 @@ namespace EvolutionShop.Growth
     // Pip. Neither helpers nor machines ever choose an undiscovered mix or pair (GR.8).
 
     /// <summary>
-    /// Where helpers walk (GR-09): the rooms of the greybox (shop units A and B, the back room, the lab annex, the workshop)
-    /// joined by their doorways, and the points they work at. A path runs through the doorways between two points' rooms.
+    /// Where helpers walk (GR-09): the rooms of the greybox (shop units A, B and C, the back room, the lab annex, the
+    /// workshop) and the points they work at. In the lab a path runs through the doorways between two points' rooms; in the
+    /// shop it keeps to the visitors' walking network (GR-10, GrowthSpaces), joined from the back room's door.
     /// </summary>
     public static class GrowthWalk
     {
         public const float Speed = 2f, Handle = 0.6f;
-        public enum Room { A, B, Back, Annex, Workshop }
+        public enum Room { A, B, C, Back, Annex, Workshop }
 
         public static Room RoomOf((float x, float z) p) =>
-            p.z < 4 ? (p.x < 4 ? Room.A : Room.B) : p.z < 9 ? Room.Back : p.x < 4 ? Room.Annex : Room.Workshop;
+            p.z < 4 ? (p.x < 4 ? Room.A : Room.B) : p.z < 9 ? (p.x < 2 ? Room.Back : Room.C) : p.x < 4 ? Room.Annex : Room.Workshop;
 
-        /// <summary>Each doorway: the two rooms and a point on either side of it (walked through straight).</summary>
+        static bool InShop(Room r) => r == Room.A || r == Room.B || r == Room.C;
+
+        /// <summary>The back room's door into unit A: a point on either side of it (walked through straight).</summary>
+        static readonly (float x, float z) BackDoorShop = (0.8f, 3.5f), BackDoorLab = (0.8f, 4.5f);
+
+        /// <summary>The lab's doorways: the two rooms and a point on either side of each (walked through straight).</summary>
         static readonly (Room a, Room b, (float x, float z) pa, (float x, float z) pb)[] Doors =
         {
-            (Room.A, Room.Back, (0.8f, 3.5f), (0.8f, 4.5f)),
             (Room.Back, Room.Annex, (1.15f, 8.5f), (1.15f, 9.5f)),
             (Room.Annex, Room.Workshop, (3.5f, 10.3f), (4.5f, 10.3f)),
-            (Room.A, Room.B, (3.5f, 0f), (4.5f, 0f)),
         };
 
         /// <summary>The counter's staff side, where Pip stands; each helper's home spot.</summary>
@@ -41,12 +45,9 @@ namespace EvolutionShop.Growth
         /// <summary>In front of the incubator's tray, and of the breeding tank's nursery.</summary>
         public static readonly (float x, float z) Tray = (-0.8f, 6.05f), Nursery = (-0.5f, 5.15f);
         /// <summary>Where a visitor or a helper stands at each shop place (GrowthWorld.Places' browse spots) and each rack place.</summary>
-        public static readonly Dictionary<string, (float x, float z)> Places = new Dictionary<string, (float x, float z)>
-        {
-            ["a1"] = (-2.2f, 2.2f), ["a2"] = (-2.2f, 0.9f), ["a3"] = (-0.4f, -0.95f), ["a4"] = (-2.2f, -1.6f),
-            ["b1"] = (5.6f, 2.2f), ["b2"] = (8.6f, 2.2f), ["b3"] = (7.6f, -1.35f), ["b4"] = (9.8f, 0.2f),
-            ["r1"] = (7.0f, 10.8f), ["r2"] = (8.75f, 10.8f), ["r3"] = (10.2f, 11.6f), ["r4"] = (10.2f, 13.4f),
-        };
+        public static readonly Dictionary<string, (float x, float z)> Places = GrowthSpaces.Spots.Select(s => (s.Id, s.Browse))
+            .Concat(new[] { ("r1", (7.0f, 10.8f)), ("r2", (8.75f, 10.8f)), ("r3", (10.2f, 11.6f)), ("r4", (10.2f, 13.4f)) })
+            .ToDictionary(x => x.Item1, x => x.Item2);
 
         public static (float x, float z) Home(string helper) => helper == "pip" ? Counter : helper == "nori" ? NoriHome : MossHome;
 
@@ -77,8 +78,30 @@ namespace EvolutionShop.Growth
             return path;
         }
 
-        /// <summary>The walk from one point to another: through the doorways between their rooms.</summary>
+        /// <summary>The walk from one point to another: in the lab through the doorways between their rooms; into, out of
+        /// and across the shop along its walking network, through the back room's door.</summary>
         public static List<(float x, float z)> Path((float x, float z) from, (float x, float z) to)
+        {
+            if (GrowthSpaces.Distance(from, to) < 1e-3f) return new List<(float x, float z)> { from, to };
+            Room rf = RoomOf(from), rt = RoomOf(to);
+            if (!InShop(rf) && !InShop(rt)) return LabPath(from, to);
+            var points = new List<(float x, float z)>();
+            string start, end;
+            if (InShop(rf)) { points.Add(from); start = GrowthSpaces.JoinOf(from); }
+            else { points.AddRange(LabPath(from, BackDoorLab)); points.Add(BackDoorShop); start = "BackA"; }
+            var tail = new List<(float x, float z)>();
+            if (InShop(rt)) { end = GrowthSpaces.JoinOf(to); tail.Add(to); }
+            else { end = "BackA"; tail.Add(BackDoorShop); tail.AddRange(LabPath(BackDoorLab, to)); }
+            points.AddRange(GrowthSpaces.NetworkPath(start, end).Select(n => GrowthSpaces.Points[n]));
+            points.AddRange(tail);
+            var walk = new List<(float x, float z)>();
+            foreach (var p in points) if (walk.Count == 0 || GrowthSpaces.Distance(walk[walk.Count - 1], p) > 1e-4f) walk.Add(p);
+            if (walk.Count == 1) walk.Add(walk[0]);
+            return walk;
+        }
+
+        /// <summary>A walk between two points in the lab (the back room, the annex, the workshop), through their doorways.</summary>
+        static List<(float x, float z)> LabPath((float x, float z) from, (float x, float z) to)
         {
             var points = new List<(float x, float z)> { from };
             var rooms = Rooms(RoomOf(from), RoomOf(to));

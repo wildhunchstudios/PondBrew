@@ -233,9 +233,9 @@ namespace EvolutionShop
                     Check(s.ReloadSaved(), "Reload the saved slot");
                     shop = s.Shop; moss = shop.Helper("moss"); nori = shop.Helper("nori"); large = shop.ContainerAt("a3");
                     var file = JsonUtility.FromJson<GrowthSave>(File.ReadAllText(s.SavePath));
-                    Check(file.version == 8 && JsonUtility.ToJson(GrowthShop.Restore(file, out _).Snapshot()) == before && moss.Step == "parent-deliver" && moss.Hands.Count == 1 && moss.Hands[0].Id == hand &&
+                    Check(file.version >= 8 && JsonUtility.ToJson(GrowthShop.Restore(file, out _).Snapshot()) == before && moss.Step == "parent-deliver" && moss.Hands.Count == 1 && moss.Hands[0].Id == hand &&
                         Mathf.Abs(moss.Progress - progress) < 1e-4f && moss.Place == place && shop.MossPairA == "pondlet" && moss.Level == 2 && shop.SecondTill && shop.Staff.Count == 3,
-                        "The version 8 save brings the helpers back mid-step: Moss's walk, the creature in his hands, his level and pair, the second till");
+                        "The version 8 (and later) save brings the helpers back mid-step: Moss's walk, the creature in his hands, his level and pair, the second till");
                     yield return null; yield return null;
                     Check(s.World.FigureCarrying("moss") == hand && (Flat(s.World.FigurePosition("moss")) - Expected(moss)).magnitude < 0.05f && moss.Status.StartsWith("Carrying a "),
                         "Moss's figure is back where he was, the same creature in hand, saying what he is doing");

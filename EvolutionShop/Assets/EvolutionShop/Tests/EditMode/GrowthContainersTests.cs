@@ -67,8 +67,8 @@ namespace EvolutionShop.Tests
         public void PlacesTakeContainersByTheirFootprint()
         {
             var shop = Grown();
-            Assert.That(GrowthShop.Places.Select(p => p.Id), Is.EqualTo(new[] { "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4" }));
-            Assert.That(GrowthShop.Places.Count(p => p.Size == "feature"), Is.EqualTo(1));
+            Assert.That(GrowthShop.Places.Select(p => p.Id), Is.EqualTo(new[] { "a1", "a2", "a3", "a4", "b1", "b2", "b3", "b4", "c1", "c2", "c3", "c4", "c5", "c6", "e1", "e2" }), "GR-10: unit C's six and the hall's two");
+            Assert.That(GrowthShop.Places.Where(p => p.Size == "feature").Select(p => p.Id), Is.EqualTo(new[] { "b4", "c1", "c2" }), "unit B's feature place and unit C's feature wall");
             Assert.That(shop.BuyContainer("large", "a2").Failure, Is.EqualTo(GrowthFailure.TooBigForPlace), "a standard place takes a Starter tank only");
             Assert.That(shop.BuyContainer("show", "b1").Failure, Is.EqualTo(GrowthFailure.TooBigForPlace), "a long place is 2.5 x 1 m; a Show tank 3 x 1.5 m");
             Assert.That(shop.BuyContainer("starter", "b4").Success, Is.True, "any smaller container fits a bigger place");
@@ -79,6 +79,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.BuyContainer("large", "z9").Failure, Is.EqualTo(GrowthFailure.NoSuchPlace));
             var closed = Grown(); closed.UnitB = false;
             Assert.That(closed.BuyContainer("starter", "b1").Failure, Is.EqualTo(GrowthFailure.NoSuchPlace), "unit B's places open with it");
+            Assert.That(shop.BuyContainer("starter", "c3").Failure, Is.EqualTo(GrowthFailure.NoSuchPlace), "unit C's places open with it");
         }
 
         [Test]
@@ -240,11 +241,19 @@ namespace EvolutionShop.Tests
             var v = shop.Visitors.Single();
             Assert.That(v.Plan, Is.EqualTo(new[] { show.Id, starter.Id }), "the most appealing container first");
             Assert.That(v.ContainerId, Is.EqualTo(show.Id));
-            Run(shop, GrowthShop.BrowseSeconds);
+            // GR-10: a visitor's look counts from the door, so one bound for unit B's Show tank has the time to walk there.
+            Assert.That(GrowthSpaces.FirstLook("b4"), Is.GreaterThan(GrowthShop.BrowseSeconds));
+            Assert.That(v.BrowseFor, Is.EqualTo(GrowthSpaces.FirstLook("b4")));
+            Run(shop, v.BrowseFor - v.Clock - 0.5f);
+            Assert.That(v.Browsed, Is.Zero, "still on the way to it and looking");
+            Run(shop, 1f);
             Assert.That(v.State, Is.EqualTo(GrowthVisitorState.Browsing), "nothing affordable there: on to the next");
             Assert.That(v.Browsed, Is.EqualTo(1));
             Assert.That(v.ContainerId, Is.EqualTo(starter.Id));
-            Run(shop, GrowthShop.NextBrowseSeconds);
+            // The next look counts the walk back from unit B's Show tank too.
+            Assert.That(GrowthSpaces.NextLook("b4", starter.Place), Is.GreaterThan(GrowthShop.NextBrowseSeconds));
+            Assert.That(v.BrowseFor, Is.EqualTo(GrowthSpaces.NextLook("b4", starter.Place)));
+            Run(shop, GrowthSpaces.NextLook("b4", starter.Place));
             Assert.That(v.State, Is.EqualTo(GrowthVisitorState.Queued));
             Assert.That(v.SpecimenIds.Single(), Is.EqualTo(starter.Occupants[0].Id));
             Assert.That(shop.Today.Refusals, Is.Zero);
@@ -373,7 +382,7 @@ namespace EvolutionShop.Tests
         public void TheDensestLayoutFillsEveryPlaceWithTheLargestContainerAtItsHighestLevel()
         {
             var shop = GrowthShop.Densest();
-            Assert.That(shop.Containers.Select(c => c.Place), Is.EqualTo(GrowthShop.Places.Select(p => p.Id)));
+            Assert.That(shop.Containers.Select(c => c.Place), Is.EqualTo(GrowthShop.UnitAPlaces.Concat(GrowthShop.UnitBPlaces)));
             Assert.That(shop.Containers.Select(c => c.Kind), Is.EqualTo(new[] { "large", "starter", "large", "starter", "large", "large", "large", "show" }));
             Assert.That(shop.Containers.All(c => c.Level == c.Def.Levels.Length && c.Free == 0), Is.True);
             Assert.That(shop.Stock.Count(), Is.EqualTo(120), "16 x 5 + 8 x 2 + 24 spaces of small creatures");
@@ -383,6 +392,10 @@ namespace EvolutionShop.Tests
             var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(JsonUtility.ToJson(shop.Snapshot())), out string problem);
             Assert.That(problem, Is.Null);
             Assert.That(back.Stock.Count(), Is.EqualTo(120));
+            // GR-10's final layout: unit C and the hall too, every place: 264 small creatures.
+            var final = GrowthShop.Densest(5, final: true);
+            Assert.That((final.Containers.Count, final.Stock.Count(), final.Containers.Count(c => c.Kind == "show")), Is.EqualTo((16, 264, 3)));
+            Assert.That(GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(JsonUtility.ToJson(final.Snapshot())), out problem), Is.Not.Null, problem);
             // A whole day in it, served at the counter: visitors browse, reserve and buy without a rule breaking.
             shop.OpenShop();
             for (int i = 0; i < 2000 && shop.Phase == GrowthPhase.Day; i++)

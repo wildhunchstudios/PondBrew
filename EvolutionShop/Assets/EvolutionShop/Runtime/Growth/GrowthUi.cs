@@ -228,6 +228,7 @@ namespace EvolutionShop
                 case GrowthEventKind.CultureOwned:
                 case GrowthEventKind.NewColour:
                 case GrowthEventKind.LineDay:
+                case GrowthEventKind.Opened:
                     Log.Add(e.Text);
                     if (!Ready) return;
                     bannerLabel.text = e.Text; banner.style.display = DisplayStyle.Flex; bannerUntil = Time.unscaledTime + 3f;
@@ -352,7 +353,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature();
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature();
         }
 
         string LiveText()
@@ -401,6 +402,8 @@ namespace EvolutionShop
                 case GrowthCard.Workshop: FillWorkshop(); break;
                 case GrowthCard.Sorter: FillSorter(); break;
                 case GrowthCard.Staff: FillStaff(); break;
+                case GrowthCard.UnitC: FillUnitC(); break;
+                case GrowthCard.Hall: FillHall(); break;
                 case GrowthCard.Helper: FillHelper(target); break;
             }
         }

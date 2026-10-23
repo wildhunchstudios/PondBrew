@@ -137,7 +137,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened }
 
     public sealed class GrowthEvent
     {
@@ -165,7 +165,9 @@ namespace EvolutionShop.Growth
         public const float NextBrowseSeconds = 5f;
         /// <summary>
         /// GR-03's floor places (GR.11): "long" places along walls and islands take Starter and Large tanks (2.5 x 1 m),
-        /// "standard" ones a Starter tank (1.5 x 1 m), and unit B's east wall one feature place for a Show tank (3 x 1.5 m).
+        /// "standard" ones a Starter tank (1.5 x 1 m), and "feature" places a Show tank (3 x 1.5 m): unit B's east wall and,
+        /// GR-10, unit C's north wall (its feature wall). Unit C adds six places, the exhibition hall finish two along unit
+        /// B's front wall; their positions are GrowthSpaces'.
         /// </summary>
         public static readonly GrowthPlace[] Places =
         {
@@ -177,6 +179,14 @@ namespace EvolutionShop.Growth
             new GrowthPlace { Id = "b2", Unit = "unit-b", Size = "long", Width = 2.5f, Depth = 1f },
             new GrowthPlace { Id = "b3", Unit = "unit-b", Size = "long", Width = 2.5f, Depth = 1f },
             new GrowthPlace { Id = "b4", Unit = "unit-b", Size = "feature", Width = 3f, Depth = 1.5f },
+            new GrowthPlace { Id = "c1", Unit = "unit-c", Size = "feature", Width = 3f, Depth = 1.5f },
+            new GrowthPlace { Id = "c2", Unit = "unit-c", Size = "feature", Width = 3f, Depth = 1.5f },
+            new GrowthPlace { Id = "c3", Unit = "unit-c", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "c4", Unit = "unit-c", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "c5", Unit = "unit-c", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "c6", Unit = "unit-c", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "e1", Unit = "hall", Size = "long", Width = 2.5f, Depth = 1f },
+            new GrowthPlace { Id = "e2", Unit = "hall", Size = "long", Width = 2.5f, Depth = 1f },
         };
         public static readonly string[] UnitAPlaces = Places.Where(p => p.Unit == "unit-a").Select(p => p.Id).ToArray(), UnitBPlaces = Places.Where(p => p.Unit == "unit-b").Select(p => p.Id).ToArray();
         /// <summary>The shop containers a player buys on the floor (the lab rack comes with the lab, later).</summary>
@@ -294,11 +304,11 @@ namespace EvolutionShop.Growth
         public static string JournalKey(string species, Colour colour) => species + "/" + colour;
         public bool HasHybrid => Discovered.Any(d => GrowthContent.Get(d).Kind != SpeciesKind.Founder);
         public IEnumerable<GrowthContainer> ShopContainers => Containers.Where(c => !c.Def.Lab);
-        public IEnumerable<string> OwnedPlaces => UnitB ? UnitAPlaces.Concat(UnitBPlaces) : UnitAPlaces;
+        public IEnumerable<string> OwnedPlaces => Places.Where(p => UnitOpen(p.Unit)).Select(p => p.Id);
         public IEnumerable<string> FreePlaces => OwnedPlaces.Where(p => Containers.All(c => c.Place != p));
         public GrowthContainer Container(string id) => Containers.FirstOrDefault(c => c.Id == id);
         public GrowthContainer ContainerAt(string place) => Containers.FirstOrDefault(c => c.Place == place);
-        public int VisitorsAtOnce => GrowthContent.Expansions.Where(e => e.Id == "unit-a" || e.Id == "unit-b" && UnitB).Sum(e => e.VisitorsAtOnce);
+        public int VisitorsAtOnce => GrowthContent.Expansions.Where(e => e.Id == "unit-a" || e.Id == "unit-b" && UnitB || e.Id == "unit-c" && UnitC || e.Id == "exhibition-hall" && Hall).Sum(e => e.VisitorsAtOnce);
         public IEnumerable<GrowthVisitor> Queue => Visitors.Where(v => v.State == GrowthVisitorState.Queued);
         /// <summary>The visitor who queued first (a queued visitor's clock starts when they join the queue).</summary>
         public GrowthVisitor FrontOfQueue => Queue.OrderByDescending(v => v.Clock).ThenBy(v => v.Id).FirstOrDefault();
@@ -977,16 +987,17 @@ namespace EvolutionShop.Growth
         public void StopVial() => VialProgress = 0;
 
         /// <summary>
-        /// GR-03's densest layout (validation): unit B open, era 4 and 4 stars, every place holding the largest container it
-        /// takes at its highest level, filled to the last space with small creatures of 21 species, three of each in turn (schools).
+        /// GR-03's densest layout (validation): unit B open, era 4 and 4 stars, every place of units A and B holding the largest
+        /// container it takes at its highest level, filled to the last space with small creatures of 21 species, three of each
+        /// in turn (schools). GR-10's final layout (final): unit C and the exhibition hall finish open too, era 5, every place.
         /// </summary>
-        public static GrowthShop Densest(int stars = 4)
+        public static GrowthShop Densest(int stars = 4, bool final = false)
         {
-            var shop = new GrowthShop { Era = 4, UnitB = true, Credits = 0, Reputation = GrowthContent.StarThresholds[Math.Max(0, stars - 1)] };
+            var shop = new GrowthShop { Era = final ? 5 : 4, UnitB = true, UnitC = final, Hall = final, Credits = 0, Reputation = GrowthContent.StarThresholds[Math.Max(0, stars - 1)] };
             shop.Containers.Clear();
             var small = GrowthContent.Species.Where(s => s.Size == SizeClass.Small && s.Kind != SpeciesKind.Crown).Select(s => s.Id).ToList();
             int k = 0;
-            foreach (var place in Places)
+            foreach (var place in Places.Where(p => shop.UnitOpen(p.Unit)))
             {
                 var def = GrowthContent.Containers.Where(d => !d.Lab && place.Takes(d)).OrderByDescending(d => d.Levels.Last().Stat("spaces")).First();
                 var c = new GrowthContainer { Id = "tank-" + shop.nextId++, Kind = def.Id, Place = place.Id, Level = def.Levels.Length };
@@ -1071,7 +1082,7 @@ namespace EvolutionShop.Growth
             var unit = UnitBDef;
             Credits -= unit.Credits;
             UnitB = true;
-            Raise(GrowthEventKind.Bought, unit.Name + " opened", amount: unit.Credits);
+            Raise(GrowthEventKind.Opened, "Shop unit B opened", amount: unit.Credits);
             return GrowthResult.Ok();
         }
 
@@ -1176,6 +1187,8 @@ namespace EvolutionShop.Growth
             v.Plan.AddRange(ShopContainers.Where(c => c.Occupants.Count > 0)
                 .OrderByDescending(Appeal).ThenBy(c => Hash(v.Id * 977 + StableHash(c.Id))).Take(MostBrowsed).Select(c => c.Id));
             v.ContainerId = v.Plan.Count > 0 ? v.Plan[0] : null;
+            // GR-10: the look counts from the door, so a visitor bound for a far tank has the time to walk there.
+            if (v.ContainerId != null) v.BrowseFor = GrowthSpaces.FirstLook(Container(v.ContainerId).Place);
             visitorsToday++;
             if (Today != null) Today.Visitors++;
             Visitors.Add(v);
@@ -1197,7 +1210,8 @@ namespace EvolutionShop.Growth
                 if (v.Browsed < v.Plan.Count)
                 {
                     v.ContainerId = v.Plan[v.Browsed];
-                    v.BrowseFor = NextBrowseSeconds;
+                    var next = Container(v.ContainerId);
+                    v.BrowseFor = c != null && next != null ? GrowthSpaces.NextLook(c.Place, next.Place) : NextBrowseSeconds;
                     v.Clock = 0;
                     return;
                 }
@@ -1387,6 +1401,7 @@ namespace EvolutionShop.Growth
                     // GR-08: era 4's goal, a full day on the line and a large creature; with 5 stars they open era 5.
                     list.Add(("Let the incubator dose a recipe by itself: its level 4 and a buffer piped to its port", AutoBatches > 0));
                     list.Add(("Open the workshop east of the lab annex (" + WorkshopDef.Credits + " credits, at night)", Workshop));
+                    list.Add(("Open shop unit C behind unit B (" + UnitCDef.Credits + " credits, at night)", UnitC));
                     var sorter = GrowthContent.Station("sorter").Levels[0];
                     list.Add(("Buy the sorter in the workshop (" + sorter.Credits + " credits) and lay its chute from the incubator", HasSorter && Chute != null));
                     list.Add(("Run a full day on the line: the auto-doser and the sorter on from opening to close, and " + LineDaySales + " sales of what it stocked (" +
@@ -1396,6 +1411,8 @@ namespace EvolutionShop.Growth
                 }
                 else
                 {
+                    if (!UnitC) list.Add(("Open shop unit C behind unit B (" + UnitCDef.Credits + " credits, at night)", false));
+                    list.Add(("Finish the exhibition hall: its plans hang in unit C (" + HallDef.Credits + " credits, at night)", Hall));
                     list.Add(("The greybox ends here: the Grand Exhibition comes with GR-11", true));
                 }
             }
@@ -1443,7 +1460,7 @@ namespace EvolutionShop.Growth
         GrowthSave SnapshotCore() => new GrowthSave
         {
             credits = Credits, reputation = Reputation, rp = Rp, era = Era, day = Day, sales = SalesTotal, refusals = RefusalsTotal, nextId = nextId,
-            phase = Phase.ToString(), daySecondsLeft = DaySecondsLeft, unitB = UnitB,
+            phase = Phase.ToString(), daySecondsLeft = DaySecondsLeft, unitB = UnitB, unitC = UnitC, hall = Hall,
             cultures = Cultures.ToArray(), growerUnits = Cultures.Select(c => GrowerUnits[c]).ToArray(),
             stations = Levels.Keys.ToArray(), levels = Levels.Values.ToArray(),
             held = Held.ToArray(), chamber = Chamber.ToArray(), incubating = Incubating, incubationLeft = IncubationLeft, pending = Pending ?? "",
@@ -1481,7 +1498,7 @@ namespace EvolutionShop.Growth
             var shop = new GrowthShop();
             shop.Containers.Clear(); shop.Cultures.Clear(); shop.GrowerUnits.Clear();
             shop.Credits = s.credits; shop.Reputation = s.reputation; shop.Rp = s.rp; shop.Era = Math.Max(1, s.era); shop.Day = Math.Max(1, s.day);
-            shop.SalesTotal = s.sales; shop.RefusalsTotal = s.refusals; shop.Phase = phase; shop.DaySecondsLeft = s.daySecondsLeft; shop.UnitB = s.unitB;
+            shop.SalesTotal = s.sales; shop.RefusalsTotal = s.refusals; shop.Phase = phase; shop.DaySecondsLeft = s.daySecondsLeft; shop.UnitB = s.unitB; shop.UnitC = s.unitC; shop.Hall = s.hall;
             for (int i = 0; i < (s.cultures ?? new string[0]).Length; i++)
             {
                 if (GrowthContent.CultureIndex(s.cultures[i]) < 0) { problem = "Unknown culture " + s.cultures[i]; return null; }
@@ -1557,7 +1574,7 @@ namespace EvolutionShop.Growth
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -1571,18 +1588,19 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>8: GR-09 (the helpers: their levels, duty and wages paid, the step each is on and what they carry; Moss's jobs);
+        /// <summary>9: GR-10 (shop unit C and the exhibition hall finish);
+        /// 8: GR-09 (the helpers: their levels, duty and wages paid, the step each is on and what they carry; Moss's jobs);
         /// 7: GR-08 (the workshop, racks, the sorter and its chute, stock targets, the line's days, the analyzer's hint);
         /// 6: GR-07 (the lab annex, buffers, pipes, the power board's order and the auto-doser);
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 8;
+        public const int CurrentVersion = 9;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
         public float daySecondsLeft;
-        public bool unitB;
+        public bool unitB, unitC, hall;
         public string[] cultures;
         public float[] growerUnits;
         public string[] stations;

@@ -96,7 +96,7 @@ namespace EvolutionShop.Growth
             if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
             Credits -= WorkshopDef.Credits;
             Workshop = true;
-            Raise(GrowthEventKind.Bought, WorkshopDef.Name + " opened", amount: WorkshopDef.Credits);
+            Raise(GrowthEventKind.Opened, WorkshopDef.Name + " opened", amount: WorkshopDef.Credits);
             return GrowthResult.Ok();
         }
 

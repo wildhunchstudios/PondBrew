@@ -3,16 +3,17 @@ using System.Linq;
 namespace EvolutionShop.Growth
 {
     /// <summary>
-    /// GR-07: development-only start points for the power playtest (Docs/Evidence/gr-07/PLAY.md), each with its own save:
+    /// GR-07: development-only start points for the power playtest (Docs/Evidence/gr-07/PLAY.md), and GR-10's for a look at
+    /// the spaces (Docs/Evidence/gr-10/LOOK.md), each with its own save:
     /// the start of era 3 (the lab annex still closed) and the start of era 4 (the annex with the bubble turbine, electric
     /// pumps and two growers piped to buffers). They are shops a player could have by then, made with the shop's own actions
     /// where it has them; the creatures in the tanks are put there as the routes' fixtures put them.
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces";
 
-        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : null;
+        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : null;
 
         /// <summary>The start of era 3: 3 stars, 1,200 credits, 45 RP, unit B, Bloom, Flow, Ember and Spark, the founders of
         /// the first families and four hybrids, the breeding tank, a Large tank, stocked tanks, levels 2-3.</summary>
@@ -62,6 +63,16 @@ namespace EvolutionShop.Growth
             foreach (var c in shop.Cultures) shop.GrowerUnits[c] = shop.GrowerCapacityOf(c);
             shop.BufferAt(0).Units = 8; shop.BufferAt(1).Units = 8;
             shop.Credits = 6000; shop.Rp = 60;
+            shop.TakeEvents();
+            return shop;
+        }
+
+        /// <summary>GR-10's look at the spaces (Docs/Evidence/gr-10/LOOK.md): the era 4 start at 5 stars in era 5 with 30,000
+        /// credits, so the workshop, shop unit C and the exhibition hall finish can each be opened at night and seen opening.</summary>
+        public static GrowthShop SpacesStart()
+        {
+            var shop = Era4Start();
+            shop.Era = 5; shop.Day = 20; shop.Reputation = GrowthContent.StarThresholds[4] + 50; shop.Credits = 30000;
             shop.TakeEvents();
             return shop;
         }

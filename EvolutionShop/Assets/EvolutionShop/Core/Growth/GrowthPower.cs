@@ -281,7 +281,7 @@ namespace EvolutionShop.Growth
             if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
             Credits -= AnnexDef.Credits;
             Annex = true;
-            Raise(GrowthEventKind.Bought, AnnexDef.Name + " opened", amount: AnnexDef.Credits);
+            Raise(GrowthEventKind.Opened, AnnexDef.Name + " opened", amount: AnnexDef.Credits);
             return GrowthResult.Ok();
         }
 

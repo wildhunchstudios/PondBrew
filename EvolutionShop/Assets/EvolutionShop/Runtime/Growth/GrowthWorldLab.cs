@@ -34,7 +34,7 @@ namespace EvolutionShop
         int generatorLevel = -1;
         string pipeSignature = "", ghostSignature = "";
         Material ghostOk, ghostBad, lampOk, lampSlow;
-        public bool AnnexWallStanding => annexWall != null && annexWall.activeSelf;
+        public bool AnnexWallStanding => Standing("annex");
         public int BuiltPipes => pipesRoot == null ? 0 : pipesRoot.childCount;
         public int BuiltBuffers => bufferViews.Count;
         public bool PumpStanding(string culture) => pumps.ContainsKey(culture);
@@ -118,8 +118,6 @@ namespace EvolutionShop
 
         void SyncLab(GrowthShop shop)
         {
-            if (annexWall.activeSelf == shop.Annex) annexWall.SetActive(!shop.Annex);
-            annexLight.enabled = shop.Annex;
             // The generator's look follows its level: a dashed place, the hand crank's wheel, the bubble turbine.
             int gen = shop.Level("generator");
             if (gen != generatorLevel) BuildGenerator(gen);

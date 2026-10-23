@@ -17,13 +17,13 @@ namespace EvolutionShop
         public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
             TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke",
             BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke", PowerSmokeArgument = "-evolutionGrowthPowerSmoke",
-            LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke";
+            LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : null;
         public static bool Requested
         {
             get
@@ -40,7 +40,7 @@ namespace EvolutionShop
         }
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -65,7 +65,7 @@ namespace EvolutionShop
         public bool ValidationMode { get; private set; }
         public bool AllowValidationInput;
         public string SavePath { get; private set; }
-        /// <summary>GR-07: a development-only start point for the playtest (-evolutionGrowthStart era3 or era4), with its own save; null for the usual greybox.</summary>
+        /// <summary>GR-07: a development-only start point for the playtest (-evolutionGrowthStart era3 or era4; GR-10's spaces), with its own save; null for the usual greybox.</summary>
         public string StartPoint { get; private set; }
         public string Notice { get; private set; }
         public bool PeekOn = true, ReducedMotion;
@@ -97,7 +97,7 @@ namespace EvolutionShop
             {
                 // GR-07: a start point keeps its own save, so the usual greybox shop is never touched.
                 StartPoint = start;
-                SavePath = Path.Combine(Application.persistentDataPath, "growth-gr07-" + start + ".json");
+                SavePath = Path.Combine(Application.persistentDataPath, (start == GrowthStarts.Spaces ? "growth-gr10-" : "growth-gr07-") + start + ".json");
             }
             string notice = null;
             Shop = StartPoint != null && !File.Exists(SavePath) ? GrowthStarts.Make(StartPoint) : LoadOrNew(SavePath, out notice);
@@ -243,6 +243,8 @@ namespace EvolutionShop
                 case GrowthTargetKind.WorkshopWall: SetCard(GrowthCard.Workshop); break;
                 case GrowthTargetKind.Sorter: SetCard(GrowthCard.Sorter); break;
                 case GrowthTargetKind.StaffBoard: SetCard(GrowthCard.Staff); break;
+                case GrowthTargetKind.UnitCWall: SetCard(GrowthCard.UnitC); break;
+                case GrowthTargetKind.HallBoard: SetCard(GrowthCard.Hall); break;
                 case GrowthTargetKind.Helper: SetCard(GrowthCard.Helper, target.Id); break;
                 case GrowthTargetKind.Generator: SetCard(GrowthCard.Generator); break;
                 case GrowthTargetKind.PowerBoard: SetCard(GrowthCard.PowerBoard); break;
@@ -511,6 +513,10 @@ namespace EvolutionShop
             {
                 case GrowthTargetKind.AnnexWall: status = Shop.Annex ? "Open" : "E see what it needs"; return "Lab annex";
                 case GrowthTargetKind.WorkshopWall: status = Shop.Workshop ? "Open" : "E see what it needs"; return "Workshop";
+                case GrowthTargetKind.UnitCWall: status = Shop.UnitC ? "Open" : "E see what it needs"; return "Shop unit C";
+                case GrowthTargetKind.HallBoard:
+                    status = Shop.Hall ? "Finished · E details" : "E see what it needs";
+                    return Shop.Hall ? "Exhibition hall" : "Exhibition hall plans";
                 case GrowthTargetKind.StaffBoard:
                     status = Shop.Staff.Count == 0 ? "E see who could work here" : Shop.Staff.Count + " hired · " + Shop.WageBill + " credits a night and day · E open";
                     return "Staff board";

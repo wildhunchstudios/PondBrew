@@ -376,7 +376,7 @@ namespace EvolutionShop.Tests
             while (moss.Dose == null) shop.Tick(0.05f);
             shop.SetDuty("pip", false);
             var save = shop.Snapshot();
-            Assert.That(save.version, Is.EqualTo(8));
+            Assert.That(save.version, Is.GreaterThanOrEqualTo(8));
             string json = JsonUtility.ToJson(save);
             var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(json), out string problem);
             Assert.That(problem, Is.Null);

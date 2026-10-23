@@ -197,7 +197,8 @@ namespace EvolutionShop
         string place;
         int queueIndex = -1;
         bool wasQueued;
-        const float Speed = 1.5f;
+        /// <summary>GR-10: as the rules time a visitor's walk (GrowthSpaces.VisitorSpeed).</summary>
+        const float Speed = GrowthSpaces.VisitorSpeed;
         static readonly Dictionary<string, Material> visitorMaterials = new Dictionary<string, Material>();
 
         static Color TypeColour(string type)

@@ -46,7 +46,8 @@ namespace EvolutionShop
             var shop = s.Shop;
             yield return null;
             Check(shop.Era == 2 && shop.Stars == 2 && shop.UnitB && starter.Place == "a1", "Fixture: an era 2 shop with two stars, unit B open, a Starter tank on a1");
-            Check(GrowthShop.Places.Count(p => p.Size == "long") == 5 && GrowthShop.Places.Count(p => p.Size == "standard") == 2 && GrowthShop.Places.Count(p => p.Size == "feature") == 1,
+            var unitsAB = GrowthShop.Places.Where(p => p.Unit == "unit-a" || p.Unit == "unit-b").ToList();
+            Check(unitsAB.Count(p => p.Size == "long") == 5 && unitsAB.Count(p => p.Size == "standard") == 2 && unitsAB.Count(p => p.Size == "feature") == 1,
                 "Places: five long, two standard and one feature place across units A and B");
             LookAt(new Vector3(1.6f, 0, -3.4f), new Vector3(-1.4f, 1.0f, 1.2f)); yield return Shot("30-unit-a-places");
 
