@@ -35,6 +35,8 @@ namespace EvolutionShop.Tests
             Assert.That(r.SpeciesAtExhibition, Is.GreaterThanOrEqualTo(GrowthContent.ExhibitionSpecies));
             Assert.That(r.CrownsAtExhibition, Is.GreaterThanOrEqualTo(GrowthContent.ExhibitionCrowns));
             Assert.That(r.CollectAllMinute, Is.GreaterThan(r.ExhibitionMinute));
+            // GR-11: the main ending, prepared the night after the exhibition opens and held the next day.
+            Assert.That(r.EndingMinute, Is.GreaterThan(r.ExhibitionMinute).And.LessThan(r.ExhibitionMinute + 20));
             Assert.That(r.EntriesAtEnd, Is.EqualTo(GrowthContent.JournalEntries));
             // Every species is found, each family no earlier than its era.
             Assert.That(r.SpeciesMinute.Keys, Is.EquivalentTo(GrowthContent.Species.Select(s => s.Id)));
@@ -52,6 +54,7 @@ namespace EvolutionShop.Tests
             {
                 var r = PacingSimulator.Run(policy);
                 Assert.That(r.ExhibitionMinute, Is.InRange(180, 260), name + " exhibition");
+                Assert.That(r.EndingMinute, Is.InRange(190, 280), name + " the Grand Exhibition held");
                 Assert.That(r.CollectAllMinute, Is.InRange(420, 780), name + " collect-all");
                 Assert.That(r.LargestStall, Is.LessThanOrEqualTo(15), name + " stall");
                 Assert.That(r.DeadEnds, Is.Empty, name);

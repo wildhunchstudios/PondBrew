@@ -153,7 +153,8 @@ namespace EvolutionShop
             if (!Ready) return;
             var shop = s.Shop;
             dayLabel.text = (shop.Phase == GrowthPhase.Night ? "Night " : "Day ") + shop.Day + " · Era " + shop.Era;
-            clockLabel.text = shop.Phase == GrowthPhase.Day ? ShopClock(shop.DaySecondsLeft) + " left · " + shop.Queue.Count() + " waiting" : "Untimed: open the shop at the counter";
+            clockLabel.text = shop.Phase == GrowthPhase.Day ? ShopClock(shop.DaySecondsLeft) + " left · " + shop.Queue.Count() + " waiting" + (shop.ExhibitionToday ? " · exhibition guests " + shop.GuestsServed + "/" + GrowthShop.ExhibitionPurchases : "") :
+                shop.ExhibitionPrepared ? "Untimed: the Grand Exhibition opens with the shop" : "Untimed: open the shop at the counter";
             creditsLabel.text = shop.Credits + " credits";
             int next = shop.Stars < 5 ? GrowthContent.StarThresholds[shop.Stars] : GrowthContent.ReputationMax;
             starsLabel.text = StarsText(shop.Stars) + "  reputation " + shop.Reputation + (shop.Stars < 5 ? "/" + next : "") + (shop.Rp > 0 ? " · " + shop.Rp + " RP" : "");
@@ -195,7 +196,7 @@ namespace EvolutionShop
             var spec = s.Shop.Stock.FirstOrDefault(x => x.Id == creature.SpecimenId);
             if (spec == null) { peekTag.style.display = DisplayStyle.None; return; }
             var holder = s.Shop.HolderOf(spec.Id);
-            peekLabel.text = GrowthSession.Named(spec) + (spec.ReservedBy != 0 ? " (reserved)" : "");
+            peekLabel.text = GrowthSession.Named(spec) + (GrowthShop.IsOnDisplay(spec) ? " (on display)" : spec.ReservedBy != 0 ? " (reserved)" : "");
             Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(document.rootVisualElement.panel, creature.transform.position + Vector3.up * (creature.Length * 0.9f), s.Player.View);
             peekTag.style.display = DisplayStyle.Flex;
             peekTag.style.left = p.x;
@@ -208,8 +209,9 @@ namespace EvolutionShop
         {
             Log.Add(text);
             if (!Ready) return;
-            var t = Paper(8); t.style.marginBottom = 6;
-            var l = Text(text); l.style.fontSize = 20; if (warn) l.style.color = new Color(0.54f, 0.18f, 0.10f);
+            var t = Paper(8); t.style.marginBottom = 6; t.style.maxWidth = 300;
+            // GR-11: a long note (the Grand Exhibition's six, or why it fell short) wraps rather than running off the screen.
+            var l = Text(text); l.style.fontSize = 20; l.style.whiteSpace = WhiteSpace.Normal; if (warn) l.style.color = new Color(0.54f, 0.18f, 0.10f);
             t.Add(l); toasts.Add(t);
             toastItems.Add((t, Time.unscaledTime + (warn ? 3.5f : 3f)));
             while (toastItems.Count > 4) { toastItems[0].element.RemoveFromHierarchy(); toastItems.RemoveAt(0); }
@@ -229,11 +231,12 @@ namespace EvolutionShop
                 case GrowthEventKind.NewColour:
                 case GrowthEventKind.LineDay:
                 case GrowthEventKind.Opened:
+                case GrowthEventKind.ExhibitionWon:
                     Log.Add(e.Text);
                     if (!Ready) return;
                     bannerLabel.text = e.Text; banner.style.display = DisplayStyle.Flex; bannerUntil = Time.unscaledTime + 3f;
                     return;
-                default: Toast(e.Text, e.Kind == GrowthEventKind.Refusal || e.Kind == GrowthEventKind.Impatient || e.Kind == GrowthEventKind.StaffHome); return;
+                default: Toast(e.Text, e.Kind == GrowthEventKind.Refusal || e.Kind == GrowthEventKind.Impatient || e.Kind == GrowthEventKind.StaffHome || e.Kind == GrowthEventKind.ExhibitionFailed); return;
             }
         }
 
@@ -244,7 +247,7 @@ namespace EvolutionShop
             if (!Ready) return;
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null;
             if (which == GrowthCard.None) return;
-            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause;
+            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Results;
             card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding || which == GrowthCard.Helper ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer || which == GrowthCard.Staff ? 540 : which == GrowthCard.PowerBoard || which == GrowthCard.Sorter ? 600 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
@@ -353,7 +356,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature();
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature() + "|" + ExhibitionSignature();
         }
 
         string LiveText()
@@ -405,6 +408,7 @@ namespace EvolutionShop
                 case GrowthCard.UnitC: FillUnitC(); break;
                 case GrowthCard.Hall: FillHall(); break;
                 case GrowthCard.Helper: FillHelper(target); break;
+                case GrowthCard.Results: FillResults(); break;
             }
         }
 
@@ -786,10 +790,9 @@ namespace EvolutionShop
         void FillBoard()
         {
             var shop = s.Shop;
-            var body = Head("Pinboard", "era " + shop.Era + ": " + GrowthContent.Eras[shop.Era - 1].Name);
-            body.Add(Text("Goal: " + shop.EraGoal));
-            foreach (var (text, done) in shop.Objectives()) body.Add(Text((done ? "✓ " : "· ") + text, done ? "es-req--done" : "es-req"));
-            body.Add(Text("Discovered " + shop.Discovered.Count + " of " + GrowthContent.SpeciesCount + " species · journal " + shop.Journal.Count + "/" + GrowthContent.JournalEntries, "es-text--muted"));
+            var body = Head("Pinboard", shop.ExhibitionDone ? "free play" : "era " + shop.Era + ": " + GrowthContent.Eras[shop.Era - 1].Name);
+            // GR-11: the objective board (GR.12): now, next and the long goal, the same at the top of the journal.
+            BoardSections(body);
             // GR-04: research turns research points (earned by discoveries) into Spark and, much later, Dusk.
             var research = new VisualElement(); research.style.marginTop = 10; research.style.borderTopWidth = 2; research.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); research.style.paddingTop = 6;
             research.Add(Text("Research · " + shop.Rp + " research points (each discovery brings some)"));
@@ -1009,9 +1012,13 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             var body = ScreenHead("Journal");
+            // GR-11: the objective board, mirrored from the pinboard (GR.12).
+            var goals = Text("Goals"); goals.style.fontSize = 24; goals.style.unityFontStyleAndWeight = FontStyle.Bold;
+            body.Add(goals);
+            BoardSections(body);
             // GR.6: the Cultures page shows all seven from the start: owned ones with their source and level, the rest
             // greyed with where to get them.
-            var cultures = Text("Cultures"); cultures.style.fontSize = 24; cultures.style.unityFontStyleAndWeight = FontStyle.Bold;
+            var cultures = Text("Cultures"); cultures.style.fontSize = 24; cultures.style.unityFontStyleAndWeight = FontStyle.Bold; cultures.style.marginTop = 14;
             body.Add(cultures);
             foreach (var c in GrowthContent.Cultures)
             {
@@ -1074,9 +1081,13 @@ namespace EvolutionShop
                 if (d.Refusals > 0) body.Add(Text(d.Refusals + " found nothing to buy" + (d.Impatient > 0 ? ", " + d.Impatient + " got tired of waiting" : "") + "."));
                 else if (d.Impatient > 0) body.Add(Text(d.Impatient + " got tired of waiting."));
                 body.Add(Text("Reputation " + (d.ReputationGained >= 0 ? "+" : "") + d.ReputationGained + " · " + StarsText(d.StarsAfter) + (d.StarsAfter > d.StarsBefore ? " — a new star!" : "")));
+                ExhibitionReceipt(body, d);
             }
             body.Add(Text("Night " + shop.Day + ": prepare at your own pace. Goal: " + shop.EraGoal, "es-text--muted"));
-            var row = Row(); row.Add(Button("Good night", () => s.SetCard(GrowthCard.None), true)); body.Add(row);
+            var row = Row();
+            if (d != null && d.ExhibitionWon) row.Add(Button("See the results", () => s.SetCard(GrowthCard.Results), true));
+            row.Add(Button("Good night", () => s.SetCard(GrowthCard.None), d == null || !d.ExhibitionWon));
+            body.Add(row);
         }
 
         void FillWelcome()

@@ -315,7 +315,7 @@ namespace EvolutionShop.Tests
             Assert.That(events.Any(e => e.Kind == GrowthEventKind.LineDay), Is.True);
             Assert.That(events.Any(e => e.Kind == GrowthEventKind.EraUp && e.Text.StartsWith("Era 5")), Is.True);
             Assert.That((shop.Era, shop.EraFiveGateMet), Is.EqualTo((5, true)));
-            Assert.That(shop.Objectives().Last().text, Is.EqualTo("The greybox ends here: the Grand Exhibition comes with GR-11"));
+            Assert.That(shop.Objectives().Last().text, Does.StartWith("Host it: six exhibition guests"), "GR-11: era 5's goal is the Grand Exhibition");
         }
 
         [Test]

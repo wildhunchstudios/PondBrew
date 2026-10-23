@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace EvolutionShop.Growth
@@ -11,9 +12,9 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition";
 
-        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : null;
+        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : null;
 
         /// <summary>The start of era 3: 3 stars, 1,200 credits, 45 RP, unit B, Bloom, Flow, Ember and Spark, the founders of
         /// the first families and four hybrids, the breeding tank, a Large tank, stocked tanks, levels 2-3.</summary>
@@ -73,6 +74,46 @@ namespace EvolutionShop.Growth
         {
             var shop = Era4Start();
             shop.Era = 5; shop.Day = 20; shop.Reputation = GrowthContent.StarThresholds[4] + 50; shop.Credits = 30000;
+            shop.TakeEvents();
+            return shop;
+        }
+
+        /// <summary>GR-11's look at the Grand Exhibition: the spaces start with the workshop, unit C and the hall open and a
+        /// full day run on the line; every founder and two hybrids of each family known, with five crowns and their parents
+        /// (the exhibition's requirements met); Show tanks on unit B's and unit C's feature places and Large tanks on the
+        /// exhibition places, empty; the five crowns waiting in Large tanks on c3 and c4 to be put on display; and one of
+        /// each other creature known, as far as the other tanks hold them.</summary>
+        public static GrowthShop ExhibitionStart()
+        {
+            var shop = SpacesStart();
+            shop.Credits = 100000;
+            shop.BuyWorkshop(); shop.BuyUnitC(); shop.BuyHall();
+            shop.LineDays = 1;
+            var known = new List<string>();
+            foreach (var f in GrowthContent.Families)
+            {
+                var members = GrowthContent.Species.Where(s => s.Family == f.Id).ToList();
+                known.AddRange(members.Where(s => s.Kind == SpeciesKind.Founder).Select(s => s.Id));
+                known.AddRange(members.Where(s => s.Kind == SpeciesKind.Hybrid).Take(2).Select(s => s.Id));
+            }
+            var crowns = GrowthContent.Species.Where(s => s.Kind == SpeciesKind.Crown).Take(GrowthContent.ExhibitionCrowns).ToList();
+            foreach (var c in crowns) known.AddRange(new[] { c.Id, c.PairA, c.PairB });
+            foreach (var id in known.Distinct().Where(id => !shop.Discovered.Contains(id)))
+            {
+                shop.Discovered.Add(id);
+                shop.Journal.Add(GrowthShop.JournalKey(id, Colour.Classic));
+            }
+            foreach (var (kind, place) in new[] { ("large", "b3"), ("show", "b4"), ("show", "c1"), ("show", "c2"), ("large", "c3"), ("large", "c4"), ("large", "c5"), ("large", "c6"), ("large", "e1"), ("large", "e2") })
+                shop.BuyContainer(kind, place);
+            foreach (var crown in crowns)
+                foreach (var place in new[] { "c3", "c4" })
+                    if (shop.DevelopmentStock(shop.ContainerAt(place).Id, crown.Id).Success) break;
+            var others = shop.Discovered.Where(d => GrowthContent.Get(d).Kind != SpeciesKind.Crown && !shop.Stock.Any(s => s.Species == d)).ToList();
+            var tanks = shop.ShopContainers.Where(c => !GrowthShop.SpotlitPlaces.Contains(c.Place)).OrderBy(c => c.Place, System.StringComparer.Ordinal).ToList();
+            foreach (var species in others)
+                foreach (var t in tanks)
+                    if (shop.DevelopmentStock(t.Id, species).Success) break;
+            shop.Credits = 20000;
             shop.TakeEvents();
             return shop;
         }

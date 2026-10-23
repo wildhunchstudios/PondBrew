@@ -128,7 +128,7 @@ namespace EvolutionShop.Tests
             var low = At(5, 4); low.UnitC = true;
             Assert.That(low.HallCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs 5 stars"));
             Assert.That(shop.Objectives().Single(o => o.text.StartsWith("Finish the exhibition hall")).done, Is.False);
-            Assert.That(shop.Objectives().Last().text, Is.EqualTo("The greybox ends here: the Grand Exhibition comes with GR-11"));
+            Assert.That(shop.Objectives().Last().text, Does.StartWith("Host it: six exhibition guests"), "GR-11: the Grand Exhibition follows the hall");
             int visitors = shop.VisitorsAtOnce;
             Assert.That(shop.BuyHall().Success, Is.True);
             Assert.That((shop.Hall, shop.VisitorsAtOnce), Is.EqualTo((true, visitors + 1)));
@@ -176,7 +176,7 @@ namespace EvolutionShop.Tests
             var shop = At(5, 5);
             Assert.That(shop.BuyUnitC().Success && shop.BuyHall().Success && shop.BuyContainer("show", "c2").Success && shop.BuyContainer("starter", "e2").Success, Is.True);
             var save = shop.Snapshot();
-            Assert.That(save.version, Is.EqualTo(9));
+            Assert.That(save.version, Is.GreaterThanOrEqualTo(9), "version 9 or later (GR-11 is 10)");
             string json = JsonUtility.ToJson(save);
             var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(json), out string problem);
             Assert.That(problem, Is.Null);

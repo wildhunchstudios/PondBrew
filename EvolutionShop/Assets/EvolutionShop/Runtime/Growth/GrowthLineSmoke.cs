@@ -177,8 +177,8 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.Phase == GrowthPhase.Night && served >= GrowthShop.LineDaySales && shop.LineDays == 1 && s.Ui.Log.Any(l => l.StartsWith("A full day on the line")),
                 "Through the day (accelerated, " + served + " sales served) the line kept the shop stocked: a full day on the line");
-            Check(shop.Era == 5 && s.Ui.Log.Any(l => l.StartsWith("Era 5")) && shop.Objectives().Last().text == "The greybox ends here: the Grand Exhibition comes with GR-11",
-                "Five stars, a large creature and a full day on the line open era 5; the greybox ends there");
+            Check(shop.Era == 5 && s.Ui.Log.Any(l => l.StartsWith("Era 5")) && shop.Objectives().Last().text.StartsWith("Host it: six exhibition guests"),
+                "Five stars, a large creature and a full day on the line open era 5, whose goal is the Grand Exhibition");
             yield return Shot("117-era-5");
             s.SetCard(GrowthCard.None);
 

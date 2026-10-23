@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard, Award }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -177,6 +177,7 @@ namespace EvolutionShop
             UnitCRoom();
             SetPieces();
             HallFinish();
+            ExhibitionPieces();
             tanksRoot = new GameObject("Tanks").transform; tanksRoot.SetParent(transform, false);
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
@@ -461,6 +462,7 @@ namespace EvolutionShop
             ResetLine();
             ResetHelpers();
             ResetSpaces();
+            ResetExhibition();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -528,6 +530,7 @@ namespace EvolutionShop
             SyncVisitors(shop);
             SyncHelpers(shop);
             SyncSpaces(shop);
+            SyncExhibition(shop);
         }
 
         // ---------------------------------------------------------------- the breeding tank (GR-05)
@@ -931,6 +934,7 @@ namespace EvolutionShop
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
             if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t); }
             AnimateOpenings(dt);
+            AnimateConfetti(dt);
             foreach (var v in visitors.Values) v.Tick(dt);
         }
 

@@ -105,6 +105,8 @@ namespace EvolutionShop.Growth
     {
         public int Number;
         public string Name, Gate, Goal;
+        /// <summary>GR-11: what the era opens, for its era-up banner and the board's next unlock.</summary>
+        public string Opens;
         public int Stars;
         /// <summary>Target window for reaching this era, in minutes of play (GR.4).</summary>
         public int TargetFrom, TargetTo;
@@ -503,15 +505,17 @@ namespace EvolutionShop.Growth
 
         public static readonly EraDef[] Eras =
         {
-            new EraDef { Number = 1, Name = "Back room", Stars = 1, Gate = "Start", Goal = "Discover 3 creatures and buy your second tank", TargetFrom = 0, TargetTo = 0 },
-            new EraDef { Number = 2, Name = "Real shop", Stars = 2, Gate = "2 stars, 3 creatures discovered, 2 tanks", Goal = "Breed your first hybrid; reach 3 stars", TargetFrom = 20, TargetTo = 40 },
-            new EraDef { Number = 3, Name = "Plumbing", Stars = 3, Gate = "3 stars, a hybrid bred, a Large tank", Goal = "Power the lab; fill a Large tank", TargetFrom = 60, TargetTo = 90 },
-            new EraDef { Number = 4, Name = "Machines", Stars = 4, Gate = "4 stars, powered pumps running, 12 species", Goal = "Run a full day on the line; discover a large creature", TargetFrom = 120, TargetTo = 160 },
-            new EraDef { Number = 5, Name = "Exhibition", Stars = 5, Gate = "5 stars, a large creature, a full day on the line", Goal = "Host the Grand Exhibition", TargetFrom = 180, TargetTo = 220 },
+            new EraDef { Number = 1, Name = "Back room", Stars = 1, Gate = "Start", Goal = "Discover 3 creatures and buy your second tank", Opens = "The back room, the incubator and unit A", TargetFrom = 0, TargetTo = 0 },
+            new EraDef { Number = 2, Name = "Real shop", Stars = 2, Gate = "2 stars, 3 creatures discovered, 2 tanks", Goal = "Breed your first hybrid; reach 3 stars", Opens = "Shop unit B can open", TargetFrom = 20, TargetTo = 40 },
+            new EraDef { Number = 3, Name = "Plumbing", Stars = 3, Gate = "3 stars, a hybrid bred, a Large tank", Goal = "Power the lab; fill a Large tank", Opens = "Water kits and catalog page 3 open", TargetFrom = 60, TargetTo = 90 },
+            new EraDef { Number = 4, Name = "Machines", Stars = 4, Gate = "4 stars, powered pumps running, 12 species", Goal = "Run a full day on the line; discover a large creature", Opens = "The incubator's auto-doser, fast pumps and the workshop open", TargetFrom = 120, TargetTo = 160 },
+            new EraDef { Number = 5, Name = "Exhibition", Stars = 5, Gate = "5 stars, a large creature, a full day on the line", Goal = "Host the Grand Exhibition", Opens = "The tide engine, the planner and catalog page 5 open", TargetFrom = 180, TargetTo = 220 },
         };
 
         /// <summary>The Grand Exhibition becomes available (GR.12), in minutes.</summary>
         public const int ExhibitionFrom = 200, ExhibitionTo = 250, ExhibitionSpecies = 48, ExhibitionCrowns = 5;
+        /// <summary>GR-11: the main ending, the Grand Exhibition held (GR.3: about 4:00), in minutes.</summary>
+        public const int EndingFrom = 200, EndingTo = 270;
 
         public static readonly VisitorTypeDef[] Visitors =
         {

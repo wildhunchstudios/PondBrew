@@ -208,6 +208,7 @@ namespace EvolutionShop
                 case "bargain": return new Color(0.98f, 0.78f, 0.37f);
                 case "collector": return new Color(0.84f, 0.38f, 0.27f);
                 case "premium": return new Color(0.55f, 0.42f, 0.78f);
+                case GrowthShop.GuestType: return new Color(0.86f, 0.64f, 0.16f);
                 default: return new Color(0.31f, 0.66f, 0.75f);
             }
         }
@@ -223,6 +224,13 @@ namespace EvolutionShop
             ShopWorld.Shape(root.transform, "Body", PrimitiveType.Capsule, new Vector3(0, 0.75f, 0), new Vector3(0.45f, 0.62f, 0.32f), body);
             ShopWorld.Shape(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0, 1.55f, 0), Vector3.one * 0.3f, skin);
             ShopWorld.Shape(root.transform, "Nose", PrimitiveType.Sphere, new Vector3(0, 1.55f, 0.15f), Vector3.one * 0.07f, skin);
+            // GR-11: an exhibition guest wears gold and a rosette.
+            if (v.Type == GrowthShop.GuestType)
+            {
+                if (!visitorMaterials.TryGetValue("rosette", out var rosette) || rosette == null) visitorMaterials["rosette"] = rosette = ShopWorld.MakeMaterial("GR guest rosette", new Color(0.98f, 0.95f, 0.85f), 0, 0.2f);
+                ShopWorld.Shape(root.transform, "Rosette", PrimitiveType.Sphere, new Vector3(0.1f, 1.12f, 0.17f), new Vector3(0.14f, 0.14f, 0.05f), rosette);
+                ShopWorld.Shape(root.transform, "Hat", PrimitiveType.Cylinder, new Vector3(0, 1.74f, 0), new Vector3(0.26f, 0.05f, 0.26f), body);
+            }
             return view;
         }
 

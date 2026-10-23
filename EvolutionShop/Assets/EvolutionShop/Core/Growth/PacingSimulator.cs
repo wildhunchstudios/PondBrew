@@ -58,7 +58,7 @@ namespace EvolutionShop.Growth
         /// <summary>Minute each era was reached (era 1 at 0; -1 when never).</summary>
         public readonly double[] EraMinute = { 0, -1, -1, -1, -1 };
         public double FirstUpgradeMinute = -1, SecondTankMinute = -1, FirstHelperMinute = -1, PoweredMinute = -1, LineMinute = -1,
-            ExhibitionMinute = -1, CollectAllMinute = -1, LargestStall, EndMinute;
+            ExhibitionMinute = -1, EndingMinute = -1, CollectAllMinute = -1, LargestStall, EndMinute;
         public string LargestStallAt = "";
         /// <summary>The most creatures on display at once (GR.5's budget: 180 on screen at the final layout).</summary>
         public int MostCreatures;
@@ -86,6 +86,9 @@ namespace EvolutionShop.Growth
             Add("First powered automation", "about 1:30-2:00", PoweredMinute, PoweredMinute >= 85 && PoweredMinute <= 125);
             Add("Grand Exhibition available", "about 3:30 (" + Clock(GrowthContent.ExhibitionFrom) + "-" + Clock(GrowthContent.ExhibitionTo) + ")", ExhibitionMinute,
                 ExhibitionMinute >= GrowthContent.ExhibitionFrom && ExhibitionMinute <= GrowthContent.ExhibitionTo);
+            // GR-11: the main ending, the Grand Exhibition held: prepared the night after it opens and hosted the next day.
+            Add("Grand Exhibition held (main ending)", "about 4:00 (" + Clock(GrowthContent.EndingFrom) + "-" + Clock(GrowthContent.EndingTo) + ")", EndingMinute,
+                EndingMinute >= GrowthContent.EndingFrom && EndingMinute <= GrowthContent.EndingTo);
             Add("Collect-all (" + GrowthContent.JournalEntries + " entries)", "8-12 h", CollectAllMinute, CollectAllMinute >= 480 && CollectAllMinute <= 720);
             c.Add(("Longest stretch with nothing new, before the exhibition", "15 min at most", Clock(LargestStall) + LargestStallAt, LargestStall <= 15));
             c.Add(("Most creatures on display at once", "180 at most (GR.5)", MostCreatures.ToString(CultureInfo.InvariantCulture), MostCreatures <= 180));
@@ -182,6 +185,11 @@ namespace EvolutionShop.Growth
                 Night();
                 Daytime();
                 CheckEras();
+                if (exhibitionReached && report.EndingMinute < 0 && day > report.ExhibitionDay)
+                {
+                    report.EndingMinute = Minute;
+                    Event("ending", "**The Grand Exhibition is held** (prepared the night before: five crowns on display, six species stocked)");
+                }
                 row.Era = era; row.Stars = Stars; row.Reputation = rep; row.Credits = (int)credits; row.Rp = rp;
                 row.Species = discovered.Count; row.Entries = entries.Count; row.Spaces = ShopSpaces(true) + ShopSpaces(false);
                 report.Days.Add(row);

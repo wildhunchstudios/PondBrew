@@ -36,7 +36,7 @@ namespace EvolutionShop.Growth
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
         TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog, NoOffspring, NotTinted,
-        NoRoute,
+        NoRoute, NotEnough,
     }
 
     public readonly struct GrowthResult
@@ -104,6 +104,9 @@ namespace EvolutionShop.Growth
         public readonly List<string> Plan = new List<string>();
         public int Browsed;
         public float Clock, Patience, BrowseFor = GrowthShop.BrowseSeconds;
+        /// <summary>GR-11: an exhibition guest's species and which of the six purchases they came for (-1 for other visitors).</summary>
+        public string Wants;
+        public int Order = -1;
     }
 
     public sealed class GrowthMixEntry
@@ -137,7 +140,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed }
 
     public sealed class GrowthEvent
     {
@@ -151,6 +154,10 @@ namespace EvolutionShop.Growth
         public int Day, Visitors, Sales, Revenue, Refusals, Impatient, ReputationGained, StarsBefore, StarsAfter;
         /// <summary>Passers-by who did not come in because every tank was empty (no reputation lost).</summary>
         public int WalkedPast;
+        /// <summary>GR-11: the Grand Exhibition's day: its guests, those served, and whether it was held or why it fell short.</summary>
+        public int Guests, GuestsServed;
+        public bool Exhibition, ExhibitionWon;
+        public readonly List<string> ExhibitionNotes = new List<string>();
     }
 
     public sealed partial class GrowthShop
@@ -575,6 +582,7 @@ namespace EvolutionShop.Growth
             if (c == null) return GrowthResult.Fail(GrowthFailure.NoSuchContainer, containerId);
             var s = c.Occupants.FirstOrDefault(o => o.Id == specimenId);
             if (s == null) return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen);
+            if (IsOnDisplay(s)) return GrowthResult.Fail(GrowthFailure.Reserved, "on display for the Grand Exhibition");
             if (s.ReservedBy != 0) return GrowthResult.Fail(GrowthFailure.Reserved, "a visitor is buying it");
             if (Carried.Count >= CarryLimit) return GrowthResult.Fail(GrowthFailure.HandsFull, "carry up to " + CarryLimit);
             c.Occupants.Remove(s);
@@ -658,6 +666,7 @@ namespace EvolutionShop.Growth
             if (ContainerAt(place) != null) { why = "The place is taken"; return GrowthFailure.PlaceTaken; }
             if (!spot.Takes(c.Def)) { why = c.Def.Name + " is " + Footprint(c.Def) + "; this place takes " + spot.Width.ToString("0.#") + " × " + spot.Depth.ToString("0.#") + " m"; return GrowthFailure.TooBigForPlace; }
             if (Phase != GrowthPhase.Night) { why = "Containers are moved at night"; return GrowthFailure.NotAtNight; }
+            if (c.Occupants.Any(IsOnDisplay)) { why = "Its crowns are on display for the Grand Exhibition"; return GrowthFailure.Reserved; }
             if (c.Occupants.Any(s => s.ReservedBy != 0)) { why = "A visitor is buying from it"; return GrowthFailure.Reserved; }
             return GrowthFailure.None;
         }
@@ -1091,22 +1100,22 @@ namespace EvolutionShop.Growth
             if (Era == 1 && EraTwoGateMet)
             {
                 Era = 2;
-                Raise(GrowthEventKind.EraUp, "Era 2: " + GrowthContent.Eras[1].Name + ". Shop unit B can open.");
+                Raise(GrowthEventKind.EraUp, "Era 2: " + GrowthContent.Eras[1].Name + ". " + GrowthContent.Eras[1].Opens + ".");
             }
             if (Era == 2 && EraThreeGateMet)
             {
                 Era = 3;
-                Raise(GrowthEventKind.EraUp, "Era 3: " + GrowthContent.Eras[2].Name + ". Water kits and catalog page 3 open.");
+                Raise(GrowthEventKind.EraUp, "Era 3: " + GrowthContent.Eras[2].Name + ". " + GrowthContent.Eras[2].Opens + ".");
             }
             if (Era == 3 && EraFourGateMet)
             {
                 Era = 4;
-                Raise(GrowthEventKind.EraUp, "Era 4: " + GrowthContent.Eras[3].Name + ". The incubator's auto-doser, fast pumps and the workshop open.");
+                Raise(GrowthEventKind.EraUp, "Era 4: " + GrowthContent.Eras[3].Name + ". " + GrowthContent.Eras[3].Opens + ".");
             }
             if (Era == 4 && EraFiveGateMet)
             {
                 Era = 5;
-                Raise(GrowthEventKind.EraUp, "Era 5: " + GrowthContent.Eras[4].Name + ". The tide engine, the planner and catalog page 5 open.");
+                Raise(GrowthEventKind.EraUp, "Era 5: " + GrowthContent.Eras[4].Name + ". " + GrowthContent.Eras[4].Opens + ".");
             }
         }
 
@@ -1121,6 +1130,7 @@ namespace EvolutionShop.Growth
             visitorsToday = 0;
             Today = new GrowthDaySummary { Day = Day, StarsBefore = Stars };
             Raise(GrowthEventKind.DayStarted, "Day " + Day + ": the shop is open");
+            StartExhibitionDay();
             Deliver();
             StartLineDay();
             RefreshHint();
@@ -1156,11 +1166,13 @@ namespace EvolutionShop.Growth
             DaySecondsLeft -= seconds;
             arrivalClock += seconds;
             int star = Stars - 1;
-            if (DaySecondsLeft > BrowseSeconds && arrivalClock >= GrowthContent.ArrivalSeconds[star] && Visitors.Count < VisitorsAtOnce)
+            // Exhibition guests (GR-11) come at their own times and do not take ordinary visitors' places.
+            if (DaySecondsLeft > BrowseSeconds && arrivalClock >= GrowthContent.ArrivalSeconds[star] && Visitors.Count(v => v.Type != GuestType) < VisitorsAtOnce)
             {
                 arrivalClock = 0;
                 Arrive();
             }
+            if (DaySecondsLeft > BrowseSeconds) TickGuests();
             foreach (var v in Visitors.ToList())
             {
                 v.Clock += seconds;
@@ -1183,8 +1195,8 @@ namespace EvolutionShop.Growth
             foreach (var t in types) { if (roll < t.Weights[star]) { type = t; break; } roll -= t.Weights[star]; }
             var v = new GrowthVisitor { Id = nextId++, Type = type.Id, Budget = type.Budgets[star], State = GrowthVisitorState.Browsing };
             // GR-03: the visitor looks into the stocked containers one at a time, the most appealing first, then in an
-            // order of their own; at most three.
-            v.Plan.AddRange(ShopContainers.Where(c => c.Occupants.Count > 0)
+            // order of their own; at most three. GR-11: a tank holding only creatures on exhibition display is passed by.
+            v.Plan.AddRange(ShopContainers.Where(c => c.Occupants.Any(s => !IsOnDisplay(s)))
                 .OrderByDescending(Appeal).ThenBy(c => Hash(v.Id * 977 + StableHash(c.Id))).Take(MostBrowsed).Select(c => c.Id));
             v.ContainerId = v.Plan.Count > 0 ? v.Plan[0] : null;
             // GR-10: the look counts from the door, so a visitor bound for a far tank has the time to walk there.
@@ -1222,7 +1234,7 @@ namespace EvolutionShop.Growth
             if (Queue.Count() >= QueueLength) { v.Clock = v.BrowseFor - 1f; return; }
             if (!ReserveAll(v, chosen)) { Leave(v, GrowthVisitOutcome.NothingAffordable); return; }
             v.State = GrowthVisitorState.Queued;
-            v.Patience = QueuePatience;
+            v.Patience = v.Type == GuestType ? GuestPatience : QueuePatience;
             v.Clock = 0;
         }
 
@@ -1230,6 +1242,12 @@ namespace EvolutionShop.Growth
         public List<GrowthSpecimen> PickFrom(GrowthVisitor v, GrowthContainer c)
         {
             var free = c.Occupants.Where(s => s.ReservedBy == 0).ToList();
+            // GR-11: an exhibition guest takes only what they came for.
+            if (v.Type == GuestType)
+            {
+                var wanted = free.Where(s => s.Species == v.Wants && Price(s.Species) <= v.Budget).OrderBy(s => s.Id).FirstOrDefault();
+                return wanted == null ? null : new List<GrowthSpecimen> { wanted };
+            }
             if (v.Type == "collector" && Stars >= 3)
             {
                 var pair = free.GroupBy(s => s.Species).Where(g => g.Count() >= 2 && 2 * Price(g.Key) <= v.Budget * Tolerance(c, g.Key))
@@ -1273,6 +1291,7 @@ namespace EvolutionShop.Growth
             v.State = GrowthVisitorState.Leaving;
             v.Outcome = outcome;
             v.Clock = 0;
+            if (v.Type == GuestType) { GuestLeaves(v, outcome); return; }
             int before = Reputation;
             if (outcome == GrowthVisitOutcome.NothingAffordable)
             {
@@ -1329,6 +1348,7 @@ namespace EvolutionShop.Growth
             v.Clock = 0;
             var first = bought[0];
             Raise(GrowthEventKind.Sale, verb + (bought.Count > 1 ? "a pair of " + first.Def.Name + "s" : first.Def.Name) + " for " + price + " credits", first.Species, price);
+            if (v.Type == GuestType) GuestBuys(v);
             if (Stars > starsBefore) Raise(GrowthEventKind.StarUp, "The shop has " + Stars + " stars!", amount: Stars);
             CheckEra();
             return true;
@@ -1344,6 +1364,7 @@ namespace EvolutionShop.Growth
             ServeProgress = 0;
             if (Today != null) { Today.StarsAfter = Stars; LastDay = Today; }
             Today = null;
+            EndExhibitionDay();
             EndLineDay();
             Raise(GrowthEventKind.DayEnded, "Day " + Day + " is over");
             Day++;
@@ -1353,7 +1374,7 @@ namespace EvolutionShop.Growth
 
         // ---------------------------------------------------------------- the objective board (GR.12)
 
-        public string EraGoal => GrowthContent.Eras[Era - 1].Goal;
+        public string EraGoal => ExhibitionDone ? "Free play: fill the journal" : GrowthContent.Eras[Era - 1].Goal;
 
         /// <summary>The goal and its progress lines, as the objective board and the HUD show them.</summary>
         public List<(string text, bool done)> Objectives()
@@ -1409,12 +1430,8 @@ namespace EvolutionShop.Growth
                     list.Add(("Discover a large creature: a Reefback, made with Brine", Discovered.Any(d => GrowthContent.Get(d).Size == SizeClass.Large)));
                     list.Add(("Reach 5 stars (reputation " + Reputation + "/" + GrowthContent.StarThresholds[4] + ")", Stars >= 5));
                 }
-                else
-                {
-                    if (!UnitC) list.Add(("Open shop unit C behind unit B (" + UnitCDef.Credits + " credits, at night)", false));
-                    list.Add(("Finish the exhibition hall: its plans hang in unit C (" + HallDef.Credits + " credits, at night)", Hall));
-                    list.Add(("The greybox ends here: the Grand Exhibition comes with GR-11", true));
-                }
+                // GR-11: era 5's goal, the Grand Exhibition; then free play.
+                else ExhibitionObjectives(list);
             }
             return list;
         }
@@ -1454,6 +1471,7 @@ namespace EvolutionShop.Growth
             SavePower(save);
             SaveLine(save);
             SaveHelpers(save);
+            SaveExhibition(save);
             return save;
         }
 
@@ -1574,7 +1592,7 @@ namespace EvolutionShop.Growth
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -1588,19 +1606,28 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>9: GR-10 (shop unit C and the exhibition hall finish);
+        /// <summary>10: GR-11 (the Grand Exhibition: prepared, under way or held, its six purchases, the crowns on display, its results);
+        /// 9: GR-10 (shop unit C and the exhibition hall finish);
         /// 8: GR-09 (the helpers: their levels, duty and wages paid, the step each is on and what they carry; Moss's jobs);
         /// 7: GR-08 (the workshop, racks, the sorter and its chute, stock targets, the line's days, the analyzer's hint);
         /// 6: GR-07 (the lab annex, buffers, pipes, the power board's order and the auto-doser);
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 9;
+        public const int CurrentVersion = 10;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
         public float daySecondsLeft;
         public bool unitB, unitC, hall;
+        public bool exhibitionPrepared, exhibitionToday, exhibitionDone;
+        public int exhibitionAttempts;
+        public string exhibitionFailure;
+        public string[] exhibitionSpecies, exhibitionMissed;
+        public bool[] exhibitionBought;
+        public int[] exhibitionDisplay;
+        public int resultDay, resultSpecies, resultCrowns, resultJournal, resultRevenue, resultSales, resultAttempts;
+        public string[] resultGuests, resultCrowned;
         public string[] cultures;
         public float[] growerUnits;
         public string[] stations;

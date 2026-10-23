@@ -24,10 +24,11 @@ namespace EvolutionShop
         void FillHall()
         {
             var shop = s.Shop;
+            // GR-11: once the hall is finished, its board is the Grand Exhibition's.
+            if (shop.Hall) { FillExhibition(); return; }
             var hall = GrowthShop.HallDef;
             var body = Head(shop.Hall ? "Exhibition hall" : "Exhibition hall plans", shop.Hall ? "finished" : hall.Credits + " credits");
-            body.Add(Text(shop.Hall ? "The shop is an exhibition hall: banners in every unit, spotlights on the feature places, and two exhibition places along unit B's front wall either side of the bay window. The Grand Exhibition itself comes with GR-11." :
-                "Finish the shop as an exhibition hall: banners in every unit, spotlights on the feature places, two exhibition places along unit B's front wall either side of the bay window, and one more visitor at a time. The Grand Exhibition itself comes with GR-11."));
+            body.Add(Text("Finish the shop as an exhibition hall: banners in every unit, spotlights on the feature places, two exhibition places along unit B's front wall either side of the bay window, and one more visitor at a time. Then this board is where the Grand Exhibition is prepared."));
             if (!shop.Hall)
             {
                 body.Add(Text("Needs unit C, era 5, 5 stars and " + hall.Credits + " credits, at night.", "es-text--muted"));
