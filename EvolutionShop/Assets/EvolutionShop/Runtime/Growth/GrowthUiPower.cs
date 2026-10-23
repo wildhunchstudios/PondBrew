@@ -47,10 +47,11 @@ namespace EvolutionShop
             {
                 string id = shop.PowerOrder[i];
                 var use = shop.PowerUse(id);
-                string status = id == GrowthShop.DoserPower ? shop.AutoStatus : shop.LineStatus(shop.Pipe(int.Parse(id.Substring(5))));
-                bool electric = id == GrowthShop.DoserPower || shop.ElectricPumps;
+                bool machine = id == GrowthShop.DoserPower || id == GrowthShop.SorterPower;
+                string status = id == GrowthShop.DoserPower ? shop.AutoStatus : id == GrowthShop.SorterPower ? shop.SorterStatus : shop.LineStatus(shop.Pipe(int.Parse(id.Substring(5))));
+                bool electric = machine || shop.ElectricPumps;
                 var row = Row();
-                var label = Text((i + 1) + ". " + shop.PowerName(id) + (electric ? " · draws " + (id == GrowthShop.DoserPower ? GrowthContent.AutoDoserUnits : shop.PumpUnits) : " · cranked by hand") + " · " + status);
+                var label = Text((i + 1) + ". " + shop.PowerName(id) + (electric ? " · draws " + (id == GrowthShop.DoserPower ? GrowthContent.AutoDoserUnits : id == GrowthShop.SorterPower ? (int)shop.SorterUnits : shop.PumpUnits) : " · cranked by hand") + " · " + status);
                 // A machine short of power says so in the warning colour (never by colour alone: its words say it too).
                 if (use != null && use.Draw > 0 && use.Got < use.Draw - 0.001f) label.style.color = new Color(0.62f, 0.25f, 0.12f);
                 label.style.flexGrow = 1; label.style.flexShrink = 1; label.style.width = 360;
@@ -61,7 +62,7 @@ namespace EvolutionShop
             }
             if (shop.Pipes.Count > 0) body.Add(Text("Pipes: " + shop.Pipes.Count + " laid, " + shop.Pipes.Sum(p => p.Length).ToString("0.#") + " m in all.", "es-text--muted"));
             UpgradeSection(body, "pump", "Pumps and pipes");
-            Footer(body, "Pipes start on a grower's or a buffer's card.");
+            Footer(body, "Pipes start on a grower's or a buffer's card; the chute on the sorter's.");
         }
 
         void FillBuffer(string target)
@@ -143,17 +144,20 @@ namespace EvolutionShop
             var section = new VisualElement(); section.style.marginTop = 12; section.style.borderTopWidth = 2; section.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); section.style.paddingTop = 8;
             var head = Text("Auto-doser · " + (shop.AutoOn ? "on" : "off")); head.style.unityFontStyleAndWeight = FontStyle.Bold; section.Add(head);
             section.Add(Text(shop.AutoStatus, shop.AutoOn && shop.AutoStatus.StartsWith("Waiting") ? "es-card__reason" : "es-text"));
-            section.Add(Text("It doses a recipe you already know from the buffers piped to the port, then incubates it; it never tries something new.", "es-text--muted"));
+            section.Add(Text("It doses a recipe you already know from the buffers piped to the port, then incubates it; it never tries something new." +
+                (shop.HasSorter ? " By stock targets, each batch is the known recipe furthest below its target on the sorter's card." : ""), "es-text--muted"));
             var recipes = Row();
+            if (shop.HasSorter) recipes.Add(Button((shop.AutoByTargets ? "✓ " : "") + "By stock targets", () => s.Act(shop.SetAutoByTargets), shop.AutoByTargets, !shop.AutoBatch && !shop.AutoByTargets));
             foreach (var sp in GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder && shop.Discovered.Contains(x.Id) && x.Doses <= shop.MaxDoses))
             {
                 string id = sp.Id;
-                var b = Button((shop.AutoRecipe == id ? "✓ " : "") + sp.Name, () => s.Act(() => shop.SetAutoRecipe(id)), shop.AutoRecipe == id, !shop.AutoBatch);
+                bool chosen = shop.AutoRecipe == id && !shop.AutoByTargets;
+                var b = Button((chosen ? "✓ " : "") + sp.Name, () => s.Act(() => shop.SetAutoRecipe(id)), chosen, !shop.AutoBatch);
                 b.style.borderLeftWidth = 8; b.style.borderLeftColor = CultureColour(GrowthContent.Cultures[System.Array.FindIndex(sp.Recipe, n => n > 0)].Id);
                 recipes.Add(b);
             }
             section.Add(recipes);
-            section.Add(Button(shop.AutoOn ? "Switch it off" : "Switch it on", () => s.Act(() => shop.SwitchAutoDoser(!shop.AutoOn)), !shop.AutoOn, shop.AutoOn || shop.AutoRecipe != null));
+            section.Add(Button(shop.AutoOn ? "Switch it off" : "Switch it on", () => s.Act(() => shop.SwitchAutoDoser(!shop.AutoOn)), !shop.AutoOn, shop.AutoOn || shop.AutoRecipe != null || shop.AutoByTargets));
             var port = shop.PortBuffers.ToList();
             section.Add(Text(port.Count == 0 ? "No buffer is piped to the port yet." : "Piped to the port: " + string.Join(", ", port.Select(b => GrowthShop.Name(b.Culture) + " (" + shop.BufferName(b.Place).ToLowerInvariant() + ", " + Mathf.FloorToInt(b.Units) + ")")) + ".", "es-text--muted"));
             bool night = shop.Phase == GrowthPhase.Night;

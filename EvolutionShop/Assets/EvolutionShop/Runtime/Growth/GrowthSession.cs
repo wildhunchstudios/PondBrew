@@ -16,13 +16,14 @@ namespace EvolutionShop
     {
         public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
             TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke",
-            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke", PowerSmokeArgument = "-evolutionGrowthPowerSmoke";
+            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke", PowerSmokeArgument = "-evolutionGrowthPowerSmoke",
+            LineSmokeArgument = "-evolutionGrowthLineSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : null;
         public static bool Requested
         {
             get
@@ -39,7 +40,7 @@ namespace EvolutionShop
         }
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -239,6 +240,8 @@ namespace EvolutionShop
                 case GrowthTargetKind.Breeding: SetCard(GrowthCard.Breeding); break;
                 case GrowthTargetKind.Vial: Ui.Hint("Hold the mouse on a vial to collect its doses"); break;
                 case GrowthTargetKind.AnnexWall: SetCard(GrowthCard.Annex); break;
+                case GrowthTargetKind.WorkshopWall: SetCard(GrowthCard.Workshop); break;
+                case GrowthTargetKind.Sorter: SetCard(GrowthCard.Sorter); break;
                 case GrowthTargetKind.Generator: SetCard(GrowthCard.Generator); break;
                 case GrowthTargetKind.PowerBoard: SetCard(GrowthCard.PowerBoard); break;
                 case GrowthTargetKind.Buffer: SetCard(GrowthCard.Buffer, target.Id); break;
@@ -248,7 +251,8 @@ namespace EvolutionShop
 
         // ---------------------------------------------------------------- pipes (GR-07)
 
-        /// <summary>The pipe end a target stands for: a grower (or its pump) is its tap, a buffer its place, the incubator its port.</summary>
+        /// <summary>The pipe end a target stands for: a grower (or its pump) is its tap, a buffer its place, the incubator its port
+        /// (its outlet for the chute, GR-08), the sorter its hopper.</summary>
         public static string EndOf(GrowthTarget t)
         {
             if (t == null) return null;
@@ -257,6 +261,7 @@ namespace EvolutionShop
                 case GrowthTargetKind.Grower: case GrowthTargetKind.Pump: return GrowthLab.Tap(t.Id);
                 case GrowthTargetKind.Buffer: return GrowthLab.Buffer(int.Parse(t.Id));
                 case GrowthTargetKind.Incubator: return GrowthLab.Port;
+                case GrowthTargetKind.Sorter: return GrowthLab.Sorter;
                 default: return null;
             }
         }
@@ -280,6 +285,7 @@ namespace EvolutionShop
         {
             if (PipeFrom == null) return;
             string to = EndOf(Focused);
+            if (to == GrowthLab.Port && PipeFrom == GrowthLab.Sorter) to = GrowthLab.Out;
             if (to == PipeFrom) to = null;
             if (to == PipeTo && (PipePlan != null || PipeWhy != null)) { World.ShowPipeGhost(PipePlan, PipeReady, Shop); return; }
             PipeTo = to; PipePlan = null; PipeWhy = null; PipeReady = false;
@@ -293,7 +299,7 @@ namespace EvolutionShop
 
         void LayAimedPipe()
         {
-            if (PipeTo == null) { Ui.Hint("Aim at the pipe's other end: a buffer, a grower or the incubator"); return; }
+            if (PipeTo == null) { Ui.Hint("Aim at the pipe's other end: a buffer, a grower, the incubator or the sorter"); return; }
             string from = PipeFrom, to = PipeTo;
             if (Act(() => Shop.LayPipe(from, to)).Success) StopPipe();
             else { PipeTo = null; }
@@ -500,6 +506,11 @@ namespace EvolutionShop
             switch (Focused.Kind)
             {
                 case GrowthTargetKind.AnnexWall: status = Shop.Annex ? "Open" : "E see what it needs"; return "Lab annex";
+                case GrowthTargetKind.WorkshopWall: status = Shop.Workshop ? "Open" : "E see what it needs"; return "Workshop";
+                case GrowthTargetKind.Sorter:
+                    if (!Shop.HasSorter) { var s1 = GrowthContent.Station("sorter").Levels[0]; status = "era " + s1.Era + " · " + s1.Credits + " credits · E see what it needs"; return "Sorter (not bought)"; }
+                    status = Shop.SorterStatus + " · E stock targets";
+                    return "Sorter";
                 case GrowthTargetKind.Generator:
                     if (!Shop.HasGenerator) { var g1 = GrowthContent.Station("generator").Levels[0]; status = "era " + g1.Era + " · " + g1.Credits + " credits and " + g1.Rp + " RP · E see what it needs"; return "Generator (not bought)"; }
                     status = Shop.HandCrank ? (CrankingNow ? "cranking: " + Shop.GeneratorUnits.ToString("0") + " unit" : "hold mouse to crank · E details") : Shop.GeneratorUnits.ToString("0") + " units · E details";
@@ -546,6 +557,7 @@ namespace EvolutionShop
                     status = c.Used + "/" + c.Spaces + " spaces" + (Shop.Harmony(c) ? " · in harmony" : "") + (Shop.Carried.Count > 0 ? " · E put in" : " · E open");
                     return c.Def.Name;
                 case GrowthTargetKind.Place:
+                    if (GrowthShop.LabPlace(Focused.Id) != null) { status = Shop.Phase == GrowthPhase.Night ? "E place a lab rack" : "Racks are placed at night"; return "Rack place " + Focused.Id.Substring(1); }
                     var spot = GrowthShop.Place(Focused.Id);
                     status = Shop.Phase == GrowthPhase.Night ? "E buy or move a tank here" : "Tanks are placed at night";
                     return "Empty " + (spot?.Size ?? "") + " place";

@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -177,6 +177,8 @@ namespace EvolutionShop
             Stations();
             AnnexRoom();
             LabStations();
+            WorkshopRoom();
+            LineStations();
             tanksRoot = new GameObject("Tanks").transform; tanksRoot.SetParent(transform, false);
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
@@ -457,6 +459,7 @@ namespace EvolutionShop
             breedingTank = null; breedingLevel = 0; breedingViews.Clear();
             breedingSlot.SetActive(true);
             ResetLab();
+            ResetLine();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -464,8 +467,8 @@ namespace EvolutionShop
         public void Sync(GrowthShop shop, float dt)
         {
             phase = shop.Phase;
-            // Tanks follow the shop's containers; each keeps its creatures in step with its occupants.
-            foreach (var c in shop.ShopContainers)
+            // Tanks follow the shop's containers, and the workshop's racks (GR-08); each keeps its creatures in step with its occupants.
+            foreach (var c in shop.Containers)
             {
                 if (tanks.TryGetValue(c.Id, out var view) && view.Signature != TankView.SignatureOf(c)) { Destroy(view.Root.gameObject); tanks.Remove(c.Id); view = null; }
                 if (view == null) tanks[c.Id] = view = BuildTank(c);
@@ -473,7 +476,7 @@ namespace EvolutionShop
             }
             foreach (var id in tanks.Keys.Where(k => shop.Container(k) == null).ToList()) { Destroy(tanks[id].Root.gameObject); tanks.Remove(id); }
             var free = new HashSet<string>(shop.FreePlaces);
-            foreach (var m in markers) if (m.Value.activeSelf != free.Contains(m.Key)) m.Value.SetActive(free.Contains(m.Key));
+            foreach (var m in markers) { bool show = MarkerShows(shop, m.Key, free); if (m.Value.activeSelf != show) m.Value.SetActive(show); }
             if (unitBWall.activeSelf == shop.UnitB) unitBWall.SetActive(!shop.UnitB);
             unitBLight.enabled = shop.UnitB;
             foreach (var c in shop.Cultures)
@@ -522,6 +525,7 @@ namespace EvolutionShop
             if (incubatorDome.sharedMaterial != domeWant) incubatorDome.sharedMaterial = domeWant;
             SyncLevelLooks(shop);
             SyncLab(shop);
+            SyncLine(shop);
             SyncVisitors(shop);
         }
 
@@ -662,7 +666,7 @@ namespace EvolutionShop
             }
         }
 
-        /// <summary>The research bench: notes (1), a microscope (2); the analyzer and planner wait for GR-08.</summary>
+        /// <summary>The research bench: notes (1), a microscope (2), the analyzer's screen (3), the planner's board (4, GR-08).</summary>
         void BenchParts(Transform p, int level)
         {
             Box(p, "Notes", new Vector3(-0.15f, 0.915f, 0.1f), new Vector3(0.22f, 0.01f, 0.16f), paper);
@@ -671,6 +675,16 @@ namespace EvolutionShop
                 Box(p, "Microscope base", new Vector3(-0.42f, 0.93f, 0), new Vector3(0.16f, 0.04f, 0.14f), stand);
                 ShopWorld.Shape(p, "Microscope arm", PrimitiveType.Cylinder, new Vector3(-0.42f, 1.06f, -0.03f), new Vector3(0.04f, 0.11f, 0.04f), stand);
                 ShopWorld.Shape(p, "Microscope tube", PrimitiveType.Cylinder, new Vector3(-0.42f, 1.18f, 0.02f), new Vector3(0.05f, 0.07f, 0.05f), marker).localRotation = Quaternion.Euler(20, 0, 0);
+            }
+            if (level >= 3)
+            {
+                Box(p, "Analyzer", new Vector3(0.12f, 1.0f, -0.12f), new Vector3(0.26f, 0.18f, 0.2f), trim);
+                Box(p, "Analyzer screen", new Vector3(0.12f, 1.02f, -0.015f), new Vector3(0.2f, 0.12f, 0.01f), Glow("GR analyzer screen", new Color(0.55f, 0.85f, 0.78f), 0.3f));
+            }
+            if (level >= 4)
+            {
+                Box(p, "Planner board", new Vector3(0.12f, 1.38f, -0.2f), new Vector3(0.5f, 0.34f, 0.03f), paper);
+                Box(p, "Planner line", new Vector3(0.12f, 1.38f, -0.18f), new Vector3(0.36f, 0.03f, 0.01f), sign);
             }
         }
 
@@ -750,7 +764,7 @@ namespace EvolutionShop
         }
 
         /// <summary>Stand and glass heights by container: the Starter tank at 0.9 m, the Large tank lower and taller, the Show tank lowest and tallest.</summary>
-        static (float stand, float glass) Proportions(string kind) => kind == "show" ? (0.55f, 1.0f) : kind == "large" ? (0.8f, 0.75f) : (0.9f, 0.62f);
+        static (float stand, float glass) Proportions(string kind) => kind == "show" ? (0.55f, 1.0f) : kind == "large" ? (0.8f, 0.75f) : kind == "rack" ? (0.7f, 0.5f) : (0.9f, 0.62f);
 
         Material plant;
 
@@ -794,7 +808,7 @@ namespace EvolutionShop
 
         TankView BuildTank(GrowthContainer c)
         {
-            var place = Places[c.Place];
+            var place = PlaceOf(c.Place);
             var def = c.Def;
             var (standH, glassH) = Proportions(c.Kind);
             float W = def.Width, D = def.Depth, top = standH + glassH, waterH = glassH - 0.12f, waterY = standH + 0.05f + waterH * 0.5f;
@@ -808,8 +822,18 @@ namespace EvolutionShop
             Box(root, "Water", new Vector3(0, waterY, 0), new Vector3(W - 0.06f, waterH, D - 0.06f), c.Water == Water.Brine ? waterBrine : c.Water == Water.Warm ? waterWarm : water);
             Box(root, "Glass", new Vector3(0, standH + glassH * 0.5f, 0), new Vector3(W, glassH, D), glass);
             Box(root, "Rim", new Vector3(0, top + 0.015f, 0), new Vector3(W + 0.02f, 0.03f, D + 0.02f), trim);
-            for (int i = 0; i < Mathf.Max(1, Mathf.RoundToInt(W)); i++)
-                Box(root, "Plant", new Vector3(W * 0.5f - 0.2f - i * 0.9f, standH + 0.15f, -D * 0.5f + 0.15f), new Vector3(0.05f, 0.22f + 0.06f * (i % 2), 0.05f), plant);
+            if (def.Lab)
+            {
+                // GR-08: a lab rack is a shelving frame around a plain tank, with a label: no plants, never on show.
+                foreach (int sx in new[] { -1, 1 })
+                    foreach (int sz in new[] { -1, 1 })
+                        Box(root, "Rack post", new Vector3(sx * (W * 0.5f - 0.03f), (top + 0.4f) * 0.5f, sz * (D * 0.5f - 0.03f)), new Vector3(0.05f, top + 0.4f, 0.05f), stand);
+                Box(root, "Rack shelf", new Vector3(0, top + 0.4f, 0), new Vector3(W, 0.04f, D), stand);
+                Box(root, "Rack label", new Vector3(0, standH * 0.5f, D * 0.5f + 0.01f), new Vector3(0.4f, 0.12f, 0.02f), paper);
+            }
+            else
+                for (int i = 0; i < Mathf.Max(1, Mathf.RoundToInt(W)); i++)
+                    Box(root, "Plant", new Vector3(W * 0.5f - 0.2f - i * 0.9f, standH + 0.15f, -D * 0.5f + 0.15f), new Vector3(0.05f, 0.22f + 0.06f * (i % 2), 0.05f), plant);
             // Its level shows: a filter on the back at level 2, a lid at level 3 (GR.14: one look a level).
             if (c.Level >= 2) Box(root, "Filter", new Vector3(W * 0.5f - 0.3f, top - 0.12f, -D * 0.5f + 0.07f), new Vector3(0.24f, 0.22f, 0.1f), trim);
             if (c.Level >= 3) Box(root, "Lid", new Vector3(0, top + 0.05f, 0), new Vector3(W + 0.02f, 0.03f, D + 0.02f), stand);
@@ -898,7 +922,7 @@ namespace EvolutionShop
             }
             for (int i = 0; i < hatchlingViews.Count; i++)
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
-            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); }
+            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); }
             foreach (var v in visitors.Values) v.Tick(dt);
         }
 

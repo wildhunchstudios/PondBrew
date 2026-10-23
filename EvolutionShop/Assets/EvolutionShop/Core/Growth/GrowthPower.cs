@@ -17,15 +17,17 @@ namespace EvolutionShop.Growth
     // culture (GR.15.1).
 
     /// <summary>
-    /// The lab grid (GR.8, GR.11): 0.5 m cells over the back room (6 x 5 m) and the lab annex (8 x 8 m) north of it, where
-    /// pipes run overhead under the 3.6 m ceiling. Where every pipe end is: each grower's tap (on its back, by the wall), the
-    /// annex's buffer places along its south wall, and the incubator's port behind it. The runtime builds the lab from these.
+    /// The lab grid (GR.8, GR.11): 0.5 m cells over the back room (6 x 5 m), the lab annex (8 x 8 m) north of it and, from
+    /// GR-08, the workshop (8 x 6 m) east of the annex, where pipes run overhead under the 3.6 m ceiling. Where every pipe end
+    /// is: each grower's tap (on its back, by the wall), the annex's buffer places along its south wall, the incubator's port
+    /// behind it and its outlet beside it (the hatchling chute's top), and the sorter's hopper in the workshop. The runtime
+    /// builds the lab from these.
     /// </summary>
     public static class GrowthLab
     {
         public const float CellSize = 0.5f, MinX = -4f, MinZ = 4f, PipeHeight = 3.1f;
-        public const int Columns = 16, Rows = 26, BackRoomColumns = 12, AnnexFirstRow = 10, BufferPlaces = 6;
-        public const string Port = "port";
+        public const int Columns = 32, Rows = 26, BackRoomColumns = 12, AnnexColumns = 16, AnnexFirstRow = 10, WorkshopRows = 12, BufferPlaces = 6;
+        public const string Port = "port", Out = "out", Sorter = "sorter";
 
         /// <summary>GR-04's slots for each culture's source: four growers along the west wall facing east, three along the north wall facing south.</summary>
         public static readonly Dictionary<string, (float x, float z)> Growers = new Dictionary<string, (float x, float z)>
@@ -33,7 +35,9 @@ namespace EvolutionShop.Growth
             ["bloom"] = (-3.45f, 4.75f), ["flow"] = (-3.45f, 5.85f), ["ember"] = (-3.45f, 6.95f), ["brine"] = (-3.45f, 8.05f),
             ["spark"] = (-2.5f, 8.5f), ["mist"] = (-1.3f, 8.5f), ["dusk"] = (-0.1f, 8.5f),
         };
-        public static readonly (float x, float z) Incubator = (-0.8f, 6.9f), PortPoint = (-0.8f, 7.35f);
+        public static readonly (float x, float z) Incubator = (-0.8f, 6.9f), PortPoint = (-0.8f, 7.35f), OutPoint = (-0.3f, 6.9f);
+        /// <summary>GR-08: the workshop east of the annex (x 4 to 12, z 9 to 15): the sorter against its north wall, its hopper in front.</summary>
+        public static readonly (float x, float z) SorterStand = (6f, 14.2f), SorterPoint = (6f, 13.55f);
 
         public static bool OnNorthWall(string culture) => Growers[culture].z > 8.2f;
         public static (float x, float z) TapPoint(string culture) { var g = Growers[culture]; return OnNorthWall(culture) ? (g.x, 8.85f) : (-3.85f, g.z); }
@@ -44,21 +48,23 @@ namespace EvolutionShop.Growth
         public static string Buffer(int place) => "buffer:" + place;
         public static bool IsTap(string end) => end != null && end.StartsWith("tap:", StringComparison.Ordinal) && Growers.ContainsKey(end.Substring(4));
         public static bool IsBuffer(string end) => end != null && end.StartsWith("buffer:", StringComparison.Ordinal) && int.TryParse(end.Substring(7), out int p) && p >= 0 && p < BufferPlaces && end == Buffer(p);
-        public static bool IsEnd(string end) => IsTap(end) || IsBuffer(end) || end == Port;
+        public static bool IsEnd(string end) => IsTap(end) || IsBuffer(end) || end == Port || end == Out || end == Sorter;
         public static string TapCulture(string end) => end.Substring(4);
         public static int BufferPlace(string end) => int.Parse(end.Substring(7));
 
-        public static (float x, float z) Point(string end) => IsTap(end) ? TapPoint(TapCulture(end)) : IsBuffer(end) ? BufferPoint(BufferPlace(end)) : PortPoint;
-        /// <summary>The height a pipe drops to at an end: a tap on a grower's back, a buffer's lid, the incubator's port.</summary>
-        public static float Height(string end) => IsTap(end) ? 1.3f : IsBuffer(end) ? 1.5f : 1.25f;
+        public static (float x, float z) Point(string end) =>
+            IsTap(end) ? TapPoint(TapCulture(end)) : IsBuffer(end) ? BufferPoint(BufferPlace(end)) : end == Out ? OutPoint : end == Sorter ? SorterPoint : PortPoint;
+        /// <summary>The height a pipe drops to at an end: a tap on a grower's back, a buffer's lid, the incubator's port and outlet, the sorter's hopper.</summary>
+        public static float Height(string end) => IsTap(end) ? 1.3f : IsBuffer(end) ? 1.5f : end == Out ? 0.95f : end == Sorter ? 1.6f : 1.25f;
         public static (int c, int r) EndCell(string end) { var p = Point(end); return Cell(p.x, p.z); }
-        public static IEnumerable<string> AllEnds => Growers.Keys.Select(Tap).Concat(Enumerable.Range(0, BufferPlaces).Select(Buffer)).Concat(new[] { Port });
+        public static IEnumerable<string> AllEnds => Growers.Keys.Select(Tap).Concat(Enumerable.Range(0, BufferPlaces).Select(Buffer)).Concat(new[] { Port, Out, Sorter });
 
         public static (int c, int r) Cell(float x, float z) => ((int)Math.Floor((x - MinX) / CellSize), (int)Math.Floor((z - MinZ) / CellSize));
         public static (float x, float z) Centre((int c, int r) cell) => (MinX + (cell.c + 0.5f) * CellSize, MinZ + (cell.r + 0.5f) * CellSize);
-        /// <summary>A cell under the lab's ceiling: the back room's, or the annex's once it is open.</summary>
-        public static bool InLab((int c, int r) cell, bool annex) =>
-            cell.c >= 0 && cell.r >= 0 && cell.c < Columns && cell.r < Rows && (cell.r < AnnexFirstRow ? cell.c < BackRoomColumns : annex);
+        /// <summary>A cell under the lab's ceiling: the back room's, the annex's once it is open, the workshop's once it is.</summary>
+        public static bool InLab((int c, int r) cell, bool annex, bool workshop = false) =>
+            cell.c >= 0 && cell.r >= 0 && cell.c < Columns && cell.r < Rows &&
+            (cell.c >= AnnexColumns ? workshop && cell.r >= AnnexFirstRow && cell.r < AnnexFirstRow + WorkshopRows : cell.r < AnnexFirstRow ? cell.c < BackRoomColumns : annex);
         public static bool Adjacent((int c, int r) a, (int c, int r) b) => Math.Abs(a.c - b.c) + Math.Abs(a.r - b.r) == 1;
 
         /// <summary>A pipe's length in metres: its overhead run from cell to cell and its drop at each end.</summary>
@@ -156,7 +162,8 @@ namespace EvolutionShop.Growth
         }
     }
 
-    /// <summary>A pipe on the lab grid: from a grower's tap to a buffer (a pump's line), or from a buffer to the incubator's port.</summary>
+    /// <summary>A pipe on the lab grid: from a grower's tap to a buffer (a pump's line), from a buffer to the incubator's port, or the
+    /// hatchling chute from the incubator's outlet to the sorter (GR-08).</summary>
     public sealed class GrowthPipe
     {
         public int Id;
@@ -167,6 +174,7 @@ namespace EvolutionShop.Growth
         public int Paid;
         /// <summary>A grower's tap to a buffer: the line a pump moves culture down.</summary>
         public bool Line => GrowthLab.IsTap(From);
+        public bool Chute => From == GrowthLab.Out;
         public string Culture => Line ? GrowthLab.TapCulture(From) : null;
         public string PowerId => "line:" + Id;
     }
@@ -248,7 +256,8 @@ namespace EvolutionShop.Growth
 
         /// <summary>An end's name for the player: "the Bloom tap", "buffer 2", "the incubator's port".</summary>
         public string EndName(string end) =>
-            GrowthLab.IsTap(end) ? "the " + Name(GrowthLab.TapCulture(end)) + " tap" : GrowthLab.IsBuffer(end) ? "buffer " + (GrowthLab.BufferPlace(end) + 1) : "the incubator's port";
+            GrowthLab.IsTap(end) ? "the " + Name(GrowthLab.TapCulture(end)) + " tap" : GrowthLab.IsBuffer(end) ? "buffer " + (GrowthLab.BufferPlace(end) + 1) :
+            end == GrowthLab.Out ? "the incubator's outlet" : end == GrowthLab.Sorter ? "the sorter" : "the incubator's port";
 
         // ---------------------------------------------------------------- the lab annex
 
@@ -346,12 +355,12 @@ namespace EvolutionShop.Growth
 
         // ---------------------------------------------------------------- pipes
 
-        /// <summary>Two picked ends as a pipe's upstream and downstream: a tap to a buffer, or a buffer to the port, either way round.</summary>
+        /// <summary>Two picked ends as a pipe's upstream and downstream: a tap to a buffer, a buffer to the port, or the outlet to the sorter, either way round.</summary>
         public static bool Orient(string a, string b, out string from, out string to)
         {
             from = to = null;
-            if (GrowthLab.IsTap(b) || a == GrowthLab.Port && GrowthLab.IsBuffer(b)) { var t = a; a = b; b = t; }
-            if (GrowthLab.IsTap(a) && GrowthLab.IsBuffer(b) || GrowthLab.IsBuffer(a) && b == GrowthLab.Port) { from = a; to = b; return true; }
+            if (GrowthLab.IsTap(b) || a == GrowthLab.Port && GrowthLab.IsBuffer(b) || b == GrowthLab.Out) { var t = a; a = b; b = t; }
+            if (GrowthLab.IsTap(a) && GrowthLab.IsBuffer(b) || GrowthLab.IsBuffer(a) && b == GrowthLab.Port || a == GrowthLab.Out && b == GrowthLab.Sorter) { from = a; to = b; return true; }
             return false;
         }
 
@@ -364,10 +373,17 @@ namespace EvolutionShop.Growth
             plan = null; why = null;
             if (!Annex) { why = "Open the lab annex first"; return GrowthFailure.Locked; }
             if (!HasPumps) { why = "Buy pumps and pipes on the power board first"; return GrowthFailure.Locked; }
-            if (!Orient(a, b, out string from, out string to)) { why = "A pipe runs from a grower's tap to a buffer, or from a buffer to the incubator's port"; return GrowthFailure.NoSuchPlace; }
-            int place = GrowthLab.IsBuffer(to) ? GrowthLab.BufferPlace(to) : GrowthLab.BufferPlace(from);
+            if (!Orient(a, b, out string from, out string to)) { why = "A pipe runs from a grower's tap to a buffer, from a buffer to the incubator's port, or from the incubator's outlet to the sorter"; return GrowthFailure.NoSuchPlace; }
+            int place = GrowthLab.IsBuffer(to) ? GrowthLab.BufferPlace(to) : GrowthLab.IsBuffer(from) ? GrowthLab.BufferPlace(from) : -1;
             var buffer = BufferAt(place);
-            if (GrowthLab.IsTap(from))
+            if (from == GrowthLab.Out)
+            {
+                // GR-08: the hatchling chute, from the incubator's outlet to the sorter in the workshop (no pump: clutches slide down it).
+                if (!Workshop) { why = "Open the workshop first: the sorter stands there"; return GrowthFailure.Locked; }
+                if (!HasSorter) { why = "Buy the sorter in the workshop first"; return GrowthFailure.Locked; }
+                if (Chute != null) { why = "The chute is laid already"; return GrowthFailure.Busy; }
+            }
+            else if (GrowthLab.IsTap(from))
             {
                 string culture = GrowthLab.TapCulture(from);
                 if (!Owns(culture)) { why = "You don't grow " + Name(culture) + " yet"; return GrowthFailure.NotOwned; }
@@ -386,7 +402,7 @@ namespace EvolutionShop.Growth
             }
             if (Phase != GrowthPhase.Night) { why = "Pipes are laid at night"; return GrowthFailure.NotAtNight; }
             var cells = RouteFor(from, to);
-            if (cells == null) { why = "No room for this pipe: other pipes are in the way"; return GrowthFailure.NoRoute; }
+            if (cells == null || !GrowthLab.CanJoin(Pipes.Select(p => p.Cells), cells)) { why = "No room for this pipe: other pipes are in the way"; return GrowthFailure.NoRoute; }
             plan = new GrowthPipe { From = from, To = to, Length = GrowthLab.Length(cells, from, to) };
             plan.Cells.AddRange(cells);
             plan.Paid = (int)Math.Ceiling(plan.Length * GrowthContent.PipeCreditsPerMetre - 1e-4f);
@@ -398,7 +414,7 @@ namespace EvolutionShop.Growth
         List<(int c, int r)> RouteFor(string from, string to)
         {
             var ends = new HashSet<(int c, int r)>(GrowthLab.AllEnds.Where(e => e != from && e != to).Select(GrowthLab.EndCell));
-            return GrowthLab.Route(GrowthLab.EndCell(from), GrowthLab.EndCell(to), c => GrowthLab.InLab(c, Annex) && !ends.Contains(c), GrowthLab.Occupancy(Pipes.Select(p => p.Cells)));
+            return GrowthLab.Route(GrowthLab.EndCell(from), GrowthLab.EndCell(to), c => GrowthLab.InLab(c, Annex, Workshop) && !ends.Contains(c), GrowthLab.Occupancy(Pipes.Select(p => p.Cells)));
         }
 
         /// <summary>Lays a pipe at night between two ends: paid by its length; a tap's pipe gives its buffer the culture and joins the power board.</summary>
@@ -425,7 +441,7 @@ namespace EvolutionShop.Growth
             var p = Pipe(id);
             if (p == null) return GrowthResult.Fail(GrowthFailure.NoSuchPlace, "No such pipe");
             if (Phase != GrowthPhase.Night) return GrowthResult.Fail(GrowthFailure.NotAtNight, "Pipes are taken down at night");
-            if (!p.Line && AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing from it");
+            if (!p.Line && !p.Chute && AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing from it");
             Pipes.Remove(p);
             PowerOrder.Remove(p.PowerId);
             if (p.Line)
@@ -491,10 +507,11 @@ namespace EvolutionShop.Growth
             return GrowthResult.Ok();
         }
 
-        /// <summary>A machine's name on the power board: a pump by its line, or the auto-doser.</summary>
+        /// <summary>A machine's name on the power board: a pump by its line, the auto-doser, or the sorter.</summary>
         public string PowerName(string id)
         {
             if (id == DoserPower) return "Auto-doser";
+            if (id == SorterPower) return "Sorter";
             var p = Pipe(int.Parse(id.Substring(5)));
             return p == null ? id : Name(p.Culture) + " pump to " + BufferName(GrowthLab.BufferPlace(p.To)).ToLowerInvariant();
         }
@@ -545,6 +562,7 @@ namespace EvolutionShop.Growth
             var failure = AutoRecipeCheck(species, out string why);
             if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
             AutoRecipe = species;
+            AutoByTargets = false;
             return GrowthResult.Ok(species);
         }
 
@@ -552,7 +570,7 @@ namespace EvolutionShop.Growth
         public GrowthResult SwitchAutoDoser(bool on)
         {
             if (!AutoDoser) return GrowthResult.Fail(GrowthFailure.Locked, "The auto-doser comes with the incubator's level 4");
-            if (on && AutoRecipe == null) return GrowthResult.Fail(GrowthFailure.NoDose, "Choose a recipe first");
+            if (on && AutoRecipe == null && !AutoByTargets) return GrowthResult.Fail(GrowthFailure.NoDose, "Choose a recipe first");
             if (AutoOn == on) return GrowthResult.Fail(GrowthFailure.MaxLevel, on ? "On already" : "Off already");
             AutoOn = on;
             if (on && !PowerOrder.Contains(DoserPower)) PowerOrder.Add(DoserPower);
@@ -578,13 +596,15 @@ namespace EvolutionShop.Growth
         string AutoWaiting()
         {
             if (!AutoDoser) return "Needs the incubator's level 4";
-            if (AutoRecipe == null) return "Choose a recipe";
+            if (AutoRecipe == null && !AutoByTargets) return "Choose a recipe";
             if (!AutoOn) return "Off";
             if (AutoBatch) { var next = AutoMissing().FirstOrDefault(); return next != null && PortUnits(next) < 1 ? "Waiting for 1 " + Name(next) + " in the port's buffers" : null; }
             if (Incubating) return "Incubating";
-            if (Hatchlings.Count > 0) return "Waiting: take the clutch out of the incubator";
+            if (Hatchlings.Count > 0) return HasSorter && Chute != null ? "Waiting for the sorter to clear the tray" : "Waiting: take the clutch out of the incubator";
             if (Chamber.Count > 0) return "The chamber has doses: start them or take them back";
-            var recipe = GrowthContent.Get(AutoRecipe).Recipe;
+            string species = NextRecipe;
+            if (species == null) return "Every stock target the port can make is met";
+            var recipe = GrowthContent.Get(species).Recipe;
             for (int i = 0; i < recipe.Length; i++)
             {
                 if (recipe[i] == 0) continue;
@@ -602,7 +622,7 @@ namespace EvolutionShop.Growth
             {
                 string waiting = AutoWaiting();
                 if (waiting != null) return waiting;
-                if (!AutoBatch) return "Starting a " + GrowthContent.Get(AutoRecipe).Name;
+                if (!AutoBatch) return "Starting a " + GrowthContent.Get(NextRecipe).Name;
                 int total = GrowthContent.Get(AutoRecipe).Doses;
                 return PowerStatus(PowerUse(DoserPower), "Dosing a " + GrowthContent.Get(AutoRecipe).Name + ": " + (total - AutoMissing().Count) + " of " + total + " doses");
             }
@@ -635,12 +655,13 @@ namespace EvolutionShop.Growth
         {
             float supply = !HasGenerator ? 0 : HandCrank ? GeneratorUnits * Math.Min(1f, crankLeft / seconds) : GeneratorUnits;
             crankLeft = Math.Max(0, crankLeft - seconds);
-            if (AutoDoser && AutoOn && AutoRecipe != null && !AutoBatch && AutoWaiting() == null) { AutoBatch = true; AutoProgress = 0; }
+            if (AutoDoser && AutoOn && !AutoBatch && AutoWaiting() == null) { AutoRecipe = NextRecipe; AutoBatch = true; AutoProgress = 0; }
             PowerUses.Clear();
             foreach (string id in PowerOrder)
             {
                 var use = new GrowthPowerUse { Id = id, Name = PowerName(id) };
                 if (id == DoserPower) use.Draw = AutoBatch && AutoWaiting() == null ? GrowthContent.AutoDoserUnits : 0;
+                else if (id == SorterPower) use.Draw = HasSorter && SorterIdle() == null ? SorterUnits : 0;
                 else { var p = Pipe(int.Parse(id.Substring(5))); use.Draw = p != null && ElectricPumps && LineIdle(p) == null ? PumpUnits : 0; }
                 PowerUses.Add(use);
             }
@@ -657,13 +678,21 @@ namespace EvolutionShop.Growth
                     while (AutoBatch && AutoProgress >= GrowthContent.AutoDoseSeconds && AutoWaiting() == null) { AutoProgress -= GrowthContent.AutoDoseSeconds; AutoDose(); }
                     continue;
                 }
+                if (use.Id == SorterPower)
+                {
+                    SortProgress += seconds * share;
+                    while (SortProgress >= SortSeconds && SorterIdle() == null) { SortProgress -= SortSeconds; SortOne(); }
+                    continue;
+                }
                 var p = Pipe(int.Parse(use.Id.Substring(5)));
                 var b = BufferAt(GrowthLab.BufferPlace(p.To));
                 float amount = Math.Min(seconds * share / PumpDoseSeconds, Math.Min(GrowerUnits[p.Culture], GrowthContent.BufferCapacity - b.Units));
                 GrowerUnits[p.Culture] -= amount;
                 b.Units += amount;
             }
-            foreach (var use in PowerUses) use.Status = use.Id == DoserPower ? AutoStatus : LineStatus(Pipe(int.Parse(use.Id.Substring(5))));
+            if (!HasSorter || SorterIdle() != null) SortProgress = 0;
+            foreach (var use in PowerUses) use.Status = use.Id == DoserPower ? AutoStatus : use.Id == SorterPower ? SorterStatus : LineStatus(Pipe(int.Parse(use.Id.Substring(5))));
+            TickLineDay();
         }
 
         // ---------------------------------------------------------------- saving (version 6)
@@ -681,6 +710,7 @@ namespace EvolutionShop.Growth
         static string RestorePower(GrowthShop shop, GrowthSave s)
         {
             shop.Annex = s.annex;
+            shop.Workshop = s.workshop;
             if ((shop.HasGenerator || shop.HasPumps) && !shop.Annex) return "Power without the lab annex";
             foreach (var b in s.buffers ?? new GrowthSave.Buffer[0])
             {
@@ -700,14 +730,15 @@ namespace EvolutionShop.Growth
                 if (cells.Count == 0 || cells[0] != GrowthLab.EndCell(from) || cells[cells.Count - 1] != GrowthLab.EndCell(to)) return "A pipe that does not reach its ends";
                 for (int i = 0; i < cells.Count; i++)
                 {
-                    if (!GrowthLab.InLab(cells[i], shop.Annex)) return "A pipe outside the lab";
+                    if (!GrowthLab.InLab(cells[i], shop.Annex, shop.Workshop)) return "A pipe outside the lab";
                     if (i > 0 && !GrowthLab.Adjacent(cells[i - 1], cells[i])) return "A broken pipe";
                 }
                 if (!GrowthLab.CanJoin(shop.Pipes.Select(p => p.Cells), cells)) return "Two pipes in one place";
-                int place = GrowthLab.IsBuffer(to) ? GrowthLab.BufferPlace(to) : GrowthLab.BufferPlace(from);
+                int place = GrowthLab.IsBuffer(to) ? GrowthLab.BufferPlace(to) : GrowthLab.IsBuffer(from) ? GrowthLab.BufferPlace(from) : -1;
                 var buffer = shop.BufferAt(place);
-                if (buffer == null) return "A pipe to a buffer that is not there";
-                if (GrowthLab.IsTap(from))
+                if (from == GrowthLab.Out) { if (!shop.Workshop || !shop.HasSorter || shop.Chute != null) return "A chute that cannot be"; }
+                else if (buffer == null) return "A pipe to a buffer that is not there";
+                else if (GrowthLab.IsTap(from))
                 {
                     string culture = GrowthLab.TapCulture(from);
                     if (!shop.Owns(culture) || shop.Pipes.Count(p => p.From == from) >= shop.Taps || shop.InletOf(place) != null) return "A tap's pipe that cannot be";
@@ -720,11 +751,12 @@ namespace EvolutionShop.Growth
             }
             foreach (var id in s.powerOrder ?? new string[0])
             {
-                bool known = id == DoserPower || id.StartsWith("line:", StringComparison.Ordinal) && int.TryParse(id.Substring(5), out int pid) && shop.Pipe(pid) != null && shop.Pipe(pid).Line;
+                bool known = id == DoserPower || id == SorterPower && shop.HasSorter || id.StartsWith("line:", StringComparison.Ordinal) && int.TryParse(id.Substring(5), out int pid) && shop.Pipe(pid) != null && shop.Pipe(pid).Line;
                 if (!known || shop.PowerOrder.Contains(id)) return "Unknown power use " + id;
                 shop.PowerOrder.Add(id);
             }
             foreach (var line in shop.Lines) if (!shop.PowerOrder.Contains(line.PowerId)) shop.PowerOrder.Add(line.PowerId);
+            if (shop.HasSorter && !shop.PowerOrder.Contains(SorterPower)) shop.PowerOrder.Add(SorterPower);
             shop.AutoRecipe = string.IsNullOrEmpty(s.autoRecipe) ? null : s.autoRecipe;
             shop.AutoOn = s.autoOn; shop.AutoBatch = s.autoBatch; shop.AutoProgress = Math.Max(0, s.autoProgress); shop.AutoBatches = Math.Max(0, s.autoBatches);
             if (shop.AutoRecipe != null)
@@ -732,14 +764,16 @@ namespace EvolutionShop.Growth
                 var r = GrowthContent.Get(shop.AutoRecipe);
                 if (r == null || r.Kind != SpeciesKind.Founder || !shop.Discovered.Contains(shop.AutoRecipe) || !shop.AutoDoser) return "An auto-doser recipe that cannot be";
             }
-            if (shop.AutoOn && shop.AutoRecipe == null) return "The auto-doser on without a recipe";
+            shop.AutoByTargets = s.autoByTargets;
+            if (shop.AutoByTargets && !shop.AutoDoser) return "An auto-doser by targets without the auto-doser";
+            if (shop.AutoOn && shop.AutoRecipe == null && !shop.AutoByTargets) return "The auto-doser on without a recipe";
             if (shop.AutoOn && !shop.PowerOrder.Contains(DoserPower)) shop.PowerOrder.Add(DoserPower);
             if (shop.AutoBatch)
             {
                 // A batch mid-way is the doses it moved into the chamber so far: never more than the recipe (GR.15.1, no culture twice).
                 var recipe = GrowthContent.Get(shop.AutoRecipe).Recipe;
                 bool fits = shop.Chamber.All(c => shop.Chamber.Count(x => x == c) <= recipe[GrowthContent.CultureIndex(c)]);
-                if (!shop.AutoOn || !fits || shop.Incubating || shop.Hatchlings.Count > 0) return "An auto-doser batch that cannot be";
+                if (shop.AutoRecipe == null || !shop.AutoOn || !fits || shop.Incubating || shop.Hatchlings.Count > 0) return "An auto-doser batch that cannot be";
             }
             return null;
         }

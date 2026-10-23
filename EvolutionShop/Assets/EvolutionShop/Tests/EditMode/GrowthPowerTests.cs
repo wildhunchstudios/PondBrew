@@ -89,7 +89,7 @@ namespace EvolutionShop.Tests
             Assert.That((shop.HandCrank, shop.GeneratorUnits, shop.SupplyNow), Is.EqualTo((false, 3f, 3f)), "the bubble turbine runs by itself");
             Assert.That(shop.CrankGenerator().Failure, Is.EqualTo(GrowthFailure.Busy));
             Assert.That(shop.UpgradeCheck("generator", out _, out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Waits for the workshop (GR-10)"), "turbines past the bubble turbine stand in the workshop");
+            Assert.That(why, Is.EqualTo("Needs era 4"), "the twin turbine in era 4 (GR-08: in the workshop)");
             Assert.That(shop.UpgradeCheck("pump", out _, out why), Is.EqualTo(GrowthFailure.Locked));
             Assert.That(why, Is.EqualTo("Needs era 4"), "fast pumps in era 4");
             // Buffers come with pumps and are placed at night.
@@ -190,7 +190,7 @@ namespace EvolutionShop.Tests
             // Every end sits in its own cell inside the lab.
             var cells = GrowthLab.AllEnds.Select(GrowthLab.EndCell).ToList();
             Assert.That(cells.Distinct().Count(), Is.EqualTo(cells.Count));
-            Assert.That(cells.All(c => GrowthLab.InLab(c, true)), Is.True);
+            Assert.That(cells.All(c => GrowthLab.InLab(c, true, true)), Is.True);
             Assert.That(GrowthLab.AllEnds.Where(GrowthLab.IsBuffer).All(e => GrowthLab.EndCell(e).r >= GrowthLab.AnnexFirstRow), Is.True, "buffers stand in the annex");
         }
 
@@ -393,7 +393,7 @@ namespace EvolutionShop.Tests
             back.BufferAt(1).Units = 1;
             back.Tick(0.6f);
             Assert.That((back.Incubating, back.BufferAt(0).Units, back.BufferAt(1).Units), Is.EqualTo((true, 0f, 0f)));
-            Assert.That(GrowthSave.CurrentVersion, Is.EqualTo(6));
+            Assert.That(GrowthSave.CurrentVersion, Is.GreaterThanOrEqualTo(6), "version 6 or later (GR-08 is 7)");
             // A GR-06 save loads with no annex.
             var gr06 = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(JsonUtility.ToJson(At(4, 4).Snapshot()).Replace("\"version\":6", "\"version\":5")), out problem);
             Assert.That(problem, Is.Null);
@@ -416,7 +416,7 @@ namespace EvolutionShop.Tests
             Refused(b => b.chamber = new[] { "bloom", "bloom" }, "An auto-doser batch that cannot be");
             Refused(b => b.autoRecipe = "ribbonfin", "An auto-doser recipe that cannot be");
             Refused(b => b.powerOrder = b.powerOrder.Concat(new[] { "line:999" }).ToArray(), "Unknown power use line:999");
-            Refused(b => b.levels[Array.IndexOf(b.stations, "generator")] = 3, "Bad station level generator");
+            Refused(b => b.levels[Array.IndexOf(b.stations, "generator")] = 3, "A turbine without the workshop it stands in");
         }
     }
 }

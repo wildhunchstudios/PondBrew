@@ -220,12 +220,14 @@ namespace EvolutionShop
             switch (e.Kind)
             {
                 case GrowthEventKind.Collected:
-                case GrowthEventKind.Pumped: return;
+                case GrowthEventKind.Pumped:
+                case GrowthEventKind.Sorted: return;
                 case GrowthEventKind.Discovery:
                 case GrowthEventKind.EraUp:
                 case GrowthEventKind.StarUp:
                 case GrowthEventKind.CultureOwned:
                 case GrowthEventKind.NewColour:
+                case GrowthEventKind.LineDay:
                     Log.Add(e.Text);
                     if (!Ready) return;
                     bannerLabel.text = e.Text; banner.style.display = DisplayStyle.Flex; bannerUntil = Time.unscaledTime + 3f;
@@ -242,7 +244,7 @@ namespace EvolutionShop
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null;
             if (which == GrowthCard.None) return;
             bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause;
-            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer ? 540 : which == GrowthCard.PowerBoard ? 600 : 470);
+            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer ? 540 : which == GrowthCard.PowerBoard || which == GrowthCard.Sorter ? 600 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
             Fill(which, target);
@@ -350,7 +352,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature();
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature();
         }
 
         string LiveText()
@@ -362,7 +364,7 @@ namespace EvolutionShop
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + ShopClock(shop.DaySecondsLeft) + " left." : "Closed for the night.";
                 case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacityOf(s.CardTarget) + " doses ready";
                 case GrowthCard.Breeding: return !shop.HasBreedingTank ? "" : shop.Offspring != null ? "An offspring is in the nursery." : shop.Breeding ? "Breeding… " + Mathf.CeilToInt(shop.BreedingLeft) + " s" : "Waiting for a pair.";
-                default: return PowerLiveText() ?? "";
+                default: return PowerLiveText() ?? LineLiveText() ?? "";
             }
         }
 
@@ -396,6 +398,8 @@ namespace EvolutionShop
                 case GrowthCard.Generator: FillGenerator(); break;
                 case GrowthCard.PowerBoard: FillPowerBoard(); break;
                 case GrowthCard.Buffer: FillBuffer(target); break;
+                case GrowthCard.Workshop: FillWorkshop(); break;
+                case GrowthCard.Sorter: FillSorter(); break;
             }
         }
 
@@ -545,6 +549,7 @@ namespace EvolutionShop
                 body.Add(tintBox);
             }
             AutoDoserSection(body);
+            ChuteSection(body);
             UpgradeSection(body, "incubator");
             Footer(body);
         }
@@ -590,7 +595,8 @@ namespace EvolutionShop
             var c = shop.Container(containerId);
             if (c == null) { s.SetCard(GrowthCard.None); return; }
             var body = Head(c.Def.Name + " · level " + c.Level, c.Used + "/" + c.Spaces + " spaces");
-            body.Add(Text("Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better.", "es-text--muted"));
+            body.Add(Text(c.Def.Lab ? "In the workshop, off the shop floor: visitors never see it. Holds " + Holds(c.Def) + "; carry creatures from here to the shop's tanks." :
+                "Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better.", "es-text--muted"));
             body.Add(SpaceGrid(c));
             // Each species in it with its count; press one to take a creature of it out.
             var grid = Row();
@@ -618,8 +624,8 @@ namespace EvolutionShop
                 }
                 body.Add(put);
             }
-            // GR.5 comfort (era 3): the water, harmony and the water kits.
-            if (shop.Era >= GrowthContent.ComfortEra)
+            // GR.5 comfort (era 3): the water, harmony and the water kits (not for a lab rack, which is never on show).
+            if (shop.Era >= GrowthContent.ComfortEra && !c.Def.Lab)
             {
                 var waterLine = Text("Water: " + c.Water.ToString().ToLowerInvariant() + " · " + HarmonyText(c)); waterLine.style.marginTop = 8;
                 body.Add(waterLine);
@@ -664,6 +670,7 @@ namespace EvolutionShop
         void FillPlace(string place)
         {
             var shop = s.Shop;
+            if (GrowthShop.LabPlace(place) != null) { FillRackPlace(place); return; }
             var spot = GrowthShop.Place(place);
             if (spot == null) { s.SetCard(GrowthCard.None); return; }
             var body = Head("Empty place", (spot.Unit == "unit-b" ? "shop unit B" : "shop unit A") + " · " + spot.Size);
@@ -752,6 +759,7 @@ namespace EvolutionShop
             body.Add(Text(shop.Microscope ? "The microscope: the incubator card says how many doses each mix is from something new." :
                 "Notes: undiscovered founders show the cultures they use in the journal. The microscope (level 2) measures how far a mix is from something new.", "es-text--muted"));
             UpgradeSection(body, "bench", "The research bench");
+            AnalyzerSection(body);
             Footer(body);
         }
 
@@ -902,7 +910,9 @@ namespace EvolutionShop
                 var known = shop.PairEntry(pairState.Parents[0].Species, pairState.Parents[1].Species);
                 var next = shop.NextColourOf(pairState);
                 string colour = next == Colour.Classic ? "" : " Its colour: " + next + (shop.Tint != null ? " (the " + GrowthShop.Name(shop.Tint) + " tint)." : " (the higher parent colour).");
-                body.Add(Text((known != null ? "This pair makes a " + GrowthContent.Get(known.Species).Name + " (bred ×" + known.Count + " so far)." : "A pair you have not tried: every pair makes something.") + colour,
+                var planned = known == null ? shop.PlannerPredicts(pairState.Parents[0].Species, pairState.Parents[1].Species) : null;
+                body.Add(Text((known != null ? "This pair makes a " + GrowthContent.Get(known.Species).Name + " (bred ×" + known.Count + " so far)." :
+                    planned != null ? "The planner: this pair makes a " + planned.Name + (shop.Discovered.Contains(planned.Id) ? "." : " — new to your journal.") : "A pair you have not tried: every pair makes something.") + colour,
                     known == null ? "es-card__reason" : "es-text"));
             }
             }

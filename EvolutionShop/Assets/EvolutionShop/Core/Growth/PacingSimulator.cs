@@ -378,12 +378,14 @@ namespace EvolutionShop.Growth
 
         /// <summary>
         /// GR-07: what the lab's pipes cost beside a level: with the hand pump, two lines (a buffer each and a pipe of about
-        /// LineMetres from a grower's tap); with the incubator's port (level 4), a pipe from each of those buffers to it.
+        /// LineMetres from a grower's tap); with the incubator's port (level 4), a pipe from each of those buffers to it; GR-08:
+        /// with the sorter, its hatchling chute of about ChuteMetres from the incubator's outlet to the workshop.
         /// </summary>
-        public const float LineMetres = 7f, PortMetres = 9f;
+        public const float LineMetres = 7f, PortMetres = 9f, ChuteMetres = 17f;
         static int LinesWith(string id, int lv) =>
             id == "pump" && lv == 1 ? 2 * (GrowthContent.BufferCredits + (int)Math.Ceiling(LineMetres * GrowthContent.PipeCreditsPerMetre)) :
-            id == "incubator" && lv == 4 ? 2 * (int)Math.Ceiling(PortMetres * GrowthContent.PipeCreditsPerMetre) : 0;
+            id == "incubator" && lv == 4 ? 2 * (int)Math.Ceiling(PortMetres * GrowthContent.PipeCreditsPerMetre) :
+            id == "sorter" && lv == 1 ? (int)Math.Ceiling(ChuteMetres * GrowthContent.PipeCreditsPerMetre) : 0;
 
         /// <summary>Machines need their room; turbines need the annex; the line's machines need the workshop and power.</summary>
         bool StationReady(string id, int next)

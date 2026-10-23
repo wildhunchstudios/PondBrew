@@ -46,7 +46,7 @@ namespace EvolutionShop
             Application.logMessageReceived += Log;
             bool failed = false;
             string route = GrowthGreybox.SmokeRoute;
-            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : route == "cultures" ? CulturesScenario() : route == "breeding" ? BreedingScenario() : route == "stations" ? StationsScenario() : route == "power" ? PowerScenario() : Scenario();
+            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : route == "cultures" ? CulturesScenario() : route == "breeding" ? BreedingScenario() : route == "stations" ? StationsScenario() : route == "power" ? PowerScenario() : route == "line" ? LineScenario() : Scenario();
             while (true)
             {
                 object current;
@@ -60,7 +60,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText : route == "cultures" ? CulturesScenarioText : route == "breeding" ? BreedingScenarioText : route == "stations" ? StationsScenarioText : route == "power" ? PowerScenarioText :
+                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText : route == "cultures" ? CulturesScenarioText : route == "breeding" ? BreedingScenarioText : route == "stations" ? StationsScenarioText : route == "power" ? PowerScenarioText : route == "line" ? LineScenarioText :
                     "GR-02 greybox: fresh shop, grower collection by a held mouse, never-fail mixing and the mix log, hatch, carry, tank and school, peek, a day of visitors served at the counter, the receipt, a second tank, era 2 and unit B, an upgrade, save and reload, comfort",
                 context = Application.isEditor ? "Unity Editor Play mode (automated)" : "Windows standalone development player (automated)",
                 unityVersion = Application.unityVersion, graphics = SystemInfo.graphicsDeviceName, processor = SystemInfo.processorType, savePath = s.SavePath,

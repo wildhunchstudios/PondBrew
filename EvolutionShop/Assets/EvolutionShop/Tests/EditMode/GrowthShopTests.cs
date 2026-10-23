@@ -388,10 +388,13 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Buy a Large tank"));
             Assert.That(shop.Objectives().First().done, Is.False);
             shop.Era = 3;
-            // GR-07: era 3's goal, the lab annex and powered pumps; the greybox ends in era 4.
+            // GR-07: era 3's goal, the lab annex and powered pumps. GR-08: era 4's, the workshop and a full day on the line; the greybox ends in era 5.
             Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Open the lab annex"));
             shop.Era = 4;
-            Assert.That(shop.Objectives().Last().done, Is.True, "the greybox ends in era 4");
+            Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Open the workshop"));
+            Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Run a full day on the line"));
+            shop.Era = 5;
+            Assert.That(shop.Objectives().Last().done, Is.True, "the greybox ends in era 5");
         }
     }
 }

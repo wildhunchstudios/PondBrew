@@ -50,7 +50,8 @@ namespace EvolutionShop
             Box(rooms, "Annex ceiling", new Vector3(0, 3.65f, 13), new Vector3(8, 0.1f, 8), wallLab);
             Wall("Annex west wall", new Vector2(-4, 9), new Vector2(-4, 17), 3.6f, wallLab);
             Wall("Annex north wall", new Vector2(-4, 17), new Vector2(4, 17), 3.6f, wallLab);
-            Wall("Annex east wall", new Vector2(4, 9), new Vector2(4, 17), 3.6f, wallLab);
+            // GR-08: a doorway into the workshop, closed by a partition until it opens (GrowthWorldLine).
+            Wall("Annex east wall", new Vector2(4, 9), new Vector2(4, 17), 3.6f, wallLab, new Vector2(WorkshopDoorFrom, WorkshopDoorTo));
             Wall("Annex south wall (east of the back room)", new Vector2(2, 9), new Vector2(4, 9), 3.6f, wallLab);
             annexLight = Lamp("Lab annex lamp", new Vector3(0, 2.8f, 13), 9, 1.15f);
             annexWall = new GameObject("Lab annex partition");
@@ -142,7 +143,7 @@ namespace EvolutionShop
             { if (pumps[c].root) Destroy(pumps[c].root.gameObject); pumps.Remove(c); }
             foreach (var c in piped) if (!pumps.ContainsKey(c) && sources.TryGetValue(c, out var src)) pumps[c] = BuildPump(src.Root, c, shop.Level("pump"));
             // Pipes, rebuilt when they change.
-            string signature = string.Join(";", shop.Pipes.Select(p => p.Id + ":" + p.From + ">" + p.To + ":" + (shop.BufferAt(GrowthLab.IsBuffer(p.To) ? GrowthLab.BufferPlace(p.To) : GrowthLab.BufferPlace(p.From))?.Culture ?? "")));
+            string signature = string.Join(";", shop.Pipes.Select(p => p.Id + ":" + p.From + ">" + p.To + ":" + (PipeCulture(shop, p) ?? "")));
             if (signature != pipeSignature) { pipeSignature = signature; BuildPipes(shop); }
             // The power board: supply and draw as bars of the generator's largest output, a lamp that is amber when short.
             float scale = 12f;
@@ -184,13 +185,20 @@ namespace EvolutionShop
             }
             else
             {
-                // The bubble turbine: a tall glass column of rising bubbles over a turbine housing.
-                Box(p, "Turbine", new Vector3(0, 0.6f, 0), new Vector3(0.7f, 0.4f, 0.6f), trim, true);
-                ShopWorld.Shape(p, "Column", PrimitiveType.Cylinder, new Vector3(0, 1.3f, 0), new Vector3(0.5f, 0.5f, 0.5f), glass);
-                ShopWorld.Shape(p, "Column water", PrimitiveType.Cylinder, new Vector3(0, 1.25f, 0), new Vector3(0.44f, 0.44f, 0.44f), water);
-                for (int i = 0; i < 8; i++)
-                    turbineBubbles.Add(ShopWorld.Shape(p, "Bubble " + i, PrimitiveType.Sphere, new Vector3(0.12f * Mathf.Sin(i * 2.1f), 0.85f, 0.12f * Mathf.Cos(i * 2.1f)), Vector3.one * 0.07f, dome));
-                Box(p, "Lamp", new Vector3(0.28f, 0.75f, 0.31f), new Vector3(0.08f, 0.08f, 0.02f), lampOk);
+                // The bubble turbine: a tall glass column of rising bubbles over a turbine housing. GR-08: the twin turbine
+                // (level 3) has two columns, the tide engine (level 4) three over a wider drum; both stand in the workshop.
+                int columns = level >= 4 ? 3 : level == 3 ? 2 : 1;
+                Box(p, "Turbine", new Vector3(0, 0.6f, 0), new Vector3(0.7f + 0.45f * (columns - 1), 0.4f, 0.6f), trim, true);
+                if (level >= 4) ShopWorld.Shape(p, "Tide drum", PrimitiveType.Cylinder, new Vector3(0, 0.6f, -0.32f), new Vector3(0.5f, 0.5f, 0.5f), stand).localRotation = Quaternion.Euler(0, 0, 90);
+                for (int k = 0; k < columns; k++)
+                {
+                    float x = (k - (columns - 1) * 0.5f) * 0.5f;
+                    ShopWorld.Shape(p, "Column", PrimitiveType.Cylinder, new Vector3(x, 1.3f, 0), new Vector3(0.44f, 0.5f, 0.44f), glass);
+                    ShopWorld.Shape(p, "Column water", PrimitiveType.Cylinder, new Vector3(x, 1.25f, 0), new Vector3(0.38f, 0.44f, 0.38f), water);
+                    for (int i = 0; i < 8; i++)
+                        turbineBubbles.Add(ShopWorld.Shape(p, "Bubble " + i, PrimitiveType.Sphere, new Vector3(x + 0.1f * Mathf.Sin(i * 2.1f + k), 0.85f, 0.1f * Mathf.Cos(i * 2.1f + k)), Vector3.one * 0.07f, dome));
+                }
+                Box(p, "Lamp", new Vector3(0.28f + 0.22f * (columns - 1), 0.75f, 0.31f), new Vector3(0.08f, 0.08f, 0.02f), lampOk);
             }
         }
 
@@ -253,29 +261,37 @@ namespace EvolutionShop
             return points;
         }
 
+        /// <summary>The culture a pipe carries: its line's, or for a port pipe its buffer's; none for the chute.</summary>
+        static string PipeCulture(GrowthShop shop, GrowthPipe p) =>
+            p.Line ? p.Culture : GrowthLab.IsBuffer(p.From) ? shop.BufferAt(GrowthLab.BufferPlace(p.From))?.Culture : null;
+
         void BuildPipes(GrowthShop shop)
         {
             for (int i = pipesRoot.childCount - 1; i >= 0; i--) Destroy(pipesRoot.GetChild(i).gameObject);
             var laid = new List<GrowthPipe>();
+            KeepChutePath(new List<Vector3>());
             foreach (var pipe in shop.Pipes)
             {
                 var before = new HashSet<(int c, int r)>(laid.SelectMany(p => p.Cells));
                 var crossings = pipe.Cells.Skip(1).Take(Mathf.Max(0, pipe.Cells.Count - 2)).Where(before.Contains).ToList();
-                string c = pipe.Line ? pipe.Culture : shop.BufferAt(GrowthLab.BufferPlace(pipe.From))?.Culture;
+                string c = PipeCulture(shop, pipe);
                 var root = new GameObject("Pipe " + pipe.Id + ": " + pipe.From + " to " + pipe.To).transform; root.SetParent(pipesRoot, false);
-                DrawPath(root, PipePath(pipe, crossings), c == null ? stand : culture[c]);
+                var path = PipePath(pipe, crossings);
+                // GR-08: the hatchling chute is a wider glass tube; its bead follows its path.
+                if (pipe.Chute) { DrawPath(root, path, chuteMat, ChuteRadius); KeepChutePath(path); }
+                else DrawPath(root, path, c == null ? stand : culture[c]);
                 laid.Add(pipe);
             }
         }
 
-        void DrawPath(Transform root, List<Vector3> points, Material material)
+        void DrawPath(Transform root, List<Vector3> points, Material material, float radius = PipeRadius)
         {
             for (int i = 1; i < points.Count; i++)
             {
                 var a = points[i - 1]; var b = points[i];
                 float length = Vector3.Distance(a, b);
                 if (length < 0.005f) continue;
-                var seg = ShopWorld.Shape(root, "Segment", PrimitiveType.Cylinder, (a + b) * 0.5f, new Vector3(PipeRadius * 2, length * 0.5f + PipeRadius, PipeRadius * 2), material);
+                var seg = ShopWorld.Shape(root, "Segment", PrimitiveType.Cylinder, (a + b) * 0.5f, new Vector3(radius * 2, length * 0.5f + radius, radius * 2), material);
                 seg.localRotation = Quaternion.FromToRotation(Vector3.up, (b - a).normalized);
             }
         }
@@ -289,7 +305,7 @@ namespace EvolutionShop
             ghostSignature = signature;
             if (plan == null) return;
             var before = new HashSet<(int c, int r)>(shop.Pipes.SelectMany(p => p.Cells));
-            DrawPath(ghostRoot, PipePath(plan, plan.Cells.Skip(1).Take(Mathf.Max(0, plan.Cells.Count - 2)).Where(before.Contains).ToList()), ok ? ghostOk : ghostBad);
+            DrawPath(ghostRoot, PipePath(plan, plan.Cells.Skip(1).Take(Mathf.Max(0, plan.Cells.Count - 2)).Where(before.Contains).ToList()), ok ? ghostOk : ghostBad, plan.Chute ? ChuteRadius : PipeRadius);
         }
 
         public void HidePipeGhost()

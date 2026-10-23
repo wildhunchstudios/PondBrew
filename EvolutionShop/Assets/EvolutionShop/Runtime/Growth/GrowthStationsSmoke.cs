@@ -36,7 +36,7 @@ namespace EvolutionShop
             s.LoadFixture(fx);
             var shop = s.Shop;
             yield return null; yield return null;
-            Check(shop.Era == 4 && shop.Stars == 4 && GrowthShop.UpgradeableStations.Where(st => st != "generator" && st != "pump").All(st => shop.Level(st) == (st == "breeding" ? 2 : 1)),
+            Check(shop.Era == 4 && shop.Stars == 4 && GrowthShop.UpgradeableStations.Where(st => st != "generator" && st != "pump" && st != "sorter").All(st => shop.Level(st) == (st == "breeding" ? 2 : 1)),
                 "Fixture: an era 4, four-star shop with every station at level 1 (the breeding tank at 2)");
 
             // The research bench: the siphon's and the bench's ladders.
@@ -48,7 +48,8 @@ namespace EvolutionShop
             string card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Workbench && card.Contains("The siphon · level 1 of 4") && card.Contains("The research bench · level 1 of 4") && card.Contains("Upgrade to level 2 for 15 cr"),
                 "E opens its card: the siphon's ladder (level 1 of 4) and the bench's");
-            Check(card.Contains("Waits for the analyzer (GR-08)") && card.Contains("Waits for the planner (GR-08)"), "The bench's levels 3 and 4 say they wait for GR-08");
+            Check(card.Contains("3. Analyzer: one undiscovered reachable mix or pair a day · 1500 cr and 120 RP, era 4") && card.Contains("4. Planner: predicts the offspring of any two known species · 4000 cr and 200 RP, era 5"),
+                "The bench's levels 3 and 4: the analyzer and the planner (GR-08), with their costs and gates");
             yield return Shot("90-research-bench");
             for (int lv = 2; lv <= 3; lv++) Ok(s.Act(() => shop.Upgrade("siphon")), "Siphon level " + lv);
             s.SetCard(GrowthCard.None);
@@ -182,9 +183,9 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             Check(most == 3 && shop.Phase == GrowthPhase.Night, "Through a day (accelerated) the queue fills to 3 and never more; then the shop closes");
 
-            // The ladders say what waits: the research bench's analyzer and planner, the counter's second till.
-            Check(shop.UpgradeCheck("bench", out _, out string waits) == GrowthFailure.Locked && waits == "Waits for the analyzer (GR-08)" &&
-                shop.UpgradeCheck("counter", out _, out waits) == GrowthFailure.Locked && waits.Contains("GR-09"), "The analyzer, the planner and the second till wait for later tasks");
+            // The ladders say what waits: the counter's second till (the analyzer and planner came with GR-08).
+            Check(shop.UpgradeCheck("bench", out var bench3, out string waits) == GrowthFailure.None && bench3.Level == 3 &&
+                shop.UpgradeCheck("counter", out _, out waits) == GrowthFailure.Locked && waits.Contains("GR-09"), "The second till waits for helpers (GR-09); the bench's analyzer is on offer");
             Check(new[] { "siphon", "grower", "incubator", "breeding", "vat" }.All(st => shop.UpgradeCheck(st, out _, out _) == GrowthFailure.MaxLevel), "Every other station is at its highest level");
             LookAt(new Vector3(0.9f, 0, 5.0f), new Vector3(-2.0f, 0.8f, 7.6f)); yield return Shot("99-back-room-levels");
 

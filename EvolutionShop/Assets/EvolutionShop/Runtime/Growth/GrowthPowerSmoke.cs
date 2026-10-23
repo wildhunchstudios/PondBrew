@@ -80,8 +80,8 @@ namespace EvolutionShop
             Check(s.FocusName(out status) == "Generator (not bought)" && status.Contains("200 credits and 30 RP"), "Not bought yet: 200 credits and 30 RP");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Generator && card.Contains("The generator · level 0 of 4") && card.Contains("Upgrade to level 1 for 200 cr and 30 RP") && card.Contains("Waits for the workshop (GR-10)"),
-                "Its card: the hand crank for 200 credits and 30 RP; the twin turbine and the tide engine wait for the workshop");
+            Check(s.Card == GrowthCard.Generator && card.Contains("The generator · level 0 of 4") && card.Contains("Upgrade to level 1 for 200 cr and 30 RP") && card.Contains("3. Twin turbine: 6 units · 3000 cr, era 4"),
+                "Its card: the hand crank for 200 credits and 30 RP; the twin turbine in era 4 (GR-08: in the workshop)");
             Ok(s.Act(() => shop.Upgrade("generator")), "Buy the generator's hand crank");
             s.SetCard(GrowthCard.None);
             yield return null; yield return null;
@@ -228,9 +228,9 @@ namespace EvolutionShop
             Check(s.ReloadSaved(), "Reload the saved slot");
             shop = s.Shop;
             var file = JsonUtility.FromJson<GrowthSave>(File.ReadAllText(s.SavePath));
-            Check(JsonUtility.ToJson(GrowthShop.Restore(file, out _).Snapshot()) == saved && file.version == 6 && shop.AutoBatch && shop.Chamber.Count == 1 && shop.Pipes.Count == 5 &&
+            Check(JsonUtility.ToJson(GrowthShop.Restore(file, out _).Snapshot()) == saved && file.version == GrowthSave.CurrentVersion && shop.AutoBatch && shop.Chamber.Count == 1 && shop.Pipes.Count == 5 &&
                 shop.PowerOrder.First() == GrowthShop.DoserPower && Mathf.Abs(shop.Buffers.Sum(b => b.Units) + shop.Chamber.Count - total) < 0.001f,
-                "The version 6 save brings the lab back mid-batch: pipes, buffers, the board's order and the auto-doser's dose, no culture doubled");
+                "The save (version " + GrowthSave.CurrentVersion + ") brings the lab back mid-batch: pipes, buffers, the board's order and the auto-doser's dose, no culture doubled");
             yield return null; yield return null;
             Check(s.World.BuiltPipes == 5 && s.World.BuiltBuffers == 3 && s.World.GeneratorLookLevel == 2, "The reloaded lab looks the same: five pipes, three buffers, the bubble turbine");
             foreach (var c in shop.Cultures) shop.GrowerUnits[c] = 0;

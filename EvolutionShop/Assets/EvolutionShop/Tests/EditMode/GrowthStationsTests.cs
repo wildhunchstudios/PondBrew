@@ -30,7 +30,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void EveryStationHasItsLevelsAndTheLaterOnesSayWhatTheyWaitFor()
         {
-            Assert.That(GrowthShop.UpgradeableStations, Is.EquivalentTo(new[] { "siphon", "grower", "incubator", "counter", "bench", "breeding", "vat", "generator", "pump" }));
+            Assert.That(GrowthShop.UpgradeableStations, Is.EquivalentTo(new[] { "siphon", "grower", "incubator", "counter", "bench", "breeding", "vat", "generator", "pump", "sorter" }));
             Assert.That(new GrowthShop().Level("bench"), Is.EqualTo(1), "the research bench starts at level 1 (notes)");
             // Each level's era, stars, research points and credits gate it, in that order, as GrowthContent says.
             foreach (var station in new[] { "siphon", "grower", "incubator", "counter", "bench" })
@@ -61,11 +61,11 @@ namespace EvolutionShop.Tests
             var top = At(era: 5, stars: 5);
             foreach (var station in new[] { "siphon", "grower", "incubator", "counter", "bench", "breeding" })
                 while (top.UpgradeCheck(station, out _, out _) == GrowthFailure.None) top.Upgrade(station);
-            Assert.That(GrowthShop.UpgradeableStations.Where(s => s != "vat" && s != "generator" && s != "pump").Select(top.Level), Is.EqualTo(new[] { 4, 4, 4, 3, 2, 3 }),
-                "siphon, growers and incubator to 4, the counter to 3 and the bench to 2 (their next levels wait), the breeding tank to 3");
+            Assert.That(GrowthShop.UpgradeableStations.Where(s => s != "vat" && s != "generator" && s != "pump" && s != "sorter").Select(top.Level), Is.EqualTo(new[] { 4, 4, 4, 3, 4, 3 }),
+                "siphon, growers, incubator and the bench to 4 (GR-08: the analyzer and planner), the counter to 3 (its next level waits), the breeding tank to 3");
             Assert.That(GrowthShop.WaitsFor("counter", 4), Does.Contain("GR-09"));
-            Assert.That(GrowthShop.WaitsFor("bench", 3), Does.Contain("GR-08"));
-            Assert.That(GrowthShop.WaitsFor("bench", 4), Does.Contain("GR-08"));
+            Assert.That(GrowthShop.WaitsFor("bench", 3), Is.Null);
+            Assert.That(GrowthShop.WaitsFor("bench", 4), Is.Null);
             Assert.That(top.UpgradeCheck("siphon", out _, out string max), Is.EqualTo(GrowthFailure.MaxLevel));
             Assert.That(max, Is.EqualTo("Highest level"));
             Assert.That(top.UpgradeCheck("vat", out _, out string vat), Is.EqualTo(GrowthFailure.Locked));
@@ -282,7 +282,7 @@ namespace EvolutionShop.Tests
             Refused(b => { b.hatchling = new GrowthSave.Specimen[0]; b.levels[Array.IndexOf(b.stations, "incubator")] = 2; }, "Unknown incubator tint mist");
             Refused(b => b.levels[Array.IndexOf(b.stations, "breeding")] = 2, "More parents than the breeding tank takes");
             Refused(b => b.levels[Array.IndexOf(b.stations, "counter")] = 4, "Bad station level counter");
-            Refused(b => b.levels[Array.IndexOf(b.stations, "bench")] = 3, "Bad station level bench");
+            Refused(b => { b.stations = b.stations.Concat(new[] { "sorter" }).ToArray(); b.levels = b.levels.Concat(new[] { 2 }).ToArray(); }, "Bad station level sorter");
         }
     }
 }
