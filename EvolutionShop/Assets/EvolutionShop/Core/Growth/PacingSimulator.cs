@@ -34,7 +34,7 @@ namespace EvolutionShop.Growth
         public int WageReserveDays = 2;
         /// <summary>While saving for the next gate purchase, the player still buys things costing up to this share of it.</summary>
         public float WhileSavingShare = .1f;
-        public float StartingCredits = 10;
+        public float StartingCredits = GrowthContent.StartingCredits;
         public double MaxHours = 16;
     }
 

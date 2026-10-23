@@ -109,6 +109,8 @@ namespace EvolutionShop.Growth
     {
         public const int SpeciesCount = 72, ColourCount = 4, JournalEntries = SpeciesCount * ColourCount;
         public const float DaySeconds = 330f;
+        /// <summary>Credits a new shop starts with: a first upgrade is a sale or two away (GR.3).</summary>
+        public const int StartingCredits = 10;
 
         // ---------------------------------------------------------------- cultures (GR.6)
 
