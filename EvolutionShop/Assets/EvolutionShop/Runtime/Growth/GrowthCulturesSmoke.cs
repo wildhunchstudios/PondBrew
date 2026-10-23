@@ -183,7 +183,7 @@ namespace EvolutionShop
             Check(s.SaveNow(), "Save");
             string before = JsonUtility.ToJson(s.Shop.Snapshot());
             Check(s.ReloadSaved(), "Reload the saved slot");
-            Check(JsonUtility.ToJson(s.Shop.Snapshot()) == before && JsonUtility.FromJson<GrowthSave>(File.ReadAllText(s.SavePath)).version == 3, "The version 3 save brings the same shop back, with its seven cultures");
+            Check(JsonUtility.ToJson(s.Shop.Snapshot()) == before && JsonUtility.FromJson<GrowthSave>(File.ReadAllText(s.SavePath)).version >= 3, "The save (version 3 and later) brings the same shop back, with its seven cultures");
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
         }
     }

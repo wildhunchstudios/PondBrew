@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -79,8 +79,13 @@ namespace EvolutionShop
         /// <summary>Where a player stands to use a source: 1.3 m in front of it.</summary>
         public static Vector3 GrowerFront(string culture) => GrowerPositions[culture] + Quaternion.Euler(0, GrowerYaw(culture), 0) * new Vector3(0, 0, 1.3f);
         public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 7.7f), BoardPosition = new Vector3(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(4f, 0, 0);
-        /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.</summary>
-        public static readonly Vector3 VialShelfPosition = new Vector3(-1.7f, 0, 4.25f), CatalogPosition = new Vector3(1.2f, 0, -3.3f);
+        /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.
+        /// GR-05 moved the shelf 0.2 m west to make room for the breeding tank.</summary>
+        public static readonly Vector3 VialShelfPosition = new Vector3(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(1.2f, 0, -3.3f);
+        /// <summary>GR-05: the breeding tank against the back room's south wall, west of the door, facing the incubator (GR.7.2).
+        /// Its glass is 1.06 m wide: the pair's compartment, and a nursery behind a divider at its east end.</summary>
+        public static readonly Vector3 BreedingPosition = new Vector3(-0.5f, 0, 4.42f);
+        public const float BreedingWaterY = 1.0f, BreedingDivider = 0.22f;
 
         GrowthSession session;
         Material floorWood, floorTile, floorB, wall, wallLab, trim, stand, glass, water, waterBrine, waterWarm, gravel, counterMat, cabinet, paper, marker, partition, sign, dome, harmony, lightBar;
@@ -95,6 +100,14 @@ namespace EvolutionShop
         readonly Dictionary<string, GameObject> slots = new Dictionary<string, GameObject>();
         readonly Dictionary<string, Transform> vials = new Dictionary<string, Transform>();
         Transform stationsRoot;
+        /// <summary>GR-05: the breeding tank (built once bought, again when its level changes), its dashed slot until then,
+        /// its water (tinted by the culture in it) and the creatures in it by specimen id.</summary>
+        GameObject breedingSlot, breedingTank;
+        int breedingLevel;
+        Renderer breedingWater;
+        readonly Dictionary<int, GrowthCreatureView> breedingViews = new Dictionary<int, GrowthCreatureView>();
+        public IReadOnlyDictionary<int, GrowthCreatureView> BreedingViews => breedingViews;
+        public bool BreedingTankStanding => breedingTank != null;
         readonly Dictionary<int, GrowthVisitorView> visitors = new Dictionary<int, GrowthVisitorView>();
         readonly List<Transform> doseBlobs = new List<Transform>();
         GameObject unitBWall, unitBSign;
@@ -309,6 +322,21 @@ namespace EvolutionShop
                 bottle.gameObject.SetActive(false);
                 vials[c.Id] = bottle;
             }
+            // GR-05: the breeding tank's dashed slot; focusing it opens its card, where it is bought (era 2).
+            var bslot = new GameObject("Slot for the breeding tank").transform; bslot.SetParent(root, false);
+            bslot.localPosition = BreedingPosition;
+            for (int i = 0; i < 5; i++)
+            {
+                float a = -0.48f + 0.24f * i;
+                Box(bslot, "Dash", new Vector3(a, 0.01f, 0.25f), new Vector3(0.14f, 0.01f, 0.03f), marker);
+                Box(bslot, "Dash", new Vector3(a, 0.01f, -0.25f), new Vector3(0.14f, 0.01f, 0.03f), marker);
+            }
+            foreach (int side in new[] { -1, 1 }) Box(bslot, "Dash", new Vector3(side * 0.55f, 0.01f, 0), new Vector3(0.03f, 0.01f, 0.3f), marker);
+            Box(bslot, "Sign", new Vector3(0, 0.02f, 0), new Vector3(0.36f, 0.02f, 0.2f), paper);
+            Target(bslot.gameObject, GrowthTargetKind.Breeding, "breeding");
+            var slotCollider = bslot.gameObject.AddComponent<BoxCollider>();
+            slotCollider.center = new Vector3(0, 0.45f, 0); slotCollider.size = new Vector3(1.1f, 0.9f, 0.5f); slotCollider.isTrigger = true; // focus, not a wall
+            breedingSlot = bslot.gameObject;
             // The supplier catalog on its stand by the counter (GR.6).
             var catalog = new GameObject("Supplier catalog").transform; catalog.SetParent(root, false);
             catalog.localPosition = CatalogPosition; // facing into the shop (+z), its book tilted toward the reader
@@ -413,6 +441,9 @@ namespace EvolutionShop
             hatchlingView = null;
             foreach (var kv in sources) { Destroy(kv.Value.Root.gameObject); slots[kv.Key].SetActive(true); }
             sources.Clear();
+            if (breedingTank) Destroy(breedingTank);
+            breedingTank = null; breedingLevel = 0; breedingViews.Clear();
+            breedingSlot.SetActive(true);
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -453,6 +484,7 @@ namespace EvolutionShop
                 if (doseBlobs[i].gameObject.activeSelf != on) doseBlobs[i].gameObject.SetActive(on);
                 if (on) doseBlobs[i].GetComponent<Renderer>().sharedMaterial = culture[shop.Chamber[i]];
             }
+            SyncBreeding(shop);
             incubatorGlow.intensity = shop.Incubating ? 0.45f : shop.Hatchling != null ? 0.3f : 0;
             if (shop.Hatchling != null && (hatchlingView == null || hatchlingView.SpecimenId != shop.Hatchling.Id))
             {
@@ -462,6 +494,108 @@ namespace EvolutionShop
             }
             else if (shop.Hatchling == null && hatchlingView) { Destroy(hatchlingView.gameObject); hatchlingView = null; }
             SyncVisitors(shop);
+        }
+
+        // ---------------------------------------------------------------- the breeding tank (GR-05)
+
+        /// <summary>The breeding tank at its level: a cabinet, a glass tank with the pair's water and a nursery behind a
+        /// divider, a label, and at level 2 a rim with the tint port (a funnel), open so the nursery can be seen from above.</summary>
+        GameObject BuildBreeding(int level)
+        {
+            var root = new GameObject("Breeding tank (level " + level + ")").transform; root.SetParent(stationsRoot, false);
+            root.localPosition = BreedingPosition;
+            Box(root, "Cabinet", new Vector3(0, 0.39f, 0), new Vector3(1.1f, 0.78f, 0.5f), cabinet, true);
+            Box(root, "Glass", new Vector3(0, BreedingWaterY, 0), new Vector3(1.06f, 0.44f, 0.46f), glass);
+            breedingWater = Box(root, "Water", new Vector3(0, BreedingWaterY - 0.02f, 0), new Vector3(1.0f, 0.36f, 0.42f), water).GetComponent<Renderer>();
+            Box(root, "Divider", new Vector3(BreedingDivider, BreedingWaterY, 0), new Vector3(0.015f, 0.4f, 0.44f), trim);
+            Box(root, "Gravel", new Vector3(0, 0.8f, 0), new Vector3(1.0f, 0.03f, 0.42f), gravel);
+            Box(root, "Label", new Vector3(0, 0.55f, 0.255f), new Vector3(0.56f, 0.14f, 0.02f), paper);
+            Box(root, "Heart", new Vector3(-0.2f, 0.55f, 0.267f), new Vector3(0.08f, 0.08f, 0.01f), sign);
+            Box(root, "Nursery label", new Vector3(0.36f, 0.72f, 0.255f), new Vector3(0.22f, 0.06f, 0.02f), marker);
+            if (level >= 2)
+            {
+                foreach (int side in new[] { -1, 1 })
+                {
+                    Box(root, "Rim", new Vector3(0, BreedingWaterY + 0.23f, side * 0.235f), new Vector3(1.08f, 0.025f, 0.03f), trim);
+                    Box(root, "Rim", new Vector3(side * 0.535f, BreedingWaterY + 0.23f, 0), new Vector3(0.03f, 0.025f, 0.47f), trim);
+                }
+                ShopWorld.Shape(root, "Tint port", PrimitiveType.Cylinder, new Vector3(-0.48f, BreedingWaterY + 0.29f, 0.2f), new Vector3(0.09f, 0.05f, 0.09f), counterMat);
+            }
+            Target(root.gameObject, GrowthTargetKind.Breeding, "breeding");
+            AddCollider(root.gameObject, new Vector3(0, 0.62f, 0), new Vector3(1.12f, 1.24f, 0.52f));
+            return root.gameObject;
+        }
+
+        readonly Dictionary<string, Material> tintedWater = new Dictionary<string, Material>();
+
+        void SyncBreeding(GrowthShop shop)
+        {
+            bool owned = shop.HasBreedingTank;
+            if (breedingSlot.activeSelf == owned) breedingSlot.SetActive(!owned);
+            int level = shop.Level("breeding");
+            if (owned && (breedingTank == null || breedingLevel != level))
+            {
+                if (breedingTank) Destroy(breedingTank);
+                breedingViews.Clear();
+                breedingTank = BuildBreeding(level);
+                breedingLevel = level;
+            }
+            if (!owned) return;
+            // The water takes the tint's colour while a dose is in it (GR.7.2).
+            Material want = water;
+            if (shop.Tint != null && !tintedWater.TryGetValue(shop.Tint, out want))
+            {
+                var tint = Hex(GrowthContent.Culture(shop.Tint).Hex); tint.a = 0.32f;
+                tintedWater[shop.Tint] = want = Transparent("GR breeding water " + shop.Tint, tint);
+            }
+            if (breedingWater.sharedMaterial != want) breedingWater.sharedMaterial = want;
+            var inside = shop.Parents.ToList();
+            if (shop.Offspring != null) inside.Add(shop.Offspring);
+            foreach (var s in inside)
+                if (!breedingViews.ContainsKey(s.Id)) breedingViews[s.Id] = GrowthCreatureView.Create(s, breedingTank.transform);
+            foreach (var id in breedingViews.Keys.Where(k => inside.All(s => s.Id != k)).ToList()) { Destroy(breedingViews[id].gameObject); breedingViews.Remove(id); }
+        }
+
+        /// <summary>The pair swims in its compartment, side by side and facing each other now and then; the offspring bobs in the nursery.</summary>
+        void AnimateBreeding(float t, GrowthShop shop)
+        {
+            if (breedingTank == null) return;
+            float left = -0.5f, right = BreedingDivider - 0.01f;
+            for (int i = 0; i < shop.Parents.Count; i++)
+            {
+                if (!breedingViews.TryGetValue(shop.Parents[i].Id, out var v) || v == null) continue;
+                float L = v.Length;
+                float hx = Mathf.Max(0.02f, (right - left) * 0.5f - L * 0.6f), cx = (left + right) * 0.5f, hz = Mathf.Max(0.02f, 0.21f - L * 0.5f);
+                float speed = L > 0.2f ? 0.45f : L > 0.1f ? 0.6f : 0.8f, phase = i * Mathf.PI;
+                Vector3 Path(float tt) => new Vector3(cx + hx * Mathf.Sin(0.5f * tt + phase), 0.05f * Mathf.Sin(0.9f * tt + phase), hz * 0.7f * Mathf.Sin(0.8f * tt + phase * 0.5f));
+                Vector3 pos = Path(t * speed), ahead = Path(t * speed + 0.2f);
+                v.transform.localPosition = new Vector3(pos.x, BreedingWaterY + pos.y, pos.z);
+                Vector3 dir = ahead - pos; dir.y *= 0.3f;
+                if (dir.sqrMagnitude > 1e-6f) v.transform.localRotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
+                v.Tick(t);
+            }
+            if (shop.Offspring != null && breedingViews.TryGetValue(shop.Offspring.Id, out var o) && o != null)
+            {
+                float nursery = (BreedingDivider + 0.5f) * 0.5f;
+                o.transform.localPosition = new Vector3(nursery, BreedingWaterY + 0.03f * Mathf.Sin(t * 1.7f), 0.04f * Mathf.Sin(t * 0.9f));
+                o.transform.localRotation = Quaternion.Euler(0, 90 + 25f * Mathf.Sin(t * 0.6f), 0);
+                o.Tick(t);
+            }
+        }
+
+        /// <summary>The creature in the breeding tank nearest the screen's centre (the route's checks and the peek tag).</summary>
+        public GrowthCreatureView BreedingCreatureNearCentre(Camera camera)
+        {
+            GrowthCreatureView best = null; float bestDistance = 0.12f;
+            foreach (var creature in breedingViews.Values)
+            {
+                if (creature == null) continue;
+                var p = camera.WorldToViewportPoint(creature.transform.position);
+                if (p.z <= 0) continue;
+                float d = new Vector2(p.x - 0.5f, (p.y - 0.5f) * camera.pixelHeight / Mathf.Max(1, camera.pixelWidth)).magnitude;
+                if (d < bestDistance) { best = creature; bestDistance = d; }
+            }
+            return best;
         }
 
         /// <summary>Stand and glass heights by container: the Starter tank at 0.9 m, the Large tank lower and taller, the Show tank lowest and tallest.</summary>
@@ -605,6 +739,7 @@ namespace EvolutionShop
                 index++;
             }
             if (hatchlingView) { hatchlingView.transform.localRotation = Quaternion.Euler(0, t * 40f, 0); hatchlingView.Tick(t); }
+            if (session.Shop != null) AnimateBreeding(t, session.Shop);
             foreach (var v in visitors.Values) v.Tick(dt);
         }
 

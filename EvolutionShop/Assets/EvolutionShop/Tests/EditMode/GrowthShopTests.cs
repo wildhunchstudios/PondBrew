@@ -324,7 +324,8 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Upgrade("incubator").Success, Is.True);
             Assert.That(shop.MaxDoses, Is.EqualTo(4));
             Assert.That(shop.IncubationSeconds, Is.EqualTo(8));
-            Assert.That(shop.Upgrade("breeding").Failure, Is.EqualTo(GrowthFailure.MaxLevel), "not in the greybox");
+            Assert.That(shop.Upgrade("bench").Failure, Is.EqualTo(GrowthFailure.MaxLevel), "not in the greybox");
+            Assert.That(shop.Upgrade("breeding").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-05: the breeding tank waits for era 2");
         }
 
         [Test]
@@ -379,12 +380,14 @@ namespace EvolutionShop.Tests
             Assert.That(lines.Select(l => l.text), Has.Some.StartsWith("Discover 3 creatures (0/3)"));
             Assert.That(lines.Select(l => l.text), Has.Some.StartsWith("Own 2 tanks (1/2)"));
             shop.Era = 2;
-            Assert.That(shop.Objectives().Single().text, Does.StartWith("Open shop unit B"));
+            Assert.That(shop.Objectives().First().text, Does.StartWith("Open shop unit B"));
             shop.UnitB = true;
-            // GR-03: then a Large tank for a long place, and the greybox ends.
-            Assert.That(shop.Objectives().Select(l => l.text).First(), Does.StartWith("Buy a Large tank"));
+            // GR-05: era 2's goal, the breeding tank and a first hybrid, with a Large tank and 3 stars toward era 3.
+            Assert.That(shop.Objectives().Select(l => l.text).First(), Does.StartWith("Buy the breeding tank"));
+            Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Buy a Large tank"));
             Assert.That(shop.Objectives().First().done, Is.False);
-            Assert.That(shop.Objectives().Last().done, Is.True);
+            shop.Era = 3;
+            Assert.That(shop.Objectives().Last().done, Is.True, "the greybox ends in era 3");
         }
     }
 }

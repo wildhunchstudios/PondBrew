@@ -158,9 +158,12 @@ namespace EvolutionShop
             int next = shop.Stars < 5 ? GrowthContent.StarThresholds[shop.Stars] : GrowthContent.ReputationMax;
             starsLabel.text = StarsText(shop.Stars) + "  reputation " + shop.Reputation + (shop.Stars < 5 ? "/" + next : "") + (shop.Rp > 0 ? " · " + shop.Rp + " RP" : "");
             var goals = shop.Objectives();
-            goalLabel.text = "Goal: " + shop.EraGoal + "\n" + string.Join("\n", goals.Select(g => (g.done ? "✓ " : "· ") + g.text));
+            // GR-05: the HUD keeps to what is still to do, three lines at most; the pinboard has every line.
+            var todo = goals.Where(g => !g.done).ToList();
+            goalLabel.text = "Goal: " + shop.EraGoal + (todo.Count == 0 ? "" : "\n" + string.Join("\n", todo.Take(3).Select(g => "· " + g.text))) +
+                (todo.Count > 3 ? "\n· " + (todo.Count - 3) + " more on the pinboard" : "");
             siphonLabel.text = "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity + (shop.Held.Count == 0 ? ": empty" : ": " + string.Join(", ", shop.Held.GroupBy(c => c).Select(g => g.Count() + " " + GrowthShop.Name(g.Key))));
-            carryLabel.text = shop.Carried.Count == 0 ? "Hands free" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(c => c.Def.Name)) + " · E on a tank to put in";
+            carryLabel.text = shop.Carried.Count == 0 ? "Hands free" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(GrowthSession.Named)) + " · E on a tank to put in";
             bool free = s.Card == GrowthCard.None;
             hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Welcome ? DisplayStyle.None : DisplayStyle.Flex;
             string name = free ? s.FocusName(out string status) : null;
@@ -191,7 +194,7 @@ namespace EvolutionShop
             var spec = s.Shop.Stock.FirstOrDefault(x => x.Id == creature.SpecimenId);
             if (spec == null) { peekTag.style.display = DisplayStyle.None; return; }
             var holder = s.Shop.HolderOf(spec.Id);
-            peekLabel.text = spec.Def.Name + (spec.ReservedBy != 0 ? " (reserved)" : "");
+            peekLabel.text = GrowthSession.Named(spec) + (spec.ReservedBy != 0 ? " (reserved)" : "");
             Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(document.rootVisualElement.panel, creature.transform.position + Vector3.up * (creature.Length * 0.9f), s.Player.View);
             peekTag.style.display = DisplayStyle.Flex;
             peekTag.style.left = p.x;
@@ -220,6 +223,7 @@ namespace EvolutionShop
                 case GrowthEventKind.EraUp:
                 case GrowthEventKind.StarUp:
                 case GrowthEventKind.CultureOwned:
+                case GrowthEventKind.NewColour:
                     Log.Add(e.Text);
                     if (!Ready) return;
                     bannerLabel.text = e.Text; banner.style.display = DisplayStyle.Flex; bannerUntil = Time.unscaledTime + 3f;
@@ -236,13 +240,25 @@ namespace EvolutionShop
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null;
             if (which == GrowthCard.None) return;
             bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause;
-            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog ? 580 : which == GrowthCard.Place || which == GrowthCard.Board ? 540 : 470);
+            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board ? 540 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
             Fill(which, target);
         }
 
         public void RefreshCard() { if (card != null) ShowCard(s.Card, s.CardTarget); }
+
+        /// <summary>Validation: scrolls the open card to its first label that starts with the text (journal pages below the fold).</summary>
+        public bool ScrollTo(string startsWith)
+        {
+            if (card == null) return false;
+            var label = card.Query<Label>().ToList().FirstOrDefault(l => l.text.StartsWith(startsWith));
+            var scroll = card.Q<ScrollView>();
+            if (label == null || scroll == null) return false;
+            float y = label.worldBound.y - scroll.contentContainer.worldBound.y;
+            scroll.scrollOffset = new Vector2(0, Mathf.Max(0, y - 8));
+            return true;
+        }
 
         /// <summary>Every label and button text on the open card or screen (for the validation route).</summary>
         public string CardText() => card == null ? "" : string.Join(" | ", card.Query<TextElement>().ToList().Select(t => t.text));
@@ -331,7 +347,8 @@ namespace EvolutionShop
             return s.Card + "|" + s.CardTarget + "|" + shop.Credits + "|" + shop.Phase + "|" + shop.Held.Count + string.Join(",", shop.Held) + "|" + string.Join(",", shop.Chamber) +
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
-                "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.GreyboxStations.Select(shop.Level)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum());
+                "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum());
         }
 
         string LiveText()
@@ -342,6 +359,7 @@ namespace EvolutionShop
                 case GrowthCard.Incubator: return shop.Incubating ? "Incubating… " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : shop.Hatchling != null ? "A hatchling is ready." : "Idle.";
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + ShopClock(shop.DaySecondsLeft) + " left." : "Closed for the night.";
                 case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacity + " doses ready";
+                case GrowthCard.Breeding: return !shop.HasBreedingTank ? "" : shop.Offspring != null ? "An offspring is in the nursery." : shop.Breeding ? "Breeding… " + Mathf.CeilToInt(shop.BreedingLeft) + " s" : "Waiting for a pair.";
                 default: return "";
             }
         }
@@ -363,6 +381,7 @@ namespace EvolutionShop
                 case GrowthCard.Place: FillPlace(target); break;
                 case GrowthCard.Crate: FillCrate(); break;
                 case GrowthCard.Catalog: FillCatalog(); break;
+                case GrowthCard.Breeding: FillBreeding(); break;
                 case GrowthCard.Counter: FillCounter(); break;
                 case GrowthCard.Workbench: FillWorkbench(); break;
                 case GrowthCard.UnitB: FillUnitB(); break;
@@ -495,7 +514,7 @@ namespace EvolutionShop
                 else cell.style.backgroundColor = sold ? Color.Lerp(fill, Color.white, 0.55f) : fill;
                 grid.Add(cell);
             }
-            foreach (var o in c.Occupants.OrderBy(o => o.Species)) Cell((int)o.Def.Size, GrowthCreatureView.ColourOf(o.Def), false, o.ReservedBy != 0);
+            foreach (var o in c.Occupants.OrderBy(o => o.Species)) Cell((int)o.Def.Size, GrowthCreatureView.ColourOf(o.Def, o.Colour), false, o.ReservedBy != 0);
             for (int i = 0; i < c.Free; i++) Cell(1, Color.clear, true, false);
             return grid;
         }
@@ -521,14 +540,14 @@ namespace EvolutionShop
             body.Add(SpaceGrid(c));
             // Each species in it with its count; press one to take a creature of it out.
             var grid = Row();
-            foreach (var g in c.Occupants.GroupBy(o => o.Species))
+            foreach (var g in c.Occupants.GroupBy(o => (o.Species, o.Colour)))
             {
                 var free = g.FirstOrDefault(o => o.ReservedBy == 0);
                 int sold = g.Count(o => o.ReservedBy != 0);
                 var def = g.First().Def;
-                var b = Button(def.Name + (g.Count() > 1 ? " ×" + g.Count() : "") + (sold > 0 ? " (" + sold + " sold)" : "") + " · " + shop.Price(def.Id) + " cr",
+                var b = Button(GrowthSession.Named(g.First()) + (g.Count() > 1 ? " ×" + g.Count() : "") + (sold > 0 ? " (" + sold + " sold)" : "") + " · " + shop.Price(def.Id) + " cr",
                     () => { if (free != null) s.Act(() => shop.TakeOut(c.Id, free.Id)); }, false, free != null && shop.Carried.Count < GrowthShop.CarryLimit, "Take one out");
-                b.style.borderLeftWidth = 10; b.style.borderLeftColor = GrowthCreatureView.ColourOf(def);
+                b.style.borderLeftWidth = 10; b.style.borderLeftColor = GrowthCreatureView.ColourOf(def, g.Key.Colour);
                 grid.Add(b);
             }
             body.Add(grid);
@@ -541,7 +560,7 @@ namespace EvolutionShop
                 {
                     var spec = carried;
                     bool fits = GrowthRules.Fits(c.Def, c.Level, c.Occupants.Select(x => x.Species), spec.Species);
-                    put.Add(Button("Put in " + spec.Def.Name, () => s.Act(() => shop.PutIn(c.Id, spec.Id)), true, fits, fits ? null : (int)spec.Def.Size > (int)c.Def.Largest ? "Too big for this tank" : "Not enough spaces"));
+                    put.Add(Button("Put in " + GrowthSession.Named(spec), () => s.Act(() => shop.PutIn(c.Id, spec.Id)), true, fits, fits ? null : (int)spec.Def.Size > (int)c.Def.Largest ? "Too big for this tank" : "Not enough spaces"));
                 }
                 body.Add(put);
             }
@@ -697,7 +716,7 @@ namespace EvolutionShop
             var body = Head("Pinboard", "era " + shop.Era + ": " + GrowthContent.Eras[shop.Era - 1].Name);
             body.Add(Text("Goal: " + shop.EraGoal));
             foreach (var (text, done) in shop.Objectives()) body.Add(Text((done ? "✓ " : "· ") + text, done ? "es-req--done" : "es-req"));
-            body.Add(Text("Discovered " + shop.Discovered.Count + " of " + GrowthContent.SpeciesCount + " species · journal " + shop.Discovered.Count + "/" + GrowthContent.JournalEntries, "es-text--muted"));
+            body.Add(Text("Discovered " + shop.Discovered.Count + " of " + GrowthContent.SpeciesCount + " species · journal " + shop.Journal.Count + "/" + GrowthContent.JournalEntries, "es-text--muted"));
             // GR-04: research turns research points (earned by discoveries) into Spark and, much later, Dusk.
             var research = new VisualElement(); research.style.marginTop = 10; research.style.borderTopWidth = 2; research.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); research.style.paddingTop = 6;
             research.Add(Text("Research · " + shop.Rp + " research points (each discovery brings some)"));
@@ -770,6 +789,140 @@ namespace EvolutionShop
             Footer(body);
         }
 
+        // ---------------------------------------------------------------- the breeding tank (GR-05)
+
+        void FillBreeding()
+        {
+            var shop = s.Shop;
+            var levels = GrowthContent.Station("breeding").Levels;
+            if (!shop.HasBreedingTank)
+            {
+                var intro = Head("Breeding tank", "not bought");
+                intro.Add(Text("Two creatures in, one offspring out, and the parents stay. Every pair makes something: hybrids, the families' crowns and new colours come from breeding, and a known pair makes more stock without cultures."));
+                var first = levels[0];
+                intro.Add(Text("Level 1: " + first.Change + " · " + first.Credits + " credits and " + first.Rp + " research points (era " + first.Era + ", " + first.Stars + " stars).", "es-text--muted"));
+                var buy = shop.UpgradeCheck("breeding", out _, out string buyWhy);
+                intro.Add(Button(buy == GrowthFailure.None ? "Buy the breeding tank for " + first.Credits + " cr and " + first.Rp + " RP" : buyWhy,
+                    () => s.Act(() => shop.Upgrade("breeding")), true, buy == GrowthFailure.None));
+                Footer(intro);
+                return;
+            }
+            var body = Head("Breeding tank", "level " + shop.Level("breeding") + " · a pair every " + shop.BreedSeconds.ToString("0") + " s");
+            Live(body);
+            if (shop.Offspring != null)
+            {
+                var o = shop.Offspring;
+                body.Add(Text("In the nursery: a " + GrowthSession.Named(o) + (shop.OffspringWasNew ? " — new to your journal!" : "."), shop.OffspringWasNew ? "es-card__reason" : "es-text"));
+                body.Add(Button("Take the " + GrowthSession.Named(o) + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(shop.TakeOffspring), true, shop.Carried.Count < GrowthShop.CarryLimit));
+            }
+            body.Add(Text("The pair (" + shop.Parents.Count + "/" + GrowthShop.PairSize + ", press one to take it out at any time):", "es-text--muted"));
+            var pair = Row();
+            foreach (var p in shop.Parents.ToList())
+            {
+                int id = p.Id;
+                var b = Button(GrowthSession.Named(p), () => s.Act(() => shop.TakeParent(id)), false, shop.Carried.Count < GrowthShop.CarryLimit, "Take it out");
+                b.style.borderLeftWidth = 10; b.style.borderLeftColor = GrowthCreatureView.ColourOf(p.Def, p.Colour);
+                pair.Add(b);
+            }
+            for (int i = shop.Parents.Count; i < GrowthShop.PairSize; i++)
+            {
+                var empty = new VisualElement(); empty.style.width = 110; empty.style.height = 30; empty.style.marginTop = 6; empty.style.marginRight = 6;
+                empty.style.borderTopWidth = empty.style.borderBottomWidth = empty.style.borderLeftWidth = empty.style.borderRightWidth = 2;
+                empty.style.borderTopColor = empty.style.borderBottomColor = empty.style.borderLeftColor = empty.style.borderRightColor = new Color(0.79f, 0.72f, 0.56f);
+                empty.style.borderTopLeftRadius = empty.style.borderTopRightRadius = empty.style.borderBottomLeftRadius = empty.style.borderBottomRightRadius = 10;
+                pair.Add(empty);
+            }
+            body.Add(pair);
+            if (shop.Parents.Count < GrowthShop.PairSize)
+            {
+                if (shop.Carried.Count == 0) body.Add(Text("Bring creatures from a tank (peek and E takes one), then E here puts them in.", "es-text--muted"));
+                var put = Row();
+                foreach (var carried in shop.Carried.ToList())
+                {
+                    var spec = carried;
+                    var f = shop.ParentCheck(spec, out string why);
+                    put.Add(Button(f == GrowthFailure.None ? "Put in " + GrowthSession.Named(spec) : GrowthSession.Named(spec) + ": " + why, () => s.Act(() => shop.PutParent(spec.Id)), true, f == GrowthFailure.None));
+                }
+                body.Add(put);
+            }
+            else
+            {
+                // What the pair makes: the pair log knows a pair once tried (the planner, research bench level 4, predicts any pair).
+                var known = shop.PairEntry(shop.Parents[0].Species, shop.Parents[1].Species);
+                string colour = shop.NextColour == Colour.Classic ? "" : " Its colour: " + shop.NextColour + (shop.Tint != null ? " (the " + GrowthShop.Name(shop.Tint) + " tint)." : " (the higher parent colour).");
+                body.Add(Text((known != null ? "This pair makes a " + GrowthContent.Get(known.Species).Name + " (bred ×" + known.Count + " so far)." : "A pair you have not tried: every pair makes something.") + colour,
+                    known == null ? "es-card__reason" : "es-text"));
+            }
+            // Tinting the water (level 2): Bloom makes Sunny offspring, Flow Deep, Mist Shimmer.
+            var tint = new VisualElement(); tint.style.marginTop = 10; tint.style.borderTopWidth = 2; tint.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); tint.style.paddingTop = 6;
+            if (!shop.TintPort) tint.Add(Text("Tint port at level 2: a dose of Bloom, Flow or Mist in the water makes the next offspring Sunny, Deep or Shimmer. Untinted, it takes the higher parent colour (Classic, Sunny, Deep, Shimmer).", "es-text--muted"));
+            else if (shop.Tint != null)
+            {
+                tint.Add(Text("The water is tinted with " + GrowthShop.Name(shop.Tint) + ": the next offspring is " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.Tint) + "."));
+                tint.Add(Button("Take the tint back", () => s.Act(shop.ClearTint), false, shop.Held.Count < shop.SiphonCapacity));
+            }
+            else
+            {
+                tint.Add(Text("Tint the water with a dose from the siphon (used by the next offspring):", "es-text--muted"));
+                var tints = Row();
+                foreach (var culture in GrowthShop.TintCultures)
+                {
+                    string c = culture;
+                    var f = shop.TintCheck(c, out string why);
+                    var b = Button(GrowthShop.Name(c) + " → " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, c), () => s.Act(() => shop.TintWater(c)), false, f == GrowthFailure.None,
+                        f == GrowthFailure.NoDose ? "Collect " + GrowthShop.Name(c) + " first" : why);
+                    b.style.borderLeftWidth = 8; b.style.borderLeftColor = CultureColour(c);
+                    tints.Add(b);
+                }
+                tint.Add(tints);
+            }
+            body.Add(tint);
+            // The pair log, newest first.
+            var logTitle = Text("Pair log · " + shop.PairLog.Count + " pairs tried"); logTitle.style.fontSize = 17; logTitle.style.unityFontStyleAndWeight = FontStyle.Bold; logTitle.style.marginTop = 10;
+            body.Add(logTitle);
+            if (shop.PairLog.Count == 0) body.Add(Text("Any two creatures make something; a pair breeds the same thing every time.", "es-text--muted"));
+            foreach (var p in shop.PairLog.AsEnumerable().Reverse().Take(6)) body.Add(Text(PairLine(p)));
+            UpgradeSection(body, "breeding");
+            Footer(body);
+        }
+
+        static string PairLine(GrowthPairEntry p) =>
+            GrowthContent.Get(p.A).Name + " × " + GrowthContent.Get(p.B).Name + " → " + GrowthContent.Get(p.Species).Name + (p.Count > 1 ? " ×" + p.Count : "") +
+            (GrowthContent.Get(p.Species).Kind == SpeciesKind.Crown ? " (a crown!)" : "");
+
+        /// <summary>GR.13's family chart: a tile for each of a family's eight, named once known, with its colours found.</summary>
+        VisualElement FamilyTiles(FamilyDef family)
+        {
+            var shop = s.Shop;
+            var row = Row(); row.style.flexWrap = Wrap.NoWrap; row.style.marginTop = 4;
+            foreach (var sp in GrowthContent.Species.Where(x => x.Family == family.Id))
+            {
+                bool known = shop.Discovered.Contains(sp.Id);
+                var colour = known ? GrowthCreatureView.ColourOf(sp) : new Color(0.62f, 0.62f, 0.62f);
+                var tile = new VisualElement(); tile.style.width = 106; tile.style.height = 46; tile.style.marginRight = 4; tile.style.paddingLeft = 6; tile.style.paddingTop = 2;
+                tile.style.overflow = Overflow.Hidden;
+                tile.style.backgroundColor = known ? Color.Lerp(colour, Color.white, 0.62f) : new Color(0.9f, 0.88f, 0.82f);
+                tile.style.borderTopWidth = tile.style.borderBottomWidth = tile.style.borderLeftWidth = tile.style.borderRightWidth = sp.Kind == SpeciesKind.Crown ? 3 : 2;
+                tile.style.borderTopColor = tile.style.borderBottomColor = tile.style.borderLeftColor = tile.style.borderRightColor = sp.Kind == SpeciesKind.Crown ? new Color(0.85f, 0.62f, 0.18f) : colour;
+                tile.style.borderTopLeftRadius = tile.style.borderTopRightRadius = tile.style.borderBottomLeftRadius = tile.style.borderBottomRightRadius = 8;
+                var name = Text((known ? sp.Name : "?") + " · " + (sp.Kind == SpeciesKind.Founder ? "F" : sp.Kind == SpeciesKind.Hybrid ? "H" : "C"));
+                name.style.fontSize = 13; name.style.whiteSpace = WhiteSpace.NoWrap; name.style.marginTop = 0; name.style.marginBottom = 0;
+                tile.Add(name);
+                var dots = Row(); dots.style.flexWrap = Wrap.NoWrap;
+                foreach (Colour c in Enum.GetValues(typeof(Colour)))
+                {
+                    bool found = shop.Journal.Contains(GrowthShop.JournalKey(sp.Id, c));
+                    var d = Dot(found ? GrowthCreatureView.ColourOf(sp, c) : Color.clear, 11);
+                    d.style.borderTopWidth = d.style.borderBottomWidth = d.style.borderLeftWidth = d.style.borderRightWidth = 1;
+                    d.style.borderTopColor = d.style.borderBottomColor = d.style.borderLeftColor = d.style.borderRightColor = new Color(0.5f, 0.46f, 0.38f);
+                    dots.Add(d);
+                }
+                tile.Add(dots);
+                row.Add(tile);
+            }
+            return row;
+        }
+
         void FillJournal()
         {
             var shop = s.Shop;
@@ -790,29 +943,40 @@ namespace EvolutionShop
             }
             var creatures = Text("Creatures"); creatures.style.fontSize = 24; creatures.style.unityFontStyleAndWeight = FontStyle.Bold; creatures.style.marginTop = 14;
             body.Add(creatures);
-            body.Add(Text("Each undiscovered founder shows the cultures it uses; an exact recipe finds it. A family shows once you have the cultures for one of its founders.", "es-text--muted"));
+            body.Add(Text("Discovered " + shop.Discovered.Count + " of " + GrowthContent.SpeciesCount + " species · journal " + shop.Journal.Count + "/" + GrowthContent.JournalEntries + " (each species in four colours: Classic, Sunny, Deep, Shimmer)."));
+            body.Add(Text("Each undiscovered founder shows the cultures it uses; an exact recipe finds it. Hybrids and crowns are bred. A family shows once you have the cultures for one of its founders or have found one of it.", "es-text--muted"));
             bool Reachable(SpeciesDef sp) => sp.Recipe != null && Enumerable.Range(0, sp.Recipe.Length).All(i => sp.Recipe[i] == 0 || shop.Owns(GrowthContent.Cultures[i].Id) || shop.Vials.ContainsKey(GrowthContent.Cultures[i].Id));
             foreach (var family in GrowthContent.Families)
             {
                 var members = GrowthContent.Species.Where(x => x.Family == family.Id).ToList();
                 if (family.Id != "brookkin" && !members.Any(m => shop.Discovered.Contains(m.Id) || m.Kind == SpeciesKind.Founder && Reachable(m))) continue;
-                var head = Text(family.Name + " · " + family.Size.ToString().ToLowerInvariant() + " · " + members.Count(m => shop.Discovered.Contains(m.Id)) + "/" + members.Count);
+                var head = Text(family.Name + " · " + family.Size.ToString().ToLowerInvariant() + " · " + members.Count(m => shop.Discovered.Contains(m.Id)) + "/" + members.Count +
+                    " · colours " + members.Sum(m => shop.Journal.Count(j => j.StartsWith(m.Id + "/"))) + "/" + members.Count * GrowthContent.ColourCount);
                 head.style.unityFontStyleAndWeight = FontStyle.Bold; head.style.marginTop = 8;
                 body.Add(head);
+                body.Add(FamilyTiles(family));
                 foreach (var sp in members)
                 {
                     bool known = shop.Discovered.Contains(sp.Id);
                     var row = Row(); row.style.marginTop = 4; row.style.flexWrap = Wrap.NoWrap;
                     row.Add(Dot(known ? GrowthCreatureView.ColourOf(sp) : new Color(0.6f, 0.6f, 0.6f), 22));
-                    string clue = sp.Kind != SpeciesKind.Founder ? (sp.Kind == SpeciesKind.Crown ? "the family's crown, bred from its best" : "a hybrid, bred rather than mixed (breeding comes in era 2)") :
+                    string clue = sp.Kind != SpeciesKind.Founder ? (sp.Kind == SpeciesKind.Crown ? "the family's crown: one special pair of its own, never an average" :
+                        shop.HasBreedingTank ? "a hybrid: try pairs in the breeding tank" : "a hybrid, bred rather than mixed (the breeding tank, era 2)") :
                         "uses " + string.Join(" and ", Enumerable.Range(0, sp.Recipe.Length).Where(i => sp.Recipe[i] > 0).Select(i => GrowthContent.Cultures[i].Name));
-                    var entry = Text(known ? sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + (sp.Recipe != null ? GrowthReport.Recipe(sp.Recipe) : "") + " · " + sp.Price + " cr" : "??? · " + clue);
+                    var bred = shop.PairLog.FirstOrDefault(p => p.Species == sp.Id);
+                    string how = sp.Recipe != null ? GrowthReport.Recipe(sp.Recipe) : bred != null ? "bred from " + GrowthContent.Get(bred.A).Name + " × " + GrowthContent.Get(bred.B).Name : "bred";
+                    var entry = Text(known ? sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + how + " · " + sp.Price + " cr" : "??? · " + clue);
                     entry.style.flexGrow = 1; entry.style.flexShrink = 1; entry.style.marginLeft = 8; entry.style.whiteSpace = WhiteSpace.NoWrap;
                     row.Add(entry);
                     body.Add(row);
                 }
             }
             body.Add(Text("Mix log: " + shop.MixLog.Count + " different mixes tried.", "es-text--muted"));
+            // GR-05: the pair log, every pair tried and what it makes.
+            var pairs = Text("Pair log · " + shop.PairLog.Count + " pairs tried"); pairs.style.fontSize = 24; pairs.style.unityFontStyleAndWeight = FontStyle.Bold; pairs.style.marginTop = 14;
+            body.Add(pairs);
+            if (shop.PairLog.Count == 0) body.Add(Text(shop.HasBreedingTank ? "Put two creatures in the breeding tank: every pair makes something." : "Pairs come with the breeding tank (era 2).", "es-text--muted"));
+            foreach (var p in shop.PairLog.AsEnumerable().Reverse()) body.Add(Text(PairLine(p)));
             var close = Row(); close.Add(Button("Close (Tab)", () => s.SetCard(GrowthCard.None), true)); body.Add(close);
         }
 

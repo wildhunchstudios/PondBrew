@@ -57,6 +57,24 @@ namespace EvolutionShop
             return Color.HSVToRGB(Mathf.Repeat(h + (s.BreedingValue % 7 - 3) * 0.025f, 1), sat * 0.9f, Mathf.Clamp01(v * 0.95f));
         }
 
+        /// <summary>
+        /// GR.7.2's four colours on the species' own (placeholders for AD.3's palettes): Classic as it is, Sunny warmer and
+        /// brighter, Deep darker and richer, Shimmer pale and softly glowing.
+        /// </summary>
+        public static Color ColourOf(SpeciesDef s, Colour colour)
+        {
+            var c = ColourOf(s);
+            if (colour == Colour.Classic) return c;
+            Color.RGBToHSV(c, out float h, out float sat, out float v);
+            float Toward(float degrees, float t) => Mathf.Repeat(Mathf.LerpAngle(h * 360f, degrees, t), 360f) / 360f;
+            switch (colour)
+            {
+                case Colour.Sunny: return Color.HSVToRGB(Toward(48f, 0.72f), Mathf.Max(sat, 0.6f), Mathf.Max(v, 0.97f));
+                case Colour.Deep: return Color.HSVToRGB(Toward(232f, 0.35f), Mathf.Clamp01(sat * 1.15f + 0.15f), v * 0.55f);
+                default: return Color.HSVToRGB(h, sat * 0.3f, 1f);
+            }
+        }
+
         static Material Mat(string key, Color c)
         {
             if (!materials.TryGetValue(key, out var m) || m == null) materials[key] = m = ShopWorld.MakeMaterial("GR creature " + key, c, 0, 0.55f);
@@ -64,13 +82,13 @@ namespace EvolutionShop
         }
 
         /// <summary>A softly glowing accent (lanterns and lures), under the bloom threshold.</summary>
-        static Material GlowMat(string key, Color c)
+        static Material GlowMat(string key, Color c, float strength = 0.75f)
         {
             if (!materials.TryGetValue("glow " + key, out var m) || m == null)
             {
                 materials["glow " + key] = m = ShopWorld.MakeMaterial("GR creature glow " + key, c, 0, 0.6f);
                 m.EnableKeyword("_EMISSION");
-                m.SetColor("_EmissionColor", c * 0.75f);
+                m.SetColor("_EmissionColor", c * strength);
             }
             return m;
         }
@@ -84,8 +102,11 @@ namespace EvolutionShop
             view.SpecimenId = specimen.Id;
             view.Species = specimen.Species;
             float L = view.Length = LengthOf(def.Size);
-            Color body = ColourOf(def), belly = Color.Lerp(body, Color.white, 0.55f), fin = Color.Lerp(body, Color.black, 0.25f);
-            var bodyMat = Mat(def.Id + "-body", body); var bellyMat = Mat(def.Id + "-belly", belly); var finMat = Mat(def.Id + "-fin", fin);
+            // GR-05: the specimen's colour (Classic, Sunny, Deep or Shimmer); a Shimmer body glows softly, under the bloom threshold.
+            string key = def.Id + (specimen.Colour == Colour.Classic ? "" : "-" + specimen.Colour);
+            Color body = ColourOf(def, specimen.Colour), belly = Color.Lerp(body, Color.white, 0.55f), fin = Color.Lerp(body, Color.black, 0.25f);
+            var bodyMat = specimen.Colour == Colour.Shimmer ? GlowMat(key + "-body", body, 0.22f) : Mat(key + "-body", body);
+            var bellyMat = Mat(key + "-belly", belly); var finMat = Mat(key + "-fin", fin);
             var white = Mat("eye", Color.white); var black = Mat("pupil", new Color(0.08f, 0.1f, 0.12f));
             float head = def.Size == SizeClass.Small ? 1.3f : 1f;
             // Shape by species: Bubblebelly is round, Ribbonfin long with a ribbon tail, the rest a plain teardrop.
@@ -108,7 +129,7 @@ namespace EvolutionShop
             view.tail.localPosition = new Vector3(0, 0, -0.34f * L);
             ShopWorld.Shape(view.tail, "Tail", PrimitiveType.Cube, new Vector3(0, 0, -tailScale.z * 0.5f), tailScale, finMat);
             ShopWorld.Shape(root.transform, "Fin", PrimitiveType.Cube, new Vector3(0, 0.22f * L, -0.05f * L), new Vector3(0.03f, 0.16f, 0.22f) * L, finMat);
-            Family(view, root.transform, def, L, head, bodyScale, body, fin);
+            Family(view, root.transform, def, key, L, head, bodyScale, body, fin);
             // A small honey tag over a creature a visitor is buying.
             view.reservedTag = ShopWorld.Shape(root.transform, "Reserved tag", PrimitiveType.Cube, new Vector3(0, 0.45f * L, 0), new Vector3(0.18f, 0.12f, 0.02f) * L * 1.6f, Mat("reserved", new Color(0.98f, 0.78f, 0.37f)));
             view.reservedTag.gameObject.SetActive(false);
@@ -118,9 +139,9 @@ namespace EvolutionShop
         }
 
         /// <summary>Each family's feature, so sizes and families read apart at a glance (placeholders for GR.14's rigs).</summary>
-        static void Family(GrowthCreatureView view, Transform root, SpeciesDef def, float L, float head, Vector3 bodyScale, Color body, Color fin)
+        static void Family(GrowthCreatureView view, Transform root, SpeciesDef def, string key, float L, float head, Vector3 bodyScale, Color body, Color fin)
         {
-            var finMat = Mat(def.Id + "-fin", fin);
+            var finMat = Mat(key + "-fin", fin);
             switch (def.Family)
             {
                 case "sparkline":
@@ -148,7 +169,7 @@ namespace EvolutionShop
                     ShopWorld.Shape(root, "Stripe", PrimitiveType.Sphere, Vector3.zero, Vector3.Scale(bodyScale, new Vector3(1.04f, 0.22f, 0.92f)), Mat("stripe", new Color(0.95f, 0.97f, 0.96f)));
                     break;
                 case "reefback":
-                    ShopWorld.Shape(root, "Shell", PrimitiveType.Sphere, new Vector3(0, 0.17f * L, -0.04f * L), new Vector3(0.5f, 0.3f, 0.62f) * L, Mat(def.Id + "-shell", Color.Lerp(fin, new Color(0.45f, 0.36f, 0.28f), 0.5f)));
+                    ShopWorld.Shape(root, "Shell", PrimitiveType.Sphere, new Vector3(0, 0.17f * L, -0.04f * L), new Vector3(0.5f, 0.3f, 0.62f) * L, Mat(key + "-shell", Color.Lerp(fin, new Color(0.45f, 0.36f, 0.28f), 0.5f)));
                     break;
                 case "gloamer":
                     ShopWorld.Shape(root, "Lure stalk", PrimitiveType.Cube, new Vector3(0, 0.3f * L, 0.38f * L), new Vector3(0.025f, 0.2f, 0.025f) * L, finMat);

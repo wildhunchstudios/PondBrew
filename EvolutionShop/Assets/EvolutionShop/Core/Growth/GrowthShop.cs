@@ -12,6 +12,10 @@ namespace EvolutionShop.Growth
     // GR-04 adds GR.6's cultures: each of the seven from its source (the two free growers; Ember and Brine growers and the
     // Mist vat ordered from the supplier catalog at night and delivered at the next opening; Spark and Dusk researched with
     // research points), starter vials to try a culture before owning it, and mixing with whatever culture is in the chamber.
+    // GR-05 adds GR.7.2's breeding: the breeding tank in the back room (era 2, bought with credits and research points), any
+    // pair making the offspring GrowthRules.Breed gives into its nursery while the parents stay, colour set by a tinted dose
+    // or the higher parent colour, the pair log, a journal of species in colours (288 entries) with research points for
+    // every first species and colour, and the era 3 gate (3 stars, a hybrid bred, a Large tank).
     // Pure and engine-free, read by GrowthSession (Runtime) and tested in EditMode. Numbers come from GrowthContent; this
     // class holds the state and the rules: growers and the siphon, the incubator's never-fail mixing with its mix log and
     // "one dose from something new", carrying hatchlings, Starter tanks of 4 spaces with occupant lists and schools,
@@ -25,7 +29,7 @@ namespace EvolutionShop.Growth
         None, NotAtNight, NotDuringDay, UnknownCulture, NotOwned, SiphonFull, GrowerEmpty, NoDose, ChamberFull, ChamberEmpty,
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
-        TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog,
+        TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog, NoOffspring, NotTinted,
     }
 
     public readonly struct GrowthResult
@@ -103,7 +107,16 @@ namespace EvolutionShop.Growth
         public int Count = 1;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned }
+    /// <summary>GR-05: a pair tried in the breeding tank and what it makes (the journal's pair log, GR.7.2).</summary>
+    public sealed class GrowthPairEntry
+    {
+        /// <summary>The parents' species in id order (a pair is the same pair either way round) and their offspring's.</summary>
+        public string A, B, Species;
+        public bool WasNew;
+        public int Count = 1;
+    }
+
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour }
 
     public sealed class GrowthEvent
     {
@@ -149,6 +162,12 @@ namespace EvolutionShop.Growth
         public static readonly string[] ShopKinds = { "starter", "large", "show" };
         /// <summary>The stations the greybox has (GR-02: siphon, growers, incubator and counter at levels 1-2).</summary>
         public static readonly string[] GreyboxStations = { "siphon", "grower", "incubator", "counter" };
+        /// <summary>GR-05: every station the greybox upgrades; the breeding tank starts at level 0 (not bought) and is bought as its level 1.</summary>
+        public static readonly string[] UpgradeableStations = GreyboxStations.Concat(new[] { "breeding" }).ToArray();
+        /// <summary>GR.7.2: the breeding tank takes one pair (its level 3's second pair waits for GR-06's levels past 2).</summary>
+        public const int PairSize = 2;
+        /// <summary>GR.7.2's tints: Bloom makes Sunny offspring, Flow Deep, Mist Shimmer.</summary>
+        public static readonly string[] TintCultures = { "bloom", "flow", "mist" };
 
         public int Credits, Reputation, Rp, Era = 1, Day = 1, SalesTotal, RefusalsTotal;
         public GrowthPhase Phase = GrowthPhase.Night;
@@ -173,6 +192,18 @@ namespace EvolutionShop.Growth
         public readonly List<GrowthContainer> Containers = new List<GrowthContainer>();
         public readonly List<string> Discovered = new List<string>();
         public readonly List<GrowthMixEntry> MixLog = new List<GrowthMixEntry>();
+        /// <summary>GR-05: the breeding tank's pair, its offspring waiting in the nursery, the seconds until the next one, and
+        /// the culture tinting its water (level 2), used by the next offspring.</summary>
+        public readonly List<GrowthSpecimen> Parents = new List<GrowthSpecimen>();
+        public GrowthSpecimen Offspring;
+        public float BreedingLeft;
+        public string Tint;
+        public GrowthPairEntry LastPair;
+        /// <summary>Whether the offspring in the nursery was a new journal entry (a new species or colour): the card says so.</summary>
+        public bool OffspringWasNew;
+        public readonly List<GrowthPairEntry> PairLog = new List<GrowthPairEntry>();
+        /// <summary>GR-05: the journal's entries, a species in a colour ("pondlet/Sunny"): 72 species in 4 colours, 288 in all.</summary>
+        public readonly List<string> Journal = new List<string>();
         public readonly List<GrowthVisitor> Visitors = new List<GrowthVisitor>();
         public readonly List<GrowthEvent> Events = new List<GrowthEvent>();
         public GrowthDaySummary Today, LastDay;
@@ -201,6 +232,14 @@ namespace EvolutionShop.Growth
         public int MaxDoses => (int)Stat("incubator", "maxDoses");
         public float IncubationSeconds => Stat("incubator", "seconds");
         public float ServeSeconds => Stat("counter", "serveSeconds");
+        public bool HasBreedingTank => Level("breeding") > 0;
+        public float BreedSeconds => HasBreedingTank ? Stat("breeding", "seconds") : 0;
+        public bool LargeParents => HasBreedingTank && Stat("breeding", "largeParents") > 0;
+        public bool TintPort => HasBreedingTank && Stat("breeding", "tint") > 0;
+        /// <summary>A pair is in and the nursery is free: the timer runs (GR.15.1: a result that has nowhere to go waits).</summary>
+        public bool Breeding => Parents.Count >= PairSize && Offspring == null;
+        public static string JournalKey(string species, Colour colour) => species + "/" + colour;
+        public bool HasHybrid => Discovered.Any(d => GrowthContent.Get(d).Kind != SpeciesKind.Founder);
         public IEnumerable<GrowthContainer> ShopContainers => Containers.Where(c => !c.Def.Lab);
         public IEnumerable<string> OwnedPlaces => UnitB ? UnitAPlaces.Concat(UnitBPlaces) : UnitAPlaces;
         public IEnumerable<string> FreePlaces => OwnedPlaces.Where(p => Containers.All(c => c.Place != p));
@@ -234,6 +273,9 @@ namespace EvolutionShop.Growth
 
         /// <summary>GR.4's era 2 gate: 2 stars, 3 creatures discovered, 2 tanks.</summary>
         public bool EraTwoGateMet => Stars >= 2 && Discovered.Count >= 3 && ShopContainers.Count() >= 2;
+
+        /// <summary>GR.4's era 3 gate: 3 stars, a hybrid bred, a Large tank.</summary>
+        public bool EraThreeGateMet => Stars >= 3 && HasHybrid && ShopContainers.Any(c => c.Kind == "large");
 
         // ---------------------------------------------------------------- the siphon and growers
 
@@ -344,16 +386,32 @@ namespace EvolutionShop.Growth
             Incubating = false;
             IncubationLeft = 0;
             Hatchling = new GrowthSpecimen { Id = nextId++, Species = Pending, Colour = Colour.Classic };
-            if (!Discovered.Contains(Pending))
-            {
-                Discovered.Add(Pending);
-                var def = GrowthContent.Get(Pending);
-                Rp += GrowthContent.RpFor(def.Kind);
-                Raise(GrowthEventKind.Discovery, "New creature: " + def.Name + "!", Pending);
-                CheckEra();
-            }
-            else Raise(GrowthEventKind.Hatched, GrowthContent.Get(Pending).Name + " hatched", Pending);
+            if (!Record(Hatchling)) Raise(GrowthEventKind.Hatched, GrowthContent.Get(Pending).Name + " hatched", Pending);
             Pending = null;
+        }
+
+        /// <summary>
+        /// GR.7.2: a new creature's journal entry, its species in its colour. A first species is a discovery (founder 5 RP,
+        /// hybrid 8, crown 20); a known species in a new colour is a new colour (2 RP). True when either is new.
+        /// </summary>
+        bool Record(GrowthSpecimen s)
+        {
+            string key = JournalKey(s.Species, s.Colour);
+            bool newEntry = !Journal.Contains(key);
+            if (newEntry) Journal.Add(key);
+            var def = s.Def;
+            if (!Discovered.Contains(s.Species))
+            {
+                Discovered.Add(s.Species);
+                Rp += GrowthContent.RpFor(def.Kind);
+                Raise(GrowthEventKind.Discovery, "New creature: " + (s.Colour == Colour.Classic ? "" : s.Colour + " ") + def.Name + "!", s.Species);
+                CheckEra();
+                return true;
+            }
+            if (!newEntry) return false;
+            Rp += GrowthContent.RpColour;
+            Raise(GrowthEventKind.NewColour, "New colour: " + s.Colour + " " + def.Name + "!", s.Species);
+            return true;
         }
 
         // ---------------------------------------------------------------- carrying and containers
@@ -559,6 +617,127 @@ namespace EvolutionShop.Growth
             return GrowthResult.Ok(species);
         }
 
+        // ---------------------------------------------------------------- the breeding tank (GR.7.2, GR-05)
+
+        /// <summary>Why a creature cannot go into the breeding tank now (None when it can), with a sentence.</summary>
+        public GrowthFailure ParentCheck(GrowthSpecimen s, out string why)
+        {
+            why = null;
+            if (!HasBreedingTank) { why = "Buy the breeding tank first"; return GrowthFailure.Locked; }
+            if (Parents.Count >= PairSize) { why = "The breeding tank takes one pair"; return GrowthFailure.ChamberFull; }
+            if (s.Def.Size == SizeClass.Large && !LargeParents) { why = "Large parents need the breeding tank's level 2"; return GrowthFailure.DoesNotFit; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Puts a carried creature into the breeding tank (the first that may go, or the one asked for); a pair starts breeding.</summary>
+        public GrowthResult PutParent(int specimenId = 0)
+        {
+            if (Carried.Count == 0) return GrowthResult.Fail(GrowthFailure.HandsEmpty);
+            var candidates = specimenId == 0 ? Carried.ToList() : Carried.Where(x => x.Id == specimenId).ToList();
+            if (candidates.Count == 0) return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen);
+            GrowthSpecimen parent = null; string why = null; var failure = GrowthFailure.None;
+            foreach (var x in candidates) { failure = ParentCheck(x, out why); if (failure == GrowthFailure.None) { parent = x; break; } }
+            if (parent == null) return GrowthResult.Fail(failure, why);
+            Carried.Remove(parent);
+            Parents.Add(parent);
+            RestartBreeding();
+            return GrowthResult.Ok(parent.Species);
+        }
+
+        /// <summary>Takes a parent out into the hands, at any time (GR.15.1: the timer starts again when a pair is back in).</summary>
+        public GrowthResult TakeParent(int specimenId)
+        {
+            var p = Parents.FirstOrDefault(x => x.Id == specimenId);
+            if (p == null) return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen);
+            if (Carried.Count >= CarryLimit) return GrowthResult.Fail(GrowthFailure.HandsFull, "carry up to " + CarryLimit);
+            Parents.Remove(p);
+            Carried.Add(p);
+            RestartBreeding();
+            return GrowthResult.Ok(p.Species);
+        }
+
+        /// <summary>Takes the offspring out of the nursery; the pair starts on the next one (breeding as production, GR.7.2).</summary>
+        public GrowthResult TakeOffspring()
+        {
+            if (Offspring == null) return GrowthResult.Fail(GrowthFailure.NoOffspring, "Nothing in the nursery yet");
+            if (Carried.Count >= CarryLimit) return GrowthResult.Fail(GrowthFailure.HandsFull, "carry up to " + CarryLimit);
+            Carried.Add(Offspring);
+            Offspring = null;
+            RestartBreeding();
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>Why a dose cannot tint the breeding water now (None when it can).</summary>
+        public GrowthFailure TintCheck(string culture, out string why)
+        {
+            why = null;
+            if (!HasBreedingTank) { why = "Buy the breeding tank first"; return GrowthFailure.Locked; }
+            if (!TintPort) { why = "Tinting needs the breeding tank's level 2"; return GrowthFailure.Locked; }
+            if (!TintCultures.Contains(culture)) { why = "Only Bloom, Flow and Mist tint the water"; return GrowthFailure.UnknownCulture; }
+            if (Tint != null) { why = "The water is tinted with " + Name(Tint) + " already"; return GrowthFailure.Busy; }
+            if (!Held.Contains(culture)) { why = "1 " + Name(culture); return GrowthFailure.NoDose; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>GR.7.2: a dose of Bloom, Flow or Mist from the siphon tints the water; the next offspring is Sunny, Deep or Shimmer.</summary>
+        public GrowthResult TintWater(string culture)
+        {
+            var failure = TintCheck(culture, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            Held.Remove(culture);
+            Tint = culture;
+            return GrowthResult.Ok(culture);
+        }
+
+        /// <summary>Takes an unused tint back into the siphon.</summary>
+        public GrowthResult ClearTint()
+        {
+            if (Tint == null) return GrowthResult.Fail(GrowthFailure.NotTinted, "The water is not tinted");
+            if (Held.Count >= SiphonCapacity) return GrowthResult.Fail(GrowthFailure.SiphonFull);
+            Held.Add(Tint);
+            Tint = null;
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>The colour the pair's next offspring will have (the tint, else the higher parent colour).</summary>
+        public Colour NextColour => Parents.Count < PairSize ? Colour.Classic : GrowthRules.BreedColour(Parents[0].Colour, Parents[1].Colour, Tint);
+
+        static (string a, string b) Ordered(string x, string y) => string.CompareOrdinal(x, y) <= 0 ? (x, y) : (y, x);
+
+        /// <summary>The pair log's entry for two species (either order), or null when the pair was never tried.</summary>
+        public GrowthPairEntry PairEntry(string x, string y)
+        {
+            var (a, b) = Ordered(x, y);
+            return PairLog.FirstOrDefault(p => p.A == a && p.B == b);
+        }
+
+        void RestartBreeding() => BreedingLeft = Breeding ? BreedSeconds : 0;
+
+        /// <summary>
+        /// GR.7.2: the pair makes what GrowthRules.Breed gives (the species whose breeding value is nearest the parents'
+        /// average, a special pair's crown, a same-species pair true) in the tint's colour or the higher parent colour, into
+        /// the nursery. The parents stay; the tint is used up.
+        /// </summary>
+        void BreedOffspring()
+        {
+            var a = Parents[0]; var b = Parents[1];
+            var child = GrowthRules.Breed(a.Species, b.Species);
+            var colour = GrowthRules.BreedColour(a.Colour, b.Colour, Tint);
+            Tint = null;
+            BreedingLeft = 0;
+            Offspring = new GrowthSpecimen { Id = nextId++, Species = child.Id, Colour = colour };
+            var entry = PairEntry(a.Species, b.Species);
+            if (entry != null) { entry.Count++; entry.WasNew = false; }
+            else
+            {
+                var (x, y) = Ordered(a.Species, b.Species);
+                PairLog.Add(entry = new GrowthPairEntry { A = x, B = y, Species = child.Id, WasNew = !Discovered.Contains(child.Id) });
+            }
+            LastPair = entry;
+            OffspringWasNew = Record(Offspring);
+            if (!OffspringWasNew) Raise(GrowthEventKind.Bred, (colour == Colour.Classic ? "" : colour + " ") + child.Name + " bred", child.Id);
+        }
+
         // ---------------------------------------------------------------- cultures, the supplier and research (GR.6)
 
         public bool Owns(string culture) => Cultures.Contains(culture);
@@ -704,7 +883,7 @@ namespace EvolutionShop.Growth
         public GrowthFailure UpgradeCheck(string station, out LevelDef next, out string why)
         {
             next = null; why = null;
-            if (!GreyboxStations.Contains(station)) { why = "Not in the greybox"; return GrowthFailure.MaxLevel; }
+            if (!UpgradeableStations.Contains(station)) { why = "Not in the greybox"; return GrowthFailure.MaxLevel; }
             int lv = Level(station);
             var levels = GrowthContent.Station(station).Levels;
             if (lv >= Math.Min(levels.Length, GreyboxMaxLevel)) { why = "Highest level in the greybox"; return GrowthFailure.MaxLevel; }
@@ -715,6 +894,7 @@ namespace EvolutionShop.Growth
             // GR.15.1: an upgrade installs only when its station is idle.
             if (station == "incubator" && (Incubating || Hatchling != null)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
             if (station == "counter" && Queue.Any()) { why = "Visitors are waiting"; return GrowthFailure.Busy; }
+            if (station == "breeding" && (Breeding || Offspring != null)) { why = "Busy: take a parent or the offspring out first"; return GrowthFailure.Busy; }
             if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -726,7 +906,7 @@ namespace EvolutionShop.Growth
             Credits -= next.Credits;
             Rp -= next.Rp;
             Levels[station] = next.Level;
-            Raise(GrowthEventKind.Upgraded, GrowthContent.Station(station).Name + " level " + next.Level + ": " + next.Change, amount: next.Credits);
+            Raise(GrowthEventKind.Upgraded, GrowthContent.Station(station).Name + (next.Level == 1 ? " bought: " : " level " + next.Level + ": ") + next.Change, amount: next.Credits);
             CheckEra();
             return GrowthResult.Ok();
         }
@@ -765,6 +945,11 @@ namespace EvolutionShop.Growth
                 Era = 2;
                 Raise(GrowthEventKind.EraUp, "Era 2: " + GrowthContent.Eras[1].Name + ". Shop unit B can open.");
             }
+            if (Era == 2 && EraThreeGateMet)
+            {
+                Era = 3;
+                Raise(GrowthEventKind.EraUp, "Era 3: " + GrowthContent.Eras[2].Name + ". Water kits and catalog page 3 open.");
+            }
         }
 
         // ---------------------------------------------------------------- the day
@@ -791,6 +976,11 @@ namespace EvolutionShop.Growth
             {
                 IncubationLeft -= seconds;
                 if (IncubationLeft <= 0) Hatch();
+            }
+            if (Breeding)
+            {
+                BreedingLeft -= seconds;
+                if (BreedingLeft <= 0) BreedOffspring();
             }
             if (Phase == GrowthPhase.Day) TickDay(seconds);
             // Visitors who left are gone once they have walked out (the presentation walks them in that time).
@@ -993,18 +1183,30 @@ namespace EvolutionShop.Growth
                 list.Add(("Own 2 tanks (" + Math.Min(2, ShopContainers.Count()) + "/2)", ShopContainers.Count() >= 2));
                 list.Add(("Reach 2 stars (reputation " + Reputation + "/" + GrowthContent.StarThresholds[1] + ")", Stars >= 2));
             }
-            else if (!UnitB)
-            {
-                var unit = GrowthContent.Expansions.First(e => e.Id == "unit-b");
-                list.Add(("Open shop unit B (" + Math.Min(Credits, unit.Credits) + "/" + unit.Credits + " credits, at night)", false));
-            }
             else
             {
-                bool large = ShopContainers.Any(c => c.Kind != "starter");
-                list.Add(("Buy a Large tank for a long place (" + GrowthContent.Container("large").Levels[0].Credits + " credits, at night)", large));
-                list.Add(("Get Ember: order its grower from the supplier catalog at the counter (" + GrowthContent.Culture("ember").Credits + " credits)", Owns("ember") || Orders.Contains("grower-ember")));
-                list.Add(("Research Spark at the pinboard (" + GrowthContent.Culture("spark").Rp + " research points)", Owns("spark")));
-                list.Add(("The greybox ends here: breeding and the rest of era 2 come with GR-05", true));
+                if (!UnitB)
+                {
+                    var unit = GrowthContent.Expansions.First(e => e.Id == "unit-b");
+                    list.Add(("Open shop unit B (" + Math.Min(Credits, unit.Credits) + "/" + unit.Credits + " credits, at night)", false));
+                }
+                if (Era == 2)
+                {
+                    // GR-05: era 2's goal, breed your first hybrid and reach 3 stars; with a Large tank they open era 3.
+                    var breeding = GrowthContent.Station("breeding").Levels[0];
+                    list.Add(("Buy the breeding tank in the back room (" + breeding.Credits + " credits and " + breeding.Rp + " RP)", HasBreedingTank));
+                    list.Add(("Breed your first hybrid", HasHybrid));
+                    list.Add(("Buy a Large tank for a long place (" + GrowthContent.Container("large").Levels[0].Credits + " credits, at night)", ShopContainers.Any(c => c.Kind == "large")));
+                    list.Add(("Reach 3 stars (reputation " + Reputation + "/" + GrowthContent.StarThresholds[2] + ")", Stars >= 3));
+                    list.Add(("Get Ember: order its grower from the supplier catalog at the counter (" + GrowthContent.Culture("ember").Credits + " credits)", Owns("ember") || Orders.Contains("grower-ember")));
+                    list.Add(("Research Spark at the pinboard (" + GrowthContent.Culture("spark").Rp + " research points)", Owns("spark")));
+                }
+                else
+                {
+                    var large = ShopContainers.Where(c => c.Kind == "large").OrderBy(c => c.Free).FirstOrDefault();
+                    list.Add(("Fill a Large tank (" + (large == null ? "buy one first" : large.Used + "/" + large.Spaces + " spaces") + ")", large != null && large.Free == 0));
+                    list.Add(("The greybox ends here: power, pipes and the lab annex come with GR-07 and GR-10", true));
+                }
             }
             return list;
         }
@@ -1046,6 +1248,10 @@ namespace EvolutionShop.Growth
             discovered = Discovered.ToArray(),
             vialCultures = Vials.Keys.ToArray(), vialDoses = Vials.Values.ToArray(), orders = Orders.ToArray(),
             mixLog = MixLog.Select(m => new GrowthSave.Mix { doses = m.Doses, species = m.Species, exact = m.Exact, wasNew = m.WasNew, distanceToNew = m.DistanceToNew, count = m.Count }).ToArray(),
+            parents = Parents.Select(GrowthSave.Specimen.Of).ToArray(),
+            offspring = Offspring == null ? new GrowthSave.Specimen[0] : new[] { GrowthSave.Specimen.Of(Offspring) },
+            breedingLeft = BreedingLeft, tint = Tint ?? "", journal = Journal.ToArray(),
+            pairLog = PairLog.Select(p => new GrowthSave.Pair { a = p.A, b = p.B, species = p.Species, wasNew = p.WasNew, count = p.Count }).ToArray(),
         };
 
         /// <summary>Restores a saved shop; visitors and reservations are not saved (a day resumes empty). Null and a reason when the save is not one.</summary>
@@ -1054,9 +1260,11 @@ namespace EvolutionShop.Growth
             problem = null;
             if (s == null) { problem = "No save"; return null; }
             // Version 1 (GR-02) had no water; its containers keep fresh water. Version 2 (GR-03) had no vials or orders.
+            // Version 3 (GR-04) had no breeding tank, pair log or colours: its journal is its discoveries, all Classic.
             if (s.version < 1 || s.version > GrowthSave.CurrentVersion) { problem = "Unknown GR save version " + s.version; return null; }
             bool Known(string species) => GrowthContent.Get(species) != null;
-            var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0])).ToList();
+            var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0]))
+                .Concat(s.parents ?? new GrowthSave.Specimen[0]).Concat(s.offspring ?? new GrowthSave.Specimen[0]).ToList();
             if (all.Any(x => !Known(x.species))) { problem = "Unknown species in the save"; return null; }
             if (all.Select(x => x.id).Distinct().Count() != all.Count) { problem = "A creature is saved twice"; return null; }
             if ((s.discovered ?? new string[0]).Any(d => !Known(d))) { problem = "Unknown discovery in the save"; return null; }
@@ -1072,7 +1280,7 @@ namespace EvolutionShop.Growth
             }
             for (int i = 0; i < (s.stations ?? new string[0]).Length; i++)
             {
-                if (!shop.Levels.ContainsKey(s.stations[i]) || s.levels[i] < 1 || s.levels[i] > GreyboxMaxLevel) { problem = "Bad station level " + s.stations[i]; return null; }
+                if (!UpgradeableStations.Contains(s.stations[i]) || s.levels[i] < 1 || s.levels[i] > GreyboxMaxLevel) { problem = "Bad station level " + s.stations[i]; return null; }
                 shop.Levels[s.stations[i]] = s.levels[i];
             }
             shop.Held.AddRange(s.held ?? new string[0]); shop.Chamber.AddRange(s.chamber ?? new string[0]);
@@ -1094,6 +1302,27 @@ namespace EvolutionShop.Growth
                 shop.Containers.Add(c);
             }
             shop.Discovered.AddRange(s.discovered ?? new string[0]);
+            shop.Parents.AddRange((s.parents ?? new GrowthSave.Specimen[0]).Select(x => x.ToSpecimen()));
+            shop.Offspring = s.offspring != null && s.offspring.Length > 0 ? s.offspring[0].ToSpecimen() : null;
+            if ((shop.Parents.Count > 0 || shop.Offspring != null) && !shop.HasBreedingTank) { problem = "Breeding without a breeding tank"; return null; }
+            if (shop.Parents.Count > PairSize) { problem = "More parents than the breeding tank takes"; return null; }
+            if (shop.Parents.Any(p => p.Def.Size == SizeClass.Large) && !shop.LargeParents) { problem = "A Large parent before the breeding tank's level 2"; return null; }
+            shop.Tint = string.IsNullOrEmpty(s.tint) ? null : s.tint;
+            if (shop.Tint != null && !TintCultures.Contains(shop.Tint)) { problem = "Unknown tint " + s.tint; return null; }
+            shop.BreedingLeft = !shop.Breeding ? 0 : s.breedingLeft > 0 ? Math.Min(s.breedingLeft, shop.BreedSeconds) : shop.BreedSeconds;
+            if (s.version < 4) shop.Journal.AddRange(shop.Discovered.Select(d => JournalKey(d, Colour.Classic)));
+            else
+                foreach (var key in s.journal ?? new string[0])
+                {
+                    var parts = key.Split('/');
+                    if (parts.Length != 2 || !Known(parts[0]) || !Enum.TryParse<Colour>(parts[1], out var colour) || !Enum.IsDefined(typeof(Colour), colour)) { problem = "Unknown journal entry " + key; return null; }
+                    if (!shop.Journal.Contains(key)) shop.Journal.Add(key);
+                }
+            foreach (var p in s.pairLog ?? new GrowthSave.Pair[0])
+            {
+                if (!Known(p.a) || !Known(p.b) || !Known(p.species)) { problem = "Unknown species in the pair log"; return null; }
+                shop.PairLog.Add(new GrowthPairEntry { A = p.a, B = p.b, Species = p.species, WasNew = p.wasNew, Count = Math.Max(1, p.count) });
+            }
             var vialCultures = s.vialCultures ?? new string[0];
             for (int i = 0; i < vialCultures.Length; i++)
             {
@@ -1119,8 +1348,9 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>3: GR-04 (vials and supplier orders); 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 3;
+        /// <summary>4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
+        /// 2: GR-03 (container water). Older saves load.</summary>
+        public const int CurrentVersion = 4;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1140,6 +1370,11 @@ namespace EvolutionShop.Growth
         public Mix[] mixLog;
         public string[] vialCultures, orders;
         public int[] vialDoses;
+        public Specimen[] parents, offspring;
+        public float breedingLeft;
+        public string tint;
+        public string[] journal;
+        public Pair[] pairLog;
         /// <summary>Comfort settings kept with the slot: peek on or off, reduced motion.</summary>
         public bool peekOff, reducedMotion;
         public float sensitivity = 1;
@@ -1157,6 +1392,13 @@ namespace EvolutionShop.Growth
             public string id, kind, place, water;
             public int level;
             public Specimen[] occupants;
+        }
+
+        [Serializable] public sealed class Pair
+        {
+            public string a, b, species;
+            public bool wasNew;
+            public int count;
         }
 
         [Serializable] public sealed class Mix

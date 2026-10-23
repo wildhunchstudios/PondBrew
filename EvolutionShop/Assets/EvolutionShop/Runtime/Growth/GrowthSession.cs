@@ -15,12 +15,13 @@ namespace EvolutionShop
     public static class GrowthGreybox
     {
         public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
-            TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke";
+            TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke",
+            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
-            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : null;
+            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : null;
         public static bool Requested
         {
             get
@@ -37,7 +38,7 @@ namespace EvolutionShop
         }
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -215,6 +216,7 @@ namespace EvolutionShop
                 case GrowthTargetKind.UnitBWall: SetCard(GrowthCard.UnitB); break;
                 case GrowthTargetKind.Board: SetCard(GrowthCard.Board); break;
                 case GrowthTargetKind.Catalog: SetCard(GrowthCard.Catalog); break;
+                case GrowthTargetKind.Breeding: SetCard(GrowthCard.Breeding); break;
                 case GrowthTargetKind.Vial: Ui.Hint("Hold the mouse on a vial to collect its doses"); break;
             }
         }
@@ -287,6 +289,7 @@ namespace EvolutionShop
                 if (Peeking && PeekCreature != null) TakeFromTank(PeekCreature);
                 // Carrying creatures, E on a tank puts one in; otherwise E opens what is under the reticle.
                 else if (Focused != null && Focused.Kind == GrowthTargetKind.Tank && Shop.Carried.Count > 0) { string id = Focused.Id; Act(() => Shop.PutIn(id)); }
+                else if (Focused != null && Focused.Kind == GrowthTargetKind.Breeding && BreedingShortcut()) { }
                 else if (Focused != null) Interact(Focused);
             }
             Ui.Tick(dt);
@@ -301,10 +304,25 @@ namespace EvolutionShop
             {
                 Ui?.Event(e);
                 if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter) SetCard(GrowthCard.Receipt); }
-                if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp || e.Kind == GrowthEventKind.CultureOwned) SaveNow();
+                if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.NewColour || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp || e.Kind == GrowthEventKind.CultureOwned) SaveNow();
             }
             if (phase != Shop.Phase) World.SetPhase(Shop.Phase);
         }
+
+        /// <summary>
+        /// GR-05: E at the breeding tank puts a carried creature in while the pair has room, else takes a waiting offspring
+        /// with a free hand; otherwise (nothing to put in or take) it opens the card. False when the card should open.
+        /// </summary>
+        bool BreedingShortcut()
+        {
+            if (!Shop.HasBreedingTank) return false;
+            if (Shop.Parents.Count < GrowthShop.PairSize && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None)) { Act(() => Shop.PutParent()); return true; }
+            if (Shop.Offspring != null && Shop.Carried.Count < GrowthShop.CarryLimit) { Act(Shop.TakeOffspring); return true; }
+            return false;
+        }
+
+        /// <summary>A creature's name with its colour when it is not Classic ("Sunny Pondlet").</summary>
+        public static string Named(GrowthSpecimen s) => (s.Colour == Colour.Classic ? "" : s.Colour + " ") + s.Def.Name;
 
         void HoldActions(bool held, float dt)
         {
@@ -409,6 +427,18 @@ namespace EvolutionShop
                 case GrowthTargetKind.Workbench: status = "E upgrade the siphon"; return "Tool bench";
                 case GrowthTargetKind.UnitBWall: status = Shop.UnitB ? "Open" : "E see what it needs"; return "Shop unit B";
                 case GrowthTargetKind.Board: status = "E goals"; return "Pinboard";
+                case GrowthTargetKind.Breeding:
+                    if (!Shop.HasBreedingTank)
+                    {
+                        var first = GrowthContent.Station("breeding").Levels[0];
+                        status = "era " + first.Era + " · " + first.Credits + " credits and " + first.Rp + " RP · E see what it needs";
+                        return "Breeding tank (not bought)";
+                    }
+                    bool canPut = Shop.Parents.Count < GrowthShop.PairSize && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None);
+                    status = Shop.Offspring != null ? Named(Shop.Offspring) + " in the nursery · " + (canPut ? "E put in" : Shop.Carried.Count < GrowthShop.CarryLimit ? "E take it" : "hands full") :
+                        Shop.Breeding ? Mathf.CeilToInt(Shop.BreedingLeft) + " s to the offspring · E details" :
+                        Shop.Parents.Count + "/" + GrowthShop.PairSize + " parents · " + (canPut ? "E put in" : "E open");
+                    return "Breeding tank";
             }
             return null;
         }

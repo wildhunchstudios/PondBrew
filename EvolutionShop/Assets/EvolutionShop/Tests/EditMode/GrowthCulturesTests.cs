@@ -186,7 +186,7 @@ namespace EvolutionShop.Tests
             Assert.That(back.Owns("spark"), Is.True);
             Assert.That(back.Vials["ember"], Is.EqualTo(2));
             Assert.That(back.Orders, Is.EqualTo(new[] { "grower-ember" }));
-            Assert.That(GrowthSave.CurrentVersion, Is.EqualTo(3));
+            Assert.That(GrowthSave.CurrentVersion, Is.GreaterThanOrEqualTo(3), "version 3 or later (GR-05 is 4)");
             var old = JsonUtility.FromJson<GrowthSave>(json);
             old.version = 2; old.vialCultures = null; old.vialDoses = null; old.orders = null;
             Assert.That(GrowthShop.Restore(old, out problem), Is.Not.Null, "a GR-03 save loads");
