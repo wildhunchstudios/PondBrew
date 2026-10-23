@@ -15,6 +15,13 @@ namespace EvolutionShop.Tests
         static GrowthShop At(int era, int stars, int credits = 50000, int rp = 500) =>
             new GrowthShop { Era = era, Reputation = GrowthContent.StarThresholds[stars - 1] + 10, Credits = credits, Rp = rp };
 
+        /// <summary>GR-09: the counter's second till is a helper's, so its level 4 is checked with Pip hired.</summary>
+        static GrowthShop Ready(GrowthShop shop, string station, int level)
+        {
+            if (station == "counter" && level == 4) shop.Staff["pip"] = new GrowthHelper { Id = "pip" };
+            return shop;
+        }
+
         static void UpgradeTo(GrowthShop shop, string station, int level)
         {
             while (shop.Level(station) < level) Assert.That(shop.Upgrade(station).Success, Is.True, station + " to level " + (shop.Level(station) + 1));
@@ -39,7 +46,7 @@ namespace EvolutionShop.Tests
                 for (int lv = 2; lv <= levels.Length; lv++)
                 {
                     var def = levels[lv - 1];
-                    var shop = At(era: 5, stars: 5);
+                    var shop = Ready(At(era: 5, stars: 5), station, lv);
                     shop.Levels[station] = lv - 1;
                     string later = GrowthShop.WaitsFor(station, lv);
                     if (later != null)
@@ -48,10 +55,10 @@ namespace EvolutionShop.Tests
                         Assert.That(waits, Is.EqualTo(later));
                         continue;
                     }
-                    if (def.Era > 1) { var early = At(era: def.Era - 1, stars: 5); early.Levels[station] = lv - 1; early.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs era " + def.Era), station + " " + lv); }
-                    if (def.Stars > 1) { var low = At(era: 5, stars: def.Stars - 1); low.Levels[station] = lv - 1; low.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs " + def.Stars + " stars"), station + " " + lv); }
-                    if (def.Rp > 0) { var poor = At(era: 5, stars: 5, rp: def.Rp - 1); poor.Levels[station] = lv - 1; poor.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs " + def.Rp + " research points"), station + " " + lv); }
-                    var broke = At(era: 5, stars: 5, credits: def.Credits - 1); broke.Levels[station] = lv - 1;
+                    if (def.Era > 1) { var early = Ready(At(era: def.Era - 1, stars: 5), station, lv); early.Levels[station] = lv - 1; early.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs era " + def.Era), station + " " + lv); }
+                    if (def.Stars > 1) { var low = Ready(At(era: 5, stars: def.Stars - 1), station, lv); low.Levels[station] = lv - 1; low.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs " + def.Stars + " stars"), station + " " + lv); }
+                    if (def.Rp > 0) { var poor = Ready(At(era: 5, stars: 5, rp: def.Rp - 1), station, lv); poor.Levels[station] = lv - 1; poor.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs " + def.Rp + " research points"), station + " " + lv); }
+                    var broke = Ready(At(era: 5, stars: 5, credits: def.Credits - 1), station, lv); broke.Levels[station] = lv - 1;
                     Assert.That(broke.UpgradeCheck(station, out _, out _), Is.EqualTo(GrowthFailure.NotEnoughCredits), station + " " + lv);
                     int credits = shop.Credits, rp = shop.Rp;
                     Assert.That(shop.Upgrade(station).Success, Is.True, station + " " + lv);
@@ -63,7 +70,7 @@ namespace EvolutionShop.Tests
                 while (top.UpgradeCheck(station, out _, out _) == GrowthFailure.None) top.Upgrade(station);
             Assert.That(GrowthShop.UpgradeableStations.Where(s => s != "vat" && s != "generator" && s != "pump" && s != "sorter").Select(top.Level), Is.EqualTo(new[] { 4, 4, 4, 3, 4, 3 }),
                 "siphon, growers, incubator and the bench to 4 (GR-08: the analyzer and planner), the counter to 3 (its next level waits), the breeding tank to 3");
-            Assert.That(GrowthShop.WaitsFor("counter", 4), Does.Contain("GR-09"));
+            Assert.That(GrowthShop.WaitsFor("counter", 4), Is.Null, "GR-09: the second till came with the helpers");
             Assert.That(GrowthShop.WaitsFor("bench", 3), Is.Null);
             Assert.That(GrowthShop.WaitsFor("bench", 4), Is.Null);
             Assert.That(top.UpgradeCheck("siphon", out _, out string max), Is.EqualTo(GrowthFailure.MaxLevel));
@@ -281,7 +288,7 @@ namespace EvolutionShop.Tests
             Refused(b => b.levels[Array.IndexOf(b.stations, "incubator")] = 2, "More hatchlings than the incubator's clutch");
             Refused(b => { b.hatchling = new GrowthSave.Specimen[0]; b.levels[Array.IndexOf(b.stations, "incubator")] = 2; }, "Unknown incubator tint mist");
             Refused(b => b.levels[Array.IndexOf(b.stations, "breeding")] = 2, "More parents than the breeding tank takes");
-            Refused(b => b.levels[Array.IndexOf(b.stations, "counter")] = 4, "Bad station level counter");
+            Refused(b => b.levels[Array.IndexOf(b.stations, "counter")] = 4, "A second till without Pip");
             Refused(b => { b.stations = b.stations.Concat(new[] { "sorter" }).ToArray(); b.levels = b.levels.Concat(new[] { 2 }).ToArray(); }, "Bad station level sorter");
         }
     }

@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -179,6 +179,7 @@ namespace EvolutionShop
             LabStations();
             WorkshopRoom();
             LineStations();
+            StaffBoard();
             tanksRoot = new GameObject("Tanks").transform; tanksRoot.SetParent(transform, false);
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
@@ -460,6 +461,7 @@ namespace EvolutionShop
             breedingSlot.SetActive(true);
             ResetLab();
             ResetLine();
+            ResetHelpers();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -527,6 +529,7 @@ namespace EvolutionShop
             SyncLab(shop);
             SyncLine(shop);
             SyncVisitors(shop);
+            SyncHelpers(shop);
         }
 
         // ---------------------------------------------------------------- the breeding tank (GR-05)
@@ -705,7 +708,7 @@ namespace EvolutionShop
             }
         }
 
-        /// <summary>The counter: a bag dispenser (2), a card reader (3); the second till waits for helpers (GR-09).</summary>
+        /// <summary>The counter: a bag dispenser (2), a card reader (3), a second till where you serve beside Pip (4, GR-09).</summary>
         void CounterParts(Transform p, int level)
         {
             if (level >= 2) Box(p, "Bag dispenser", new Vector3(-0.7f, 1.16f, 0.1f), new Vector3(0.26f, 0.24f, 0.2f), paper);
@@ -714,6 +717,12 @@ namespace EvolutionShop
                 var reader = Box(p, "Card reader", new Vector3(0.15f, 1.1f, 0.12f), new Vector3(0.12f, 0.05f, 0.18f), trim);
                 reader.localRotation = Quaternion.Euler(-20, 0, 0);
                 Box(p, "Card reader light", new Vector3(0.15f, 1.13f, 0.17f), new Vector3(0.03f, 0.01f, 0.03f), Glow("GR reader light", new Color(0.5f, 0.95f, 0.6f), 0.4f));
+            }
+            if (level >= 4)
+            {
+                Box(p, "Second till", new Vector3(-0.25f, 1.14f, -0.05f), new Vector3(0.34f, 0.2f, 0.28f), cabinet);
+                var screen = Box(p, "Till screen", new Vector3(-0.25f, 1.32f, -0.12f), new Vector3(0.24f, 0.14f, 0.02f), stand);
+                screen.localRotation = Quaternion.Euler(-15, 0, 0);
             }
         }
 
@@ -922,7 +931,7 @@ namespace EvolutionShop
             }
             for (int i = 0; i < hatchlingViews.Count; i++)
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
-            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); }
+            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t); }
             foreach (var v in visitors.Values) v.Tick(dt);
         }
 

@@ -201,9 +201,9 @@ namespace EvolutionShop
             Check(s.ReloadSaved(), "Reload the saved slot");
             shop = s.Shop;
             var file = JsonUtility.FromJson<GrowthSave>(File.ReadAllText(s.SavePath));
-            Check(JsonUtility.ToJson(GrowthShop.Restore(file, out _).Snapshot()) == saved && file.version == 7 && shop.Workshop && shop.HasSorter && shop.Chute != null && shop.Racks.Count() == 2 &&
+            Check(JsonUtility.ToJson(GrowthShop.Restore(file, out _).Snapshot()) == saved && file.version >= 7 && shop.Workshop && shop.HasSorter && shop.Chute != null && shop.Racks.Count() == 2 &&
                 shop.Target("pondlet") == 2 && shop.AutoByTargets && shop.LineDays == 1 && shop.Hint != null && shop.Era == 5,
-                "The version 7 save brings the line back: the workshop, racks, the chute, the targets, the line's day and the analyzer's hint");
+                "The version 7 (and later) save brings the line back: the workshop, racks, the chute, the targets, the line's day and the analyzer's hint");
             yield return null; yield return null;
             Check(!s.World.WorkshopWallStanding && s.World.BuiltRacks == 2 && s.World.ChuteBuilt && s.World.SorterLookLevel == 1 && s.World.GeneratorInWorkshop, "The reloaded workshop looks the same");
             LookAt(new Vector3(4.8f, 0, 10.2f), new Vector3(9.5f, 1.0f, 13.2f)); yield return Shot("119-workshop");

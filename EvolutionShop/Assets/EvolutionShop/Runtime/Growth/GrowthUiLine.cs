@@ -13,7 +13,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthUi
     {
-        /// <summary>The species the sorter card's target picker shows, and the planner's two picks (the cards' own state).</summary>
+        /// <summary>The species the stock targets' picker shows (the sorter's and Nori's cards), and the planner's two picks (the cards' own state).</summary>
         string targetPick, planA, planB;
 
         void FillWorkshop()
@@ -43,27 +43,8 @@ namespace EvolutionShop
             Live(body);
             body.Add(Text(shop.SorterStatus, shop.SorterStatus.StartsWith("No room") || shop.SorterStatus.StartsWith("Waiting for power") ? "es-card__reason" : "es-text"));
             ChuteRow(body);
-            // The stock targets: how many of each species the shop's tanks should show.
-            var section = new VisualElement(); section.style.marginTop = 12; section.style.borderTopWidth = 2; section.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); section.style.paddingTop = 8;
-            var head = Text("Stock targets"); head.style.unityFontStyleAndWeight = FontStyle.Bold; section.Add(head);
-            var known = GrowthContent.Species.Where(x => shop.Discovered.Contains(x.Id)).Select(x => x.Id).ToList();
-            section.Add(Text(shop.StockTargets.Count == 0 ? "No targets yet: every hatchling goes to a rack." :
-                "Targets: " + string.Join(", ", known.Where(id => shop.Target(id) > 0).Select(id => GrowthContent.Get(id).Name + " " + shop.Shown(id) + "/" + shop.Target(id))) + ". Below its target, a species goes to the shop's tanks; the rest to the racks.", "es-text--muted"));
-            if (known.Count > 0)
-            {
-                if (targetPick == null || !known.Contains(targetPick)) targetPick = known.FirstOrDefault(id => shop.Target(id) > 0) ?? known[0];
-                int at = known.IndexOf(targetPick);
-                var row = Row();
-                row.Add(Button("◀", () => { targetPick = known[(at + known.Count - 1) % known.Count]; RefreshCard(); }, false, known.Count > 1));
-                var label = Text(GrowthContent.Get(targetPick).Name + " · in the shop " + shop.Shown(targetPick) + " · in racks " + shop.Racked(targetPick) + " · target " + shop.Target(targetPick));
-                label.style.width = 300; label.style.flexGrow = 1; label.style.flexShrink = 1; row.Add(label);
-                row.Add(Button("▶", () => { targetPick = known[(at + 1) % known.Count]; RefreshCard(); }, false, known.Count > 1));
-                string pick = targetPick;
-                row.Add(Button("−", () => s.Act(() => shop.SetTarget(pick, shop.Target(pick) - 1)), false, shop.Target(pick) > 0));
-                row.Add(Button("+", () => s.Act(() => shop.SetTarget(pick, shop.Target(pick) + 1)), true, shop.Target(pick) < GrowthShop.MostTarget));
-                section.Add(row);
-            }
-            body.Add(section);
+            // The stock targets: how many of each species the shop's tanks should show (shared with Nori's card, GR-09).
+            TargetsSection(body, "No targets yet: every hatchling goes to a rack.");
             var racks = shop.Racks.ToList();
             body.Add(Text(racks.Count == 0 ? "No racks yet: place one on a rack place in the workshop." : "Racks: " + string.Join(", ", racks.OrderBy(c => c.Place).Select(c => GrowthShop.RackName(c.Place) + " " + c.Used + "/" + c.Spaces)) + ".", "es-text--muted"));
             Footer(body);

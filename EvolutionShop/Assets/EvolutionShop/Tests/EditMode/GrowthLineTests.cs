@@ -426,7 +426,7 @@ namespace EvolutionShop.Tests
             shop.LineSalesToday = 2;
             shop.SortProgress = 0.4f;
             var save = shop.Snapshot();
-            Assert.That(save.version, Is.EqualTo(7));
+            Assert.That(save.version, Is.GreaterThanOrEqualTo(7));
             string json = JsonUtility.ToJson(save);
             var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(json), out string problem);
             Assert.That(problem, Is.Null);

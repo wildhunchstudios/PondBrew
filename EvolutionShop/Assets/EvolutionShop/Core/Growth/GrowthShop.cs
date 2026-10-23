@@ -137,7 +137,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome }
 
     public sealed class GrowthEvent
     {
@@ -192,13 +192,10 @@ namespace EvolutionShop.Growth
 
         /// <summary>
         /// GR-06: a level whose capability belongs to a later task waits for it (shown on the station's card with its change
-        /// and gate, not bought yet): the counter's second till for a cashier (GR-09). The analyzer and planner came with GR-08.
+        /// and gate, not bought yet). None waits now: the analyzer and planner came with GR-08, the counter's second till with
+        /// GR-09's helpers.
         /// </summary>
-        public static string WaitsFor(string station, int level)
-        {
-            if (station == "counter" && level >= 4) return "Waits for helpers (GR-09): a cashier works the second till";
-            return null;
-        }
+        public static string WaitsFor(string station, int level) => null;
         /// <summary>GR.7.2's tints: Bloom makes Sunny offspring, Flow Deep, Mist Shimmer.</summary>
         public static readonly string[] TintCultures = { "bloom", "flow", "mist" };
 
@@ -278,7 +275,7 @@ namespace EvolutionShop.Growth
         public int Clutch => Math.Max(1, (int)Stat("incubator", "clutch"));
         public bool IncubatorTintPort => Stat("incubator", "tint") > 0;
         /// <summary>GR-06: the counter's queue (2, then 3 with the card reader); more visitors wait by the tanks until there is room.</summary>
-        public int QueueLength => Math.Max(1, (int)Stat("counter", "queue"));
+        public int QueueLength => Math.Max(1, (int)Stat("counter", "queue")) + PipCalls;
         /// <summary>GR-06: the research bench's microscope (level 2) says how many doses a mix is from the nearest new creature.</summary>
         public bool Microscope => Level("bench") >= 2;
         /// <summary>GR-06: the breeding tank's pairs at its level (two at level 3).</summary>
@@ -373,10 +370,13 @@ namespace EvolutionShop.Growth
 
         // ---------------------------------------------------------------- the incubator
 
+        /// <summary>Who owns the chamber's batch, when a machine or a helper does: the player's doses keep out of it.</summary>
+        public string ChamberLock => AutoBatch ? "The auto-doser is dosing" : MossBatch ? "Moss is dosing" : null;
+
         public GrowthResult AddDose(string culture)
         {
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
-            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
+            if (ChamberLock != null) return GrowthResult.Fail(GrowthFailure.Busy, ChamberLock);
             if (!Held.Contains(culture)) return GrowthResult.Fail(GrowthFailure.NoDose, culture);
             if (Chamber.Count >= MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
             Held.Remove(culture);
@@ -387,7 +387,7 @@ namespace EvolutionShop.Growth
         public GrowthResult ReturnDose(string culture)
         {
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
-            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
+            if (ChamberLock != null) return GrowthResult.Fail(GrowthFailure.Busy, ChamberLock);
             if (!Chamber.Contains(culture)) return GrowthResult.Fail(GrowthFailure.NoDose, culture);
             if (Held.Count >= SiphonCapacity) return GrowthResult.Fail(GrowthFailure.SiphonFull);
             Chamber.Remove(culture);
@@ -402,7 +402,7 @@ namespace EvolutionShop.Growth
             if (s == null || s.Kind != SpeciesKind.Founder) return GrowthResult.Fail(GrowthFailure.NotAFounder, species);
             if (!Discovered.Contains(species)) return GrowthResult.Fail(GrowthFailure.NotDiscovered, species);
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
-            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
+            if (ChamberLock != null) return GrowthResult.Fail(GrowthFailure.Busy, ChamberLock);
             if (s.Doses > MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
             // Doses already in the chamber go back first, so the recipe is exact.
             var held = new List<string>(Held); held.AddRange(Chamber);
@@ -436,7 +436,7 @@ namespace EvolutionShop.Growth
         public GrowthResult StartIncubation()
         {
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
-            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
+            if (ChamberLock != null) return GrowthResult.Fail(GrowthFailure.Busy, ChamberLock);
             if (Hatchlings.Count > 0) return GrowthResult.Fail(GrowthFailure.HatchlingWaiting);
             if (Chamber.Count == 0) return GrowthResult.Fail(GrowthFailure.ChamberEmpty);
             if (Chamber.Count > MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
@@ -1024,7 +1024,9 @@ namespace EvolutionShop.Growth
             if (station == "sorter" && !Workshop) { why = "Open the workshop first"; return GrowthFailure.Locked; }
             if (station == "generator" && next.Level >= 3 && !Workshop) { why = "The " + next.Change.Split(':')[0].ToLowerInvariant() + " stands in the workshop: open it first"; return GrowthFailure.Locked; }
             // GR.15.1: an upgrade installs only when its station is idle.
-            if (station == "incubator" && (Incubating || Hatchlings.Count > 0 || AutoBatch)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
+            if (station == "incubator" && (Incubating || Hatchlings.Count > 0 || AutoBatch || MossBatch)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
+            // GR-09: the counter's second till is a helper's.
+            if (station == "counter" && next.Level == 4 && Helper("pip") == null) { why = "Hire Pip first: the second till is for a helper"; return GrowthFailure.Locked; }
             if (station == "counter" && Queue.Any()) { why = "Visitors are waiting"; return GrowthFailure.Busy; }
             if (station == "breeding" && Pairs.Any(p => p.Breeding || p.Offspring != null)) { why = "Busy: take a parent or the offspring out first"; return GrowthFailure.Busy; }
             if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -1132,6 +1134,7 @@ namespace EvolutionShop.Growth
                 if (pair.Left <= 0) BreedOffspring(pair);
             }
             if (Phase == GrowthPhase.Day) TickDay(seconds);
+            TickHelpers(seconds);
             // Visitors who left are gone once they have walked out (the presentation walks them in that time).
             foreach (var v in Visitors) if (v.State == GrowthVisitorState.Leaving) v.Clock += Phase == GrowthPhase.Day ? 0 : seconds;
             Visitors.RemoveAll(v => v.State == GrowthVisitorState.Leaving && v.Clock >= LeaveSeconds);
@@ -1273,17 +1276,28 @@ namespace EvolutionShop.Growth
             if (Today != null) Today.ReputationGained += Reputation - before;
         }
 
-        /// <summary>Holding the mouse on the counter bags the front visitor's creature (GR.9 counter levels).</summary>
+        /// <summary>
+        /// Holding the mouse on the counter bags the front visitor's creature (GR.9 counter levels). GR-09: with Pip at the
+        /// one till the player cannot serve; the second till (counter level 4) lets the player serve the next visitor beside Pip.
+        /// </summary>
         public GrowthResult Serve(float seconds)
         {
             if (Phase != GrowthPhase.Day) return GrowthResult.Fail(GrowthFailure.NotDuringDay);
-            var v = FrontOfQueue;
+            if (Working("pip") && !SecondTill) { ServeProgress = 0; return GrowthResult.Fail(GrowthFailure.Busy, "Pip is at the till: the counter's second till (level 4) lets you serve beside Pip"); }
+            PlayerAtTill = true;
+            var v = PlayerVisitor;
             if (v == null) { ServeProgress = 0; return GrowthResult.Fail(GrowthFailure.NoVisitorWaiting); }
             ServeProgress += seconds;
             if (ServeProgress < ServeSeconds) return GrowthResult.Ok("bagging");
             ServeProgress = 0;
+            return SellTo(v, "Sold ") ? GrowthResult.Ok("sold") : GrowthResult.Fail(GrowthFailure.NoSuchSpecimen);
+        }
+
+        /// <summary>Completes a visitor's purchase at the counter (the player's or Pip's): false when what they chose is gone.</summary>
+        bool SellTo(GrowthVisitor v, string verb)
+        {
             var bought = v.SpecimenIds.Select(id => HolderOf(id)?.Occupants.First(o => o.Id == id)).Where(s => s != null).ToList();
-            if (bought.Count == 0) { Leave(v, GrowthVisitOutcome.TiredOfWaiting); return GrowthResult.Fail(GrowthFailure.NoSuchSpecimen); }
+            if (bought.Count == 0) { Leave(v, GrowthVisitOutcome.TiredOfWaiting); return false; }
             int price = 0, starsBefore = Stars;
             foreach (var s in bought)
             {
@@ -1300,13 +1314,13 @@ namespace EvolutionShop.Growth
             v.Outcome = GrowthVisitOutcome.Bought;
             v.Clock = 0;
             var first = bought[0];
-            Raise(GrowthEventKind.Sale, "Sold " + (bought.Count > 1 ? "a pair of " + first.Def.Name + "s" : first.Def.Name) + " for " + price + " credits", first.Species, price);
+            Raise(GrowthEventKind.Sale, verb + (bought.Count > 1 ? "a pair of " + first.Def.Name + "s" : first.Def.Name) + " for " + price + " credits", first.Species, price);
             if (Stars > starsBefore) Raise(GrowthEventKind.StarUp, "The shop has " + Stars + " stars!", amount: Stars);
             CheckEra();
-            return GrowthResult.Ok("sold");
+            return true;
         }
 
-        public void StopServing() => ServeProgress = 0;
+        public void StopServing() { ServeProgress = 0; PlayerAtTill = false; }
 
         void CloseShop()
         {
@@ -1319,6 +1333,7 @@ namespace EvolutionShop.Growth
             EndLineDay();
             Raise(GrowthEventKind.DayEnded, "Day " + Day + " is over");
             Day++;
+            StartDutyPeriod();
             CheckEra();
         }
 
@@ -1421,6 +1436,7 @@ namespace EvolutionShop.Growth
             var save = SnapshotCore();
             SavePower(save);
             SaveLine(save);
+            SaveHelpers(save);
             return save;
         }
 
@@ -1541,9 +1557,9 @@ namespace EvolutionShop.Growth
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s);
             if (problem != null) return null;
-            shop.nextId = Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1);
+            shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
             shop.CheckEra();
             shop.Events.Clear();
@@ -1555,12 +1571,13 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>7: GR-08 (the workshop, racks, the sorter and its chute, stock targets, the line's days, the analyzer's hint);
+        /// <summary>8: GR-09 (the helpers: their levels, duty and wages paid, the step each is on and what they carry; Moss's jobs);
+        /// 7: GR-08 (the workshop, racks, the sorter and its chute, stock targets, the line's days, the analyzer's hint);
         /// 6: GR-07 (the lab annex, buffers, pipes, the power board's order and the auto-doser);
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1601,6 +1618,10 @@ namespace EvolutionShop.Growth
         public string hintKind, hintA, hintB, hintSpecies;
         public int[] hintRecipe;
         public int hintDay;
+        public Helper[] staff;
+        public string mossRecipe, mossPairA, mossPairB, mossTask;
+        public bool mossBatch;
+        public int mossBatches;
         /// <summary>Comfort settings kept with the slot: peek on or off, reduced motion.</summary>
         public bool peekOff, reducedMotion;
         public float sensitivity = 1;
@@ -1612,6 +1633,16 @@ namespace EvolutionShop.Growth
             public bool fromLine;
             public static Specimen Of(GrowthSpecimen s) => new Specimen { id = s.Id, species = s.Species, colour = s.Colour.ToString(), fromLine = s.FromLine };
             public GrowthSpecimen ToSpecimen() => new GrowthSpecimen { Id = id, Species = species, Colour = Enum.TryParse<Colour>(colour, out var c) ? c : Colour.Classic, FromLine = fromLine };
+        }
+
+        /// <summary>A helper: level, duty and paid period, the step they are on (a walk from a spot to a target and what it is about), what they carry.</summary>
+        [Serializable] public sealed class Helper
+        {
+            public string id, step, place, dose, status;
+            public int level, paidPeriod, specimen, nextJob;
+            public bool onDuty;
+            public float progress, stepSeconds, spotX, spotZ, targetX, targetZ;
+            public Specimen[] hands;
         }
 
         [Serializable] public sealed class Box

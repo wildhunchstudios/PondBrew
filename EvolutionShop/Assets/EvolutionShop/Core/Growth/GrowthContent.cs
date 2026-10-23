@@ -479,12 +479,14 @@ namespace EvolutionShop.Growth
 
         public static readonly HelperDef[] Helpers =
         {
-            new HelperDef { Id = "pip", Name = "Pip", Job = "cashier", Gate = "2 stars and 40 sales", Stars = 2, Fee = 100, Wages = new[] { 8, 12, 16 }, TrainCosts = new[] { 300, 1200 } },
+            new HelperDef { Id = "pip", Name = "Pip", Job = "cashier", Gate = "2 stars and 150 sales", Stars = 2, Fee = 100, Wages = new[] { 8, 12, 16 }, TrainCosts = new[] { 300, 1200 } },
             new HelperDef { Id = "nori", Name = "Nori", Job = "stocker", Gate = "3 stars and a Large tank", Stars = 3, Fee = 400, Wages = new[] { 25, 35, 50 }, TrainCosts = new[] { 1000, 3000 } },
             new HelperDef { Id = "moss", Name = "Moss", Job = "technician", Gate = "3 stars and a powered generator", Stars = 3, Fee = 800, Wages = new[] { 60, 80, 100 }, TrainCosts = new[] { 2000, 5000 } },
         };
 
         public const int PipSalesGate = 150;
+
+        public static HelperDef Helper(string id) => Helpers.FirstOrDefault(h => h.Id == id);
 
         // ---------------------------------------------------------------- stars, eras and visitors (GR.4, GR.10)
 

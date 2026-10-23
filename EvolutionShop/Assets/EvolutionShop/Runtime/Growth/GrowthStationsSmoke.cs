@@ -151,7 +151,7 @@ namespace EvolutionShop
                 "40 s later (accelerated) both nurseries hold an offspring: a Puddlepup and a Reedwhisker");
             LookAt(GrowthWorld.BreedingPosition + new Vector3(0, 0, 1.1f), GrowthWorld.BreedingPosition + new Vector3(0, GrowthWorld.BreedingWaterY, 0)); yield return Shot("97-two-pairs");
 
-            // The counter: a bag dispenser, a card reader and a queue of 3; its second till waits for helpers.
+            // The counter: a bag dispenser, a card reader and a queue of 3; its second till comes once Pip is hired (GR-09).
             Ok(s.Act(() => shop.Upgrade("counter")), "Counter level 2");
             Ok(s.Act(() => shop.Upgrade("counter")), "Counter level 3: the card reader, 0.5 s, a queue of 3");
             LookAt(GrowthWorld.CounterPosition + new Vector3(0, 0, 1.4f), GrowthWorld.CounterPosition + new Vector3(0, 1.05f, 0));
@@ -159,8 +159,8 @@ namespace EvolutionShop
             Aimed(GrowthTargetKind.Counter, "counter", "The reticle focuses the counter");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(card.Contains("Counter · level 3 of 4") && card.Contains("Waits for helpers (GR-09): a cashier works the second till") && shop.ServeSeconds == 0.5f && shop.QueueLength == 3,
-                "The counter's card: level 3 of 4, the second till waiting for helpers");
+            Check(card.Contains("Counter · level 3 of 4") && card.Contains("Hire Pip first: the second till is for a helper") && shop.ServeSeconds == 0.5f && shop.QueueLength == 3,
+                "The counter's card: level 3 of 4, the second till once Pip is hired");
             yield return Shot("98-counter");
             s.SetCard(GrowthCard.None);
             foreach (var place in new[] { "b1", "b2" })
@@ -183,9 +183,9 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             Check(most == 3 && shop.Phase == GrowthPhase.Night, "Through a day (accelerated) the queue fills to 3 and never more; then the shop closes");
 
-            // The ladders say what waits: the counter's second till (the analyzer and planner came with GR-08).
+            // The ladders say what is still needed: the counter's second till needs Pip (GR-09; the analyzer and planner came with GR-08).
             Check(shop.UpgradeCheck("bench", out var bench3, out string waits) == GrowthFailure.None && bench3.Level == 3 &&
-                shop.UpgradeCheck("counter", out _, out waits) == GrowthFailure.Locked && waits.Contains("GR-09"), "The second till waits for helpers (GR-09); the bench's analyzer is on offer");
+                shop.UpgradeCheck("counter", out _, out waits) == GrowthFailure.Locked && waits.Contains("Hire Pip first"), "The second till needs Pip (GR-09); the bench's analyzer is on offer");
             Check(new[] { "siphon", "grower", "incubator", "breeding", "vat" }.All(st => shop.UpgradeCheck(st, out _, out _) == GrowthFailure.MaxLevel), "Every other station is at its highest level");
             LookAt(new Vector3(0.9f, 0, 5.0f), new Vector3(-2.0f, 0.8f, 7.6f)); yield return Shot("99-back-room-levels");
 
