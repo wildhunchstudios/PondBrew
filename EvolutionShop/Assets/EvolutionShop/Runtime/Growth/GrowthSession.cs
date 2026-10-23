@@ -15,11 +15,12 @@ namespace EvolutionShop
     public static class GrowthGreybox
     {
         public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
-            TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke";
+            TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), or null.</summary>
         public static string SmokeRoute =>
-            ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" : null;
+            ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
+            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : null;
         public static bool Requested
         {
             get
@@ -36,7 +37,7 @@ namespace EvolutionShop
         }
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -213,6 +214,8 @@ namespace EvolutionShop
                 case GrowthTargetKind.Workbench: SetCard(GrowthCard.Workbench); break;
                 case GrowthTargetKind.UnitBWall: SetCard(GrowthCard.UnitB); break;
                 case GrowthTargetKind.Board: SetCard(GrowthCard.Board); break;
+                case GrowthTargetKind.Catalog: SetCard(GrowthCard.Catalog); break;
+                case GrowthTargetKind.Vial: Ui.Hint("Hold the mouse on a vial to collect its doses"); break;
             }
         }
 
@@ -298,7 +301,7 @@ namespace EvolutionShop
             {
                 Ui?.Event(e);
                 if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter) SetCard(GrowthCard.Receipt); }
-                if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp) SaveNow();
+                if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp || e.Kind == GrowthEventKind.CultureOwned) SaveNow();
             }
             if (phase != Shop.Phase) World.SetPhase(Shop.Phase);
         }
@@ -313,6 +316,14 @@ namespace EvolutionShop
                 if (!r.Success && (r.Failure == GrowthFailure.SiphonFull || r.Failure == GrowthFailure.GrowerEmpty)) Ui.Hint(Explain(r));
             }
             else Shop.StopCollecting();
+            // GR-04: a starter vial is collected as a grower is, until it is empty.
+            if (held && Focused != null && Focused.Kind == GrowthTargetKind.Vial)
+            {
+                var r = Shop.CollectVial(Focused.Id, dt);
+                CollectingNow = r.Success;
+                if (!r.Success && (r.Failure == GrowthFailure.SiphonFull || r.Failure == GrowthFailure.NoDose)) Ui.Hint(Explain(r));
+            }
+            else Shop.StopVial();
             if (held && Focused != null && Focused.Kind == GrowthTargetKind.Counter && Shop.Phase == GrowthPhase.Day)
             {
                 var r = Shop.Serve(dt);
@@ -359,8 +370,14 @@ namespace EvolutionShop
             switch (Focused.Kind)
             {
                 case GrowthTargetKind.Grower:
-                    status = Mathf.FloorToInt(Shop.GrowerUnits[Focused.Id]) + "/" + Shop.GrowerCapacity + " · hold mouse to collect · E details";
-                    return GrowthShop.Name(Focused.Id) + " grower";
+                    status = Mathf.FloorToInt(Shop.GrowerUnits.TryGetValue(Focused.Id, out float units) ? units : 0) + "/" + Shop.GrowerCapacity + " · hold mouse to collect · E details";
+                    return GrowthContent.Culture(Focused.Id).Source == CultureSource.Vat ? "Conditioning vat (" + GrowthShop.Name(Focused.Id) + ")" : GrowthShop.Name(Focused.Id) + " grower";
+                case GrowthTargetKind.Vial:
+                    status = (Shop.Vials.TryGetValue(Focused.Id, out int left) ? left : 0) + " doses · hold mouse to collect";
+                    return GrowthShop.Name(Focused.Id) + " starter vial";
+                case GrowthTargetKind.Catalog:
+                    status = (Shop.Phase == GrowthPhase.Night ? "E order" : "E browse · orders at night") + (Shop.Orders.Count > 0 ? " · " + Shop.Orders.Count + " on order" : "");
+                    return "Supplier catalog";
                 case GrowthTargetKind.Incubator:
                     status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left" : Shop.Hatchling != null ? "A hatchling is ready · E" : Shop.Chamber.Count + "/" + Shop.MaxDoses + " doses · E to mix";
                     return "Incubator";

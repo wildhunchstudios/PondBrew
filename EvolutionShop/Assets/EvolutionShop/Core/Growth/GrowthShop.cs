@@ -9,6 +9,9 @@ namespace EvolutionShop.Growth
     // selling them, size classes (small 1, medium 2, large 4 spaces), water and harmony (comfort, era 3), appeal, visitors
     // who browse one container at a time and choose a specimen from it, Collectors who reserve a pair (all or none) and
     // Big spenders who favour bigger creatures.
+    // GR-04 adds GR.6's cultures: each of the seven from its source (the two free growers; Ember and Brine growers and the
+    // Mist vat ordered from the supplier catalog at night and delivered at the next opening; Spark and Dusk researched with
+    // research points), starter vials to try a culture before owning it, and mixing with whatever culture is in the chamber.
     // Pure and engine-free, read by GrowthSession (Runtime) and tested in EditMode. Numbers come from GrowthContent; this
     // class holds the state and the rules: growers and the siphon, the incubator's never-fail mixing with its mix log and
     // "one dose from something new", carrying hatchlings, Starter tanks of 4 spaces with occupant lists and schools,
@@ -22,7 +25,7 @@ namespace EvolutionShop.Growth
         None, NotAtNight, NotDuringDay, UnknownCulture, NotOwned, SiphonFull, GrowerEmpty, NoDose, ChamberFull, ChamberEmpty,
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
-        TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer,
+        TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog,
     }
 
     public readonly struct GrowthResult
@@ -100,7 +103,7 @@ namespace EvolutionShop.Growth
         public int Count = 1;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned }
 
     public sealed class GrowthEvent
     {
@@ -152,6 +155,11 @@ namespace EvolutionShop.Growth
         public float DaySecondsLeft;
         public bool UnitB;
         public readonly List<string> Cultures = new List<string> { "bloom", "flow" };
+        /// <summary>GR-04: starter vials' doses left, by culture (collected with the siphon at the vial shelf).</summary>
+        public readonly Dictionary<string, int> Vials = new Dictionary<string, int>();
+        /// <summary>GR-04: supplier orders paid at night, delivered when the shop next opens.</summary>
+        public readonly List<string> Orders = new List<string>();
+        public float VialProgress { get; private set; }
         public readonly Dictionary<string, float> GrowerUnits = new Dictionary<string, float>();
         public readonly Dictionary<string, int> Levels = new Dictionary<string, int> { ["siphon"] = 1, ["grower"] = 1, ["incubator"] = 1, ["counter"] = 1 };
         public readonly List<string> Held = new List<string>();
@@ -305,7 +313,10 @@ namespace EvolutionShop.Growth
         }
 
         /// <summary>What the chamber's mix would make now (never fails while it has doses), for the card's preview of nothing: the result stays a surprise until it hatches.</summary>
-        public MixResult Preview() => Chamber.Count == 0 ? new MixResult(null, false, -1) : GrowthRules.Mix(ChamberRecipe(), Cultures, Discovered);
+        /// <summary>The cultures a mix may use: those owned and any in the chamber (a vial's culture before its source is owned).</summary>
+        List<string> MixCultures() => Cultures.Concat(Chamber).Distinct().ToList();
+
+        public MixResult Preview() => Chamber.Count == 0 ? new MixResult(null, false, -1) : GrowthRules.Mix(ChamberRecipe(), MixCultures(), Discovered);
 
         /// <summary>GR.15.1: an empty mix is refused; the chamber can never hold more than the level allows; the output must be free.</summary>
         public GrowthResult StartIncubation()
@@ -315,7 +326,7 @@ namespace EvolutionShop.Growth
             if (Chamber.Count == 0) return GrowthResult.Fail(GrowthFailure.ChamberEmpty);
             if (Chamber.Count > MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
             var recipe = ChamberRecipe();
-            var mix = GrowthRules.Mix(recipe, Cultures, Discovered);
+            var mix = GrowthRules.Mix(recipe, MixCultures(), Discovered);
             Pending = mix.Species.Id;
             bool isNew = !Discovered.Contains(Pending);
             var entry = MixLog.FirstOrDefault(e => e.Doses.SequenceEqual(recipe));
@@ -548,6 +559,121 @@ namespace EvolutionShop.Growth
             return GrowthResult.Ok(species);
         }
 
+        // ---------------------------------------------------------------- cultures, the supplier and research (GR.6)
+
+        public bool Owns(string culture) => Cultures.Contains(culture);
+
+        /// <summary>A culture becomes renewable: its grower (or the vat for Mist) stands in the back room, full.</summary>
+        void AddCulture(string culture, string how)
+        {
+            if (Cultures.Contains(culture)) return;
+            Cultures.Add(culture);
+            GrowerUnits[culture] = GrowerCapacity;
+            Raise(GrowthEventKind.CultureOwned, "New culture: " + Name(culture) + " (" + how + ")", amount: GrowthContent.CultureIndex(culture));
+        }
+
+        /// <summary>Why a catalog item cannot be ordered now (None when it can), with a sentence.</summary>
+        public GrowthFailure OrderCheck(string itemId, out string why)
+        {
+            why = null;
+            var item = GrowthContent.CatalogItem(itemId);
+            if (item == null) { why = "Not in the catalog"; return GrowthFailure.NotInCatalog; }
+            if (Orders.Contains(itemId)) { why = "Ordered: it arrives when the shop opens"; return GrowthFailure.Ordered; }
+            if (Owns(item.Culture)) { why = item.Kind == CatalogKind.Vial ? "You grow " + Name(item.Culture) + " already" : "You have it"; return GrowthFailure.Owned; }
+            if (item.Kind != CatalogKind.Vial && Orders.Any(o => GrowthContent.CatalogItem(o).Culture == item.Culture && GrowthContent.CatalogItem(o).Kind != CatalogKind.Vial)) { why = "Already on order"; return GrowthFailure.Ordered; }
+            if (item.Stars > Stars) { why = "Catalog page " + item.Stars + ": needs " + item.Stars + " stars"; return GrowthFailure.Locked; }
+            if (item.Era > Era) { why = "Needs era " + item.Era; return GrowthFailure.Locked; }
+            if (item.Rp > Rp) { why = "Needs " + item.Rp + " research points"; return GrowthFailure.Locked; }
+            if (Phase != GrowthPhase.Night) { why = "Orders are placed at night"; return GrowthFailure.NotAtNight; }
+            if (Credits < item.Credits) { why = "Needs " + item.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Orders an item from the supplier at night: paid now, delivered when the shop next opens (GR.6: no timers).</summary>
+        public GrowthResult Order(string itemId)
+        {
+            var failure = OrderCheck(itemId, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var item = GrowthContent.CatalogItem(itemId);
+            Credits -= item.Credits;
+            Rp -= item.Rp;
+            Orders.Add(itemId);
+            Raise(GrowthEventKind.Ordered, "Ordered: " + item.Name + " (arrives when the shop opens)", amount: item.Credits);
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>Takes an order back at night, with its credits and research points.</summary>
+        public GrowthResult CancelOrder(string itemId)
+        {
+            if (!Orders.Contains(itemId)) return GrowthResult.Fail(GrowthFailure.NotInCatalog, "Not on order");
+            if (Phase != GrowthPhase.Night) return GrowthResult.Fail(GrowthFailure.NotAtNight, "Orders change at night");
+            var item = GrowthContent.CatalogItem(itemId);
+            Orders.Remove(itemId);
+            Credits += item.Credits;
+            Rp += item.Rp;
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>The night's orders arrive as the shop opens: growers and the vat stand in the back room, vials on its shelf.</summary>
+        void Deliver()
+        {
+            foreach (var id in Orders.ToList())
+            {
+                var item = GrowthContent.CatalogItem(id);
+                Orders.Remove(id);
+                Raise(GrowthEventKind.Delivered, "Delivered: " + item.Name);
+                switch (item.Kind)
+                {
+                    case CatalogKind.Grower: AddCulture(item.Culture, "its grower is in the back room"); break;
+                    case CatalogKind.Vat: AddCulture(item.Culture, "the conditioning vat is in the back room"); break;
+                    case CatalogKind.Vial: Vials[item.Culture] = (Vials.TryGetValue(item.Culture, out int n) ? n : 0) + GrowthContent.VialDoses; break;
+                }
+            }
+        }
+
+        /// <summary>Why a culture cannot be researched now (None when it can): Spark and Dusk come from research points.</summary>
+        public GrowthFailure ResearchCheck(string culture, out string why)
+        {
+            why = null;
+            var c = GrowthContent.Culture(culture);
+            if (c == null || c.Source != CultureSource.Research) { why = "Not a research culture"; return GrowthFailure.NotInCatalog; }
+            if (Owns(culture)) { why = "Researched"; return GrowthFailure.Owned; }
+            if (c.Era > Era) { why = "Needs era " + c.Era; return GrowthFailure.Locked; }
+            if (c.Stars > Stars) { why = "Needs " + c.Stars + " stars"; return GrowthFailure.Locked; }
+            if (c.Rp > Rp) { why = "Needs " + c.Rp + " research points (you have " + Rp + ")"; return GrowthFailure.Locked; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Research a culture with research points: its grower stands in the back room at once (GR.6).</summary>
+        public GrowthResult Research(string culture)
+        {
+            var failure = ResearchCheck(culture, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            Rp -= GrowthContent.Culture(culture).Rp;
+            AddCulture(culture, "researched; its grower is in the back room");
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>Holding the siphon on a vial: one dose every hold time, as from a grower, until the vial is empty.</summary>
+        public GrowthResult CollectVial(string culture, float seconds)
+        {
+            if (!Vials.TryGetValue(culture, out int left) || left < 1) { VialProgress = 0; return GrowthResult.Fail(GrowthFailure.NoDose, Name(culture) + " vial is empty"); }
+            if (Held.Count >= SiphonCapacity) { VialProgress = 0; return GrowthResult.Fail(GrowthFailure.SiphonFull); }
+            VialProgress += seconds;
+            int collected = 0;
+            while (VialProgress >= HoldSeconds && Held.Count < SiphonCapacity && left > 0)
+            {
+                VialProgress -= HoldSeconds;
+                left--; Held.Add(culture); collected++;
+            }
+            if (left == 0) { Vials.Remove(culture); VialProgress = 0; } else Vials[culture] = left;
+            if (Held.Count >= SiphonCapacity) VialProgress = 0;
+            if (collected > 0) Raise(GrowthEventKind.Collected, collected + " " + Name(culture), amount: collected);
+            return GrowthResult.Ok(collected.ToString());
+        }
+
+        public void StopVial() => VialProgress = 0;
+
         /// <summary>
         /// GR-03's densest layout (validation): unit B open, era 4 and 4 stars, every place holding the largest container it
         /// takes at its highest level, filled to the last space with small creatures of 21 species, three of each in turn (schools).
@@ -652,6 +778,7 @@ namespace EvolutionShop.Growth
             visitorsToday = 0;
             Today = new GrowthDaySummary { Day = Day, StarsBefore = Stars };
             Raise(GrowthEventKind.DayStarted, "Day " + Day + ": the shop is open");
+            Deliver();
             return GrowthResult.Ok();
         }
 
@@ -875,6 +1002,8 @@ namespace EvolutionShop.Growth
             {
                 bool large = ShopContainers.Any(c => c.Kind != "starter");
                 list.Add(("Buy a Large tank for a long place (" + GrowthContent.Container("large").Levels[0].Credits + " credits, at night)", large));
+                list.Add(("Get Ember: order its grower from the supplier catalog at the counter (" + GrowthContent.Culture("ember").Credits + " credits)", Owns("ember") || Orders.Contains("grower-ember")));
+                list.Add(("Research Spark at the pinboard (" + GrowthContent.Culture("spark").Rp + " research points)", Owns("spark")));
                 list.Add(("The greybox ends here: breeding and the rest of era 2 come with GR-05", true));
             }
             return list;
@@ -915,6 +1044,7 @@ namespace EvolutionShop.Growth
             carried = Carried.Select(GrowthSave.Specimen.Of).ToArray(),
             containers = Containers.Select(c => new GrowthSave.Box { id = c.Id, kind = c.Kind, place = c.Place, level = c.Level, water = c.Water.ToString(), occupants = c.Occupants.Select(GrowthSave.Specimen.Of).ToArray() }).ToArray(),
             discovered = Discovered.ToArray(),
+            vialCultures = Vials.Keys.ToArray(), vialDoses = Vials.Values.ToArray(), orders = Orders.ToArray(),
             mixLog = MixLog.Select(m => new GrowthSave.Mix { doses = m.Doses, species = m.Species, exact = m.Exact, wasNew = m.WasNew, distanceToNew = m.DistanceToNew, count = m.Count }).ToArray(),
         };
 
@@ -923,7 +1053,7 @@ namespace EvolutionShop.Growth
         {
             problem = null;
             if (s == null) { problem = "No save"; return null; }
-            // Version 1 (GR-02) had no water; its containers keep fresh water.
+            // Version 1 (GR-02) had no water; its containers keep fresh water. Version 2 (GR-03) had no vials or orders.
             if (s.version < 1 || s.version > GrowthSave.CurrentVersion) { problem = "Unknown GR save version " + s.version; return null; }
             bool Known(string species) => GrowthContent.Get(species) != null;
             var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0])).ToList();
@@ -946,7 +1076,8 @@ namespace EvolutionShop.Growth
                 shop.Levels[s.stations[i]] = s.levels[i];
             }
             shop.Held.AddRange(s.held ?? new string[0]); shop.Chamber.AddRange(s.chamber ?? new string[0]);
-            if (shop.Held.Concat(shop.Chamber).Any(c => !shop.Cultures.Contains(c))) { problem = "A dose of a culture not owned"; return null; }
+            // A dose may be of a culture not owned (from a starter vial, GR-04), but it must be a culture.
+            if (shop.Held.Concat(shop.Chamber).Any(c => GrowthContent.CultureIndex(c) < 0)) { problem = "A dose of an unknown culture"; return null; }
             shop.Incubating = s.incubating; shop.IncubationLeft = s.incubationLeft; shop.Pending = string.IsNullOrEmpty(s.pending) ? null : s.pending;
             if (shop.Incubating && (shop.Pending == null || !Known(shop.Pending))) { problem = "An incubation without its creature"; return null; }
             shop.Hatchling = s.hatchling != null && s.hatchling.Length > 0 ? s.hatchling[0].ToSpecimen() : null;
@@ -963,6 +1094,18 @@ namespace EvolutionShop.Growth
                 shop.Containers.Add(c);
             }
             shop.Discovered.AddRange(s.discovered ?? new string[0]);
+            var vialCultures = s.vialCultures ?? new string[0];
+            for (int i = 0; i < vialCultures.Length; i++)
+            {
+                int doses = s.vialDoses != null && i < s.vialDoses.Length ? s.vialDoses[i] : 0;
+                if (GrowthContent.CultureIndex(vialCultures[i]) < 0 || doses < 1) { problem = "A vial that is not one"; return null; }
+                shop.Vials[vialCultures[i]] = doses;
+            }
+            foreach (var o in s.orders ?? new string[0])
+            {
+                if (GrowthContent.CatalogItem(o) == null) { problem = "Unknown order " + o; return null; }
+                shop.Orders.Add(o);
+            }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             shop.nextId = Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1);
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -976,8 +1119,8 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>2: GR-03 (container water). Version 1 saves load with fresh water.</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>3: GR-04 (vials and supplier orders); 2: GR-03 (container water). Older saves load.</summary>
+        public const int CurrentVersion = 3;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -995,6 +1138,8 @@ namespace EvolutionShop.Growth
         public Box[] containers;
         public string[] discovered;
         public Mix[] mixLog;
+        public string[] vialCultures, orders;
+        public int[] vialDoses;
         /// <summary>Comfort settings kept with the slot: peek on or off, reduced motion.</summary>
         public bool peekOff, reducedMotion;
         public float sensitivity = 1;

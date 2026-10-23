@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace EvolutionShop.Growth
 {
@@ -21,6 +22,18 @@ namespace EvolutionShop.Growth
         public string Id, Name, Hex;
         public CultureSource Source;
         public int Era, Stars, Credits, Rp;
+        /// <summary>GR-04: the supplier's starter vial of this culture (GrowthContent.VialDoses doses), 0 when there is none.</summary>
+        public int VialCredits;
+    }
+
+    public enum CatalogKind { Grower, Vat, Vial }
+
+    /// <summary>GR.6's supplier catalog: an item, its page (stars), its gate and its price. Orders arrive at the next opening.</summary>
+    public sealed class CatalogItemDef
+    {
+        public string Id, Name, Culture, Text;
+        public CatalogKind Kind;
+        public int Stars, Era, Credits, Rp;
     }
 
     public sealed class FamilyDef
@@ -118,11 +131,11 @@ namespace EvolutionShop.Growth
         {
             new CultureDef { Id = "bloom", Name = "Bloom", Hex = "#FF6F61", Source = CultureSource.StarterGrower, Era = 1 },
             new CultureDef { Id = "flow", Name = "Flow", Hex = "#3FC5F0", Source = CultureSource.StarterGrower, Era = 1 },
-            new CultureDef { Id = "ember", Name = "Ember", Hex = "#FF9A3C", Source = CultureSource.CatalogGrower, Era = 2, Stars = 2, Credits = 150 },
-            new CultureDef { Id = "spark", Name = "Spark", Hex = "#FFD447", Source = CultureSource.Research, Era = 2, Stars = 2, Rp = 10 },
-            new CultureDef { Id = "mist", Name = "Mist", Hex = "#C9B6FF", Source = CultureSource.Vat, Era = 3, Stars = 3, Credits = 600, Rp = 40 },
-            new CultureDef { Id = "brine", Name = "Brine", Hex = "#4FD1A5", Source = CultureSource.CatalogGrower, Era = 4, Stars = 4, Credits = 1500 },
-            new CultureDef { Id = "dusk", Name = "Dusk", Hex = "#5B4BDB", Source = CultureSource.Research, Era = 5, Stars = 5, Rp = 150 },
+            new CultureDef { Id = "ember", Name = "Ember", Hex = "#FF9A3C", Source = CultureSource.CatalogGrower, Era = 2, Stars = 2, Credits = 150, VialCredits = 25 },
+            new CultureDef { Id = "spark", Name = "Spark", Hex = "#FFD447", Source = CultureSource.Research, Era = 2, Stars = 2, Rp = 10, VialCredits = 40 },
+            new CultureDef { Id = "mist", Name = "Mist", Hex = "#C9B6FF", Source = CultureSource.Vat, Era = 3, Stars = 3, Credits = 600, Rp = 40, VialCredits = 120 },
+            new CultureDef { Id = "brine", Name = "Brine", Hex = "#4FD1A5", Source = CultureSource.CatalogGrower, Era = 4, Stars = 4, Credits = 1500, VialCredits = 250 },
+            new CultureDef { Id = "dusk", Name = "Dusk", Hex = "#5B4BDB", Source = CultureSource.Research, Era = 5, Stars = 5, Rp = 150, VialCredits = 600 },
         };
 
         public static int CultureIndex(string id)
@@ -399,6 +412,37 @@ namespace EvolutionShop.Growth
         /// death or a sale blocked: disagreement only means no bonus.
         /// </summary>
         public const int ComfortEra = 3, WaterKitCredits = 150;
+
+        /// <summary>Doses in a supplier's starter vial (GR-04).</summary>
+        public const int VialDoses = 3;
+
+        /// <summary>
+        /// GR.6's supplier catalog, from the cultures: a grower for each catalog culture (Ember, Brine), the conditioning vat
+        /// that makes Mist, and a starter vial of each culture that is not free, each on the page of its stars.
+        /// </summary>
+        public static readonly CatalogItemDef[] Catalog = BuildCatalog();
+
+        static CatalogItemDef[] BuildCatalog()
+        {
+            var items = new List<CatalogItemDef>();
+            foreach (var c in Cultures)
+            {
+                if (c.Source == CultureSource.CatalogGrower)
+                    items.Add(new CatalogItemDef { Id = "grower-" + c.Id, Name = c.Name + " grower", Culture = c.Id, Kind = CatalogKind.Grower, Stars = c.Stars, Era = c.Era, Credits = c.Credits, Rp = c.Rp,
+                        Text = "A grower of " + c.Name + ": yours to keep, it refills by itself" });
+                if (c.Source == CultureSource.Vat)
+                    items.Add(new CatalogItemDef { Id = "vat", Name = "Conditioning vat", Culture = c.Id, Kind = CatalogKind.Vat, Stars = c.Stars, Era = c.Era, Credits = c.Credits, Rp = c.Rp,
+                        Text = "Conditions water into " + c.Name + ", like a grower; needs the research to run it" });
+            }
+            foreach (var c in Cultures)
+                if (c.VialCredits > 0)
+                    items.Add(new CatalogItemDef { Id = "vial-" + c.Id, Name = c.Name + " starter vial", Culture = c.Id, Kind = CatalogKind.Vial, Stars = c.Stars, Era = c.Era, Credits = c.VialCredits,
+                        Text = VialDoses + " doses of " + c.Name + ", to try it before owning its source" });
+            return items.OrderBy(i => i.Stars).ThenBy(i => i.Kind == CatalogKind.Vial ? 1 : 0).ToArray();
+        }
+
+        public static CatalogItemDef CatalogItem(string id) => Catalog.FirstOrDefault(i => i.Id == id);
+        public static CultureDef Culture(string id) { int i = CultureIndex(id); return i < 0 ? null : Cultures[i]; }
         /// <summary>
         /// GR.10.1 tolerance: how far over budget a visitor will go for a creature in a school (+15%) and for each point of its
         /// container's appeal (+10%: a lit Show tank, harmony), capped together at +40%.

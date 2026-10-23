@@ -344,7 +344,7 @@ namespace EvolutionShop.Tests
             Assert.That(back.ContainerAt("a3").Water, Is.EqualTo(Water.Brine));
             Assert.That(back.ContainerAt("a3").Level, Is.EqualTo(2));
             Assert.That(back.ContainerAt("b4").Kind, Is.EqualTo("show"));
-            Assert.That(GrowthSave.CurrentVersion, Is.EqualTo(2));
+            Assert.That(GrowthSave.CurrentVersion, Is.GreaterThanOrEqualTo(2), "version 2 or later (GR-04 is 3)");
 
             var v1 = JsonUtility.FromJson<GrowthSave>(json);
             v1.version = 1;
@@ -365,7 +365,7 @@ namespace EvolutionShop.Tests
             bad.containers[0].place = "z9";
             Assert.That(GrowthShop.Restore(bad, out _), Is.Null);
             bad = JsonUtility.FromJson<GrowthSave>(json);
-            bad.version = 3;
+            bad.version = 99; // a version from the future
             Assert.That(GrowthShop.Restore(bad, out _), Is.Null);
         }
 

@@ -223,8 +223,8 @@ namespace EvolutionShop
             Check(s.ReloadSaved(), "Reload the saved slot");
             Check(JsonUtility.ToJson(s.Shop.Snapshot()) == before, "The reloaded shop is the saved one");
             var reloaded = JsonUtility.FromJson<GrowthSave>(File.ReadAllText(s.SavePath));
-            Check(reloaded.version == 2 && reloaded.containers.Any(b => b.kind == "show" && b.water == "Brine") && reloaded.containers.Any(b => b.kind == "starter" && b.level == 3),
-                "The version 2 save keeps the Show tank's brine water and the Starter tank's level 3");
+            Check(reloaded.version >= 2 && reloaded.containers.Any(b => b.kind == "show" && b.water == "Brine") && reloaded.containers.Any(b => b.kind == "starter" && b.level == 3),
+                "The save (version 2 and later) keeps the Show tank's brine water and the Starter tank's level 3");
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
         }
 

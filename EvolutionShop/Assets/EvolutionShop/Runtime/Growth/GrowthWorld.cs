@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -65,8 +65,22 @@ namespace EvolutionShop
         public static readonly Vector3[] QueueSpots = { new Vector3(2.8f, 0, -1.7f), new Vector3(2.8f, 0, -0.95f), new Vector3(2.8f, 0, -0.2f), new Vector3(2.05f, 0, -0.2f), new Vector3(1.3f, 0, -0.2f) };
         public static readonly Vector3 CounterPosition = new Vector3(2.8f, 0, -2.6f);
         public static readonly Vector3 IncubatorPosition = new Vector3(-0.8f, 0, 6.9f);
-        public static readonly Dictionary<string, Vector3> GrowerPositions = new Dictionary<string, Vector3> { ["bloom"] = new Vector3(-3.45f, 0, 5.3f), ["flow"] = new Vector3(-3.45f, 0, 7.0f) };
-        public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 7.7f), BoardPosition = new Vector3(-1.6f, 1.55f, 8.86f), UnitBWallPosition = new Vector3(4f, 0, 0);
+        /// <summary>
+        /// GR-04: a slot in the back room for each culture's source: Bloom, Flow, Ember and Brine growers along the west wall
+        /// (facing east), the Spark grower, the Mist vat and the Dusk grower along the north wall (facing south). A slot shows
+        /// as a dashed square with the culture's colour until its source arrives.
+        /// </summary>
+        public static readonly Dictionary<string, Vector3> GrowerPositions = new Dictionary<string, Vector3>
+        {
+            ["bloom"] = new Vector3(-3.45f, 0, 4.75f), ["flow"] = new Vector3(-3.45f, 0, 5.85f), ["ember"] = new Vector3(-3.45f, 0, 6.95f), ["brine"] = new Vector3(-3.45f, 0, 8.05f),
+            ["spark"] = new Vector3(-2.5f, 0, 8.5f), ["mist"] = new Vector3(-1.3f, 0, 8.5f), ["dusk"] = new Vector3(-0.1f, 0, 8.5f),
+        };
+        public static float GrowerYaw(string culture) => GrowerPositions[culture].z > 8.2f ? 180 : 90;
+        /// <summary>Where a player stands to use a source: 1.3 m in front of it.</summary>
+        public static Vector3 GrowerFront(string culture) => GrowerPositions[culture] + Quaternion.Euler(0, GrowerYaw(culture), 0) * new Vector3(0, 0, 1.3f);
+        public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 7.7f), BoardPosition = new Vector3(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(4f, 0, 0);
+        /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.</summary>
+        public static readonly Vector3 VialShelfPosition = new Vector3(-1.7f, 0, 4.25f), CatalogPosition = new Vector3(1.2f, 0, -3.3f);
 
         GrowthSession session;
         Material floorWood, floorTile, floorB, wall, wallLab, trim, stand, glass, water, waterBrine, waterWarm, gravel, counterMat, cabinet, paper, marker, partition, sign, dome, harmony, lightBar;
@@ -75,7 +89,12 @@ namespace EvolutionShop
         readonly Dictionary<string, Material> culture = new Dictionary<string, Material>();
         readonly Dictionary<string, TankView> tanks = new Dictionary<string, TankView>();
         readonly Dictionary<string, GameObject> markers = new Dictionary<string, GameObject>();
-        readonly Dictionary<string, Transform> growerFill = new Dictionary<string, Transform>();
+        /// <summary>Each owned culture's source: its fill (how full it is) and the slot marker it replaced.</summary>
+        sealed class Source { public Transform Root, Fill; public float BaseY, Height, Width; }
+        readonly Dictionary<string, Source> sources = new Dictionary<string, Source>();
+        readonly Dictionary<string, GameObject> slots = new Dictionary<string, GameObject>();
+        readonly Dictionary<string, Transform> vials = new Dictionary<string, Transform>();
+        Transform stationsRoot;
         readonly Dictionary<int, GrowthVisitorView> visitors = new Dictionary<int, GrowthVisitorView>();
         readonly List<Transform> doseBlobs = new List<Transform>();
         GameObject unitBWall, unitBSign;
@@ -253,19 +272,52 @@ namespace EvolutionShop
 
         void Stations()
         {
-            var root = new GameObject("Stations").transform; root.SetParent(transform, false);
+            var root = stationsRoot = new GameObject("Stations").transform; root.SetParent(transform, false);
+            // A slot for each culture's source; the source itself is built when the culture is owned (Sync).
             foreach (var kv in GrowerPositions)
             {
-                var g = new GameObject(GrowthShop.Name(kv.Key) + " grower").transform; g.SetParent(root, false);
-                g.localPosition = kv.Value; g.localRotation = Quaternion.Euler(0, 90, 0);
-                var body = Box(g, "Cabinet", new Vector3(0, 0.5f, 0), new Vector3(0.8f, 1.0f, 0.7f), cabinet, true);
-                ShopWorld.Shape(g, "Jar", PrimitiveType.Cylinder, new Vector3(0, 1.3f, 0), new Vector3(0.42f, 0.3f, 0.42f), glass);
-                var fill = ShopWorld.Shape(g, "Culture", PrimitiveType.Cylinder, new Vector3(0, 1.05f, 0), new Vector3(0.36f, 0.25f, 0.36f), culture[kv.Key]);
-                Box(g, "Label", new Vector3(0, 0.75f, 0.36f), new Vector3(0.5f, 0.18f, 0.02f), culture[kv.Key]);
-                growerFill[kv.Key] = fill;
-                Target(g.gameObject, GrowthTargetKind.Grower, kv.Key);
-                AddCollider(g.gameObject, new Vector3(0, 0.8f, 0), new Vector3(0.85f, 1.6f, 0.75f));
+                var slot = new GameObject("Slot for " + GrowthShop.Name(kv.Key)).transform; slot.SetParent(root, false);
+                slot.localPosition = kv.Value; slot.localRotation = Quaternion.Euler(0, GrowerYaw(kv.Key), 0);
+                for (int i = 0; i < 4; i++)
+                {
+                    float a = -0.3f + 0.2f * i;
+                    Box(slot, "Dash", new Vector3(a, 0.01f, 0.36f), new Vector3(0.1f, 0.01f, 0.03f), marker);
+                    Box(slot, "Dash", new Vector3(a, 0.01f, -0.36f), new Vector3(0.1f, 0.01f, 0.03f), marker);
+                    Box(slot, "Dash", new Vector3(0.41f, 0.01f, a * 0.8f), new Vector3(0.03f, 0.01f, 0.1f), marker);
+                    Box(slot, "Dash", new Vector3(-0.41f, 0.01f, a * 0.8f), new Vector3(0.03f, 0.01f, 0.1f), marker);
+                }
+                Box(slot, "Culture swatch", new Vector3(0, 0.02f, 0), new Vector3(0.22f, 0.02f, 0.22f), culture[kv.Key]);
+                slots[kv.Key] = slot.gameObject;
             }
+            // The vial shelf: a bottle for each culture a starter vial can bring, shown while it holds doses.
+            var shelf = new GameObject("Vial shelf").transform; shelf.SetParent(root, false);
+            shelf.localPosition = VialShelfPosition;
+            Box(shelf, "Shelf", new Vector3(0, 0.95f, 0.05f), new Vector3(1.4f, 0.05f, 0.3f), counterMat, true);
+            Box(shelf, "Bracket", new Vector3(-0.6f, 0.85f, 0.0f), new Vector3(0.05f, 0.18f, 0.2f), stand);
+            Box(shelf, "Bracket", new Vector3(0.6f, 0.85f, 0.0f), new Vector3(0.05f, 0.18f, 0.2f), stand);
+            int vialIndex = 0;
+            foreach (var c in GrowthContent.Cultures)
+            {
+                if (c.VialCredits <= 0) continue;
+                var bottle = new GameObject(c.Name + " vial").transform; bottle.SetParent(shelf, false);
+                bottle.localPosition = new Vector3(-0.5f + 0.25f * vialIndex++, 0.98f, 0.06f);
+                ShopWorld.Shape(bottle, "Glass", PrimitiveType.Cylinder, new Vector3(0, 0.11f, 0), new Vector3(0.1f, 0.11f, 0.1f), glass);
+                ShopWorld.Shape(bottle, "Cork", PrimitiveType.Cylinder, new Vector3(0, 0.24f, 0), new Vector3(0.06f, 0.025f, 0.06f), counterMat);
+                ShopWorld.Shape(bottle, "Culture", PrimitiveType.Cylinder, new Vector3(0, 0.08f, 0), new Vector3(0.085f, 0.08f, 0.085f), culture[c.Id]);
+                Target(bottle.gameObject, GrowthTargetKind.Vial, c.Id);
+                AddCollider(bottle.gameObject, new Vector3(0, 0.13f, 0), new Vector3(0.2f, 0.3f, 0.2f));
+                bottle.gameObject.SetActive(false);
+                vials[c.Id] = bottle;
+            }
+            // The supplier catalog on its stand by the counter (GR.6).
+            var catalog = new GameObject("Supplier catalog").transform; catalog.SetParent(root, false);
+            catalog.localPosition = CatalogPosition; // facing into the shop (+z), its book tilted toward the reader
+            Box(catalog, "Stand", new Vector3(0, 0.5f, 0), new Vector3(0.45f, 1.0f, 0.35f), counterMat, true);
+            var book = Box(catalog, "Book", new Vector3(0, 1.06f, 0), new Vector3(0.4f, 0.06f, 0.3f), sign);
+            book.localRotation = Quaternion.Euler(12, 0, 0);
+            Box(catalog, "Pages", new Vector3(0, 1.1f, 0.01f), new Vector3(0.36f, 0.02f, 0.26f), paper).localRotation = Quaternion.Euler(12, 0, 0);
+            Target(catalog.gameObject, GrowthTargetKind.Catalog, "catalog");
+            AddCollider(catalog.gameObject, new Vector3(0, 0.6f, 0), new Vector3(0.5f, 1.2f, 0.4f));
             incubatorRoot = new GameObject("Incubator").transform; incubatorRoot.SetParent(root, false);
             incubatorRoot.localPosition = IncubatorPosition;
             Box(incubatorRoot, "Base", new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.9f, 0.7f), cabinet, true);
@@ -301,7 +353,7 @@ namespace EvolutionShop
             AddCollider(bench.gameObject, new Vector3(0, 0.6f, 0), new Vector3(1.35f, 1.2f, 0.65f));
 
             var board = new GameObject("Pinboard").transform; board.SetParent(root, false);
-            board.localPosition = BoardPosition;
+            board.localPosition = BoardPosition; board.localRotation = Quaternion.Euler(0, 90, 0); // on the east wall, facing the room
             Box(board, "Board", Vector3.zero, new Vector3(1.4f, 0.9f, 0.05f), counterMat, true);
             for (int i = 0; i < 3; i++) Box(board, "Note " + i, new Vector3(-0.4f + 0.4f * i, 0.05f * (i % 2), -0.03f), new Vector3(0.3f, 0.36f, 0.01f), paper);
             Target(board.gameObject, GrowthTargetKind.Board, "board");
@@ -359,6 +411,8 @@ namespace EvolutionShop
             visitors.Clear();
             if (hatchlingView) Destroy(hatchlingView.gameObject);
             hatchlingView = null;
+            foreach (var kv in sources) { Destroy(kv.Value.Root.gameObject); slots[kv.Key].SetActive(true); }
+            sources.Clear();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -378,11 +432,20 @@ namespace EvolutionShop
             foreach (var m in markers) if (m.Value.activeSelf != free.Contains(m.Key)) m.Value.SetActive(free.Contains(m.Key));
             if (unitBWall.activeSelf == shop.UnitB) unitBWall.SetActive(!shop.UnitB);
             unitBLight.enabled = shop.UnitB;
-            foreach (var kv in growerFill)
+            foreach (var c in shop.Cultures)
+                if (!sources.ContainsKey(c) && GrowerPositions.ContainsKey(c)) { sources[c] = BuildSource(c); slots[c].SetActive(false); }
+            foreach (var kv in sources)
             {
-                float f = shop.GrowerCapacity == 0 ? 0 : Mathf.Clamp01(shop.GrowerUnits[kv.Key] / shop.GrowerCapacity);
-                kv.Value.localScale = new Vector3(0.36f, Mathf.Max(0.01f, 0.25f * f), 0.36f);
-                kv.Value.localPosition = new Vector3(0, 1.0f + 0.25f * f, 0);
+                float f = shop.GrowerCapacity == 0 || !shop.GrowerUnits.ContainsKey(kv.Key) ? 0 : Mathf.Clamp01(shop.GrowerUnits[kv.Key] / shop.GrowerCapacity);
+                var s = kv.Value;
+                s.Fill.localScale = new Vector3(s.Width, Mathf.Max(0.01f, s.Height * f), s.Width);
+                s.Fill.localPosition = new Vector3(0, s.BaseY + s.Height * f, 0);
+            }
+            foreach (var kv in vials)
+            {
+                int doses = shop.Vials.TryGetValue(kv.Key, out int n) ? n : 0;
+                if (kv.Value.gameObject.activeSelf != doses > 0) kv.Value.gameObject.SetActive(doses > 0);
+                if (doses > 0) kv.Value.Find("Culture").localScale = new Vector3(0.085f, 0.08f * doses / GrowthContent.VialDoses, 0.085f);
             }
             for (int i = 0; i < doseBlobs.Count; i++)
             {
@@ -405,6 +468,37 @@ namespace EvolutionShop
         static (float stand, float glass) Proportions(string kind) => kind == "show" ? (0.55f, 1.0f) : kind == "large" ? (0.8f, 0.75f) : (0.9f, 0.62f);
 
         Material plant;
+
+        /// <summary>A culture's source: a grower cabinet with its jar, or for Mist the conditioning vat (GR.6).</summary>
+        Source BuildSource(string id)
+        {
+            bool vat = GrowthContent.Culture(id).Source == CultureSource.Vat;
+            var g = new GameObject(GrowthShop.Name(id) + (vat ? " vat" : " grower")).transform; g.SetParent(stationsRoot, false);
+            g.localPosition = GrowerPositions[id]; g.localRotation = Quaternion.Euler(0, GrowerYaw(id), 0);
+            Source s;
+            if (vat)
+            {
+                Box(g, "Vat base", new Vector3(0, 0.15f, 0), new Vector3(0.8f, 0.3f, 0.7f), cabinet, true);
+                ShopWorld.Shape(g, "Vat", PrimitiveType.Cylinder, new Vector3(0, 0.8f, 0), new Vector3(0.62f, 0.5f, 0.62f), glass);
+                var fill = ShopWorld.Shape(g, "Culture", PrimitiveType.Cylinder, new Vector3(0, 0.6f, 0), new Vector3(0.56f, 0.4f, 0.56f), culture[id]);
+                ShopWorld.Shape(g, "Pipe", PrimitiveType.Cylinder, new Vector3(0.3f, 1.4f, 0), new Vector3(0.06f, 0.25f, 0.06f), trim);
+                Box(g, "Label", new Vector3(0, 0.15f, 0.36f), new Vector3(0.5f, 0.14f, 0.02f), culture[id]);
+                s = new Source { Root = g, Fill = fill, BaseY = 0.32f, Height = 0.42f, Width = 0.56f };
+            }
+            else
+            {
+                Box(g, "Cabinet", new Vector3(0, 0.5f, 0), new Vector3(0.8f, 1.0f, 0.7f), cabinet, true);
+                ShopWorld.Shape(g, "Jar", PrimitiveType.Cylinder, new Vector3(0, 1.3f, 0), new Vector3(0.42f, 0.3f, 0.42f), glass);
+                var fill = ShopWorld.Shape(g, "Culture", PrimitiveType.Cylinder, new Vector3(0, 1.05f, 0), new Vector3(0.36f, 0.25f, 0.36f), culture[id]);
+                Box(g, "Label", new Vector3(0, 0.75f, 0.36f), new Vector3(0.5f, 0.18f, 0.02f), culture[id]);
+                s = new Source { Root = g, Fill = fill, BaseY = 1.0f, Height = 0.25f, Width = 0.36f };
+            }
+            Target(g.gameObject, GrowthTargetKind.Grower, id);
+            AddCollider(g.gameObject, new Vector3(0, 0.8f, 0), new Vector3(0.85f, 1.6f, 0.75f));
+            return s;
+        }
+
+        public bool HasSource(string culture) => sources.ContainsKey(culture);
 
         TankView BuildTank(GrowthContainer c)
         {
