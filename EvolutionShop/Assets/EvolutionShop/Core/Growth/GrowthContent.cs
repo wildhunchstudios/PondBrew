@@ -107,7 +107,7 @@ namespace EvolutionShop.Growth
 
     public static class GrowthContent
     {
-        public const int SpeciesCount = 36, ColourCount = 4, JournalEntries = SpeciesCount * ColourCount;
+        public const int SpeciesCount = 72, ColourCount = 4, JournalEntries = SpeciesCount * ColourCount;
         public const float DaySeconds = 330f;
 
         // ---------------------------------------------------------------- cultures (GR.6)
@@ -118,9 +118,9 @@ namespace EvolutionShop.Growth
             new CultureDef { Id = "flow", Name = "Flow", Hex = "#3FC5F0", Source = CultureSource.StarterGrower, Era = 1 },
             new CultureDef { Id = "ember", Name = "Ember", Hex = "#FF9A3C", Source = CultureSource.CatalogGrower, Era = 2, Stars = 2, Credits = 150 },
             new CultureDef { Id = "spark", Name = "Spark", Hex = "#FFD447", Source = CultureSource.Research, Era = 2, Stars = 2, Rp = 10 },
-            new CultureDef { Id = "mist", Name = "Mist", Hex = "#C9B6FF", Source = CultureSource.Vat, Era = 3, Stars = 3, Credits = 600, Rp = 25 },
+            new CultureDef { Id = "mist", Name = "Mist", Hex = "#C9B6FF", Source = CultureSource.Vat, Era = 3, Stars = 3, Credits = 600, Rp = 40 },
             new CultureDef { Id = "brine", Name = "Brine", Hex = "#4FD1A5", Source = CultureSource.CatalogGrower, Era = 4, Stars = 4, Credits = 1500 },
-            new CultureDef { Id = "dusk", Name = "Dusk", Hex = "#5B4BDB", Source = CultureSource.Research, Era = 5, Stars = 5, Rp = 60 },
+            new CultureDef { Id = "dusk", Name = "Dusk", Hex = "#5B4BDB", Source = CultureSource.Research, Era = 5, Stars = 5, Rp = 150 },
         };
 
         public static int CultureIndex(string id)
@@ -141,8 +141,11 @@ namespace EvolutionShop.Growth
             new FamilyDef { Id = "sparkline", Name = "Sparkline", Size = SizeClass.Small, LeadCulture = "spark", Era = 2 },
             new FamilyDef { Id = "cinderling", Name = "Cinderling", Size = SizeClass.Medium, LeadCulture = "ember", Era = 2 },
             new FamilyDef { Id = "airfin", Name = "Airfin", Size = SizeClass.Medium, LeadCulture = "mist", Era = 3 },
+            new FamilyDef { Id = "dewling", Name = "Dewling", Size = SizeClass.Small, LeadCulture = "mist", Era = 3 },
             new FamilyDef { Id = "reefback", Name = "Reefback", Size = SizeClass.Large, LeadCulture = "brine", Era = 4 },
+            new FamilyDef { Id = "saltscale", Name = "Saltscale", Size = SizeClass.Medium, LeadCulture = "brine", Era = 4 },
             new FamilyDef { Id = "gloamer", Name = "Gloamer", Size = SizeClass.Large, LeadCulture = "dusk", Era = 5 },
+            new FamilyDef { Id = "cometail", Name = "Cometail", Size = SizeClass.Large, LeadCulture = "spark", Era = 5 },
         };
 
         public static FamilyDef Family(string id)
@@ -158,69 +161,117 @@ namespace EvolutionShop.Growth
         static SpeciesDef Crown(string id, string name, string family, string a, string b, int bv, int price, Temperament t, Water w)
             => new SpeciesDef { Id = id, Name = name, Family = family, Kind = SpeciesKind.Crown, PairA = a, PairB = b, BreedingValue = bv, Price = price, Temperament = t, Water = w };
 
-        // Breeding values lie on one line, families in era order; each hybrid sits at the exact average of its intended
-        // parents (named in its comment), and GrowthRules.Validate checks that pair really resolves to it. Names are
+        // Nine families of eight (the user's choice, 2026-10-23): three founders, four hybrids and a crown each. Breeding
+        // values lie on one line, each family in its own band and the families in era order, so breeding never reaches
+        // past the later parent's era; the highest value of every era belongs to a founder or hybrid, never a crown. Each
+        // hybrid sits at the exact average (rounded up) of its intended parents, named in its comment and checked by
+        // GrowthRules.Validate; the first hybrid of a new family is bred from the family before it. Names are
         // provisional (GR.17). The existing five keep their recipes: Pondlet, Bubblebelly, Ribbonfin, Lanternfin, Driftwing.
         public static readonly SpeciesDef[] Species =
         {
-            // Brookkin: small, Bloom and Flow, era 1.
+            // Brookkin: small, Bloom and Flow, era 1 (band 40-160).
             Founder("pondlet", "Pondlet", "brookkin", R(bloom: 1, flow: 1), 100, 6, Temperament.Calm, Water.Fresh),
             Founder("bubblebelly", "Bubblebelly", "brookkin", R(bloom: 2, flow: 1), 40, 8, Temperament.Calm, Water.Fresh),
             Founder("ribbonfin", "Ribbonfin", "brookkin", R(bloom: 1, flow: 2), 160, 8, Temperament.Lively, Water.Fresh),
             Hybrid("puddlepup", "Puddlepup", "brookkin", 70, 10, Temperament.Lively, Water.Fresh),       // bubblebelly x pondlet
+            Hybrid("splashkit", "Splashkit", "brookkin", 115, 11, Temperament.Lively, Water.Fresh),      // puddlepup x ribbonfin
             Hybrid("reedwhisker", "Reedwhisker", "brookkin", 130, 11, Temperament.Calm, Water.Fresh),    // pondlet x ribbonfin
+            Hybrid("lilyfin", "Lilyfin", "brookkin", 145, 12, Temperament.Calm, Water.Fresh),            // reedwhisker x ribbonfin
             Crown("brookmonarch", "Brook Monarch", "brookkin", "puddlepup", "reedwhisker", 105, 30, Temperament.Calm, Water.Fresh),
 
-            // Sparkline: small, Spark, era 2.
+            // Sparkline: small, Spark, era 2 (band 200-400).
             Founder("lanternfin", "Lanternfin", "sparkline", R(bloom: 1, flow: 1, spark: 1), 260, 12, Temperament.Calm, Water.Warm),
             Founder("sparkminnow", "Sparkminnow", "sparkline", R(flow: 1, spark: 2), 340, 12, Temperament.Lively, Water.Warm),
+            Founder("fizzlet", "Fizzlet", "sparkline", R(bloom: 1, spark: 2), 380, 13, Temperament.Lively, Water.Warm),
             Hybrid("glowbelly", "Glowbelly", "sparkline", 210, 13, Temperament.Calm, Water.Fresh),       // ribbonfin x lanternfin
             Hybrid("flickerfin", "Flickerfin", "sparkline", 300, 14, Temperament.Lively, Water.Warm),    // lanternfin x sparkminnow
+            Hybrid("buzzgill", "Buzzgill", "sparkline", 360, 15, Temperament.Lively, Water.Warm),        // sparkminnow x fizzlet
             Hybrid("starglimmer", "Starglimmer", "sparkline", 400, 16, Temperament.Lively, Water.Warm),  // sparkminnow x emberpuff
             Crown("aurorafin", "Aurorafin", "sparkline", "flickerfin", "starglimmer", 350, 40, Temperament.Calm, Water.Warm),
 
-            // Cinderling: medium, Ember, era 2.
+            // Cinderling: medium, Ember, era 2 (band 460-600).
             Founder("emberpuff", "Emberpuff", "cinderling", R(bloom: 1, ember: 1), 460, 24, Temperament.Lively, Water.Warm),
             Founder("cindertail", "Cindertail", "cinderling", R(flow: 1, ember: 2), 580, 26, Temperament.Lively, Water.Warm),
+            Founder("coalbelly", "Coalbelly", "cinderling", R(ember: 2, spark: 1), 600, 28, Temperament.Calm, Water.Warm),
             Hybrid("sizzlesnout", "Sizzlesnout", "cinderling", 490, 30, Temperament.Lively, Water.Warm), // starglimmer x cindertail
             Hybrid("kindlekoi", "Kindlekoi", "cinderling", 520, 32, Temperament.Calm, Water.Warm),       // emberpuff x cindertail
+            Hybrid("sootsnap", "Sootsnap", "cinderling", 530, 33, Temperament.Lively, Water.Warm),       // emberpuff x coalbelly
             Hybrid("ashfin", "Ashfin", "cinderling", 535, 34, Temperament.Calm, Water.Warm),             // cindertail x sizzlesnout
             Crown("phoenixfry", "Phoenix Fry", "cinderling", "kindlekoi", "ashfin", 560, 80, Temperament.Lively, Water.Warm),
 
-            // Airfin: medium, Mist, era 3.
+            // Airfin: medium, Mist, era 3 (band 640-800).
             Founder("driftwing", "Driftwing", "airfin", R(bloom: 1, flow: 1, mist: 1), 700, 28, Temperament.Calm, Water.Fresh),
             Founder("puffglider", "Puffglider", "airfin", R(bloom: 1, ember: 1, mist: 2), 800, 30, Temperament.Calm, Water.Fresh),
+            Founder("hazewing", "Hazewing", "airfin", R(flow: 1, mist: 2), 640, 30, Temperament.Lively, Water.Fresh),
             Hybrid("gustgill", "Gustgill", "airfin", 668, 34, Temperament.Lively, Water.Fresh),          // ashfin x puffglider
+            Hybrid("mistrunner", "Mistrunner", "airfin", 670, 35, Temperament.Lively, Water.Fresh),      // hazewing x driftwing
             Hybrid("cloudcarp", "Cloudcarp", "airfin", 750, 36, Temperament.Calm, Water.Fresh),         // driftwing x puffglider
             Hybrid("breezeling", "Breezeling", "airfin", 775, 38, Temperament.Lively, Water.Fresh),     // cloudcarp x puffglider
             Crown("zephyray", "Zephyray", "airfin", "cloudcarp", "gustgill", 780, 90, Temperament.Calm, Water.Fresh),
 
-            // Reefback: large, Brine, era 4.
-            Founder("shellback", "Shellback", "reefback", R(flow: 2, brine: 2), 900, 70, Temperament.Calm, Water.Brine),
-            Founder("coralhorn", "Coralhorn", "reefback", R(bloom: 1, flow: 1, ember: 1, brine: 2), 1000, 76, Temperament.Lively, Water.Brine),
-            Hybrid("kelpgrazer", "Kelpgrazer", "reefback", 888, 86, Temperament.Calm, Water.Brine),     // breezeling x coralhorn
-            Hybrid("barnaclebrow", "Barnaclebrow", "reefback", 950, 90, Temperament.Calm, Water.Brine), // shellback x coralhorn
-            Hybrid("tidetusk", "Tidetusk", "reefback", 975, 96, Temperament.Lively, Water.Brine),       // barnaclebrow x coralhorn
-            Crown("coralossus", "Coralossus", "reefback", "barnaclebrow", "tidetusk", 980, 220, Temperament.Calm, Water.Brine),
+            // Dewling: small, Mist, era 3 (band 830-1000).
+            Founder("dewdrop", "Dewdrop", "dewling", R(flow: 2, mist: 1), 860, 16, Temperament.Calm, Water.Fresh),
+            Founder("fogfin", "Fogfin", "dewling", R(spark: 1, mist: 1), 940, 17, Temperament.Lively, Water.Fresh),
+            Founder("mistlet", "Mistlet", "dewling", R(bloom: 1, mist: 1), 1000, 18, Temperament.Calm, Water.Fresh),
+            Hybrid("drizzler", "Drizzler", "dewling", 830, 19, Temperament.Lively, Water.Fresh),         // puffglider x dewdrop
+            Hybrid("pearlpip", "Pearlpip", "dewling", 900, 20, Temperament.Calm, Water.Fresh),           // dewdrop x fogfin
+            Hybrid("haloling", "Haloling", "dewling", 950, 21, Temperament.Calm, Water.Fresh),           // pearlpip x mistlet
+            Hybrid("rainskipper", "Rainskipper", "dewling", 970, 22, Temperament.Lively, Water.Fresh),   // fogfin x mistlet
+            Crown("rainbowregent", "Rainbow Regent", "dewling", "pearlpip", "rainskipper", 920, 60, Temperament.Calm, Water.Fresh),
 
-            // Gloamer: large, Dusk, era 5.
-            Founder("moonmouth", "Moonmouth", "gloamer", R(spark: 1, mist: 1, dusk: 2), 1100, 100, Temperament.Calm, Water.Brine),
-            Founder("gloomfin", "Gloomfin", "gloamer", R(flow: 1, brine: 2, dusk: 2), 1200, 108, Temperament.Lively, Water.Brine),
-            Hybrid("hushray", "Hushray", "gloamer", 1088, 120, Temperament.Calm, Water.Brine),          // tidetusk x gloomfin
-            Hybrid("duskdrifter", "Duskdrifter", "gloamer", 1150, 126, Temperament.Calm, Water.Brine),  // moonmouth x gloomfin
-            Hybrid("nightlantern", "Nightlantern", "gloamer", 1175, 132, Temperament.Lively, Water.Brine), // gloomfin x duskdrifter
-            Crown("eclipseleviathan", "Eclipse Leviathan", "gloamer", "duskdrifter", "nightlantern", 1160, 300, Temperament.Calm, Water.Brine),
+            // Reefback: large, Brine, era 4 (band 1030-1200).
+            Founder("shellback", "Shellback", "reefback", R(flow: 2, brine: 2), 1060, 70, Temperament.Calm, Water.Brine),
+            Founder("coralhorn", "Coralhorn", "reefback", R(bloom: 1, flow: 1, ember: 1, brine: 2), 1160, 76, Temperament.Lively, Water.Brine),
+            Founder("clamjaw", "Clamjaw", "reefback", R(ember: 1, brine: 3), 1200, 80, Temperament.Calm, Water.Brine),
+            Hybrid("kelpgrazer", "Kelpgrazer", "reefback", 1030, 84, Temperament.Calm, Water.Brine),     // mistlet x shellback
+            Hybrid("barnaclebrow", "Barnaclebrow", "reefback", 1110, 90, Temperament.Calm, Water.Brine), // shellback x coralhorn
+            Hybrid("tidetusk", "Tidetusk", "reefback", 1135, 96, Temperament.Lively, Water.Brine),       // barnaclebrow x coralhorn
+            Hybrid("wavebreaker", "Wavebreaker", "reefback", 1180, 100, Temperament.Lively, Water.Brine), // coralhorn x clamjaw
+            Crown("coralossus", "Coralossus", "reefback", "barnaclebrow", "tidetusk", 1120, 220, Temperament.Calm, Water.Brine),
+
+            // Saltscale: medium, Brine, era 4 (band 1230-1400).
+            Founder("brinefin", "Brinefin", "saltscale", R(bloom: 1, brine: 2), 1260, 40, Temperament.Lively, Water.Brine),
+            Founder("pebblejaw", "Pebblejaw", "saltscale", R(mist: 1, brine: 2), 1340, 42, Temperament.Calm, Water.Brine),
+            Founder("seaspark", "Seaspark", "saltscale", R(spark: 2, brine: 1), 1400, 44, Temperament.Lively, Water.Brine),
+            Hybrid("foamtail", "Foamtail", "saltscale", 1230, 46, Temperament.Lively, Water.Brine),      // clamjaw x brinefin
+            Hybrid("surfskipper", "Surfskipper", "saltscale", 1300, 48, Temperament.Lively, Water.Brine), // brinefin x pebblejaw
+            Hybrid("shoalglider", "Shoalglider", "saltscale", 1350, 50, Temperament.Calm, Water.Brine),  // surfskipper x seaspark
+            Hybrid("tidepip", "Tidepip", "saltscale", 1370, 52, Temperament.Calm, Water.Brine),          // pebblejaw x seaspark
+            Crown("pearlemperor", "Pearl Emperor", "saltscale", "tidepip", "shoalglider", 1320, 140, Temperament.Calm, Water.Brine),
+
+            // Gloamer: large, Dusk, era 5 (band 1430-1600).
+            Founder("moonmouth", "Moonmouth", "gloamer", R(spark: 1, mist: 1, dusk: 2), 1460, 100, Temperament.Calm, Water.Brine),
+            Founder("gloomfin", "Gloomfin", "gloamer", R(flow: 1, brine: 2, dusk: 2), 1540, 108, Temperament.Lively, Water.Brine),
+            Founder("shadeback", "Shadeback", "gloamer", R(bloom: 1, dusk: 2), 1600, 112, Temperament.Calm, Water.Brine),
+            Hybrid("hushray", "Hushray", "gloamer", 1430, 118, Temperament.Calm, Water.Brine),           // seaspark x moonmouth
+            Hybrid("duskdrifter", "Duskdrifter", "gloamer", 1500, 126, Temperament.Calm, Water.Brine),   // moonmouth x gloomfin
+            Hybrid("murkmaw", "Murkmaw", "gloamer", 1550, 130, Temperament.Lively, Water.Brine),         // duskdrifter x shadeback
+            Hybrid("nightlantern", "Nightlantern", "gloamer", 1570, 132, Temperament.Lively, Water.Brine), // gloomfin x shadeback
+            Crown("eclipseleviathan", "Eclipse Leviathan", "gloamer", "duskdrifter", "nightlantern", 1520, 300, Temperament.Calm, Water.Brine),
+
+            // Cometail: large, Spark and Dusk, era 5 (band 1630-1800).
+            Founder("starmaw", "Starmaw", "cometail", R(spark: 2, dusk: 2), 1660, 120, Temperament.Lively, Water.Warm),
+            Founder("meteorback", "Meteorback", "cometail", R(ember: 1, spark: 1, dusk: 2), 1740, 128, Temperament.Calm, Water.Warm),
+            Founder("nebulafin", "Nebulafin", "cometail", R(spark: 1, mist: 2, dusk: 1), 1800, 134, Temperament.Calm, Water.Warm),
+            Hybrid("orbitail", "Orbitail", "cometail", 1630, 138, Temperament.Lively, Water.Warm),       // shadeback x starmaw
+            Hybrid("quasarray", "Quasarray", "cometail", 1700, 144, Temperament.Calm, Water.Warm),       // starmaw x meteorback
+            Hybrid("novatusk", "Novatusk", "cometail", 1750, 150, Temperament.Lively, Water.Warm),       // quasarray x nebulafin
+            Hybrid("cosmocarp", "Cosmocarp", "cometail", 1770, 156, Temperament.Calm, Water.Warm),       // meteorback x nebulafin
+            Crown("celestialwyrm", "Celestial Wyrm", "cometail", "cosmocarp", "novatusk", 1720, 320, Temperament.Calm, Water.Warm),
         };
 
         /// <summary>The parents each hybrid is designed around (its breeding value is their average); validated.</summary>
         public static readonly (string hybrid, string a, string b)[] IntendedPairs =
         {
-            ("puddlepup", "bubblebelly", "pondlet"), ("reedwhisker", "pondlet", "ribbonfin"),
-            ("glowbelly", "ribbonfin", "lanternfin"), ("flickerfin", "lanternfin", "sparkminnow"), ("starglimmer", "sparkminnow", "emberpuff"),
-            ("sizzlesnout", "starglimmer", "cindertail"), ("kindlekoi", "emberpuff", "cindertail"), ("ashfin", "cindertail", "sizzlesnout"),
-            ("gustgill", "ashfin", "puffglider"), ("cloudcarp", "driftwing", "puffglider"), ("breezeling", "cloudcarp", "puffglider"),
-            ("kelpgrazer", "breezeling", "coralhorn"), ("barnaclebrow", "shellback", "coralhorn"), ("tidetusk", "barnaclebrow", "coralhorn"),
-            ("hushray", "tidetusk", "gloomfin"), ("duskdrifter", "moonmouth", "gloomfin"), ("nightlantern", "gloomfin", "duskdrifter"),
+            ("puddlepup", "bubblebelly", "pondlet"), ("splashkit", "puddlepup", "ribbonfin"), ("reedwhisker", "pondlet", "ribbonfin"), ("lilyfin", "reedwhisker", "ribbonfin"),
+            ("glowbelly", "ribbonfin", "lanternfin"), ("flickerfin", "lanternfin", "sparkminnow"), ("buzzgill", "sparkminnow", "fizzlet"), ("starglimmer", "sparkminnow", "emberpuff"),
+            ("sizzlesnout", "starglimmer", "cindertail"), ("kindlekoi", "emberpuff", "cindertail"), ("sootsnap", "emberpuff", "coalbelly"), ("ashfin", "cindertail", "sizzlesnout"),
+            ("gustgill", "ashfin", "puffglider"), ("mistrunner", "hazewing", "driftwing"), ("cloudcarp", "driftwing", "puffglider"), ("breezeling", "cloudcarp", "puffglider"),
+            ("drizzler", "puffglider", "dewdrop"), ("pearlpip", "dewdrop", "fogfin"), ("haloling", "pearlpip", "mistlet"), ("rainskipper", "fogfin", "mistlet"),
+            ("kelpgrazer", "mistlet", "shellback"), ("barnaclebrow", "shellback", "coralhorn"), ("tidetusk", "barnaclebrow", "coralhorn"), ("wavebreaker", "coralhorn", "clamjaw"),
+            ("foamtail", "clamjaw", "brinefin"), ("surfskipper", "brinefin", "pebblejaw"), ("shoalglider", "surfskipper", "seaspark"), ("tidepip", "pebblejaw", "seaspark"),
+            ("hushray", "seaspark", "moonmouth"), ("duskdrifter", "moonmouth", "gloomfin"), ("murkmaw", "duskdrifter", "shadeback"), ("nightlantern", "gloomfin", "shadeback"),
+            ("orbitail", "shadeback", "starmaw"), ("quasarray", "starmaw", "meteorback"), ("novatusk", "quasarray", "nebulafin"), ("cosmocarp", "meteorback", "nebulafin"),
         };
 
         public static SpeciesDef Get(string id)
@@ -284,18 +335,18 @@ namespace EvolutionShop.Growth
             {
                 L(1, 0, "Notes: culture icons on undiscovered silhouettes", 1, 1, 0, ("triesPerFounder", 2.5f), ("triesPerHybrid", 3)),
                 L(2, 80, "Microscope: how many doses to the nearest new creature", 2, 2, 5, ("triesPerFounder", 1.5f), ("triesPerHybrid", 3)),
-                L(3, 1500, "Analyzer: one undiscovered reachable mix or pair a day", 4, 4, 40, ("triesPerFounder", 1.2f), ("triesPerHybrid", 1.8f)),
-                L(4, 4000, "Planner: predicts the offspring of any two known species", 5, 5, 80, ("triesPerFounder", 1.2f), ("triesPerHybrid", 1)),
+                L(3, 1500, "Analyzer: one undiscovered reachable mix or pair a day", 4, 4, 120, ("triesPerFounder", 1.2f), ("triesPerHybrid", 1.8f)),
+                L(4, 4000, "Planner: predicts the offspring of any two known species", 5, 5, 200, ("triesPerFounder", 1.2f), ("triesPerHybrid", 1)),
             }},
             new StationDef { Id = "vat", Name = "Conditioning vat", Levels = new[]
             {
-                L(1, 600, "Mist (as today)", 3, 3, 25, ("mist", 1)),
+                L(1, 600, "Mist (as today)", 3, 3, 40, ("mist", 1)),
                 L(2, 800, "Double batch", 3, 3, 0, ("mist", 2)),
                 L(3, 1500, "Faster; Shimmer tint", 4, 4, 0, ("mist", 3), ("shimmer", 1)),
             }},
             new StationDef { Id = "generator", Name = "Generator", Levels = new[]
             {
-                L(1, 200, "Hand crank: 1 unit while cranked", 3, 3, 15, ("units", 1), ("manual", 1)),
+                L(1, 200, "Hand crank: 1 unit while cranked", 3, 3, 30, ("units", 1), ("manual", 1)),
                 L(2, 800, "Bubble turbine: 3 units", 3, 3, 0, ("units", 3)),
                 L(3, 3000, "Twin turbine: 6 units", 4, 4, 0, ("units", 6)),
                 L(4, 6000, "Tide engine: 12 units", 5, 5, 0, ("units", 12)),
@@ -392,7 +443,7 @@ namespace EvolutionShop.Growth
         };
 
         /// <summary>The Grand Exhibition becomes available (GR.12), in minutes.</summary>
-        public const int ExhibitionFrom = 200, ExhibitionTo = 250, ExhibitionSpecies = 24, ExhibitionCrowns = 3;
+        public const int ExhibitionFrom = 200, ExhibitionTo = 250, ExhibitionSpecies = 48, ExhibitionCrowns = 5;
 
         public static readonly VisitorTypeDef[] Visitors =
         {

@@ -17,20 +17,23 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void RosterIsSixFamiliesOfSixWithFoundersHybridsAndOneCrownEach()
+        public void RosterIsNineFamiliesOfEightWithThreeFoundersFourHybridsAndACrown()
         {
-            Assert.That(GrowthContent.Species, Has.Length.EqualTo(36));
-            Assert.That(GrowthContent.JournalEntries, Is.EqualTo(144));
+            // The user's choice on 2026-10-23: 72 species, nine families of eight (GR.7, GR.19).
+            Assert.That(GrowthContent.Species, Has.Length.EqualTo(72));
+            Assert.That(GrowthContent.JournalEntries, Is.EqualTo(288));
             Assert.That(GrowthContent.Cultures, Has.Length.EqualTo(7));
-            Assert.That(GrowthContent.Families, Has.Length.EqualTo(6));
+            Assert.That(GrowthContent.Families, Has.Length.EqualTo(9));
             foreach (var family in GrowthContent.Families)
             {
                 var members = GrowthContent.Species.Where(s => s.Family == family.Id).ToList();
-                Assert.That(members, Has.Count.EqualTo(6), family.Id);
-                Assert.That(members.Count(s => s.Kind == SpeciesKind.Founder), Is.InRange(2, 3), family.Id);
-                Assert.That(members.Count(s => s.Kind == SpeciesKind.Hybrid), Is.InRange(2, 3), family.Id);
+                Assert.That(members, Has.Count.EqualTo(8), family.Id);
+                Assert.That(members.Count(s => s.Kind == SpeciesKind.Founder), Is.EqualTo(3), family.Id);
+                Assert.That(members.Count(s => s.Kind == SpeciesKind.Hybrid), Is.EqualTo(4), family.Id);
                 Assert.That(members.Count(s => s.Kind == SpeciesKind.Crown), Is.EqualTo(1), family.Id);
             }
+            foreach (var size in new[] { SizeClass.Small, SizeClass.Medium, SizeClass.Large })
+                Assert.That(GrowthContent.Families.Count(f => f.Size == size), Is.EqualTo(3), size.ToString());
             // The existing five keep their roles and recipes (GR.7).
             Assert.That(GrowthContent.Get("pondlet").Recipe, Is.EqualTo(new[] { 1, 1, 0, 0, 0, 0, 0 }));
             Assert.That(GrowthContent.Get("lanternfin").Family, Is.EqualTo("sparkline"));
@@ -92,8 +95,9 @@ namespace EvolutionShop.Tests
                 }
             foreach (var (hybrid, a, b) in GrowthContent.IntendedPairs) Assert.That(GrowthRules.Breed(a, b).Id, Is.EqualTo(hybrid));
             var coverage = GrowthReport.PairCoverage();
-            Assert.That(coverage.Values.Sum(), Is.EqualTo(630));
-            Assert.That(sp.Where(s => s.Kind != SpeciesKind.Crown).All(s => coverage[s.Id] >= 1), Is.True, "every non-crown is some pair's offspring");
+            Assert.That(coverage.Values.Sum(), Is.EqualTo(72 * 71 / 2));
+            // Every hybrid is some pair's offspring (a founder at the top of its band may be made only by mixing).
+            Assert.That(sp.Where(s => s.Kind == SpeciesKind.Hybrid).All(s => coverage[s.Id] >= 1), Is.True, "every hybrid is some pair's offspring");
             Assert.That(sp.Where(s => s.Kind == SpeciesKind.Crown).All(s => coverage[s.Id] == 1), Is.True, "a crown has exactly one pair");
         }
 

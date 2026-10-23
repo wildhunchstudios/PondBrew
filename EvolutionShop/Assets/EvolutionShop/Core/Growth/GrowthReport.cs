@@ -51,7 +51,7 @@ namespace EvolutionShop.Growth
             return string.Join(" + ", parts);
         }
 
-        /// <summary>How many of the 630 pairs of two different species breed each species.</summary>
+        /// <summary>How many of the pairs of two different species (2,556 for 72) breed each species.</summary>
         public static Dictionary<string, int> PairCoverage()
         {
             var count = GrowthContent.Species.ToDictionary(s => s.Id, s => 0);
@@ -113,7 +113,7 @@ namespace EvolutionShop.Growth
 
             var pairs = PairCoverage();
             b.AppendLine().AppendLine("## Species (GR.7)").AppendLine()
-             .AppendLine("*Made by*: a founder's recipe (any other mix makes the nearest founder); a hybrid's intended pair (any pair whose breeding values average nearest it also makes it); a crown's special pair (the only way). *Pairs*: how many of the 630 pairs of two different species breed it. *Found*: when the typical player in PACING.md first makes it.").AppendLine()
+             .AppendLine("*Made by*: a founder's recipe (only the exact recipe finds it; any other mix makes the nearest known founder); a hybrid's intended pair (any pair whose breeding values average nearest it also makes it); a crown's special pair (the only way). *Pairs*: how many of the " + (sp.Length * (sp.Length - 1) / 2).ToString("#,0", Inv) + " pairs of two different species breed it. *Found*: when the typical player in PACING.md first makes it.").AppendLine()
              .AppendLine("| # | Species | Family | Size | Kind | Made by | Breeding value | Price | Temperament / water | Pairs | Found |").AppendLine("| ---: | --- | --- | --- | --- | --- | ---: | ---: | --- | ---: | ---: |");
             int n = 0;
             foreach (var s in sp)
@@ -153,7 +153,7 @@ namespace EvolutionShop.Growth
             b.AppendLine().AppendLine("## Eras (GR.4)").AppendLine().AppendLine("| Era | Gate | Goal shown | Target to reach it | Typical player |").AppendLine("| --- | --- | --- | --- | --- |");
             foreach (var e in GrowthContent.Eras)
                 b.AppendLine("| " + e.Number + " " + e.Name + " | " + e.Gate + " | " + e.Goal + " | " + (e.Number == 1 ? "start" : PacingReport.Clock(e.TargetFrom) + "–" + PacingReport.Clock(e.TargetTo)) + " | " + PacingReport.Clock(typical.EraMinute[e.Number - 1]) + " |");
-            b.AppendLine().AppendLine("The Grand Exhibition (GR.12) needs the final spaces, a full day on the line, " + GrowthContent.ExhibitionSpecies + " of 36 species across all six families and " + GrowthContent.ExhibitionCrowns +
+            b.AppendLine().AppendLine("The Grand Exhibition (GR.12) needs the final spaces, a full day on the line, " + GrowthContent.ExhibitionSpecies + " of " + sp.Length + " species across all " + GrowthContent.Families.Length + " families and " + GrowthContent.ExhibitionCrowns +
                 " crowns; target " + PacingReport.Clock(GrowthContent.ExhibitionFrom) + "–" + PacingReport.Clock(GrowthContent.ExhibitionTo) + ", typical player " + PacingReport.Clock(typical.ExhibitionMinute) + ".");
 
             b.AppendLine().AppendLine("## Stars, visitors and research points (GR.10, GR.7.2)").AppendLine()
@@ -231,7 +231,7 @@ namespace EvolutionShop.Growth
             }
             s.Append("<rect x=\"").Append(F(X(GrowthContent.ExhibitionFrom))).Append("\" y=\"").Append(F(y1 + 12)).Append("\" width=\"").Append(F(X(GrowthContent.ExhibitionTo) - X(GrowthContent.ExhibitionFrom))).Append("\" height=\"6\" fill=\"#c99a2e\" opacity=\"0.8\"/>\n");
             // Axes and grid.
-            for (int sp = 0; sp <= GrowthContent.SpeciesCount; sp += 6)
+            for (int sp = 0; sp <= GrowthContent.SpeciesCount; sp += GrowthContent.SpeciesCount > 36 ? 12 : 6)
                 s.Append("<line x1=\"").Append(F(left)).Append("\" x2=\"").Append(F(left + plotW)).Append("\" y1=\"").Append(F(YS(sp))).Append("\" y2=\"").Append(F(YS(sp))).Append("\" stroke=\"#d5dbe3\"/>")
                  .Append("<text x=\"").Append(F(left - 8)).Append("\" y=\"").Append(F(YS(sp) + 4)).Append("\" text-anchor=\"end\" fill=\"#1f5fa8\">").Append(sp).AppendLine("</text>");
             for (int st = 1; st <= 5; st++)

@@ -27,7 +27,7 @@ namespace EvolutionShop.Growth
         /// <summary>Player seconds to set a breeding pair (an experiment, or a known pair for stock).</summary>
         public float PairSetupSeconds = 6;
         /// <summary>New colours chased a night before the exhibition, and after it in free play.</summary>
-        public int ColourTriesPerNight = 1, FreePlayColourTriesPerNight = 2;
+        public int ColourTriesPerNight = 2, FreePlayColourTriesPerNight = 4;
         /// <summary>Share of sales that grant an exact wish (AD-E: a 25% tip and a reputation point).</summary>
         public float WishShare = .3f, TipShare = .25f;
         /// <summary>Duty periods of wages the player keeps in reserve before buying anything else.</summary>
@@ -313,6 +313,11 @@ namespace EvolutionShop.Growth
                     yield return new Offer { Name = c.Name, Credits = c.Levels[0].Credits, Priority = priority,
                         Apply = () => { containers.Add((id, 1)); if (ShopContainers() == 2 && report.SecondTankMinute < 0) report.SecondTankMinute = Minute; } };
                 }
+            // With no free place, a Starter tank can be stored to make room for a bigger container (otherwise a floor full of
+            // Starter tanks would block the Large tank that era 3 needs: the game must let containers be stored or sold).
+            if (FreePlaces() <= 0 && Owns("starter") && !Owns("large") && Allowed(GrowthContent.Container("large").Levels[0]))
+                yield return new Offer { Name = "Large tank (in place of a Starter tank)", Credits = GrowthContent.Container("large").Levels[0].Credits, Priority = 0,
+                    Apply = () => { containers[containers.FindIndex(x => x.id == "starter")] = ("large", 1); } };
             for (int i = 0; i < containers.Count; i++)
             {
                 var (id, lv) = containers[i];
@@ -395,7 +400,7 @@ namespace EvolutionShop.Growth
                 case "sorter": return 0;
                 case "incubator": return lv == 4 ? 0 : 1;
                 case "vat": return lv == 1 ? 0 : 2;
-                case "bench": return lv == 3 ? 0 : 1;
+                case "bench": return lv == 3 && era >= 5 ? 0 : 1;
                 case "siphon": case "grower": case "counter": return 1;
                 default: return 2;
             }
