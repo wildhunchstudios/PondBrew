@@ -14,7 +14,7 @@ namespace EvolutionShop
     /// log; a container's occupants as space icons; Upgrade on every station), and the journal, night receipt, welcome and
     /// pause screens. Greybox: plain layout, the words in English only.
     /// </summary>
-    public sealed class GrowthUi : MonoBehaviour
+    public sealed partial class GrowthUi : MonoBehaviour
     {
         GrowthSession s;
         UIDocument document;
@@ -171,8 +171,9 @@ namespace EvolutionShop
             if (name != null)
             {
                 promptName.text = name; promptStatus.text = s.FocusName(out status) != null ? status : "";
-                float collect = s.Focused != null && s.Focused.Kind == GrowthTargetKind.Vial ? shop.VialProgress : shop.CollectProgress;
-                float progress = s.CollectingNow ? collect / Mathf.Max(0.01f, shop.HoldSeconds) : s.ServingNow ? shop.ServeProgress / Mathf.Max(0.01f, shop.ServeSeconds) : 0;
+                float collect = s.Focused != null && s.Focused.Kind == GrowthTargetKind.Vial ? shop.VialProgress : s.Focused != null && s.Focused.Kind == GrowthTargetKind.Buffer ? shop.BufferProgress : shop.CollectProgress;
+                float progress = s.CollectingNow ? collect / Mathf.Max(0.01f, shop.HoldSeconds) : s.ServingNow ? shop.ServeProgress / Mathf.Max(0.01f, shop.ServeSeconds) :
+                    s.PumpingNow ? shop.PumpProgress / Mathf.Max(0.01f, shop.PumpDoseSeconds) : 0;
                 promptProgress.style.width = new Length(Mathf.Clamp01(progress) * 100, LengthUnit.Percent);
             }
             if (Time.unscaledTime > hintUntil) hintLabel.text = "";
@@ -218,7 +219,8 @@ namespace EvolutionShop
         {
             switch (e.Kind)
             {
-                case GrowthEventKind.Collected: return;
+                case GrowthEventKind.Collected:
+                case GrowthEventKind.Pumped: return;
                 case GrowthEventKind.Discovery:
                 case GrowthEventKind.EraUp:
                 case GrowthEventKind.StarUp:
@@ -240,7 +242,7 @@ namespace EvolutionShop
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null;
             if (which == GrowthCard.None) return;
             bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause;
-            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower ? 540 : 470);
+            card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer ? 540 : which == GrowthCard.PowerBoard ? 600 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
             Fill(which, target);
@@ -348,7 +350,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum());
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature();
         }
 
         string LiveText()
@@ -360,7 +362,7 @@ namespace EvolutionShop
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + ShopClock(shop.DaySecondsLeft) + " left." : "Closed for the night.";
                 case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacityOf(s.CardTarget) + " doses ready";
                 case GrowthCard.Breeding: return !shop.HasBreedingTank ? "" : shop.Offspring != null ? "An offspring is in the nursery." : shop.Breeding ? "Breeding… " + Mathf.CeilToInt(shop.BreedingLeft) + " s" : "Waiting for a pair.";
-                default: return "";
+                default: return PowerLiveText() ?? "";
             }
         }
 
@@ -390,6 +392,10 @@ namespace EvolutionShop
                 case GrowthCard.Receipt: FillReceipt(); break;
                 case GrowthCard.Welcome: FillWelcome(); break;
                 case GrowthCard.Pause: FillPause(); break;
+                case GrowthCard.Annex: FillAnnex(); break;
+                case GrowthCard.Generator: FillGenerator(); break;
+                case GrowthCard.PowerBoard: FillPowerBoard(); break;
+                case GrowthCard.Buffer: FillBuffer(target); break;
             }
         }
 
@@ -429,6 +435,7 @@ namespace EvolutionShop
             body.Add(Text("Hold the left mouse on a grower to fill the siphon: " + (shop.PerHold > 1 ? shop.PerHold + " doses" : "one dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s. It holds " + shop.GrowerCapacityOf(culture) +
                 " and refills one dose every " + shop.RefillSecondsOf(culture).ToString("0.#") + " s by itself."));
             body.Add(Text("Siphon: " + shop.Held.Count + "/" + shop.SiphonCapacity + " doses.", "es-text--muted"));
+            TapSection(body, culture);
             if (vat) UpgradeSection(body, "vat", "The vat");
             UpgradeSection(body, "grower", "Every grower");
             Footer(body, "One upgrade covers every grower.");
@@ -537,6 +544,7 @@ namespace EvolutionShop
                 }
                 body.Add(tintBox);
             }
+            AutoDoserSection(body);
             UpgradeSection(body, "incubator");
             Footer(body);
         }

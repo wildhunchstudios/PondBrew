@@ -263,7 +263,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.EraUp).Text, Is.EqualTo("Era 3: Plumbing. Water kits and catalog page 3 open."));
             Assert.That(shop.EraGoal, Is.EqualTo(GrowthContent.Eras[2].Goal));
             Assert.That(shop.Objectives().First().text, Is.EqualTo("Fill a Large tank (0/8 spaces)"));
-            Assert.That(shop.Objectives().Last().done, Is.True, "and the greybox ends there");
+            Assert.That(shop.Objectives().Select(o => o.text), Has.Some.StartsWith("Open the lab annex"), "GR-07: era 3's goal goes on to the lab annex and power");
             // Two stars are not enough, whatever else is done.
             var early = At(era: 2, stars: 2, credits: 1000, breeding: 1);
             Assert.That(early.BuyContainer("large", "a3").Success, Is.True);

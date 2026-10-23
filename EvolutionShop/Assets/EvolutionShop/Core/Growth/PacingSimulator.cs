@@ -300,8 +300,8 @@ namespace EvolutionShop.Growth
                 var l = s.Levels[next - 1];
                 if (!Allowed(l) || !StationReady(s.Id, next)) continue;
                 string id = s.Id; int lv = next;
-                yield return new Offer { Name = s.Name + " L" + lv, Credits = l.Credits, Rp = l.Rp, Priority = StationPriority(id, lv),
-                    Apply = () => { level[id] = lv; if (id == "vat" && lv == 1) Culture("mist"); } };
+                yield return new Offer { Name = s.Name + " L" + lv, Credits = l.Credits + LinesWith(id, lv), Rp = l.Rp, Priority = StationPriority(id, lv),
+                    Apply = () => { level[id] = lv; if (id == "vat" && lv == 1) Culture("mist"); NotePowered(); } };
             }
             // Containers: the biggest allowed one for a free place (the Large tank first, as it gates era 3).
             if (FreePlaces() > 0)
@@ -370,10 +370,20 @@ namespace EvolutionShop.Growth
             {
                 case "pip": return sales >= GrowthContent.PipSalesGate;
                 case "nori": return Owns("large");
-                case "moss": return level["generator"] >= 2;
+                // GR-07: "a powered generator" is powered pumps running (the bubble turbine and electric pumps), as the report counts it.
+                case "moss": return level["generator"] >= 2 && level["pump"] >= 2;
                 default: return false;
             }
         }
+
+        /// <summary>
+        /// GR-07: what the lab's pipes cost beside a level: with the hand pump, two lines (a buffer each and a pipe of about
+        /// LineMetres from a grower's tap); with the incubator's port (level 4), a pipe from each of those buffers to it.
+        /// </summary>
+        public const float LineMetres = 7f, PortMetres = 9f;
+        static int LinesWith(string id, int lv) =>
+            id == "pump" && lv == 1 ? 2 * (GrowthContent.BufferCredits + (int)Math.Ceiling(LineMetres * GrowthContent.PipeCreditsPerMetre)) :
+            id == "incubator" && lv == 4 ? 2 * (int)Math.Ceiling(PortMetres * GrowthContent.PipeCreditsPerMetre) : 0;
 
         /// <summary>Machines need their room; turbines need the annex; the line's machines need the workshop and power.</summary>
         bool StationReady(string id, int next)
@@ -382,7 +392,8 @@ namespace EvolutionShop.Growth
             {
                 case "vat": return Has("annex");
                 case "generator": return Has("annex") && (next < 3 || Has("workshop"));
-                case "pump": return Has("annex") && (next == 1 || level["generator"] >= 2);
+                // GR-07: electric pumps run on the hand crank too, so they need the generator's level 1.
+                case "pump": return Has("annex") && (next == 1 || level["generator"] >= 1);
                 case "sorter": return Has("workshop") && level["generator"] >= 2;
                 case "incubator": return next < 4 || level["generator"] >= 2 && level["pump"] >= 2;
                 default: return true;
@@ -628,9 +639,15 @@ namespace EvolutionShop.Growth
 
         // ---------------------------------------------------------------- eras and the ending
 
-        void CheckEras()
+        /// <summary>Powered pumps running (the bubble turbine and electric pumps), noted the moment the second of them is bought (GR-07).</summary>
+        void NotePowered()
         {
             if (report.PoweredMinute < 0 && level["generator"] >= 2 && level["pump"] >= 2) { report.PoweredMinute = Minute; New("automation", "Powered pumps running"); }
+        }
+
+        void CheckEras()
+        {
+            NotePowered();
             for (bool advanced = true; advanced && era < 5;)
             {
                 advanced = false;

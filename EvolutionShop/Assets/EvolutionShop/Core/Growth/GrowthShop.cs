@@ -20,6 +20,8 @@ namespace EvolutionShop.Growth
     // batch and faster Mist, the incubator's clutches and tint port, the breeding tank's second pair, the counter's card
     // reader and queue of 3, and the research bench (its microscope); a level whose capability belongs to a later task
     // (power, the line, helpers) says what it waits for.
+    // GR-07 adds GR.8's power and pipes (GrowthPower.cs): the lab annex, the generator, pumps, buffers, pipes, the power
+    // board and the auto-doser, and the era 4 gate (4 stars, powered pumps running, 12 species).
     // Pure and engine-free, read by GrowthSession (Runtime) and tested in EditMode. Numbers come from GrowthContent; this
     // class holds the state and the rules: growers and the siphon, the incubator's never-fail mixing with its mix log and
     // "one dose from something new", carrying hatchlings, Starter tanks of 4 spaces with occupant lists and schools,
@@ -34,6 +36,7 @@ namespace EvolutionShop.Growth
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
         TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog, NoOffspring, NotTinted,
+        NoRoute,
     }
 
     public readonly struct GrowthResult
@@ -132,7 +135,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed }
 
     public sealed class GrowthEvent
     {
@@ -148,7 +151,7 @@ namespace EvolutionShop.Growth
         public int WalkedPast;
     }
 
-    public sealed class GrowthShop
+    public sealed partial class GrowthShop
     {
         public const int CarryLimit = 3, SchoolSize = 3, RepPerImpatient = -1;
         /// <summary>A visit: walking in and browsing, waiting in the queue, walking out. A visitor counts toward the shop's
@@ -179,8 +182,9 @@ namespace EvolutionShop.Growth
         /// <summary>The stations a shop starts with at level 1 (GR-02's four and, GR-06, the research bench).</summary>
         public static readonly string[] GreyboxStations = { "siphon", "grower", "incubator", "counter", "bench" };
         /// <summary>Every station the greybox upgrades: the breeding tank starts at level 0 and is bought as its level 1 (GR-05);
-        /// the vat arrives at level 1 from the supplier (GR-04) and is upgraded on its card (GR-06).</summary>
-        public static readonly string[] UpgradeableStations = GreyboxStations.Concat(new[] { "breeding", "vat" }).ToArray();
+        /// the vat arrives at level 1 from the supplier (GR-04) and is upgraded on its card (GR-06); the generator and pumps
+        /// are bought in the lab annex as their level 1 (GR-07).</summary>
+        public static readonly string[] UpgradeableStations = GreyboxStations.Concat(new[] { "breeding", "vat", "generator", "pump" }).ToArray();
         /// <summary>Parents in one of the breeding tank's pairs (GR.7.2); its level 3 has two pairs.</summary>
         public const int PairSize = 2;
 
@@ -193,6 +197,7 @@ namespace EvolutionShop.Growth
             if (station == "counter" && level >= 4) return "Waits for helpers (GR-09): a cashier works the second till";
             if (station == "bench" && level == 3) return "Waits for the analyzer (GR-08)";
             if (station == "bench" && level >= 4) return "Waits for the planner (GR-08)";
+            if (station == "generator" && level >= 3) return "Waits for the workshop (GR-10)";
             return null;
         }
         /// <summary>GR.7.2's tints: Bloom makes Sunny offspring, Flow Deep, Mist Shimmer.</summary>
@@ -326,7 +331,7 @@ namespace EvolutionShop.Growth
         /// <summary>GR.4's era 2 gate: 2 stars, 3 creatures discovered, 2 tanks.</summary>
         public bool EraTwoGateMet => Stars >= 2 && Discovered.Count >= 3 && ShopContainers.Count() >= 2;
 
-        /// <summary>GR.4's era 3 gate: 3 stars, a hybrid bred, a Large tank.</summary>
+        /// <summary>GR.4's era 3 gate: 3 stars, a hybrid bred, a Large tank. (Era 4's is in GrowthPower.cs.)</summary>
         public bool EraThreeGateMet => Stars >= 3 && HasHybrid && ShopContainers.Any(c => c.Kind == "large");
 
         // ---------------------------------------------------------------- the siphon and growers
@@ -372,6 +377,7 @@ namespace EvolutionShop.Growth
         public GrowthResult AddDose(string culture)
         {
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
+            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
             if (!Held.Contains(culture)) return GrowthResult.Fail(GrowthFailure.NoDose, culture);
             if (Chamber.Count >= MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
             Held.Remove(culture);
@@ -382,6 +388,7 @@ namespace EvolutionShop.Growth
         public GrowthResult ReturnDose(string culture)
         {
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
+            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
             if (!Chamber.Contains(culture)) return GrowthResult.Fail(GrowthFailure.NoDose, culture);
             if (Held.Count >= SiphonCapacity) return GrowthResult.Fail(GrowthFailure.SiphonFull);
             Chamber.Remove(culture);
@@ -396,6 +403,7 @@ namespace EvolutionShop.Growth
             if (s == null || s.Kind != SpeciesKind.Founder) return GrowthResult.Fail(GrowthFailure.NotAFounder, species);
             if (!Discovered.Contains(species)) return GrowthResult.Fail(GrowthFailure.NotDiscovered, species);
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
+            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
             if (s.Doses > MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
             // Doses already in the chamber go back first, so the recipe is exact.
             var held = new List<string>(Held); held.AddRange(Chamber);
@@ -429,6 +437,7 @@ namespace EvolutionShop.Growth
         public GrowthResult StartIncubation()
         {
             if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
+            if (AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing");
             if (Hatchlings.Count > 0) return GrowthResult.Fail(GrowthFailure.HatchlingWaiting);
             if (Chamber.Count == 0) return GrowthResult.Fail(GrowthFailure.ChamberEmpty);
             if (Chamber.Count > MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
@@ -1008,8 +1017,11 @@ namespace EvolutionShop.Growth
             if (next.Era > Era) { why = "Needs era " + next.Era; return GrowthFailure.Locked; }
             if (next.Stars > Stars) { why = "Needs " + next.Stars + " stars"; return GrowthFailure.Locked; }
             if (next.Rp > Rp) { why = "Needs " + next.Rp + " research points"; return GrowthFailure.Locked; }
+            // GR-07: the generator and pumps stand in the lab annex; electric pumps need a generator.
+            if ((station == "generator" || station == "pump") && !Annex) { why = "Open the lab annex first"; return GrowthFailure.Locked; }
+            if (station == "pump" && next.Level == 2 && !HasGenerator) { why = "Electric pumps need the generator"; return GrowthFailure.Locked; }
             // GR.15.1: an upgrade installs only when its station is idle.
-            if (station == "incubator" && (Incubating || Hatchlings.Count > 0)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
+            if (station == "incubator" && (Incubating || Hatchlings.Count > 0 || AutoBatch)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
             if (station == "counter" && Queue.Any()) { why = "Visitors are waiting"; return GrowthFailure.Busy; }
             if (station == "breeding" && Pairs.Any(p => p.Breeding || p.Offspring != null)) { why = "Busy: take a parent or the offspring out first"; return GrowthFailure.Busy; }
             if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -1068,6 +1080,11 @@ namespace EvolutionShop.Growth
                 Era = 3;
                 Raise(GrowthEventKind.EraUp, "Era 3: " + GrowthContent.Eras[2].Name + ". Water kits and catalog page 3 open.");
             }
+            if (Era == 3 && EraFourGateMet)
+            {
+                Era = 4;
+                Raise(GrowthEventKind.EraUp, "Era 4: " + GrowthContent.Eras[3].Name + ". The incubator's auto-doser and fast pumps open.");
+            }
         }
 
         // ---------------------------------------------------------------- the day
@@ -1090,6 +1107,7 @@ namespace EvolutionShop.Growth
             if (seconds <= 0) return;
             foreach (var c in Cultures)
                 GrowerUnits[c] = Math.Min(GrowerCapacityOf(c), GrowerUnits[c] + seconds / RefillSecondsOf(c));
+            TickPower(seconds);
             if (Incubating)
             {
                 IncubationLeft -= seconds;
@@ -1322,11 +1340,23 @@ namespace EvolutionShop.Growth
                     list.Add(("Get Ember: order its grower from the supplier catalog at the counter (" + GrowthContent.Culture("ember").Credits + " credits)", Owns("ember") || Orders.Contains("grower-ember")));
                     list.Add(("Research Spark at the pinboard (" + GrowthContent.Culture("spark").Rp + " research points)", Owns("spark")));
                 }
-                else
+                else if (Era == 3)
                 {
+                    // GR-07: era 3's goal, power the lab; with 4 stars and 12 species, powered pumps open era 4.
                     var large = ShopContainers.Where(c => c.Kind == "large").OrderBy(c => c.Free).FirstOrDefault();
                     list.Add(("Fill a Large tank (" + (large == null ? "buy one first" : large.Used + "/" + large.Spaces + " spaces") + ")", large != null && large.Free == 0));
-                    list.Add(("The greybox ends here: power, pipes and the lab annex come with GR-07 and GR-10", true));
+                    list.Add(("Open the lab annex behind the back room (" + AnnexDef.Credits + " credits, at night)", Annex));
+                    var generator = GrowthContent.Station("generator").Levels[0];
+                    list.Add(("Buy the generator in the annex (" + generator.Credits + " credits and " + generator.Rp + " RP)", HasGenerator));
+                    list.Add(("Pipe a grower's tap to a buffer (pumps and pipes on the power board)", Lines.Any()));
+                    list.Add(("Power the pumps: electric pumps and the bubble turbine", PoweredPumps));
+                    list.Add(("Discover 12 creatures (" + Math.Min(12, Discovered.Count) + "/12)", Discovered.Count >= 12));
+                    list.Add(("Reach 4 stars (reputation " + Reputation + "/" + GrowthContent.StarThresholds[3] + ")", Stars >= 4));
+                }
+                else
+                {
+                    list.Add(("Let the incubator dose a recipe by itself: its level 4 and a buffer piped to its port", AutoBatches > 0));
+                    list.Add(("The greybox ends here: the hatchery line and the analyzer come with GR-08", true));
                 }
             }
             return list;
@@ -1361,7 +1391,14 @@ namespace EvolutionShop.Growth
 
         // ---------------------------------------------------------------- saving (a fresh save line, GR.15)
 
-        public GrowthSave Snapshot() => new GrowthSave
+        public GrowthSave Snapshot()
+        {
+            var save = SnapshotCore();
+            SavePower(save);
+            return save;
+        }
+
+        GrowthSave SnapshotCore() => new GrowthSave
         {
             credits = Credits, reputation = Reputation, rp = Rp, era = Era, day = Day, sales = SalesTotal, refusals = RefusalsTotal, nextId = nextId,
             phase = Phase.ToString(), daySecondsLeft = DaySecondsLeft, unitB = UnitB,
@@ -1477,7 +1514,10 @@ namespace EvolutionShop.Growth
                 shop.Orders.Add(o);
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
-            shop.nextId = Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1);
+            // Version 5 and older had no annex, power or pipes.
+            problem = RestorePower(shop, s);
+            if (problem != null) return null;
+            shop.nextId = Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1);
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
             shop.CheckEra();
             shop.Events.Clear();
@@ -1489,10 +1529,11 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
+        /// <summary>6: GR-07 (the lab annex, buffers, pipes, the power board's order and the auto-doser);
+        /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1517,6 +1558,14 @@ namespace EvolutionShop.Growth
         public string tint, incubatorTint;
         public string[] journal;
         public Pair[] pairLog;
+        public bool annex;
+        public Buffer[] buffers;
+        public Pipe[] pipes;
+        public string[] powerOrder;
+        public string autoRecipe;
+        public bool autoOn, autoBatch;
+        public float autoProgress;
+        public int autoBatches;
         /// <summary>Comfort settings kept with the slot: peek on or off, reduced motion.</summary>
         public bool peekOff, reducedMotion;
         public float sensitivity = 1;
@@ -1541,6 +1590,22 @@ namespace EvolutionShop.Growth
             public string a, b, species;
             public bool wasNew;
             public int count;
+        }
+
+        [Serializable] public sealed class Buffer
+        {
+            public int place;
+            public string culture;
+            public float units;
+        }
+
+        /// <summary>A pipe: its ends and its cells on the lab grid as column, row pairs.</summary>
+        [Serializable] public sealed class Pipe
+        {
+            public int id, paid;
+            public string from, to;
+            public int[] cells;
+            public float length;
         }
 
         [Serializable] public sealed class Mix

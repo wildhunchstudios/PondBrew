@@ -368,9 +368,9 @@ namespace EvolutionShop.Growth
             }},
             new StationDef { Id = "pump", Name = "Pumps and pipes", Levels = new[]
             {
-                L(1, 150, "Hand pump and pipes: crank to fill a buffer in bulk", 3, 3, 0, ("collectFactor", .5f), ("units", 0)),
-                L(2, 400, "Electric pumps: growers feed buffers by themselves", 3, 3, 0, ("collectFactor", 0), ("units", 1)),
-                L(3, 1500, "Fast pumps", 4, 4, 0, ("collectFactor", 0), ("units", 2), ("fast", 1)),
+                L(1, 150, "Hand pump and pipes: crank to fill a buffer in bulk", 3, 3, 0, ("collectFactor", .5f), ("units", 0), ("doseSeconds", .3f)),
+                L(2, 400, "Electric pumps: growers feed buffers by themselves", 3, 3, 0, ("collectFactor", 0), ("units", 1), ("doseSeconds", 1.5f)),
+                L(3, 1500, "Fast pumps: twice as fast, 2 units each", 4, 4, 0, ("collectFactor", 0), ("units", 2), ("fast", 1), ("doseSeconds", .75f)),
             }},
             new StationDef { Id = "sorter", Name = "Hatchling chute and sorter", Levels = new[]
             {
@@ -415,6 +415,14 @@ namespace EvolutionShop.Growth
 
         /// <summary>Doses in a supplier's starter vial (GR-04).</summary>
         public const int VialDoses = 3;
+
+        /// <summary>
+        /// GR-07 (GR.8): a culture buffer in the lab annex holds BufferCapacity doses and costs BufferCredits; a pipe costs
+        /// PipeCreditsPerMetre for every metre of its run (overhead and its two drops); the auto-doser draws AutoDoserUnits of
+        /// power while it moves a dose from a buffer into the incubator every AutoDoseSeconds.
+        /// </summary>
+        public const int BufferCapacity = 24, BufferCredits = 60, PipeCreditsPerMetre = 3, AutoDoserUnits = 1;
+        public const float AutoDoseSeconds = .5f;
 
         /// <summary>
         /// GR.6's supplier catalog, from the cultures: a grower for each catalog culture (Ember, Brine), the conditioning vat

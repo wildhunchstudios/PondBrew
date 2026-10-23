@@ -324,7 +324,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Upgrade("incubator").Success, Is.True);
             Assert.That(shop.MaxDoses, Is.EqualTo(4));
             Assert.That(shop.IncubationSeconds, Is.EqualTo(8));
-            Assert.That(shop.Upgrade("generator").Failure, Is.EqualTo(GrowthFailure.MaxLevel), "not in the greybox (power is GR-07)");
+            Assert.That(shop.Upgrade("generator").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-07: the generator waits for era 3 and the lab annex");
             Assert.That(shop.Upgrade("bench").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-06: the microscope waits for era 2");
             Assert.That(shop.Upgrade("breeding").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-05: the breeding tank waits for era 2");
         }
@@ -388,7 +388,10 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Buy a Large tank"));
             Assert.That(shop.Objectives().First().done, Is.False);
             shop.Era = 3;
-            Assert.That(shop.Objectives().Last().done, Is.True, "the greybox ends in era 3");
+            // GR-07: era 3's goal, the lab annex and powered pumps; the greybox ends in era 4.
+            Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Open the lab annex"));
+            shop.Era = 4;
+            Assert.That(shop.Objectives().Last().done, Is.True, "the greybox ends in era 4");
         }
     }
 }

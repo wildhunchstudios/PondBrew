@@ -16,12 +16,13 @@ namespace EvolutionShop
     {
         public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
             TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke",
-            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke";
+            BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke", PowerSmokeArgument = "-evolutionGrowthPowerSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
-            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" : null;
+            ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : null;
         public static bool Requested
         {
             get
@@ -38,7 +39,7 @@ namespace EvolutionShop
         }
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -63,12 +64,23 @@ namespace EvolutionShop
         public bool ValidationMode { get; private set; }
         public bool AllowValidationInput;
         public string SavePath { get; private set; }
+        /// <summary>GR-07: a development-only start point for the playtest (-evolutionGrowthStart era3 or era4), with its own save; null for the usual greybox.</summary>
+        public string StartPoint { get; private set; }
         public string Notice { get; private set; }
         public bool PeekOn = true, ReducedMotion;
         public float Sensitivity = 1;
-        /// <summary>The held-mouse actions, for the HUD's progress: collecting at a grower, bagging at the counter.</summary>
+        /// <summary>The held-mouse actions, for the HUD's progress: collecting at a grower or a buffer, bagging at the counter,
+        /// cranking a hand pump or the generator (GR-07).</summary>
         public bool CollectingNow { get; private set; }
         public bool ServingNow { get; private set; }
+        public bool PumpingNow { get; private set; }
+        public bool CrankingNow { get; private set; }
+        /// <summary>GR-07's pipe mode: the end a pipe is being connected from, and the plan to the end under the reticle.</summary>
+        public string PipeFrom { get; private set; }
+        public string PipeTo { get; private set; }
+        public GrowthPipe PipePlan { get; private set; }
+        public string PipeWhy { get; private set; }
+        public bool PipeReady { get; private set; }
         public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal;
         float peekBlend, saveClock, visualClock;
         bool initialized;
@@ -79,7 +91,15 @@ namespace EvolutionShop
             ValidationMode = ShopSession.Arg("-evolutionSmoke") != null;
             SavePath = ValidationMode ? Path.Combine(ShopSession.Arg("-evolutionEvidence") ?? Application.temporaryCachePath, SaveFileName)
                 : Path.Combine(Application.persistentDataPath, SaveFileName);
-            Shop = LoadOrNew(SavePath, out string notice);
+            string start = ValidationMode ? null : ShopSession.Arg("-evolutionGrowthStart");
+            if (GrowthStarts.Make(start) != null)
+            {
+                // GR-07: a start point keeps its own save, so the usual greybox shop is never touched.
+                StartPoint = start;
+                SavePath = Path.Combine(Application.persistentDataPath, "growth-gr07-" + start + ".json");
+            }
+            string notice = null;
+            Shop = StartPoint != null && !File.Exists(SavePath) ? GrowthStarts.Make(StartPoint) : LoadOrNew(SavePath, out notice);
             Notice = notice;
             var camera = new GameObject("Player camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
@@ -152,7 +172,7 @@ namespace EvolutionShop
         /// <summary>Starts a brand new greybox shop (the pause menu's Start over); the classic game is untouched.</summary>
         public void StartOver()
         {
-            Shop = new GrowthShop();
+            Shop = StartPoint != null ? GrowthStarts.Make(StartPoint) : new GrowthShop();
             World.ResetForNewShop();
             World.Sync(Shop, 0);
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));
@@ -218,7 +238,65 @@ namespace EvolutionShop
                 case GrowthTargetKind.Catalog: SetCard(GrowthCard.Catalog); break;
                 case GrowthTargetKind.Breeding: SetCard(GrowthCard.Breeding); break;
                 case GrowthTargetKind.Vial: Ui.Hint("Hold the mouse on a vial to collect its doses"); break;
+                case GrowthTargetKind.AnnexWall: SetCard(GrowthCard.Annex); break;
+                case GrowthTargetKind.Generator: SetCard(GrowthCard.Generator); break;
+                case GrowthTargetKind.PowerBoard: SetCard(GrowthCard.PowerBoard); break;
+                case GrowthTargetKind.Buffer: SetCard(GrowthCard.Buffer, target.Id); break;
+                case GrowthTargetKind.Pump: SetCard(GrowthCard.Grower, target.Id); break;
             }
+        }
+
+        // ---------------------------------------------------------------- pipes (GR-07)
+
+        /// <summary>The pipe end a target stands for: a grower (or its pump) is its tap, a buffer its place, the incubator its port.</summary>
+        public static string EndOf(GrowthTarget t)
+        {
+            if (t == null) return null;
+            switch (t.Kind)
+            {
+                case GrowthTargetKind.Grower: case GrowthTargetKind.Pump: return GrowthLab.Tap(t.Id);
+                case GrowthTargetKind.Buffer: return GrowthLab.Buffer(int.Parse(t.Id));
+                case GrowthTargetKind.Incubator: return GrowthLab.Port;
+                default: return null;
+            }
+        }
+
+        /// <summary>Starts connecting a pipe from an end (a card's button): the card closes; aim at the other end and press E.</summary>
+        public void StartPipe(string end)
+        {
+            PipeFrom = end; PipeTo = null; PipePlan = null; PipeWhy = null; PipeReady = false;
+            SetCard(GrowthCard.None);
+            Ui?.Toast("Pipe from " + Shop.EndName(end) + ": aim at its other end and press E. Esc stops.");
+        }
+
+        public void StopPipe()
+        {
+            PipeFrom = PipeTo = null; PipePlan = null; PipeWhy = null; PipeReady = false;
+            World.HidePipeGhost();
+        }
+
+        /// <summary>The preview of the pipe to the end under the reticle: its route, length and cost, or why it cannot be laid.</summary>
+        void UpdatePipe()
+        {
+            if (PipeFrom == null) return;
+            string to = EndOf(Focused);
+            if (to == PipeFrom) to = null;
+            if (to == PipeTo && (PipePlan != null || PipeWhy != null)) { World.ShowPipeGhost(PipePlan, PipeReady, Shop); return; }
+            PipeTo = to; PipePlan = null; PipeWhy = null; PipeReady = false;
+            if (to != null)
+            {
+                var failure = Shop.PipeCheck(PipeFrom, to, out var plan, out string why);
+                PipePlan = plan; PipeWhy = why; PipeReady = failure == GrowthFailure.None;
+            }
+            World.ShowPipeGhost(PipePlan, PipeReady, Shop);
+        }
+
+        void LayAimedPipe()
+        {
+            if (PipeTo == null) { Ui.Hint("Aim at the pipe's other end: a buffer, a grower or the incubator"); return; }
+            string from = PipeFrom, to = PipeTo;
+            if (Act(() => Shop.LayPipe(from, to)).Success) StopPipe();
+            else { PipeTo = null; }
         }
 
         /// <summary>Runs a card action, saves when it changed something, and says why when it could not.</summary>
@@ -261,7 +339,8 @@ namespace EvolutionShop
             var mouse = Mouse.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
-                if (Card == GrowthCard.None) SetCard(GrowthCard.Pause); else SetCard(GrowthCard.None);
+                if (Card == GrowthCard.None && PipeFrom != null) { StopPipe(); Ui.Hint("Pipe stopped"); }
+                else if (Card == GrowthCard.None) SetCard(GrowthCard.Pause); else SetCard(GrowthCard.None);
             }
             // GR-03 (development): F8 opens the crate of every species, for looking at sizes and families.
             else if (keyboard != null && keyboard.f8Key.wasPressedThisFrame && (Card == GrowthCard.None || Card == GrowthCard.Crate))
@@ -281,12 +360,14 @@ namespace EvolutionShop
             World.Sync(Shop, dt);
             World.Animate(visualClock, dt);
             FindFocus();
+            UpdatePipe();
             UpdatePeek(dt);
             bool held = Card == GrowthCard.None && mouse != null && mouse.leftButton.isPressed && (!ValidationMode || AllowValidationInput);
             HoldActions(held, dt);
             if (Card == GrowthCard.None && keyboard != null && keyboard.eKey.wasPressedThisFrame && (!ValidationMode || AllowValidationInput))
             {
-                if (Peeking && PeekCreature != null) TakeFromTank(PeekCreature);
+                if (PipeFrom != null) LayAimedPipe();
+                else if (Peeking && PeekCreature != null) TakeFromTank(PeekCreature);
                 // Carrying creatures, E on a tank puts one in; otherwise E opens what is under the reticle.
                 else if (Focused != null && Focused.Kind == GrowthTargetKind.Tank && Shop.Carried.Count > 0) { string id = Focused.Id; Act(() => Shop.PutIn(id)); }
                 else if (Focused != null && Focused.Kind == GrowthTargetKind.Breeding && BreedingShortcut()) { }
@@ -349,6 +430,28 @@ namespace EvolutionShop
                 ServingNow = r.Success;
             }
             else Shop.StopServing();
+            // GR-07: cranking a grower's hand pump, the generator's hand crank, and siphoning from a buffer.
+            PumpingNow = CrankingNow = false;
+            if (held && PipeFrom == null && Focused != null && Focused.Kind == GrowthTargetKind.Pump)
+            {
+                var r = Shop.CrankPump(Focused.Id, dt);
+                PumpingNow = r.Success;
+                if (!r.Success) Ui.Hint(Explain(r));
+            }
+            else Shop.StopPumping();
+            if (held && PipeFrom == null && Focused != null && Focused.Kind == GrowthTargetKind.Generator)
+            {
+                var r = Shop.CrankGenerator();
+                CrankingNow = r.Success;
+                if (!r.Success) Ui.Hint(Explain(r));
+            }
+            if (held && PipeFrom == null && Focused != null && Focused.Kind == GrowthTargetKind.Buffer)
+            {
+                var r = Shop.CollectBuffer(int.Parse(Focused.Id), dt);
+                CollectingNow = r.Success;
+                if (!r.Success && (r.Failure == GrowthFailure.SiphonFull || r.Failure == GrowthFailure.GrowerEmpty)) Ui.Hint(Explain(r));
+            }
+            else Shop.StopBuffer();
         }
 
         void FindFocus()
@@ -385,9 +488,35 @@ namespace EvolutionShop
         public string FocusName(out string status)
         {
             status = null;
+            if (PipeFrom != null)
+            {
+                // GR-07's pipe mode: the preview of the pipe to the end under the reticle.
+                status = PipeTo == null ? "aim at its other end and press E · Esc stops" :
+                    PipePlan == null ? PipeWhy + " · Esc stops" :
+                    "to " + Shop.EndName(PipeTo) + ": " + PipePlan.Length.ToString("0.#") + " m, " + PipePlan.Paid + " credits · " + (PipeReady ? "E lay it" : PipeWhy) + " · Esc stops";
+                return "Pipe from " + Shop.EndName(PipeFrom);
+            }
             if (Focused == null) return null;
             switch (Focused.Kind)
             {
+                case GrowthTargetKind.AnnexWall: status = Shop.Annex ? "Open" : "E see what it needs"; return "Lab annex";
+                case GrowthTargetKind.Generator:
+                    if (!Shop.HasGenerator) { var g1 = GrowthContent.Station("generator").Levels[0]; status = "era " + g1.Era + " · " + g1.Credits + " credits and " + g1.Rp + " RP · E see what it needs"; return "Generator (not bought)"; }
+                    status = Shop.HandCrank ? (CrankingNow ? "cranking: " + Shop.GeneratorUnits.ToString("0") + " unit" : "hold mouse to crank · E details") : Shop.GeneratorUnits.ToString("0") + " units · E details";
+                    return "Generator";
+                case GrowthTargetKind.PowerBoard:
+                    status = Shop.Supply.ToString("0.#") + " units supplied, " + Shop.Draw.ToString("0.#") + " asked for · E open";
+                    return "Power board";
+                case GrowthTargetKind.Buffer:
+                    var buffer = Shop.BufferAt(int.Parse(Focused.Id));
+                    if (buffer == null) { status = Shop.Phase == GrowthPhase.Night ? "E place a buffer (" + GrowthContent.BufferCredits + " credits)" : "Buffers are placed at night"; return "Buffer place " + (int.Parse(Focused.Id) + 1); }
+                    status = Mathf.FloorToInt(buffer.Units) + "/" + GrowthContent.BufferCapacity + (buffer.Culture == null ? " · empty" : " " + GrowthShop.Name(buffer.Culture)) + " · hold mouse to collect · E details";
+                    return Shop.BufferName(buffer.Place);
+                case GrowthTargetKind.Pump:
+                    var line = Shop.Lines.FirstOrDefault(p => p.Culture == Focused.Id);
+                    string lineStatus = line == null ? "" : Shop.LineStatus(line);
+                    status = (Shop.HandPumps && lineStatus.StartsWith("Hold") ? "hold mouse to crank" : lineStatus) + " · E details";
+                    return GrowthShop.Name(Focused.Id) + (Shop.HandPumps ? " hand pump" : " pump");
                 case GrowthTargetKind.Grower:
                     status = Mathf.FloorToInt(Shop.GrowerUnits.TryGetValue(Focused.Id, out float units) ? units : 0) + "/" + Shop.GrowerCapacityOf(Focused.Id) + " · hold mouse to collect · E details";
                     return GrowthContent.Culture(Focused.Id).Source == CultureSource.Vat ? "Conditioning vat (" + GrowthShop.Name(Focused.Id) + ")" : GrowthShop.Name(Focused.Id) + " grower";

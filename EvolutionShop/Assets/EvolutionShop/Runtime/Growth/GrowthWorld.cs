@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -21,7 +21,7 @@ namespace EvolutionShop
     /// incubator, the tool bench and the pinboard; and shop unit B (8 x 8 m) to the east behind a wall that opens when it
     /// is bought. Plain shapes and colours only: the look comes later (GR.14).
     /// </summary>
-    public sealed class GrowthWorld : MonoBehaviour
+    public sealed partial class GrowthWorld : MonoBehaviour
     {
         public static readonly Vector3 Spawn = new Vector3(0.6f, 0.05f, 5.4f);
         public const float FullDistance = 6f, FreezeDistance = 12f;
@@ -64,21 +64,18 @@ namespace EvolutionShop
         /// <summary>Queue spots in front of the counter, first in line nearest it.</summary>
         public static readonly Vector3[] QueueSpots = { new Vector3(2.8f, 0, -1.7f), new Vector3(2.8f, 0, -0.95f), new Vector3(2.8f, 0, -0.2f), new Vector3(2.05f, 0, -0.2f), new Vector3(1.3f, 0, -0.2f) };
         public static readonly Vector3 CounterPosition = new Vector3(2.8f, 0, -2.6f);
-        public static readonly Vector3 IncubatorPosition = new Vector3(-0.8f, 0, 6.9f);
+        public static readonly Vector3 IncubatorPosition = new Vector3(GrowthLab.Incubator.x, 0, GrowthLab.Incubator.z);
         /// <summary>
         /// GR-04: a slot in the back room for each culture's source: Bloom, Flow, Ember and Brine growers along the west wall
         /// (facing east), the Spark grower, the Mist vat and the Dusk grower along the north wall (facing south). A slot shows
         /// as a dashed square with the culture's colour until its source arrives.
         /// </summary>
-        public static readonly Dictionary<string, Vector3> GrowerPositions = new Dictionary<string, Vector3>
-        {
-            ["bloom"] = new Vector3(-3.45f, 0, 4.75f), ["flow"] = new Vector3(-3.45f, 0, 5.85f), ["ember"] = new Vector3(-3.45f, 0, 6.95f), ["brine"] = new Vector3(-3.45f, 0, 8.05f),
-            ["spark"] = new Vector3(-2.5f, 0, 8.5f), ["mist"] = new Vector3(-1.3f, 0, 8.5f), ["dusk"] = new Vector3(-0.1f, 0, 8.5f),
-        };
+        public static readonly Dictionary<string, Vector3> GrowerPositions = GrowthLab.Growers.ToDictionary(kv => kv.Key, kv => new Vector3(kv.Value.x, 0, kv.Value.z));
         public static float GrowerYaw(string culture) => GrowerPositions[culture].z > 8.2f ? 180 : 90;
         /// <summary>Where a player stands to use a source: 1.3 m in front of it.</summary>
         public static Vector3 GrowerFront(string culture) => GrowerPositions[culture] + Quaternion.Euler(0, GrowerYaw(culture), 0) * new Vector3(0, 0, 1.3f);
-        public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 7.7f), BoardPosition = new Vector3(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(4f, 0, 0);
+        /// <summary>GR-07 moved the research bench 0.8 m south, clear of the doorway into the lab annex.</summary>
+        public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 6.9f), BoardPosition = new Vector3(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(4f, 0, 0);
         /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.
         /// GR-05 moved the shelf 0.2 m west to make room for the breeding tank.</summary>
         public static readonly Vector3 VialShelfPosition = new Vector3(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(1.2f, 0, -3.3f);
@@ -178,6 +175,8 @@ namespace EvolutionShop
 
             Rooms();
             Stations();
+            AnnexRoom();
+            LabStations();
             tanksRoot = new GameObject("Tanks").transform; tanksRoot.SetParent(transform, false);
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
@@ -276,7 +275,8 @@ namespace EvolutionShop
             Box(rooms, "Back room floor", new Vector3(-1, -0.05f, 6.5f), new Vector3(6, 0.1f, 5), floorTile, true);
             Box(rooms, "Back room ceiling", new Vector3(-1, 3.65f, 6.5f), new Vector3(6, 0.1f, 5), wallLab);
             Wall("Back room west wall", new Vector2(-4, 4), new Vector2(-4, 9), 3.6f, wallLab);
-            Wall("Back room north wall", new Vector2(-4, 9), new Vector2(2, 9), 3.6f, wallLab);
+            // GR-07: a doorway into the lab annex, closed by a partition until the annex opens (GrowthWorldLab).
+            Wall("Back room north wall", new Vector2(-4, 9), new Vector2(2, 9), 3.6f, wallLab, new Vector2(4 + AnnexDoorFrom, 4 + AnnexDoorTo));
             Wall("Back room east wall", new Vector2(2, 4), new Vector2(2, 9), 3.6f, wallLab);
             // Shop unit B, 8 x 8 m to the east.
             Box(rooms, "Unit B floor", new Vector3(8, -0.05f, 0), new Vector3(8, 0.1f, 8), floorB, true);
@@ -456,6 +456,7 @@ namespace EvolutionShop
             if (breedingTank) Destroy(breedingTank);
             breedingTank = null; breedingLevel = 0; breedingViews.Clear();
             breedingSlot.SetActive(true);
+            ResetLab();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -520,6 +521,7 @@ namespace EvolutionShop
             }
             if (incubatorDome.sharedMaterial != domeWant) incubatorDome.sharedMaterial = domeWant;
             SyncLevelLooks(shop);
+            SyncLab(shop);
             SyncVisitors(shop);
         }
 
@@ -683,8 +685,9 @@ namespace EvolutionShop
             }
             if (level >= 4)
             {
-                Box(p, "Auto-doser port", new Vector3(-0.5f, 0.62f, 0), new Vector3(0.1f, 0.24f, 0.24f), trim);
-                ShopWorld.Shape(p, "Port pipe stub", PrimitiveType.Cylinder, new Vector3(-0.6f, 0.62f, 0), new Vector3(0.06f, 0.06f, 0.06f), stand).localRotation = Quaternion.Euler(0, 0, 90);
+                // GR-07: the auto-doser's port behind the incubator, where the buffers' pipes drop to it.
+                Box(p, "Auto-doser port", new Vector3(0, 0.95f, 0.38f), new Vector3(0.3f, 0.3f, 0.08f), trim);
+                ShopWorld.Shape(p, "Port inlet", PrimitiveType.Cylinder, new Vector3(0, 1.17f, 0.42f), new Vector3(0.1f, 0.08f, 0.1f), stand);
             }
         }
 
@@ -708,10 +711,12 @@ namespace EvolutionShop
             if (level >= 4) { Tap(p, -1); ShopWorld.Shape(p, "Jar lid", PrimitiveType.Cylinder, new Vector3(0, 1.62f, 0), new Vector3(0.44f, 0.02f, 0.44f), trim); }
         }
 
+        /// <summary>A tap on the grower's back, by the wall, where its pipe rises (GR-07): the first in the middle, the second beside it.</summary>
         void Tap(Transform p, int side)
         {
-            ShopWorld.Shape(p, "Tap", PrimitiveType.Cylinder, new Vector3(side * 0.44f, 0.55f, 0.2f), new Vector3(0.05f, 0.06f, 0.05f), stand).localRotation = Quaternion.Euler(0, 0, 90);
-            Box(p, "Tap valve", new Vector3(side * 0.5f, 0.6f, 0.2f), new Vector3(0.03f, 0.06f, 0.03f), sign);
+            float x = side > 0 ? 0 : 0.16f;
+            ShopWorld.Shape(p, "Tap", PrimitiveType.Cylinder, new Vector3(x, 1.18f, -0.38f), new Vector3(0.07f, 0.1f, 0.07f), stand);
+            Box(p, "Tap valve", new Vector3(x + 0.06f, 1.12f, -0.38f), new Vector3(0.06f, 0.03f, 0.03f), sign);
         }
 
         /// <summary>The conditioning vat: a second batch tank (2), a stirrer for faster batches (3).</summary>
@@ -893,7 +898,7 @@ namespace EvolutionShop
             }
             for (int i = 0; i < hatchlingViews.Count; i++)
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
-            if (session.Shop != null) AnimateBreeding(t, session.Shop);
+            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); }
             foreach (var v in visitors.Values) v.Tick(dt);
         }
 

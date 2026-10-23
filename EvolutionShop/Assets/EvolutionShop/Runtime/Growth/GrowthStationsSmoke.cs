@@ -36,7 +36,7 @@ namespace EvolutionShop
             s.LoadFixture(fx);
             var shop = s.Shop;
             yield return null; yield return null;
-            Check(shop.Era == 4 && shop.Stars == 4 && GrowthShop.UpgradeableStations.All(st => shop.Level(st) == (st == "breeding" ? 2 : 1)),
+            Check(shop.Era == 4 && shop.Stars == 4 && GrowthShop.UpgradeableStations.Where(st => st != "generator" && st != "pump").All(st => shop.Level(st) == (st == "breeding" ? 2 : 1)),
                 "Fixture: an era 4, four-star shop with every station at level 1 (the breeding tank at 2)");
 
             // The research bench: the siphon's and the bench's ladders.
