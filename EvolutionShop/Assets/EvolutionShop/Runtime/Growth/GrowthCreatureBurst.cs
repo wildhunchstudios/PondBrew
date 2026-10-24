@@ -1,0 +1,79 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace EvolutionShop
+{
+    /// <summary>
+    /// GR-12: the little burst a kit creature lets go on its trick's beat in the greybox, sized to the creature: bubbles from a
+    /// Brookkin's lips, sparkles from a Sparkline's lantern (glowing), a puff of mist from an Airfin. They rise, sway, shrink and
+    /// are gone in a second or so. Presentation only.
+    /// </summary>
+    public sealed class GrowthCreatureBurst : MonoBehaviour
+    {
+        const float Life = 1.1f;
+        readonly List<Transform> pieces = new List<Transform>();
+        readonly List<Vector3> drift = new List<Vector3>();
+        readonly List<float> sizes = new List<float>();
+        float age, rise;
+        static readonly Dictionary<DioramaFamily, Material> materials = new Dictionary<DioramaFamily, Material>();
+
+        static Material MaterialFor(DioramaFamily family)
+        {
+            if (materials.TryGetValue(family, out var m) && m != null) return m;
+            switch (family)
+            {
+                case DioramaFamily.Sparkline:
+                    m = ShopWorld.MakeMaterial("GR burst sparkle", new Color(1f, .9f, .45f), 0, .6f);
+                    m.EnableKeyword("_EMISSION");
+                    m.SetColor("_EmissionColor", new Color(1f, .82f, .3f) * 1.6f);
+                    break;
+                case DioramaFamily.Airfin: m = ShopWorld.MakeMaterial("GR burst mist", new Color(.97f, .95f, 1f), 0, .2f); break;
+                default: m = ShopWorld.MakeMaterial("GR burst bubble", new Color(.86f, .97f, 1f), .1f, .9f); break;
+            }
+            return materials[family] = m;
+        }
+
+        /// <summary>Lets count pieces go at a point (world), in parent's space, for a creature of the given length.</summary>
+        public static GrowthCreatureBurst Spawn(Transform parent, Vector3 at, DioramaFamily family, int count, float length)
+        {
+            var go = new GameObject("Creature burst (" + family + ")");
+            go.transform.SetParent(parent, false);
+            go.transform.position = at;
+            var burst = go.AddComponent<GrowthCreatureBurst>();
+            burst.rise = length * (family == DioramaFamily.Airfin ? 1.2f : 2.2f);
+            var material = MaterialFor(family);
+            for (int i = 0; i < count; i++)
+            {
+                float a = i * 2.4f, r = length * (.08f + .05f * (i % 3));
+                float size = length * (family == DioramaFamily.Airfin ? .32f : family == DioramaFamily.Sparkline ? .1f : .14f) * (1 - .12f * (i % 3));
+                var piece = ShopWorld.Shape(go.transform, "Burst piece", family == DioramaFamily.Sparkline ? PrimitiveType.Cube : PrimitiveType.Sphere,
+                    new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r), Vector3.one * size, material);
+                if (family == DioramaFamily.Sparkline) piece.localRotation = Quaternion.Euler(45, 45 * i, 45);
+                var renderer = piece.GetComponent<Renderer>();
+                if (renderer) renderer.shadowCastingMode = ShadowCastingMode.Off;
+                var collider = piece.GetComponent<Collider>();
+                if (collider) { if (Application.isPlaying) Destroy(collider); else DestroyImmediate(collider); }
+                burst.pieces.Add(piece); burst.sizes.Add(size);
+                burst.drift.Add(new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * length * .35f);
+            }
+            return burst;
+        }
+
+        void Update()
+        {
+            age += Mathf.Min(Time.deltaTime, .1f);
+            float u = age / Life;
+            if (u >= 1) { Destroy(gameObject); return; }
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                if (!pieces[i]) continue;
+                float lag = Mathf.Clamp01(u * 1.15f - i * .04f);
+                var p = drift[i] * Mathf.Sqrt(lag) + Vector3.up * (rise * lag);
+                p.x += Mathf.Sin(age * 9 + i) * sizes[i] * .3f;
+                pieces[i].localPosition = p;
+                pieces[i].localScale = Vector3.one * (sizes[i] * (1 - u * u));
+            }
+        }
+    }
+}

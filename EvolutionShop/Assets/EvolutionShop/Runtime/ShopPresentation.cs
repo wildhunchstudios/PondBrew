@@ -7,17 +7,17 @@ namespace EvolutionShop
         public int PresentationView { get; private set; }
         public CharacterSamplePose PresentationPose { get; private set; }
         public bool PresentationMotion { get; private set; }=true;
-        /// <summary>AD-B: the creature study's species (index in DioramaSpecies.All) and colour variant, with the diorama look on.</summary>
+        /// <summary>AD-B: the creature study's species (index in DioramaSpecies.Classic, the classic game's five) and colour variant, with the diorama look on.</summary>
         public int PresentationSpecies { get; private set; }
         public DioramaVariant PresentationVariant { get; private set; }
-        public string PresentationSpeciesId => DioramaSpecies.All[Mathf.Clamp(PresentationSpecies,0,DioramaSpecies.All.Count-1)].Id;
+        public string PresentationSpeciesId => DioramaSpecies.Classic[Mathf.Clamp(PresentationSpecies,0,DioramaSpecies.Classic.Count-1)].Id;
         /// <summary>Whether the creature study offers every species, its variants and its trick (the look is on, the creature shown).</summary>
         public bool PresentationCreatures => Panel==ShopPanel.Presentation && !ComedyPreview && PresentationView==2 && DioramaLookOn;
         void ApplyPresentationCreature() => World.SetStudyCreature(DioramaLookOn?PresentationSpeciesId:"pondlet",PresentationVariant);
         public void SelectPresentationSpecies(int index)
         {
             if(!PresentationCreatures) return;
-            int count=DioramaSpecies.All.Count;PresentationSpecies=((index%count)+count)%count;sampleClock=0;
+            int count=DioramaSpecies.Classic.Count;PresentationSpecies=((index%count)+count)%count;sampleClock=0;
             ApplyPresentationCreature();
         }
         public void SelectPresentationVariant(int index)

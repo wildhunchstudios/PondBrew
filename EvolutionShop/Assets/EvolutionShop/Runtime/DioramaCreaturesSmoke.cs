@@ -47,8 +47,8 @@ namespace EvolutionShop
             GateFresh();
             var w = shop.World;
             yield return CreaturesFoundation(w);
-            int count = DioramaSpecies.All.Count;
-            for (int i = 0; i < count; i++) yield return CreatureInTank(w, DioramaSpecies.All[i], DioramaSpecies.All[(i + 1) % count]);
+            int count = DioramaSpecies.Classic.Count;
+            for (int i = 0; i < count; i++) yield return CreatureInTank(w, DioramaSpecies.Classic[i], DioramaSpecies.Classic[(i + 1) % count]);
             FamilyColoursOnScreen("tank water", r => r.waterOnScreen);
             yield return CreatureComfort(w);
             yield return CreatureIncubator(w);
@@ -63,7 +63,7 @@ namespace EvolutionShop
         {
             Check(w.DioramaActive && DioramaLook.Active && shop.DioramaLookOn, "The creatures route switches the diorama look on");
             Check(DioramaVariants.Ready, "The colour variant atlas loads, readable, " + DioramaVariants.Slots.Length + " x " + DioramaVariants.SpeciesCapacity * 4);
-            foreach (var spec in DioramaSpecies.All)
+            foreach (var spec in DioramaSpecies.Classic)
             {
                 var kit = Resources.Load<GameObject>(DioramaLook.KitPath + spec.Kit);
                 Check(kit, "Kit loads / " + spec.Kit);
@@ -266,7 +266,7 @@ namespace EvolutionShop
 
         IEnumerator CreatureIncubator(ShopWorld w)
         {
-            foreach (var spec in DioramaSpecies.All)
+            foreach (var spec in DioramaSpecies.Classic)
             {
                 w.PreviewResidentForValidation("incubator", spec.Id, "adb-incubator-" + spec.Id);
                 DioramaView(IncubatorEye, IncubatorTarget);
@@ -308,9 +308,9 @@ namespace EvolutionShop
             Check(shop.PresentationCreatures && CardShown(root, StudyPresenter.CreaturesName) && CardShown(root, StudyPresenter.SpeciesName) &&
                 CardShown(root, StudyPresenter.VariantName) && CardShown(root, StudyPresenter.TrickName), "The creature study offers species, colour and trick with the look on");
             var strings = shop.ToolkitUi.Strings;
-            for (int i = 0; i < DioramaSpecies.All.Count; i++)
+            for (int i = 0; i < DioramaSpecies.Classic.Count; i++)
             {
-                var spec = DioramaSpecies.All[i];
+                var spec = DioramaSpecies.Classic[i];
                 if (i > 0) yield return CardClick(root.Q<Button>(StudyPresenter.SpeciesName), "Next species");
                 else shop.SelectPresentationSpecies(0);
                 yield return HudFrames(2);

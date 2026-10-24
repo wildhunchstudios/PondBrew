@@ -38,6 +38,19 @@ namespace EvolutionShop
         public float ContainerScale(bool incubator) => IsDiorama ? (incubator ? dioramaSpecies.IncubatorScale : dioramaSpecies.TankScale) : 1;
         /// <summary>How much of its swim path a kit creature uses in the large tanks, so the larger model stays in the glass.</summary>
         public float DioramaSwim => IsDiorama ? dioramaSpecies.SwimAmplitude : 1;
+        /// <summary>GR-12: the kit body's length (its Body mesh, nose to tail root, before the model's scale), which the greybox
+        /// sets to the species' GR size class.</summary>
+        public float DioramaBodyLength => dioramaBody && dioramaBody.sharedMesh ? dioramaBody.sharedMesh.bounds.size.z : 0;
+
+        /// <summary>GR-12: builds the kit creature whatever the classic look switch says, for the greybox, which shows every kit
+        /// species in the AD look. False when the species or its model is missing.</summary>
+        public bool BuildKit(string speciesId)
+        {
+            species = speciesId;
+            if (!DioramaSpecies.TryGet(speciesId, out _) || !BuildDioramaCreature(speciesId)) return false;
+            Animate(0);
+            return true;
+        }
 
         bool BuildDioramaCreature(string speciesId)
         {
@@ -158,27 +171,31 @@ namespace EvolutionShop
             if (MimicPoseActive && !reduced) t = Mathf.Floor(mimicTime * 2f) * .25f;
             float drive = reduced ? 0 : Mathf.Lerp(.28f, 1, effort) * wake.IdleWeight;
             float tailYaw, finRoll, finRollOther, finPitch, crestRoll;
-            switch (dioramaSpecies.Id)
+            // GR-12: each family strokes its own way (AD-B's Driftwing, Lanternfin and Brookkin), each species at its own tempo
+            // (1 for AD-B's five, which stroke exactly as before).
+            float tempo = dioramaSpecies.Tempo;
+            switch (dioramaSpecies.Family)
             {
-                case "driftwing":
+                case DioramaFamily.Airfin:
                 {
                     // A brief soft downstroke gives way to a long open-sail glide.
-                    float stroke = reduced ? 0 : CreatureMotion.WingStroke(t) * drive;
-                    tailYaw = Mathf.Sin(t * 2.1f - .6f) * 10 * drive; finRoll = finRollOther = -stroke * 17; finPitch = stroke * 6;
-                    crestRoll = Mathf.Sin(t * 2.1f - 1) * 5 * drive;
+                    float stroke = reduced ? 0 : CreatureMotion.WingStroke(t * tempo) * drive;
+                    tailYaw = Mathf.Sin(t * 2.1f * tempo - .6f) * 10 * drive; finRoll = finRollOther = -stroke * 17; finPitch = stroke * 6;
+                    crestRoll = Mathf.Sin(t * 2.1f * tempo - 1) * 5 * drive;
                     break;
                 }
-                case "lanternfin":
+                case DioramaFamily.Sparkline:
                 {
-                    float flutter = Mathf.Sin(t * 4.6f), opposite = Mathf.Sin(t * 4.6f - .5f);
-                    tailYaw = Mathf.Sin(t * 4.6f - .8f) * 15 * drive; finRoll = flutter * 13 * drive; finRollOther = opposite * 13 * drive;
-                    finPitch = flutter * 5 * drive; crestRoll = Mathf.Sin(t * 4.6f - 1.2f) * 4 * drive;
+                    float w = 4.6f * tempo;
+                    float flutter = Mathf.Sin(t * w), opposite = Mathf.Sin(t * w - .5f);
+                    tailYaw = Mathf.Sin(t * w - .8f) * 15 * drive; finRoll = flutter * 13 * drive; finRollOther = opposite * 13 * drive;
+                    finPitch = flutter * 5 * drive; crestRoll = Mathf.Sin(t * w - 1.2f) * 4 * drive;
                     break;
                 }
                 default:
                 {
                     bool ribbon = dioramaSpecies.Id == "ribbonfin";
-                    float speed = ribbon ? 2.7f : 3.6f;
+                    float speed = (ribbon ? 2.7f : 3.6f) * tempo;
                     float wave = Mathf.Sin(t * speed), delayed = Mathf.Sin(t * speed - (ribbon ? .9f : .65f));
                     tailYaw = delayed * (ribbon ? 21 : 15) * drive; finRoll = wave * 12 * drive; finRollOther = delayed * 12 * drive;
                     finPitch = wave * 6 * drive; crestRoll = Mathf.Sin(t * speed - 1.4f) * 6 * drive;

@@ -106,8 +106,10 @@ namespace EvolutionShop
             { "DK_Crate", "C99A62" }, { "DK_CrateSlat", "A87A48" },
         };
 
-        /// <summary>Slots that glow (bloom) as well as being lit: the Sparkline's lantern.</summary>
-        public static bool GlowSlot(string slot) => slot == "DK_LanternfinAccent";
+        /// <summary>Slots that glow (bloom) as well as being lit: a Sparkline's accent, its lantern (GR-12: and what else its
+        /// species paints with it, a glowing stripe, belly, fin tips or stars).</summary>
+        public static bool GlowSlot(string slot) =>
+            DioramaVariants.TryParse(slot, out var species, out int column) && species.Family == DioramaFamily.Sparkline && column == 3;
 
         /// <summary>A kit slot's colour: shared slots from the palette, a species' own slots from the atlas's Classic row.</summary>
         public static bool TryGetSlotColor(string slot, out Color color)

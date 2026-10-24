@@ -46,12 +46,22 @@ namespace EvolutionShop
             Application.logMessageReceived += Log;
             bool failed = false;
             string route = GrowthGreybox.SmokeRoute;
-            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : route == "cultures" ? CulturesScenario() : route == "breeding" ? BreedingScenario() : route == "stations" ? StationsScenario() : route == "power" ? PowerScenario() : route == "line" ? LineScenario() : route == "helpers" ? HelpersScenario() : route == "spaces" ? SpacesScenario() : route == "exhibition" ? ExhibitionScenario() : Scenario();
-            while (true)
+            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : route == "cultures" ? CulturesScenario() : route == "breeding" ? BreedingScenario() : route == "stations" ? StationsScenario() : route == "power" ? PowerScenario() : route == "line" ? LineScenario() : route == "helpers" ? HelpersScenario() : route == "spaces" ? SpacesScenario() : route == "exhibition" ? ExhibitionScenario() : route == "creatures" ? CreaturesScenario() : Scenario();
+            // GR-12: nested steps (such as GR-03's Measure) are run here, not by Unity, so a check failing inside one stops the
+            // route with its reason instead of leaving the route waiting until the runner's timeout.
+            var stack = new Stack<IEnumerator>();
+            stack.Push(steps);
+            while (stack.Count > 0)
             {
                 object current;
-                try { if (!steps.MoveNext()) break; current = steps.Current; }
+                try
+                {
+                    var top = stack.Peek();
+                    if (!top.MoveNext()) { stack.Pop(); continue; }
+                    current = top.Current;
+                }
                 catch (Exception e) { errors.Add("GR route stopped: " + e); failed = true; break; }
+                if (current is IEnumerator nested) { stack.Push(nested); continue; }
                 yield return current;
             }
             RestoreInput();
@@ -60,7 +70,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText : route == "cultures" ? CulturesScenarioText : route == "breeding" ? BreedingScenarioText : route == "stations" ? StationsScenarioText : route == "power" ? PowerScenarioText : route == "line" ? LineScenarioText : route == "helpers" ? HelpersScenarioText : route == "spaces" ? SpacesScenarioText : route == "exhibition" ? ExhibitionScenarioText :
+                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText : route == "cultures" ? CulturesScenarioText : route == "breeding" ? BreedingScenarioText : route == "stations" ? StationsScenarioText : route == "power" ? PowerScenarioText : route == "line" ? LineScenarioText : route == "helpers" ? HelpersScenarioText : route == "spaces" ? SpacesScenarioText : route == "exhibition" ? ExhibitionScenarioText : route == "creatures" ? CreaturesScenarioText :
                     "GR-02 greybox: fresh shop, grower collection by a held mouse, never-fail mixing and the mix log, hatch, carry, tank and school, peek, a day of visitors served at the counter, the receipt, a second tank, era 2 and unit B, an upgrade, save and reload, comfort",
                 context = Application.isEditor ? "Unity Editor Play mode (automated)" : "Windows standalone development player (automated)",
                 unityVersion = Application.unityVersion, graphics = SystemInfo.graphicsDeviceName, processor = SystemInfo.processorType, savePath = s.SavePath,

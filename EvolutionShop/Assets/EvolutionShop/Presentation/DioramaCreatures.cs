@@ -5,10 +5,11 @@ using UnityEngine;
 namespace EvolutionShop
 {
     /// <summary>AD-B creature families. Each family shares one rig (the same pivots, face parts and face shape keys); its
-    /// species differ by body, fins, colours and the family's signature part (Sparkline: the lantern).</summary>
+    /// species differ by body, fins, colours and the family's signature part (Sparkline: the lantern). GR-12 completes each
+    /// family to eight species, wave by wave (wave 1: these three).</summary>
     public enum DioramaFamily { Brookkin, Sparkline, Airfin }
 
-    /// <summary>AD.3's four colour variants. Colour swaps only; which one a specimen is comes with AD-F.</summary>
+    /// <summary>AD.3's four colour variants. Colour swaps only; in the greybox a specimen's colour (GR.7.2) picks it.</summary>
     public enum DioramaVariant { Classic, Sunny, Deep, Shimmer }
 
     /// <summary>One kit species: its model, family, place in the variant atlas and how big containers show it.</summary>
@@ -19,16 +20,29 @@ namespace EvolutionShop
         /// <summary>Row block in the variant atlas (rows Index * 4 to Index * 4 + 3), fixed forever as species are added.</summary>
         public readonly int Index;
         public readonly float ModelScale, TankScale, IncubatorScale, SwimAmplitude, TrickSeconds;
+        /// <summary>GR-12: how quickly it strokes and plays its family's habit (1 for AD-B's five); its trick's own length is
+        /// TrickSeconds, so each species plays its family's trick at its own tempo.</summary>
+        public readonly float Tempo;
+        /// <summary>GR-12: a family's crown, grander, with a trick of its own.</summary>
+        public readonly bool Crown;
 
         DioramaSpecies(string id, string kit, DioramaFamily family, int index, float model, float tank, float incubator,
-            float swim, float trick, string signature)
+            float swim, float trick, string signature, float tempo = 1, bool crown = false)
         {
             Id = id; Kit = kit; Family = family; Index = index; ModelScale = model; TankScale = tank; IncubatorScale = incubator;
-            SwimAmplitude = swim; TrickSeconds = trick; Signature = signature;
+            SwimAmplitude = swim; TrickSeconds = trick; Signature = signature; Tempo = tempo; Crown = crown;
         }
 
-        /// <summary>The five existing species. Scales are on top of each container's classic size; the AD-A and AD-B routes
-        /// check every one stays inside its glass while it swims and does its trick.</summary>
+        /// <summary>A GR-12 species: shown only in the greybox at its GR size class, so the classic containers' sizes stay
+        /// plain (the model's 0.9, and 1 in tanks and the incubator).</summary>
+        static DioramaSpecies Wave(string id, DioramaFamily family, int index, float trick, float tempo, string signature, bool crown = false)
+            => new DioramaSpecies(id, "Diorama" + char.ToUpperInvariant(id[0]) + id.Substring(1), family, index, .9f, 1, 1, .7f, trick,
+                signature, tempo, crown);
+
+        /// <summary>AD-B's five, then GR-12's waves in the kit script's order (the atlas rows follow it forever). AD-B's scales
+        /// are on top of each classic container's size, and the AD-A and AD-B routes check those stay inside their glass; the
+        /// greybox shows every species at its GR size class instead. Signatures name the trick: AD-B's five keep their own,
+        /// each family's other species play its family's (splash, twinkle, glide) at their own tempo, and each crown its own.</summary>
         public static readonly IReadOnlyList<DioramaSpecies> All = new[]
         {
             new DioramaSpecies("pondlet", "DioramaPondlet", DioramaFamily.Brookkin, 0, .9f, 1.6f, 1.5f, .82f, .6f, "bubble"),
@@ -36,7 +50,31 @@ namespace EvolutionShop
             new DioramaSpecies("ribbonfin", "DioramaRibbonfin", DioramaFamily.Brookkin, 2, .9f, 1.25f, 1.2f, 1.6f, 1.4f, "twirl"),
             new DioramaSpecies("lanternfin", "DioramaLanternfin", DioramaFamily.Sparkline, 3, .9f, 1.3f, 1.25f, .75f, 1.2f, "flash"),
             new DioramaSpecies("driftwing", "DioramaDriftwing", DioramaFamily.Airfin, 4, .9f, 1.2f, 1.15f, .7f, 1.8f, "loop"),
+            // GR-12 wave 1 (2026-10-24): the Brookkin, Sparkline and Airfin completed to eight each.
+            Wave("puddlepup", DioramaFamily.Brookkin, 5, 1f, 1.25f, "splash"),
+            Wave("splashkit", DioramaFamily.Brookkin, 6, .95f, 1.3f, "splash"),
+            Wave("reedwhisker", DioramaFamily.Brookkin, 7, 1.4f, .85f, "splash"),
+            Wave("lilyfin", DioramaFamily.Brookkin, 8, 1.3f, .9f, "splash"),
+            Wave("brookmonarch", DioramaFamily.Brookkin, 9, 2f, .8f, "fountain", true),
+            Wave("sparkminnow", DioramaFamily.Sparkline, 10, 1.1f, 1.3f, "twinkle"),
+            Wave("fizzlet", DioramaFamily.Sparkline, 11, 1.2f, 1.2f, "twinkle"),
+            Wave("glowbelly", DioramaFamily.Sparkline, 12, 1.6f, .9f, "twinkle"),
+            Wave("flickerfin", DioramaFamily.Sparkline, 13, 1.15f, 1.25f, "twinkle"),
+            Wave("buzzgill", DioramaFamily.Sparkline, 14, 1.05f, 1.35f, "twinkle"),
+            Wave("starglimmer", DioramaFamily.Sparkline, 15, 1.3f, 1.1f, "twinkle"),
+            Wave("aurorafin", DioramaFamily.Sparkline, 16, 2f, .8f, "aurora", true),
+            Wave("puffglider", DioramaFamily.Airfin, 17, 2f, .85f, "glide"),
+            Wave("hazewing", DioramaFamily.Airfin, 18, 1.5f, 1.2f, "glide"),
+            Wave("gustgill", DioramaFamily.Airfin, 19, 1.4f, 1.3f, "glide"),
+            Wave("mistrunner", DioramaFamily.Airfin, 20, 1.45f, 1.25f, "glide"),
+            Wave("cloudcarp", DioramaFamily.Airfin, 21, 2f, .85f, "glide"),
+            Wave("breezeling", DioramaFamily.Airfin, 22, 1.5f, 1.2f, "glide"),
+            Wave("zephyray", DioramaFamily.Airfin, 23, 2f, .75f, "gale", true),
         };
+
+        /// <summary>The classic game's species, AD-B's five: the classic shop, its creature study and AD-B's route show only
+        /// these (GR-12's species swim in the greybox at their GR size classes).</summary>
+        public static readonly IReadOnlyList<DioramaSpecies> Classic = new List<DioramaSpecies>(All).GetRange(0, 5);
 
         public static bool TryGet(string id, out DioramaSpecies species)
         {
@@ -51,7 +89,7 @@ namespace EvolutionShop
     public static class DioramaVariants
     {
         public const string AtlasAsset = "DioramaVariantAtlas";
-        public const int SpeciesCapacity = 24;
+        public const int SpeciesCapacity = 72;
         /// <summary>Columns: the four species colour slots, the species' blush, and Shimmer's sheen (alpha = its strength).</summary>
         public static readonly string[] Slots = { "Body", "Fin", "Belly", "Accent", "Blush", "Sheen" };
         public const int Sheen = 5;
@@ -87,12 +125,24 @@ namespace EvolutionShop
         public static string SlotName(string speciesId, int slot) =>
             "DK_" + char.ToUpperInvariant(speciesId[0]) + speciesId.Substring(1) + Slots[slot];
 
+        static Dictionary<string, (int species, int slot)> slotNames;
+
         /// <summary>Which species and slot a kit material slot name is, for a species' own five colour slots.</summary>
         public static bool TryParse(string slotName, out DioramaSpecies species, out int slot)
         {
-            foreach (var s in DioramaSpecies.All)
-                for (int k = 0; k < Sheen; k++)
-                    if (SlotName(s.Id, k) == slotName) { species = s; slot = k; return true; }
+            if (slotNames == null)
+            {
+                // Built once: every kit creature asks for each of its slots.
+                var names = new Dictionary<string, (int, int)>();
+                for (int i = 0; i < DioramaSpecies.All.Count; i++)
+                    for (int k = 0; k < Sheen; k++) names[SlotName(DioramaSpecies.All[i].Id, k)] = (i, k);
+                slotNames = names;
+            }
+            if (slotName != null && slotNames.TryGetValue(slotName, out var found))
+            {
+                species = DioramaSpecies.All[found.species]; slot = found.slot;
+                return true;
+            }
             species = default; slot = -1;
             return false;
         }
@@ -110,7 +160,8 @@ namespace EvolutionShop
     }
 
     /// <summary>AD.4's signature tricks (when the player lingers at a display) and idle habits, one each per species.
-    /// Pure functions of time; Reduced motion plays neither. The Pondlet's bubble trick and nose-down bob are AD-A's.</summary>
+    /// Pure functions of time; Reduced motion plays neither. The Pondlet's bubble trick and nose-down bob are AD-A's. GR-12:
+    /// a family's other species play its family's trick and habit at their own tempo, and each crown has a trick of its own.</summary>
     public static class DioramaTricks
     {
         static float Ease(float t) { t = Mathf.Clamp01(t); return t * t * (3 - 2 * t); }
@@ -123,12 +174,13 @@ namespace EvolutionShop
         public static DioramaTrickPose Trick(string species, float age, float previous = -1)
         {
             var p = new DioramaTrickPose();
-            float d = Duration(species);
+            if (!DioramaSpecies.TryGet(species, out var s)) return p;
+            float d = s.TrickSeconds;
             if (!(age >= 0) || age >= d || d <= 0) return p;
-            float u = age / d;
-            switch (species)
+            float u = age / d, before = previous / d;
+            switch (s.Signature)
             {
-                case "bubblebelly":
+                case "balloon":
                     // Balloon belly: puffs up round, turns once on the spot, then lets the air out in a burp of bubbles.
                     p.Puffed = Ease(u / .33f) * (1 - Ease((u - .7f) / .3f));
                     p.Surprised = Bump(u, 0, .3f) * .6f;
@@ -137,14 +189,14 @@ namespace EvolutionShop
                     p.Lift = p.Puffed * .03f;
                     p.Release = Crossed(previous / d, u, .72f);
                     break;
-                case "ribbonfin":
+                case "twirl":
                     // Ribbon twirl: one barrel roll with its ribbons streaming.
                     p.Roll = Ease(u) * 360;
                     p.Tail = Bump(u, 0, 1) * 18;
                     p.Happy = Bump(u, 0, 1) * .9f;
                     p.Release = Crossed(previous / d, u, .5f);
                     break;
-                case "lanternfin":
+                case "flash":
                     // Lantern flash: a surprised look, then the lantern flares twice with sparkles.
                     p.Surprised = Bump(u, 0, .3f) * .8f;
                     p.Glow = Bump(u, .15f, .45f) * 2.6f + Bump(u, .5f, .8f) * 2.6f;
@@ -152,7 +204,7 @@ namespace EvolutionShop
                     p.Pitch = -Bump(u, .1f, .9f) * 8;
                     p.Release = Crossed(previous / d, u, .3f) || Crossed(previous / d, u, .65f);
                     break;
-                case "driftwing":
+                case "loop":
                     // Loop glide: sails wide open, a small vertical loop and back into the glide.
                     p.Fins = Bump(u, 0, 1) * 22;
                     p.Pitch = -Ease((u - .1f) / .75f) * 360;
@@ -160,8 +212,95 @@ namespace EvolutionShop
                     p.Happy = Bump(u, 0, 1) * .9f;
                     p.Release = Crossed(previous / d, u, .5f);
                     break;
+                case "splash":
+                {
+                    // The Brookkin's: a happy hop that shakes the water off (three quick side-to-side rolls), chest puffed, with a
+                    // splash of bubbles at the top.
+                    float shake = Mathf.Sqrt(Mathf.Sin(u * Mathf.PI));
+                    p.Roll = Mathf.Sin(u * Mathf.PI * 6) * 50 * shake;
+                    p.Pitch = Bump(u, 0, .45f) * 18;
+                    p.Puffed = Bump(u, 0, .5f) * .45f;
+                    p.Lift = Bump(u, 0, 1) * .045f;
+                    p.Tail = Bump(u, 0, 1) * 15;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .45f);
+                    break;
+                }
+                case "twinkle":
+                    // The Sparkline's: one turn on the spot while its lantern twinkles three times, sparkling on the last.
+                    p.Yaw = Ease(u) * 360;
+                    p.Glow = (Bump(u, .08f, .33f) + Bump(u, .38f, .63f) + Bump(u, .68f, .93f)) * 2.2f;
+                    p.Surprised = Bump(u, 0, .25f) * .6f;
+                    p.Happy = Mathf.Clamp01((u - .2f) / .2f) * (1 - Ease((u - .85f) / .15f));
+                    p.Release = Crossed(before, u, .8f);
+                    break;
+                case "glide":
+                    // The Airfin's: sails spread wide, it banks round in one circle on the spot and levels out, letting a puff
+                    // of mist go halfway.
+                    p.Fins = Bump(u, 0, 1) * 24;
+                    p.Yaw = Ease(u) * 360;
+                    p.Roll = Bump(u, .05f, .95f) * 32;
+                    p.Lift = Bump(u, 0, 1) * .025f;
+                    p.Happy = Bump(u, 0, 1) * .9f;
+                    p.Release = Crossed(before, u, .5f);
+                    break;
+                case "fountain":
+                    // Brook Monarch: rises proud with its chest out, looks up, bows deeply to its audience swaying on its way,
+                    // and lets a fountain of bubbles go three times.
+                    p.Lift = Bump(u, 0, 1) * .05f;
+                    p.Puffed = Bump(u, .05f, .95f) * .6f;
+                    p.Pitch = Bump(u, 0, .3f) * 10 - Bump(u, .3f, .8f) * 30;
+                    p.Roll = Mathf.Sin(u * Mathf.PI * 2) * 20;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .35f) || Crossed(before, u, .55f) || Crossed(before, u, .75f);
+                    break;
+                case "aurora":
+                    // Aurorafin: a slow barrel roll, sails wide, while its three lanterns glow in waves, sparkling twice.
+                    p.Roll = Ease(u) * 360;
+                    p.Glow = (1.2f + Mathf.Sin(u * Mathf.PI * 4)) * Bump(u, 0, 1) * 1.4f;
+                    p.Fins = Bump(u, 0, 1) * 20;
+                    p.Happy = Bump(u, 0, 1) * .9f;
+                    p.Release = Crossed(before, u, .35f) || Crossed(before, u, .7f);
+                    break;
+                case "gale":
+                    // Zephyray: two great wing beats, each a gust, then a rising spiral of two turns banked into the wind.
+                    p.Fins = (Bump(u, 0, .17f) + Bump(u, .17f, .34f)) * 34;
+                    p.Yaw = Ease((u - .34f) / .6f) * 720;
+                    p.Roll = Bump(u, .34f, .96f) * 28;
+                    p.Lift = Bump(u, .3f, 1) * .05f;
+                    p.Happy = Bump(u, 0, 1) * .9f;
+                    p.Release = Crossed(before, u, .08f) || Crossed(before, u, .25f);
+                    break;
             }
             return p;
+        }
+
+        /// <summary>GR-12: the Pondlet's bubble as a pose for the greybox, where no PondletGlance plays it (the classic shop plays
+        /// AD-A's glance instead): a surprised look up, a little nose-up and one bubble from its lips.</summary>
+        public static DioramaTrickPose PondletBubble(float age, float previous = -1)
+        {
+            var p = new DioramaTrickPose();
+            float d = Duration("pondlet");
+            if (!(age >= 0) || age >= d || d <= 0) return p;
+            float u = age / d;
+            p.Surprised = Bump(u, 0, .5f) * .7f;
+            p.Happy = Bump(u, .3f, 1) * .9f;
+            p.Pitch = Bump(u, 0, 1) * 10;
+            p.Tail = Bump(u, 0, 1) * 12;
+            p.Release = Crossed(previous / d, u, .45f);
+            return p;
+        }
+
+        /// <summary>GR-12: how many bubbles, sparkles or puffs a species' trick releases (the AD-A Pondlet's one bubble too).</summary>
+        public static int Releases(string species)
+        {
+            if (!DioramaSpecies.TryGet(species, out var s)) return 0;
+            switch (s.Signature)
+            {
+                case "flash": case "aurora": case "gale": return 2;
+                case "fountain": return 3;
+                default: return 1;
+            }
         }
 
         /// <summary>How far a trick has drawn the creature to mid-water (0..1): in over its first 0.3 s, out over its last.</summary>
@@ -179,6 +318,31 @@ namespace EvolutionShop
             var p = new DioramaTrickPose();
             if (!(clock >= 0) || float.IsInfinity(clock)) return p;
             float t = clock + phase;
+            if (DioramaSpecies.TryGet(species, out var s) && s.Index >= 5)
+            {
+                // GR-12: the family's habit at the species' own tempo.
+                float tempo = s.Tempo;
+                switch (s.Family)
+                {
+                    case DioramaFamily.Brookkin:
+                    {
+                        // A happy wag every few seconds, rolling a little with it.
+                        float age = Mathf.Repeat(t * tempo, 6f);
+                        float wag = Bump(age, 0, 1.1f);
+                        p.Tail = Mathf.Sin(age * 12) * 13 * wag; p.Roll = Mathf.Sin(age * 6) * 5 * wag; p.Happy = wag * .4f;
+                        break;
+                    }
+                    case DioramaFamily.Sparkline:
+                        // The lantern breathes at its own pace, and now and then gives a dim flicker.
+                        p.Glow = .5f + .5f * Mathf.Sin(t * 1.6f * tempo) - Bump(Mathf.Repeat(t * tempo, 8f), 0, .25f) * .7f;
+                        break;
+                    case DioramaFamily.Airfin:
+                        // Hovering: sails held out with a slow tilt.
+                        p.Fins = 6 + 4 * Mathf.Sin(t * .9f * tempo); p.Roll = Mathf.Sin(t * .7f * tempo) * 6;
+                        break;
+                }
+                return p;
+            }
             switch (species)
             {
                 case "bubblebelly":

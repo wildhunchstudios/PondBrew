@@ -12,9 +12,12 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures";
 
-        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : null;
+        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : null;
+
+        /// <summary>GR-12's families done so far (wave 1), shown in the AD look.</summary>
+        public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin" };
 
         /// <summary>The start of era 3: 3 stars, 1,200 credits, 45 RP, unit B, Bloom, Flow, Ember and Spark, the founders of
         /// the first families and four hybrids, the breeding tank, a Large tank, stocked tanks, levels 2-3.</summary>
@@ -116,6 +119,44 @@ namespace EvolutionShop.Growth
             shop.Credits = 20000;
             shop.TakeEvents();
             return shop;
+        }
+
+        /// <summary>GR-12's look at wave 1 (Docs/Evidence/gr-12/LOOK.md): the spaces start with shop unit C open, every Brookkin,
+        /// Sparkline and Airfin known in all four colours, and a Show tank for each family: the Brookkin on unit B's feature place
+        /// and the Sparkline and the Airfin on unit C's feature wall, each of its species in Classic and one other colour (Sunny,
+        /// Deep and Shimmer in turn); the Airfin's second colours, which the Show tank has no room for, in Large tanks on c3 and
+        /// c4.</summary>
+        public static GrowthShop CreaturesStart()
+        {
+            var shop = SpacesStart();
+            shop.Credits = 100000;
+            shop.BuyUnitC();
+            var wave = GrowthContent.Species.Where(s => KitFamilies.Contains(s.Family)).ToList();
+            foreach (var s in wave)
+            {
+                if (!shop.Discovered.Contains(s.Id)) shop.Discovered.Add(s.Id);
+                foreach (Colour colour in System.Enum.GetValues(typeof(Colour)))
+                    if (!shop.Journal.Contains(GrowthShop.JournalKey(s.Id, colour))) shop.Journal.Add(GrowthShop.JournalKey(s.Id, colour));
+            }
+            foreach (var (kind, place) in new[] { ("show", "b4"), ("show", "c1"), ("show", "c2"), ("large", "c3"), ("large", "c4") })
+                shop.BuyContainer(kind, place);
+            var others = new[] { Colour.Sunny, Colour.Deep, Colour.Shimmer };
+            var tankFor = new Dictionary<string, string> { { "brookkin", "b4" }, { "sparkline", "c1" }, { "airfin", "c2" } };
+            // Every species in Classic in its family's tank first, then its second colour there while it has room, else beside it.
+            foreach (var s in wave) Stock(shop, tankFor[s.Family], s.Id, Colour.Classic);
+            for (int i = 0; i < wave.Count; i++)
+                if (!Stock(shop, tankFor[wave[i].Family], wave[i].Id, others[i % 3]) && !Stock(shop, "c3", wave[i].Id, others[i % 3])) Stock(shop, "c4", wave[i].Id, others[i % 3]);
+            shop.Credits = 20000;
+            shop.TakeEvents();
+            return shop;
+        }
+
+        static bool Stock(GrowthShop shop, string place, string species, Colour colour)
+        {
+            var c = shop.ContainerAt(place);
+            if (c == null || !shop.DevelopmentStock(c.Id, species).Success) return false;
+            c.Occupants[c.Occupants.Count - 1].Colour = colour;
+            return true;
         }
     }
 }

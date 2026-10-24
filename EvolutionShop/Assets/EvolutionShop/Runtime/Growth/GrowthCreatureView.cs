@@ -6,11 +6,13 @@ using UnityEngine.Rendering;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-02's placeholder creature at its size class (GR.5: a small one is 6-9 cm, a medium 12-18, a large 25-40), with a
-    /// head 1.3 times the usual size for small species (GR.14 readability), eyes, a tail and a fin; colour from its recipe's
-    /// cultures. Each of the Brookkin founders has a shape of its own so they can be told apart in a school, and (GR-03) each
-    /// family a feature of its own: a lantern, dew beads, wings, spikes, a stripe, a shell, a lure or a comet tail.
-    /// Creatures cast no shadows (GR.5's budget: up to 180 on screen).
+    /// A creature at its size class (GR.5: a small one is 6-9 cm, a medium 12-18, a large 25-40). GR-12: a species the diorama
+    /// kit has (wave 1: the Brookkin, Sparkline and Airfin) is its kit model in its colour from the variant atlas, its body set
+    /// to the class's length, with its family's strokes and habit at its own tempo, blinks and pupils on the player, and its
+    /// trick when the player lingers on it in peek. Any other is GR-02's placeholder, with a head 1.3 times the usual size for
+    /// small species (GR.14 readability), eyes, a tail and a fin, coloured from its recipe's cultures, with (GR-03) its
+    /// family's feature: dew beads, spikes, a stripe, a shell, a lure or a comet tail. Creatures cast no shadows (GR.5's
+    /// budget: up to 180 on screen).
     /// </summary>
     public sealed class GrowthCreatureView : MonoBehaviour
     {
@@ -32,11 +34,69 @@ namespace EvolutionShop
         float wag;
         static readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
 
-        public static float LengthOf(SizeClass size) => size == SizeClass.Small ? 0.075f : size == SizeClass.Medium ? 0.15f : 0.32f;
+        // GR-12: the kit creature, its holder (turned to face +Z, scaled to the size class) and its clocks; its distant look.
+        CreatureVisual kit;
+        Transform kitHolder;
+        GameObject far;
+        int detail;
+        /// <summary>Each species' distant look in each colour, baked once and shared by every specimen of it.</summary>
+        static readonly Dictionary<string, (Mesh mesh, Material[] outlined, Material[] plain)> farLooks = new Dictionary<string, (Mesh, Material[], Material[])>();
+        DioramaFamily family;
+        float phase, clock, lastTick = -1, focus, cooldown, trickAge = -1;
+        static readonly Quaternion KitTurn = Quaternion.Euler(0, 180, 0);
+        /// <summary>Seconds on a creature in peek before it plays its trick, and the rest after one (AD-B's linger is 1.5 s at
+        /// a display; a peek is already a close look).</summary>
+        public const float TrickLinger = .8f, TrickRest = 6f;
+        /// <summary>A trick's lift is in the classic display's units; in the greybox it is this share of the creature's length.</summary>
+        const float LiftShare = 1.6f;
 
-        /// <summary>The species' colour: its recipe's cultures mixed by dose, or its family's lead culture shaded by its breeding value.</summary>
+        /// <summary>GR-12: the kit creature showing this specimen; null for a placeholder.</summary>
+        public CreatureVisual Kit => kit;
+        /// <summary>The farthest any part reaches from the creature's centre across the water, and above or below it, at scale 1:
+        /// the swim keeps both inside the glass (a placeholder's are GR-02's 0.6 and 0.4 of its length).</summary>
+        public float Reach { get; private set; }
+        public float HalfHeight { get; private set; }
+        /// <summary>The trick's age in seconds while it plays, else -1.</summary>
+        public float TrickAge => trickAge;
+        /// <summary>How far a trick has drawn the creature to mid-water (0..1).</summary>
+        public float Settle => trickAge >= 0 && kit != null ? DioramaTricks.Settle(Species, trickAge) : 0;
+        /// <summary>The look it is shown in: 0 the full kit creature (near, in view), 1 its distant look with its ink outline, 2
+        /// without (beyond 6 m or out of view). GrowthWorld picks it by distance (KitDistance, FullDistance).</summary>
+        public int Detail => detail;
+        /// <summary>Its distant look while it is shown, else null.</summary>
+        public Renderer FarRenderer => far != null && far.activeSelf ? far.GetComponent<Renderer>() : null;
+        /// <summary>Validation: tricks started and bursts released by every creature so far.</summary>
+        public static int TricksPlayed { get; private set; }
+        public static int BurstsReleased { get; private set; }
+        /// <summary>Validation: the bursts this creature has released (its tricks' and its habit's).</summary>
+        public int Bursts { get; private set; }
+        /// <summary>Where the player's eyes are; kit creatures' pupils follow it while it is set.</summary>
+        public static Vector3 Viewer;
+        public static bool ViewerSet;
+
+        public static float LengthOf(SizeClass size) => size == SizeClass.Small ? 0.075f : size == SizeClass.Medium ? 0.15f : 0.32f;
+        /// <summary>GR-12: crowns are grander, at the top of their size class (9, 18 and 38 cm).</summary>
+        public const float CrownLength = 1.2f;
+        public static float LengthOf(SpeciesDef def) => LengthOf(def.Size) * (def.Kind == SpeciesKind.Crown ? CrownLength : 1f);
+
+        static DioramaVariant Variant(Colour colour) =>
+            colour == Colour.Sunny ? DioramaVariant.Sunny : colour == Colour.Deep ? DioramaVariant.Deep :
+            colour == Colour.Shimmer ? DioramaVariant.Shimmer : DioramaVariant.Classic;
+
+        /// <summary>GR-12: a kit species' body colour in a variant, from the atlas, so cards and the journal match the creature.</summary>
+        static bool KitColour(SpeciesDef s, Colour colour, out Color c)
+        {
+            c = default;
+            if (s == null || !DioramaSpecies.TryGet(s.Id, out var spec) || !DioramaVariants.Ready) return false;
+            c = DioramaVariants.Color(spec.Index, Variant(colour), 0); c.a = 1;
+            return true;
+        }
+
+        /// <summary>The species' colour: a kit species' Classic body from the atlas (GR-12); otherwise its recipe's cultures mixed
+        /// by dose, or its family's lead culture shaded by its breeding value.</summary>
         public static Color ColourOf(SpeciesDef s)
         {
+            if (KitColour(s, Colour.Classic, out var kitColour)) return kitColour;
             if (s.Recipe != null)
             {
                 Color sum = Color.black; int doses = 0;
@@ -63,6 +123,7 @@ namespace EvolutionShop
         /// </summary>
         public static Color ColourOf(SpeciesDef s, Colour colour)
         {
+            if (KitColour(s, colour, out var kitColour)) return kitColour;
             var c = ColourOf(s);
             if (colour == Colour.Classic) return c;
             Color.RGBToHSV(c, out float h, out float sat, out float v);
@@ -101,7 +162,9 @@ namespace EvolutionShop
             var view = root.AddComponent<GrowthCreatureView>();
             view.SpecimenId = specimen.Id;
             view.Species = specimen.Species;
-            float L = view.Length = LengthOf(def.Size);
+            float L = view.Length = LengthOf(def);
+            view.Reach = 0.6f * L; view.HalfHeight = 0.4f * L;
+            if (BuildKit(view, root.transform, specimen, def, L)) return view;
             // GR-05: the specimen's colour (Classic, Sunny, Deep or Shimmer); a Shimmer body glows softly, under the bloom threshold.
             string key = def.Id + (specimen.Colour == Colour.Classic ? "" : "-" + specimen.Colour);
             Color body = ColourOf(def, specimen.Colour), belly = Color.Lerp(body, Color.white, 0.55f), fin = Color.Lerp(body, Color.black, 0.25f);
@@ -131,11 +194,59 @@ namespace EvolutionShop
             ShopWorld.Shape(root.transform, "Fin", PrimitiveType.Cube, new Vector3(0, 0.22f * L, -0.05f * L), new Vector3(0.03f, 0.16f, 0.22f) * L, finMat);
             Family(view, root.transform, def, key, L, head, bodyScale, body, fin);
             // A small honey tag over a creature a visitor is buying.
-            view.reservedTag = ShopWorld.Shape(root.transform, "Reserved tag", PrimitiveType.Cube, new Vector3(0, 0.45f * L, 0), new Vector3(0.18f, 0.12f, 0.02f) * L * 1.6f, Mat("reserved", new Color(0.98f, 0.78f, 0.37f)));
+            Finish(view, root.transform, specimen, L, 0.45f * L);
+            return view;
+        }
+
+        /// <summary>A small honey tag over a creature a visitor is buying; no shadows for any creature.</summary>
+        static void Finish(GrowthCreatureView view, Transform root, GrowthSpecimen specimen, float L, float tagHeight)
+        {
+            view.reservedTag = ShopWorld.Shape(root, "Reserved tag", PrimitiveType.Cube, new Vector3(0, tagHeight, 0), new Vector3(0.18f, 0.12f, 0.02f) * L * 1.6f, Mat("reserved", new Color(0.98f, 0.78f, 0.37f)));
             view.reservedTag.gameObject.SetActive(false);
             view.wag = specimen.Id * 0.73f;
             foreach (var r in root.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
-            return view;
+        }
+
+        /// <summary>
+        /// GR-12: the kit creature for a kit species, turned to swim along +Z (the kit faces -Z), its body the size class's
+        /// length (GR.14; the kit's big-eyed heads already carry the readability the placeholders' 1.3 head gives), in the
+        /// specimen's colour. False (and nothing built) without its model.
+        /// </summary>
+        static bool BuildKit(GrowthCreatureView view, Transform root, GrowthSpecimen specimen, SpeciesDef def, float L)
+        {
+            if (!DioramaSpecies.TryGet(def.Id, out var spec)) return false;
+            var holder = new GameObject("Kit " + spec.Id).transform;
+            holder.SetParent(root, false);
+            holder.localRotation = KitTurn;
+            var visual = holder.gameObject.AddComponent<CreatureVisual>();
+            if (!visual.BuildKit(def.Id) || visual.DioramaBodyLength <= 0)
+            {
+                if (Application.isPlaying) Destroy(holder.gameObject); else DestroyImmediate(holder.gameObject);
+                return false;
+            }
+            holder.localScale = Vector3.one * (L / (visual.DioramaBodyLength * spec.ModelScale));
+            visual.SetDioramaVariant(Variant(specimen.Colour));
+            visual.SetPondletIdentity(def.Id + "#" + specimen.Id);
+            view.kit = visual; view.kitHolder = holder; view.family = spec.Family;
+            view.phase = PondletMotion.IdentityPhase("#" + specimen.Id);
+            // Its reach across the water and its height, from every part (fins, sails, lanterns, tails), as it rests.
+            float reach = 0, half = 0;
+            var toRoot = root.worldToLocalMatrix;
+            foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
+            {
+                var mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                if (!mesh) continue;
+                var m = toRoot * r.transform.localToWorldMatrix;
+                var b = mesh.bounds;
+                for (int k = 0; k < 8; k++)
+                {
+                    var p = m.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                    reach = Mathf.Max(reach, new Vector2(p.x, p.z).magnitude); half = Mathf.Max(half, Mathf.Abs(p.y));
+                }
+            }
+            view.Reach = reach; view.HalfHeight = half;
+            Finish(view, root, specimen, L, half + 0.1f * L);
+            return true;
         }
 
         /// <summary>Each family's feature, so sizes and families read apart at a glance (placeholders for GR.14's rigs).</summary>
@@ -181,9 +292,129 @@ namespace EvolutionShop
             }
         }
 
-        public void Tick(float t)
+        /// <summary>One frame of its life at time t: a placeholder wags its tail; a kit creature strokes, blinks, looks at the
+        /// player, plays its family's habit and, after a moment under the reticle in peek, its trick (Reduced motion: none).</summary>
+        public void Tick(float t, bool reduced = false)
         {
-            if (tail) tail.localRotation = Quaternion.Euler(0, 22f * Mathf.Sin(t * 7f + wag), 0);
+            if (kit == null)
+            {
+                if (tail) tail.localRotation = Quaternion.Euler(0, 22f * Mathf.Sin(t * 7f + wag), 0);
+                return;
+            }
+            // Its distant look is at rest: no face, habit or trick to run.
+            if (detail != 0) { lastTick = -1; return; }
+            float dt = lastTick < 0 || !FxParticleRequest.Finite(t) ? 0 : Mathf.Clamp(t - lastTick, 0, .25f);
+            lastTick = FxParticleRequest.Finite(t) ? t : lastTick;
+            float before = clock;
+            if (!reduced) clock += dt;
+            cooldown = Mathf.Max(0, cooldown - dt);
+            focus = highlighted ? focus + dt : 0;
+            float trickBefore = trickAge;
+            if (trickAge >= 0) { trickAge += dt; if (trickAge >= DioramaTricks.Duration(Species)) trickAge = -1; }
+            if (reduced) trickAge = -1;
+            else if (trickAge < 0 && focus >= TrickLinger && cooldown <= 0) { trickAge = 0; trickBefore = -1; cooldown = TrickRest; TricksPlayed++; }
+            var idle = reduced ? default : DioramaTricks.Idle(Species, clock, phase, before);
+            var trick = trickAge < 0 ? default : Species == "pondlet" ? DioramaTricks.PondletBubble(trickAge, trickBefore) : DioramaTricks.Trick(Species, trickAge, trickBefore);
+            bool tricking = trickAge >= 0;
+            kit.SetDioramaFace(tricking ? Mathf.Max(.2f, trick.Happy) : .2f + idle.Happy, Mathf.Max(idle.Surprised, trick.Surprised), Mathf.Max(idle.Puffed, trick.Puffed));
+            kit.SetDioramaAction(idle.Glow + trick.Glow, idle.Tail + trick.Tail, idle.Fins + trick.Fins);
+            if (ViewerSet && !reduced) kit.SetLookTarget(Viewer); else kit.ClearLookTarget();
+            kitHolder.localRotation = KitTurn * Quaternion.Euler(idle.Pitch + trick.Pitch, idle.Yaw + trick.Yaw, idle.Roll + trick.Roll);
+            kitHolder.localPosition = Vector3.up * ((idle.Lift + trick.Lift) * Length * LiftShare);
+            kit.AnimateSpecies(clock, .7f, reduced);
+            if (!reduced && (trick.Release || idle.Release)) Burst(trick.Release);
+        }
+
+        /// <summary>
+        /// GR.5's update levels, for a kit creature's look: near and in view (0) the full kit creature, with its face, strokes,
+        /// habit and trick (peek, tricks and the player's look at it all happen there); further (1), and beyond 6 m or out of
+        /// view (2), its distant look instead: its species in its colour, at rest, baked into one mesh shared by every specimen
+        /// of it, with one material a colour slot, so a tank full of creatures costs a handful of draws; with its ink outline at
+        /// 1, without at 2. A placeholder keeps its primitives at every level.
+        /// </summary>
+        public void SetDetail(int level)
+        {
+            if (kit == null || detail == level) return;
+            detail = level;
+            bool near = level == 0;
+            if (!near && far == null) far = BuildFar();
+            trickAge = -1;
+            kitHolder.gameObject.SetActive(near);
+            if (far != null)
+            {
+                far.SetActive(!near);
+                if (!near && farLooks.TryGetValue(FarKey, out var look)) far.GetComponent<MeshRenderer>().sharedMaterials = level == 1 ? look.outlined : look.plain;
+            }
+        }
+
+        string FarKey => Species + "/" + kit.DioramaVariant;
+
+        GameObject BuildFar()
+        {
+            if (!farLooks.TryGetValue(FarKey, out var look) || look.mesh == null) farLooks[FarKey] = look = Bake(kitHolder);
+            var go = new GameObject("Far " + Species);
+            go.transform.SetParent(transform, false);
+            go.transform.localRotation = KitTurn;
+            go.transform.localScale = kitHolder.localScale;
+            go.AddComponent<MeshFilter>().sharedMesh = look.mesh;
+            var renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = look.outlined;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            return go;
+        }
+
+        /// <summary>The kit creature as it is now, in its holder's space, merged into one mesh with a submesh a colour slot,
+        /// and copies of its materials (the lantern at its resting glow), with its outline and without.</summary>
+        static (Mesh, Material[], Material[]) Bake(Transform holder)
+        {
+            var groups = new List<(Material material, List<CombineInstance> parts)>();
+            var toHolder = holder.worldToLocalMatrix;
+            var temporary = new List<Mesh>();
+            foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
+            {
+                Mesh mesh;
+                if (r is SkinnedMeshRenderer skinned) { mesh = new Mesh(); skinned.BakeMesh(mesh, false); temporary.Add(mesh); }
+                else if (r.GetComponent<MeshFilter>() is MeshFilter filter && filter.sharedMesh) mesh = filter.sharedMesh;
+                else continue;
+                var matrix = toHolder * r.transform.localToWorldMatrix;
+                var materials = r.sharedMaterials;
+                for (int sub = 0; sub < mesh.subMeshCount && sub < materials.Length; sub++)
+                {
+                    int g = groups.FindIndex(x => x.material == materials[sub]);
+                    if (g < 0) { groups.Add((materials[sub], new List<CombineInstance>())); g = groups.Count - 1; }
+                    groups[g].parts.Add(new CombineInstance { mesh = mesh, subMeshIndex = sub, transform = matrix });
+                }
+            }
+            var slots = new List<CombineInstance>();
+            var copies = new Material[groups.Count];
+            var plain = new Material[groups.Count];
+            for (int g = 0; g < groups.Count; g++)
+            {
+                var merged = new Mesh { indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+                merged.CombineMeshes(groups[g].parts.ToArray(), true, true);
+                temporary.Add(merged);
+                slots.Add(new CombineInstance { mesh = merged, transform = Matrix4x4.identity });
+                var copy = new Material(groups[g].material) { name = groups[g].material.name + " (far)" };
+                if (copy.IsKeywordEnabled("_EMISSION") || DioramaLook.GlowSlot(groups[g].material.name.Replace("Diorama / ", "")))
+                    copy.SetColor("_EmissionColor", copy.GetColor("_BaseColor") * .6f);
+                copies[g] = copy;
+                plain[g] = new Material(copy) { name = copy.name.Replace(" (far)", " (far, plain)") };
+                plain[g].SetShaderPassEnabled(DioramaLook.OutlinePass, false);
+            }
+            var result = new Mesh { name = "Far look", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+            result.CombineMeshes(slots.ToArray(), false, false);
+            result.RecalculateBounds();
+            foreach (var m in temporary) if (Application.isPlaying) Destroy(m); else DestroyImmediate(m);
+            return (result, copies, plain);
+        }
+
+        /// <summary>The bubbles (Brookkin, from its lips), sparkles (Sparkline, from its lantern) or puff of mist (Airfin) a trick or
+        /// habit lets go on its beat.</summary>
+        void Burst(bool trick)
+        {
+            var from = family == DioramaFamily.Sparkline && kit.DioramaLanternPoint ? kit.DioramaLanternPoint : kit.DioramaLips ? kit.DioramaLips : transform;
+            GrowthCreatureBurst.Spawn(transform.parent, from.position, family, trick ? 5 : 2, Length);
+            BurstsReleased++; Bursts++;
         }
     }
 

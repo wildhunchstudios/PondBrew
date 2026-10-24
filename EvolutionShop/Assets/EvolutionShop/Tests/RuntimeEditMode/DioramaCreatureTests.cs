@@ -3,24 +3,44 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using EvolutionShop.Growth;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace EvolutionShop.Tests
 {
     /// <summary>AD-B creature families: the kit rigs, the species table, the colour variant atlas, tricks and idle habits, family
-    /// water and container fit.</summary>
+    /// water and container fit. GR-12: wave 1's species on the same rigs, their family and crown tricks.</summary>
     public sealed class DioramaCreatureTests
     {
         static string Repo => Path.GetFullPath(Path.Combine(Application.dataPath, "..", ".."));
         static string Manifest => File.ReadAllText(Path.Combine(Repo, "ArtSource", "DioramaKit", "manifest.json"));
         static readonly string[] RigParts = { "Body", "Eyes", "Pupils", "Glints", "Lids", "Blush", "Lips", "Tail pivot", "Left fin pivot", "Right fin pivot", "Crest pivot" };
 
+        /// <summary>The classic game's five species (the classic containers show only those).</summary>
+        static IEnumerable<DioramaSpecies> Classic()
+        {
+            var game = GameConfig.CreateDefault().Species.Select(s => s.Id).ToArray();
+            return DioramaSpecies.All.Where(s => game.Contains(s.Id));
+        }
+
         [Test] public void EveryGameSpeciesHasAKitSpeciesInManifestOrder()
         {
             var game = GameConfig.CreateDefault().Species.Select(s => s.Id).ToArray();
-            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.EquivalentTo(game), "Every species the game has, and only those, is a kit species");
+            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.SupersetOf(game), "Every species the classic game has is a kit species");
+            Assert.That(DioramaSpecies.All.Take(5).Select(s => s.Id), Is.EquivalentTo(game), "AD-B's five first, at their atlas blocks");
+            // GR-12 wave 1: every Brookkin, Sparkline and Airfin of GR.7's roster, and nothing else yet.
+            var wave1 = GrowthContent.Species.Where(s => s.Family == "brookkin" || s.Family == "sparkline" || s.Family == "airfin").ToArray();
+            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.EquivalentTo(wave1.Select(s => s.Id)), "Wave 1: the three families' eight each");
+            foreach (var def in wave1)
+            {
+                Assert.That(DioramaSpecies.TryGet(def.Id, out var kit), Is.True, def.Id);
+                Assert.That(kit.Family.ToString().ToLowerInvariant(), Is.EqualTo(def.Family), def.Id + " in its GR family");
+                Assert.That(kit.Crown, Is.EqualTo(def.Kind == SpeciesKind.Crown), def.Id + " a crown exactly when GR.7's is");
+                Assert.That(kit.Tempo, Is.InRange(.7f, 1.4f), def.Id + " tempo");
+            }
             Assert.That(DioramaSpecies.All.Select(s => s.Index), Is.EqualTo(Enumerable.Range(0, DioramaSpecies.All.Count)), "Atlas blocks in order");
+            Assert.That(DioramaSpecies.All.Count, Is.LessThanOrEqualTo(DioramaVariants.SpeciesCapacity), "The atlas holds every species");
             string manifest = Manifest;
             int at = 0;
             foreach (var s in DioramaSpecies.All)
@@ -32,6 +52,14 @@ namespace EvolutionShop.Tests
                 Assert.That(s.TankScale, Is.InRange(1f, 1.7f)); Assert.That(s.IncubatorScale, Is.InRange(1f, 1.6f));
                 Assert.That(s.TrickSeconds, Is.InRange(.5f, 2f));
             }
+            // Signatures: AD-B's five keep their own; a family's other species play its family's, each crown its own.
+            var family = new Dictionary<DioramaFamily, string> { { DioramaFamily.Brookkin, "splash" }, { DioramaFamily.Sparkline, "twinkle" }, { DioramaFamily.Airfin, "glide" } };
+            Assert.That(DioramaSpecies.All.Take(5).Select(s => s.Signature), Is.EqualTo(new[] { "bubble", "balloon", "twirl", "flash", "loop" }));
+            foreach (var s in DioramaSpecies.All.Skip(5))
+                if (s.Crown) Assert.That(family.Values.Contains(s.Signature) || DioramaSpecies.All.Count(o => o.Signature == s.Signature) > 1, Is.False, s.Id + " a trick of its own");
+                else Assert.That(s.Signature, Is.EqualTo(family[s.Family]), s.Id + " plays its family's trick");
+            foreach (var group in DioramaSpecies.All.Skip(5).Where(s => !s.Crown).GroupBy(s => s.Family))
+                Assert.That(group.Select(s => s.TrickSeconds).Distinct().Count(), Is.GreaterThan(group.Count() / 2), group.Key + "'s species play at tempos of their own");
             Assert.That(DioramaSpecies.TryGet("pondlet", out var pondlet) && pondlet.TankScale == CreatureVisual.DioramaTankScale &&
                 pondlet.IncubatorScale == CreatureVisual.DioramaIncubatorScale && pondlet.SwimAmplitude == CreatureVisual.DioramaSwimAmplitude,
                 Is.True, "The Pondlet keeps AD-A's sizes");
@@ -78,7 +106,7 @@ namespace EvolutionShop.Tests
         [Test] public void TheVariantAtlasHoldsTheManifestsColours()
         {
             DioramaVariants.Reset();
-            Assert.That(DioramaVariants.Ready, Is.True, "The atlas loads, readable, at 6 x 96");
+            Assert.That(DioramaVariants.Ready, Is.True, "The atlas loads, readable, at 6 x 288 (GR.7's 72 species)");
             var atlas = Resources.Load<Texture2D>(DioramaLook.KitPath + DioramaVariants.AtlasAsset);
             Assert.That(atlas.filterMode, Is.EqualTo(FilterMode.Point));
             Assert.That(atlas.mipmapCount, Is.EqualTo(1));
@@ -110,8 +138,9 @@ namespace EvolutionShop.Tests
                 foreach (var v in new[] { DioramaVariant.Sunny, DioramaVariant.Deep, DioramaVariant.Shimmer })
                     Assert.That(Distance(classic, DioramaVariants.Color(s.Index, v, 0)), Is.GreaterThan(.12f), s.Id + " " + v + " differs from Classic");
             }
-            // Rows past the five species stay empty until AD-F fills them.
+            // Rows past the kit's species stay empty until GR-12's next waves fill them.
             Assert.That(DioramaVariants.Color(DioramaSpecies.All.Count, DioramaVariant.Classic, 0).a, Is.EqualTo(0));
+            Assert.That(DioramaVariants.Color(DioramaVariants.SpeciesCapacity - 1, DioramaVariant.Shimmer, 0).a, Is.EqualTo(0));
         }
 
         static float Distance(Color a, Color b) => Mathf.Sqrt((a.r - b.r) * (a.r - b.r) + (a.g - b.g) * (a.g - b.g) + (a.b - b.b) * (a.b - b.b));
@@ -191,7 +220,10 @@ namespace EvolutionShop.Tests
                     if (p.Release) releases++;
                 }
                 Assert.That(peak, Is.GreaterThan(90), s.Id + " does something you can see");
-                Assert.That(releases, Is.EqualTo(s.Id == "lanternfin" ? 2 : 1), s.Id + " releases its bubbles or sparkles on its beats");
+                // The flash and the aurora sparkle twice, the gale gusts on both wing beats, the fountain bubbles three times.
+                int beats = s.Signature == "flash" || s.Signature == "aurora" || s.Signature == "gale" ? 2 : s.Signature == "fountain" ? 3 : 1;
+                Assert.That(releases, Is.EqualTo(beats), s.Id + " releases its bubbles or sparkles on its beats");
+                Assert.That(DioramaTricks.Releases(s.Id), Is.EqualTo(beats), s.Id + " says how many");
                 var after = DioramaTricks.Trick(s.Id, d, d - .01f);
                 Assert.That(after.Roll == 0 && after.Pitch == 0 && after.Yaw == 0 && after.Puffed == 0 && after.Glow == 0 && !after.Release, Is.True, s.Id + " ends at rest");
                 Assert.That(DioramaTricks.Trick(s.Id, -1).Equals(default(DioramaTrickPose)), Is.True);
@@ -200,6 +232,41 @@ namespace EvolutionShop.Tests
                 var end = DioramaTricks.Trick(s.Id, d - 1e-4f);
                 Assert.That(Quaternion.Angle(Quaternion.Euler(end.Pitch, end.Yaw, end.Roll), Quaternion.identity), Is.LessThan(2f), s.Id + " ends upright");
             }
+            // The Pondlet's own (AD-A's glance in the classic shop) stays out of DioramaTricks.Trick; the greybox plays it as a pose.
+            Assert.That(DioramaTricks.Trick("pondlet", .3f, .29f).Equals(default(DioramaTrickPose)), Is.True, "The classic Pondlet's bubble is PondletGlance's");
+            int bubbles = 0;
+            for (float age = 0, before = -1; age < DioramaTricks.Duration("pondlet"); before = age, age += 1 / 60f)
+                if (DioramaTricks.PondletBubble(age, before).Release) bubbles++;
+            Assert.That(bubbles, Is.EqualTo(1), "The greybox Pondlet blows one bubble");
+            Assert.That(DioramaTricks.PondletBubble(DioramaTricks.Duration("pondlet")).Equals(default(DioramaTrickPose)), Is.True, "and ends at rest");
+        }
+
+        [Test] public void FamilyTricksPlayAtEachSpeciesTempoAndHabitsFollowIt()
+        {
+            // Two of a family play the same moves, stretched to their own lengths: the same pose at the same share of the trick.
+            foreach (var pair in new[] { ("puddlepup", "reedwhisker"), ("sparkminnow", "glowbelly"), ("hazewing", "cloudcarp") })
+            {
+                float a = DioramaTricks.Duration(pair.Item1), b = DioramaTricks.Duration(pair.Item2);
+                Assert.That(a, Is.Not.EqualTo(b), pair + " differ in tempo");
+                for (float u = .05f; u < 1; u += .1f)
+                {
+                    var p = DioramaTricks.Trick(pair.Item1, u * a); var q = DioramaTricks.Trick(pair.Item2, u * b);
+                    Assert.That(p.Roll, Is.EqualTo(q.Roll).Within(.01f)); Assert.That(p.Yaw, Is.EqualTo(q.Yaw).Within(.01f));
+                    Assert.That(p.Glow, Is.EqualTo(q.Glow).Within(.001f));
+                }
+            }
+            // A quicker species runs its family's habit faster: the Splashkit's wag comes round sooner than the Reedwhisker's.
+            float First(string species)
+            {
+                for (float t = 0; t < 20; t += 1 / 60f) if (Mathf.Abs(DioramaTricks.Idle(species, t, 2f).Tail) > 3) return t;
+                return float.PositiveInfinity;
+            }
+            Assert.That(First("splashkit"), Is.LessThan(First("reedwhisker")), "Tempo sets the habit's pace");
+            Assert.That(DioramaTricks.Idle("glowbelly", 1, 0).Glow, Is.Not.EqualTo(0), "A Sparkline's lantern breathes");
+            Assert.That(DioramaTricks.Idle("mistrunner", 1, 0).Fins, Is.GreaterThan(1), "An Airfin holds its sails out");
+            // AD-B's five keep their own habits exactly (their switch, untouched by the tempo).
+            Assert.That(DioramaTricks.Idle("ribbonfin", 3.3f, .37f).Equals(DioramaTricks.Idle("ribbonfin", 3.3f, .37f)), Is.True);
+            Assert.That(DioramaTricks.Idle("pondlet", 3.3f, .37f).Equals(default(DioramaTrickPose)), Is.True, "The Pondlet's habit is AD-A's");
         }
 
         [Test] public void ATrickDrawsTheCreatureToMidWaterAndBackSmoothly()
@@ -275,12 +342,13 @@ namespace EvolutionShop.Tests
         {
             // Drives the real creature through its trick at mid-water (DioramaTricks.Settle), broadside either way, with its
             // tail and sails swishing, and measures its renderers' bounds as the AD-B route does every frame. The resident origin
-            // sits 0.52 above the bottom of the water and 0.54 below its surface, 0.62 from the front and the back glass.
+            // sits 0.52 above the bottom of the water and 0.54 below its surface, 0.62 from the front and the back glass. The
+            // classic shop's five only: GR-12's species swim in the greybox's tanks (GrowthKitCreatureTests and its route).
             bool was = DioramaLook.Active;
             DioramaLook.Active = true;
             try
             {
-                foreach (var s in DioramaSpecies.All)
+                foreach (var s in Classic())
                 {
                     var tank = new GameObject("tank test");
                     try
@@ -321,7 +389,7 @@ namespace EvolutionShop.Tests
         {
             // Static fit, with the swim path and the trick's lift and puff; the AD-B route checks every frame of the real swim.
             var interior = new Vector3(1.94f, 1.06f, 1.24f);
-            foreach (var s in DioramaSpecies.All)
+            foreach (var s in Classic())
             {
                 var kit = Resources.Load<GameObject>(DioramaLook.KitPath + s.Kit).transform;
                 var bounds = new Bounds();

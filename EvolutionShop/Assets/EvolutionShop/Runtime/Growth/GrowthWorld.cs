@@ -25,6 +25,9 @@ namespace EvolutionShop
     {
         public static readonly Vector3 Spawn = new Vector3(0.6f, 0.05f, 5.4f);
         public const float FullDistance = 6f, FreezeDistance = 12f;
+        /// <summary>GR-12: kit creatures show their full rig (face, blinks, tricks) within this distance and in view; further, their
+        /// shared baked look (with its outline to FullDistance, without beyond). Peek is within 1.6 m of the glass.</summary>
+        public const float KitDistance = 3.5f;
 
         /// <summary>A container place: where the tank stands, which way its front faces, and where a visitor stands to browse it.</summary>
         public struct Place
@@ -611,7 +614,7 @@ namespace EvolutionShop
                     float nursery = (BreedingDivider + 0.5f) * 0.5f, z = breedingLevel >= 3 ? (k == 0 ? -0.09f : 0.09f) : 0;
                     o.transform.localPosition = new Vector3(nursery, BreedingWaterY + 0.03f * Mathf.Sin(t * 1.7f + k), z + 0.04f * Mathf.Sin(t * 0.9f + k));
                     o.transform.localRotation = Quaternion.Euler(0, 90 + 25f * Mathf.Sin(t * 0.6f + k), 0);
-                    o.Tick(t);
+                    o.Tick(t, session.ReducedMotion);
                 }
             }
         }
@@ -628,7 +631,7 @@ namespace EvolutionShop
                 v.transform.localPosition = new Vector3(pos.x, BreedingWaterY + pos.y, pos.z);
                 Vector3 dir = ahead - pos; dir.y *= 0.3f;
                 if (dir.sqrMagnitude > 1e-6f) v.transform.localRotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
-                v.Tick(t);
+                v.Tick(t, session.ReducedMotion);
             }
         }
 
@@ -913,25 +916,30 @@ namespace EvolutionShop
             // spread across tanks), and frozen beyond 12 m.
             var cam = session.Player != null ? session.Player.View : null;
             if (cam != null) GeometryUtility.CalculateFrustumPlanes(cam, frustum);
+            // GR-12: kit creatures look at the player.
+            GrowthCreatureView.ViewerSet = cam != null;
+            if (cam != null) GrowthCreatureView.Viewer = cam.transform.position;
             DetailCounts[0] = DetailCounts[1] = DetailCounts[2] = 0;
             int index = 0;
             foreach (var tank in tanks.Values)
             {
-                int detail = 0;
+                int detail = 0, look = 0;
                 if (cam != null)
                 {
                     Vector3 centre = tank.Root.TransformPoint(new Vector3(0, tank.WaterY, 0));
                     float distance = Vector3.Distance(cam.transform.position, centre);
                     bool visible = GeometryUtility.TestPlanesAABB(frustum, new Bounds(centre, new Vector3(tank.Width, tank.Inner.y, tank.Width)));
                     detail = distance >= FreezeDistance ? 2 : visible && distance < FullDistance ? 0 : 1;
+                    look = visible && distance < KitDistance ? 0 : detail == 0 ? 1 : 2;
                 }
                 tank.Detail = detail;
+                tank.ShowDetail(look);
                 DetailCounts[detail] += tank.Creatures.Count;
-                if (detail == 0 || detail == 1 && (Time.frameCount + index) % 3 == 0) tank.Animate(t, session.ReducedMotion, detail == 0);
+                if (detail == 0 || detail == 1 && (Time.frameCount + index) % 3 == 0 || !tank.Placed) tank.Animate(t, session.ReducedMotion, detail == 0);
                 index++;
             }
             for (int i = 0; i < hatchlingViews.Count; i++)
-                if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t); }
+                if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t, session.ReducedMotion); }
             if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t); }
             AnimateOpenings(dt);
             AnimateConfetti(dt);
@@ -1009,6 +1017,10 @@ namespace EvolutionShop
             public Light ShowLight;
             /// <summary>The update level last frame: 0 full, 1 cheaper, 2 frozen.</summary>
             public int Detail;
+            int shownDetail = -1;
+            /// <summary>GR-12: every creature has been placed in the water at least once (a tank frozen far away still shows its
+            /// creatures swimming where they were, never at its floor).</summary>
+            public bool Placed { get; private set; }
             public readonly Dictionary<int, GrowthCreatureView> Creatures = new Dictionary<int, GrowthCreatureView>();
             readonly Dictionary<string, int> speciesCount = new Dictionary<string, int>();
             readonly List<GrowthCreatureView> order = new List<GrowthCreatureView>();
@@ -1020,7 +1032,7 @@ namespace EvolutionShop
             {
                 bool changed = false;
                 foreach (var s in c.Occupants)
-                    if (!Creatures.ContainsKey(s.Id)) { Creatures[s.Id] = GrowthCreatureView.Create(s, Root); changed = true; }
+                    if (!Creatures.ContainsKey(s.Id)) { Creatures[s.Id] = GrowthCreatureView.Create(s, Root); Creatures[s.Id].SetDetail(Mathf.Max(0, shownDetail)); changed = true; }
                 // Creatures with negative ids are validation's view-only extras (the density stress); they stay.
                 foreach (var id in Creatures.Keys.Where(k => k > 0 && c.Occupants.All(o => o.Id != k)).ToList()) { Object.Destroy(Creatures[id].gameObject); Creatures.Remove(id); changed = true; }
                 speciesCount.Clear();
@@ -1032,19 +1044,31 @@ namespace EvolutionShop
                 bool harmony = shop.Harmony(c);
                 if (HarmonyFrame.activeSelf != harmony) HarmonyFrame.SetActive(harmony);
                 if (changed || order.Count != Creatures.Count) { order.Clear(); order.AddRange(Creatures.Values.OrderBy(v => v.SpecimenId)); }
+                if (changed) Placed = false;
             }
 
             public bool InSchool(string species) => speciesCount.TryGetValue(species, out int n) && n >= GrowthShop.SchoolSize;
+
+            /// <summary>GR-12: shows its kit creatures at an update level (the full kit near and in view, else their distant look).</summary>
+            public void ShowDetail(int level)
+            {
+                if (shownDetail == level) return;
+                shownDetail = level;
+                foreach (var creature in Creatures.Values) if (creature != null) creature.SetDetail(level);
+            }
 
             /// <summary>Validation only: view-only creatures to stress the frame budget past what the places hold.</summary>
             public void AddStressCreature(GrowthSpecimen fake)
             {
                 Creatures[fake.Id] = GrowthCreatureView.Create(fake, Root);
+                Creatures[fake.Id].SetDetail(Mathf.Max(0, shownDetail));
                 order.Clear(); order.AddRange(Creatures.Values.OrderBy(v => v.SpecimenId));
+                Placed = false;
             }
 
             public void Animate(float t, bool reduced, bool full)
             {
+                Placed = true;
                 rank.Clear();
                 foreach (var creature in order)
                 {
@@ -1053,8 +1077,9 @@ namespace EvolutionShop
                     int k = rank.TryGetValue(creature.Species, out int r) ? r : 0;
                     rank[creature.Species] = k + 1;
                     float L = creature.Length;
-                    // Bounds inside the water for this creature's size; the path fills them.
-                    float hx = Mathf.Max(0.02f, Inner.x * 0.5f - L * 0.6f - 0.03f), hz = Mathf.Max(0.02f, Inner.z * 0.5f - L * 0.6f - 0.03f), hy = Mathf.Max(0.01f, Inner.y * 0.5f - L * 0.4f - 0.03f);
+                    // Bounds inside the water for this creature's reach and height (GR-12: a kit creature's sails, tails and
+                    // lanterns too); the path fills them.
+                    float hx = Mathf.Max(0.02f, Inner.x * 0.5f - creature.Reach - 0.03f), hz = Mathf.Max(0.02f, Inner.z * 0.5f - creature.Reach - 0.03f), hy = Mathf.Max(0.01f, Inner.y * 0.5f - creature.HalfHeight - 0.03f);
                     float speed = (reduced ? 0.5f : 1f) * (L > 0.2f ? 0.6f : L > 0.1f ? 0.8f : 1f) * Mathf.Clamp(1.4f / Mathf.Max(0.5f, Inner.x), 0.45f, 1f);
                     // A school shares its leader's path and keeps a loose formation behind it; others wander alone.
                     int hash = Stable(creature.Species);
@@ -1073,10 +1098,12 @@ namespace EvolutionShop
                         ahead += offset;
                     }
                     pos.x = Mathf.Clamp(pos.x, -hx, hx); pos.z = Mathf.Clamp(pos.z, -hz, hz); pos.y = Mathf.Clamp(pos.y, -hy, hy);
+                    // A trick (GR-12) eases the creature to mid-water and back, as AD-B's do in the classic tanks.
+                    pos.y *= 1 - creature.Settle;
                     creature.transform.localPosition = new Vector3(pos.x, WaterY + pos.y, pos.z);
                     Vector3 dir = ahead - pos; dir.y *= 0.3f;
                     if (dir.sqrMagnitude > 1e-6f) creature.transform.localRotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
-                    if (full) creature.Tick(t);
+                    if (full) creature.Tick(t, reduced);
                 }
             }
 
