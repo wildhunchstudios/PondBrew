@@ -113,6 +113,8 @@ namespace EvolutionShop.Tests
                 "GR-12B wave 2: the Cometail and the Reefback");
             Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Saltscale || s.Family == DioramaFamily.Cinderling).All(s => s.Remade), Is.True,
                 "GR-12B wave 3: the Saltscale and the Cinderling");
+            Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Dewling || s.Family == DioramaFamily.Sparkline && s.Id != "lanternfin").All(s => s.Remade),
+                Is.True, "GR-12B wave 4: the Dewling and the Sparkline (the Lanternfin, AD-B's, waits for wave 5)");
             Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(),
                 Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse, DioramaGait.Fluke, DioramaGait.Paddle, DioramaGait.Upright }));
             var parent = new GameObject("GR-12B gaits").transform;
@@ -238,10 +240,23 @@ namespace EvolutionShop.Tests
                 Assert.That(flutter, Is.GreaterThan(10), "the seahorse's back fin flutters far");
                 Assert.That(flips, Is.GreaterThan(6), "and fast");
 
+                // A swimming scallop: its upper shell, on its tail's pivot at its hinge, claps open and shut by the fluke's beat.
+                var scallop = Kit("pearlpip");
+                var valve = Part(scallop, "Tail pivot");
+                float clapWide = 0, clapShut = 0;
+                for (float t = 0; t < 8; t += .05f)
+                {
+                    scallop.AnimateSpecies(t, 1, false);
+                    float clap = Mathf.DeltaAngle(0, valve.localEulerAngles.x);
+                    clapWide = Mathf.Max(clapWide, clap); clapShut = Mathf.Min(clapShut, clap);
+                }
+                Assert.That(clapWide, Is.GreaterThan(12), "the scallop's shell claps one way"); Assert.That(clapShut, Is.LessThan(-12), "and the other");
+
                 // None of it with Reduced motion.
                 for (float t = 0; t < 4; t += .25f)
                 {
-                    foreach (var v in new[] { ray, sunfish, oarfish, squid, narwhal, turtle, seahorse }) v.AnimateSpecies(t, 1, true);
+                    foreach (var v in new[] { ray, sunfish, oarfish, squid, narwhal, turtle, seahorse, scallop }) v.AnimateSpecies(t, 1, true);
+                    Assert.That(Mathf.DeltaAngle(0, valve.localEulerAngles.x), Is.EqualTo(0).Within(.01f));
                     Assert.That(Roll(rightLeg), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(backFin), Is.EqualTo(0).Within(.01f));
                     Assert.That(Mathf.DeltaAngle(0, fluke.localEulerAngles.x), Is.EqualTo(0).Within(.01f));
                     Assert.That(Roll(right), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(crest), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(keel), Is.EqualTo(0).Within(.01f));

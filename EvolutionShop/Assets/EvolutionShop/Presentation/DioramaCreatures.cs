@@ -58,6 +58,12 @@ namespace EvolutionShop
             { "emberpuff", DioramaGait.Family }, { "cindertail", DioramaGait.Undulate }, { "coalbelly", DioramaGait.Paddle },
             { "sizzlesnout", DioramaGait.Undulate }, { "kindlekoi", DioramaGait.Family }, { "sootsnap", DioramaGait.Paddle },
             { "ashfin", DioramaGait.Family }, { "phoenixfry", DioramaGait.Undulate },
+            { "dewdrop", DioramaGait.Family }, { "fogfin", DioramaGait.Flap }, { "mistlet", DioramaGait.Undulate },
+            { "drizzler", DioramaGait.Family }, { "pearlpip", DioramaGait.Fluke }, { "haloling", DioramaGait.Pulse },
+            { "rainskipper", DioramaGait.Family }, { "rainbowregent", DioramaGait.Flap },
+            { "sparkminnow", DioramaGait.Family }, { "fizzlet", DioramaGait.Pulse }, { "glowbelly", DioramaGait.Family },
+            { "flickerfin", DioramaGait.Undulate }, { "buzzgill", DioramaGait.Paddle }, { "starglimmer", DioramaGait.Flap },
+            { "aurorafin", DioramaGait.Family },
         };
 
         DioramaSpecies(string id, string kit, DioramaFamily family, int index, float model, float tank, float incubator,

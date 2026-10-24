@@ -463,9 +463,10 @@ namespace EvolutionShop.Tests
                     Assert.That(crownView.Length, Is.EqualTo(GrowthCreatureView.LengthOf(GrowthContent.Get(crown.Id).Size) * GrowthCreatureView.CrownLength).Within(1e-5f),
                         crown.Id + " at the top of its size class");
                     // GR-12B: a remade family's animals differ too much in shape to compare their room (a round anglerfish, a slender
-                    // mosasaur); its crown spans more than any of them instead.
+                    // mosasaur); its crown spans more than any of them instead (than each one remade: one not yet, as AD-B's Lanternfin
+                    // until wave 5, is sized by its body's length, so its span doesn't compare).
                     float room = crown.Remade ? SpanIn(crownView) : Room(crownView);
-                    foreach (var other in family.Where(s => !s.Crown))
+                    foreach (var other in family.Where(s => !s.Crown && (!crown.Remade || s.Remade)))
                     {
                         var view = Make(parent, other.Id);
                         if (crown.Remade) Assert.That(room, Is.GreaterThan(SpanIn(view)), crown.Id + " spans more than the " + other.Id);

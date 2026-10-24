@@ -274,6 +274,9 @@ namespace EvolutionShop
         }
         /// <summary>The most a kit tail ever turns, with a trick's swing and the hatch's wake (degrees).</summary>
         public const float DioramaTailLimit = 32;
+        /// <summary>How far a lantern or lure (the Lantern pivot) sways back and forth as it swims (degrees of pitch). GR-12B: the
+        /// swim room samples it, since a Sparkline's lantern standing on a tall stalk reaches farther up and ahead as it sways.</summary>
+        public const float DioramaLanternSway = 5;
 
         /// <summary>The kit species' strokes, as deltas on each pivot's rest pose (the classic ones set absolute angles for
         /// their own primitives). The hatch wake follows FX's choreography, as the Pondlet's does.</summary>
@@ -465,7 +468,7 @@ namespace EvolutionShop
                 // blooming (never with Reduced motion).
                 crest.localScale = dioramaCrestScale * (1 + (reduced ? 0 : actionFlare) * CrestFlareGrowth);
             }
-            if (dioramaLantern) dioramaLantern.localRotation = dioramaLanternRest * Quaternion.Euler(reduced ? 0 : Mathf.Sin(t * 1.7f) * 5 * drive, 0, 0);
+            if (dioramaLantern) dioramaLantern.localRotation = dioramaLanternRest * Quaternion.Euler(reduced ? 0 : Mathf.Sin(t * 1.7f) * DioramaLanternSway * drive, 0, 0);
         }
 
         /// <summary>Validation: a face shape key's current weight (0..100), whichever part carries it.</summary>

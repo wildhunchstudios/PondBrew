@@ -269,25 +269,26 @@ namespace EvolutionShop
         /// Reefback's corals: Reach, HalfHeight; x, y), and through its trick with its habit on top (turns, rolls, bows, lifts, the
         /// crest at each moment's flare, its fins and tail at their strokes' extremes with the trick's spread and swing:
         /// TrickReach, TrickHalf; z, w). GR-12B: a remade species' way of swimming too: its crest's and keel's sway, its cloak's
-        /// pulse, its fluke's beat up and down, and its body's wave, with its tail fin riding it.</summary>
+        /// pulse, its fluke's beat up and down, and its body's wave, with its tail fin riding it; and a lantern's or lure's sway.</summary>
         static Vector4 Envelope(string species, DioramaFamily family, Transform holder, Transform root, float L)
         {
             Transform crest = null;
-            var pivots = new Transform[4];
+            var pivots = new Transform[5];
             foreach (var x in holder.GetComponentsInChildren<Transform>(true))
                 if (x.name == "Crest pivot") crest = crest ? crest : x;
                 else if (x.name == "Left fin pivot") pivots[0] = pivots[0] ? pivots[0] : x;
                 else if (x.name == "Right fin pivot") pivots[1] = pivots[1] ? pivots[1] : x;
                 else if (x.name == "Tail pivot") pivots[2] = pivots[2] ? pivots[2] : x;
                 else if (x.name == "Keel pivot") pivots[3] = pivots[3] ? pivots[3] : x;
+                else if (x.name == "Lantern pivot") pivots[4] = pivots[4] ? pivots[4] : x;
             var toRoot = root.worldToLocalMatrix;
             var fromRoot = Quaternion.Inverse(root.rotation);
             Vector3 crestAt = crest ? toRoot.MultiplyPoint3x4(crest.position) : Vector3.zero;
             var crestAxes = crest ? fromRoot * crest.rotation : Quaternion.identity;
-            // Each swinging pivot (the fins, the tail, then a sunfish's keel): where it is and its axes, in the creature's space.
-            var pivotAt = new Vector3[4];
-            var axes = new Quaternion[4];
-            for (int i = 0; i < 4; i++) if (pivots[i]) { pivotAt[i] = toRoot.MultiplyPoint3x4(pivots[i].position); axes[i] = fromRoot * pivots[i].rotation; }
+            // Each swinging pivot (the fins, the tail, a sunfish's keel, then a lantern): where it is and its axes, in the creature's space.
+            var pivotAt = new Vector3[5];
+            var axes = new Quaternion[5];
+            for (int i = 0; i < 5; i++) if (pivots[i]) { pivotAt[i] = toRoot.MultiplyPoint3x4(pivots[i].position); axes[i] = fromRoot * pivots[i].rotation; }
             float tailShift = 0;
             var corners = new List<(Vector3 p, bool onCrest, int on)>();
             foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
@@ -296,7 +297,7 @@ namespace EvolutionShop
                 if (!mesh) continue;
                 bool onCrest = crest && r.transform.IsChildOf(crest);
                 int on = -1;
-                for (int i = 0; i < 4; i++) if (pivots[i] && r.transform.IsChildOf(pivots[i])) on = i;
+                for (int i = 0; i < 5; i++) if (pivots[i] && r.transform.IsChildOf(pivots[i])) on = i;
                 var m = toRoot * r.transform.localToWorldMatrix;
                 var b = mesh.bounds;
                 // GR-12B: an undulating body's box grows by the farthest its wave moves it, and its tail fin rides the wave as far.
@@ -330,10 +331,12 @@ namespace EvolutionShop
                             else
                             {
                                 // A fin at each corner of its roll and pitch, the tail at either side (and a fluke at the top and the
-                                // bottom of its beat; riding a body's wave to either side too), a sunfish's keel at either side of its sway.
+                                // bottom of its beat; riding a body's wave to either side too), a sunfish's keel at either side of its sway,
+                                // a lantern at either end of its sway.
                                 var e = on < 2 ? new Vector3(stroke.pitch * (k / 3 - 1), 0, roll * (k % 3 - 1))
                                     : on == 2 ? new Vector3(beats > 1 ? sway.fluke * ((k / 3) % 3 - 1) : 0, yaw * (k % 3 - 1), 0)
-                                    : new Vector3(0, 0, sway.keel * (k - 1));
+                                    : on == 3 ? new Vector3(0, 0, sway.keel * (k - 1))
+                                    : new Vector3(CreatureVisual.DioramaLanternSway * (k - 1), 0, 0);
                                 q = pivotAt[on] + axes[on] * Quaternion.Euler(e) * Quaternion.Inverse(axes[on]) * (at - pivotAt[on]);
                                 if (on == 2 && tailShift > 0) q += Vector3.right * (tailShift * (k / (3 * beats) - 1));
                             }
