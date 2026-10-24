@@ -111,7 +111,10 @@ namespace EvolutionShop.Tests
             Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Gloamer).All(s => s.Remade), Is.True, "GR-12B wave 1: the Gloamer");
             Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Cometail || s.Family == DioramaFamily.Reefback).All(s => s.Remade), Is.True,
                 "GR-12B wave 2: the Cometail and the Reefback");
-            Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(), Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse, DioramaGait.Fluke }));
+            Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Saltscale || s.Family == DioramaFamily.Cinderling).All(s => s.Remade), Is.True,
+                "GR-12B wave 3: the Saltscale and the Cinderling");
+            Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(),
+                Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse, DioramaGait.Fluke, DioramaGait.Paddle, DioramaGait.Upright }));
             var parent = new GameObject("GR-12B gaits").transform;
             try
             {
@@ -208,10 +211,38 @@ namespace EvolutionShop.Tests
                 Assert.That(up, Is.GreaterThan(12), "the narwhal's fluke beats up"); Assert.That(down, Is.LessThan(-12), "and down");
                 Assert.That(aside, Is.LessThan(up / 2), "more than it swings aside");
 
+                // A snapping turtle: its legs stroke in turn (each mirrors the other's roll, so one rises as the other falls), far.
+                var turtle = Kit("sootsnap");
+                Transform leftLeg = Part(turtle, "Left fin pivot"), rightLeg = Part(turtle, "Right fin pivot");
+                widest = 0;
+                for (float t = 0; t < 8; t += .05f)
+                {
+                    turtle.AnimateSpecies(t, 1, false);
+                    Assert.That(Roll(leftLeg), Is.EqualTo(Roll(rightLeg)).Within(.5f), "the turtle's legs stroke in turn at " + t);
+                    widest = Mathf.Max(widest, Mathf.Abs(Roll(rightLeg)));
+                }
+                Assert.That(widest, Is.GreaterThan(14), "the turtle's legs stroke far");
+
+                // A seahorse: its back fin flutters, fast (a swing every half second or so) and far.
+                var seahorse = Kit("tidepip");
+                var backFin = Part(seahorse, "Crest pivot");
+                int flips = 0; float last = 0, flutter = 0;
+                for (float t = 0; t < 4; t += .02f)
+                {
+                    seahorse.AnimateSpecies(t, 1, false);
+                    float r = Roll(backFin);
+                    if (Mathf.Abs(r) > 4 && Mathf.Sign(r) != Mathf.Sign(last) && last != 0) flips++;
+                    if (Mathf.Abs(r) > 4) last = r;
+                    flutter = Mathf.Max(flutter, Mathf.Abs(r));
+                }
+                Assert.That(flutter, Is.GreaterThan(10), "the seahorse's back fin flutters far");
+                Assert.That(flips, Is.GreaterThan(6), "and fast");
+
                 // None of it with Reduced motion.
                 for (float t = 0; t < 4; t += .25f)
                 {
-                    foreach (var v in new[] { ray, sunfish, oarfish, squid, narwhal }) v.AnimateSpecies(t, 1, true);
+                    foreach (var v in new[] { ray, sunfish, oarfish, squid, narwhal, turtle, seahorse }) v.AnimateSpecies(t, 1, true);
+                    Assert.That(Roll(rightLeg), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(backFin), Is.EqualTo(0).Within(.01f));
                     Assert.That(Mathf.DeltaAngle(0, fluke.localEulerAngles.x), Is.EqualTo(0).Within(.01f));
                     Assert.That(Roll(right), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(crest), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(keel), Is.EqualTo(0).Within(.01f));
                     Assert.That((tail.localPosition - tailRest).magnitude, Is.LessThan(1e-5f)); Assert.That(cloak.localScale.x, Is.EqualTo(cloakRest.x).Within(1e-5f));

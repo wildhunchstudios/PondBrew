@@ -14,8 +14,9 @@ namespace EvolutionShop
     /// Flap: its wing fins beat up and down together (a ray); Scull: its tall top and bottom fins sweep side to side together (a
     /// sunfish, its bottom fin the Keel pivot); Undulate: a wave runs down its body from head to tail (an eel or a ribbon, its
     /// Body's Wave keys); Pulse: its cloak opens and closes (a squid, the Tail pivot); Fluke: its tail beats up and down (a whale,
-    /// a narwhal, a manatee; GR-12B wave 2).</summary>
-    public enum DioramaGait { Family, Flap, Scull, Undulate, Pulse, Fluke }
+    /// a narwhal, a manatee; GR-12B wave 2); Paddle: its limbs stroke in turn (a turtle, a frogfish; GR-12B wave 3); Upright: it
+    /// stands upright and its back fin flutters to push it along (a seahorse; GR-12B wave 3).</summary>
+    public enum DioramaGait { Family, Flap, Scull, Undulate, Pulse, Fluke, Paddle, Upright }
 
     /// <summary>AD.3's four colour variants. Colour swaps only; in the greybox a specimen's colour (GR.7.2) picks it.</summary>
     public enum DioramaVariant { Classic, Sunny, Deep, Shimmer }
@@ -51,6 +52,12 @@ namespace EvolutionShop
             { "shellback", DioramaGait.Flap }, { "coralhorn", DioramaGait.Family }, { "clamjaw", DioramaGait.Family },
             { "kelpgrazer", DioramaGait.Fluke }, { "barnaclebrow", DioramaGait.Fluke }, { "tidetusk", DioramaGait.Family },
             { "wavebreaker", DioramaGait.Family }, { "coralossus", DioramaGait.Family },
+            { "brinefin", DioramaGait.Family }, { "pebblejaw", DioramaGait.Family }, { "seaspark", DioramaGait.Undulate },
+            { "foamtail", DioramaGait.Fluke }, { "surfskipper", DioramaGait.Flap }, { "shoalglider", DioramaGait.Flap },
+            { "tidepip", DioramaGait.Upright }, { "pearlemperor", DioramaGait.Family },
+            { "emberpuff", DioramaGait.Family }, { "cindertail", DioramaGait.Undulate }, { "coalbelly", DioramaGait.Paddle },
+            { "sizzlesnout", DioramaGait.Undulate }, { "kindlekoi", DioramaGait.Family }, { "sootsnap", DioramaGait.Paddle },
+            { "ashfin", DioramaGait.Family }, { "phoenixfry", DioramaGait.Undulate },
         };
 
         DioramaSpecies(string id, string kit, DioramaFamily family, int index, float model, float tank, float incubator,

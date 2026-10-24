@@ -267,6 +267,8 @@ namespace EvolutionShop
                 case DioramaGait.Undulate: return (10, 4, 8, 4, 0, 0, 0);
                 case DioramaGait.Pulse: return (20, 0, 0, 0, 0, .12f, 0);
                 case DioramaGait.Fluke: return (10, 4, 4, 0, 0, 0, 16);
+                case DioramaGait.Paddle: return (20, 12, 6, 0, 0, 0, 0);
+                case DioramaGait.Upright: return (14, 0, 6, 16, 0, 0, 0);
                 default: return (0, 0, 0, 0, 0, 0, 0);
             }
         }
@@ -412,6 +414,24 @@ namespace EvolutionShop
                         flukePitch = Mathf.Sin(t * w) * g.fluke * drive;
                         finRoll = finRollOther = Mathf.Sin(t * w - .8f) * g.roll * drive; finPitch = Mathf.Sin(t * w - 1.4f) * g.pitch * drive;
                         tailYaw = Mathf.Sin(t * w * .5f) * g.tail * drive; crestRoll = 0;
+                        break;
+                    }
+                    case DioramaGait.Paddle:
+                    {
+                        // Its limbs stroke in turn, one forward as the other goes back, a turtle's or a frogfish's paddle.
+                        float w = 2.2f * tempo, stroke = Mathf.Sin(t * w);
+                        finRoll = stroke * g.roll * drive; finRollOther = -finRoll; finPitch = Mathf.Sin(t * w - 1.2f) * g.pitch * drive;
+                        tailYaw = Mathf.Sin(t * w * .5f) * g.tail * drive; crestRoll = 0;
+                        break;
+                    }
+                    case DioramaGait.Upright:
+                    {
+                        // It stands upright, its little back fin fluttering fast to push it along and its side fins fanning, its
+                        // curled tail swaying slowly: a seahorse's.
+                        float w = 1.4f * tempo;
+                        crestRoll = Mathf.Sin(t * w * 5) * g.crest * drive;
+                        finRoll = Mathf.Sin(t * w * 4) * g.roll * drive; finRollOther = -finRoll; finPitch = 0;
+                        tailYaw = Mathf.Sin(t * w * .5f) * g.tail * drive;
                         break;
                     }
                     case DioramaGait.Pulse:

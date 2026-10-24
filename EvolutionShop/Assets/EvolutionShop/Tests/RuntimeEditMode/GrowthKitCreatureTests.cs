@@ -236,7 +236,7 @@ namespace EvolutionShop.Tests
         [Test] public void PeekEnlargesACreatureOnlyAsFarAsItsWaterAllowsThroughItsTrick()
         {
             // GR-02's peek enlarges the creature under the reticle 1.35 times. Its reach and height through its trick are sampled
-            // (TrickReach, TrickHalf) and cover what it really does; in a Large tank's water a large crown is enlarged less, so its
+            // (TrickReach, TrickHalf) and cover what it really does; in water too tight for that a crown is enlarged less, so its
             // trick at its widest stays inside, while a small creature keeps the full 1.35. Every kit species' trick, at its peek
             // size and swimming as far as its tank lets it (at least 1 cm up and down, 2 cm across), stays inside the water of the
             // water of every container it can live in (a lab rack's too: it holds large creatures).
@@ -286,12 +286,14 @@ namespace EvolutionShop.Tests
                     Assert.That(far, Is.LessThanOrEqualTo(view.TrickReach), id + " its trick's reach");
                     Assert.That(high, Is.LessThanOrEqualTo(view.TrickHalf), id + " its trick's height");
                 }
-                // The crown its trick takes furthest or highest (GR-12B wave 2: no longer the Coralossus, a decorator crab now, whose
-                // span, legs and all, is its class's length) is enlarged less.
-                var crown = DioramaSpecies.All.Where(s => s.Crown).Select((s, i) => { var v = Make(parent, s.Id, Colour.Classic, 21 + i); v.FitTo(large); return v; })
-                    .OrderBy(v => v.PeekScale).First();
-                var small = Make(parent, "puddlepup", Colour.Classic, 99); small.FitTo(large);
-                Assert.That(crown.PeekScale, Is.LessThan(GrowthCreatureView.PeekGrowth), "a crown is enlarged less in a Large tank (" + crown.Kit.DioramaSpecies.Id + ")");
+                // In water too tight for its trick at the full 1.35, a crown is enlarged only as far as its trick fits. (GR-12B wave 3:
+                // every species now fits a Large tank at the full 1.35, each remade one's span its class's length, so the water here
+                // is made from the crown's own trick: 15% more than its height and 20% more than its reach, plus the 3 cm margin.)
+                var crown = Make(parent, "pearlemperor", Colour.Classic, 21);
+                var tight = new Vector3(2.44f, 2 * (crown.TrickHalf * 1.15f + .03f), 2 * (crown.TrickReach * 1.2f + .03f));
+                crown.FitTo(tight);
+                var small = Make(parent, "puddlepup", Colour.Classic, 22); small.FitTo(large);
+                Assert.That(crown.PeekScale, Is.EqualTo(1.15f).Within(1e-3f), "the Pearl Emperor is enlarged only as far as its trick fits");
                 Assert.That(small.PeekScale, Is.EqualTo(GrowthCreatureView.PeekGrowth), "a Puddlepup the full 1.35");
             }
             finally { Object.DestroyImmediate(parent.gameObject); }
