@@ -258,7 +258,13 @@ namespace EvolutionShop
             visual.SetPondletIdentity(def.Id + "#" + specimen.Id);
             view.kit = visual; view.kitHolder = holder; view.family = spec.Family;
             view.phase = PondletMotion.IdentityPhase("#" + specimen.Id);
-            if (!envelopes.TryGetValue(def.Id, out var envelope)) envelopes[def.Id] = envelope = Envelope(def.Id, spec.Family, holder, root, L);
+            if (!envelopes.TryGetValue(def.Id, out var envelope))
+            {
+                // GR-12B: its room is measured at rest, since BuildKit leaves it at the start of a stroke, its tail and fins turned (a
+                // long tail turned aside reaches less far than at rest); the strokes it samples then swing either way from rest.
+                visual.AnimateSpecies(0, 0, true);
+                envelopes[def.Id] = envelope = Envelope(def.Id, spec.Family, holder, root, L);
+            }
             view.Reach = envelope.x; view.HalfHeight = envelope.y; view.TrickReach = envelope.z; view.TrickHalf = envelope.w;
             Finish(view, root, specimen, L, view.HalfHeight + 0.1f * L);
             return true;

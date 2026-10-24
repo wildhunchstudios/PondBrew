@@ -115,6 +115,8 @@ namespace EvolutionShop.Tests
                 "GR-12B wave 3: the Saltscale and the Cinderling");
             Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Dewling || s.Family == DioramaFamily.Sparkline && s.Id != "lanternfin").All(s => s.Remade),
                 Is.True, "GR-12B wave 4: the Dewling and the Sparkline (the Lanternfin, AD-B's, waits for wave 5)");
+            Assert.That(DioramaSpecies.All.All(s => s.Remade), Is.True,
+                "GR-12B wave 5: the Brookkin and the Airfin, with AD-B's five, which the classic game shows too: every species, all 72");
             Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(),
                 Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse, DioramaGait.Fluke, DioramaGait.Paddle, DioramaGait.Upright }));
             var parent = new GameObject("GR-12B gaits").transform;

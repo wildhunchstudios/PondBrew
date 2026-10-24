@@ -205,8 +205,9 @@ namespace EvolutionShop.Tests
                 }
             }
             Assert.That(pondlet.Find("Tail pivot").localPosition.z, Is.GreaterThan(.25f), "Tail behind");
-            Assert.That(pondlet.Find("Left fin pivot").localPosition.x, Is.LessThan(-.15f));
-            Assert.That(pondlet.Find("Right fin pivot").localPosition.x, Is.GreaterThan(.15f));
+            // GR-12B made the Pondlet a dwarf gourami, a slim fish, so its fins sit nearer its middle than the round AD-A Pondlet's.
+            Assert.That(pondlet.Find("Left fin pivot").localPosition.x, Is.LessThan(-.08f));
+            Assert.That(pondlet.Find("Right fin pivot").localPosition.x, Is.GreaterThan(.08f));
             Assert.That(pondlet.Find("Crest pivot").localPosition.y, Is.GreaterThan(.15f), "Crest on top");
             Assert.That(MeshCentre(pondlet.Find("Lips")).z, Is.LessThan(-.3f), "Pouty lips at the front (-Z)");
             Assert.That(MeshCentre(pondlet.Find("Tail pivot")).z, Is.GreaterThan(.4f), "Tail lobes reach back");

@@ -39,8 +39,9 @@ namespace EvolutionShop
         public bool Remade => Id != null && Gaits.ContainsKey(Id);
         /// <summary>GR-12B: how it swims (Family for every species not yet remade).</summary>
         public DioramaGait Gait => Id != null && Gaits.TryGetValue(Id, out var gait) ? gait : DioramaGait.Family;
-        /// <summary>GR-12B's remade species, wave by wave (wave 1: the Gloamer; wave 2: the Cometail and the Reefback), and how each
-        /// swims.</summary>
+        /// <summary>GR-12B's remade species, wave by wave (wave 1: the Gloamer; wave 2: the Cometail and the Reefback; wave 3: the
+        /// Saltscale and the Cinderling; wave 4: the Dewling and the Sparkline; wave 5: the Brookkin and the Airfin with AD-B's five), and
+        /// how each swims: all 72 now.</summary>
         static readonly Dictionary<string, DioramaGait> Gaits = new Dictionary<string, DioramaGait>
         {
             { "moonmouth", DioramaGait.Family }, { "gloomfin", DioramaGait.Scull }, { "shadeback", DioramaGait.Family },
@@ -64,6 +65,12 @@ namespace EvolutionShop
             { "sparkminnow", DioramaGait.Family }, { "fizzlet", DioramaGait.Pulse }, { "glowbelly", DioramaGait.Family },
             { "flickerfin", DioramaGait.Undulate }, { "buzzgill", DioramaGait.Paddle }, { "starglimmer", DioramaGait.Flap },
             { "aurorafin", DioramaGait.Family },
+            { "pondlet", DioramaGait.Family }, { "bubblebelly", DioramaGait.Family }, { "ribbonfin", DioramaGait.Family },
+            { "puddlepup", DioramaGait.Undulate }, { "splashkit", DioramaGait.Paddle }, { "reedwhisker", DioramaGait.Family },
+            { "lilyfin", DioramaGait.Flap }, { "brookmonarch", DioramaGait.Flap }, { "lanternfin", DioramaGait.Family },
+            { "driftwing", DioramaGait.Family }, { "puffglider", DioramaGait.Family }, { "hazewing", DioramaGait.Flap },
+            { "gustgill", DioramaGait.Family }, { "mistrunner", DioramaGait.Paddle }, { "cloudcarp", DioramaGait.Family },
+            { "breezeling", DioramaGait.Upright }, { "zephyray", DioramaGait.Flap },
         };
 
         DioramaSpecies(string id, string kit, DioramaFamily family, int index, float model, float tank, float incubator,
