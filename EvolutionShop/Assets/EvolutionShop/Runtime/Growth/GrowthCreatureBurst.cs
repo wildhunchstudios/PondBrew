@@ -7,8 +7,9 @@ namespace EvolutionShop
     /// <summary>
     /// GR-12: the little burst a kit creature lets go on its trick's beat in the greybox, sized to the creature: bubbles from a
     /// Brookkin's lips, sparkles from a Sparkline's lantern (glowing), a puff of mist from an Airfin, sparks from a Cinderling's
-    /// spines (glowing embers, flying high) and droplets from a Dewling's beads (scattering wide). They rise, sway, shrink and
-    /// are gone in a second or so. Presentation only.
+    /// spines (glowing embers, flying high), droplets from a Dewling's beads (scattering wide), a glittering plankton cloud
+    /// from a Reefback's corals and a sparkle of salt from a Saltscale. They rise, sway, shrink and are gone in a second or so.
+    /// Presentation only.
     /// </summary>
     public sealed class GrowthCreatureBurst : MonoBehaviour
     {
@@ -35,6 +36,16 @@ namespace EvolutionShop
                     m.SetColor("_EmissionColor", new Color(1f, .45f, .12f) * 1.8f);
                     break;
                 case DioramaFamily.Dewling: m = ShopWorld.MakeMaterial("GR burst droplet", new Color(.8f, .94f, 1f), .2f, .95f); break;
+                case DioramaFamily.Reefback:
+                    m = ShopWorld.MakeMaterial("GR burst plankton", new Color(1f, .95f, .7f), 0, .4f);
+                    m.EnableKeyword("_EMISSION");
+                    m.SetColor("_EmissionColor", new Color(1f, .85f, .5f) * 1.2f);
+                    break;
+                case DioramaFamily.Saltscale:
+                    m = ShopWorld.MakeMaterial("GR burst salt", Color.white, 0, .7f);
+                    m.EnableKeyword("_EMISSION");
+                    m.SetColor("_EmissionColor", new Color(.9f, .95f, 1f) * 1.6f);
+                    break;
                 case DioramaFamily.Airfin: m = ShopWorld.MakeMaterial("GR burst mist", new Color(.97f, .95f, 1f), 0, .2f); break;
                 default: m = ShopWorld.MakeMaterial("GR burst bubble", new Color(.86f, .97f, 1f), .1f, .9f); break;
             }
@@ -48,13 +59,14 @@ namespace EvolutionShop
             go.transform.SetParent(parent, false);
             go.transform.position = at;
             var burst = go.AddComponent<GrowthCreatureBurst>();
-            burst.rise = length * (family == DioramaFamily.Airfin ? 1.2f : family == DioramaFamily.Dewling ? .8f : family == DioramaFamily.Cinderling ? 2.6f : 2.2f);
-            bool spark = family == DioramaFamily.Sparkline || family == DioramaFamily.Cinderling;
+            burst.rise = length * (family == DioramaFamily.Airfin ? 1.2f : family == DioramaFamily.Dewling ? .8f : family == DioramaFamily.Cinderling ? 2.6f :
+                family == DioramaFamily.Reefback ? .9f : family == DioramaFamily.Saltscale ? 1.6f : 2.2f);
+            bool spark = family == DioramaFamily.Sparkline || family == DioramaFamily.Cinderling || family == DioramaFamily.Saltscale;
             var material = MaterialFor(family);
             for (int i = 0; i < count; i++)
             {
                 float a = i * 2.4f, r = length * (.08f + .05f * (i % 3));
-                float size = length * (family == DioramaFamily.Airfin ? .32f : spark ? .09f : family == DioramaFamily.Dewling ? .1f : .14f) * (1 - .12f * (i % 3));
+                float size = length * (family == DioramaFamily.Airfin ? .32f : family == DioramaFamily.Reefback ? .05f : spark ? .09f : family == DioramaFamily.Dewling ? .1f : .14f) * (1 - .12f * (i % 3));
                 var piece = ShopWorld.Shape(go.transform, "Burst piece", spark ? PrimitiveType.Cube : PrimitiveType.Sphere,
                     new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r), Vector3.one * size, material);
                 if (spark) piece.localRotation = Quaternion.Euler(45, 45 * i, 45);
@@ -63,7 +75,7 @@ namespace EvolutionShop
                 var collider = piece.GetComponent<Collider>();
                 if (collider) { if (Application.isPlaying) Destroy(collider); else DestroyImmediate(collider); }
                 burst.pieces.Add(piece); burst.sizes.Add(size);
-                burst.drift.Add(new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * length * (family == DioramaFamily.Dewling ? .6f : .35f));
+                burst.drift.Add(new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * length * (family == DioramaFamily.Dewling ? .6f : family == DioramaFamily.Reefback ? .5f : .35f));
             }
             return burst;
         }

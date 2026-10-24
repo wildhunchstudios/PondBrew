@@ -110,10 +110,11 @@ namespace EvolutionShop
 
         /// <summary>Slots that glow (bloom) as well as being lit: a Sparkline's accent, its lantern (GR-12: and what else its
         /// species paints with it, a glowing stripe, belly, fin tips or stars), and (GR-12 wave 2) a Cinderling's accent, its
-        /// embers: the tips of its spines and its flames, a coal belly, a sizzling snout, glowing patches.</summary>
+        /// embers: the tips of its spines and its flames, a coal belly, a sizzling snout, glowing patches; and (GR-12 wave 3) a
+        /// Saltscale's salt stripe, which glitters (its habit keeps it soft at rest, its dart flashes it).</summary>
         public static bool GlowSlot(string slot) =>
             DioramaVariants.TryParse(slot, out var species, out int column) && column == 3 &&
-            (species.Family == DioramaFamily.Sparkline || species.Family == DioramaFamily.Cinderling);
+            (species.Family == DioramaFamily.Sparkline || species.Family == DioramaFamily.Cinderling || species.Family == DioramaFamily.Saltscale);
 
         /// <summary>A kit slot's colour: shared slots from the palette, a species' own slots from the atlas's Classic row.</summary>
         public static bool TryGetSlotColor(string slot, out Color color)

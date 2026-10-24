@@ -6,8 +6,9 @@ namespace EvolutionShop
 {
     /// <summary>AD-B creature families. Each family shares one rig (the same pivots, face parts and face shape keys); its
     /// species differ by body, fins, colours and the family's signature part (Sparkline: the lantern). GR-12 completes each
-    /// family to eight species, wave by wave (wave 1: the first three; wave 2: the Cinderling and the Dewling).</summary>
-    public enum DioramaFamily { Brookkin, Sparkline, Airfin, Cinderling, Dewling }
+    /// family to eight species, wave by wave (wave 1: the first three; wave 2: the Cinderling and the Dewling; wave 3: the
+    /// Reefback and the Saltscale).</summary>
+    public enum DioramaFamily { Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback, Saltscale }
 
     /// <summary>AD.3's four colour variants. Colour swaps only; in the greybox a specimen's colour (GR.7.2) picks it.</summary>
     public enum DioramaVariant { Classic, Sunny, Deep, Shimmer }
@@ -42,8 +43,8 @@ namespace EvolutionShop
         /// <summary>AD-B's five, then GR-12's waves in the kit script's order (the atlas rows follow it forever). AD-B's scales
         /// are on top of each classic container's size, and the AD-A and AD-B routes check those stay inside their glass; the
         /// greybox shows every species at its GR size class instead. Signatures name the trick: AD-B's five keep their own,
-        /// each family's other species play its family's (splash, twinkle, glide, flare, sprinkle) at their own tempo, and each
-        /// crown its own.</summary>
+        /// each family's other species play its family's (splash, twinkle, glide, flare, sprinkle, bloom, dart) at their own
+        /// tempo, and each crown its own.</summary>
         public static readonly IReadOnlyList<DioramaSpecies> All = new[]
         {
             new DioramaSpecies("pondlet", "DioramaPondlet", DioramaFamily.Brookkin, 0, .9f, 1.6f, 1.5f, .82f, .6f, "bubble"),
@@ -88,6 +89,23 @@ namespace EvolutionShop
             Wave("haloling", DioramaFamily.Dewling, 37, 1.5f, .8f, "sprinkle"),
             Wave("rainskipper", DioramaFamily.Dewling, 38, .95f, 1.35f, "sprinkle"),
             Wave("rainbowregent", DioramaFamily.Dewling, 39, 2f, .8f, "rainbow", true),
+            // GR-12 wave 3 (2026-10-24): the Reefback and the Saltscale, eight each (lively species quicker, calm ones slower).
+            Wave("shellback", DioramaFamily.Reefback, 40, 1.8f, .8f, "bloom"),
+            Wave("coralhorn", DioramaFamily.Reefback, 41, 1.4f, 1.1f, "bloom"),
+            Wave("clamjaw", DioramaFamily.Reefback, 42, 1.9f, .75f, "bloom"),
+            Wave("kelpgrazer", DioramaFamily.Reefback, 43, 1.7f, .85f, "bloom"),
+            Wave("barnaclebrow", DioramaFamily.Reefback, 44, 1.75f, .8f, "bloom"),
+            Wave("tidetusk", DioramaFamily.Reefback, 45, 1.35f, 1.15f, "bloom"),
+            Wave("wavebreaker", DioramaFamily.Reefback, 46, 1.3f, 1.2f, "bloom"),
+            Wave("coralossus", DioramaFamily.Reefback, 47, 2f, .75f, "reef", true),
+            Wave("brinefin", DioramaFamily.Saltscale, 48, 1f, 1.3f, "dart"),
+            Wave("pebblejaw", DioramaFamily.Saltscale, 49, 1.4f, .85f, "dart"),
+            Wave("seaspark", DioramaFamily.Saltscale, 50, .9f, 1.35f, "dart"),
+            Wave("foamtail", DioramaFamily.Saltscale, 51, 1.05f, 1.25f, "dart"),
+            Wave("surfskipper", DioramaFamily.Saltscale, 52, 1.1f, 1.3f, "dart"),
+            Wave("shoalglider", DioramaFamily.Saltscale, 53, 1.3f, .9f, "dart"),
+            Wave("tidepip", DioramaFamily.Saltscale, 54, 1.2f, .95f, "dart"),
+            Wave("pearlemperor", DioramaFamily.Saltscale, 55, 2f, .8f, "pearl", true),
         };
 
         /// <summary>The classic game's species, AD-B's five: the classic shop, its creature study and AD-B's route show only
@@ -173,7 +191,8 @@ namespace EvolutionShop
     public struct DioramaTrickPose
     {
         public float Pitch, Yaw, Roll, Lift, Puffed, Happy, Surprised, Glow, Tail, Fins;
-        /// <summary>GR-12: the Cinderling's ember spines flaring, standing taller from their roots (0 at rest, 1 blazing).</summary>
+        /// <summary>GR-12: the crest standing taller from its roots (0 at rest, 1 at its fullest): the Cinderling's ember spines
+        /// flaring, the Reefback's corals blooming.</summary>
         public float Flare;
         /// <summary>A bubble, sparkle or puff the container releases this frame (crossing a beat).</summary>
         public bool Release;
@@ -329,6 +348,47 @@ namespace EvolutionShop
                     p.Happy = Bump(u, 0, 1);
                     p.Release = Crossed(before, u, .22f) || Crossed(before, u, .85f);
                     break;
+                case "bloom":
+                    // The Reefback's: it settles with a slow bow, its corals swaying open, rocks gently as it turns to show its
+                    // reef, and puffs a glittering plankton cloud from it.
+                    p.Flare = Ease(u / .3f) * (1 - Ease((u - .7f) / .3f));
+                    p.Pitch = -Bump(u, 0, .6f) * 14;
+                    p.Yaw = Mathf.Sin(u * Mathf.PI * 2) * 38;
+                    p.Roll = Mathf.Sin(u * Mathf.PI * 4) * 10 * Bump(u, 0, 1);
+                    p.Puffed = Bump(u, .1f, .7f) * .5f;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .55f);
+                    break;
+                case "dart":
+                    // The Saltscale's: a quick dart and turn, banking, its salt stripe flashing silver, with a sparkle of salt.
+                    p.Yaw = Ease(u / .8f) * 360;
+                    p.Roll = Bump(u, .05f, .85f) * 30;
+                    p.Glow = Bump(u, .25f, .75f) * 2.6f;
+                    p.Pitch = Bump(u, 0, .4f) * 6;
+                    p.Happy = Bump(u, 0, 1) * .9f;
+                    p.Release = Crossed(before, u, .5f);
+                    break;
+                case "reef":
+                    // Coralossus: its whole reef blooms wide as it rises and turns slowly once to show it, letting plankton go
+                    // three times, and settles with a bow.
+                    p.Flare = Ease(u / .25f) * (1 - Ease((u - .8f) / .2f));
+                    p.Yaw = Ease((u - .05f) / .8f) * 360;
+                    p.Lift = Bump(u, 0, .9f) * .04f;
+                    p.Pitch = -Bump(u, .75f, 1) * 12;
+                    p.Puffed = Bump(u, 0, .6f) * .4f;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .35f) || Crossed(before, u, .55f) || Crossed(before, u, .75f);
+                    break;
+                case "pearl":
+                    // Pearl Emperor: two royal darts round, fins spread and its stripe flashing silver on each, a sparkle of
+                    // pearls each time.
+                    p.Yaw = Ease(u / .9f) * 720;
+                    p.Fins = Bump(u, 0, 1) * 22;
+                    p.Roll = Bump(u, .05f, .9f) * 20;
+                    p.Glow = (Bump(u, .1f, .45f) + Bump(u, .5f, .85f)) * 2.4f;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .3f) || Crossed(before, u, .7f);
+                    break;
                 case "rainbow":
                     // Rainbow Regent: rises and turns slowly once like a royal display, fins spread wide and its rainbow tail
                     // sweeping, spraying droplets three times.
@@ -366,8 +426,8 @@ namespace EvolutionShop
             if (!DioramaSpecies.TryGet(species, out var s)) return 0;
             switch (s.Signature)
             {
-                case "flash": case "aurora": case "gale": case "rebirth": return 2;
-                case "fountain": case "rainbow": return 3;
+                case "flash": case "aurora": case "gale": case "rebirth": case "pearl": return 2;
+                case "fountain": case "rainbow": case "reef": return 3;
                 default: return 1;
             }
         }
@@ -378,6 +438,20 @@ namespace EvolutionShop
             float d = Duration(species);
             if (!(age >= 0) || age >= d) return 0;
             return Ease(Mathf.Min(age, d - age) / .3f);
+        }
+
+        static readonly Dictionary<string, float> maxFlare = new Dictionary<string, float>();
+
+        /// <summary>GR-12: the most a species' crest ever stands taller (its Flare) in its trick or its habit, so its swim room can
+        /// leave room for it (a Cinderling's spines, a Reefback's corals); 0 for a crest that never does.</summary>
+        public static float MaxFlare(string species)
+        {
+            if (species == null) return 0;
+            if (maxFlare.TryGetValue(species, out float known)) return known;
+            float most = 0, d = Duration(species);
+            for (int i = 0; i <= 200 && d > 0; i++) most = Mathf.Max(most, Trick(species, d * i / 200f).Flare);
+            for (float t = 0; t < 30; t += 1 / 20f) most = Mathf.Max(most, Idle(species, t, 0).Flare);
+            return maxFlare[species] = most;
         }
 
         /// <summary>The idle habit at a clock (seconds of the creature's own clock) and its identity phase; previous is the
@@ -426,6 +500,22 @@ namespace EvolutionShop
                         p.Lift = (.5f + .5f * Mathf.Sin(t * 1.8f * tempo)) * .008f; p.Puffed = gather * .3f; p.Happy = gather * .3f;
                         break;
                     }
+                    case DioramaFamily.Reefback:
+                    {
+                        // Grazing: a slow nod now and then, its corals breathing open and closed.
+                        float age = Mathf.Repeat(t * tempo, 6f);
+                        p.Pitch = -Bump(age, 0, 1.6f) * 7;
+                        p.Flare = .12f + .12f * Mathf.Sin(t * .8f * tempo);
+                        break;
+                    }
+                    case DioramaFamily.Saltscale:
+                    {
+                        // Its stripe glitters softly, flickering bright now and then, and every few seconds it glances aside.
+                        float age = Mathf.Repeat(t * tempo, 5f);
+                        p.Glow = -.45f + Bump(age, 0, .3f) * .9f;
+                        p.Yaw = Bump(Mathf.Repeat(t * tempo + 2.5f, 6f), 0, .5f) * 10;
+                        break;
+                    }
                 }
                 return p;
             }
@@ -466,12 +556,15 @@ namespace EvolutionShop
     {
         /// <summary>AD.4's family water tints (glass base colour, alpha its strength), so no species blends into its water:
         /// a periwinkle stream for the Brookkin (coral, yellow and teal), a green lagoon for the Sparkline's indigo and gold, warm
-        /// sand for the lilac Airfin; GR-12: a cool blue for the ember-warm Cinderling, a mint pool for the pastel Dewling.</summary>
+        /// sand for the lilac Airfin; GR-12: a cool blue for the ember-warm Cinderling, a mint pool for the pastel Dewling, a deep
+        /// sea teal for the Reefback's corals and shells, warm coral shallows for the blue and silver Saltscale.</summary>
         public static Color Tint(DioramaFamily family) =>
             family == DioramaFamily.Sparkline ? new Color(.2f, .74f, .58f, .13f) :
             family == DioramaFamily.Airfin ? new Color(1f, .8f, .55f, .13f) :
             family == DioramaFamily.Cinderling ? new Color(.3f, .62f, .85f, .13f) :
-            family == DioramaFamily.Dewling ? new Color(.55f, .85f, .6f, .13f) : new Color(.55f, .62f, .98f, .1f);
+            family == DioramaFamily.Dewling ? new Color(.55f, .85f, .6f, .13f) :
+            family == DioramaFamily.Reefback ? new Color(.05f, .6f, .75f, .13f) :
+            family == DioramaFamily.Saltscale ? new Color(.98f, .66f, .8f, .13f) : new Color(.55f, .62f, .98f, .1f);
 
         /// <summary>The incubator fluid for a family (more opaque, since the creature grows inside it).</summary>
         /// <summary>How much more opaque the water's far side (behind the creature, and the sand) is than its near side, so the
@@ -484,6 +577,8 @@ namespace EvolutionShop
             family == DioramaFamily.Sparkline ? new Color(.25f, .88f, .55f, .2f) :
             family == DioramaFamily.Airfin ? new Color(1f, .86f, .66f, .2f) :
             family == DioramaFamily.Cinderling ? new Color(.4f, .72f, .95f, .2f) :
-            family == DioramaFamily.Dewling ? new Color(.62f, .92f, .66f, .2f) : new Color(.35f, .85f, .9f, .2f);
+            family == DioramaFamily.Dewling ? new Color(.62f, .92f, .66f, .2f) :
+            family == DioramaFamily.Reefback ? new Color(.1f, .7f, .85f, .2f) :
+            family == DioramaFamily.Saltscale ? new Color(1f, .75f, .85f, .2f) : new Color(.35f, .85f, .9f, .2f);
     }
 }

@@ -60,6 +60,15 @@ namespace EvolutionShop.Tests
                     Assert.That(view.Reach + 1e-4f, Is.GreaterThanOrEqualTo(Mathf.Max(Mathf.Abs(all.min.x), all.max.x, Mathf.Abs(all.min.z), all.max.z) * .999f), s.Id + " reach");
                     Assert.That(view.HalfHeight + 1e-4f, Is.GreaterThanOrEqualTo(Mathf.Max(Mathf.Abs(all.min.y), all.max.y) * .999f), s.Id + " height");
                     Assert.That(view.Reach, Is.InRange(.45f * L, 1.6f * L), s.Id + " reach for its length");
+                    // Its swim room leaves room for its crest at its fullest (a Cinderling's spines, a Reefback's corals), since a
+                    // trick turns it round on the spot.
+                    var crestPivot = view.Kit.GetComponentsInChildren<Transform>(true).First(x => x.name == "Crest pivot");
+                    var crestRest = crestPivot.localScale;
+                    crestPivot.localScale = crestRest * (1 + CreatureVisual.CrestFlareGrowth * DioramaTricks.MaxFlare(s.Id));
+                    var flared = BoundsIn(view.transform, view.Kit.transform);
+                    crestPivot.localScale = crestRest;
+                    Assert.That(view.Reach + 1e-4f, Is.GreaterThanOrEqualTo(Mathf.Max(Mathf.Abs(flared.min.x), flared.max.x, Mathf.Abs(flared.min.z), flared.max.z) * .999f), s.Id + " reach with its crest at its fullest");
+                    Assert.That(view.HalfHeight + 1e-4f, Is.GreaterThanOrEqualTo(Mathf.Max(Mathf.Abs(flared.min.y), flared.max.y) * .999f), s.Id + " height with its crest at its fullest");
                     Object.DestroyImmediate(view.gameObject);
                 }
             }
@@ -71,7 +80,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 colours").transform;
             try
             {
-                foreach (var id in new[] { "puddlepup", "starglimmer", "zephyray", "pondlet", "kindlekoi", "rainbowregent" })
+                foreach (var id in new[] { "puddlepup", "starglimmer", "zephyray", "pondlet", "kindlekoi", "rainbowregent", "coralossus", "seaspark" })
                 {
                     DioramaSpecies.TryGet(id, out var s);
                     var def = GrowthContent.Get(id);
@@ -95,6 +104,8 @@ namespace EvolutionShop.Tests
                 Assert.That(Make(parent, "lilyfin").Kit.DioramaGlowMaterial, Is.Null, "A Brookkin does not");
                 Assert.That(Make(parent, "coalbelly").Kit.DioramaGlowMaterial, Is.Not.Null, "A Cinderling's embers glow (its spines' tips, its coal belly)");
                 Assert.That(Make(parent, "haloling").Kit.DioramaGlowMaterial, Is.Null, "A Dewling does not");
+                Assert.That(Make(parent, "tidepip").Kit.DioramaGlowMaterial, Is.Not.Null, "A Saltscale's salt stripe glitters");
+                Assert.That(Make(parent, "clamjaw").Kit.DioramaGlowMaterial, Is.Null, "A Reefback does not glow");
             }
             finally { Object.DestroyImmediate(parent.gameObject); }
         }
@@ -104,7 +115,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 tricks").transform;
             try
             {
-                foreach (var id in new[] { "pondlet", "splashkit", "fizzlet", "gustgill", "brookmonarch", "aurorafin", "zephyray", "sootsnap", "fogfin", "phoenixfry", "rainbowregent" })
+                foreach (var id in new[] { "pondlet", "splashkit", "fizzlet", "gustgill", "brookmonarch", "aurorafin", "zephyray", "sootsnap", "fogfin", "phoenixfry", "rainbowregent", "kelpgrazer", "surfskipper", "coralossus", "pearlemperor" })
                 {
                     var view = Make(parent, id);
                     int played = GrowthCreatureView.TricksPlayed, bursts = GrowthCreatureView.BurstsReleased;
@@ -145,7 +156,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 crests").transform;
             try
             {
-                foreach (var id in new[] { "emberpuff", "phoenixfry", "pearlpip", "rainbowregent" })
+                foreach (var id in new[] { "emberpuff", "phoenixfry", "pearlpip", "rainbowregent", "barnaclebrow", "coralossus", "foamtail", "pearlemperor" })
                 {
                     var view = Make(parent, id);
                     var crest = view.Kit.GetComponentsInChildren<Transform>(true).First(t => t.name == "Crest pivot");
@@ -155,6 +166,9 @@ namespace EvolutionShop.Tests
                     view.Tick(t);
                     view.Highlighted = true;
                     int bursts = view.Bursts;
+                    string family = GrowthContent.Get(id).Family;
+                    // Sparks, droplets and plankton fly from the top of the crest; a Saltscale's salt from its body, along its stripe.
+                    Transform Origin() => family == "saltscale" ? view.Kit.transform : view.Kit.DioramaCrestPoint;
                     var crestAtBurst = new List<(Vector3 crest, Vector3 lips)>();
                     while (view.TrickAge < 0 && t < 3) view.Tick(t += dt);
                     for (float end = t + DioramaTricks.Duration(id); t < end; t += dt)
@@ -162,19 +176,19 @@ namespace EvolutionShop.Tests
                         int was = view.Bursts;
                         view.Tick(t);
                         widest = Mathf.Max(widest, crest.localScale.y / rest.y);
-                        if (view.Bursts > was) crestAtBurst.Add((view.Kit.DioramaCrestPoint.position, view.Kit.DioramaLips.position));
+                        if (view.Bursts > was) crestAtBurst.Add((Origin().position, view.Kit.DioramaLips.position));
                     }
-                    bool cinderling = GrowthContent.Get(id).Family == "cinderling";
-                    if (cinderling) Assert.That(widest, Is.GreaterThan(1.25f), id + " its spines flare during its trick");
-                    else Assert.That(widest, Is.EqualTo(1).Within(1e-4f), id + " a Dewling's crest never flares");
+                    bool flares = family == "cinderling" || family == "reefback", glows = family != "dewling";
+                    if (flares) Assert.That(widest, Is.GreaterThan(1.25f), id + " its spines flare, or its corals bloom, during its trick");
+                    else Assert.That(widest, Is.EqualTo(1).Within(1e-4f), id + " a Dewling's beads and a Saltscale's sail never stand taller");
                     Assert.That(view.Bursts - bursts, Is.EqualTo(DioramaTricks.Releases(id)), id + " bursts on its beats");
                     var spawned = parent.GetComponentsInChildren<GrowthCreatureBurst>(true);
                     Assert.That(spawned.Length, Is.EqualTo(crestAtBurst.Count), id);
                     for (int i = 0; i < spawned.Length; i++)
                         Assert.That(Vector3.Distance(spawned[i].transform.position, crestAtBurst[i].crest), Is.LessThan(Vector3.Distance(spawned[i].transform.position, crestAtBurst[i].lips)),
-                            id + " its " + (cinderling ? "sparks fly from its spines" : "droplets fly from its dew beads"));
+                            id + " its burst flies from " + (family == "saltscale" ? "its body" : "the top of its crest"));
                     var piece = spawned[0].GetComponentInChildren<Renderer>();
-                    Assert.That(piece.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.EqualTo(cinderling), id + (cinderling ? " its sparks glow" : " its droplets do not"));
+                    Assert.That(piece.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.EqualTo(glows), id + (glows ? " its sparks, plankton or salt glitter" : " its droplets do not glow"));
                     // Reduced motion: the spines never flare.
                     var calm = Make(parent, id, Colour.Classic, 9);
                     var calmCrest = calm.Kit.GetComponentsInChildren<Transform>(true).First(x => x.name == "Crest pivot");
@@ -183,6 +197,138 @@ namespace EvolutionShop.Tests
                     Object.DestroyImmediate(view.gameObject); Object.DestroyImmediate(calm.gameObject);
                     foreach (var burst in parent.GetComponentsInChildren<GrowthCreatureBurst>(true)) Object.DestroyImmediate(burst.gameObject);
                 }
+            }
+            finally { Object.DestroyImmediate(parent.gameObject); }
+        }
+
+        [Test] public void PeekEnlargesACreatureOnlyAsFarAsItsWaterAllowsThroughItsTrick()
+        {
+            // GR-02's peek enlarges the creature under the reticle 1.35 times. Its reach and height through its trick are sampled
+            // (TrickReach, TrickHalf) and cover what it really does; in a Large tank's water a large crown is enlarged less, so its
+            // trick at its widest stays inside, while a small creature keeps the full 1.35. Every kit species' trick, at its peek
+            // size and swimming as far as its tank lets it (at least 1 cm up and down, 2 cm across), stays inside the water of the
+            // water of every container it can live in (a lab rack's too: it holds large creatures).
+            var parent = new GameObject("GR-12 peek").transform;
+            var large = GrowthWorld.WaterOf("large");
+            Assert.That(large, Is.EqualTo(new Vector3(2.44f, 0.63f, 0.94f)), "a Large tank's water");
+            try
+            {
+                foreach (var kind in DioramaSpecies.All)
+                {
+                    string id = kind.Id;
+                    var homes = GrowthContent.Containers.Where(c => (int)GrowthContent.Get(id).Size <= (int)c.Largest).ToArray();
+                    Assert.That(homes.Length, Is.GreaterThan(0), id + " has a container");
+                    foreach (var home in homes)
+                    {
+                        var water = GrowthWorld.WaterOf(home.Id);
+                        var fit = Make(parent, id);
+                        fit.FitTo(water);
+                        Assert.That(fit.PeekScale, Is.InRange(1f, GrowthCreatureView.PeekGrowth), id + " in a " + home.Id);
+                        Assert.That(fit.TrickHalf * fit.PeekScale, Is.LessThanOrEqualTo(water.y * .5f - .01f + 1e-4f), id + " its trick fits a " + home.Id + "'s water's height at its peek size");
+                        Assert.That(fit.TrickReach * fit.PeekScale, Is.LessThanOrEqualTo(Mathf.Min(water.x, water.z) * .5f - .02f + 1e-4f), id + " and its depth");
+                        Object.DestroyImmediate(fit.gameObject);
+                    }
+                    var view = Make(parent, id);
+                    view.FitTo(large);
+                    view.Highlighted = true;
+                    Assert.That(view.transform.localScale.x, Is.EqualTo(view.PeekScale).Within(1e-5f), id + " peek enlarges it that far");
+                    // The sampled reach and height cover its real trick, measured on its parts as the route does.
+                    float far = 0, high = 0, t = 0, dt = 1 / 60f;
+                    view.Tick(t);
+                    for (; t < GrowthCreatureView.TrickLinger + DioramaTricks.Duration(id) + .2f; t += dt)
+                    {
+                        view.Tick(t);
+                        var m = view.transform.worldToLocalMatrix;
+                        foreach (var r in view.Kit.GetComponentsInChildren<Renderer>(true))
+                        {
+                            var b = r is SkinnedMeshRenderer s ? s.localBounds : r.GetComponent<MeshFilter>() is MeshFilter f && f.sharedMesh ? f.sharedMesh.bounds : r.localBounds;
+                            var to = m * r.transform.localToWorldMatrix;
+                            for (int k = 0; k < 8; k++)
+                            {
+                                var p = to.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                                far = Mathf.Max(far, new Vector2(p.x, p.z).magnitude); high = Mathf.Max(high, Mathf.Abs(p.y));
+                            }
+                        }
+                    }
+                    Assert.That(GrowthCreatureView.TricksPlayed > 0 && view.TrickAge < 0, Is.True, id + " played its trick");
+                    Assert.That(far, Is.LessThanOrEqualTo(view.TrickReach), id + " its trick's reach");
+                    Assert.That(high, Is.LessThanOrEqualTo(view.TrickHalf), id + " its trick's height");
+                }
+                var crown = Make(parent, "coralossus", Colour.Classic, 21); crown.FitTo(large);
+                var small = Make(parent, "puddlepup", Colour.Classic, 22); small.FitTo(large);
+                Assert.That(crown.PeekScale, Is.LessThan(GrowthCreatureView.PeekGrowth), "Coralossus is enlarged less in a Large tank");
+                Assert.That(small.PeekScale, Is.EqualTo(GrowthCreatureView.PeekGrowth), "a Puddlepup the full 1.35");
+            }
+            finally { Object.DestroyImmediate(parent.gameObject); }
+        }
+
+        [Test] public void ItsSwimRoomCoversItsTrickWithItsHabitOnTop()
+        {
+            // A trick plays on top of the creature's habit (a Reefback's nod under its bloom's bow, a Dewling's bob under its
+            // sprinkle): posed through every moment of both together, its kit model and crest set as the game sets them, every part
+            // stays within its sampled TrickReach and TrickHalf.
+            var parent = new GameObject("GR-12 habit").transform;
+            try
+            {
+                foreach (var id in new[] { "coralossus", "shellback", "kelpgrazer", "dewdrop", "phoenixfry", "emberpuff", "zephyray", "brinefin", "pondlet" })
+                {
+                    var view = Make(parent, id);
+                    var holder = view.Kit.transform;
+                    var crest = holder.GetComponentsInChildren<Transform>(true).First(x => x.name == "Crest pivot");
+                    var crestRest = crest.localScale;
+                    var renderers = view.Kit.GetComponentsInChildren<Renderer>(true);
+                    float d = DioramaTricks.Duration(id), far = 0, high = 0;
+                    for (int i = 0; i <= 30; i++)
+                    {
+                        var trick = id == "pondlet" ? DioramaTricks.PondletBubble(d * i / 30f) : DioramaTricks.Trick(id, d * i / 30f);
+                        for (float t = 0; t < 12; t += .2f)
+                        {
+                            var idle = DioramaTricks.Idle(id, t, 0);
+                            holder.localRotation = GrowthCreatureView.KitTurn * Quaternion.Euler(idle.Pitch + trick.Pitch, idle.Yaw + trick.Yaw, idle.Roll + trick.Roll);
+                            holder.localPosition = Vector3.up * ((idle.Lift + trick.Lift) * view.Length * GrowthCreatureView.LiftShare);
+                            crest.localScale = crestRest * (1 + CreatureVisual.CrestFlareGrowth * Mathf.Clamp(idle.Flare + trick.Flare, 0, 1.5f));
+                            var m = view.transform.worldToLocalMatrix;
+                            foreach (var r in renderers)
+                            {
+                                var mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                                if (!mesh) continue;
+                                var to = m * r.transform.localToWorldMatrix;
+                                for (int k = 0; k < 8; k++)
+                                {
+                                    var p = to.MultiplyPoint3x4(mesh.bounds.center + Vector3.Scale(mesh.bounds.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                                    far = Mathf.Max(far, new Vector2(p.x, p.z).magnitude); high = Mathf.Max(high, Mathf.Abs(p.y));
+                                }
+                            }
+                        }
+                    }
+                    Assert.That(far, Is.LessThanOrEqualTo(view.TrickReach / 1.04f), id + " its reach through its trick and habit together");
+                    Assert.That(high, Is.LessThanOrEqualTo(view.TrickHalf / 1.04f), id + " its height through its trick and habit together");
+                }
+            }
+            finally { Object.DestroyImmediate(parent.gameObject); }
+        }
+
+        [Test] public void ARestAfterATrickRunsOnTheShopsClockEvenWhileItIsFarAway()
+        {
+            // A trick's 6 s rest runs on the shop's clock: a creature whose tank was far away meanwhile (its distant look, not
+            // animated) is rested when the player comes back, and plays its trick again after the usual linger.
+            var parent = new GameObject("GR-12 rest").transform;
+            try
+            {
+                var view = Make(parent, "brinefin");
+                float t = 0, dt = 1 / 30f;
+                view.Tick(t);
+                view.Highlighted = true;
+                for (float end = t + GrowthCreatureView.TrickLinger + DioramaTricks.Duration("brinefin") + .5f; t < end; t += dt) view.Tick(t);
+                Assert.That(view.TrickAge, Is.EqualTo(-1), "its trick has played");
+                int played = GrowthCreatureView.TricksPlayed;
+                view.Highlighted = false;
+                view.SetDetail(1); t += 10; view.SetDetail(0);
+                view.Highlighted = true;
+                bool started = false;
+                for (float end = t + GrowthCreatureView.TrickLinger + .3f; t < end && !started; t += dt) { view.Tick(t); started = view.TrickAge >= 0; }
+                Assert.That(started, Is.True, "Back after 10 s away, lingering on it plays its trick again: its rest is over");
+                Assert.That(GrowthCreatureView.TricksPlayed, Is.EqualTo(played + 1));
             }
             finally { Object.DestroyImmediate(parent.gameObject); }
         }

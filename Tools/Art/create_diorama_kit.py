@@ -77,7 +77,8 @@ PALETTE = {
 # DK_<Species><Slot>, and a sheen (Shimmer's iridescent rim; its alpha is the strength). Variants are colour swaps only.
 FAMILIES = {'Brookkin': 'river fish: pouty lips, round fins', 'Sparkline': 'Spark: a glowing lantern on a stalk',
             'Airfin': 'Mist: wide gliding sails', 'Cinderling': 'Ember: a row of glowing ember spines down the back',
-            'Dewling': 'Mist: round and pearly, shiny dew beads on the head and back'}  # GR-12's waves 3 and 4 add the other four families
+            'Dewling': 'Mist: round and pearly, shiny dew beads on the head and back',
+            'Reefback': 'Brine: big and gentle, a domed shell crusted with coral and barnacles', 'Saltscale': 'Brine: sleek and shiny, a glittering salt stripe along each side'}  # GR-12's wave 4 adds the other two families
 SLOTS = ['Body', 'Fin', 'Belly', 'Accent', 'Blush', 'Sheen']
 VARIANT_NAMES = ['Classic', 'Sunny', 'Deep', 'Shimmer']
 ATLAS_SPECIES_CAPACITY = 72  # GR.7's 72 species
@@ -284,6 +285,86 @@ SPECIES = [  # id, kit asset, family, {variant: [Body, Fin, Belly, Accent, Blush
         'Sunny':   ['EA8DF5', '89F7E5', 'FFF3D5', 'FFABA6', 'FFA6B9', 'FFFFFF00'],
         'Deep':    ['7774B5', '4E7BB7', 'E5E3E2', 'BD74A5', 'E588B5', 'FFFFFF00'],
         'Shimmer': ['E6DEF9', 'CEEEFC', 'EAF6ED', 'FFE1ED', 'FFC1D9', 'FFF0B05E']}),
+    ('shellback', 'DioramaShellback', 'Reefback', {
+        'Classic': ['7FB3A0', 'C9A36B', 'F2EBD8', 'FF8A80', 'FF9EA8', 'FFFFFF00'],
+        'Sunny':   ['9FF5AE', 'F5E08B', 'F6EAC7', 'FFCA8A', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['548480', 'AD6647', 'DBD9D2', 'BD4E63', 'E68095', 'FFFFFF00'],
+        'Shimmer': ['DAF5EB', 'F5E3C9', 'E2EDE0', 'FFD3CF', 'FFBBC2', 'FFE0C85E']}),
+    ('coralhorn', 'DioramaCoralhorn', 'Reefback', {
+        'Classic': ['E8735A', '8E5A3C', 'FFE6D0', 'FF5A8C', 'FFA6B0', 'FFFFFF00'],
+        'Sunny':   ['F5C46B', 'F5DB73', 'FFEDA6', 'FF8067', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['AC323D', '692922', 'BD978E', 'BD2F80', 'E5889C', 'FFFFFF00'],
+        'Shimmer': ['F5C6BC', 'F5D3BF', 'FFF6ED', 'FFC0D3', 'FFC1C8', 'FFD0F05E']}),
+    ('clamjaw', 'DioramaClamjaw', 'Reefback', {
+        'Classic': ['6E7FA8', 'E8D8C0', 'F6EFE6', 'C88AE8', 'FFA6B8', 'FFFFFF00'],
+        'Sunny':   ['9FE0F5', 'F5E49F', 'F9EDD1', 'F59AE9', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['48497C', 'AC9183', 'DEDCDD', '7958AC', 'E588A4', 'FFFFFF00'],
+        'Shimmer': ['D5DEF5', 'F5EEE5', 'E5F0E9', 'E8CFF5', 'FFC1CD', 'E0F0FF5E']}),
+    ('kelpgrazer', 'DioramaKelpgrazer', 'Reefback', {
+        'Classic': ['5E9E5A', '3E6B3A', 'E6F0C8', 'C8E05A', 'FFA6A0', 'FFFFFF00'],
+        'Sunny':   ['C7F594', '82A55D', 'F5E49F', 'F5DA6E', 'FFBAA6', 'FFFFFF00'],
+        'Deep':    ['397545', '2C6242', '9CB289', 'C1B036', 'E58286', 'FFFFFF00'],
+        'Shimmer': ['CFF5CD', 'CFFFCA', 'F1F5E6', 'EBF5BD', 'FFC1BD', 'F0FFC85E']}),
+    ('barnaclebrow', 'DioramaBarnaclebrow', 'Reefback', {
+        'Classic': ['9A8C7A', '6A5A4A', 'EDE6DA', 'FFB27A', 'FF9EA0', 'FFFFFF00'],
+        'Sunny':   ['F5E49F', 'A49A75', 'F2E6C9', 'FFE785', 'FFB3A6', 'FFFFFF00'],
+        'Deep':    ['725C53', '5B4035', 'D7D5D3', 'BD5B49', 'E6808D', 'FFFFFF00'],
+        'Shimmer': ['F5ECE1', 'FFEEDC', 'DFEAE1', 'FFE2CC', 'FFBBBC', 'FFE8D05E']}),
+    ('tidetusk', 'DioramaTidetusk', 'Reefback', {
+        'Classic': ['4A4A7A', 'E8E0D0', 'F4F0E8', 'FF7A5A', 'FFA0B0', 'FFFFFF00'],
+        'Sunny':   ['C69CF5', 'F2E3BA', 'F7EDD2', 'FFCB67', 'FFA6A6', 'FFFFFF00'],
+        'Deep':    ['3D7279', 'B3B8C4', 'DDDDDE', 'BD2F3A', 'E5829D', 'FFFFFF00'],
+        'Shimmer': ['D0D0F5', 'D1ECE4', 'E3F1EA', 'FFCCC0', 'FFBDC8', 'E8D8FF5E']}),
+    ('wavebreaker', 'DioramaWavebreaker', 'Reefback', {
+        'Classic': ['E8C84A', '4A6A8A', 'FFF6D8', 'FF6A6A', 'FFA6A8', 'FFFFFF00'],
+        'Sunny':   ['F5C712', '8CF1F5', 'FFEDA6', 'FFB676', 'FFB3A6', 'FFFFFF00'],
+        'Deep':    ['C87728', '2E3B66', 'BDA994', 'BD3C5E', 'E58893', 'FFFFFF00'],
+        'Shimmer': ['F5E8B5', 'CADFF5', 'FFFCF0', 'FFC6C6', 'FFC1C2', 'C8F0FF5E']}),
+    ('coralossus', 'DioramaCoralossus', 'Reefback', {
+        'Classic': ['F28A6A', 'B5784A', 'FFF0E0', 'C060E0', 'FFA0B0', 'FFFFFF00'],
+        'Sunny':   ['F5CF76', 'F5DA70', 'FFEDA6', 'F574D9', 'FFA6A6', 'FFFFFF00'],
+        'Deep':    ['B33D41', '86392A', 'BDA39A', '6D37A6', 'E5829D', 'FFFFFF00'],
+        'Shimmer': ['F7CFC2', 'F5D5BE', 'FFF9F3', 'E8C0F5', 'FFBDC8', 'FFE0F85E']}),
+    ('brinefin', 'DioramaBrinefin', 'Saltscale', {
+        'Classic': ['4A7AC8', '2E4E8A', 'E8F0FA', 'FFFFFF', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['67DFF5', '5FD9F5', 'EFEDDF', 'FFF4D4', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['283494', '171E66', 'D3DDED', 'BFC7DC', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['BAD1F5', 'B7CCF5', 'DBF1F6', 'D9F7F4', 'FFC1D3', 'FFF0D05E']}),
+    ('pebblejaw', 'DioramaPebblejaw', 'Saltscale', {
+        'Classic': ['8A90A8', '5A5A6E', 'E6E6EE', 'FAFAFF', 'FFA6B8', 'FFFFFF00'],
+        'Sunny':   ['9FD8F5', '988CA9', 'EEE6D7', 'FCF1D4', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['5E6C7C', '495765', 'D1D5E3', 'BDC4DC', 'E588A4', 'FFFFFF00'],
+        'Shimmer': ['E4E8F5', 'EAEAFF', 'DAEAEE', 'D7F5F4', 'FFC1CD', 'E8FFF05E']}),
+    ('seaspark', 'DioramaSeaspark', 'Saltscale', {
+        'Classic': ['2EA8B8', '1E6A8A', 'E0F8FA', 'FFFFF0', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['4CF5BA', '45F5D7', 'E9F3DF', 'FFF4CC', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['135B88', '0B3366', 'CDE3ED', 'BFC7D4', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['AFEDF5', 'ACDFF5', 'D6F6F6', 'D9F7EF', 'FFC1D3', 'FFF8C05E']}),
+    ('foamtail', 'DioramaFoamtail', 'Saltscale', {
+        'Classic': ['3E5AA8', '9AB8F0', 'EEF4FF', 'FFFFFF', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['67CFF5', '9FE5F5', 'F3F0E3', 'FFF4D4', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['22217C', '646AB2', 'D8E0F1', 'BFC7DC', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['BACAF5', 'D4DFF5', 'DFF3F9', 'D9F7F4', 'FFC1D9', 'D8FFF85E']}),
+    ('surfskipper', 'DioramaSurfskipper', 'Saltscale', {
+        'Classic': ['4AA8E8', '2E6AB8', 'F0FAFF', 'FFFFFF', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['5BF5EB', '4CE4F5', 'F5F4E3', 'FFF4D4', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['2551AC', '132788', 'D9E5F1', 'BFC7DC', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['B5DBF5', 'AFCDF5', 'E1F7F9', 'D9F7F4', 'FFC1D3', 'FFE8F85E']}),
+    ('shoalglider', 'DioramaShoalglider', 'Saltscale', {
+        'Classic': ['6A6AB8', '3E3E7A', 'ECECFA', 'FFFFFF', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['C295F5', 'BA86F5', 'F2EBDF', 'FFF4D4', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['435588', '2E4F70', 'D6D9ED', 'BFC7DC', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['CDCDF5', 'C7C7F5', 'DEEEF6', 'D9F7F4', 'FFC1D9', 'D0FFE85E']}),
+    ('tidepip', 'DioramaTidepip', 'Saltscale', {
+        'Classic': ['5AB8A8', '2E7A7A', 'EAFAF6', 'FFFFFF', 'FFA6B8', 'FFFFFF00'],
+        'Sunny':   ['82F5AC', '69F5B3', 'F0F4DC', 'FFF4D4', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['368088', '1F4870', 'D5E5EA', 'BFC7DC', 'E588A4', 'FFFFFF00'],
+        'Shimmer': ['C5F5ED', 'BBF5F5', 'DDF7F3', 'D9F7F4', 'FFC1CD', 'FFE8D05E']}),
+    ('pearlemperor', 'DioramaPearlemperor', 'Saltscale', {
+        'Classic': ['2E3E7A', 'C8D0F0', 'F4F6FF', 'FFF8F0', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['69C8F5', '9FD8F5', 'F7F2E3', 'FFF0CC', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['4F2176', '899CB2', 'DDE1F1', 'BFC3D4', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['BBC7F5', 'E6E9F5', 'E3F5F9', 'D9F4EF', 'FFC1D9', 'FFF0E05E']}),
 ]
 def slot_name(species_id, slot):
     return 'DK_' + species_id[:1].upper() + species_id[1:] + slot
@@ -2012,8 +2093,534 @@ WAVE2_BUILDERS = {'emberpuff': emberpuff, 'cindertail': cindertail, 'coalbelly':
                   'dewdrop': dewdrop, 'fogfin': fogfin, 'mistlet': mistlet, 'drizzler': drizzler, 'pearlpip': pearlpip,
                   'haloling': haloling, 'rainskipper': rainskipper, 'rainbowregent': rainbowregent}
 
+# ================================================================ GR-12 wave 3: the Reefback and the Saltscale
+# Two new families on the same rig. The user chose their looks (2026-10-24): the Reefback's coral shell (big, gentle fish with
+# a domed shell on the back crusted with little coral branches and barnacles; the corals ride its Crest pivot, which the game
+# opens in its bloom) and the Saltscale's salt stripe (sleek, shiny fish with a glittering white salt stripe along each side,
+# painted along the body's mesh lines in the accent, which glows; its dorsal sail rides the Crest pivot).
+
+def coral_shell(part, sid, prof, Z0, Z1, t=.56, length=.32, width=.93, height=.62, rim=.1):
+    """The Reefback's domed shell on its back, like a turtle's carapace: an ellipsoid centred halfway up the body, so it
+    covers the back down to the upper flanks, in its fin colour, with a pale rim on the lip that overhangs the body,
+    below its widest. Centred at the length fraction t; returns its centre and radii for the corals and barnacles on it."""
+    S = lambda s: slot_name(sid, s)
+    rx, ryt, _ = prof(t)
+    top = on_body(prof, Z0, Z1, t, 90, 1.0)
+    c = Vector((0, top.y * .5, top.z))
+    R = (rx * width, top.y * height, (Z1 - Z0) * length)
+    first = len(part.faces)
+    ellipsoid(part, tuple(c), R, S('Fin'), (0, 0, 0), 48, 24)
+    paint(part, first, tuple(c), R, S('Belly'), lambda n: n.y < rim)
+    return c, R
+
+def on_dome(c, R, az, el, k=1.0):
+    """A point on a shell dome (front -Z): az degrees from the front toward the right side, el degrees up."""
+    return on_ellipsoid(R, az, el, k, tuple(c))
+
+def coral(part, sid, base, height, lean=0, turn=0, arms=3, r=.028, slot='Accent'):
+    """A little coral: a stubby trunk that forks into chunky arms, each tipped with a round polyp."""
+    S = lambda s: slot_name(sid, s)
+    base = Vector(base)
+    up = rot((0, height * .4, 0), (lean, turn, 0))
+    mid = base + up
+    taper_tube(part, [tuple(base), tuple(base + up * .5), tuple(mid)], r, r * .9, S(slot), 10)
+    for k in range(arms):
+        a = (k - (arms - 1) / 2) * (90 / max(1, arms - 1)) if arms > 1 else 0
+        d = rot((0, height * .6, 0), (lean, turn, a))
+        tip = mid + d
+        taper_tube(part, [tuple(mid), tuple(mid + d * .5 + Vector((0, height * .08, 0))), tuple(tip)], r * .85, r * .7, S(slot), 10)
+        ellipsoid(part, tuple(tip), (r * 1.25, r * 1.25, r * 1.25), S(slot), (0, 0, 0), 12, 8)
+
+def brain_coral(part, sid, at, r=.04, slot='Accent'):
+    """A round brain coral knob sitting on the shell."""
+    S = lambda s: slot_name(sid, s)
+    ellipsoid(part, tuple(at), (r, r * .75, r), S(slot), (0, 0, 0), 16, 10)
+
+def barnacle(part, sid, at, normal, r=.024):
+    """A barnacle: a pale stump with a dark opening on top."""
+    S = lambda s: slot_name(sid, s)
+    n = Vector(normal).normalized()
+    at = Vector(at)
+    cone(part, tuple(at - n * r * .4), tuple(at + n * r * 1.0), r, S('Belly'), 10, 4, .35)
+    ellipsoid(part, tuple(at + n * r * .9), (r * .42, r * .42, r * .42), S('Fin'), (0, 0, 0), 10, 6)
+
+def dome_normal(c, R, p):
+    """The outward normal of a dome at a point on it."""
+    d = Vector(p) - Vector(c)
+    return Vector((d.x / R[0] ** 2, d.y / R[1] ** 2, d.z / R[2] ** 2)).normalized()
+
+def flippers(root, sid, pivot, size=(.15, .026, .075), sweep=-18, droop=-14):
+    """A Reefback's broad paddle flippers."""
+    side_fins(root, sid, pivot, [((size[0] * .85, -.01, .02), size, (0, sweep, droop), 'Fin')])
+
+def salt_stripe(sid, Z0, Z1, t0=.22, t1=.9, width=.16, band=0.0, prof=None):
+    """The Saltscale's salt stripe along each side: a thin closed ribbon lying on the body, widest in its middle and
+    tapering smoothly to a point at both ends (painted faces would step at a taper). width is its half-width in degrees
+    round the body / 60 (so .16 is about 10 degrees); band moves it up or down the same way."""
+    S = lambda s: slot_name(sid, s)
+    half, lift = width * 60, band * 60
+    def ribbon(body):
+        n = 36
+        for side in (1, -1):
+            outer, inner = [], []
+            for i in range(n + 1):
+                u = i / n
+                tt = t0 + (t1 - t0) * u
+                a = max(.6, half * math.sin(math.pi * u) ** .5)
+                centre = (0 if side > 0 else 180) + (lift if side > 0 else -lift)
+                for k, out in ((1.012, outer), (.985, inner)):
+                    out.append((tuple(on_body(prof, Z0, Z1, tt, centre + a, k)), tuple(on_body(prof, Z0, Z1, tt, centre - a, k))))
+            verts, faces = [], []
+            for i in range(n + 1):
+                verts += [outer[i][0], outer[i][1], inner[i][0], inner[i][1]]
+            for i in range(n):
+                a0, a1 = 4 * i, 4 * (i + 1)
+                faces.append((a0, a1, a1 + 1, a0 + 1))          # outer
+                faces.append((a0 + 2, a0 + 3, a1 + 3, a1 + 2))  # inner
+                faces.append((a0, a0 + 2, a1 + 2, a1))          # one edge
+                faces.append((a0 + 1, a1 + 1, a1 + 3, a0 + 3))  # the other edge
+            last = 4 * n
+            faces.append((0, 1, 3, 2)); faces.append((last, last + 2, last + 3, last + 1))
+            body.add(verts, faces, S('Accent'))
+    return ribbon
+
+def dorsal_sail(part, sid, prof, Z0, Z1, t, height, length, lean=28, slot='Fin'):
+    """A Saltscale's dorsal sail: a blade from a root along the back, its tip swept back (a cone flattened side to side)."""
+    S = lambda s: slot_name(sid, s)
+    top = on_body(prof, Z0, Z1, t, 90, .9)
+    tip = top + rot((0, height * 1.6, 0), (lean + 22, 0, 0)) + Vector((0, 0, length * .3))
+    idx = cone(part, tuple(top), tuple(tip), length * .5, S(slot), 16, 7, .15)
+    for i in idx:
+        v = part.verts[i]
+        part.verts[i] = Vector((v.x * .18, v.y, v.z))
+
+# ---------------------------------------------------------------- Reefback: Shellback, the plain coral-shelled turtle fish
+def shellback():
+    sid = 'shellback'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaShellback')
+    Z0, Z1 = -.42, .36
+    prof = nose_profile(.42, .62, .3, .3, .28)
+    dome = {}
+    def shell(body):
+        dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1)
+        c, R = dome['c'], dome['R']
+        for az, el in ((60, 30), (-60, 30), (150, 35), (-150, 35)):
+            p = on_dome(c, R, az, el, .98)
+            barnacle(body, sid, p, dome_normal(c, R, p), .02)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.09, .108, .074), 30, .77, None, -12, (.048, .028, .016),
+                  -.04, (.04, .024, (1.15, .92, 1.0)), .62, .03, extra=shell)
+    flippers(root, sid, (.27, -.07, -.06))
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .36), ((-28, .1, .05, S('Fin')), (28, .1, .05, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def corals(part):
+        for az, el, h, lean, turn in ((0, 72, .13, -8, 0), (120, 58, .1, 14, 40), (-120, 58, .1, 10, -40)):
+            coral(part, sid, on_dome(c, R, az, el, .97), h, lean, turn)
+        for az, el in ((60, 66), (-60, 66), (180, 64)):
+            brain_coral(part, sid, on_dome(c, R, az, el, .98), .032)
+    simple_part(root, 'Crest pivot', tuple(top), corals)
+    return root
+
+# ---------------------------------------------------------------- Reefback: Coralhorn, a horn of coral branching from its head
+def coralhorn():
+    sid = 'coralhorn'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaCoralhorn')
+    Z0, Z1 = -.4, .38
+    prof = nose_profile(.4, .66, .28, .29, .26)
+    dome = {}
+    def shell(body):
+        dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1, .6, .3)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.088, .106, .072), 30, .77, None, -12, (.046, .027, .015),
+                  -.038, (.038, .022, (1.15, .9, 1.0)), .62, .03, extra=shell)
+    flippers(root, sid, (.25, -.06, -.06), (.14, .024, .07), -24, -18)
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .38), ((-30, .12, .05, S('Fin')), (30, .12, .05, S('Fin'))), .02)
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    head = on_body(prof, Z0, Z1, .2, 90, 1.0)
+    c, R = dome['c'], dome['R']
+    def horn(part):
+        # The horn: a tall branching coral on its brow, and two small ones on its shell.
+        coral(part, sid, (0, head.y - .01, head.z), .19, -12, 0, 3, .032)
+        for az in (50, -50):
+            coral(part, sid, on_dome(c, R, az, 58, .97), .09, 10, az, 3, .022)
+        brain_coral(part, sid, on_dome(c, R, 180, 62, .98), .03)
+    simple_part(root, 'Crest pivot', (0, head.y, head.z), horn)
+    return root
+
+# ---------------------------------------------------------------- Reefback: Clamjaw, a scalloped clam shell and a big underbite
+def clamjaw():
+    sid = 'clamjaw'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaClamjaw')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.46, .6, .31, .29, .3)
+    dome = {}
+    def shell(body):
+        c, R = dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1, .58, .33, .96, .66)
+        # The clam's ribs, fanning back from its front edge.
+        for a in (-60, -30, 0, 30, 60):
+            pts = [tuple(on_dome(c, R, a * (1 - u * .4), 5 + 80 * u, 1.01)) for u in (0, .25, .5, .75, 1)]
+            taper_tube(body, pts, .012, .008, S('Belly'), 8)
+    loft_creature(root, sid, Z0, Z1, prof, .16, 30, (.088, .104, .072), 32, .77, None, -12, (.046, .027, .015),
+                  -.06, (.058, .03, (1.25, .95, 1.0)), .6, .018, extra=shell)
+    flippers(root, sid, (.28, -.08, -.04))
+    def tail(part):
+        ellipsoid(part, (0, 0, .34), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .35), ((-26, .1, .055, S('Fin')), (26, .1, .055, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .32), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def corals(part):
+        for az, el, h, turn in ((180, 62, .12, 0), (100, 56, .09, 60), (-100, 56, .09, -60)):
+            coral(part, sid, on_dome(c, R, az, el, .97), h, 18, turn)
+        brain_coral(part, sid, on_dome(c, R, 0, 70, .98), .034)
+    simple_part(root, 'Crest pivot', tuple(top), corals)
+    return root
+
+# ---------------------------------------------------------------- Reefback: Kelpgrazer, kelp fronds trailing from its shell
+def kelpgrazer():
+    sid = 'kelpgrazer'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaKelpgrazer')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.44, .62, .29, .29, .27)
+    dome = {}
+    def shell(body):
+        dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1, .55, .31)
+    loft_creature(root, sid, Z0, Z1, prof, .16, 28, (.094, .112, .076), 30, .77, None, -12, (.05, .03, .016),
+                  -.04, (.036, .021, (1.1, .9, 1.0)), .64, .034, extra=shell)
+    flippers(root, sid, (.26, -.07, -.06), (.13, .024, .08))
+    def tail(part):
+        ellipsoid(part, (0, 0, .34), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .35), ((-26, .1, .05, S('Fin')), (26, .1, .05, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .32), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def kelp(part):
+        # Kelp fronds rooted on its shell, waving back over its tail, and one little coral.
+        for x, length, ph in ((-.06, .34, 0), (0, .4, 1.2), (.06, .3, 2.1)):
+            base = on_dome(c, R, 0 if x == 0 else (35 if x > 0 else -35), 70, .97)
+            pts = [base + Vector((x * u, .15 * u + .025 * math.sin(u * 7 + ph), length * .85 * u)) for u in (0, .25, .5, .75, 1)]
+            taper_tube(part, [tuple(p) for p in pts[:2]], .014, .012, S('Accent'), 8)
+            for k in range(1, 5):
+                d = pts[k] - pts[k - 1]
+                pitch = -math.degrees(math.atan2(d.y, d.z))
+                ellipsoid(part, tuple((pts[k] + pts[k - 1]) * .5), (.007, .03, d.length * .62), S('Accent'), (pitch, 0, (k % 2) * 30 - 15), 16, 8)
+        coral(part, sid, on_dome(c, R, 160, 58, .97), .08, 10, 0, 3, .022, 'Belly')
+    simple_part(root, 'Crest pivot', tuple(top), kelp)
+    return root
+
+# ---------------------------------------------------------------- Reefback: Barnaclebrow, barnacles crusted over its brow
+def barnaclebrow():
+    sid = 'barnaclebrow'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaBarnaclebrow')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.44, .62, .3, .3, .28)
+    dome = {}
+    def shell(body):
+        c, R = dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1)
+        for az, el, r in ((40, 25, .022), (-40, 25, .022), (90, 35, .02), (-90, 35, .02), (140, 30, .024), (-140, 30, .024), (180, 45, .02)):
+            p = on_dome(c, R, az, el, .98)
+            barnacle(body, sid, p, dome_normal(c, R, p), r)
+        # Its brow: a cluster of barnacles above its eyes.
+        for t, ang, r in ((.13, 76, .032), (.12, 104, .03), (.18, 90, .034), (.09, 58, .024), (.09, 122, .024)):
+            p = on_body(prof, Z0, Z1, t, ang, .97)
+            barnacle(body, sid, p, Vector((math.cos(math.radians(ang)), math.sin(math.radians(ang)), -.4)), r)
+    loft_creature(root, sid, Z0, Z1, prof, .17, 26, (.088, .106, .072), 30, .77, None, -12, (.046, .027, .015),
+                  -.04, (.04, .024, (1.15, .92, 1.0)), .62, .028, extra=shell)
+    flippers(root, sid, (.27, -.07, -.06))
+    def tail(part):
+        ellipsoid(part, (0, 0, .34), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .35), ((-28, .1, .05, S('Fin')), (28, .1, .05, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .32), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def corals(part):
+        for az, el, h, turn in ((0, 68, .11, 0), (180, 62, .1, 180)):
+            coral(part, sid, on_dome(c, R, az, el, .97), h, 6, turn)
+        brain_coral(part, sid, on_dome(c, R, 90, 64, .98), .03)
+    simple_part(root, 'Crest pivot', tuple(top), corals)
+    return root
+
+# ---------------------------------------------------------------- Reefback: Tidetusk, two curling tusks
+def tidetusk():
+    sid = 'tidetusk'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaTidetusk')
+    Z0, Z1 = -.42, .36
+    prof = nose_profile(.42, .64, .29, .29, .28)
+    dome = {}
+    def shell(body):
+        dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1, .58, .31)
+        # Two tusks curling up from its lower jaw.
+        for side in (-1, 1):
+            start = on_body(prof, Z0, Z1, .06, 180 if side < 0 else 0, .9) + Vector((0, -.05, 0))
+            pts = [tuple(start + Vector((side * .045 * u, .15 * u * u - .03 * u, -.12 * u))) for u in (0, .25, .5, .75, 1)]
+            taper_tube(body, pts, .026, .008, S('Fin'), 12)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.086, .104, .072), 30, .77, None, -12, (.046, .027, .015),
+                  -.045, (.04, .024, (1.2, .9, 1.0)), .62, .026, extra=shell)
+    flippers(root, sid, (.26, -.07, -.06), (.15, .024, .068), -26)
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .36), ((-30, .12, .05, S('Fin')), (30, .12, .05, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def corals(part):
+        for az, el, h, turn in ((20, 64, .12, 20), (-160, 58, .1, -160), (110, 52, .08, 110)):
+            coral(part, sid, on_dome(c, R, az, el, .97), h, 10, turn)
+        brain_coral(part, sid, on_dome(c, R, -70, 62, .98), .03)
+    simple_part(root, 'Crest pivot', tuple(top), corals)
+    return root
+
+# ---------------------------------------------------------------- Reefback: Wavebreaker, a shell keel like a breaking wave
+def wavebreaker():
+    sid = 'wavebreaker'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaWavebreaker')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.38, .68, .27, .28, .25)
+    dome = {}
+    def shell(body):
+        dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1, .56, .32)
+    loft_creature(root, sid, Z0, Z1, prof, .14, 31, (.086, .104, .072), 31, .76, None, -12, (.044, .026, .015),
+                  -.036, (.036, .021, (1.2, .85, 1.0)), .6, .026, extra=shell)
+    flippers(root, sid, (.24, -.06, -.07), (.16, .022, .065), -30, -10)
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.036, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .38), ((-32, .14, .05, S('Fin')), (32, .14, .05, S('Fin'))), .02)
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def keel(part):
+        # A keel of curling wave crests along its shell, their tips the accent, and one coral at the back.
+        for az_t, h in ((.15, .1), (.4, .13), (.65, .11)):
+            base = Vector((0, c.y + R[1] * .97, c.z - R[2] * .55 + R[2] * 1.1 * az_t))
+            tip = base + Vector((0, h, -.05))
+            flame(part, base, tip, .035, S('Fin'), S('Accent'))
+        coral(part, sid, on_dome(c, R, 180, 52, .97), .09, 20, 180, 3, .022)
+    simple_part(root, 'Crest pivot', tuple(top), keel)
+    return root
+
+# ---------------------------------------------------------------- Reefback crown: Coralossus, a whole reef and a crown on its shell
+def coralossus():
+    sid = 'coralossus'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaCoralossus')
+    Z0, Z1 = -.44, .42
+    prof = nose_profile(.42, .64, .33, .33, .3)
+    dome = {}
+    def shell(body):
+        c, R = dome['c'], dome['R'] = coral_shell(body, sid, prof, Z0, Z1, .55, .34, .95, .68)
+        for az, el, r in ((70, 22, .024), (-70, 22, .024), (150, 26, .022), (-150, 26, .022), (20, 20, .02), (-20, 20, .02)):
+            p = on_dome(c, R, az, el, .98)
+            barnacle(body, sid, p, dome_normal(c, R, p), r)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.1, .118, .08), 30, .77, None, -12, (.05, .03, .017),
+                  -.044, (.044, .025, (1.2, .9, 1.0)), .62, .03, extra=shell)
+    flippers(root, sid, (.31, -.07, -.06), (.2, .028, .09), -20, -12)
+    def tail(part):
+        ellipsoid(part, (0, 0, .42), (.045, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .43), ((-34, .16, .07, S('Fin')), (0, .12, .05, S('Accent')), (34, .16, .07, S('Fin'))), .024)
+    simple_part(root, 'Tail pivot', (0, 0, .4), tail)
+    c, R = dome['c'], dome['R']
+    top = Vector((c.x, c.y + R[1], c.z))
+    def reef(part):
+        # A whole reef: tall and short corals all round, and a gold crown nested among them.
+        gold_crown(part, tuple(top + Vector((0, .02, 0))), .095, 5, .075, 'DK_Gold', 0)
+        taper_tube(part, [tuple(top + Vector((0, -.01, 0))), tuple(top + Vector((0, .02, 0)))], .05, .045, S('Fin'), 16)
+        for az, el, h, arms in ((0, 54, .09, 3), (60, 52, .11, 3), (-60, 52, .12, 3), (120, 50, .1, 3), (-120, 50, .11, 2), (180, 56, .12, 3)):
+            coral(part, sid, on_dome(c, R, az, el, .97), h, -18 * math.cos(math.radians(az)), az, arms, .03)
+        for az, el in ((30, 40), (-30, 40), (90, 40), (-90, 40), (150, 42), (-150, 42)):
+            brain_coral(part, sid, on_dome(c, R, az, el, .98), .034)
+    simple_part(root, 'Crest pivot', tuple(top), reef)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Brinefin, the plain salt-striped fish
+def brinefin():
+    sid = 'brinefin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaBrinefin')
+    Z0, Z1 = -.42, .36
+    prof = nose_profile(.36, .72, .22, .23, .2)
+    loft_creature(root, sid, Z0, Z1, prof, .13, 31, (.08, .096, .066), 31, .76, None, -12, (.042, .025, .015),
+                  -.034, (.034, .019, (1.2, .82, 1.0)), .6, .026, marks=salt_stripe(sid, Z0, Z1, prof=prof), rings=40, seg=48)
+    side_fins(root, sid, (.18, -.06, -.04), [((.03, -.05, .1), (.024, .05, .12), (12, 16, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.032, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .36), ((-30, .15, .05, S('Fin')), (30, .15, .05, S('Fin'))), .02)
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def sail(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .48, .08, .12)
+    simple_part(root, 'Crest pivot', (0, .2, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Pebblejaw, chunky, pebble-spotted, a strong jaw
+def pebblejaw():
+    sid = 'pebblejaw'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaPebblejaw')
+    Z0, Z1 = -.38, .34
+    prof = nose_profile(.48, .6, .27, .27, .27)
+    stripe = salt_stripe(sid, Z0, Z1, .3, .82, .14, prof=prof)
+    def pebbles(body):
+        for t, ang, r in ((.4, 60, .018), (.52, 120, .016), (.62, 70, .015), (.35, 135, .016), (.7, 105, .013), (.48, 40, .014)):
+            ellipsoid(body, tuple(on_body(prof, Z0, Z1, t, ang, .98)), (r * 1.3, r, r * 1.4), S('Belly'), (0, 0, 0), 12, 8)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.088, .104, .072), 32, .76, None, -12, (.046, .027, .015),
+                  -.052, (.054, .03, (1.25, .95, 1.0)), .6, .018, marks=stripe, extra=pebbles, rings=36, seg=44)
+    side_fins(root, sid, (.24, -.08, -.02), [((.03, -.03, .06), (.03, .06, .085), (0, 22, -30), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .33), (.036, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .34), ((-28, .1, .055, S('Fin')), (28, .1, .055, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .31), tail)
+    def sail(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .06, .1, 24)
+    simple_part(root, 'Crest pivot', (0, .26, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Seaspark, a quick little fish whose stripe sparkles
+def seaspark():
+    sid = 'seaspark'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaSeaspark')
+    Z0, Z1 = -.38, .34
+    prof = nose_profile(.36, .72, .2, .21, .18)
+    def sparkles(body):
+        beads = []
+        for side in (-1, 1):
+            for t in (.3, .4, .5, .6, .7, .8):
+                p = on_body(prof, Z0, Z1, t, 0 if side > 0 else 180, 1.0)
+                beads.append((tuple(p + Vector((side * .004, 0, 0))), .012))
+        dew_beads(body, sid, beads)
+    loft_creature(root, sid, Z0, Z1, prof, .13, 31, (.078, .094, .064), 31, .76, None, -12, (.04, .024, .014),
+                  -.032, (.032, .018, (1.2, .82, 1.0)), .6, .026, marks=salt_stripe(sid, Z0, Z1, .24, .88, .12, prof=prof), extra=sparkles, rings=40, seg=48)
+    side_fins(root, sid, (.16, -.05, -.04), [((.025, -.04, .08), (.02, .045, .1), (12, 16, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .33), (.03, .042, .046), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .34), ((-32, .13, .045, S('Fin')), (32, .13, .045, S('Fin'))), .018)
+    simple_part(root, 'Tail pivot', (0, .01, .31), tail)
+    def sail(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .46, .07, .09, 32)
+    simple_part(root, 'Crest pivot', (0, .18, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Foamtail, its tail tipped with foam
+def foamtail():
+    sid = 'foamtail'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaFoamtail')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.38, .7, .23, .24, .21)
+    loft_creature(root, sid, Z0, Z1, prof, .13, 31, (.082, .098, .068), 31, .76, None, -12, (.042, .025, .015),
+                  -.034, (.034, .019, (1.2, .82, 1.0)), .6, .026, marks=salt_stripe(sid, Z0, Z1, prof=prof), rings=40, seg=48)
+    side_fins(root, sid, (.18, -.06, -.04), [((.03, -.05, .1), (.024, .05, .12), (12, 16, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.032, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .36), ((-30, .15, .055, S('Fin')), (30, .15, .055, S('Fin'))), .02)
+        # Foam: clusters of little bubbles at the tips of its tail.
+        for a in (-30, 30):
+            tip = Vector((0, .01, .36)) + rot((0, 0, .27), (a, 0, 0))
+            for off, r in (((0, 0, 0), .028), ((.0, .025, -.02), .02), ((0, -.022, -.018), .018), ((0, .005, .025), .016)):
+                ellipsoid(part, tuple(tip + Vector(off)), (r, r, r), S('Accent'), (0, 0, 0), 12, 8)
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def sail(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .48, .075, .11)
+    simple_part(root, 'Crest pivot', (0, .2, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Surfskipper, long wing fins for skimming the surf
+def surfskipper():
+    sid = 'surfskipper'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaSurfskipper')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.36, .74, .21, .21, .19)
+    loft_creature(root, sid, Z0, Z1, prof, .13, 31, (.08, .096, .066), 31, .76, None, -12, (.042, .025, .015),
+                  -.033, (.033, .019, (1.2, .82, 1.0)), .6, .026, marks=salt_stripe(sid, Z0, Z1, .22, .88, .13, prof=prof), rings=40, seg=48)
+    # Long wing fins, spread wide like a flying fish's.
+    side_fins(root, sid, (.16, -.02, -.06), [((.2, .0, .08), (.22, .016, .08), (0, -16, -4), 'Fin', 1.0, 'Belly')])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.03, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .36), ((-26, .17, .045, S('Fin')), (26, .17, .045, S('Fin'))), .018)
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def sail(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .05, .09, 34)
+    simple_part(root, 'Crest pivot', (0, .19, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Shoalglider, long and slender, two stripes
+def shoalglider():
+    sid = 'shoalglider'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaShoalglider')
+    Z0, Z1 = -.46, .38
+    prof = nose_profile(.32, .76, .19, .2, .17)
+    upper = salt_stripe(sid, Z0, Z1, .2, .9, .08, .3, prof=prof)
+    def stripes(body):
+        upper(body)
+        salt_stripe(sid, Z0, Z1, .24, .86, .07, -.12, prof=prof)(body)
+    loft_creature(root, sid, Z0, Z1, prof, .12, 31, (.074, .09, .062), 31, .76, None, -12, (.04, .024, .014),
+                  -.031, (.031, .018, (1.2, .82, 1.0)), .6, .024, marks=stripes, rings=44, seg=48)
+    side_fins(root, sid, (.15, -.05, -.06), [((.03, -.04, .1), (.02, .04, .12), (12, 16, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .37), (.028, .042, .048), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .38), ((-24, .16, .042, S('Fin')), (24, .16, .042, S('Fin'))), .018)
+    simple_part(root, 'Tail pivot', (0, .01, .35), tail)
+    def sail(part):
+        # A long, low dorsal ridge.
+        dorsal_sail(part, sid, prof, Z0, Z1, .52, .045, .2, 12)
+    simple_part(root, 'Crest pivot', (0, .17, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale: Tidepip, a little round fish with a short stripe
+def tidepip():
+    sid = 'tidepip'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaTidepip')
+    Z0, Z1 = -.34, .3
+    prof = nose_profile(.5, .6, .26, .26, .25)
+    loft_creature(root, sid, Z0, Z1, prof, .17, 28, (.1, .118, .08), 30, .78, None, -12, (.048, .028, .016),
+                  -.036, (.032, .019, (1.15, .92, 1.0)), .64, .032, marks=salt_stripe(sid, Z0, Z1, .36, .82, .15, prof=prof), rings=36, seg=44)
+    side_fins(root, sid, (.22, -.05, .0), [((.025, -.02, .05), (.022, .05, .07), (0, 20, -30), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .3), (.032, .044, .045), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .31), ((-28, .09, .05, S('Fin')), (28, .09, .05, S('Fin'))), .02)
+    simple_part(root, 'Tail pivot', (0, 0, .28), tail)
+    def sail(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .05, .07, 20)
+    simple_part(root, 'Crest pivot', (0, .24, .0), sail)
+    return root
+
+# ---------------------------------------------------------------- Saltscale crown: Pearl Emperor, pearls along its stripe and a crown
+def pearlemperor():
+    sid = 'pearlemperor'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaPearlemperor')
+    Z0, Z1 = -.44, .42
+    prof = nose_profile(.4, .68, .28, .3, .26)
+    def pearls(body):
+        beads = []
+        for side in (-1, 1):
+            for t in (.3, .42, .54, .66, .78):
+                p = on_body(prof, Z0, Z1, t, 0 if side > 0 else 180, 1.0)
+                beads.append((tuple(p + Vector((side * .006, 0, 0))), .018))
+        dew_beads(body, sid, beads, 'Belly')
+    loft_creature(root, sid, Z0, Z1, prof, .14, 30, (.098, .116, .08), 30, .77, None, -12, (.05, .03, .017),
+                  -.04, (.04, .023, (1.2, .85, 1.0)), .62, .03, marks=salt_stripe(sid, Z0, Z1, .22, .88, .17, prof=prof), extra=pearls, rings=40, seg=48)
+    # Long flowing silver fins, rimmed in pearl.
+    side_fins(root, sid, (.24, -.05, -.02), [((.06, -.08, .14), (.03, .08, .2), (14, 22, -40), 'Fin', 1.0, 'Belly')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .41), (.045, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
+        rimmed_lobes(part, (0, 0, .42), ((-30, .24, .08, S('Fin')), (30, .24, .08, S('Fin'))), S('Belly'))
+    simple_part(root, 'Tail pivot', (0, 0, .39), tail)
+    def crown(part):
+        top = on_body(prof, Z0, Z1, .26, 90, 1.0)
+        gold_crown(part, (0, top.y + .005, top.z), .09, 5, .08, 'DK_Gold', -10)
+        for k in range(5):
+            a = math.tau * (k + .5) / 5
+            base = Vector((0, top.y + .005, top.z)) + rot((.09 * math.cos(a), 0, .09 * math.sin(a)), (-10, 0, 0))
+            dew_beads(part, sid, [(tuple(base + rot((0, .1, 0), (-10, 0, 0))), .02)], 'Belly')
+        dorsal_sail(part, sid, prof, Z0, Z1, .56, .08, .16, 26)
+    simple_part(root, 'Crest pivot', (0, .3, -.12), crown)
+    return root
+
+WAVE3_BUILDERS = {'shellback': shellback, 'coralhorn': coralhorn, 'clamjaw': clamjaw, 'kelpgrazer': kelpgrazer,
+                  'barnaclebrow': barnaclebrow, 'tidetusk': tidetusk, 'wavebreaker': wavebreaker, 'coralossus': coralossus,
+                  'brinefin': brinefin, 'pebblejaw': pebblejaw, 'seaspark': seaspark, 'foamtail': foamtail,
+                  'surfskipper': surfskipper, 'shoalglider': shoalglider, 'tidepip': tidepip, 'pearlemperor': pearlemperor}
+
 CREATURE_BUILDERS = {'pondlet': pondlet, 'bubblebelly': bubblebelly, 'ribbonfin': ribbonfin, 'lanternfin': lanternfin,
-                     'driftwing': driftwing, **WAVE1_BUILDERS, **WAVE2_BUILDERS}
+                     'driftwing': driftwing, **WAVE1_BUILDERS, **WAVE2_BUILDERS, **WAVE3_BUILDERS}
 assert [sid for sid, _, _, _ in SPECIES] == list(CREATURE_BUILDERS), 'every species has its builder, in the atlas order'
 
 # ================================================================ AD-C: the humanoid rig (front +Z)
@@ -2678,7 +3285,7 @@ if not args.no_render:
 blend = SOURCE / 'EvolutionShop_DioramaKit.blend'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 and 2)',
+    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 3)',
     'origin': {'author': 'Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)',
                'external_sources': [], 'license': 'Original project work; no third-party source or asset license',
                'paid_generation': False, 'external_uploads': False},

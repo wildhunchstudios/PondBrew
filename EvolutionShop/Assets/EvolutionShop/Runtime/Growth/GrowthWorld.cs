@@ -777,7 +777,15 @@ namespace EvolutionShop
         }
 
         /// <summary>Stand and glass heights by container: the Starter tank at 0.9 m, the Large tank lower and taller, the Show tank lowest and tallest.</summary>
-        static (float stand, float glass) Proportions(string kind) => kind == "show" ? (0.55f, 1.0f) : kind == "large" ? (0.8f, 0.75f) : kind == "rack" ? (0.7f, 0.5f) : (0.9f, 0.62f);
+        // GR-12: a lab rack holds large creatures, so its water is as deep as a Large tank's (its stand lower, its top where it was).
+        static (float stand, float glass) Proportions(string kind) => kind == "show" ? (0.55f, 1.0f) : kind == "large" ? (0.8f, 0.75f) : kind == "rack" ? (0.45f, 0.75f) : (0.9f, 0.62f);
+
+        /// <summary>The water inside a container of a kind (width, height, depth), which its creatures swim in.</summary>
+        public static Vector3 WaterOf(string kind)
+        {
+            var def = GrowthContent.Container(kind);
+            return new Vector3(def.Width - 0.06f, Proportions(kind).glass - 0.12f, def.Depth - 0.06f);
+        }
 
         Material plant;
 
@@ -870,7 +878,7 @@ namespace EvolutionShop
             return new TankView
             {
                 Root = root, ContainerId = c.Id, Place = c.Place, Signature = TankView.SignatureOf(c), HarmonyFrame = frame, ShowLight = showLight,
-                Inner = new Vector3(W - 0.06f, waterH, D - 0.06f), WaterY = waterY, Width = W, Depth = D, Top = top,
+                Inner = WaterOf(c.Kind), WaterY = waterY, Width = W, Depth = D, Top = top,
             };
         }
 
@@ -1079,7 +1087,10 @@ namespace EvolutionShop
                     float L = creature.Length;
                     // Bounds inside the water for this creature's reach and height (GR-12: a kit creature's sails, tails and
                     // lanterns too); the path fills them.
-                    float hx = Mathf.Max(0.02f, Inner.x * 0.5f - creature.Reach - 0.03f), hz = Mathf.Max(0.02f, Inner.z * 0.5f - creature.Reach - 0.03f), hy = Mathf.Max(0.01f, Inner.y * 0.5f - creature.HalfHeight - 0.03f);
+                    // (GR-12: through its trick and habit too, at its peek size, which its water sets.)
+                    creature.FitTo(Inner);
+                    float grow = creature.PeekScale;
+                    float hx = Mathf.Max(0.02f, Inner.x * 0.5f - creature.TrickReach * grow - 0.03f), hz = Mathf.Max(0.02f, Inner.z * 0.5f - creature.TrickReach * grow - 0.03f), hy = Mathf.Max(0.01f, Inner.y * 0.5f - creature.TrickHalf * grow - 0.03f);
                     float speed = (reduced ? 0.5f : 1f) * (L > 0.2f ? 0.6f : L > 0.1f ? 0.8f : 1f) * Mathf.Clamp(1.4f / Mathf.Max(0.5f, Inner.x), 0.45f, 1f);
                     // A school shares its leader's path and keeps a loose formation behind it; others wander alone.
                     int hash = Stable(creature.Species);

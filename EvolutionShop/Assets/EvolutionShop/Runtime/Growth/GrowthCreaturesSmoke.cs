@@ -9,15 +9,15 @@ using UnityEngine.InputSystem;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-12's Windows route (-evolutionGrowthCreaturesSmoke): waves 1 and 2's 40 kit creatures in the greybox. The creatures
-    /// start point (a tank for each family, every species in two colours); each family's tank; a small creature in peek;
+    /// GR-12's Windows route (-evolutionGrowthCreaturesSmoke): waves 1 to 3's 56 kit creatures in the greybox. The creatures
+    /// start point (tanks for each family, every species in two colours); each family's tank; a small creature in peek;
     /// lingering on a creature in peek plays its trick with its burst (a family's at the species' own tempo, and each crown's
     /// own); every kit creature measured inside its tank's water every frame; Reduced motion plays no trick; the cards and
     /// the journal in the atlas's colours; frame times with the three tanks in view.
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string CreaturesScenarioText = "GR-12 creatures, waves 1 and 2: the creatures start point (a tank for each of the Brookkin, Sparkline, Airfin, Cinderling and Dewling, all 40 species in two colours), each family's tank, a small creature in peek, tricks played by lingering on a creature in peek (a family's at its species' tempo, each crown's own) with their bursts, every kit creature inside its tank's water every frame, no trick with Reduced motion, the journal and cards in the atlas's colours, frame times";
+        const string CreaturesScenarioText = "GR-12 creatures, waves 1 to 3: the creatures start point (tanks for each of the Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale, all 56 species in two colours), each family's tank, a small creature in peek, tricks played by lingering on a creature in peek (a family's at its species' tempo, each crown's own) with their bursts, every kit creature inside its tank's water every frame, no trick with Reduced motion, the journal and cards in the atlas's colours, frame times";
 
         readonly Dictionary<GrowthCreatureView, Renderer[]> kitParts = new Dictionary<GrowthCreatureView, Renderer[]>();
         float containWorst;
@@ -71,8 +71,25 @@ namespace EvolutionShop
             LookAt(feet, creature.transform.position);
             yield return Wait(() => { LookAt(feet, creature.transform.position); Contain(); return s.Peeking && s.PeekCreature == creature; }, 8, "peek at the " + species);
             Check(s.PeekCreature == creature && creature.Highlighted, "Peek puts the " + species + " under the reticle (" + s.FocusName(out _) + ")");
-            yield return Wait(() => { LookAt(feet, creature.transform.position); Contain(); return creature.TrickAge >= 0; }, GrowthCreatureView.TrickLinger + 3, species + "'s trick");
-            Check(creature.TrickAge >= 0 && GrowthCreatureView.TricksPlayed == played + 1, "Lingering on it " + GrowthCreatureView.TrickLinger.ToString("0.0") + " s plays its trick: " + why);
+            // Linger as a player would: if the reticle keeps leaving it, keep aiming at it, up to three tries; every frame
+            // notes how the linger went, so a trick that never plays says why.
+            int frames = 0, away = 0, farLook = 0, tries = 0; float streak = 0, longest = 0;
+            while (creature.TrickAge < 0 && tries < 3)
+            {
+                tries++;
+                float until = Time.realtimeSinceStartup + GrowthCreatureView.TrickLinger + 3;
+                while (creature.TrickAge < 0 && Time.realtimeSinceStartup < until)
+                {
+                    LookAt(feet, creature.transform.position); Contain();
+                    yield return null;
+                    frames++;
+                    if (creature.Detail != 0) farLook++;
+                    if (s.PeekCreature == creature) { streak += Time.unscaledDeltaTime; longest = Mathf.Max(longest, streak); } else { away++; streak = 0; }
+                }
+            }
+            string linger = frames + " frames, the reticle away " + away + ", the longest stretch on it " + longest.ToString("0.00") + " s, its distant look " + farLook + ", " + tries + " tr" + (tries == 1 ? "y" : "ies");
+            Check(creature.TrickAge >= 0 && GrowthCreatureView.TricksPlayed == played + 1, "Lingering on it " + GrowthCreatureView.TrickLinger.ToString("0.0") + " s plays its trick: " + why + " (" + linger + ")");
+            if (creature.TrickAge < 0) yield break;
             float duration = DioramaTricks.Duration(species);
             float shotAt = Time.realtimeSinceStartup + duration * 0.45f;
             while (Time.realtimeSinceStartup < shotAt) { LookAt(feet, creature.transform.position); Contain(); yield return null; }
@@ -83,22 +100,22 @@ namespace EvolutionShop
 
         IEnumerator CreaturesScenario()
         {
-            limitations.Add("GR-12 creatures route: the creatures start point (GrowthStarts.CreaturesStart: the spaces start with shop unit C open, every Brookkin, Sparkline, Airfin, Cinderling and Dewling known in all four colours, Show tanks of the Brookkin, Sparkline and Airfin on b4, c1 and c2 and Large tanks fitted to 16 spaces of the Cinderling on c4 and the Dewling on c6, each holding its species in Classic and one other colour, the medium families' second colours beside them on c3 and c5) is a labelled fixture. The view is aimed as a player would aim it, following a creature in peek until it is under the reticle; everything runs at the game's own pace. Water containment is measured on every kit creature's parts every frame of the route's swims and tricks (each renderer's own box, turned into its tank's space). Reduced motion is switched in the session as the pause card does. Frame times are measured with the game's 120 fps cap. The models are the kit's (Blender review renders in ArtSource/DioramaKit); the greybox's rooms and lighting are placeholders.");
+            limitations.Add("GR-12 creatures route: the creatures start point (GrowthStarts.CreaturesStart: the spaces start with shop unit C and the exhibition hall open, every Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale known in all four colours, Show tanks of the Brookkin, Sparkline and Airfin on b4, c1 and c2 and Large tanks fitted to 16 spaces of the Cinderling on c4, the Dewling on c6, the Reefback on the hall's e1 and e2 and the Saltscale on b3, each holding its species in Classic and one other colour, the second colours the family tanks have no room for beside them on c3, c5, b1, b2 and a3; the spaces start's own small tanks on a3, b1 and b2 emptied and sold) is a labelled fixture. The view is aimed as a player would aim it, following a creature in peek until it is under the reticle; everything runs at the game's own pace. Water containment is measured on every kit creature's parts every frame of the route's swims and tricks (each renderer's own box, turned into its tank's space). Reduced motion is switched in the session as the pause card does. Frame times are measured with the game's 120 fps cap. The models are the kit's (Blender review renders in ArtSource/DioramaKit); the greybox's rooms and lighting are placeholders.");
             yield return Opening();
             TakeInput();
             s.LoadFixture(GrowthStarts.Make(GrowthStarts.Creatures));
             var shop = s.Shop;
             yield return null; yield return null;
             var wave = DioramaSpecies.All.Select(x => x.Id).ToList();
-            // The seven tanks of the look (the era 4 start's own stocked tanks stay as they were).
-            var places = new[] { "b4", "c1", "c2", "c3", "c4", "c5", "c6" };
+            // The thirteen tanks of the look (the era 4 start's own stocked tanks on a1 and a2 stay as they were).
+            var places = new[] { "b4", "c1", "c2", "c3", "c4", "c5", "c6", "e1", "e2", "b1", "b2", "b3", "a3" };
             var mine = shop.ShopContainers.Where(c => places.Contains(c.Place)).SelectMany(c => c.Occupants).ToList();
             var views = s.World.Tanks.Values.Where(t => places.Contains(t.Place)).SelectMany(t => t.Creatures.Values).ToList();
-            Check(wave.Count == 40 && wave.All(id => mine.Count(x => x.Species == id) == 2) && mine.Count == 80,
-                "Fixture: all 40 of waves 1 and 2 (the Brookkin, Sparkline, Airfin, Cinderling and Dewling, eight each) in the look's seven tanks, two of each");
-            Check(views.Count == 80 && views.All(v => v.Kit != null && v.Kit.IsDiorama && v.Kit.DioramaSpecies.Id == v.Species), "Every one is its kit model");
+            Check(wave.Count == 56 && wave.All(id => mine.Count(x => x.Species == id) == 2) && mine.Count == 112,
+                "Fixture: all 56 of waves 1 to 3 (the Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale, eight each) in the look's thirteen tanks, two of each");
+            Check(views.Count == 112 && views.All(v => v.Kit != null && v.Kit.IsDiorama && v.Kit.DioramaSpecies.Id == v.Species), "Every one is its kit model");
             var everywhere = s.World.Tanks.Values.SelectMany(t => t.Creatures.Values).ToList();
-            Check(everywhere.All(v => (v.Kit != null) == DioramaSpecies.TryGet(v.Species, out _)), "In every tank, the five families' creatures are kit models and the other families' are still placeholders (" +
+            Check(everywhere.All(v => (v.Kit != null) == DioramaSpecies.TryGet(v.Species, out _)), "In every tank, the seven families' creatures are kit models and the other families' are still placeholders (" +
                 everywhere.Count(v => v.Kit == null) + " placeholders)");
             Check(views.All(v =>
             {
@@ -106,22 +123,22 @@ namespace EvolutionShop
                 return v.Kit.DioramaVariant.ToString() == colour.ToString();
             }) && mine.Select(x => x.Colour).Distinct().Count() == 4, "Each shows its specimen's colour from the variant atlas (Classic, Sunny, Deep and Shimmer all here)");
             Check(views.All(v => Mathf.Approximately(v.Length, GrowthCreatureView.LengthOf(GrowthContent.Get(v.Species)))) &&
-                views.Where(v => GrowthContent.Get(v.Species).Kind != SpeciesKind.Crown).Select(v => v.Length).Distinct().Count() == 2 &&
+                views.Where(v => GrowthContent.Get(v.Species).Kind != SpeciesKind.Crown).Select(v => v.Length).Distinct().Count() == 3 &&
                 views.Where(v => GrowthContent.Get(v.Species).Kind == SpeciesKind.Crown).All(v => v.Length > GrowthCreatureView.LengthOf(GrowthContent.Get(v.Species).Size)),
-                "Each at its size class (small 7.5 cm, the Airfin and the Cinderling medium 15 cm), the crowns grander at the top of theirs");
-            Check(wave.All(id => System.Enum.GetValues(typeof(Colour)).Cast<Colour>().All(c => shop.Journal.Contains(GrowthShop.JournalKey(id, c)))), "All 160 of waves 1 and 2's journal entries known");
+                "Each at its size class (small 7.5 cm; the Airfin, Cinderling and Saltscale medium 15 cm; the Reefback large 32 cm), the crowns grander at the top of theirs");
+            Check(wave.All(id => System.Enum.GetValues(typeof(Colour)).Cast<Colour>().All(c => shop.Journal.Contains(GrowthShop.JournalKey(id, c)))), "All 224 of waves 1 to 3's journal entries known");
 
             // Each family's Show tank, from where a visitor browses.
             foreach (var (place, shot, family) in new[] { ("b4", "170-brookkin-tank", "Brookkin"), ("c1", "171-sparkline-tank", "Sparkline"), ("c2", "172-airfin-tank", "Airfin"),
-                ("c4", "183-cinderling-tank", "Cinderling"), ("c6", "184-dewling-tank", "Dewling") })
+                ("c4", "183-cinderling-tank", "Cinderling"), ("c6", "184-dewling-tank", "Dewling"), ("e1", "191-reefback-tank", "Reefback"), ("b3", "192-saltscale-tank", "Saltscale") })
             {
                 var p = GrowthWorld.Places[place];
                 LookAt(p.Browse + (p.Browse - p.Position).normalized * 0.9f, p.Position + new Vector3(0, 1.1f, 0));
                 yield return Swim(2.5f);
                 var tank = s.World.Tanks.Values.First(t => t.Place == place);
-                bool medium = family == "Airfin" || family == "Cinderling";
-                Check(tank.Creatures.Count == 16 / (medium ? 2 : 1) && tank.Creatures.Values.All(v => v.Kit.DioramaSpecies.Family.ToString() == family),
-                    "The " + family + "'s tank on " + place + ": its eight species swimming");
+                int size = family == "Reefback" ? 4 : family == "Airfin" || family == "Cinderling" || family == "Saltscale" ? 2 : 1;
+                Check(tank.Creatures.Count == 16 / size && tank.Creatures.Values.All(v => v.Kit.DioramaSpecies.Family.ToString() == family),
+                    "The " + family + "'s tank on " + place + ": " + (size == 4 ? "four of its large species" : "its eight species") + " swimming");
                 yield return Shot(shot);
             }
 
@@ -137,6 +154,10 @@ namespace EvolutionShop
             yield return Linger("c6", "dewdrop", "186-trick-dewdrop-sprinkle", "the Dewling's sprinkle (a shake from nose to tail, its dew beads scattering droplets), at the Dewdrop's tempo");
             yield return Linger("c4", "phoenixfry", "187-trick-phoenixfry-rebirth", "the Phoenix Fry's own rebirth (a somersault through its blazing flames, sparks twice)");
             yield return Linger("c6", "rainbowregent", "188-trick-rainbowregent-rainbow", "the Rainbow Regent's own rainbow (a slow royal turn, its rainbow tail sweeping, droplets three times)");
+            yield return Linger("e1", "shellback", "193-trick-shellback-bloom", "the Reefback's bloom (a slow bow, its corals swaying open, a plankton cloud), at the Shellback's tempo");
+            yield return Linger("b3", "brinefin", "194-trick-brinefin-dart", "the Saltscale's dart (a quick dart and turn, its salt stripe flashing silver, a sparkle of salt), at the Brinefin's tempo");
+            yield return Linger("e2", "coralossus", "195-trick-coralossus-reef", "Coralossus's own reef (its whole reef blooming as it turns slowly once, plankton three times)");
+            yield return Linger("b3", "pearlemperor", "196-trick-pearlemperor-pearl", "the Pearl Emperor's own pearl (two royal darts round, its stripe flashing silver on each)");
 
             // Reduced motion: the same linger plays nothing.
             s.ReducedMotion = true;
@@ -159,14 +180,15 @@ namespace EvolutionShop
                 DioramaSpecies.TryGet(def.Id, out var kit);
                 var atlas = DioramaVariants.Color(kit.Index, (DioramaVariant)System.Enum.Parse(typeof(DioramaVariant), c.ToString()), 0); atlas.a = 1;
                 return Vector4.Distance(GrowthCreatureView.ColourOf(def, c), atlas) < 0.005f;
-            })), "Cards and the journal colour waves 1 and 2's creatures from the atlas, as they swim");
+            })), "Cards and the journal colour waves 1 to 3's creatures from the atlas, as they swim");
             s.SetCard(GrowthCard.None); yield return null;
             yield return Press(Key.Tab);
             yield return new WaitForSeconds(0.25f);
             string journal = s.Ui.CardText();
             Check(s.Card == GrowthCard.Journal && journal.Contains("Brookkin · small · 8/8 · colours 32/32") && journal.Contains("Sparkline · small · 8/8 · colours 32/32") &&
-                journal.Contains("Airfin · medium · 8/8 · colours 32/32") && journal.Contains("Cinderling · medium · 8/8 · colours 32/32") && journal.Contains("Dewling · small · 8/8 · colours 32/32"),
-                "Tab: the journal has the five families complete, eight species in four colours each");
+                journal.Contains("Airfin · medium · 8/8 · colours 32/32") && journal.Contains("Cinderling · medium · 8/8 · colours 32/32") && journal.Contains("Dewling · small · 8/8 · colours 32/32") &&
+                journal.Contains("Reefback · large · 8/8 · colours 32/32") && journal.Contains("Saltscale · medium · 8/8 · colours 32/32"),
+                "Tab: the journal has the seven families complete, eight species in four colours each");
             Check(s.Ui.ScrollTo("Brookkin ·"), "Scroll to the Brookkin's chart");
             yield return Shot("180-journal-brookkin");
             Check(s.Ui.ScrollTo("Airfin ·"), "Scroll to the Airfin's chart");
@@ -175,6 +197,10 @@ namespace EvolutionShop
             yield return Shot("189-journal-cinderling");
             Check(s.Ui.ScrollTo("Dewling ·"), "Scroll to the Dewling's chart");
             yield return Shot("190-journal-dewling");
+            Check(s.Ui.ScrollTo("Reefback ·"), "Scroll to the Reefback's chart");
+            yield return Shot("197-journal-reefback");
+            Check(s.Ui.ScrollTo("Saltscale ·"), "Scroll to the Saltscale's chart");
+            yield return Shot("198-journal-saltscale");
             s.SetCard(GrowthCard.None); yield return null;
 
             // A long look across the three tanks at the game's own pace: containment and frame times.

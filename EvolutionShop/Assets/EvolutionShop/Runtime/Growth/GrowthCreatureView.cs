@@ -7,7 +7,7 @@ namespace EvolutionShop
 {
     /// <summary>
     /// A creature at its size class (GR.5: a small one is 6-9 cm, a medium 12-18, a large 25-40). GR-12: a species the diorama
-    /// kit has (waves 1 and 2: the Brookkin, Sparkline, Airfin, Cinderling and Dewling) is its kit model in its colour from the variant atlas, its body set
+    /// kit has (waves 1 to 3: the Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale) is its kit model in its colour from the variant atlas, its body set
     /// to the class's length, with its family's strokes and habit at its own tempo, blinks and pupils on the player, and its
     /// trick when the player lingers on it in peek. Any other is GR-02's placeholder, with a head 1.3 times the usual size for
     /// small species (GR.14 readability), eyes, a tail and a fin, coloured from its recipe's cultures, with (GR-03) its
@@ -24,10 +24,31 @@ namespace EvolutionShop
             get => reserved;
             set { if (reserved == value) return; reserved = value; if (reservedTag) reservedTag.gameObject.SetActive(value); }
         }
+        /// <summary>Peek enlarges the creature under the reticle (GR-02: 1.35 times, for readability), as far as its tank's water
+        /// lets it be enlarged with its trick at its widest (GR-12: less for a large crown in a Large tank; FitTo).</summary>
         public bool Highlighted
         {
             get => highlighted;
-            set { highlighted = value; transform.localScale = Vector3.one * (value ? 1.35f : 1f); }
+            set { highlighted = value; transform.localScale = Vector3.one * (value ? peekScale : 1f); }
+        }
+        public const float PeekGrowth = 1.35f;
+        float peekScale = PeekGrowth;
+        /// <summary>How far peek enlarges it in its tank (1 to PeekGrowth).</summary>
+        public float PeekScale => peekScale;
+        /// <summary>GR-12: the farthest it reaches across the water and above or below its centre through its trick and habit
+        /// (turns, rolls, bows, lifts, its crest at each moment's flare), at scale 1; a placeholder's are its Reach and HalfHeight.</summary>
+        public float TrickReach { get; private set; }
+        public float TrickHalf { get; private set; }
+
+        /// <summary>Fits its peek size to its tank's water (inner size): enlarged no further than its trick, at its widest and in
+        /// mid-water, stays inside.</summary>
+        public void FitTo(Vector3 inner)
+        {
+            float fit = Mathf.Min(PeekGrowth, (inner.y * 0.5f - 0.03f) / Mathf.Max(1e-4f, TrickHalf), (Mathf.Min(inner.x, inner.z) * 0.5f - 0.03f) / Mathf.Max(1e-4f, TrickReach));
+            fit = Mathf.Max(1, fit);
+            if (fit == peekScale) return;
+            peekScale = fit;
+            if (highlighted) transform.localScale = Vector3.one * peekScale;
         }
         Transform tail, reservedTag;
         bool reserved, highlighted;
@@ -42,13 +63,21 @@ namespace EvolutionShop
         /// <summary>Each species' distant look in each colour, baked once and shared by every specimen of it.</summary>
         static readonly Dictionary<string, (Mesh mesh, Material[] outlined, Material[] plain)> farLooks = new Dictionary<string, (Mesh, Material[], Material[])>();
         DioramaFamily family;
-        float phase, clock, lastTick = -1, focus, cooldown, trickAge = -1;
-        static readonly Quaternion KitTurn = Quaternion.Euler(0, 180, 0);
+        float phase, clock, lastTick = -1, focus, trickAge = -1;
+        /// <summary>When its rest after a trick ends, on the shop's clock (the t it is ticked with), so the rest runs on while its
+        /// tank is far away and not animated.</summary>
+        float restUntil = float.NegativeInfinity;
+        /// <summary>The kit model's turn to swim forward (+Z in the greybox; the kit faces -Z).</summary>
+        public static readonly Quaternion KitTurn = Quaternion.Euler(0, 180, 0);
         /// <summary>Seconds on a creature in peek before it plays its trick, and the rest after one (AD-B's linger is 1.5 s at
         /// a display; a peek is already a close look).</summary>
         public const float TrickLinger = .8f, TrickRest = 6f;
+        /// <summary>How far a creature's puffed body, swaying crest and lantern reach past its sampled poses (TrickReach, TrickHalf).</summary>
+        const float TrickSwing = 1.08f;
+        /// <summary>Each species' Reach, HalfHeight, TrickReach and TrickHalf (x, y, z, w), sampled once.</summary>
+        static readonly Dictionary<string, Vector4> envelopes = new Dictionary<string, Vector4>();
         /// <summary>A trick's lift is in the classic display's units; in the greybox it is this share of the creature's length.</summary>
-        const float LiftShare = 1.6f;
+        public const float LiftShare = 1.6f;
 
         /// <summary>GR-12: the kit creature showing this specimen; null for a placeholder.</summary>
         public CreatureVisual Kit => kit;
@@ -163,7 +192,7 @@ namespace EvolutionShop
             view.SpecimenId = specimen.Id;
             view.Species = specimen.Species;
             float L = view.Length = LengthOf(def);
-            view.Reach = 0.6f * L; view.HalfHeight = 0.4f * L;
+            view.Reach = view.TrickReach = 0.6f * L; view.HalfHeight = view.TrickHalf = 0.4f * L;
             if (BuildKit(view, root.transform, specimen, def, L)) return view;
             // GR-05: the specimen's colour (Classic, Sunny, Deep or Shimmer); a Shimmer body glows softly, under the bloom threshold.
             string key = def.Id + (specimen.Colour == Colour.Classic ? "" : "-" + specimen.Colour);
@@ -229,24 +258,94 @@ namespace EvolutionShop
             visual.SetPondletIdentity(def.Id + "#" + specimen.Id);
             view.kit = visual; view.kitHolder = holder; view.family = spec.Family;
             view.phase = PondletMotion.IdentityPhase("#" + specimen.Id);
-            // Its reach across the water and its height, from every part (fins, sails, lanterns, tails), as it rests.
-            float reach = 0, half = 0;
+            if (!envelopes.TryGetValue(def.Id, out var envelope)) envelopes[def.Id] = envelope = Envelope(def.Id, spec.Family, holder, root, L);
+            view.Reach = envelope.x; view.HalfHeight = envelope.y; view.TrickReach = envelope.z; view.TrickHalf = envelope.w;
+            Finish(view, root, specimen, L, view.HalfHeight + 0.1f * L);
+            return true;
+        }
+
+        /// <summary>A kit species' reach across the water and its height, from every part's box (fins, sails, lanterns, tails), at
+        /// scale 1: as it rests with its crest at the fullest its trick and habit ever stand it (a Cinderling's spines, a
+        /// Reefback's corals: Reach, HalfHeight; x, y), and through its trick with its habit on top (turns, rolls, bows, lifts, the
+        /// crest at each moment's flare, its fins and tail at their strokes' extremes with the trick's spread and swing:
+        /// TrickReach, TrickHalf; z, w).</summary>
+        static Vector4 Envelope(string species, DioramaFamily family, Transform holder, Transform root, float L)
+        {
+            Transform crest = null;
+            var pivots = new Transform[3];
+            foreach (var x in holder.GetComponentsInChildren<Transform>(true))
+                if (x.name == "Crest pivot") crest = crest ? crest : x;
+                else if (x.name == "Left fin pivot") pivots[0] = pivots[0] ? pivots[0] : x;
+                else if (x.name == "Right fin pivot") pivots[1] = pivots[1] ? pivots[1] : x;
+                else if (x.name == "Tail pivot") pivots[2] = pivots[2] ? pivots[2] : x;
             var toRoot = root.worldToLocalMatrix;
+            var fromRoot = Quaternion.Inverse(root.rotation);
+            Vector3 crestAt = crest ? toRoot.MultiplyPoint3x4(crest.position) : Vector3.zero;
+            // Each swinging pivot (the fins, then the tail): where it is and its axes, in the creature's space.
+            var pivotAt = new Vector3[3];
+            var axes = new Quaternion[3];
+            for (int i = 0; i < 3; i++) if (pivots[i]) { pivotAt[i] = toRoot.MultiplyPoint3x4(pivots[i].position); axes[i] = fromRoot * pivots[i].rotation; }
+            var corners = new List<(Vector3 p, bool onCrest, int on)>();
             foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
             {
                 var mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
                 if (!mesh) continue;
+                bool onCrest = crest && r.transform.IsChildOf(crest);
+                int on = -1;
+                for (int i = 0; i < 3; i++) if (pivots[i] && r.transform.IsChildOf(pivots[i])) on = i;
                 var m = toRoot * r.transform.localToWorldMatrix;
                 var b = mesh.bounds;
                 for (int k = 0; k < 8; k++)
+                    corners.Add((m.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1))), onCrest, on));
+            }
+            var stroke = CreatureVisual.DioramaStroke(family, species);
+            (float reach, float half) Extent(Quaternion turn, float lift, float flare, float fins, float tail, bool swing)
+            {
+                float grow = 1 + CreatureVisual.CrestFlareGrowth * Mathf.Clamp(flare, 0, 1.5f), far = 0, high = 0;
+                float roll = stroke.roll + Mathf.Abs(fins), yaw = Mathf.Min(CreatureVisual.DioramaTailLimit, stroke.tail + Mathf.Abs(tail));
+                foreach (var (p, onCrest, on) in corners)
                 {
-                    var p = m.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
-                    reach = Mathf.Max(reach, new Vector2(p.x, p.z).magnitude); half = Mathf.Max(half, Mathf.Abs(p.y));
+                    var at = onCrest ? crestAt + (p - crestAt) * grow : p;
+                    int ways = !swing || on < 0 ? 1 : on < 2 ? 9 : 3;
+                    for (int k = 0; k < ways; k++)
+                    {
+                        var q = at;
+                        if (ways > 1)
+                        {
+                            // A fin at each corner of its roll and pitch, the tail at either side.
+                            var e = on < 2 ? new Vector3(stroke.pitch * (k / 3 - 1), 0, roll * (k % 3 - 1)) : new Vector3(0, yaw * (k - 1), 0);
+                            q = pivotAt[on] + axes[on] * Quaternion.Euler(e) * Quaternion.Inverse(axes[on]) * (at - pivotAt[on]);
+                        }
+                        q = turn * q + Vector3.up * lift;
+                        far = Mathf.Max(far, new Vector2(q.x, q.z).magnitude); high = Mathf.Max(high, Mathf.Abs(q.y));
+                    }
+                }
+                return (far, high);
+            }
+            var (reach, half) = Extent(Quaternion.identity, 0, DioramaTricks.MaxFlare(species), 0, 0, false);
+            // Its habit's farthest pitch, roll, lift, flare, spread and swing, added to each moment of its trick.
+            float idlePitch = 0, idleRoll = 0, idleUp = 0, idleDown = 0, idleFlare = 0, idleFins = 0, idleTail = 0;
+            for (float t = 0; t < 30; t += 1 / 20f)
+            {
+                var p = DioramaTricks.Idle(species, t, 0);
+                idlePitch = Mathf.Max(idlePitch, Mathf.Abs(p.Pitch)); idleRoll = Mathf.Max(idleRoll, Mathf.Abs(p.Roll));
+                idleUp = Mathf.Max(idleUp, p.Lift); idleDown = Mathf.Min(idleDown, p.Lift); idleFlare = Mathf.Max(idleFlare, p.Flare);
+                idleFins = Mathf.Max(idleFins, Mathf.Abs(p.Fins)); idleTail = Mathf.Max(idleTail, Mathf.Abs(p.Tail));
+            }
+            float trickReach = reach, trickHalf = half, d = DioramaTricks.Duration(species);
+            var unturn = Quaternion.Inverse(KitTurn);
+            for (int i = 0; i <= 61; i++)
+            {
+                var pose = i == 61 || d <= 0 ? default : species == "pondlet" ? DioramaTricks.PondletBubble(d * i / 60f) : DioramaTricks.Trick(species, d * i / 60f);
+                for (int c = 0; c < 8; c++)
+                {
+                    var turn = KitTurn * Quaternion.Euler(pose.Pitch + ((c & 1) == 0 ? -idlePitch : idlePitch), pose.Yaw, pose.Roll + ((c & 2) == 0 ? -idleRoll : idleRoll)) * unturn;
+                    float lift = (pose.Lift + ((c & 4) == 0 ? idleDown : idleUp)) * L * LiftShare;
+                    var (far, high) = Extent(turn, lift, pose.Flare + idleFlare, Mathf.Abs(pose.Fins) + idleFins, Mathf.Abs(pose.Tail) + idleTail, true);
+                    trickReach = Mathf.Max(trickReach, far); trickHalf = Mathf.Max(trickHalf, high);
                 }
             }
-            view.Reach = reach; view.HalfHeight = half;
-            Finish(view, root, specimen, L, half + 0.1f * L);
-            return true;
+            return new Vector4(reach, half, trickReach * TrickSwing, trickHalf * TrickSwing);
         }
 
         /// <summary>Each family's feature, so sizes and families read apart at a glance (placeholders for GR.14's rigs).</summary>
@@ -307,12 +406,11 @@ namespace EvolutionShop
             lastTick = FxParticleRequest.Finite(t) ? t : lastTick;
             float before = clock;
             if (!reduced) clock += dt;
-            cooldown = Mathf.Max(0, cooldown - dt);
             focus = highlighted ? focus + dt : 0;
             float trickBefore = trickAge;
             if (trickAge >= 0) { trickAge += dt; if (trickAge >= DioramaTricks.Duration(Species)) trickAge = -1; }
             if (reduced) trickAge = -1;
-            else if (trickAge < 0 && focus >= TrickLinger && cooldown <= 0) { trickAge = 0; trickBefore = -1; cooldown = TrickRest; TricksPlayed++; }
+            else if (trickAge < 0 && focus >= TrickLinger && !(t < restUntil)) { trickAge = 0; trickBefore = -1; restUntil = t + TrickRest; TricksPlayed++; }
             var idle = reduced ? default : DioramaTricks.Idle(Species, clock, phase, before);
             var trick = trickAge < 0 ? default : Species == "pondlet" ? DioramaTricks.PondletBubble(trickAge, trickBefore) : DioramaTricks.Trick(Species, trickAge, trickBefore);
             bool tricking = trickAge >= 0;
@@ -409,12 +507,13 @@ namespace EvolutionShop
         }
 
         /// <summary>The bubbles (Brookkin, from its lips), sparkles (Sparkline, from its lantern), puff of mist (Airfin), sparks
-        /// (Cinderling, from its spines) or droplets (Dewling, from its dew beads) a trick or habit lets go on its beat.</summary>
+        /// (Cinderling, from its spines), droplets (Dewling, from its dew beads), plankton (Reefback, from its corals) or salt
+        /// (Saltscale, from its body, along its stripe) a trick or habit lets go on its beat.</summary>
         void Burst(bool trick)
         {
-            bool fromCrest = (family == DioramaFamily.Cinderling || family == DioramaFamily.Dewling) && kit.DioramaCrestPoint;
+            bool fromCrest = (family == DioramaFamily.Cinderling || family == DioramaFamily.Dewling || family == DioramaFamily.Reefback) && kit.DioramaCrestPoint;
             var from = family == DioramaFamily.Sparkline && kit.DioramaLanternPoint ? kit.DioramaLanternPoint : fromCrest ? kit.DioramaCrestPoint :
-                kit.DioramaLips ? kit.DioramaLips : transform;
+                family == DioramaFamily.Saltscale ? kit.transform : kit.DioramaLips ? kit.DioramaLips : transform;
             GrowthCreatureBurst.Spawn(transform.parent, from.position, family, trick ? 5 : 2, Length);
             BurstsReleased++; Bursts++;
         }
