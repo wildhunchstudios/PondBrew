@@ -27,6 +27,13 @@ namespace EvolutionShop
         float faceHappy = .2f, faceSurprised, facePuffed, faceBlink, actionGlow, actionTail, actionFins, actionFlare;
         Vector3 lookTarget;
         bool lookTargetSet;
+        // GR-12B: swimming by body plan: a sunfish's Keel pivot, a squid's cloak (the Tail pivot) pulsing, an undulating Body's
+        // Wave keys and how far its tail end moves with them; and the span the greybox sizes a remade species by.
+        Transform keel;
+        Quaternion keelRest;
+        Vector3 tailRestScale = Vector3.one, tailRestPosition, tailWaveSin, tailWaveCos;
+        int waveSin = -1, waveSinNeg = -1, waveCos = -1, waveCosNeg = -1;
+        float dioramaSpan;
 
         /// <summary>True for a kit creature; false for every classic one.</summary>
         public bool IsDiorama { get; private set; }
@@ -47,8 +54,10 @@ namespace EvolutionShop
         /// <summary>How much of its swim path a kit creature uses in the large tanks, so the larger model stays in the glass.</summary>
         public float DioramaSwim => IsDiorama ? dioramaSpecies.SwimAmplitude : 1;
         /// <summary>GR-12: the kit body's length (its Body mesh, nose to tail root, before the model's scale), which the greybox
-        /// sets to the species' GR size class.</summary>
-        public float DioramaBodyLength => dioramaBody && dioramaBody.sharedMesh ? dioramaBody.sharedMesh.bounds.size.z : 0;
+        /// sets to the species' GR size class. GR-12B: a remade species' span instead (its largest extent, not counting a lure), so a
+        /// squid with a small mantle and long arms, or a sunfish with tall fins, is its class's size overall.</summary>
+        public float DioramaBodyLength => IsDiorama && dioramaSpecies.Remade ? dioramaSpan
+            : dioramaBody && dioramaBody.sharedMesh ? dioramaBody.sharedMesh.bounds.size.z : 0;
 
         /// <summary>GR-12: builds the kit creature whatever the classic look switch says, for the greybox, which shows every kit
         /// species in the AD look. False when the species or its model is missing.</summary>
@@ -69,6 +78,9 @@ namespace EvolutionShop
             model.localScale = Vector3.one * spec.ModelScale;
             tail = model.Find("Tail pivot"); finLeft = model.Find("Left fin pivot"); finRight = model.Find("Right fin pivot");
             crest = model.Find("Crest pivot");
+            keel = model.Find("Keel pivot");
+            if (keel) keelRest = keel.localRotation;
+            if (tail) { tailRestScale = tail.localScale; tailRestPosition = tail.localPosition; }
             dioramaCrestPoint = null;
             if (crest)
             {
@@ -88,6 +100,11 @@ namespace EvolutionShop
             if (dioramaPupils) dioramaPupilRest = dioramaPupils.localPosition;
             bodyPuffed = Shape(dioramaBody, "Puffed"); lidBlink = Shape(dioramaLids, "Blink"); lidHappy = Shape(dioramaLids, "Happy");
             lipHappy = Shape(dioramaLips, "Happy"); lipSurprised = Shape(dioramaLips, "Surprised");
+            waveSin = Shape(dioramaBody, "WaveSin"); waveSinNeg = Shape(dioramaBody, "WaveSinNeg");
+            waveCos = Shape(dioramaBody, "WaveCos"); waveCosNeg = Shape(dioramaBody, "WaveCosNeg");
+            tailWaveSin = tailWaveCos = Vector3.zero;
+            if (waveSin >= 0 && waveCos >= 0 && tail) (tailWaveSin, tailWaveCos) = TailWave(dioramaBody, tail);
+            dioramaSpan = Span(model);
             // A point just in front of the pouty lips: where bubble tricks start.
             dioramaLipsPoint = new GameObject("Diorama lips point").transform;
             dioramaLipsPoint.SetParent(model, false);
@@ -110,6 +127,42 @@ namespace EvolutionShop
             return true;
         }
 
+        /// <summary>GR-12B: a model's span in its own space (before its scale): its largest extent over every part, not counting a
+        /// lure (the Lantern pivot), which arcs ahead of it.</summary>
+        static float Span(Transform model)
+        {
+            var lure = model.Find("Lantern pivot");
+            var m = model.worldToLocalMatrix;
+            var b = new Bounds(); bool first = true;
+            foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+            {
+                if (lure && r.transform.IsChildOf(lure)) continue;
+                var mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                if (!mesh) continue;
+                var to = m * r.transform.localToWorldMatrix;
+                for (int k = 0; k < 8; k++)
+                {
+                    var p = to.MultiplyPoint3x4(mesh.bounds.center + Vector3.Scale(mesh.bounds.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                    if (first) { b = new Bounds(p, Vector3.zero); first = false; } else b.Encapsulate(p);
+                }
+            }
+            return Mathf.Max(b.size.x, b.size.y, b.size.z);
+        }
+        /// <summary>GR-12B: how far an undulating body's tail end moves (in the tail pivot's parent's space) at full WaveSin and
+        /// WaveCos, so its tail fin rides the wave: the deltas of the Body vertex nearest the tail pivot.</summary>
+        static (Vector3 sin, Vector3 cos) TailWave(SkinnedMeshRenderer body, Transform tail)
+        {
+            var mesh = body.sharedMesh;
+            var vertices = mesh.vertices;
+            var at = body.transform.InverseTransformPoint(tail.position);
+            int nearest = 0; float best = float.MaxValue;
+            for (int i = 0; i < vertices.Length; i++) { float d = (vertices[i] - at).sqrMagnitude; if (d < best) { best = d; nearest = i; } }
+            var sin = new Vector3[vertices.Length]; var cos = new Vector3[vertices.Length];
+            mesh.GetBlendShapeFrameVertices(mesh.GetBlendShapeIndex("WaveSin"), 0, sin, null, null);
+            mesh.GetBlendShapeFrameVertices(mesh.GetBlendShapeIndex("WaveCos"), 0, cos, null, null);
+            Vector3 Out(Vector3 d) => tail.parent.InverseTransformVector(body.transform.TransformVector(d));
+            return (Out(sin[nearest]), Out(cos[nearest]));
+        }
         static SkinnedMeshRenderer Skinned(Transform root, string name)
         {
             var t = root.Find(name);
@@ -184,6 +237,11 @@ namespace EvolutionShop
         /// drive, in degrees. Its strokes use them, and a creature's swim room samples its fins and tail at them.</summary>
         public static (float roll, float pitch, float tail) DioramaStroke(DioramaFamily family, string species)
         {
+            if (DioramaSpecies.TryGet(species, out var remade) && remade.Gait != DioramaGait.Family)
+            {
+                var g = DioramaGaitStroke(remade.Gait);
+                return (g.roll, g.pitch, g.tail);
+            }
             switch (family)
             {
                 case DioramaFamily.Airfin: return (17, 6, 10);
@@ -195,6 +253,20 @@ namespace EvolutionShop
                 case DioramaFamily.Gloamer: return (14, 6, 10);
                 case DioramaFamily.Cometail: return (6, 3, 14);
                 default: return (12, 6, species == "ribbonfin" ? 21 : 15);
+            }
+        }
+        /// <summary>GR-12B: how far each way of swimming turns a remade species' parts at full drive: its fins' roll and pitch and its
+        /// tail's yaw (its DioramaStroke), its crest's and keel's sway (degrees) and its cloak's pulse (a share of its size). Its
+        /// swim room samples them all.</summary>
+        public static (float roll, float pitch, float tail, float crest, float keel, float pulse) DioramaGaitStroke(DioramaGait gait)
+        {
+            switch (gait)
+            {
+                case DioramaGait.Flap: return (24, 5, 8, 0, 0, 0);
+                case DioramaGait.Scull: return (16, 0, 6, 22, 22, 0);
+                case DioramaGait.Undulate: return (10, 4, 8, 4, 0, 0);
+                case DioramaGait.Pulse: return (20, 0, 0, 0, 0, .12f);
+                default: return (0, 0, 0, 0, 0, 0);
             }
         }
         /// <summary>The most a kit tail ever turns, with a trick's swing and the hatch's wake (degrees).</summary>
@@ -298,6 +370,59 @@ namespace EvolutionShop
                     break;
                 }
             }
+            // GR-12B: a species remade as an animal of its own swims by its body plan, at its tempo.
+            float keelRoll = 0, pulse = 0, waveC = 0, waveS = 0;
+            var gait = dioramaSpecies.Gait;
+            if (gait != DioramaGait.Family)
+            {
+                var g = DioramaGaitStroke(gait);
+                switch (gait)
+                {
+                    case DioramaGait.Flap:
+                    {
+                        // Slow, deep beats of both wings together, a ray's flight, the tail trailing.
+                        float w = 1.7f * tempo, beat = Mathf.Sin(t * w);
+                        finRoll = finRollOther = beat * g.roll * drive; finPitch = Mathf.Sin(t * w - 1.1f) * g.pitch * drive;
+                        tailYaw = Mathf.Sin(t * w * .5f - .4f) * g.tail * drive; crestRoll = 0;
+                        break;
+                    }
+                    case DioramaGait.Scull:
+                    {
+                        // Its tall top and bottom fins sweep to one side and back together, a sunfish's sculling; little fins paddling.
+                        float w = 1.5f * tempo, sweep = Mathf.Sin(t * w);
+                        crestRoll = sweep * g.crest * drive; keelRoll = -sweep * g.keel * drive;
+                        finRoll = Mathf.Sin(t * w * 2) * g.roll * drive; finRollOther = -finRoll; finPitch = 0;
+                        tailYaw = Mathf.Sin(t * w - .6f) * g.tail * drive;
+                        break;
+                    }
+                    case DioramaGait.Undulate:
+                    {
+                        // A wave runs down its body from head to tail, its fins rippling.
+                        float w = 2.6f * tempo;
+                        waveC = Mathf.Cos(t * w) * drive; waveS = Mathf.Sin(t * w) * drive;
+                        tailYaw = Mathf.Sin(t * w - 2.2f) * g.tail * drive; finRoll = finRollOther = Mathf.Sin(t * w - 1f) * g.roll * drive;
+                        finPitch = Mathf.Sin(t * w) * g.pitch * drive; crestRoll = Mathf.Sin(t * w * .5f) * g.crest * drive;
+                        break;
+                    }
+                    case DioramaGait.Pulse:
+                    {
+                        // Its cloak opens and closes, a squid's pulse, its ear fins flapping together.
+                        float w = 1.9f * tempo;
+                        pulse = Mathf.Sin(t * w) * g.pulse * drive;
+                        finRoll = finRollOther = Mathf.Sin(t * w - .8f) * g.roll * drive; finPitch = 0; tailYaw = 0; crestRoll = 0;
+                        break;
+                    }
+                }
+            }
+            if (waveSin >= 0)
+            {
+                // The body bends by S cos - C sin of the swim's phase, a wave running from head to tail; its tail fin rides it.
+                Weight(dioramaBody, waveSin, Mathf.Max(0, waveC)); Weight(dioramaBody, waveSinNeg, Mathf.Max(0, -waveC));
+                Weight(dioramaBody, waveCos, Mathf.Max(0, -waveS)); Weight(dioramaBody, waveCosNeg, Mathf.Max(0, waveS));
+                if (tail) tail.localPosition = tailRestPosition + tailWaveSin * waveC - tailWaveCos * waveS;
+            }
+            if (tail && gait == DioramaGait.Pulse) tail.localScale = Vector3.Scale(tailRestScale, new Vector3(1 + pulse, 1 - pulse * .5f, 1 + pulse));
+            if (keel) keel.localRotation = keelRest * Quaternion.Euler(0, 0, keelRoll);
             float tailAngle = Mathf.Clamp(tailYaw + wake.Tail + (reduced ? 0 : actionTail), -DioramaTailLimit, DioramaTailLimit);
             float spread = reduced ? 0 : actionFins;
             if (tail) tail.localRotation = pondletTailRest * Quaternion.Euler(0, tailAngle, 0);

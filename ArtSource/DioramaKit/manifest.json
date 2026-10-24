@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 4)",
+  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 4, GR-12B body plans)",
   "origin": {
     "author": "Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)",
     "external_sources": [],
@@ -10,7 +10,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_diorama_kit.py",
-  "source_script_sha256": "f4d7159d07bb6e11f44ada5720b61b4e1b9c8e907f40894fa5e9caf39549a524",
+  "source_script_sha256": "ebdb9f47cc0902bc390a785d3a786ef65e57a3e21667ad23a462d0b316b70abc",
   "blend_source": "ArtSource/DioramaKit/EvolutionShop_DioramaKit.blend",
   "scale": "1 unit = 1 metre",
   "up": "Unity +Y",
@@ -182,7 +182,7 @@
     "Dewling": "Mist: round and pearly, shiny dew beads on the head and back",
     "Reefback": "Brine: big and gentle, a domed shell crusted with coral and barnacles",
     "Saltscale": "Brine: sleek and shiny, a glittering salt stripe along each side",
-    "Gloamer": "Dusk: big, dark and gentle, a glowing lure on a stalk and soft glowing spots",
+    "Gloamer": "Dusk: deep-sea animals of every kind (GR-12B), each with a glowing lure on a stalk and soft glowing lights",
     "Cometail": "Spark and Dusk: sleek, a bright glowing head and a comet tail of glowing wisps"
   },
   "species": [
@@ -3293,7 +3293,14 @@
     "family_pivots": {
       "Sparkline": [
         "Lantern pivot"
+      ],
+      "Gloamer": [
+        "Lantern pivot"
       ]
+    },
+    "body_plans": {
+      "Keel pivot": "a fin under the body that sways with the crest (the sunfish), GR-12B",
+      "Wave keys": "WaveSin, WaveSinNeg, WaveCos, WaveCosNeg on an undulating Body (the oarfish): weighted by the cosine and sine of the swim, a wave from head to tail"
     },
     "face": {
       "Body": [
@@ -8091,29 +8098,29 @@
       ]
     },
     {
-      "triangles": 12100,
-      "vertices": 6108,
+      "triangles": 15020,
+      "vertices": 7598,
       "bounds_unity_m": {
         "min": [
-          -0.3935985565185547,
-          -0.2999156415462494,
-          -0.6605434417724609
+          -0.4203384220600128,
+          -0.3521650433540344,
+          -0.7002103924751282
         ],
         "max": [
-          0.3935985565185547,
-          0.5222173929214478,
-          0.5922074913978577
+          0.4203384220600128,
+          0.5771196484565735,
+          0.5199042558670044
         ],
         "size": [
-          0.7871971130371094,
-          0.8221330344676971,
-          1.2527509331703186
+          0.8406768441200256,
+          0.9292846918106079,
+          1.2201146483421326
         ]
       },
       "id": "DioramaMoonmouth",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaMoonmouth.fbx",
-      "sha256": "70412cff35dd3362e73137332cc33a9e66180b5b17156c6de40d5acf533b71f5",
-      "bytes": 251164,
+      "sha256": "2b4f9525f6c158a7c469ddbc254ae3d4e96d0033c5e0c9fa03fc1ae82e27042c",
+      "bytes": 339964,
       "objects": [
         "Blush",
         "Body",
@@ -8154,35 +8161,36 @@
       ]
     },
     {
-      "triangles": 17788,
-      "vertices": 8962,
+      "triangles": 15216,
+      "vertices": 7686,
       "bounds_unity_m": {
         "min": [
-          -0.48876142501831055,
-          -0.29583117365837097,
-          -0.592282772064209
+          -0.18055665493011475,
+          -0.6793127655982971,
+          -0.5288044214248657
         ],
         "max": [
-          0.48876142501831055,
-          0.4449796676635742,
-          0.6293919086456299
+          0.18055665493011475,
+          0.677303671836853,
+          0.33416444063186646
         ],
         "size": [
-          0.9775228500366211,
-          0.7408108413219452,
-          1.2216746807098389
+          0.3611133098602295,
+          1.3566164374351501,
+          0.8629688620567322
         ]
       },
       "id": "DioramaGloomfin",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaGloomfin.fbx",
-      "sha256": "a0498e26004d45fd0ab8a3ade5bea0ac938d4225408eb7d3e506b3f53b08fa68",
-      "bytes": 345980,
+      "sha256": "79c0ad49052c816f797c6e469e74ac60fd49372253527acca9955a5cab2590ad",
+      "bytes": 294508,
       "objects": [
         "Blush",
         "Body",
         "Crest pivot",
         "Eyes",
         "Glints",
+        "Keel pivot",
         "Lantern pivot",
         "Left fin pivot",
         "Lids",
@@ -8217,29 +8225,29 @@
       ]
     },
     {
-      "triangles": 13604,
-      "vertices": 6880,
+      "triangles": 16192,
+      "vertices": 8194,
       "bounds_unity_m": {
         "min": [
-          -0.35299375653266907,
-          -0.2799678444862366,
-          -0.6245030164718628
+          -0.35041123628616333,
+          -0.21664921939373016,
+          -0.6256358027458191
         ],
         "max": [
-          0.35299375653266907,
-          0.47469380497932434,
-          0.5796945691108704
+          0.35041123628616333,
+          0.42944496870040894,
+          0.5939971208572388
         ],
         "size": [
-          0.7059875130653381,
-          0.7546616494655609,
-          1.2041975855827332
+          0.7008224725723267,
+          0.6460941880941391,
+          1.2196329236030579
         ]
       },
       "id": "DioramaShadeback",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaShadeback.fbx",
-      "sha256": "f4b4108cb0f154cb6d3bc96dd1e08816ec254a44d06ec7ca11b6e7a5c8060237",
-      "bytes": 278284,
+      "sha256": "15bfe23247d1bb01d98c83ec1b2cc4676d2f95a957b8b6f4f2492ed5d1c039a5",
+      "bytes": 346492,
       "objects": [
         "Blush",
         "Body",
@@ -8280,29 +8288,29 @@
       ]
     },
     {
-      "triangles": 12636,
-      "vertices": 6378,
+      "triangles": 12324,
+      "vertices": 6236,
       "bounds_unity_m": {
         "min": [
-          -0.8127294778823853,
-          -0.18000000715255737,
-          -0.5601235032081604
+          -0.46028992533683777,
+          -0.05055950582027435,
+          -0.47813451290130615
         ],
         "max": [
-          0.8127294778823853,
-          0.3659374713897705,
-          0.9209232330322266
+          0.46028992533683777,
+          0.2684066593647003,
+          0.7506518363952637
         ],
         "size": [
-          1.6254589557647705,
-          0.5459374785423279,
-          1.481046736240387
+          0.9205798506736755,
+          0.31896616518497467,
+          1.2287863492965698
         ]
       },
       "id": "DioramaHushray",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaHushray.fbx",
-      "sha256": "2ee609a265cf8e6c784c0e18e6307cdd3ba18f6bf7b718c053f716c15a0528e5",
-      "bytes": 259324,
+      "sha256": "454a092279cbff69a9ffe39bb35555192e556d9d33f7132b62cc4ca8331a6a03",
+      "bytes": 276556,
       "objects": [
         "Blush",
         "Body",
@@ -8343,29 +8351,29 @@
       ]
     },
     {
-      "triangles": 14280,
-      "vertices": 7198,
+      "triangles": 16676,
+      "vertices": 8454,
       "bounds_unity_m": {
         "min": [
-          -0.418301522731781,
-          -0.3023630976676941,
-          -0.6144239902496338
+          -0.10567940771579742,
+          -0.24199998378753662,
+          -0.6381975412368774
         ],
         "max": [
-          0.418301522731781,
-          0.48739516735076904,
-          0.8866804838180542
+          0.10567940771579742,
+          0.33831357955932617,
+          0.6870640516281128
         ],
         "size": [
-          0.836603045463562,
-          0.7897582650184631,
-          1.501104474067688
+          0.21135881543159485,
+          0.5803135633468628,
+          1.3252615928649902
         ]
       },
       "id": "DioramaDuskdrifter",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaDuskdrifter.fbx",
-      "sha256": "608e3fd1dcbee3278e5665fa05db5134f97f0e1081c5c80242ba234c1c30154a",
-      "bytes": 292716,
+      "sha256": "f328399dee73d23257e3cd599460264e7a9df2508e7466a4e72b7501b29c1d79",
+      "bytes": 441372,
       "objects": [
         "Blush",
         "Body",
@@ -8382,7 +8390,11 @@
       ],
       "shape_keys": {
         "Body": [
-          "Puffed"
+          "Puffed",
+          "WaveSin",
+          "WaveSinNeg",
+          "WaveCos",
+          "WaveCosNeg"
         ],
         "Lids": [
           "Blink",
@@ -8406,29 +8418,29 @@
       ]
     },
     {
-      "triangles": 12240,
-      "vertices": 6188,
+      "triangles": 14248,
+      "vertices": 7222,
       "bounds_unity_m": {
         "min": [
-          -0.369009405374527,
-          -0.32987266778945923,
-          -0.6508040428161621
+          -0.2508069574832916,
+          -0.21425701677799225,
+          -0.7103156447410583
         ],
         "max": [
-          0.369009405374527,
-          0.5008646249771118,
-          0.5764811038970947
+          0.2508069574832916,
+          0.4532967805862427,
+          0.5680356025695801
         ],
         "size": [
-          0.738018810749054,
-          0.830737292766571,
-          1.2272851467132568
+          0.5016139149665833,
+          0.6675537973642349,
+          1.2783512473106384
         ]
       },
       "id": "DioramaMurkmaw",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaMurkmaw.fbx",
-      "sha256": "b28db2b876a3802befc24c3b054b0bf79cd1da3966534bc12424a50b48799164",
-      "bytes": 254716,
+      "sha256": "f68a60e7fba14bd7fe3a7d87a546a1a7ea4541f825aae701c0138d3930f2b410",
+      "bytes": 296588,
       "objects": [
         "Blush",
         "Body",
@@ -8469,29 +8481,29 @@
       ]
     },
     {
-      "triangles": 16808,
-      "vertices": 8498,
+      "triangles": 14176,
+      "vertices": 7226,
       "bounds_unity_m": {
         "min": [
-          -0.33599621057510376,
-          -0.2697218060493469,
-          -0.6061939597129822
+          -0.3268802762031555,
+          -0.2679194211959839,
+          -0.42688024044036865
         ],
         "max": [
-          0.33599621057510376,
-          0.47514253854751587,
-          0.5922074913978577
+          0.3268802762031555,
+          0.45933717489242554,
+          0.22688028216362
         ],
         "size": [
-          0.6719924211502075,
-          0.7448643445968628,
-          1.1984014511108398
+          0.653760552406311,
+          0.7272565960884094,
+          0.6537605226039886
         ]
       },
       "id": "DioramaNightlantern",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaNightlantern.fbx",
-      "sha256": "c4d3af190c601fa109ba71e8529a5baee67ed0db0901f809b688ea7ace457039",
-      "bytes": 327996,
+      "sha256": "4e89a9fa8e8eca02051e06504138c900366eb477ba5a0979d7e977f76fc86f66",
+      "bytes": 296300,
       "objects": [
         "Blush",
         "Body",
@@ -8532,29 +8544,29 @@
       ]
     },
     {
-      "triangles": 21676,
-      "vertices": 10956,
+      "triangles": 19400,
+      "vertices": 9852,
       "bounds_unity_m": {
         "min": [
-          -0.5715371370315552,
-          -0.2999655604362488,
-          -0.695143461227417
+          -0.3727080225944519,
+          -0.23357249796390533,
+          -0.8299854397773743
         ],
         "max": [
-          0.5715371370315552,
-          0.5270968675613403,
-          0.7587893605232239
+          0.3727080225944519,
+          0.35951194167137146,
+          0.6187973022460938
         ],
         "size": [
-          1.1430742740631104,
-          0.8270624279975891,
-          1.4539328217506409
+          0.7454160451889038,
+          0.5930844396352768,
+          1.448782742023468
         ]
       },
       "id": "DioramaEclipseleviathan",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaEclipseleviathan.fbx",
-      "sha256": "11b9652f1b1f5f9111d0cfda944cf2ed2770416db666ea8133912101bc7b666f",
-      "bytes": 403564,
+      "sha256": "9af9db6684809d007e3e53f2d579275e422d54b77c7538a722a592e6f2512453",
+      "bytes": 403452,
       "objects": [
         "Blush",
         "Body",

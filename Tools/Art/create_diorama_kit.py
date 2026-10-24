@@ -3,7 +3,7 @@
 Run: blender --background --factory-startup --python create_diorama_kit.py -- --repo C:/dev/DumbVideoGameStudio
 
 Builds the creature species on their family rigs (AD-B's five, and GR-12's waves: wave 1 completes the Brookkin, Sparkline
-and Airfin to eight each) and the seven characters on one humanoid rig (AD-C: the four
+and Airfin to eight each; GR-12B gives each species an aquatic animal of its own, wave by wave, the Gloamer first) and the seven characters on one humanoid rig (AD-C: the four
 customer types and the three crew) as rigid parts on named pivots (so the game's existing pose code drives them) with face
 shape keys, plus the six hand-drawn effect shapes as one flipbook sheet and the creatures' colour variant atlas.
 Everything is generated from the numbers below; nothing is imported.
@@ -79,7 +79,7 @@ FAMILIES = {'Brookkin': 'river fish: pouty lips, round fins', 'Sparkline': 'Spar
             'Airfin': 'Mist: wide gliding sails', 'Cinderling': 'Ember: a row of glowing ember spines down the back',
             'Dewling': 'Mist: round and pearly, shiny dew beads on the head and back',
             'Reefback': 'Brine: big and gentle, a domed shell crusted with coral and barnacles', 'Saltscale': 'Brine: sleek and shiny, a glittering salt stripe along each side',
-            'Gloamer': 'Dusk: big, dark and gentle, a glowing lure on a stalk and soft glowing spots', 'Cometail': 'Spark and Dusk: sleek, a bright glowing head and a comet tail of glowing wisps'}  # all nine families (GR-12 waves 1 to 4)
+            'Gloamer': 'Dusk: deep-sea animals of every kind (GR-12B), each with a glowing lure on a stalk and soft glowing lights', 'Cometail': 'Spark and Dusk: sleek, a bright glowing head and a comet tail of glowing wisps'}  # all nine families (GR-12 waves 1 to 4)
 SLOTS = ['Body', 'Fin', 'Belly', 'Accent', 'Blush', 'Sheen']
 VARIANT_NAMES = ['Classic', 'Sunny', 'Deep', 'Shimmer']
 ATLAS_SPECIES_CAPACITY = 72  # GR.7's 72 species
@@ -2764,213 +2764,740 @@ def comet_head(sid, prof, Z0, Z1, t=.2, radius=None):
         repaint(body, 0, Z0, Z1, S('Accent'), lambda sn, tt, cs: tt < t and sn > -.5)
     return marks
 
-# ---------------------------------------------------------------- Gloamer: Moonmouth, a moon-pale lure and a wide smile
+# ================================================================ GR-12B: body plans (GR.34)
+# The user found (2026-10-24) that most creatures shared one face and body; GR-12B gives every species an aquatic animal of its
+# own. These helpers build any body: a loft along a curved spine with frames that turn as little as they can (BPSpine,
+# bp_profile, BPBody.at for points on its surface, bp_loft, bp_puffed), soft fin membranes and strips (bp_plate, bp_strip),
+# mirrored fins (bp_fins), the house eyes with a mouth of any shape (bp_face; mouth_gape, mouth_grin, mouth_arc, mouth_o),
+# and an undulating body's Wave keys (bp_wave_keys). Every model keeps the rig's names, so the game drives it as before.
+
+def bp_catmull(points, n):
+    """n points along a Catmull-Rom curve through points, evenly spaced by arc length."""
+    P = [Vector(p) for p in points]
+    P = [P[0] + (P[0] - P[1])] + P + [P[-1] + (P[-1] - P[-2])]
+    segs = len(points) - 1
+    fine = []
+    m = max(400, n * 10)
+    for i in range(m + 1):
+        s = i / m * segs
+        k = min(int(s), segs - 1); f = s - k
+        p0, p1, p2, p3 = P[k], P[k + 1], P[k + 2], P[k + 3]
+        fine.append(.5 * ((2 * p1) + (-p0 + p2) * f + (2 * p0 - 5 * p1 + 4 * p2 - p3) * f * f + (-p0 + 3 * p1 - 3 * p2 + p3) * f * f * f))
+    L = [0.0]
+    for i in range(1, len(fine)):
+        L.append(L[-1] + (fine[i] - fine[i - 1]).length)
+    out, j = [], 0
+    for i in range(n):
+        target = L[-1] * i / (n - 1)
+        while j < len(L) - 2 and L[j + 1] < target:
+            j += 1
+        span = L[j + 1] - L[j]
+        f = 0 if span < 1e-9 else (target - L[j]) / span
+        out.append(fine[j].lerp(fine[j + 1], min(1, max(0, f))))
+    return out
+
+class BPSpine:
+    """A smooth spine through control points (head first), with frames that turn as little as they can (parallel transport).
+    side is the creature's right (+X when the spine runs toward +Z), up its top."""
+    def __init__(self, points, n=81, up=(0, 1, 0)):
+        self.n = n
+        self.pts = bp_catmull(points, n)
+        self.sides, self.ups = [], []
+        side = None
+        for j in range(n):
+            tan = (self.pts[min(j + 1, n - 1)] - self.pts[max(j - 1, 0)]).normalized()
+            if side is None:
+                side = Vector(up).cross(tan).normalized()
+            side = (side - tan * side.dot(tan)).normalized()
+            self.sides.append(side.copy()); self.ups.append(tan.cross(side).normalized())
+    def frame(self, t):
+        x = min(max(t, 0), 1) * (self.n - 1)
+        k = min(int(x), self.n - 2); f = x - k
+        c = self.pts[k].lerp(self.pts[k + 1], f)
+        s = self.sides[k].lerp(self.sides[k + 1], f).normalized()
+        up = self.ups[k].lerp(self.ups[k + 1], f).normalized()
+        return c, s, up
+    def tangent(self, t):
+        a, b = self.frame(max(0, t - .01))[0], self.frame(min(1, t + .01))[0]
+        return (b - a).normalized()
+
+def bp_profile(keys, nose=.12, tail=.04):
+    """A body profile from keys [(t, rx, ry_top, ry_bottom)], eased between keys, rounded off to a dome at the nose and a cap
+    at the tail end. Returns profile(t) -> (rx, ryt, ryb)."""
+    def lerp_keys(t):
+        if t <= keys[0][0]:
+            return keys[0][1:]
+        for a, b in zip(keys, keys[1:]):
+            if t <= b[0]:
+                f = (t - a[0]) / (b[0] - a[0]); f = f * f * (3 - 2 * f)
+                return tuple(a[i] + (b[i] - a[i]) * f for i in range(1, 4))
+        return keys[-1][1:]
+    def prof(t):
+        rx, ryt, ryb = lerp_keys(t)
+        d = 1.0
+        if t < nose:
+            d = math.sqrt(max(0, 1 - (1 - t / nose) ** 2))
+        elif t > 1 - tail:
+            d = math.sqrt(max(0, 1 - ((t - (1 - tail)) / tail) ** 2))
+        return rx * d, ryt * d, ryb * d
+    return prof
+
+class BPBody:
+    """What a spine loft made: the spine and profile (to place things on its surface) and each vertex's spine fraction, so
+    the Puffed key can swell it from its spine."""
+    def __init__(self, spine, prof):
+        self.spine, self.prof = spine, prof
+    def at(self, t, angle, k=1.0):
+        """A point on the surface at spine fraction t and angle round it (0 the right side, 90 the top), k of the radius."""
+        c, s, up = self.spine.frame(t)
+        rx, ryt, ryb = self.prof(t)[:3]
+        a = math.radians(angle); cs, sn = math.cos(a), math.sin(a)
+        return c + s * (rx * cs * k) + up * ((ryt if sn > 0 else ryb) * sn * k)
+    def normal(self, t, angle):
+        p0 = self.at(t, angle, 1.0); c = self.spine.frame(t)[0]
+        return (p0 - c).normalized()
+
+def bp_loft(part, body, material, t0=0.0, t1=1.0, rings=40, seg=36, belly=None, squarish=None, caps=(True, True)):
+    """A closed loft along body's spine from t0 to t1 (a pole at each end where caps say so; an open end is closed flat).
+    belly(t, sin, cos) -> slot or None paints faces. squarish(t) > 1 squares the section."""
+    spine, prof = body.spine, body.prof
+    verts, params = [], []
+    ts = [t0 + (t1 - t0) * r / rings for r in range(rings + 1)]
+    inner = ts[1:-1] if caps[0] and caps[1] else ts[1:] if not caps[0] and caps[1] else ts[:-1] if caps[0] else ts
+    if caps[0]:
+        verts.append(tuple(spine.frame(t0)[0])); params.append((t0, 0, 0))
+    for t in inner:
+        c, s, up = spine.frame(t)
+        rx, ryt, ryb = prof(t)[:3]
+        rx, ryt, ryb = max(rx, .002), max(ryt, .002), max(ryb, .002)
+        sq = squarish(t) if squarish else 1.0
+        for k in range(seg):
+            a = math.tau * k / seg
+            x, y = math.cos(a), math.sin(a)
+            if sq != 1.0:
+                m = max((abs(x) ** sq + abs(y) ** sq) ** (1 / sq), 1e-6); x, y = x / m, y / m
+            verts.append(tuple(c + s * (rx * x) + up * ((ryt if y > 0 else ryb) * y)))
+            params.append((t, math.sin(a), math.cos(a)))
+    if caps[1]:
+        verts.append(tuple(spine.frame(t1)[0])); params.append((t1, 0, 0))
+    faces = []
+    o = 1 if caps[0] else 0
+    nr = len(inner)
+    if caps[0]:
+        for k in range(seg):
+            faces.append((0, o + k, o + (k + 1) % seg))
+    else:
+        faces.append(tuple(o + k for k in range(seg - 1, -1, -1)))
+    for r in range(nr - 1):
+        a, b = o + r * seg, o + (r + 1) * seg
+        for k in range(seg):
+            j = (k + 1) % seg
+            faces.append((a + k, b + k, b + j, a + j))
+    last = o + (nr - 1) * seg
+    if caps[1]:
+        end = len(verts) - 1
+        for k in range(seg):
+            faces.append((last + k, end, last + (k + 1) % seg))
+    else:
+        faces.append(tuple(last + k for k in range(seg)))
+    first_face = len(part.faces)
+    rng = part.add(verts, faces, material)  # faces and params both index this loft's own vertices here
+    if belly:
+        for fi, f in enumerate(faces):
+            t = sum(params[i][0] for i in f) / len(f)
+            sn = sum(params[i][1] for i in f) / len(f); cs = sum(params[i][2] for i in f) / len(f)
+            slot = belly(t, sn, cs)
+            if slot:
+                part.slots[first_face + fi] = part.slot(slot)
+    return rng
+
+def bp_puffed(obj, part, body, gain=.15):
+    """The Puffed key for a spine body: every vertex of the part swells away from the nearest point of the spine, most at
+    the middle of its length."""
+    pts = body.spine.pts; n = len(pts)
+    def puffed(i, v):
+        v = Vector(v)
+        best, bj = 1e9, 0
+        for j in range(0, n, 2):
+            d = (pts[j] - v).length_squared
+            if d < best:
+                best, bj = d, j
+        t = bj / (n - 1)
+        g = 1 + gain * math.sin(math.pi * min(1, max(0, t))) ** .8
+        return pts[bj] + (v - pts[bj]) * g
+    shape_key(obj, part, 'Puffed', puffed)
+
+def bp_plate(part, outline, thick, material, rim=None, rim_from=.72, normal=None, curl=0.0):
+    """A soft fin membrane: a pillowy slab over a closed outline (roughly planar, star-shaped about its centre), thickest
+    in the middle and thin at the edge, with an optional band of the rim slot round its edge."""
+    P = [Vector(p) for p in outline]
+    c = sum(P, Vector()) / len(P)
+    if normal is None:
+        nrm = Vector((0, 0, 0))
+        for i in range(len(P)):
+            a, b = P[i] - c, P[(i + 1) % len(P)] - c
+            nrm += a.cross(b)
+        nrm = nrm.normalized()
+    else:
+        nrm = Vector(normal).normalized()
+    n = len(P)
+    rings = (0.0, .45, rim_from, .9, 1.0)
+    heights = (1.0, .92, .62, .42, .2)
+    verts = []
+    for side in (1, -1):
+        verts.append(tuple(c + nrm * (thick * .5 * side)))
+        for f, h in zip(rings[1:], heights[1:]):
+            for p in P:
+                q = c + (p - c) * f
+                bend = nrm * (curl * f * f)
+                verts.append(tuple(q + bend + nrm * (thick * .5 * h * side)))
+    per = 1 + n * (len(rings) - 1)
+    faces, slots = [], []
+    for side in (0, 1):
+        o = side * per
+        for i in range(n):
+            j = (i + 1) % n
+            f = (o, o + 1 + i, o + 1 + j)
+            faces.append(f if side == 0 else f[::-1]); slots.append(0)
+        for r in range(len(rings) - 2):
+            for i in range(n):
+                j = (i + 1) % n
+                a, b = o + 1 + r * n, o + 1 + (r + 1) * n
+                f = (a + i, b + i, b + j, a + j)
+                faces.append(f if side == 0 else f[::-1]); slots.append(1 if r >= 1 else 0)
+    lo, hi = 1 + (len(rings) - 2) * n, per + 1 + (len(rings) - 2) * n
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((lo + i, lo + j, hi + j, hi + i)); slots.append(1)
+    first = len(part.faces)
+    rng = part.add(verts, faces, material)
+    if rim:
+        for fi, s in enumerate(slots):
+            if s:
+                part.slots[first + fi] = part.slot(rim)
+    return rng
+
+def bp_outline(points, n=40, closed=True):
+    """A smooth closed outline through points (Catmull-Rom, evenly spaced)."""
+    pts = list(points) + [points[0], points[1]] if closed else list(points)
+    curve = bp_catmull(pts[:len(points) + 1], n + 1)
+    return [tuple(p) for p in curve[:-1]]
+
+def bp_spots(part, body, sid, items, slot='Accent'):
+    """Little round lights on the body's surface: items [(t, angle, radius)], both sides mirrored when angle isn't 90/-90."""
+    for t, angle, r in items:
+        for a in ((angle, 180 - angle) if abs(abs(angle) - 90) > 1 else (angle,)):
+            p = body.at(t, a, .985)
+            ellipsoid(part, tuple(p), (r, r, r), slot_name(sid, slot), (0, 0, 0), 12, 8)
+
+def bp_face(root, sid, eye_c, eye_r, eye_yaw, mouth, eye_pitch=0, pupil_k=.6, blush=None, lid_slot='Body', smile=.025):
+    """The house eyes (glossy whites, pupils, glints and lids with Blink and Happy) placed where the animal has them, a mouth
+    of its own built by mouth(part) -> (centre, half width) into Lips (with Happy and Surprised), and blush only if given
+    (blush=(centre, radii, yaw))."""
+    S = lambda slot: slot_name(sid, slot)
+    eyes, pupils, glints, lids, bl = Part('Eyes'), Part('Pupils'), Part('Glints'), Part('Lids'), Part('Blush')
+    lid_builders = []
+    for side in (-1, 1):
+        c = (side * eye_c[0], eye_c[1], eye_c[2])
+        eul = (eye_pitch, -side * eye_yaw, 0)
+        ellipsoid(eyes, c, eye_r, 'DK_EyeWhite', eul, 24, 14)
+        fwd = rot((0, 0, -1), eul)
+        pr = (eye_r[0] * pupil_k, eye_r[1] * pupil_k * 1.06, eye_r[2] * .5)
+        pc = Vector(c) + fwd * (eye_r[2] * .72) + Vector((0, -.004, 0))
+        ellipsoid(pupils, pc, pr, 'DK_Pupil', eul, 20, 12)
+        upv = rot((0, 1, 0), eul); sidev = rot((1, 0, 0), eul)
+        gc = Vector(c) + fwd * (eye_r[2] * 1.15) + upv * (eye_r[1] * .29) - sidev * (side * (.006 + eye_r[0] * .16))
+        ellipsoid(glints, gc, (eye_r[0] * .22, eye_r[1] * .2, eye_r[2] * .17), 'DK_Glint', eul, 12, 8)
+        lid_r = (eye_r[0] * 1.07, eye_r[1] * 1.06, eye_r[2] * 1.08)
+        idx, build = shell(lids, c, lid_r, S(lid_slot), eul, math.radians(24), .010, 24, 8)
+        lid_builders.append((idx, build))
+        if blush:
+            bc, br, by = blush
+            ellipsoid(bl, (side * bc[0], bc[1], bc[2]), br, S('Blush'), (0, -side * by, 0), 16, 8)
+    if not blush:
+        # The rig keeps a Blush part: a speck hidden inside the head, for animals that don't blush.
+        ellipsoid(bl, (0, eye_c[1], eye_c[2] + .05), (.004, .004, .004), S('Blush'), (0, 0, 0), 6, 4)
+    for p in (eyes, pupils, glints, bl):
+        make_object(p, root)
+    lids_obj = make_object(lids, root)
+    for name, angle in (('Blink', 104), ('Happy', 58)):
+        moved = {}
+        for idx, build in lid_builders:
+            for i, v in zip(idx, build(math.radians(angle))):
+                moved[i] = v
+        shape_key(lids_obj, lids, name, lambda i, v, moved=moved: moved[i])
+    lips = Part('Lips')
+    lc, hw = mouth(lips)
+    lc = Vector(lc)
+    lips_obj = make_object(lips, root)
+    def happy(i, v):
+        d = Vector(v) - lc
+        return lc + Vector((d.x * 1.1, d.y * .85 + smile * min(1.5, (d.x / hw) ** 2) - .004, d.z))
+    def surprised(i, v):
+        d = Vector(v) - lc
+        return lc + Vector((d.x * .95, d.y * 1.5, d.z * 1.05))
+    shape_key(lips_obj, lips, 'Happy', happy)
+    shape_key(lips_obj, lips, 'Surprised', surprised)
+
+# ---------------------------------------------------------------- mouths (each builds into the Lips part)
+def mouth_grin(body, t_mid, t_corner, a_corner, r=.012, sid=None, teeth=None, lip=None, k=1.0, depth=.0):
+    """A smile drawn along the snout: a dark line from one corner (at spine fraction t_corner, angle a_corner on the right)
+    under the snout (t_mid at the bottom) to the other. teeth: [(where along the line 0..1, length, radius, up?)]."""
+    def build(part):
+        pts = []
+        for k_ in range(15):
+            s = k_ / 14
+            ang = (-180 - a_corner) + (a_corner - (-180 - a_corner)) * s
+            w = abs(s - .5) * 2
+            t = t_mid + (t_corner - t_mid) * w ** 1.6
+            pts.append(body.at(t, ang, k + depth))
+        tube(part, [tuple(p) for p in pts], r, 'DK_Mouth', 10)
+        if lip:
+            tube(part, [tuple(p + Vector((0, r * 1.2, 0))) for p in pts[2:-2]], r * .8, lip, 8)
+        for where, length, rad, up in (teeth or ()):
+            i = min(14, max(0, int(round(where * 14))))
+            base = pts[i]
+            d = Vector((0, 1 if up else -1, 0)) if isinstance(up, bool) else Vector(up).normalized()
+            tip = base + d * length
+            cone(part, tuple(base - d * rad * .5), tuple(tip), rad, 'DK_EyeWhite', 10, 4, .15)
+        mid = pts[7]; width = (pts[0] - pts[14]).length / 2
+        return tuple(mid), max(width, .02)
+    return build
+
+def mouth_gape(center, rx, ry, rim, sid, upper=(), lower=(), tilt=0, rim_r=.03, depth=.06):
+    """A wide open mouth on the front of the face: a dark hollow, a rim of lips round it, and rounded teeth along the
+    upper and lower edges [(across -1..1, length, radius)], pointing in."""
+    def build(part):
+        c = Vector(center)
+        ellipsoid(part, tuple(c + rot((0, 0, depth * .4), (tilt, 0, 0))), (rx * .92, ry * .9, depth), 'DK_Mouth', (tilt, 0, 0), 28, 14)
+        torus(part, c, 1.0, rim_r, rim, (rx, ry, 1), 40, 12, (tilt, 0, 0))
+        for teeth, sign in ((upper, 1), (lower, -1)):
+            for x, length, rad in teeth:
+                a = math.acos(max(-1, min(1, x)))
+                p = c + rot((rx * math.cos(a), sign * ry * math.sin(a) * .97, 0), (tilt, 0, 0))
+                tip = p + rot((0, -sign * length, -.006), (tilt, 0, 0))
+                cone(part, tuple(p), tuple(tip), rad, 'DK_EyeWhite', 10, 4, .2)
+        return tuple(c), rx
+    return build
+
+def mouth_o(center, r, rim, euler=(0, 0, 0)):
+    """A small round pursed mouth (a sunfish's), a ring of lips with a dark middle."""
+    def build(part):
+        c = Vector(center)
+        torus(part, c, r, r * .55, rim, (1, 1, 1), 28, 10, euler)
+        ellipsoid(part, tuple(c + rot((0, 0, .004), euler)), (r * .8, r * .8, .01), 'DK_Mouth', euler, 14, 8)
+        return tuple(c), r * 1.4
+    return build
+
+def bp_lure(root, sid, base, rise, reach, bulb, stalk=.02, bend=110, kind='round'):
+    lure(root, sid, tuple(base), rise, reach, bulb, stalk, bend, kind)
+
+def bp_fins(root, pivot, build):
+    """The Left and Right fin pivots, mirrored: build(part, m) draws the right fin (+X) through m(point), which mirrors x for
+    the left one, and returns nothing."""
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        part = Part(label + ' fin')
+        build(part, lambda p, side=side: (side * p[0], p[1], p[2]))
+        make_object(part, root, (side * pivot[0], pivot[1], pivot[2]), label + ' fin pivot')
+
+def bp_strip(part, lower, upper, thick, material, rim=None, seg=12, side_dirs=None):
+    """A fin strip between two edges (lists of points, front to back): a flat tube whose section is a thin lens from the
+    lower edge to the upper, rounded at both ends; rim paints its upper edge."""
+    n = len(lower)
+    verts, faces, slots = [], [], []
+    for i in range(n):
+        lo, hi = Vector(lower[i]), Vector(upper[i])
+        c = (lo + hi) / 2; up = hi - lo
+        h = max(up.length / 2, 1e-4); up = up.normalized()
+        tan = (Vector(lower[min(i + 1, n - 1)]) - Vector(lower[max(i - 1, 0)])).normalized()
+        sd = Vector(side_dirs[i]) if side_dirs else tan.cross(up).normalized()
+        end = 1.0 if 0 < i < n - 1 else .35
+        for k in range(seg):
+            a = math.tau * k / seg
+            verts.append(tuple(c + up * (h * math.sin(a)) + sd * (thick * .5 * math.cos(a) * end)))
+    for r in range(n - 1):
+        for k in range(seg):
+            j = (k + 1) % seg
+            faces.append((r * seg + k, r * seg + j, (r + 1) * seg + j, (r + 1) * seg + k))
+            slots.append(math.sin(math.tau * (k + .5) / seg) > .55)
+    faces.append(tuple(range(seg - 1, -1, -1))); slots.append(False)
+    faces.append(tuple((n - 1) * seg + k for k in range(seg))); slots.append(False)
+    first = len(part.faces)
+    rng = part.add(verts, faces, material)
+    if rim:
+        for fi, s in enumerate(slots):
+            if s:
+                part.slots[first + fi] = part.slot(rim)
+    return rng
+
+def mouth_arc(center, width, droop, r=.01, back=.02, right=(1, 0, 0), up=(0, 1, 0), teeth=(), lip=None):
+    """A smile on a face that looks forward: a dark line curving down from its corners (droop) to its middle, its corners
+    set back by back to follow the face. teeth: [(across -1..1, length, radius, (dx, dy, dz))]."""
+    def build(part):
+        c, rt, upv = Vector(center), Vector(right), Vector(up)
+        fwd = rt.cross(upv).normalized()  # toward the back of the head (+Z for a creature facing -Z)
+        pts = []
+        for k in range(13):
+            x = -1 + 2 * k / 12
+            pts.append(c + rt * (width * x) + upv * (droop * (x * x - 1)) + fwd * (back * x * x))
+        tube(part, [tuple(p) for p in pts], r, 'DK_Mouth', 10)
+        if lip:
+            tube(part, [tuple(p - upv * r * 1.3) for p in pts[2:-2]], r * .8, lip, 8)
+        for x, length, rad, d in teeth:
+            base = c + rt * (width * x) + upv * (droop * (x * x - 1)) + fwd * (back * x * x)
+            d = Vector(d).normalized()
+            cone(part, tuple(base - d * rad * .4), tuple(base + d * length), rad, 'DK_EyeWhite', 10, 4, .15)
+        return tuple(c + upv * (-droop * .5)), width
+    return build
+
+def bp_wave_keys(obj, part, body, amp=.055, waves=1.2, start=.2):
+    """An undulating body's four Wave keys (WaveSin and WaveCos, each with its negative, so the game's weights stay positive):
+    each vertex moves sideways by amp, growing from nothing at start of the body's length to full at its tail, times the sine
+    or the cosine of its place along the body (waves of them from head to tail). Weighted by the cosine and the sine of the
+    swim's phase, they make a wave that runs from head to tail."""
+    pts, sides = body.spine.pts, body.spine.sides
+    n = len(pts)
+    near = []
+    for v in part.verts:
+        best, bj = 1e9, 0
+        for j in range(n):
+            d = (pts[j] - v).length_squared
+            if d < best:
+                best, bj = d, j
+        near.append(bj)
+    def key(name, fn, sign):
+        def moved(i, v):
+            s = near[i] / (n - 1)
+            e = 0.0 if s <= start else (s - start) / (1 - start)
+            e = e * e * (3 - 2 * e)
+            return Vector(v) + sides[near[i]] * (sign * amp * e * fn(math.tau * waves * s))
+        shape_key(obj, part, name, moved)
+    key('WaveSin', math.sin, 1); key('WaveSinNeg', math.sin, -1); key('WaveCos', math.cos, 1); key('WaveCosNeg', math.cos, -1)
+
+# ---------------------------------------------------------------- GR-12B wave 1: the Gloamer's eight as animals of their own
+def bp_belly(S, below=-.5, t_from=.06, t_to=.97):
+    return lambda t, sn, cs: S('Belly') if sn < below and t_from < t < t_to else None
+
+# ---------------------------------------------------------------- Moonmouth: an anglerfish
 def moonmouth():
-    sid = 'moonmouth'; S = lambda slot: slot_name(sid, slot)
+    sid = 'moonmouth'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaMoonmouth')
-    Z0, Z1 = -.42, .38
-    prof = nose_profile(.46, .62, .32, .32, .3)
-    loft_creature(root, sid, Z0, Z1, prof, .17, 32, (.09, .108, .074), 30, .77, None, -12, (.048, .028, .016),
-                  -.07, (.07, .03, (1.35, .8, 1.0)), .6, .036, extra=lambda b: glow_spots(b, sid, prof, Z0, Z1, (.4, .5, .6, .7)))
-    side_fins(root, sid, (.28, -.07, -.02), [((.04, -.04, .08), (.03, .1, .14), (8, 20, -30), 'Fin')])
+    spine = BPSpine([(0, 0, -.40), (0, 0, -.12), (0, .03, .18), (0, .06, .40)])
+    body = BPBody(spine, bp_profile([(0, .30, .26, .30), (.25, .37, .35, .35), (.5, .25, .24, .23), (.74, .085, .1, .085),
+                                     (1, .05, .06, .05)], nose=.14, tail=.05))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), belly=bp_belly(S, -.45, .1))
+    # The jutting lower jaw: a heavy chin under the gape.
+    ellipsoid(B, (0, -.17, -.345), (.2, .075, .075), S('Belly'), (-10, 0, 0), 28, 14)
+    bp_spots(B, body, sid, [(.32, -12, .024), (.42, -14, .022), (.52, -16, .02), (.62, -18, .017), (.38, -40, .018), (.5, -42, .016)])
+    for side in (1, -1):
+        tube(B, [tuple(body.at(t, (-28 if side > 0 else -152) + 6 * (t - .05) / .2, 1.0)) for t in (.03, .08, .13, .18, .23)], .012, 'DK_Mouth', 10)
+    bp_puffed(make_object(B, root), B, body, .14)
+    eye = body.at(.13, 58, .84)
+    bp_face(root, sid, tuple(eye), (.085, .1, .075), 30,
+            mouth_gape((0, -.09, -.405), .2, .115, S('Belly'), sid,
+                       upper=[(-.7, .04, .014), (-.35, .05, .016), (0, .05, .016), (.35, .05, .016), (.7, .04, .014)],
+                       lower=[(-.8, .045, .015), (-.5, .06, .018), (-.15, .065, .019), (.15, .065, .019), (.5, .06, .018), (.8, .045, .015)],
+                       tilt=16, rim_r=.032, depth=.016), eye_pitch=14)
+    def pec(part, m):
+        bp_plate(part, [m(p) for p in bp_outline([(.27, -.04, .0), (.36, -.08, .05), (.42, -.12, .13), (.36, -.17, .15), (.29, -.13, .07)], 24)],
+                 .03, S('Fin'))
+    bp_fins(root, (.27, -.08, .03), pec)
     def tail(part):
-        ellipsoid(part, (0, 0, .37), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
-        fan_tail(part, (0, 0, .38), ((-30, .13, .06, S('Fin')), (30, .13, .06, S('Fin'))), .022)
-    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
-    def fin(part):
-        dorsal_sail(part, sid, prof, Z0, Z1, .52, .06, .14, 30)
-    simple_part(root, 'Crest pivot', (0, .3, .0), fin)
-    lure(root, sid, on_body(prof, Z0, Z1, .16, 90, .96), .2, .17, .078)
+        bp_plate(part, bp_outline([(0, .07, .37), (0, .12, .44), (0, .1, .5), (0, .03, .52), (0, -.04, .5), (0, -.07, .44), (0, -.03, .37)], 30),
+                 .03, S('Fin'))
+    simple_part(root, 'Tail pivot', (0, .05, .37), tail)
+    def crest(part):
+        a, b = body.at(.56, 90, .9), body.at(.72, 90, .9)
+        bp_plate(part, bp_outline([tuple(a), tuple(a + Vector((0, .09, .03))), tuple(a + Vector((0, .11, .09))), tuple(b + Vector((0, .07, .02))), tuple(b)], 24),
+                 .025, S('Fin'))
+    simple_part(root, 'Crest pivot', tuple(body.at(.6, 90, 1.0)), crest)
+    bp_lure(root, sid, body.at(.09, 90, .96), .3, .12, .085, .022, 150)
     return root
 
-# ---------------------------------------------------------------- Gloamer: Gloomfin, great dark fan fins edged in glow
+# ---------------------------------------------------------------- Gloomfin: an ocean sunfish
 def gloomfin():
-    sid = 'gloomfin'; S = lambda slot: slot_name(sid, slot)
+    sid = 'gloomfin'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaGloomfin')
-    Z0, Z1 = -.42, .38
-    prof = nose_profile(.4, .7, .26, .28, .25)
-    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.084, .1, .07), 31, .76, None, -12, (.044, .026, .015),
-                  -.045, (.044, .024, (1.25, .85, 1.0)), .6, .03, extra=lambda b: glow_spots(b, sid, prof, Z0, Z1, (.36, .46, .56, .66, .76), -24, .02))
-    # Great fan fins of two lobes, their edges glowing.
-    side_fins(root, sid, (.22, -.05, -.04), [((.12, -.04, .1), (.2, .024, .15), (0, -22, -42), 'Fin', 1.0, 'Accent'),
-                                          ((.08, -.12, .2), (.14, .022, .1), (0, -40, -64), 'Fin', 1.0, 'Accent')])
-    def tail(part):
-        ellipsoid(part, (0, 0, .37), (.036, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
-        rimmed_lobes(part, (0, 0, .38), ((-34, .16, .06, S('Fin')), (0, .12, .05, S('Fin')), (34, .16, .06, S('Fin'))), S('Accent'))
-    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
-    def fin(part):
-        dorsal_sail(part, sid, prof, Z0, Z1, .5, .07, .16, 34)
-    simple_part(root, 'Crest pivot', (0, .26, .0), fin)
-    lure(root, sid, on_body(prof, Z0, Z1, .15, 90, .96), .17, .14, .058, .017)
+    spine = BPSpine([(0, 0, -.30), (0, 0, -.05), (0, 0, .24)])
+    body = BPBody(spine, bp_profile([(0, .09, .2, .2), (.3, .14, .31, .31), (.65, .13, .3, .3), (1, .1, .25, .25)], nose=.18, tail=.1))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), belly=bp_belly(S, -.55, .08))
+    bp_spots(B, body, sid, [(.35, 10, .02), (.47, 25, .018), (.58, 5, .02), (.68, 30, .016), (.5, -20, .018), (.75, -5, .016)])
+    bp_puffed(make_object(B, root), B, body, .12)
+    eye = body.at(.13, 26, .86)
+    bp_face(root, sid, tuple(eye), (.075, .088, .068), 52, mouth_o((0, -.045, -.302), .026, S('Belly')))
+    def pec(part, m):
+        bp_plate(part, [m(p) for p in bp_outline([(.11, .02, -.17), (.15, .04, -.14), (.18, .03, -.09), (.15, -.0, -.09), (.11, -.0, -.13)], 20)],
+                 .022, S('Body'), rim=S('Fin'))
+    bp_fins(root, (.11, .01, -.15), pec)
+    def clavus(part):
+        # The sunfish's tail: a frilly scalloped rim round its back.
+        c = Vector((0, 0, .06))
+        for k in range(9):
+            th = math.radians(-64 + 128 * k / 8)
+            p = c + Vector((0, .24 * math.sin(th), .2 * math.cos(th) + .02))
+            ellipsoid(part, tuple(p), (.022, .062, .055), S('Fin'), (-math.degrees(th), 0, 0), 18, 10)
+    simple_part(root, 'Tail pivot', (0, 0, .26), clavus)
+    fin_outline = [(0, .26, -.0), (0, .42, .06), (0, .6, .16), (0, .68, .25), (0, .62, .3), (0, .44, .25), (0, .26, .22)]
+    def crest(part):
+        bp_plate(part, bp_outline(fin_outline, 32), .035, S('Fin'), rim=S('Accent'), rim_from=.8)
+    simple_part(root, 'Crest pivot', (0, .3, .1), crest)
+    def keel(part):
+        bp_plate(part, bp_outline([(0, -y, z) for _, y, z in fin_outline][::-1], 32), .035, S('Fin'), rim=S('Accent'), rim_from=.8)
+    simple_part(root, 'Keel pivot', (0, -.3, .1), keel)
+    bp_lure(root, sid, body.at(.07, 90, .96), .16, .1, .05, .016, 140)
     return root
 
-# ---------------------------------------------------------------- Gloamer: Shadeback, a tall ridge of soft shadowy spines
+# ---------------------------------------------------------------- Shadeback: a coelacanth
 def shadeback():
-    sid = 'shadeback'; S = lambda slot: slot_name(sid, slot)
+    sid = 'shadeback'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaShadeback')
-    Z0, Z1 = -.42, .38
-    prof = nose_profile(.44, .64, .3, .33, .28)
-    def spots(body):
-        glow_spots(body, sid, prof, Z0, Z1, (.36, .48, .6, .72), -20, .022)
-        glow_spots(body, sid, prof, Z0, Z1, (.42, .54, .66), -42, .018)
-    loft_creature(root, sid, Z0, Z1, prof, .16, 30, (.088, .106, .072), 30, .77, None, -12, (.046, .027, .015),
-                  -.05, (.046, .025, (1.2, .85, 1.0)), .6, .028, extra=spots)
-    side_fins(root, sid, (.26, -.08, -.02), [((.03, -.04, .07), (.03, .08, .12), (6, 20, -32), 'Fin')])
+    spine = BPSpine([(0, 0, -.40), (0, .01, -.1), (0, 0, .2), (0, 0, .36)])
+    body = BPBody(spine, bp_profile([(0, .15, .15, .16), (.25, .21, .23, .22), (.55, .19, .21, .18), (.82, .085, .1, .08),
+                                     (1, .05, .06, .05)], nose=.2, tail=.05))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), belly=bp_belly(S, -.55, .12, .9))
+    bp_spots(B, body, sid, [(.3, 20, .03), (.38, 46, .022), (.45, 4, .028), (.52, 34, .025), (.6, -12, .024), (.66, 22, .02),
+                            (.72, 48, .018), (.4, -28, .02), (.78, 6, .016)])
+    # Fleshy lobed fins: the pelvic pair, the second dorsal and the anal, each a lobe and a little fan.
+    def lobed(part, base, out, length, rad, fan):
+        base, out = Vector(base), Vector(out).normalized()
+        tip = base + out * length
+        cone(part, tuple(base - out * .015), tuple(tip), rad, S('Body'), 14, 6, .35)
+        back = Vector((0, 0, 1))
+        a = (back - out * back.dot(out)).normalized()
+        pts = [tip - out * .01 + a * -.012, tip + out * fan * .55 + a * -.02, tip + out * fan + a * .02, tip + out * fan * .8 + a * fan * .55,
+               tip + out * fan * .25 + a * fan * .55, tip + a * .03]
+        bp_plate(part, bp_outline([tuple(p) for p in pts], 26), .016, S('Fin'))
+    lobed(B, body.at(.74, 90, .92), (0, 1, .5), .05, .022, .08)
+    lobed(B, body.at(.74, -90, .92), (0, -1, .5), .05, .022, .08)
+    for side in (1, -1):
+        lobed(B, body.at(.56, -62 if side > 0 else -118, .92), (side * .6, -.8, .55), .045, .02, .075)
+    bp_puffed(make_object(B, root), B, body, .14)
+    eye = body.at(.16, 22, .84)
+    bp_face(root, sid, tuple(eye), (.08, .09, .07), 44, mouth_grin(body, .035, .14, -22, .011), eye_pitch=4)
+    def pec(part, m):
+        cone(part, m((.18, -.08, -.1)), m((.26, -.13, -.03)), .03, S('Body'), 14, 6, .35)
+        bp_plate(part, [m(p) for p in bp_outline([(.25, -.12, -.04), (.31, -.15, .0), (.35, -.2, .07), (.3, -.2, .1), (.25, -.15, .02)], 24)],
+                 .018, S('Fin'))
+    bp_fins(root, (.2, -.09, -.08), pec)
     def tail(part):
-        ellipsoid(part, (0, 0, .37), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
-        fan_tail(part, (0, 0, .38), ((-28, .12, .06, S('Fin')), (28, .12, .06, S('Fin'))), .022)
-    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
-    def ridge(part):
-        # A ridge of soft, rounded shadow spines down its back.
-        for t, h in ((.3, .1), (.4, .14), (.5, .15), (.6, .13), (.7, .09)):
-            p = on_body(prof, Z0, Z1, t, 90, .94)
-            cone(part, tuple(p), tuple(p + rot((0, h, 0), (30, 0, 0))), .045, S('Fin'), 12, 6, .5)
-    simple_part(root, 'Crest pivot', (0, .3, .0), ridge)
-    lure(root, sid, on_body(prof, Z0, Z1, .14, 90, .96), .17, .15, .064)
+        bp_plate(part, bp_outline([(0, .04, .34), (0, .15, .4), (0, .18, .5), (0, .07, .5), (0, .02, .43)], 24), .022, S('Fin'))
+        bp_plate(part, bp_outline([(0, -.04, .34), (0, -.02, .43), (0, -.07, .5), (0, -.18, .5), (0, -.15, .4)], 24), .022, S('Fin'))
+        ellipsoid(part, (0, 0, .46), (.024, .032, .085), S('Body'), (0, 0, 0), 14, 8)
+        ellipsoid(part, (0, 0, .555), (.012, .05, .04), S('Fin'), (0, 0, 0), 14, 8)
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def crest(part):
+        a, b = body.at(.34, 90, .9), body.at(.46, 90, .9)
+        top = [tuple(a), tuple(a + Vector((0, .1, .0))), tuple(a + Vector((0, .15, .05))), tuple(b + Vector((0, .13, .03))),
+               tuple(b + Vector((0, .05, .03))), tuple(b)]
+        bp_plate(part, bp_outline(top, 28), .022, S('Fin'))
+    simple_part(root, 'Crest pivot', tuple(body.at(.4, 90, 1.0)), crest)
+    bp_lure(root, sid, body.at(.14, 90, .96), .2, .15, .055, .018, 120)
     return root
 
-# ---------------------------------------------------------------- Gloamer: Hushray, a wide, quiet ray with a lure
+# ---------------------------------------------------------------- Hushray: a stingray
 def hushray():
-    sid = 'hushray'; S = lambda slot: slot_name(sid, slot)
+    sid = 'hushray'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaHushray')
-    R = (.32, .18, .42)
-    def spots(body):
-        for az in (60, 80, 100, 120, -60, -80, -100, -120):
-            p = on_ellipsoid(R, az, -8, 1.0)
-            ellipsoid(body, tuple(p), (.02, .02, .02), S('Accent'), (0, 0, 0), 12, 8)
-    round_creature(root, sid, R, 30, 24, (.09, .106, .072), 34, .82, (50, -2), (.048, .028, .016), -8,
-                   (.042, .024, (1.25, .85, 1.0)), .62, .028, -.25, 1.0, 1.12, extra=spots)
-    # Wide, rounded wings, their edges softly glowing.
-    side_fins(root, sid, (.28, .0, .0), [((.24, .0, .08), (.3, .026, .24), (0, -12, 4), 'Fin', .9, 'Accent')])
+    spine = BPSpine([(0, 0, -.30), (0, .01, 0), (0, .02, .22)])
+    body = BPBody(spine, bp_profile([(0, .14, .06, .035), (.3, .22, .095, .045), (.7, .17, .08, .04), (1, .07, .045, .03)], nose=.25, tail=.12))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), belly=lambda t, sn, cs: S('Belly') if sn < -.2 else None)
+    for side in (1, -1):
+        ellipsoid(B, (side * .075, .07, -.14), (.06, .045, .06), S('Body'), (0, 0, 0), 18, 10)  # eye mounds
+        ellipsoid(B, (side * .085, .085, -.06), (.022, .008, .016), 'DK_Mouth', (0, 0, 0), 12, 6)  # spiracles
+    bp_spots(B, body, sid, [(.5, 90, .016), (.62, 90, .014), (.74, 90, .012)])
+    bp_puffed(make_object(B, root), B, body, .1)
+    bp_face(root, sid, (.075, .1, -.15), (.06, .07, .055), 18,
+            mouth_arc((0, -.022, -.285), .1, .02, .009, .05), eye_pitch=42, pupil_k=.62)
+    def wing(part, m):
+        out = bp_outline([(.12, .01, -.25), (.28, .005, -.2), (.42, 0, -.08), (.46, 0, .02), (.4, 0, .12), (.26, .01, .17),
+                          (.12, .02, .14), (.1, .03, -.06)], 40)
+        bp_plate(part, [m(p) for p in out], .075, S('Fin'), rim=S('Accent'), rim_from=.84, normal=(0, 1, 0))
+        for p in ((.24, .04, -.12), (.31, .035, -.05), (.36, .03, .03), (.27, .04, .03), (.2, .045, .07)):
+            ellipsoid(part, m(p), (.015, .01, .015), S('Accent'), (0, 0, 0), 10, 6)
+    bp_fins(root, (.16, .0, -.04), wing)
     def tail(part):
-        pts = [(0, .015 * math.sin(s * math.pi), .38 + .5 * s) for s in (0, .2, .4, .6, .8, 1)]
-        taper_tube(part, pts, .026, .01, S('Body'), 12)
-        ellipsoid(part, (0, 0, .41), (.05, .045, .06), S('Fin'), (0, 0, 0), 14, 8)
-        ellipsoid(part, (0, .0, .9), (.022, .022, .022), S('Accent'), (0, 0, 0), 10, 6)
-    simple_part(root, 'Tail pivot', (0, 0, .36), tail)
-    def nub(part):
-        ellipsoid(part, (0, .2, .12), (.02, .04, .07), S('Fin'), (24, 0, 0), 14, 8)
-    simple_part(root, 'Crest pivot', (0, .17, .1), nub)
-    lure(root, sid, on_ellipsoid(R, 0, 52, .97), .16, .15, .06, .017)
+        taper_tube(part, [(0, .015, .2), (0, .025, .34), (.02, .035, .48), (-.01, .035, .62), (0, .03, .74)], .032, .007, S('Fin'), 12)
+        cone(part, (0, .04, .33), (0, .07, .42), .012, S('Accent'), 10, 4, .1)
+    simple_part(root, 'Tail pivot', (0, .01, .2), tail)
+    def crest(part):
+        bp_plate(part, bp_outline([(0, .05, .12), (0, .1, .17), (0, .09, .21), (0, .05, .2)], 16), .018, S('Fin'))
+    simple_part(root, 'Crest pivot', (0, .06, .16), crest)
+    bp_lure(root, sid, (0, .095, -.2), .15, .12, .045, .014, 130)
     return root
 
-# ---------------------------------------------------------------- Gloamer: Duskdrifter, long drifting veils
+# ---------------------------------------------------------------- Duskdrifter: an oarfish
 def duskdrifter():
-    sid = 'duskdrifter'; S = lambda slot: slot_name(sid, slot)
+    sid = 'duskdrifter'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaDuskdrifter')
-    Z0, Z1 = -.42, .38
-    prof = nose_profile(.42, .68, .28, .29, .26)
-    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.088, .104, .072), 31, .77, None, -12, (.046, .027, .015),
-                  -.04, (.04, .023, (1.2, .85, 1.0)), .6, .03, extra=lambda b: glow_spots(b, sid, prof, Z0, Z1, (.38, .5, .62, .74), -26, .02))
-    # Long veil fins drifting back and down, edged in a faint glow.
-    side_fins(root, sid, (.24, -.06, -.02), [((.08, -.12, .2), (.03, .1, .24), (24, 18, -38), 'Fin', 1.0, 'Accent')])
+    spine = BPSpine([(0, 0, -.44), (.012, .005, -.22), (-.02, .01, .02), (.025, 0, .26), (-.02, -.01, .47), (.015, 0, .62)], 121)
+    body = BPBody(spine, bp_profile([(0, .058, .11, .1), (.12, .066, .13, .115), (.5, .056, .115, .095), (.85, .036, .075, .058),
+                                     (1, .016, .04, .03)], nose=.08, tail=.05))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), 0, 1.0, 80, 28, belly=bp_belly(S, -.55, .05))
+    lo, hi, sd = [], [], []
+    for k in range(48):
+        t = .07 + .9 * k / 47
+        c, s, up = spine.frame(t)
+        base = body.at(t, 90, .9)
+        h = .075 * (1 - .4 * t) * math.sin(math.pi / 2 * min(1, (t - .07) / .08)) ** .5
+        lo.append(tuple(base)); hi.append(tuple(base + up * max(h, .006))); sd.append(tuple(s))
+    bp_strip(B, lo, hi, .02, S('Fin'), rim=S('Accent'), side_dirs=sd)
+    bp_spots(B, body, sid, [(t, -30, .013) for t in (.16, .24, .32, .4, .48, .56, .64, .72, .8)])
+    body_obj = make_object(B, root)
+    bp_puffed(body_obj, B, body, .1)
+    bp_wave_keys(body_obj, B, body)
     def tail(part):
-        ellipsoid(part, (0, 0, .37), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
-        rimmed_lobes(part, (0, 0, .38), ((-22, .25, .07, S('Fin')), (12, .28, .07, S('Fin'))), S('Accent'))
-    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
-    def veil(part):
-        # A long, low veil of a dorsal fin.
-        dorsal_sail(part, sid, prof, Z0, Z1, .5, .06, .26, 14)
-    simple_part(root, 'Crest pivot', (0, .27, .0), veil)
-    lure(root, sid, on_body(prof, Z0, Z1, .15, 90, .96), .18, .16, .06, .017, 110, 'flame')
+        # The oarfish has hardly a tail fin: a little tuft at the end of its ribbon.
+        end, tan = spine.frame(1.0)[0], spine.tangent(.98)
+        bp_plate(part, bp_outline([tuple(end - tan * .03 + Vector((0, .03, 0))), tuple(end + tan * .05 + Vector((0, .045, 0))),
+                                   tuple(end + tan * .07), tuple(end + tan * .05 - Vector((0, .04, 0))), tuple(end - tan * .03 - Vector((0, .025, 0)))], 20),
+                 .016, S('Fin'), rim=S('Accent'))
+    simple_part(root, 'Tail pivot', tuple(spine.frame(.97)[0]), tail)
+    eye = body.at(.065, 18, .82)
+    bp_face(root, sid, tuple(eye), (.05, .06, .046), 56, mouth_arc((0, -.03, -.437), .03, .01, .007, .015), eye_pitch=4)
+    def oars(part, m):
+        pts = [(.03, -.11, -.32), (.06, -.17, -.22), (.08, -.2, -.06), (.09, -.21, .1)]
+        taper_tube(part, [m(p) for p in pts], .009, .006, S('Fin'), 10)
+        ellipsoid(part, m((.09, -.212, .14)), (.014, .03, .05), S('Accent'), (0, 0, 0), 14, 8)
+    bp_fins(root, (.03, -.1, -.33), oars)
+    def crest(part):
+        for k, (t, lean, length) in enumerate(((.05, 22, .2), (.065, 34, .26), (.08, 46, .3), (.095, 56, .27), (.11, 66, .22), (.125, 74, .17))):
+            base = body.at(t, 90, .9)
+            pts = [tuple(base + rot((0, length * s, 0), (lean * s, 0, 0)) + Vector((0, 0, .02 * s * s))) for s in (0, .25, .5, .75, 1)]
+            taper_tube(part, pts, .012, .007, S('Fin'), 10)
+            ellipsoid(part, pts[-1], (.014, .014, .014), S('Accent'), (0, 0, 0), 10, 6)
+    simple_part(root, 'Crest pivot', tuple(body.at(.08, 90, 1.0)), crest)
+    bp_lure(root, sid, body.at(.04, 90, .96), .14, .1, .045, .014, 130, 'flame')
     return root
 
-# ---------------------------------------------------------------- Gloamer: Murkmaw, a great maw with little teeth
+# ---------------------------------------------------------------- Murkmaw: a viperfish
 def murkmaw():
-    sid = 'murkmaw'; S = lambda slot: slot_name(sid, slot)
+    sid = 'murkmaw'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaMurkmaw')
-    Z0, Z1 = -.42, .38
-    prof = nose_profile(.48, .6, .32, .3, .33)
-    def teeth(body):
-        glow_spots(body, sid, prof, Z0, Z1, (.42, .54, .66), -30, .022)
-        # Little rounded teeth over its lower lip.
-        for x in (-.04, -.02, 0, .02, .04):
-            base = Vector((x, -.13 + abs(x) * .4, Z0 - .02))
-            cone(body, tuple(base), tuple(base + Vector((0, .032, -.004))), .011, S('Belly'), 10, 4, .3)
-    loft_creature(root, sid, Z0, Z1, prof, .19, 34, (.08, .096, .066), 30, .76, None, -6, (.044, .026, .015),
-                  -.09, (.075, .034, (1.3, .85, 1.0)), .58, .02, extra=teeth)
-    side_fins(root, sid, (.28, -.08, .0), [((.03, -.04, .06), (.03, .08, .1), (6, 22, -30), 'Fin')])
+    spine = BPSpine([(0, 0, -.40), (0, .02, -.15), (0, 0, .15), (0, .02, .42)])
+    body = BPBody(spine, bp_profile([(0, .1, .1, .15), (.18, .17, .18, .23), (.4, .15, .16, .15), (.75, .08, .09, .07),
+                                     (1, .035, .045, .035)], nose=.14, tail=.04))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), belly=bp_belly(S, -.55, .14))
+    bp_spots(B, body, sid, [(t, -58, .016) for t in (.24, .32, .4, .48, .56, .64, .72)] + [(t, -78, .013) for t in (.28, .36, .44, .52, .6)])
+    bp_puffed(make_object(B, root), B, body, .13)
+    eye = body.at(.12, 38, .84)
+    fang = (0, 1, -.5)
+    bp_face(root, sid, tuple(eye), (.075, .086, .066), 38,
+            mouth_grin(body, .03, .17, -14, .013, teeth=[(.4, .17, .02, fang), (.6, .17, .02, fang), (.27, .05, .011, True),
+                                                         (.73, .05, .011, True), (.33, .045, .01, False), (.67, .045, .01, False)]))
+    def pec(part, m):
+        bp_plate(part, [m(p) for p in bp_outline([(.15, -.08, -.18), (.22, -.1, -.13), (.25, -.14, -.05), (.2, -.15, -.06), (.15, -.12, -.12)], 20)],
+                 .02, S('Fin'))
+    bp_fins(root, (.15, -.1, -.15), pec)
     def tail(part):
-        ellipsoid(part, (0, 0, .37), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
-        fan_tail(part, (0, 0, .38), ((-30, .12, .06, S('Fin')), (30, .12, .06, S('Fin'))), .022)
-    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
-    def spikes(part):
-        # A short, spiky dorsal fin.
-        for t, h in ((.42, .08), (.5, .1), (.58, .08)):
-            p = on_body(prof, Z0, Z1, t, 90, .94)
-            cone(part, tuple(p), tuple(p + rot((0, h, 0), (34, 0, 0))), .03, S('Fin'), 10, 5, .2)
-    simple_part(root, 'Crest pivot', (0, .3, .0), spikes)
-    lure(root, sid, on_body(prof, Z0, Z1, .2, 90, .96), .19, .2, .068)
+        bp_plate(part, bp_outline([(0, .02, .39), (0, .1, .45), (0, .16, .56), (0, .1, .55), (0, .02, .47)], 20), .02, S('Fin'))
+        bp_plate(part, bp_outline([(0, -.02, .39), (0, -.02, .47), (0, -.1, .55), (0, -.16, .56), (0, -.1, .45)], 20), .02, S('Fin'))
+    simple_part(root, 'Tail pivot', (0, .02, .39), tail)
+    def crest(part):
+        a, b = body.at(.62, 90, .9), body.at(.72, 90, .9)
+        bp_plate(part, bp_outline([tuple(a), tuple(a + Vector((0, .07, .02))), tuple(b + Vector((0, .06, .03))), tuple(b)], 16), .02, S('Fin'))
+    simple_part(root, 'Crest pivot', tuple(body.at(.66, 90, 1.0)), crest)
+    bp_lure(root, sid, body.at(.3, 90, .96), .26, .24, .05, .012, 162)
     return root
 
-# ---------------------------------------------------------------- Gloamer: Nightlantern, three lures and rows of lights
+# ---------------------------------------------------------------- Nightlantern: a vampire squid
 def nightlantern():
-    sid = 'nightlantern'; S = lambda slot: slot_name(sid, slot)
+    sid = 'nightlantern'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaNightlantern')
-    Z0, Z1 = -.42, .38
-    prof = nose_profile(.42, .66, .29, .3, .27)
-    def lights(body):
-        glow_spots(body, sid, prof, Z0, Z1, (.32, .42, .52, .62, .72, .8), -18, .02)
-        glow_spots(body, sid, prof, Z0, Z1, (.37, .47, .57, .67), -44, .017)
-    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.088, .104, .072), 31, .77, None, -12, (.046, .027, .015),
-                  -.042, (.042, .024, (1.2, .85, 1.0)), .6, .03, extra=lights)
-    side_fins(root, sid, (.25, -.06, -.02), [((.04, -.04, .08), (.028, .09, .13), (8, 20, -30), 'Fin', .9, 'Accent')])
-    def tail(part):
-        ellipsoid(part, (0, 0, .37), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
-        fan_tail(part, (0, 0, .38), ((-30, .13, .06, S('Fin')), (30, .13, .06, S('Fin'))), .022)
-    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
-    def fin(part):
-        dorsal_sail(part, sid, prof, Z0, Z1, .52, .06, .13, 30)
-    simple_part(root, 'Crest pivot', (0, .28, .0), fin)
-    # Three lures on stalks from its brow, the middle one tallest.
-    base = on_body(prof, Z0, Z1, .15, 90, .96)
-    lantern = Part('Lantern')
-    for side, rise, reach in ((0, .2, .16), (-1, .14, .1), (1, .14, .1)):
-        pts = [tuple(base + Vector((side * .13 * math.sin(math.radians(a)), rise * math.sin(math.radians(a)), -reach * (1 - math.cos(math.radians(a))))))
-               for a in range(0, 111, 10)]
-        tube(lantern, pts, .016, S('Body'), 10)
-        head = Vector(pts[-1]) + Vector((0, .012, -.04))
-        r = .052 if side == 0 else .04
-        ellipsoid(lantern, tuple(head), (r, r * 1.05, r), S('Accent'), (0, 0, 0), 22, 12)
-        ellipsoid(lantern, tuple(head + Vector((-r * .3, r * .45, -r * .7))), (r * .27, r * .25, r * .17), 'DK_Glint', (0, 0, 0), 10, 6)
-    make_object(lantern, root, tuple(base), 'Lantern pivot')
+    spine = BPSpine([(0, -.08, -.1), (0, .1, -.02), (0, .3, .12)], 61, up=(0, 0, -1))
+    body = BPBody(spine, bp_profile([(0, .18, .18, .18), (.35, .23, .23, .23), (.75, .19, .19, .19), (1, .1, .1, .1)], nose=.16, tail=.22))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), belly=lambda t, sn, cs: S('Belly') if sn < -.6 and t < .5 else None)
+    for side in (1, -1):
+        ellipsoid(B, (side * .2, .2, .08), (.028, .028, .028), S('Accent'), (0, 0, 0), 14, 8)  # lights at the fin bases
+    bp_puffed(make_object(B, root), B, body, .12)
+    eye = body.at(.32, 58, .82)
+    bp_face(root, sid, tuple(eye), (.098, .11, .082), 26, mouth_arc(tuple(body.at(.1, 90, 1.0)), .045, .015, .009, .02), eye_pitch=-4)
+    def ears(part, m):
+        bp_plate(part, [m(p) for p in bp_outline([(.17, .24, .02), (.26, .3, .06), (.32, .3, .12), (.27, .24, .14), (.18, .2, .1)], 24)],
+                 .03, S('Fin'))
+    bp_fins(root, (.18, .23, .07), ears)
+    def cloak(part):
+        c = Vector((0, -.12, -.1))
+        tips = []
+        for k in range(8):
+            phi = math.tau * (k + .5) / 8
+            rad = Vector((math.sin(phi), 0, -math.cos(phi)))
+            pts = [c + rad * .05, c + rad * .15 + Vector((0, -.08, 0)), c + rad * .24 + Vector((0, -.13, 0)),
+                   c + rad * .3 + Vector((0, -.12, 0)), c + rad * .33 + Vector((0, -.08, 0))]
+            taper_tube(part, [tuple(p) for p in pts], .028, .011, S('Body'), 10)
+            ellipsoid(part, tuple(pts[-1] + Vector((0, .006, 0))), (.022, .022, .022), S('Accent'), (0, 0, 0), 12, 8)
+            for s in (.35, .6):  # soft spines (cirri) along each arm
+                q = c + rad * (.05 + .25 * s) + Vector((0, -.1 * s - .02, 0))
+                cone(part, tuple(q), tuple(q + Vector((0, -.04, 0)) + rad * .01), .008, S('Fin'), 8, 3, .1)
+            tips.append([c + rad * .07, c + rad * .17 + Vector((0, -.09, 0)), c + rad * .25 + Vector((0, -.125, 0))])
+        for k in range(8):
+            a, b = tips[k], tips[(k + 1) % 8]
+            web = [tuple(c + Vector((0, -.02, 0))), tuple(a[1]), tuple(a[2]), tuple((a[2] + b[2]) / 2 + Vector((0, .03, 0))), tuple(b[2]), tuple(b[1])]
+            bp_plate(part, web, .014, S('Fin'))
+    simple_part(root, 'Tail pivot', (0, -.12, -.1), cloak)
+    def crest(part):
+        top = body.at(.97, 90, .5)
+        cone(part, tuple(top), tuple(top + Vector((0, .06, .05))), .05, S('Body'), 14, 5, .4)
+    simple_part(root, 'Crest pivot', tuple(body.at(1.0, 90, 0)), crest)
+    bp_lure(root, sid, body.at(.72, 90, .96), .12, .14, .05, .013, 125, 'fizz')
     return root
 
-# ---------------------------------------------------------------- Gloamer crown: Eclipse Leviathan, an eclipse for a lure, a crown
+# ---------------------------------------------------------------- Eclipse Leviathan: a mosasaur, its lure an eclipse
 def eclipseleviathan():
-    sid = 'eclipseleviathan'; S = lambda slot: slot_name(sid, slot)
+    sid = 'eclipseleviathan'; S = lambda s: slot_name(sid, s)
     root = creature_root('DioramaEclipseleviathan')
-    Z0, Z1 = -.46, .44
-    prof = nose_profile(.44, .66, .32, .33, .3)
-    def lights(body):
-        glow_spots(body, sid, prof, Z0, Z1, (.32, .42, .52, .62, .72), -20, .024)
-        glow_spots(body, sid, prof, Z0, Z1, (.37, .47, .57, .67), -44, .019)
-    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.1, .118, .08), 30, .77, None, -12, (.05, .03, .017),
-                  -.05, (.05, .027, (1.25, .85, 1.0)), .62, .03, extra=lights)
-    # Great fins, their edges glowing like the eclipse's ring.
-    side_fins(root, sid, (.28, -.05, -.02), [((.12, -.02, .12), (.18, .024, .14), (0, -26, 8), 'Fin', 1.0, 'Accent'),
-                                          ((.08, -.1, .22), (.11, .02, .08), (0, -46, -16), 'Fin', 1.0, 'Accent')])
+    spine = BPSpine([(0, .04, -.56), (0, .03, -.3), (0, 0, -.05), (0, 0, .2), (0, .03, .46)], 101)
+    body = BPBody(spine, bp_profile([(0, .04, .03, .035), (.08, .075, .062, .062), (.19, .12, .115, .1), (.26, .11, .11, .105),
+                                     (.42, .18, .18, .19), (.7, .125, .135, .12), (.9, .055, .07, .05), (1, .03, .04, .03)],
+                                    nose=.05, tail=.03))
+    B = Part('Body')
+    bp_loft(B, body, S('Body'), rings=60, belly=bp_belly(S, -.5, .03))
+    for side in (1, -1):  # brow ridges over the eyes
+        p = body.at(.17, 52 if side > 0 else 128, 1.0)
+        ellipsoid(B, tuple(p), (.05, .022, .065), S('Body'), (0, 0, 0), 16, 8)
+    def rear(m):
+        return [m(p) for p in bp_outline([(.12, -.12, .16), (.2, -.17, .2), (.26, -.21, .26), (.22, -.2, .29), (.13, -.13, .25)], 22)]
+    for side in (1, -1):
+        bp_plate(B, rear(lambda p, side=side: (side * p[0], p[1], p[2])), .03, S('Fin'), rim=S('Accent'), rim_from=.82)
+    bp_spots(B, body, sid, [(t, -22, .022) for t in (.36, .45, .54, .63, .72)] + [(t, -46, .017) for t in (.4, .5, .6, .68)])
+    bp_puffed(make_object(B, root), B, body, .12)
+    eye = body.at(.165, 40, .84)
+    down, up_ = (0, -1, -.15), (0, 1, -.15)
+    teeth = [(w, .026, .009, down) for w in (.12, .2, .28, .36, .64, .72, .8, .88)] + [(w, .022, .008, up_) for w in (.16, .24, .32, .68, .76, .84)]
+    bp_face(root, sid, tuple(eye), (.068, .078, .06), 36, mouth_grin(body, .012, .2, -6, .009, teeth=teeth), eye_pitch=8)
+    def flipper(part, m):
+        out = bp_outline([(.13, -.08, -.18), (.24, -.14, -.15), (.34, -.21, -.06), (.37, -.23, .03), (.3, -.19, .05), (.14, -.1, -.06)], 28)
+        bp_plate(part, [m(p) for p in out], .035, S('Fin'), rim=S('Accent'), rim_from=.82)
+    bp_fins(root, (.14, -.09, -.13), flipper)
     def tail(part):
-        ellipsoid(part, (0, 0, .43), (.046, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
-        rimmed_lobes(part, (0, 0, .44), ((-32, .2, .08, S('Fin')), (0, .14, .06, S('Fin')), (32, .2, .08, S('Fin'))), S('Accent'))
-    simple_part(root, 'Tail pivot', (0, 0, .41), tail)
+        bp_plate(part, bp_outline([(0, .02, .4), (0, -.06, .47), (0, -.18, .56), (0, -.2, .62), (0, -.09, .58), (0, .02, .5)], 26),
+                 .03, S('Fin'), rim=S('Accent'), rim_from=.82)
+        bp_plate(part, bp_outline([(0, .05, .43), (0, .1, .5), (0, .12, .56), (0, .06, .53), (0, .03, .48)], 18), .025, S('Fin'))
+    simple_part(root, 'Tail pivot', (0, .03, .42), tail)
     def crown(part):
-        top = on_body(prof, Z0, Z1, .3, 90, 1.0)
-        gold_crown(part, (0, top.y + .005, top.z), .09, 5, .08, 'DK_Gold', -8)
-        dorsal_sail(part, sid, prof, Z0, Z1, .56, .07, .18, 28)
-    simple_part(root, 'Crest pivot', (0, .32, -.08), crown)
-    # The eclipse: a dark orb on its lure, ringed by a blazing corona.
-    base = on_body(prof, Z0, Z1, .14, 90, .96)
+        top = body.at(.21, 90, 1.0)
+        gold_crown(part, (0, top.y + .004, top.z), .075, 5, .07, 'DK_Gold', -6)
+        for t in (.34, .42, .5, .58, .66):  # a low ridge of scutes down the back
+            p = body.at(t, 90, .96)
+            cone(part, tuple(p), tuple(p + Vector((0, .045, .02))), .022, S('Fin'), 10, 4, .2)
+    simple_part(root, 'Crest pivot', tuple(body.at(.3, 90, 1.0)), crown)
+    base = body.at(.1, 90, .96)
     lantern = Part('Lantern')
-    pts = [tuple(base + Vector((0, .16 * math.sin(math.radians(a)), -.17 * (1 - math.cos(math.radians(a)))))) for a in range(0, 111, 10)]
-    tube(lantern, pts, .02, S('Body'), 10)
-    head = Vector(pts[-1]) + Vector((0, .02, -.065))
-    ellipsoid(lantern, tuple(head), (.068, .07, .068), S('Fin'), (0, 0, 0), 24, 14)
-    torus(lantern, head + Vector((0, 0, .01)), .088, .017, S('Accent'), (1, 1, 1), 36, 10)
+    pts = [tuple(base + Vector((0, .16 * math.sin(math.radians(a)), -.16 * (1 - math.cos(math.radians(a)))))) for a in range(0, 121, 10)]
+    tube(lantern, pts, .018, S('Body'), 10)
+    head = Vector(pts[-1]) + Vector((0, .0, -.07))
+    ellipsoid(lantern, tuple(head), (.064, .066, .064), S('Fin'), (0, 0, 0), 24, 14)
+    torus(lantern, head + Vector((0, 0, .01)), .084, .016, S('Accent'), (1, 1, 1), 36, 10)
     for k in range(8):
         a = math.tau * k / 8
         d = Vector((math.cos(a), math.sin(a), 0))
-        cone(lantern, tuple(head + d * .1), tuple(head + d * .125), .014, S('Accent'), 8, 3, .1)
+        cone(lantern, tuple(head + d * .095), tuple(head + d * .12), .013, S('Accent'), 8, 3, .1)
     make_object(lantern, root, tuple(base), 'Lantern pivot')
     return root
 
@@ -3856,7 +4383,7 @@ if not args.no_render:
 blend = SOURCE / 'EvolutionShop_DioramaKit.blend'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 4)',
+    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 4, GR-12B body plans)',
     'origin': {'author': 'Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)',
                'external_sources': [], 'license': 'Original project work; no third-party source or asset license',
                'paid_generation': False, 'external_uploads': False},
@@ -3876,7 +4403,9 @@ manifest = {
     'species': [{'id': sid, 'asset': asset, 'family': family, 'atlas_rows': [k * len(VARIANT_NAMES), k * len(VARIANT_NAMES) + len(VARIANT_NAMES) - 1],
                  'variants': {v: dict(zip(SLOTS, codes)) for v, codes in variants.items()}}
                 for k, (sid, asset, family, variants) in enumerate(SPECIES)],
-    'rig': {'pivots': ['Left fin pivot', 'Right fin pivot', 'Tail pivot', 'Crest pivot'], 'family_pivots': {'Sparkline': ['Lantern pivot']},
+    'rig': {'pivots': ['Left fin pivot', 'Right fin pivot', 'Tail pivot', 'Crest pivot'], 'family_pivots': {'Sparkline': ['Lantern pivot'], 'Gloamer': ['Lantern pivot']},
+            'body_plans': {'Keel pivot': 'a fin under the body that sways with the crest (the sunfish), GR-12B',
+                           'Wave keys': 'WaveSin, WaveSinNeg, WaveCos, WaveCosNeg on an undulating Body (the oarfish): weighted by the cosine and sine of the swim, a wave from head to tail'},
             'face': {'Body': ['Puffed'], 'Lids': ['Blink', 'Happy'], 'Lips': ['Happy', 'Surprised']},
             'parts': ['Body', 'Eyes', 'Pupils', 'Glints', 'Lids', 'Blush', 'Lips']},
     'export_settings': {'format': 'FBX', 'forward': '-Z', 'up': 'Y', 'global_scale': 1, 'bake_space_transform': True,

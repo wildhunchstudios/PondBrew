@@ -87,12 +87,122 @@ namespace EvolutionShop.Tests
                 Assert.That(Shapes(root, "Body"), Does.Contain("Puffed"), s.Id);
                 Assert.That(Shapes(root, "Lids"), Is.SupersetOf(new[] { "Blink", "Happy" }), s.Id);
                 Assert.That(Shapes(root, "Lips"), Is.SupersetOf(new[] { "Happy", "Surprised" }), s.Id);
-                // Front -Z: the lips are ahead of the body's middle and the tail behind it; left is -X.
-                Assert.That(Centre(root.Find("Lips")).z, Is.LessThan(Centre(root.Find("Body")).z - .2f), "Lips at the front / " + s.Id);
-                Assert.That(root.Find("Tail pivot").localPosition.z, Is.GreaterThan(.25f), "Tail behind / " + s.Id);
+                // Front -Z: the lips are ahead of the body's middle and the tail behind it (GR-12B: behind its body's middle; a
+                // squid's cloak, on its Tail pivot, under it); left is -X.
+                Assert.That(Centre(root.Find("Lips")).z, Is.LessThan(Centre(root.Find("Body")).z - (s.Remade ? .15f : .2f)), "Lips at the front / " + s.Id);
+                if (s.Gait == DioramaGait.Pulse)
+                    Assert.That(root.Find("Tail pivot").localPosition.y, Is.LessThan(Centre(root.Find("Body")).y - .1f), "A cloak under its body / " + s.Id);
+                else
+                    Assert.That(root.Find("Tail pivot").localPosition.z, Is.GreaterThan(s.Remade ? Centre(root.Find("Body")).z + .1f : .25f), "Tail behind / " + s.Id);
+                // GR-12B: what its way of swimming moves: a sunfish's keel, an undulating body's Wave keys.
+                Assert.That(root.Find("Keel pivot") != null, Is.EqualTo(s.Gait == DioramaGait.Scull), "A keel to scull with / " + s.Id);
+                Assert.That(Shapes(root, "Body").Contains("WaveSin"), Is.EqualTo(s.Gait == DioramaGait.Undulate), "Wave keys to undulate with / " + s.Id);
+                if (s.Gait == DioramaGait.Undulate) Assert.That(Shapes(root, "Body"), Is.SupersetOf(new[] { "WaveSin", "WaveSinNeg", "WaveCos", "WaveCosNeg" }), s.Id);
                 Assert.That(root.Find("Left fin pivot").localPosition.x, Is.LessThan(0), s.Id);
                 Assert.That(root.Find("Right fin pivot").localPosition.x, Is.GreaterThan(0), s.Id);
             }
+        }
+
+        [Test] public void RemadeSpeciesSwimByTheirBodyPlans()
+        {
+            // GR-12B: a ray's wings beat up and down together; a sunfish's tall top and bottom fins sweep to one side together; a
+            // wave runs down an oarfish's body from head to tail, its tail fin riding it; a squid's cloak opens and closes. None of
+            // it with Reduced motion.
+            Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Gloamer).All(s => s.Remade), Is.True, "GR-12B wave 1: the Gloamer");
+            Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(), Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse }));
+            var parent = new GameObject("GR-12B gaits").transform;
+            try
+            {
+                CreatureVisual Kit(string id)
+                {
+                    var go = new GameObject(id); go.transform.SetParent(parent, false);
+                    var v = go.AddComponent<CreatureVisual>();
+                    Assert.That(v.BuildKit(id), Is.True, id);
+                    return v;
+                }
+                Transform Part(CreatureVisual v, string name) => v.GetComponentsInChildren<Transform>(true).First(x => x.name == name);
+                float Roll(Transform t) => Mathf.DeltaAngle(0, t.localEulerAngles.z);
+
+                // A ray: both wings rise and fall together, as mirror images, far.
+                var ray = Kit("hushray");
+                Transform left = Part(ray, "Left fin pivot"), right = Part(ray, "Right fin pivot");
+                float widest = 0;
+                for (float t = 0; t < 8; t += .05f)
+                {
+                    ray.AnimateSpecies(t, 1, false);
+                    Assert.That(Roll(left), Is.EqualTo(-Roll(right)).Within(.5f), "the ray's wings beat together at " + t);
+                    widest = Mathf.Max(widest, Mathf.Abs(Roll(right)));
+                }
+                Assert.That(widest, Is.GreaterThan(18), "the ray's wings beat deep");
+
+                // A sunfish: its top and bottom fins sweep to the same side together.
+                var sunfish = Kit("gloomfin");
+                Transform crest = Part(sunfish, "Crest pivot"), keel = Part(sunfish, "Keel pivot");
+                Vector3 topRest = crest.TransformPoint(Vector3.up * .3f), bottomRest = keel.TransformPoint(Vector3.down * .3f);
+                widest = 0;
+                int together = 0;
+                for (float t = 0; t < 8; t += .05f)
+                {
+                    sunfish.AnimateSpecies(t, 1, false);
+                    float top = crest.TransformPoint(Vector3.up * .3f).x - topRest.x, bottom = keel.TransformPoint(Vector3.down * .3f).x - bottomRest.x;
+                    widest = Mathf.Max(widest, Mathf.Abs(Roll(crest)));
+                    if (Mathf.Abs(Roll(crest)) > 5) { Assert.That(Mathf.Sign(top), Is.EqualTo(Mathf.Sign(bottom)), "its fins sweep to one side at " + t); together++; }
+                }
+                Assert.That(widest, Is.GreaterThan(18), "the sunfish's fins sweep far");
+                Assert.That(together, Is.GreaterThan(40));
+
+                // An oarfish: a wave runs from head to tail (the tail end swings later than the middle), its tail fin riding it.
+                var oarfish = Kit("duskdrifter");
+                var body = oarfish.GetComponentsInChildren<SkinnedMeshRenderer>(true).First(r => r.name == "Body");
+                var rest = body.sharedMesh.vertices;
+                int Nearest(float z) { int best = 0; for (int i = 1; i < rest.Length; i++) if (Mathf.Abs(rest[i].z - z) + Mathf.Abs(rest[i].x) * .1f < Mathf.Abs(rest[best].z - z) + Mathf.Abs(rest[best].x) * .1f) best = i; return best; }
+                float zMin = rest.Min(v => v.z), zMax = rest.Max(v => v.z);
+                int mid = Nearest(Mathf.Lerp(zMin, zMax, .65f)), end = Nearest(Mathf.Lerp(zMin, zMax, .9f));
+                var tail = Part(oarfish, "Tail pivot");
+                oarfish.AnimateSpecies(0, 1, true);  // at rest (building it swam it one frame)
+                var tailRest = tail.localPosition;
+                var baked = new Mesh();
+                float period = 2 * Mathf.PI / (2.6f * DioramaSpecies.All.First(s => s.Id == "duskdrifter").Tempo);
+                float midPeak = -1, endPeak = -1, midMost = 0, endMost = 0, tailMost = 0;
+                for (float t = 0; t < period; t += period / 200)
+                {
+                    oarfish.AnimateSpecies(t, 1, false);
+                    body.BakeMesh(baked, false);
+                    var v = baked.vertices;
+                    float m = v[mid].x - rest[mid].x, e = v[end].x - rest[end].x;
+                    if (m > midMost) { midMost = m; midPeak = t; }
+                    if (e > endMost) { endMost = e; endPeak = t; }
+                    tailMost = Mathf.Max(tailMost, (tail.localPosition - tailRest).magnitude);
+                }
+                Assert.That(endMost, Is.GreaterThan(.02f), "the oarfish's tail end swings");
+                Assert.That(Mathf.Repeat(endPeak - midPeak, period), Is.InRange(.03f * period, .5f * period), "the wave runs from its middle to its tail");
+                Assert.That(tailMost, Is.GreaterThan(.02f), "its tail fin rides the wave");
+                UnityEngine.Object.DestroyImmediate(baked);
+
+                // A squid: its cloak opens and closes.
+                var squid = Kit("nightlantern");
+                var cloak = Part(squid, "Tail pivot");
+                squid.AnimateSpecies(0, 1, true);
+                var cloakRest = cloak.localScale;
+                float open = 0, shut = 0;
+                for (float t = 0; t < 8; t += .05f)
+                {
+                    squid.AnimateSpecies(t, 1, false);
+                    open = Mathf.Max(open, cloak.localScale.x / cloakRest.x - 1); shut = Mathf.Max(shut, 1 - cloak.localScale.x / cloakRest.x);
+                }
+                Assert.That(open, Is.GreaterThan(.08f), "the squid's cloak opens"); Assert.That(shut, Is.GreaterThan(.08f), "and closes");
+
+                // None of it with Reduced motion.
+                for (float t = 0; t < 4; t += .25f)
+                {
+                    foreach (var v in new[] { ray, sunfish, oarfish, squid }) v.AnimateSpecies(t, 1, true);
+                    Assert.That(Roll(right), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(crest), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(keel), Is.EqualTo(0).Within(.01f));
+                    Assert.That((tail.localPosition - tailRest).magnitude, Is.LessThan(1e-5f)); Assert.That(cloak.localScale.x, Is.EqualTo(cloakRest.x).Within(1e-5f));
+                    for (int k = 0; k < body.sharedMesh.blendShapeCount; k++)
+                        if (body.sharedMesh.GetBlendShapeName(k).StartsWith("Wave")) Assert.That(body.GetBlendShapeWeight(k), Is.EqualTo(0).Within(1e-4f));
+                }
+            }
+            finally { UnityEngine.Object.DestroyImmediate(parent.gameObject); }
         }
 
         static string[] Shapes(Transform root, string part)

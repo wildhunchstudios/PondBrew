@@ -10,6 +10,12 @@ namespace EvolutionShop
     /// Reefback and the Saltscale; wave 4: the Gloamer and the Cometail).</summary>
     public enum DioramaFamily { Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback, Saltscale, Gloamer, Cometail }
 
+    /// <summary>GR-12B: how a species remade as an animal of its own swims, by its body plan (GR.34). Family: its family's strokes;
+    /// Flap: its wing fins beat up and down together (a ray); Scull: its tall top and bottom fins sweep side to side together (a
+    /// sunfish, its bottom fin the Keel pivot); Undulate: a wave runs down its body from head to tail (an eel or a ribbon, its
+    /// Body's Wave keys); Pulse: its cloak opens and closes (a squid, the Tail pivot).</summary>
+    public enum DioramaGait { Family, Flap, Scull, Undulate, Pulse }
+
     /// <summary>AD.3's four colour variants. Colour swaps only; in the greybox a specimen's colour (GR.7.2) picks it.</summary>
     public enum DioramaVariant { Classic, Sunny, Deep, Shimmer }
 
@@ -26,6 +32,18 @@ namespace EvolutionShop
         public readonly float Tempo;
         /// <summary>GR-12: a family's crown, grander, with a trick of its own.</summary>
         public readonly bool Crown;
+        /// <summary>GR-12B: remade as an aquatic animal of its own (GR.34): sized by its span (its largest extent, not counting a lure)
+        /// rather than its body's length, and swimming by its body plan.</summary>
+        public bool Remade => Id != null && Gaits.ContainsKey(Id);
+        /// <summary>GR-12B: how it swims (Family for every species not yet remade).</summary>
+        public DioramaGait Gait => Id != null && Gaits.TryGetValue(Id, out var gait) ? gait : DioramaGait.Family;
+        /// <summary>GR-12B's remade species, wave by wave (wave 1: the Gloamer), and how each swims.</summary>
+        static readonly Dictionary<string, DioramaGait> Gaits = new Dictionary<string, DioramaGait>
+        {
+            { "moonmouth", DioramaGait.Family }, { "gloomfin", DioramaGait.Scull }, { "shadeback", DioramaGait.Family },
+            { "hushray", DioramaGait.Flap }, { "duskdrifter", DioramaGait.Undulate }, { "murkmaw", DioramaGait.Family },
+            { "nightlantern", DioramaGait.Pulse }, { "eclipseleviathan", DioramaGait.Family },
+        };
 
         DioramaSpecies(string id, string kit, DioramaFamily family, int index, float model, float tank, float incubator,
             float swim, float trick, string signature, float tempo = 1, bool crown = false)

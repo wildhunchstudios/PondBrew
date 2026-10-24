@@ -15,6 +15,26 @@ namespace EvolutionShop.Tests
         static GrowthCreatureView Make(Transform parent, string species, Colour colour = Colour.Classic, int id = 7) =>
             GrowthCreatureView.Create(new GrowthSpecimen { Id = id, Species = species, Colour = colour }, parent);
 
+        /// <summary>GR-12B: a remade species' span in the greybox: its largest extent, not counting its lure.</summary>
+        static float SpanIn(GrowthCreatureView view)
+        {
+            var lure = view.Kit.GetComponentsInChildren<Transform>(true).FirstOrDefault(x => x.name == "Lantern pivot");
+            var b = new Bounds(); bool first = true;
+            var m = view.transform.worldToLocalMatrix;
+            foreach (var r in view.Kit.GetComponentsInChildren<Renderer>(true))
+            {
+                var mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                if (!mesh || (lure && r.transform.IsChildOf(lure))) continue;
+                var to = m * r.transform.localToWorldMatrix;
+                for (int k = 0; k < 8; k++)
+                {
+                    var p = to.MultiplyPoint3x4(mesh.bounds.center + Vector3.Scale(mesh.bounds.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                    if (first) { b = new Bounds(p, Vector3.zero); first = false; } else b.Encapsulate(p);
+                }
+            }
+            return Mathf.Max(b.size.x, b.size.y, b.size.z);
+        }
+
         static Bounds BoundsIn(Transform space, Transform of)
         {
             var b = new Bounds(); bool first = true;
@@ -45,13 +65,16 @@ namespace EvolutionShop.Tests
                     Assert.That(view.Kit != null && view.Kit.IsDiorama && view.Kit.DioramaSpecies.Id == s.Id, Is.True, s.Id + " is its kit model");
                     float L = GrowthCreatureView.LengthOf(def.Size) * (def.Kind == SpeciesKind.Crown ? GrowthCreatureView.CrownLength : 1);
                     Assert.That(view.Length, Is.EqualTo(L).Within(1e-5f), s.Id + " at its size class");
-                    // The kit body (nose to tail root) is the class's length; fins, sails and tails reach beyond it.
+                    // The kit body (nose to tail root) is the class's length; fins, sails and tails reach beyond it. GR-12B: a remade
+                    // species' span (its largest extent, not counting its lure) is the class's length instead, whatever its shape.
                     var body = view.Kit.GetComponentsInChildren<SkinnedMeshRenderer>(true).First(r => r.name == "Body");
                     var bodyBounds = BoundsIn(view.transform, body.transform);
-                    Assert.That(bodyBounds.size.z, Is.EqualTo(L).Within(L * .02f), s.Id + " body length");
+                    if (s.Remade) view.Kit.AnimateSpecies(0, 1, true);  // its span at rest (a squid's cloak pulses as it swims)
+                    if (s.Remade) Assert.That(SpanIn(view), Is.EqualTo(L).Within(L * .02f), s.Id + " span");
+                    else Assert.That(bodyBounds.size.z, Is.EqualTo(L).Within(L * .02f), s.Id + " body length");
                     // It faces the way it swims (+Z in the greybox; the kit faces -Z): its lips ahead of its body's middle.
                     float lips = view.transform.InverseTransformPoint(view.Kit.DioramaLips.position).z;
-                    Assert.That(lips, Is.GreaterThan(bodyBounds.center.z + L * .3f), s.Id + " faces +Z");
+                    Assert.That(lips, Is.GreaterThan(bodyBounds.center.z + L * (s.Remade ? .15f : .3f)), s.Id + " faces +Z");
                     var parts = view.Kit.GetComponentsInChildren<Transform>(true).Select(p => p.name).ToArray();
                     Assert.That(parts, Is.SupersetOf(new[] { "Body", "Lids", "Lips", "Tail pivot", "Left fin pivot", "Right fin pivot", "Crest pivot" }), s.Id + " on its family rig");
                     Assert.That(view.GetComponentsInChildren<Renderer>(true).All(r => r.shadowCastingMode == ShadowCastingMode.Off), Is.True, s.Id + " casts no shadow (GR.5's budget)");
@@ -59,7 +82,7 @@ namespace EvolutionShop.Tests
                     var all = BoundsIn(view.transform, view.Kit.transform);
                     Assert.That(view.Reach + 1e-4f, Is.GreaterThanOrEqualTo(Mathf.Max(Mathf.Abs(all.min.x), all.max.x, Mathf.Abs(all.min.z), all.max.z) * .999f), s.Id + " reach");
                     Assert.That(view.HalfHeight + 1e-4f, Is.GreaterThanOrEqualTo(Mathf.Max(Mathf.Abs(all.min.y), all.max.y) * .999f), s.Id + " height");
-                    Assert.That(view.Reach, Is.InRange(.45f * L, 1.6f * L), s.Id + " reach for its length");
+                    Assert.That(view.Reach, Is.InRange((s.Remade ? .3f : .45f) * L, 1.6f * L), s.Id + " reach for its length");
                     // Its swim room leaves room for its crest at its fullest (a Cinderling's spines, a Reefback's corals), since a
                     // trick turns it round on the spot.
                     var crestPivot = view.Kit.GetComponentsInChildren<Transform>(true).First(x => x.name == "Crest pivot");
@@ -315,6 +338,45 @@ namespace EvolutionShop.Tests
             finally { Object.DestroyImmediate(parent.gameObject); }
         }
 
+        [Test] public void ItsSwimRoomCoversItsWayOfSwimming()
+        {
+            // GR-12B: a remade species swimming by its body plan at full drive (a ray's wings, a sunfish's tall fins, an oarfish's
+            // wave with its tail fin riding it, a squid's cloak), its whole model as posed and bent, stays within its sampled
+            // TrickReach and TrickHalf.
+            var parent = new GameObject("GR-12B swim room").transform;
+            var baked = new Mesh();
+            try
+            {
+                foreach (var s in DioramaSpecies.All.Where(x => x.Remade))
+                {
+                    var view = Make(parent, s.Id);
+                    var renderers = view.Kit.GetComponentsInChildren<Renderer>(true);
+                    float far = 0, high = 0;
+                    for (float t = 0; t < 10; t += .05f)
+                    {
+                        view.Kit.AnimateSpecies(t, 1, false);
+                        var m = view.transform.worldToLocalMatrix;
+                        foreach (var r in renderers)
+                        {
+                            Bounds b;
+                            if (r is SkinnedMeshRenderer skinned) { skinned.BakeMesh(baked, false); baked.RecalculateBounds(); b = baked.bounds; }
+                            else { var mesh = r.GetComponent<MeshFilter>()?.sharedMesh; if (!mesh) continue; b = mesh.bounds; }
+                            var to = m * r.transform.localToWorldMatrix;
+                            for (int k = 0; k < 8; k++)
+                            {
+                                var p = to.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                                far = Mathf.Max(far, new Vector2(p.x, p.z).magnitude); high = Mathf.Max(high, Mathf.Abs(p.y));
+                            }
+                        }
+                    }
+                    Assert.That(far, Is.LessThanOrEqualTo(view.TrickReach / 1.04f), s.Id + " its reach as it swims");
+                    Assert.That(high, Is.LessThanOrEqualTo(view.TrickHalf / 1.04f), s.Id + " its height as it swims");
+                    Object.DestroyImmediate(view.gameObject);
+                }
+            }
+            finally { Object.DestroyImmediate(baked); Object.DestroyImmediate(parent.gameObject); }
+        }
+
         [Test] public void ARestAfterATrickRunsOnTheShopsClockEvenWhileItIsFarAway()
         {
             // A trick's 6 s rest runs on the shop's clock: a creature whose tank was far away meanwhile (its distant look, not
@@ -393,11 +455,14 @@ namespace EvolutionShop.Tests
                     var crownView = Make(parent, crown.Id);
                     Assert.That(crownView.Length, Is.EqualTo(GrowthCreatureView.LengthOf(GrowthContent.Get(crown.Id).Size) * GrowthCreatureView.CrownLength).Within(1e-5f),
                         crown.Id + " at the top of its size class");
-                    float room = Room(crownView);
+                    // GR-12B: a remade family's animals differ too much in shape to compare their room (a round anglerfish, a slender
+                    // mosasaur); its crown spans more than any of them instead.
+                    float room = crown.Remade ? SpanIn(crownView) : Room(crownView);
                     foreach (var other in family.Where(s => !s.Crown))
                     {
                         var view = Make(parent, other.Id);
-                        Assert.That(room, Is.GreaterThan(Room(view)), crown.Id + " takes more room than the " + other.Id);
+                        if (crown.Remade) Assert.That(room, Is.GreaterThan(SpanIn(view)), crown.Id + " spans more than the " + other.Id);
+                        else Assert.That(room, Is.GreaterThan(Room(view)), crown.Id + " takes more room than the " + other.Id);
                         Object.DestroyImmediate(view.gameObject);
                     }
                 }

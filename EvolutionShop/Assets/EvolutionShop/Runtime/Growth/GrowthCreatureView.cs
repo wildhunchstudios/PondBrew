@@ -268,23 +268,27 @@ namespace EvolutionShop
         /// scale 1: as it rests with its crest at the fullest its trick and habit ever stand it (a Cinderling's spines, a
         /// Reefback's corals: Reach, HalfHeight; x, y), and through its trick with its habit on top (turns, rolls, bows, lifts, the
         /// crest at each moment's flare, its fins and tail at their strokes' extremes with the trick's spread and swing:
-        /// TrickReach, TrickHalf; z, w).</summary>
+        /// TrickReach, TrickHalf; z, w). GR-12B: a remade species' way of swimming too: its crest's and keel's sway, its cloak's
+        /// pulse, and its body's wave, with its tail fin riding it.</summary>
         static Vector4 Envelope(string species, DioramaFamily family, Transform holder, Transform root, float L)
         {
             Transform crest = null;
-            var pivots = new Transform[3];
+            var pivots = new Transform[4];
             foreach (var x in holder.GetComponentsInChildren<Transform>(true))
                 if (x.name == "Crest pivot") crest = crest ? crest : x;
                 else if (x.name == "Left fin pivot") pivots[0] = pivots[0] ? pivots[0] : x;
                 else if (x.name == "Right fin pivot") pivots[1] = pivots[1] ? pivots[1] : x;
                 else if (x.name == "Tail pivot") pivots[2] = pivots[2] ? pivots[2] : x;
+                else if (x.name == "Keel pivot") pivots[3] = pivots[3] ? pivots[3] : x;
             var toRoot = root.worldToLocalMatrix;
             var fromRoot = Quaternion.Inverse(root.rotation);
             Vector3 crestAt = crest ? toRoot.MultiplyPoint3x4(crest.position) : Vector3.zero;
-            // Each swinging pivot (the fins, then the tail): where it is and its axes, in the creature's space.
-            var pivotAt = new Vector3[3];
-            var axes = new Quaternion[3];
-            for (int i = 0; i < 3; i++) if (pivots[i]) { pivotAt[i] = toRoot.MultiplyPoint3x4(pivots[i].position); axes[i] = fromRoot * pivots[i].rotation; }
+            var crestAxes = crest ? fromRoot * crest.rotation : Quaternion.identity;
+            // Each swinging pivot (the fins, the tail, then a sunfish's keel): where it is and its axes, in the creature's space.
+            var pivotAt = new Vector3[4];
+            var axes = new Quaternion[4];
+            for (int i = 0; i < 4; i++) if (pivots[i]) { pivotAt[i] = toRoot.MultiplyPoint3x4(pivots[i].position); axes[i] = fromRoot * pivots[i].rotation; }
+            float tailShift = 0;
             var corners = new List<(Vector3 p, bool onCrest, int on)>();
             foreach (var r in holder.GetComponentsInChildren<Renderer>(true))
             {
@@ -292,13 +296,17 @@ namespace EvolutionShop
                 if (!mesh) continue;
                 bool onCrest = crest && r.transform.IsChildOf(crest);
                 int on = -1;
-                for (int i = 0; i < 3; i++) if (pivots[i] && r.transform.IsChildOf(pivots[i])) on = i;
+                for (int i = 0; i < 4; i++) if (pivots[i] && r.transform.IsChildOf(pivots[i])) on = i;
                 var m = toRoot * r.transform.localToWorldMatrix;
                 var b = mesh.bounds;
+                // GR-12B: an undulating body's box grows by the farthest its wave moves it, and its tail fin rides the wave as far.
+                float wave = r is SkinnedMeshRenderer ? WaveReach(mesh) : 0;
+                if (wave > 0) { b.Expand(2 * wave); tailShift = Mathf.Max(tailShift, m.MultiplyVector(new Vector3(wave, 0, 0)).magnitude); }
                 for (int k = 0; k < 8; k++)
                     corners.Add((m.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1))), onCrest, on));
             }
             var stroke = CreatureVisual.DioramaStroke(family, species);
+            var sway = CreatureVisual.DioramaGaitStroke(DioramaSpecies.TryGet(species, out var remade) ? remade.Gait : DioramaGait.Family);
             (float reach, float half) Extent(Quaternion turn, float lift, float flare, float fins, float tail, bool swing)
             {
                 float grow = 1 + CreatureVisual.CrestFlareGrowth * Mathf.Clamp(flare, 0, 1.5f), far = 0, high = 0;
@@ -306,15 +314,27 @@ namespace EvolutionShop
                 foreach (var (p, onCrest, on) in corners)
                 {
                     var at = onCrest ? crestAt + (p - crestAt) * grow : p;
-                    int ways = !swing || on < 0 ? 1 : on < 2 ? 9 : 3;
+                    // GR-12B: a squid's cloak (its tail) at its widest pulse.
+                    if (swing && on == 2 && sway.pulse > 0)
+                        at = pivotAt[2] + axes[2] * Vector3.Scale(Quaternion.Inverse(axes[2]) * (at - pivotAt[2]), new Vector3(1 + sway.pulse, 1, 1 + sway.pulse));
+                    int ways = !swing ? 1 : onCrest ? (sway.crest > 0 ? 3 : 1) : on < 0 ? 1 : on < 2 ? 9 : on == 2 ? (tailShift > 0 ? 9 : 3) : 3;
                     for (int k = 0; k < ways; k++)
                     {
                         var q = at;
                         if (ways > 1)
                         {
-                            // A fin at each corner of its roll and pitch, the tail at either side.
-                            var e = on < 2 ? new Vector3(stroke.pitch * (k / 3 - 1), 0, roll * (k % 3 - 1)) : new Vector3(0, yaw * (k - 1), 0);
-                            q = pivotAt[on] + axes[on] * Quaternion.Euler(e) * Quaternion.Inverse(axes[on]) * (at - pivotAt[on]);
+                            if (onCrest)
+                                // GR-12B: a sunfish's tall crest at either side of its sway.
+                                q = crestAt + crestAxes * Quaternion.Euler(0, 0, sway.crest * (k - 1)) * Quaternion.Inverse(crestAxes) * (at - crestAt);
+                            else
+                            {
+                                // A fin at each corner of its roll and pitch, the tail at either side (riding a body's wave to either side
+                                // too), a sunfish's keel at either side of its sway.
+                                var e = on < 2 ? new Vector3(stroke.pitch * (k / 3 - 1), 0, roll * (k % 3 - 1))
+                                    : on == 2 ? new Vector3(0, yaw * (k % 3 - 1), 0) : new Vector3(0, 0, sway.keel * (k - 1));
+                                q = pivotAt[on] + axes[on] * Quaternion.Euler(e) * Quaternion.Inverse(axes[on]) * (at - pivotAt[on]);
+                                if (on == 2 && tailShift > 0) q += Vector3.right * (tailShift * (k / 3 - 1));
+                            }
                         }
                         q = turn * q + Vector3.up * lift;
                         far = Mathf.Max(far, new Vector2(q.x, q.z).magnitude); high = Mathf.Max(high, Mathf.Abs(q.y));
@@ -346,6 +366,19 @@ namespace EvolutionShop
                 }
             }
             return new Vector4(reach, half, trickReach * TrickSwing, trickHalf * TrickSwing);
+        }
+
+        /// <summary>GR-12B: the farthest an undulating body's wave moves any of its vertices (0 without Wave keys): its WaveSin and
+        /// WaveCos together, since it bends by WaveSin cos - WaveCos sin of its phase.</summary>
+        static float WaveReach(Mesh mesh)
+        {
+            int s = mesh.GetBlendShapeIndex("WaveSin"), c = mesh.GetBlendShapeIndex("WaveCos");
+            if (s < 0 || c < 0) return 0;
+            var ds = new Vector3[mesh.vertexCount]; var dc = new Vector3[mesh.vertexCount];
+            mesh.GetBlendShapeFrameVertices(s, 0, ds, null, null); mesh.GetBlendShapeFrameVertices(c, 0, dc, null, null);
+            float most = 0;
+            for (int i = 0; i < ds.Length; i++) most = Mathf.Max(most, Mathf.Sqrt(ds[i].sqrMagnitude + dc[i].sqrMagnitude));
+            return most;
         }
 
         /// <summary>Each family's feature, so sizes and families read apart at a glance (placeholders for GR.14's rigs).</summary>
