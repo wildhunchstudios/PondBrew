@@ -38,6 +38,8 @@ namespace EvolutionShop
         /// <summary>GR-12: the top of the crest (the Cinderling's spine tips, the Dewling's dew beads), where their sparks and
         /// droplets fly from; null without a crest mesh.</summary>
         public Transform DioramaCrestPoint => dioramaCrestPoint;
+        /// <summary>GR-12: a kit creature's tail pivot, where a Cometail's stardust streams from; null for a classic creature.</summary>
+        public Transform DioramaTailPivot => IsDiorama ? tail : null;
         public Material DioramaGlowMaterial => dioramaGlow;
 
         /// <summary>Extra container scale: a kit creature reads about twice as large in display tanks and the incubator.</summary>
@@ -190,6 +192,8 @@ namespace EvolutionShop
                 case DioramaFamily.Reefback: return (16, 8, 8);
                 case DioramaFamily.Saltscale: return (6, 3, 17);
                 case DioramaFamily.Sparkline: return (13, 5, 15);
+                case DioramaFamily.Gloamer: return (14, 6, 10);
+                case DioramaFamily.Cometail: return (6, 3, 14);
                 default: return (12, 6, species == "ribbonfin" ? 21 : 15);
             }
         }
@@ -253,6 +257,24 @@ namespace EvolutionShop
                 {
                     // Quick, stiff beats of the tail, the little fins held close and trimming.
                     float w = 5.2f * tempo;
+                    float beat = Mathf.Sin(t * w), trim = Mathf.Sin(t * w * .5f);
+                    tailYaw = Mathf.Sin(t * w - .5f) * amp.tail * drive; finRoll = trim * amp.roll * drive; finRollOther = -trim * amp.roll * drive;
+                    finPitch = beat * amp.pitch * drive; crestRoll = beat * 2 * drive;
+                    break;
+                }
+                case DioramaFamily.Gloamer:
+                {
+                    // Slow sculling of its big fins in turn, a lazy tail, its lure swaying.
+                    float w = 1.8f * tempo;
+                    float scull = Mathf.Sin(t * w);
+                    tailYaw = Mathf.Sin(t * w - .7f) * amp.tail * drive; finRoll = scull * amp.roll * drive; finRollOther = -scull * amp.roll * drive;
+                    finPitch = Mathf.Sin(t * w - 1f) * amp.pitch * drive; crestRoll = Mathf.Sin(t * w * .5f) * 3 * drive;
+                    break;
+                }
+                case DioramaFamily.Cometail:
+                {
+                    // Strong, smooth beats of the tail, its fins swept back and trimming, its comet tail streaming.
+                    float w = 3.4f * tempo;
                     float beat = Mathf.Sin(t * w), trim = Mathf.Sin(t * w * .5f);
                     tailYaw = Mathf.Sin(t * w - .5f) * amp.tail * drive; finRoll = trim * amp.roll * drive; finRollOther = -trim * amp.roll * drive;
                     finPitch = beat * amp.pitch * drive; crestRoll = beat * 2 * drive;

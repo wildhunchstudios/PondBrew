@@ -80,7 +80,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 colours").transform;
             try
             {
-                foreach (var id in new[] { "puddlepup", "starglimmer", "zephyray", "pondlet", "kindlekoi", "rainbowregent", "coralossus", "seaspark" })
+                foreach (var id in new[] { "puddlepup", "starglimmer", "zephyray", "pondlet", "kindlekoi", "rainbowregent", "coralossus", "seaspark", "eclipseleviathan", "nebulafin" })
                 {
                     DioramaSpecies.TryGet(id, out var s);
                     var def = GrowthContent.Get(id);
@@ -106,6 +106,10 @@ namespace EvolutionShop.Tests
                 Assert.That(Make(parent, "haloling").Kit.DioramaGlowMaterial, Is.Null, "A Dewling does not");
                 Assert.That(Make(parent, "tidepip").Kit.DioramaGlowMaterial, Is.Not.Null, "A Saltscale's salt stripe glitters");
                 Assert.That(Make(parent, "clamjaw").Kit.DioramaGlowMaterial, Is.Null, "A Reefback does not glow");
+                var lure = Make(parent, "murkmaw");
+                Assert.That(lure.Kit.DioramaGlowMaterial, Is.Not.Null, "A Gloamer's lure and spots glow");
+                Assert.That(lure.Kit.DioramaLanternPoint, Is.Not.Null, "with its lure's bulb");
+                Assert.That(Make(parent, "orbitail").Kit.DioramaGlowMaterial, Is.Not.Null, "A Cometail's head and comet tail glow");
             }
             finally { Object.DestroyImmediate(parent.gameObject); }
         }
@@ -115,7 +119,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 tricks").transform;
             try
             {
-                foreach (var id in new[] { "pondlet", "splashkit", "fizzlet", "gustgill", "brookmonarch", "aurorafin", "zephyray", "sootsnap", "fogfin", "phoenixfry", "rainbowregent", "kelpgrazer", "surfskipper", "coralossus", "pearlemperor" })
+                foreach (var id in new[] { "pondlet", "splashkit", "fizzlet", "gustgill", "brookmonarch", "aurorafin", "zephyray", "sootsnap", "fogfin", "phoenixfry", "rainbowregent", "kelpgrazer", "surfskipper", "coralossus", "pearlemperor", "shadeback", "orbitail", "eclipseleviathan", "celestialwyrm" })
                 {
                     var view = Make(parent, id);
                     int played = GrowthCreatureView.TricksPlayed, bursts = GrowthCreatureView.BurstsReleased;
@@ -156,7 +160,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 crests").transform;
             try
             {
-                foreach (var id in new[] { "emberpuff", "phoenixfry", "pearlpip", "rainbowregent", "barnaclebrow", "coralossus", "foamtail", "pearlemperor" })
+                foreach (var id in new[] { "emberpuff", "phoenixfry", "pearlpip", "rainbowregent", "barnaclebrow", "coralossus", "foamtail", "pearlemperor", "nightlantern", "eclipseleviathan", "quasarray", "celestialwyrm" })
                 {
                     var view = Make(parent, id);
                     var crest = view.Kit.GetComponentsInChildren<Transform>(true).First(t => t.name == "Crest pivot");
@@ -167,8 +171,11 @@ namespace EvolutionShop.Tests
                     view.Highlighted = true;
                     int bursts = view.Bursts;
                     string family = GrowthContent.Get(id).Family;
-                    // Sparks, droplets and plankton fly from the top of the crest; a Saltscale's salt from its body, along its stripe.
-                    Transform Origin() => family == "saltscale" ? view.Kit.transform : view.Kit.DioramaCrestPoint;
+                    // Sparks, droplets and plankton fly from the top of the crest; a Saltscale's salt from its body, along its stripe;
+                    // a Gloamer's motes from its lure and a Cometail's stardust from its tail.
+                    Transform Origin() => family == "saltscale" ? view.Kit.transform : family == "gloamer" ? view.Kit.DioramaLanternPoint :
+                        family == "cometail" ? view.Kit.DioramaTailPivot : view.Kit.DioramaCrestPoint;
+                    string origin = family == "saltscale" ? "its body" : family == "gloamer" ? "its lure" : family == "cometail" ? "its tail" : "the top of its crest";
                     var crestAtBurst = new List<(Vector3 crest, Vector3 lips)>();
                     while (view.TrickAge < 0 && t < 3) view.Tick(t += dt);
                     for (float end = t + DioramaTricks.Duration(id); t < end; t += dt)
@@ -180,15 +187,15 @@ namespace EvolutionShop.Tests
                     }
                     bool flares = family == "cinderling" || family == "reefback", glows = family != "dewling";
                     if (flares) Assert.That(widest, Is.GreaterThan(1.25f), id + " its spines flare, or its corals bloom, during its trick");
-                    else Assert.That(widest, Is.EqualTo(1).Within(1e-4f), id + " a Dewling's beads and a Saltscale's sail never stand taller");
+                    else Assert.That(widest, Is.EqualTo(1).Within(1e-4f), id + " a Dewling's beads, a Saltscale's sail and the Gloamer's and Cometail's crests never stand taller");
                     Assert.That(view.Bursts - bursts, Is.EqualTo(DioramaTricks.Releases(id)), id + " bursts on its beats");
                     var spawned = parent.GetComponentsInChildren<GrowthCreatureBurst>(true);
                     Assert.That(spawned.Length, Is.EqualTo(crestAtBurst.Count), id);
                     for (int i = 0; i < spawned.Length; i++)
                         Assert.That(Vector3.Distance(spawned[i].transform.position, crestAtBurst[i].crest), Is.LessThan(Vector3.Distance(spawned[i].transform.position, crestAtBurst[i].lips)),
-                            id + " its burst flies from " + (family == "saltscale" ? "its body" : "the top of its crest"));
+                            id + " its burst flies from " + origin);
                     var piece = spawned[0].GetComponentInChildren<Renderer>();
-                    Assert.That(piece.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.EqualTo(glows), id + (glows ? " its sparks, plankton or salt glitter" : " its droplets do not glow"));
+                    Assert.That(piece.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.EqualTo(glows), id + (glows ? " its sparks, plankton, salt, motes or stardust glitter" : " its droplets do not glow"));
                     // Reduced motion: the spines never flare.
                     var calm = Make(parent, id, Colour.Classic, 9);
                     var calmCrest = calm.Kit.GetComponentsInChildren<Transform>(true).First(x => x.name == "Crest pivot");
@@ -270,7 +277,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 habit").transform;
             try
             {
-                foreach (var id in new[] { "coralossus", "shellback", "kelpgrazer", "dewdrop", "phoenixfry", "emberpuff", "zephyray", "brinefin", "pondlet" })
+                foreach (var id in new[] { "coralossus", "shellback", "kelpgrazer", "dewdrop", "phoenixfry", "emberpuff", "zephyray", "brinefin", "pondlet", "eclipseleviathan", "nightlantern", "celestialwyrm", "starmaw" })
                 {
                     var view = Make(parent, id);
                     var holder = view.Kit.transform;

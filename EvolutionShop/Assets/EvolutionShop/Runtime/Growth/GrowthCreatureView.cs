@@ -7,7 +7,7 @@ namespace EvolutionShop
 {
     /// <summary>
     /// A creature at its size class (GR.5: a small one is 6-9 cm, a medium 12-18, a large 25-40). GR-12: a species the diorama
-    /// kit has (waves 1 to 3: the Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale) is its kit model in its colour from the variant atlas, its body set
+    /// kit has (waves 1 to 4: all nine families) is its kit model in its colour from the variant atlas, its body set
     /// to the class's length, with its family's strokes and habit at its own tempo, blinks and pupils on the player, and its
     /// trick when the player lingers on it in peek. Any other is GR-02's placeholder, with a head 1.3 times the usual size for
     /// small species (GR.14 readability), eyes, a tail and a fin, coloured from its recipe's cultures, with (GR-03) its
@@ -507,12 +507,15 @@ namespace EvolutionShop
         }
 
         /// <summary>The bubbles (Brookkin, from its lips), sparkles (Sparkline, from its lantern), puff of mist (Airfin), sparks
-        /// (Cinderling, from its spines), droplets (Dewling, from its dew beads), plankton (Reefback, from its corals) or salt
-        /// (Saltscale, from its body, along its stripe) a trick or habit lets go on its beat.</summary>
+        /// (Cinderling, from its spines), droplets (Dewling, from its dew beads), plankton (Reefback, from its corals), salt
+        /// (Saltscale, from its body, along its stripe), glowing motes (Gloamer, from its lure) or stardust (Cometail, from its
+        /// tail) a trick or habit lets go on its beat.</summary>
         void Burst(bool trick)
         {
             bool fromCrest = (family == DioramaFamily.Cinderling || family == DioramaFamily.Dewling || family == DioramaFamily.Reefback) && kit.DioramaCrestPoint;
-            var from = family == DioramaFamily.Sparkline && kit.DioramaLanternPoint ? kit.DioramaLanternPoint : fromCrest ? kit.DioramaCrestPoint :
+            bool fromLantern = (family == DioramaFamily.Sparkline || family == DioramaFamily.Gloamer) && kit.DioramaLanternPoint;
+            var from = fromLantern ? kit.DioramaLanternPoint : fromCrest ? kit.DioramaCrestPoint :
+                family == DioramaFamily.Cometail && kit.DioramaTailPivot ? kit.DioramaTailPivot :
                 family == DioramaFamily.Saltscale ? kit.transform : kit.DioramaLips ? kit.DioramaLips : transform;
             GrowthCreatureBurst.Spawn(transform.parent, from.position, family, trick ? 5 : 2, Length);
             BurstsReleased++; Bursts++;

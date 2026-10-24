@@ -78,7 +78,8 @@ PALETTE = {
 FAMILIES = {'Brookkin': 'river fish: pouty lips, round fins', 'Sparkline': 'Spark: a glowing lantern on a stalk',
             'Airfin': 'Mist: wide gliding sails', 'Cinderling': 'Ember: a row of glowing ember spines down the back',
             'Dewling': 'Mist: round and pearly, shiny dew beads on the head and back',
-            'Reefback': 'Brine: big and gentle, a domed shell crusted with coral and barnacles', 'Saltscale': 'Brine: sleek and shiny, a glittering salt stripe along each side'}  # GR-12's wave 4 adds the other two families
+            'Reefback': 'Brine: big and gentle, a domed shell crusted with coral and barnacles', 'Saltscale': 'Brine: sleek and shiny, a glittering salt stripe along each side',
+            'Gloamer': 'Dusk: big, dark and gentle, a glowing lure on a stalk and soft glowing spots', 'Cometail': 'Spark and Dusk: sleek, a bright glowing head and a comet tail of glowing wisps'}  # all nine families (GR-12 waves 1 to 4)
 SLOTS = ['Body', 'Fin', 'Belly', 'Accent', 'Blush', 'Sheen']
 VARIANT_NAMES = ['Classic', 'Sunny', 'Deep', 'Shimmer']
 ATLAS_SPECIES_CAPACITY = 72  # GR.7's 72 species
@@ -365,6 +366,86 @@ SPECIES = [  # id, kit asset, family, {variant: [Body, Fin, Belly, Accent, Blush
         'Sunny':   ['69C8F5', '9FD8F5', 'F7F2E3', 'FFF0CC', 'FFA6B9', 'FFFFFF00'],
         'Deep':    ['4F2176', '899CB2', 'DDE1F1', 'BFC3D4', 'E588B5', 'FFFFFF00'],
         'Shimmer': ['BBC7F5', 'E6E9F5', 'E3F5F9', 'D9F4EF', 'FFC1D9', 'FFF0E05E']}),
+    ('moonmouth', 'DioramaMoonmouth', 'Gloamer', {
+        'Classic': ['2E3A6E', '1E2648', '8C93C8', 'FFF2B0', 'FF9EC0', 'FFFFFF00'],
+        'Sunny':   ['624CA9', '443476', 'BD9FF5', 'FFEDA6', 'FFA6B6', 'FFFFFF00'],
+        'Deep':    ['22666B', '153442', '5D7294', 'DBB07D', 'E680AE', 'FFFFFF00'],
+        'Shimmer': ['BCC9FF', '9DA8D5', 'D9DCF5', 'FFFAE1', 'FFBBD3', 'FFF0C85E']}),
+    ('gloomfin', 'DioramaGloomfin', 'Gloamer', {
+        'Classic': ['2A4A4E', '16282C', '7FA8A8', '6AF0FF', 'FF9EB0', 'FFFFFF00'],
+        'Sunny':   ['477E6C', '2A5046', '9FF5CD', '76FFCD', 'FFA6A7', 'FFFFFF00'],
+        'Deep':    ['3D2555', '101828', '55727C', '3C8DBD', 'E6809D', 'FFFFFF00'],
+        'Shimmer': ['B2DCE1', '7C9AA0', 'DEF5F5', 'C6F9FF', 'FFBBC8', 'C8FFF85E']}),
+    ('shadeback', 'DioramaShadeback', 'Gloamer', {
+        'Classic': ['3A2E4A', '241A30', '9A88B0', 'B8FF6A', 'FFA0B8', 'FFFFFF00'],
+        'Sunny':   ['724D78', '513055', 'EE9FF5', 'FEFF76', 'FFA6AD', 'FFFFFF00'],
+        'Deep':    ['223E68', '14152C', '635C82', '5DBD3C', 'E582A5', 'FFFFFF00'],
+        'Shimmer': ['C4B4D9', '9585A8', 'E9E0F5', 'E4FFC6', 'FFBDCD', 'E8FFC85E']}),
+    ('hushray', 'DioramaHushray', 'Gloamer', {
+        'Classic': ['5E5C66', '3A3844', 'CACAD8', '9AE8FF', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['A69B80', '695D70', 'DAD3C7', 'A2FFE9', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['6F768F', '2D333F', 'BBBED2', '6390BD', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['A0BEBE', 'C0BDCE', 'C8D8E0', 'D9F6FF', 'FFC1D3', 'D8F0FF5E']}),
+    ('duskdrifter', 'DioramaDuskdrifter', 'Gloamer', {
+        'Classic': ['4E2E5A', '2E1A38', 'B090C0', 'FFB0E8', 'FFA0C0', 'FFFFFF00'],
+        'Sunny':   ['8E4C83', '602F5B', 'F59FE9', 'FFA6BB', 'FFA6B5', 'FFFFFF00'],
+        'Deep':    ['242557', '181334', '73618E', 'BD74BB', 'E582AE', 'FFFFFF00'],
+        'Shimmer': ['E9C1F8', 'A88BB7', 'EDDEF5', 'FFE1F6', 'FFBDD3', 'FFD8F85E']}),
+    ('murkmaw', 'DioramaMurkmaw', 'Gloamer', {
+        'Classic': ['2E3A2A', '1C2418', '8A9A7A', 'FFD86A', 'FF9A9A', 'FFFFFF00'],
+        'Sunny':   ['5B6349', '40452F', 'F2F59F', 'FFE476', 'FFB2A2', 'FFFFFF00'],
+        'Deep':    ['265A4D', '132115', '5A7253', 'DB8541', 'E67D87', 'FFFFFF00'],
+        'Shimmer': ['A9BBA4', '82917B', 'EBF5E1', 'FFF0C6', 'FFB8B8', 'FFF0C05E']}),
+    ('nightlantern', 'DioramaNightlantern', 'Gloamer', {
+        'Classic': ['1E2A4E', '121A34', '7A88B8', 'FFF6C8', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['34667E', '22485B', '9FDAF5', 'FFEDA6', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['4A1752', '150C30', '525088', 'B7BD87', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['A2B2E1', '7C88AF', 'D5DDF5', 'FFFCEA', 'FFC1D9', 'FFF8E05E']}),
+    ('eclipseleviathan', 'DioramaEclipseleviathan', 'Gloamer', {
+        'Classic': ['1A1A2A', '3A2A5A', '6A6A8A', 'FFC860', 'FF9AB0', 'FFFFFF00'],
+        'Sunny':   ['3D314D', '7D468E', 'C79FF5', 'FFE26D', 'FFA2A7', 'FFFFFF00'],
+        'Deep':    ['163C43', '1E2753', '475066', 'DB7238', 'E67D9E', 'FFFFFF00'],
+        'Shimmer': ['82829C', 'D0BCF8', 'DFDFF5', 'FFEAC3', 'FFB8C8', 'FFE0A05E']}),
+    ('starmaw', 'DioramaStarmaw', 'Cometail', {
+        'Classic': ['2E5AA8', '1E3A78', 'D8E4FF', 'FFF080', 'FFA6B8', 'FFFFFF00'],
+        'Sunny':   ['51D9F5', '4CCFF5', 'A6EBFF', 'FFE88A', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['151E7C', '22116E', '9496BD', 'DBA354', 'E588A4', 'FFFFFF00'],
+        'Shimmer': ['B1CAF5', 'AFC5F5', 'F0F5FF', 'FFF9CF', 'FFC1CD', 'FFF8C85E']}),
+    ('meteorback', 'DioramaMeteorback', 'Cometail', {
+        'Classic': ['6A4A3A', '4A3428', 'C8B8A8', 'FF8A3A', 'FF9A9A', 'FFFFFF00'],
+        'Sunny':   ['A4935D', '786D44', 'F5E49F', 'FFDB4A', 'FFB2A2', 'FFFFFF00'],
+        'Deep':    ['6F3262', '441E24', '947B73', 'BD2D16', 'E67D87', 'FFFFFF00'],
+        'Shimmer': ['FFDCCB', 'D9BCAC', 'F5EDE6', 'FFD3B4', 'FFB8B8', 'FFE0C05E']}),
+    ('nebulafin', 'DioramaNebulafin', 'Cometail', {
+        'Classic': ['4AA8C8', '8AD8E8', 'E8F8FF', 'FFB0F0', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['67F5D7', '9AF5DA', 'EFF3E3', 'FFA6C4', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['285C94', '5887AC', 'D3E3F1', 'B774BD', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['BAE6F5', 'CFEEF5', 'DBF6F9', 'FFE1F9', 'FFC1D3', 'FFD8F85E']}),
+    ('orbitail', 'DioramaOrbitail', 'Cometail', {
+        'Classic': ['E8B04A', '8A5A2A', 'FFF0D0', '8AF0FF', 'FF9A9A', 'FFFFFF00'],
+        'Sunny':   ['F5D65B', 'F5D558', 'FFEDA6', '93FFDB', 'FFB2A2', 'FFFFFF00'],
+        'Deep':    ['C85F28', '773316', 'BDA18E', '5694BD', 'E67D87', 'FFFFFF00'],
+        'Shimmer': ['F5DEB5', 'F5D4B4', 'FFF9ED', 'D3F9FF', 'FFB8B8', 'D0F8FF5E']}),
+    ('quasarray', 'DioramaQuasarray', 'Cometail', {
+        'Classic': ['3A3A8A', '6A6AC8', 'D0D0F8', 'FFFFFF', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['AF72F5', 'BC8BF5', 'CAA1F8', 'FFF4D4', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['213366', '415794', '8E99B8', 'BFC7DC', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['BFBFF5', 'C9C9F5', 'EEEEFD', 'D9F7F4', 'FFC1D9', 'E8E8FF5E']}),
+    ('novatusk', 'DioramaNovatusk', 'Cometail', {
+        'Classic': ['2E8A7A', '1E5A50', 'D8F4EC', 'C8FF8A', 'FFA6B0', 'FFFFFF00'],
+        'Sunny':   ['5FF595', '348E58', 'E4F0D5', 'FFFF93', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['175F66', '133E53', 'C6E0E2', '71BD56', 'E5889C', 'FFFFFF00'],
+        'Shimmer': ['B7F5EA', 'ADF8EB', 'D1F3ED', 'EAFFD3', 'FFC1C8', 'F0FFD05E']}),
+    ('cosmocarp', 'DioramaCosmocarp', 'Cometail', {
+        'Classic': ['F2F2F8', 'E89AC8', 'FFFFFF', '6A5AE8', 'FFA6B8', 'FFFFFF00'],
+        'Sunny':   ['F9ECC7', 'F59FAA', 'FFF8E3', 'BB6BF5', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['B9C1D8', 'AC65A1', 'E5E9F1', '3244AC', 'E588A4', 'FFFFFF00'],
+        'Shimmer': ['C5F2EE', 'F5D6E8', 'EAFAF9', 'C2BCF5', 'FFC1CD', 'E0D8FF5E']}),
+    ('celestialwyrm', 'DioramaCelestialwyrm', 'Cometail', {
+        'Classic': ['1E3A8A', 'E8C8FF', 'F8F0FF', 'FFE8A0', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['45C4F5', 'FFA6FB', 'FAEDE3', 'FFEDA6', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['0B0B66', '9887BD', 'E0DDF1', 'DBA16F', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['ACBFF5', 'F6EAFF', 'E6F1F9', 'FFF6DB', 'FFC1D9', 'FFF0D05E']}),
 ]
 def slot_name(species_id, slot):
     return 'DK_' + species_id[:1].upper() + species_id[1:] + slot
@@ -2619,8 +2700,498 @@ WAVE3_BUILDERS = {'shellback': shellback, 'coralhorn': coralhorn, 'clamjaw': cla
                   'brinefin': brinefin, 'pebblejaw': pebblejaw, 'seaspark': seaspark, 'foamtail': foamtail,
                   'surfskipper': surfskipper, 'shoalglider': shoalglider, 'tidepip': tidepip, 'pearlemperor': pearlemperor}
 
+# ================================================================ GR-12 wave 4: the Gloamer and the Cometail
+# The last two families on the same rig. The user chose their looks (2026-10-24): the Gloamer's glowing lure (big, dark, gentle
+# deep-sea fish with a glowing lure dangling from the brow on a curved stalk, its Lantern pivot, which the game sways and lets
+# its motes go from, and soft glowing spots along the sides) and the Cometail's comet tail (sleek fish with a bright glowing head
+# and a long tail streaming behind like a comet's, in glowing wisps, on its Tail pivot).
+
+def glow_spots(body, sid, prof, Z0, Z1, ts, angle=-28, r=.022, yoff=lambda t: 0):
+    """The Gloamer's lights: little glowing spots along each lower flank (the accent, which glows)."""
+    S = lambda s: slot_name(sid, s)
+    for side in (1, -1):
+        for t in ts:
+            p = on_body(prof, Z0, Z1, t, angle if side > 0 else 180 - angle, 1.0, yoff)
+            ellipsoid(body, tuple(p), (r, r, r), S('Accent'), (0, 0, 0), 12, 8)
+
+def lure(root, sid, base, rise, reach, bulb, stalk=.02, bend=110, kind='round'):
+    """The Gloamer's lure: a stalk from the brow curving up and over to a glowing bulb that dangles ahead of the mouth (the
+    Sparkline's lantern helper, bent further), on the Lantern pivot."""
+    make_object(lantern_on_stalk(root, sid, base, rise, reach, bulb, stalk, bend, kind), root, tuple(base), 'Lantern pivot')
+
+def swell_tube(part, points, radii, material, sides=14):
+    """A tube along points with a radius at each (closed at both ends): a comet's wisp."""
+    verts, n = [], len(points)
+    for i, p in enumerate(points):
+        c = Vector(p)
+        tan = (Vector(points[min(i + 1, n - 1)]) - Vector(points[max(i - 1, 0)])).normalized()
+        side = tan.cross(Vector((0, 1, 0)))
+        if side.length < .01:
+            side = tan.cross(Vector((1, 0, 0)))
+        side.normalize(); other = tan.cross(side).normalized()
+        for k in range(sides):
+            a = math.tau * k / sides
+            verts.append(tuple(c + radii[i] * (math.cos(a) * side + math.sin(a) * other)))
+    faces = []
+    for r in range(n - 1):
+        for k in range(sides):
+            j = (k + 1) % sides
+            faces.append((r * sides + k, r * sides + j, (r + 1) * sides + j, (r + 1) * sides + k))
+    faces.append(tuple(range(sides - 1, -1, -1)))
+    faces.append(tuple((n - 1) * sides + k for k in range(sides)))
+    return part.add(verts, faces, material)
+
+def comet_tail(part, base, wisps):
+    """The Cometail's signature: a comet's tail of wisps streaming back from the tail root, each swelling from a narrow root to
+    its widest a third of the way back and thinning to a point, spreading apart as they go, as a comet's tail does.
+    wisps: [(spread in degrees to the side, rise in degrees up, length, widest radius, slot)]."""
+    base = Vector(base)
+    for spread, rise, length, width, slot in wisps:
+        pts, radii = [], []
+        for k in range(13):
+            s = k / 12
+            d = rot((0, 0, length * s), (-rise * (.35 + .65 * s), spread * (.35 + .65 * s), 0))
+            pts.append(tuple(base + d))
+            swell = math.sin(math.pi * .5 * s / .35) if s < .35 else (1 - (s - .35) / .65) ** .85
+            radii.append(width * swell + .006)
+        swell_tube(part, pts, radii, slot, 14)
+
+def comet_head(sid, prof, Z0, Z1, t=.2, radius=None):
+    """The Cometail's bright head: its head, nose to the back of its eyes, in the accent, which glows (its belly kept), the
+    comet's bright head before its tail."""
+    S = lambda s: slot_name(sid, s)
+    def marks(body):
+        repaint(body, 0, Z0, Z1, S('Accent'), lambda sn, tt, cs: tt < t and sn > -.5)
+    return marks
+
+# ---------------------------------------------------------------- Gloamer: Moonmouth, a moon-pale lure and a wide smile
+def moonmouth():
+    sid = 'moonmouth'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaMoonmouth')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.46, .62, .32, .32, .3)
+    loft_creature(root, sid, Z0, Z1, prof, .17, 32, (.09, .108, .074), 30, .77, None, -12, (.048, .028, .016),
+                  -.07, (.07, .03, (1.35, .8, 1.0)), .6, .036, extra=lambda b: glow_spots(b, sid, prof, Z0, Z1, (.4, .5, .6, .7)))
+    side_fins(root, sid, (.28, -.07, -.02), [((.04, -.04, .08), (.03, .1, .14), (8, 20, -30), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .38), ((-30, .13, .06, S('Fin')), (30, .13, .06, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def fin(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .52, .06, .14, 30)
+    simple_part(root, 'Crest pivot', (0, .3, .0), fin)
+    lure(root, sid, on_body(prof, Z0, Z1, .16, 90, .96), .2, .17, .078)
+    return root
+
+# ---------------------------------------------------------------- Gloamer: Gloomfin, great dark fan fins edged in glow
+def gloomfin():
+    sid = 'gloomfin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaGloomfin')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.4, .7, .26, .28, .25)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.084, .1, .07), 31, .76, None, -12, (.044, .026, .015),
+                  -.045, (.044, .024, (1.25, .85, 1.0)), .6, .03, extra=lambda b: glow_spots(b, sid, prof, Z0, Z1, (.36, .46, .56, .66, .76), -24, .02))
+    # Great fan fins of two lobes, their edges glowing.
+    side_fins(root, sid, (.22, -.05, -.04), [((.12, -.04, .1), (.2, .024, .15), (0, -22, -42), 'Fin', 1.0, 'Accent'),
+                                          ((.08, -.12, .2), (.14, .022, .1), (0, -40, -64), 'Fin', 1.0, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.036, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        rimmed_lobes(part, (0, 0, .38), ((-34, .16, .06, S('Fin')), (0, .12, .05, S('Fin')), (34, .16, .06, S('Fin'))), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def fin(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .07, .16, 34)
+    simple_part(root, 'Crest pivot', (0, .26, .0), fin)
+    lure(root, sid, on_body(prof, Z0, Z1, .15, 90, .96), .17, .14, .058, .017)
+    return root
+
+# ---------------------------------------------------------------- Gloamer: Shadeback, a tall ridge of soft shadowy spines
+def shadeback():
+    sid = 'shadeback'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaShadeback')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.44, .64, .3, .33, .28)
+    def spots(body):
+        glow_spots(body, sid, prof, Z0, Z1, (.36, .48, .6, .72), -20, .022)
+        glow_spots(body, sid, prof, Z0, Z1, (.42, .54, .66), -42, .018)
+    loft_creature(root, sid, Z0, Z1, prof, .16, 30, (.088, .106, .072), 30, .77, None, -12, (.046, .027, .015),
+                  -.05, (.046, .025, (1.2, .85, 1.0)), .6, .028, extra=spots)
+    side_fins(root, sid, (.26, -.08, -.02), [((.03, -.04, .07), (.03, .08, .12), (6, 20, -32), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .38), ((-28, .12, .06, S('Fin')), (28, .12, .06, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def ridge(part):
+        # A ridge of soft, rounded shadow spines down its back.
+        for t, h in ((.3, .1), (.4, .14), (.5, .15), (.6, .13), (.7, .09)):
+            p = on_body(prof, Z0, Z1, t, 90, .94)
+            cone(part, tuple(p), tuple(p + rot((0, h, 0), (30, 0, 0))), .045, S('Fin'), 12, 6, .5)
+    simple_part(root, 'Crest pivot', (0, .3, .0), ridge)
+    lure(root, sid, on_body(prof, Z0, Z1, .14, 90, .96), .17, .15, .064)
+    return root
+
+# ---------------------------------------------------------------- Gloamer: Hushray, a wide, quiet ray with a lure
+def hushray():
+    sid = 'hushray'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaHushray')
+    R = (.32, .18, .42)
+    def spots(body):
+        for az in (60, 80, 100, 120, -60, -80, -100, -120):
+            p = on_ellipsoid(R, az, -8, 1.0)
+            ellipsoid(body, tuple(p), (.02, .02, .02), S('Accent'), (0, 0, 0), 12, 8)
+    round_creature(root, sid, R, 30, 24, (.09, .106, .072), 34, .82, (50, -2), (.048, .028, .016), -8,
+                   (.042, .024, (1.25, .85, 1.0)), .62, .028, -.25, 1.0, 1.12, extra=spots)
+    # Wide, rounded wings, their edges softly glowing.
+    side_fins(root, sid, (.28, .0, .0), [((.24, .0, .08), (.3, .026, .24), (0, -12, 4), 'Fin', .9, 'Accent')])
+    def tail(part):
+        pts = [(0, .015 * math.sin(s * math.pi), .38 + .5 * s) for s in (0, .2, .4, .6, .8, 1)]
+        taper_tube(part, pts, .026, .01, S('Body'), 12)
+        ellipsoid(part, (0, 0, .41), (.05, .045, .06), S('Fin'), (0, 0, 0), 14, 8)
+        ellipsoid(part, (0, .0, .9), (.022, .022, .022), S('Accent'), (0, 0, 0), 10, 6)
+    simple_part(root, 'Tail pivot', (0, 0, .36), tail)
+    def nub(part):
+        ellipsoid(part, (0, .2, .12), (.02, .04, .07), S('Fin'), (24, 0, 0), 14, 8)
+    simple_part(root, 'Crest pivot', (0, .17, .1), nub)
+    lure(root, sid, on_ellipsoid(R, 0, 52, .97), .16, .15, .06, .017)
+    return root
+
+# ---------------------------------------------------------------- Gloamer: Duskdrifter, long drifting veils
+def duskdrifter():
+    sid = 'duskdrifter'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaDuskdrifter')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.42, .68, .28, .29, .26)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.088, .104, .072), 31, .77, None, -12, (.046, .027, .015),
+                  -.04, (.04, .023, (1.2, .85, 1.0)), .6, .03, extra=lambda b: glow_spots(b, sid, prof, Z0, Z1, (.38, .5, .62, .74), -26, .02))
+    # Long veil fins drifting back and down, edged in a faint glow.
+    side_fins(root, sid, (.24, -.06, -.02), [((.08, -.12, .2), (.03, .1, .24), (24, 18, -38), 'Fin', 1.0, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        rimmed_lobes(part, (0, 0, .38), ((-22, .25, .07, S('Fin')), (12, .28, .07, S('Fin'))), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def veil(part):
+        # A long, low veil of a dorsal fin.
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .06, .26, 14)
+    simple_part(root, 'Crest pivot', (0, .27, .0), veil)
+    lure(root, sid, on_body(prof, Z0, Z1, .15, 90, .96), .18, .16, .06, .017, 110, 'flame')
+    return root
+
+# ---------------------------------------------------------------- Gloamer: Murkmaw, a great maw with little teeth
+def murkmaw():
+    sid = 'murkmaw'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaMurkmaw')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.48, .6, .32, .3, .33)
+    def teeth(body):
+        glow_spots(body, sid, prof, Z0, Z1, (.42, .54, .66), -30, .022)
+        # Little rounded teeth over its lower lip.
+        for x in (-.04, -.02, 0, .02, .04):
+            base = Vector((x, -.13 + abs(x) * .4, Z0 - .02))
+            cone(body, tuple(base), tuple(base + Vector((0, .032, -.004))), .011, S('Belly'), 10, 4, .3)
+    loft_creature(root, sid, Z0, Z1, prof, .19, 34, (.08, .096, .066), 30, .76, None, -6, (.044, .026, .015),
+                  -.09, (.075, .034, (1.3, .85, 1.0)), .58, .02, extra=teeth)
+    side_fins(root, sid, (.28, -.08, .0), [((.03, -.04, .06), (.03, .08, .1), (6, 22, -30), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .38), ((-30, .12, .06, S('Fin')), (30, .12, .06, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def spikes(part):
+        # A short, spiky dorsal fin.
+        for t, h in ((.42, .08), (.5, .1), (.58, .08)):
+            p = on_body(prof, Z0, Z1, t, 90, .94)
+            cone(part, tuple(p), tuple(p + rot((0, h, 0), (34, 0, 0))), .03, S('Fin'), 10, 5, .2)
+    simple_part(root, 'Crest pivot', (0, .3, .0), spikes)
+    lure(root, sid, on_body(prof, Z0, Z1, .2, 90, .96), .19, .2, .068)
+    return root
+
+# ---------------------------------------------------------------- Gloamer: Nightlantern, three lures and rows of lights
+def nightlantern():
+    sid = 'nightlantern'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaNightlantern')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.42, .66, .29, .3, .27)
+    def lights(body):
+        glow_spots(body, sid, prof, Z0, Z1, (.32, .42, .52, .62, .72, .8), -18, .02)
+        glow_spots(body, sid, prof, Z0, Z1, (.37, .47, .57, .67), -44, .017)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.088, .104, .072), 31, .77, None, -12, (.046, .027, .015),
+                  -.042, (.042, .024, (1.2, .85, 1.0)), .6, .03, extra=lights)
+    side_fins(root, sid, (.25, -.06, -.02), [((.04, -.04, .08), (.028, .09, .13), (8, 20, -30), 'Fin', .9, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .38), ((-30, .13, .06, S('Fin')), (30, .13, .06, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def fin(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .52, .06, .13, 30)
+    simple_part(root, 'Crest pivot', (0, .28, .0), fin)
+    # Three lures on stalks from its brow, the middle one tallest.
+    base = on_body(prof, Z0, Z1, .15, 90, .96)
+    lantern = Part('Lantern')
+    for side, rise, reach in ((0, .2, .16), (-1, .14, .1), (1, .14, .1)):
+        pts = [tuple(base + Vector((side * .13 * math.sin(math.radians(a)), rise * math.sin(math.radians(a)), -reach * (1 - math.cos(math.radians(a))))))
+               for a in range(0, 111, 10)]
+        tube(lantern, pts, .016, S('Body'), 10)
+        head = Vector(pts[-1]) + Vector((0, .012, -.04))
+        r = .052 if side == 0 else .04
+        ellipsoid(lantern, tuple(head), (r, r * 1.05, r), S('Accent'), (0, 0, 0), 22, 12)
+        ellipsoid(lantern, tuple(head + Vector((-r * .3, r * .45, -r * .7))), (r * .27, r * .25, r * .17), 'DK_Glint', (0, 0, 0), 10, 6)
+    make_object(lantern, root, tuple(base), 'Lantern pivot')
+    return root
+
+# ---------------------------------------------------------------- Gloamer crown: Eclipse Leviathan, an eclipse for a lure, a crown
+def eclipseleviathan():
+    sid = 'eclipseleviathan'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaEclipseleviathan')
+    Z0, Z1 = -.46, .44
+    prof = nose_profile(.44, .66, .32, .33, .3)
+    def lights(body):
+        glow_spots(body, sid, prof, Z0, Z1, (.32, .42, .52, .62, .72), -20, .024)
+        glow_spots(body, sid, prof, Z0, Z1, (.37, .47, .57, .67), -44, .019)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.1, .118, .08), 30, .77, None, -12, (.05, .03, .017),
+                  -.05, (.05, .027, (1.25, .85, 1.0)), .62, .03, extra=lights)
+    # Great fins, their edges glowing like the eclipse's ring.
+    side_fins(root, sid, (.28, -.05, -.02), [((.12, -.02, .12), (.18, .024, .14), (0, -26, 8), 'Fin', 1.0, 'Accent'),
+                                          ((.08, -.1, .22), (.11, .02, .08), (0, -46, -16), 'Fin', 1.0, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .43), (.046, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
+        rimmed_lobes(part, (0, 0, .44), ((-32, .2, .08, S('Fin')), (0, .14, .06, S('Fin')), (32, .2, .08, S('Fin'))), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, 0, .41), tail)
+    def crown(part):
+        top = on_body(prof, Z0, Z1, .3, 90, 1.0)
+        gold_crown(part, (0, top.y + .005, top.z), .09, 5, .08, 'DK_Gold', -8)
+        dorsal_sail(part, sid, prof, Z0, Z1, .56, .07, .18, 28)
+    simple_part(root, 'Crest pivot', (0, .32, -.08), crown)
+    # The eclipse: a dark orb on its lure, ringed by a blazing corona.
+    base = on_body(prof, Z0, Z1, .14, 90, .96)
+    lantern = Part('Lantern')
+    pts = [tuple(base + Vector((0, .16 * math.sin(math.radians(a)), -.17 * (1 - math.cos(math.radians(a)))))) for a in range(0, 111, 10)]
+    tube(lantern, pts, .02, S('Body'), 10)
+    head = Vector(pts[-1]) + Vector((0, .02, -.065))
+    ellipsoid(lantern, tuple(head), (.068, .07, .068), S('Fin'), (0, 0, 0), 24, 14)
+    torus(lantern, head + Vector((0, 0, .01)), .088, .017, S('Accent'), (1, 1, 1), 36, 10)
+    for k in range(8):
+        a = math.tau * k / 8
+        d = Vector((math.cos(a), math.sin(a), 0))
+        cone(lantern, tuple(head + d * .1), tuple(head + d * .125), .014, S('Accent'), 8, 3, .1)
+    make_object(lantern, root, tuple(base), 'Lantern pivot')
+    return root
+
+# ---------------------------------------------------------------- Cometail: Starmaw, a star on its brow and a wide mouth
+def starmaw():
+    sid = 'starmaw'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaStarmaw')
+    Z0, Z1 = -.42, .36
+    prof = nose_profile(.38, .72, .25, .26, .23)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.086, .102, .07), 31, .76, None, -12, (.044, .026, .015),
+                  -.05, (.056, .028, (1.3, .85, 1.0)), .6, .034, marks=comet_head(sid, prof, Z0, Z1), rings=36, seg=44)
+    side_fins(root, sid, (.2, -.06, -.04), [((.04, -.05, .11), (.024, .05, .14), (12, 18, -36), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.034, .046, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, .01, .36), ((0, 4, .54, .065, S('Accent')), (-18, 8, .46, .05, S('Accent')), (18, 8, .46, .05, S('Accent')), (-10, -14, .44, .045, S('Fin')), (10, -14, .44, .045, S('Fin'))))
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def star(part):
+        c = on_body(prof, Z0, Z1, .2, 90, .98) + Vector((0, .03, 0))
+        ellipsoid(part, tuple(c), (.03, .036, .036), S('Accent'), (0, 0, 0), 12, 8)
+        for k in range(5):
+            a = math.tau * k / 5
+            d = Vector((0, math.cos(a), math.sin(a)))
+            cone(part, tuple(c + d * .02), tuple(c + d * .095), .026, S('Accent'), 10, 4, .1)
+    simple_part(root, 'Crest pivot', (0, .23, -.1), star)
+    return root
+
+# ---------------------------------------------------------------- Cometail: Meteorback, a craggy rock back and a fiery tail
+def meteorback():
+    sid = 'meteorback'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaMeteorback')
+    Z0, Z1 = -.42, .36
+    prof = nose_profile(.44, .64, .29, .3, .27)
+    loft_creature(root, sid, Z0, Z1, prof, .16, 30, (.088, .104, .072), 30, .77, None, -12, (.046, .027, .015),
+                  -.045, (.044, .024, (1.2, .85, 1.0)), .6, .028, marks=comet_head(sid, prof, Z0, Z1), rings=36, seg=44)
+    side_fins(root, sid, (.24, -.08, -.02), [((.03, -.04, .07), (.03, .07, .11), (6, 20, -32), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .36), ((0, 6, .54, .07, S('Accent')), (-20, 10, .46, .055, S('Accent')), (20, 10, .46, .055, S('Accent')), (-12, -12, .44, .05, S('Fin')), (12, -12, .44, .05, S('Accent'))))
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def rocks(part):
+        # Craggy rock lumps along its back, like a meteor's.
+        for t, ang, r in ((.32, 90, .05), (.42, 70, .045), (.44, 112, .042), (.54, 90, .055), (.62, 66, .04), (.66, 116, .04), (.72, 90, .04)):
+            p = on_body(prof, Z0, Z1, t, ang, .98)
+            ellipsoid(part, tuple(p), (r, r * .8, r * 1.1), S('Fin'), (12 * ang / 90, ang - 90, 0), 12, 8, 1.8)
+    simple_part(root, 'Crest pivot', (0, .3, .0), rocks)
+    return root
+
+# ---------------------------------------------------------------- Cometail: Nebulafin, cloudy fins full of stars
+def nebulafin():
+    sid = 'nebulafin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaNebulafin')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.42, .68, .27, .28, .25)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.088, .104, .072), 31, .77, None, -12, (.046, .027, .015),
+                  -.04, (.04, .023, (1.2, .85, 1.0)), .6, .03, marks=comet_head(sid, prof, Z0, Z1), rings=36, seg=44)
+    # Cloudy fins: puffs in a cluster, flecked with little stars.
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .24, -.05, -.02)
+        fin = Part(label + ' fin')
+        for off, r in (((.07, -.02, .06), .065), ((.13, -.05, .12), .055), ((.09, -.08, .17), .045), ((.04, -.06, .12), .05)):
+            ellipsoid(fin, (pivot[0] + side * off[0], pivot[1] + off[1], pivot[2] + off[2]), (r, r * .55, r), S('Fin'), (0, 0, side * -20), 16, 10)
+        for off in ((.1, .0, .07), (.15, -.03, .13), (.07, -.05, .16), (.12, -.08, .1)):
+            ellipsoid(fin, (pivot[0] + side * off[0], pivot[1] + off[1] + .02, pivot[2] + off[2]), (.011, .011, .011), S('Accent'), (0, 0, 0), 8, 6)
+        make_object(fin, root, pivot, label + ' fin pivot')
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.036, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .36), ((0, 8, .5, .055, S('Accent')), (-22, 4, .44, .045, S('Fin')), (22, 4, .44, .045, S('Fin')), (-10, -14, .41, .042, S('Accent')), (10, -14, .41, .042, S('Accent')), (0, 22, .37, .036, S('Fin'))))
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def cloud(part):
+        top = on_body(prof, Z0, Z1, .48, 90, .95)
+        for off, r in (((0, .03, -.04), .05), ((0, .05, .03), .06), ((0, .02, .1), .045)):
+            ellipsoid(part, tuple(top + Vector(off)), (r * .7, r, r), S('Fin'), (0, 0, 0), 14, 8)
+        for off in ((0, .1, .02), (.02, .07, -.05), (-.02, .06, .1)):
+            ellipsoid(part, tuple(top + Vector(off)), (.012, .012, .012), S('Accent'), (0, 0, 0), 8, 6)
+    simple_part(root, 'Crest pivot', (0, .26, .0), cloud)
+    return root
+
+# ---------------------------------------------------------------- Cometail: Orbitail, a ring orbiting its tail
+def orbitail():
+    sid = 'orbitail'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaOrbitail')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.4, .7, .26, .27, .24)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.086, .102, .07), 31, .76, None, -12, (.044, .026, .015),
+                  -.038, (.038, .022, (1.2, .85, 1.0)), .6, .03, marks=comet_head(sid, prof, Z0, Z1), rings=36, seg=44)
+    side_fins(root, sid, (.21, -.06, -.04), [((.04, -.05, .1), (.024, .05, .13), (12, 18, -36), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.036, .048, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .36), ((0, 4, .5, .06, S('Accent')), (-16, 8, .41, .045, S('Accent')), (16, 8, .41, .045, S('Accent')), (0, -14, .39, .042, S('Fin'))))
+        # A tilted ring orbiting its tail, with a little moon on it.
+        torus(part, (0, 0, .42), .13, .014, S('Accent'), (1, 1, 1), 40, 10, (20, 0, 0))
+        moon = Vector((0, 0, .42)) + rot((.13, 0, 0), (20, 0, 0))
+        ellipsoid(part, tuple(moon), (.026, .026, .026), S('Belly'), (0, 0, 0), 12, 8)
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def fin(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .48, .07, .12, 30)
+    simple_part(root, 'Crest pivot', (0, .23, .0), fin)
+    return root
+
+# ---------------------------------------------------------------- Cometail: Quasarray, wide wings and a blazing core with jets
+def quasarray():
+    sid = 'quasarray'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaQuasarray')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.4, .7, .3, .22, .2)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 34, (.084, .1, .068), 31, .76, None, -12, (.044, .026, .015),
+                  -.034, (.038, .022, (1.25, .85, 1.0)), .6, .03, marks=comet_head(sid, prof, Z0, Z1), rings=36, seg=44)
+    # Wide wings, swept back, their edges glowing.
+    side_fins(root, sid, (.24, -.01, -.02), [((.15, .0, .1), (.18, .022, .14), (0, -22, 4), 'Fin', .9, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.036, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .36), ((0, 4, .52, .058, S('Accent')), (-16, 8, .44, .045, S('Accent')), (16, 8, .44, .045, S('Accent')), (-8, -12, .41, .04, S('Fin')), (8, -12, .41, .04, S('Fin'))))
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def core(part):
+        # A blazing core on its back with two short jets, as a quasar's.
+        c = on_body(prof, Z0, Z1, .46, 90, .96) + Vector((0, .03, 0))
+        ellipsoid(part, tuple(c), (.045, .045, .045), S('Accent'), (0, 0, 0), 16, 10)
+        torus(part, tuple(c), .07, .01, S('Fin'), (1, 1, 1), 32, 8, (90, 0, 0))
+        for d in (Vector((0, .9, -.45)), Vector((0, .9, .45))):
+            d.normalize()
+            cone(part, tuple(c + d * .04), tuple(c + d * .15), .018, S('Accent'), 10, 4, .1)
+    simple_part(root, 'Crest pivot', (0, .21, .0), core)
+    return root
+
+# ---------------------------------------------------------------- Cometail: Novatusk, a long glowing tusk
+def novatusk():
+    sid = 'novatusk'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaNovatusk')
+    Z0, Z1 = -.42, .36
+    prof = nose_profile(.4, .7, .27, .28, .25)
+    def tusk(body):
+        # A long, spiralled tusk from above its mouth, glowing.
+        base = Vector((0, .05, Z0 + .02))
+        cone(body, tuple(base), tuple(base + Vector((0, .05, -.3))), .03, S('Accent'), 14, 8, .05)
+        for k in range(5):
+            s = (k + .5) / 5
+            p = base + Vector((0, .05 * s, -.3 * s))
+            torus(body, tuple(p), .03 * (1 - s) + .004, .005, S('Belly'), (1, 1, 1), 16, 6, (-9, 0, 0))
+    loft_creature(root, sid, Z0, Z1, prof, .16, 32, (.086, .102, .07), 31, .76, None, -12, (.044, .026, .015),
+                  -.05, (.038, .022, (1.2, .85, 1.0)), .6, .028, marks=comet_head(sid, prof, Z0, Z1), extra=tusk, rings=36, seg=44)
+    side_fins(root, sid, (.22, -.07, -.03), [((.04, -.05, .1), (.026, .055, .13), (10, 18, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.036, .048, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .36), ((0, 6, .52, .062, S('Accent')), (-18, 8, .44, .048, S('Accent')), (18, 8, .44, .048, S('Accent')), (0, -14, .41, .044, S('Fin'))))
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def fin(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .06, .13, 32)
+    simple_part(root, 'Crest pivot', (0, .26, .0), fin)
+    return root
+
+# ---------------------------------------------------------------- Cometail: Cosmocarp, a carp with galaxy spots and barbels
+def cosmocarp():
+    sid = 'cosmocarp'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaCosmocarp')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.42, .66, .27, .28, .25)
+    def galaxy(body):
+        # Galaxy spots: soft patches with a glowing heart.
+        for t, ang, r in ((.34, 70, .05), (.5, 104, .055), (.62, 64, .045), (.42, 140, .04), (.7, 120, .04)):
+            for side in (1, -1):
+                a = ang if side > 0 else 180 - ang
+                p = on_body(prof, Z0, Z1, t, a, 1.0)
+                ellipsoid(body, tuple(p), (r, r * .7, r), S('Fin'), (0, 0, 0), 14, 8)
+                ellipsoid(body, tuple(on_body(prof, Z0, Z1, t, a, 1.03)), (r * .35, r * .35, r * .35), S('Accent'), (0, 0, 0), 10, 6)
+        for side in (-1, 1):
+            start = Vector((side * .05, -.055, Z0 - .005))
+            pts = [tuple(start + Vector((side * .05 * s, -.12 * s, .05 * s * s))) for s in (0, .25, .5, .75, 1)]
+            taper_tube(body, pts, .009, .004, S('Fin'), 8)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 31, (.086, .102, .07), 31, .77, None, -12, (.044, .026, .015),
+                  -.04, (.038, .022, (1.2, .85, 1.0)), .6, .03, marks=comet_head(sid, prof, Z0, Z1), extra=galaxy, rings=36, seg=44)
+    side_fins(root, sid, (.23, -.07, -.03), [((.04, -.05, .09), (.026, .06, .12), (10, 20, -32), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .37), (.038, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .38), ((0, 6, .52, .06, S('Fin')), (-18, 10, .46, .048, S('Accent')), (18, 10, .46, .048, S('Accent')), (-10, -12, .44, .044, S('Fin')), (10, -12, .44, .044, S('Accent'))))
+    simple_part(root, 'Tail pivot', (0, 0, .35), tail)
+    def fin(part):
+        dorsal_sail(part, sid, prof, Z0, Z1, .5, .07, .2, 22)
+    simple_part(root, 'Crest pivot', (0, .26, .0), fin)
+    return root
+
+# ---------------------------------------------------------------- Cometail crown: Celestial Wyrm, a long sky dragon with a crown
+def celestialwyrm():
+    sid = 'celestialwyrm'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaCelestialwyrm')
+    Z0, Z1 = -.5, .5
+    prof = nose_profile(.3, .7, .28, .28, .25)
+    def whiskers(body):
+        # Long whiskers sweeping back from its snout, and two little horns.
+        for side in (-1, 1):
+            start = Vector((side * .06, -.03, Z0 + .03))
+            pts = [tuple(start + Vector((side * .36 * s, .06 * math.sin(s * math.pi) - .03 * s, .22 * s))) for s in (0, .2, .4, .6, .8, 1)]
+            taper_tube(body, pts, .01, .004, S('Fin'), 8)
+            hb = on_body(prof, Z0, Z1, .16, 90 - side * 30, .95)
+            cone(body, tuple(hb), tuple(hb + Vector((side * .04, .13, .08))), .026, S('Fin'), 10, 5, .2)
+    loft_creature(root, sid, Z0, Z1, prof, .11, 31, (.078, .094, .064), 31, .76, None, -12, (.04, .024, .014),
+                  -.03, (.032, .019, (1.2, .82, 1.0)), .6, .026, marks=comet_head(sid, prof, Z0, Z1, .16), extra=whiskers, rings=44, seg=44)
+    # Dragon-wing fins of two lobes, edged in starlight.
+    side_fins(root, sid, (.24, -.04, -.12), [((.18, .0, .1), (.27, .024, .18), (0, -24, -22), 'Fin', .9, 'Accent'),
+                                          ((.1, -.08, .24), (.15, .02, .1), (0, -42, -40), 'Fin', .9, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .49), (.032, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        comet_tail(part, (0, 0, .5), ((0, 4, .55, .07, S('Accent')), (-20, 10, .48, .054, S('Accent')), (20, 10, .48, .054, S('Accent')), (-12, -12, .46, .05, S('Fin')), (12, -12, .46, .05, S('Fin')), (0, 24, .4, .042, S('Accent'))))
+    simple_part(root, 'Tail pivot', (0, 0, .47), tail)
+    def mane(part):
+        top = on_body(prof, Z0, Z1, .2, 90, 1.0)
+        gold_crown(part, (0, top.y + .005, top.z), .075, 5, .07, 'DK_Gold', -10)
+        # A mane of flowing wisps along its back.
+        for t in (.32, .44, .56, .68, .8):
+            p = on_body(prof, Z0, Z1, t, 90, .94)
+            pts = [tuple(p + Vector((0, .1 * s - .02 * s * s, .12 * s))) for s in (0, .25, .5, .75, 1)]
+            taper_tube(part, pts, .024, .006, S('Fin'), 10)
+    simple_part(root, 'Crest pivot', (0, .22, -.2), mane)
+    return root
+
+WAVE4_BUILDERS = {'moonmouth': moonmouth, 'gloomfin': gloomfin, 'shadeback': shadeback, 'hushray': hushray,
+                  'duskdrifter': duskdrifter, 'murkmaw': murkmaw, 'nightlantern': nightlantern, 'eclipseleviathan': eclipseleviathan,
+                  'starmaw': starmaw, 'meteorback': meteorback, 'nebulafin': nebulafin, 'orbitail': orbitail,
+                  'quasarray': quasarray, 'novatusk': novatusk, 'cosmocarp': cosmocarp, 'celestialwyrm': celestialwyrm}
+
 CREATURE_BUILDERS = {'pondlet': pondlet, 'bubblebelly': bubblebelly, 'ribbonfin': ribbonfin, 'lanternfin': lanternfin,
-                     'driftwing': driftwing, **WAVE1_BUILDERS, **WAVE2_BUILDERS, **WAVE3_BUILDERS}
+                     'driftwing': driftwing, **WAVE1_BUILDERS, **WAVE2_BUILDERS, **WAVE3_BUILDERS, **WAVE4_BUILDERS}
 assert [sid for sid, _, _, _ in SPECIES] == list(CREATURE_BUILDERS), 'every species has its builder, in the atlas order'
 
 # ================================================================ AD-C: the humanoid rig (front +Z)
@@ -3285,7 +3856,7 @@ if not args.no_render:
 blend = SOURCE / 'EvolutionShop_DioramaKit.blend'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 3)',
+    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 4)',
     'origin': {'author': 'Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)',
                'external_sources': [], 'license': 'Original project work; no third-party source or asset license',
                'paid_generation': False, 'external_uploads': False},

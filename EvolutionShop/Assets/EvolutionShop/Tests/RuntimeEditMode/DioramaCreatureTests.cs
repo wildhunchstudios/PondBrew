@@ -29,12 +29,11 @@ namespace EvolutionShop.Tests
             var game = GameConfig.CreateDefault().Species.Select(s => s.Id).ToArray();
             Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.SupersetOf(game), "Every species the classic game has is a kit species");
             Assert.That(DioramaSpecies.All.Take(5).Select(s => s.Id), Is.EquivalentTo(game), "AD-B's five first, at their atlas blocks");
-            // GR-12 waves 1 to 3: every Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale of GR.7's roster,
-            // and nothing else yet.
-            var families = new[] { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale" };
-            var waves = GrowthContent.Species.Where(s => families.Contains(s.Family)).ToArray();
-            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.EquivalentTo(waves.Select(s => s.Id)), "Waves 1 to 3: the seven families' eight each");
-            Assert.That(DioramaSpecies.All.Count, Is.EqualTo(56));
+            // GR-12 waves 1 to 4: all of GR.7's roster, the nine families' eight each.
+            var waves = GrowthContent.Species.ToArray();
+            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.EquivalentTo(waves.Select(s => s.Id)), "Waves 1 to 4: the nine families' eight each");
+            Assert.That(DioramaSpecies.All.Count, Is.EqualTo(72));
+            Assert.That(DioramaSpecies.All.Count, Is.EqualTo(DioramaVariants.SpeciesCapacity), "The atlas is full");
             foreach (var def in waves)
             {
                 Assert.That(DioramaSpecies.TryGet(def.Id, out var kit), Is.True, def.Id);
@@ -57,7 +56,8 @@ namespace EvolutionShop.Tests
             }
             // Signatures: AD-B's five keep their own; a family's other species play its family's, each crown its own.
             var family = new Dictionary<DioramaFamily, string> { { DioramaFamily.Brookkin, "splash" }, { DioramaFamily.Sparkline, "twinkle" }, { DioramaFamily.Airfin, "glide" },
-                { DioramaFamily.Cinderling, "flare" }, { DioramaFamily.Dewling, "sprinkle" }, { DioramaFamily.Reefback, "bloom" }, { DioramaFamily.Saltscale, "dart" } };
+                { DioramaFamily.Cinderling, "flare" }, { DioramaFamily.Dewling, "sprinkle" }, { DioramaFamily.Reefback, "bloom" }, { DioramaFamily.Saltscale, "dart" },
+                { DioramaFamily.Gloamer, "lure" }, { DioramaFamily.Cometail, "streak" } };
             Assert.That(DioramaSpecies.All.Take(5).Select(s => s.Signature), Is.EqualTo(new[] { "bubble", "balloon", "twirl", "flash", "loop" }));
             foreach (var s in DioramaSpecies.All.Skip(5))
                 if (s.Crown) Assert.That(family.Values.Contains(s.Signature) || DioramaSpecies.All.Count(o => o.Signature == s.Signature) > 1, Is.False, s.Id + " a trick of its own");
@@ -77,7 +77,7 @@ namespace EvolutionShop.Tests
                 Assert.That(kit, Is.Not.Null, s.Kit);
                 var root = kit.transform;
                 foreach (var part in RigParts) Assert.That(root.Find(part), Is.Not.Null, s.Id + " / " + part);
-                Assert.That(root.Find("Lantern pivot") != null, Is.EqualTo(s.Family == DioramaFamily.Sparkline), "The Sparkline's lantern / " + s.Id);
+                Assert.That(root.Find("Lantern pivot") != null, Is.EqualTo(s.Family == DioramaFamily.Sparkline || s.Family == DioramaFamily.Gloamer), "The Sparkline's lantern and the Gloamer's lure / " + s.Id);
                 foreach (Transform part in root)
                 {
                     Assert.That(part.childCount, Is.EqualTo(0), "Flat kit / " + s.Id + "/" + part.name);
@@ -142,9 +142,8 @@ namespace EvolutionShop.Tests
                 foreach (var v in new[] { DioramaVariant.Sunny, DioramaVariant.Deep, DioramaVariant.Shimmer })
                     Assert.That(Distance(classic, DioramaVariants.Color(s.Index, v, 0)), Is.GreaterThan(.12f), s.Id + " " + v + " differs from Classic");
             }
-            // Rows past the kit's species stay empty until GR-12's next waves fill them.
-            Assert.That(DioramaVariants.Color(DioramaSpecies.All.Count, DioramaVariant.Classic, 0).a, Is.EqualTo(0));
-            Assert.That(DioramaVariants.Color(DioramaVariants.SpeciesCapacity - 1, DioramaVariant.Shimmer, 0).a, Is.EqualTo(0));
+            // GR-12 wave 4 fills the atlas: its last row is the Celestial Wyrm's Shimmer.
+            Assert.That(DioramaVariants.Color(DioramaVariants.SpeciesCapacity - 1, DioramaVariant.Shimmer, 0).a, Is.EqualTo(1));
         }
 
         static float Distance(Color a, Color b) => Mathf.Sqrt((a.r - b.r) * (a.r - b.r) + (a.g - b.g) * (a.g - b.g) + (a.b - b.b) * (a.b - b.b));
@@ -163,8 +162,9 @@ namespace EvolutionShop.Tests
                     var classic = DioramaVariants.Color(s.Index, DioramaVariant.Classic, 0); classic.a = 1;
                     Assert.That(Distance(body.GetColor("_BaseColor"), classic), Is.LessThan(.005f), "Body from the atlas's Classic row / " + s.Id);
                     var lantern = owned.FirstOrDefault(m => DioramaLook.GlowSlot(m.name.Replace("Diorama / ", "")));
-                    Assert.That(lantern != null, Is.EqualTo(s.Family == DioramaFamily.Sparkline || s.Family == DioramaFamily.Cinderling || s.Family == DioramaFamily.Saltscale), s.Id);
-                    if (lantern) Assert.That(lantern.GetColor("_EmissionColor").maxColorComponent, Is.GreaterThan(.3f), "The lantern (a Cinderling's embers, a Saltscale's stripe) glows");
+                    Assert.That(lantern != null, Is.EqualTo(s.Family == DioramaFamily.Sparkline || s.Family == DioramaFamily.Cinderling || s.Family == DioramaFamily.Saltscale ||
+                        s.Family == DioramaFamily.Gloamer || s.Family == DioramaFamily.Cometail), s.Id);
+                    if (lantern) Assert.That(lantern.GetColor("_EmissionColor").maxColorComponent, Is.GreaterThan(.3f), "The lantern (a Cinderling's embers, a Saltscale's stripe, a Gloamer's lure, a Cometail's head and tail) glows");
                 }
                 finally
                 {
@@ -225,9 +225,10 @@ namespace EvolutionShop.Tests
                 }
                 Assert.That(peak, Is.GreaterThan(90), s.Id + " does something you can see");
                 // The flash and the aurora sparkle twice, the gale gusts on both wing beats, the rebirth sparks going over and coming
-                // round, the fountain bubbles three times and the rainbow sprays three times.
-                int beats = s.Signature == "flash" || s.Signature == "aurora" || s.Signature == "gale" || s.Signature == "rebirth" || s.Signature == "pearl" ? 2 :
-                    s.Signature == "fountain" || s.Signature == "rainbow" || s.Signature == "reef" ? 3 : 1;
+                // round, the eclipse's corona blazing twice, the fountain bubbles three times, the rainbow sprays three times and a
+                // streak and the starfall leave stardust three times.
+                int beats = s.Signature == "flash" || s.Signature == "aurora" || s.Signature == "gale" || s.Signature == "rebirth" || s.Signature == "pearl" || s.Signature == "eclipse" ? 2 :
+                    s.Signature == "fountain" || s.Signature == "rainbow" || s.Signature == "reef" || s.Signature == "streak" || s.Signature == "starfall" ? 3 : 1;
                 Assert.That(releases, Is.EqualTo(beats), s.Id + " releases its bubbles or sparkles on its beats");
                 Assert.That(DioramaTricks.Releases(s.Id), Is.EqualTo(beats), s.Id + " says how many");
                 var after = DioramaTricks.Trick(s.Id, d, d - .01f);
@@ -251,7 +252,7 @@ namespace EvolutionShop.Tests
         [Test] public void FamilyTricksPlayAtEachSpeciesTempoAndHabitsFollowIt()
         {
             // Two of a family play the same moves, stretched to their own lengths: the same pose at the same share of the trick.
-            foreach (var pair in new[] { ("puddlepup", "reedwhisker"), ("sparkminnow", "glowbelly"), ("hazewing", "cloudcarp"), ("cindertail", "coalbelly"), ("rainskipper", "haloling"), ("coralhorn", "clamjaw"), ("seaspark", "pebblejaw") })
+            foreach (var pair in new[] { ("puddlepup", "reedwhisker"), ("sparkminnow", "glowbelly"), ("hazewing", "cloudcarp"), ("cindertail", "coalbelly"), ("rainskipper", "haloling"), ("coralhorn", "clamjaw"), ("seaspark", "pebblejaw"), ("gloomfin", "moonmouth"), ("starmaw", "meteorback") })
             {
                 float a = DioramaTricks.Duration(pair.Item1), b = DioramaTricks.Duration(pair.Item2);
                 Assert.That(a, Is.Not.EqualTo(b), pair + " differ in tempo");
@@ -262,6 +263,19 @@ namespace EvolutionShop.Tests
                     Assert.That(p.Glow, Is.EqualTo(q.Glow).Within(.001f)); Assert.That(p.Flare, Is.EqualTo(q.Flare).Within(.001f));
                 }
             }
+            // GR-12 wave 4: a lure dims first, then pulses brighter; an eclipse goes dark, then its corona blazes; the starfall
+            // spirals round twice.
+            float Glows(string id, bool lowest)
+            {
+                float most = 0, d = DioramaTricks.Duration(id);
+                for (float a = 0; a < d; a += 1 / 60f) most = lowest ? Mathf.Min(most, DioramaTricks.Trick(id, a).Glow) : Mathf.Max(most, DioramaTricks.Trick(id, a).Glow);
+                return most;
+            }
+            Assert.That(Glows("moonmouth", true), Is.LessThan(-.5f), "A Gloamer's lights dim first");
+            Assert.That(Glows("moonmouth", false), Is.GreaterThan(2f), "then its lure pulses brighter");
+            Assert.That(Glows("eclipseleviathan", true), Is.LessThan(-.8f), "An eclipse goes dark");
+            Assert.That(Glows("eclipseleviathan", false), Is.GreaterThan(2.5f), "then its corona blazes");
+            Assert.That(DioramaTricks.Trick("celestialwyrm", DioramaTricks.Duration("celestialwyrm") * .5f).Yaw, Is.GreaterThan(360), "The starfall spirals round twice");
             // A quicker species runs its family's habit faster: the Splashkit's wag comes round sooner than the Reedwhisker's.
             float First(string species)
             {
@@ -287,7 +301,15 @@ namespace EvolutionShop.Tests
             Assert.That(Peak("kelpgrazer", p => -p.Pitch), Is.GreaterThan(4), "and it nods as it grazes");
             Assert.That(Peak("brinefin", p => p.Glow), Is.GreaterThan(.3f), "A Saltscale's stripe flickers bright now and then");
             Assert.That(Peak("brinefin", p => -p.Glow), Is.GreaterThan(.3f), "and glitters softly at rest");
-            Assert.That(Peak("puddlepup", p => p.Flare) + Peak("pearlpip", p => p.Flare) + Peak("zephyray", p => p.Flare) + Peak("brinefin", p => p.Flare), Is.EqualTo(0),
+            // GR-12 wave 4: a Gloamer's lights breathe deep and dim, its lure winking brighter now and then, as it hangs nose a little
+            // down; a Cometail's head and tail glow bright, and its tail streams out with a flick.
+            Assert.That(Peak("hushray", p => p.Glow), Is.GreaterThan(.8f), "A Gloamer's lure winks brighter now and then");
+            Assert.That(Peak("hushray", p => -p.Glow), Is.GreaterThan(.3f), "and its lights breathe deep and dim");
+            Assert.That(Peak("hushray", p => -p.Pitch), Is.GreaterThan(2.5f), "as it hangs, nose a little down");
+            Assert.That(Peak("cosmocarp", p => p.Glow), Is.GreaterThan(.6f), "A Cometail's head and tail glow bright");
+            Assert.That(Peak("cosmocarp", p => p.Tail), Is.GreaterThan(8), "and its tail streams out with a flick");
+            Assert.That(Peak("puddlepup", p => p.Flare) + Peak("pearlpip", p => p.Flare) + Peak("zephyray", p => p.Flare) + Peak("brinefin", p => p.Flare) +
+                Peak("hushray", p => p.Flare) + Peak("cosmocarp", p => p.Flare), Is.EqualTo(0),
                 "Only the Cinderling's spines and the Reefback's corals stand taller");
             Assert.That(DioramaTricks.MaxFlare("emberpuff"), Is.EqualTo(1).Within(.02f), "A flare stands the spines at their fullest");
             Assert.That(DioramaTricks.MaxFlare("shellback"), Is.EqualTo(1).Within(.02f), "and a bloom the corals");
@@ -336,7 +358,7 @@ namespace EvolutionShop.Tests
         [Test] public void FamilyWaterTintsAreDistinctAndNeverMatchTheirSpecies()
         {
             var tints = ((DioramaFamily[])Enum.GetValues(typeof(DioramaFamily))).Select(DioramaWater.Tint).ToArray();
-            Assert.That(tints.Length, Is.EqualTo(7));
+            Assert.That(tints.Length, Is.EqualTo(9));
             for (int i = 0; i < tints.Length; i++)
             {
                 Assert.That(tints[i].a, Is.InRange(.05f, .2f));

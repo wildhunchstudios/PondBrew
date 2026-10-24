@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 3)",
+  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 to 4)",
   "origin": {
     "author": "Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)",
     "external_sources": [],
@@ -10,7 +10,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_diorama_kit.py",
-  "source_script_sha256": "f2f8af595335a6e8f933bb45c58a8ce98e6557b5d5d246b0e13918a620454417",
+  "source_script_sha256": "f4d7159d07bb6e11f44ada5720b61b4e1b9c8e907f40894fa5e9caf39549a524",
   "blend_source": "ArtSource/DioramaKit/EvolutionShop_DioramaKit.blend",
   "scale": "1 unit = 1 metre",
   "up": "Unity +Y",
@@ -71,6 +71,22 @@
     "DioramaShoalglider": "local -Z (creature)",
     "DioramaTidepip": "local -Z (creature)",
     "DioramaPearlemperor": "local -Z (creature)",
+    "DioramaMoonmouth": "local -Z (creature)",
+    "DioramaGloomfin": "local -Z (creature)",
+    "DioramaShadeback": "local -Z (creature)",
+    "DioramaHushray": "local -Z (creature)",
+    "DioramaDuskdrifter": "local -Z (creature)",
+    "DioramaMurkmaw": "local -Z (creature)",
+    "DioramaNightlantern": "local -Z (creature)",
+    "DioramaEclipseleviathan": "local -Z (creature)",
+    "DioramaStarmaw": "local -Z (creature)",
+    "DioramaMeteorback": "local -Z (creature)",
+    "DioramaNebulafin": "local -Z (creature)",
+    "DioramaOrbitail": "local -Z (creature)",
+    "DioramaQuasarray": "local -Z (creature)",
+    "DioramaNovatusk": "local -Z (creature)",
+    "DioramaCosmocarp": "local -Z (creature)",
+    "DioramaCelestialwyrm": "local -Z (creature)",
     "DioramaCasualVisitor": "local +Z (character)",
     "DioramaBargainVisitor": "local +Z (character)",
     "DioramaCollectorVisitor": "local +Z (character)",
@@ -165,7 +181,9 @@
     "Cinderling": "Ember: a row of glowing ember spines down the back",
     "Dewling": "Mist: round and pearly, shiny dew beads on the head and back",
     "Reefback": "Brine: big and gentle, a domed shell crusted with coral and barnacles",
-    "Saltscale": "Brine: sleek and shiny, a glittering salt stripe along each side"
+    "Saltscale": "Brine: sleek and shiny, a glittering salt stripe along each side",
+    "Gloamer": "Dusk: big, dark and gentle, a glowing lure on a stalk and soft glowing spots",
+    "Cometail": "Spark and Dusk: sleek, a bright glowing head and a comet tail of glowing wisps"
   },
   "species": [
     {
@@ -2575,6 +2593,694 @@
           "Sheen": "FFF0E05E"
         }
       }
+    },
+    {
+      "id": "moonmouth",
+      "asset": "DioramaMoonmouth",
+      "family": "Gloamer",
+      "atlas_rows": [
+        224,
+        227
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "2E3A6E",
+          "Fin": "1E2648",
+          "Belly": "8C93C8",
+          "Accent": "FFF2B0",
+          "Blush": "FF9EC0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "624CA9",
+          "Fin": "443476",
+          "Belly": "BD9FF5",
+          "Accent": "FFEDA6",
+          "Blush": "FFA6B6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "22666B",
+          "Fin": "153442",
+          "Belly": "5D7294",
+          "Accent": "DBB07D",
+          "Blush": "E680AE",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "BCC9FF",
+          "Fin": "9DA8D5",
+          "Belly": "D9DCF5",
+          "Accent": "FFFAE1",
+          "Blush": "FFBBD3",
+          "Sheen": "FFF0C85E"
+        }
+      }
+    },
+    {
+      "id": "gloomfin",
+      "asset": "DioramaGloomfin",
+      "family": "Gloamer",
+      "atlas_rows": [
+        228,
+        231
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "2A4A4E",
+          "Fin": "16282C",
+          "Belly": "7FA8A8",
+          "Accent": "6AF0FF",
+          "Blush": "FF9EB0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "477E6C",
+          "Fin": "2A5046",
+          "Belly": "9FF5CD",
+          "Accent": "76FFCD",
+          "Blush": "FFA6A7",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "3D2555",
+          "Fin": "101828",
+          "Belly": "55727C",
+          "Accent": "3C8DBD",
+          "Blush": "E6809D",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "B2DCE1",
+          "Fin": "7C9AA0",
+          "Belly": "DEF5F5",
+          "Accent": "C6F9FF",
+          "Blush": "FFBBC8",
+          "Sheen": "C8FFF85E"
+        }
+      }
+    },
+    {
+      "id": "shadeback",
+      "asset": "DioramaShadeback",
+      "family": "Gloamer",
+      "atlas_rows": [
+        232,
+        235
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "3A2E4A",
+          "Fin": "241A30",
+          "Belly": "9A88B0",
+          "Accent": "B8FF6A",
+          "Blush": "FFA0B8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "724D78",
+          "Fin": "513055",
+          "Belly": "EE9FF5",
+          "Accent": "FEFF76",
+          "Blush": "FFA6AD",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "223E68",
+          "Fin": "14152C",
+          "Belly": "635C82",
+          "Accent": "5DBD3C",
+          "Blush": "E582A5",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "C4B4D9",
+          "Fin": "9585A8",
+          "Belly": "E9E0F5",
+          "Accent": "E4FFC6",
+          "Blush": "FFBDCD",
+          "Sheen": "E8FFC85E"
+        }
+      }
+    },
+    {
+      "id": "hushray",
+      "asset": "DioramaHushray",
+      "family": "Gloamer",
+      "atlas_rows": [
+        236,
+        239
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "5E5C66",
+          "Fin": "3A3844",
+          "Belly": "CACAD8",
+          "Accent": "9AE8FF",
+          "Blush": "FFA6C0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "A69B80",
+          "Fin": "695D70",
+          "Belly": "DAD3C7",
+          "Accent": "A2FFE9",
+          "Blush": "FFA6B1",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "6F768F",
+          "Fin": "2D333F",
+          "Belly": "BBBED2",
+          "Accent": "6390BD",
+          "Blush": "E588AC",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "A0BEBE",
+          "Fin": "C0BDCE",
+          "Belly": "C8D8E0",
+          "Accent": "D9F6FF",
+          "Blush": "FFC1D3",
+          "Sheen": "D8F0FF5E"
+        }
+      }
+    },
+    {
+      "id": "duskdrifter",
+      "asset": "DioramaDuskdrifter",
+      "family": "Gloamer",
+      "atlas_rows": [
+        240,
+        243
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "4E2E5A",
+          "Fin": "2E1A38",
+          "Belly": "B090C0",
+          "Accent": "FFB0E8",
+          "Blush": "FFA0C0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "8E4C83",
+          "Fin": "602F5B",
+          "Belly": "F59FE9",
+          "Accent": "FFA6BB",
+          "Blush": "FFA6B5",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "242557",
+          "Fin": "181334",
+          "Belly": "73618E",
+          "Accent": "BD74BB",
+          "Blush": "E582AE",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "E9C1F8",
+          "Fin": "A88BB7",
+          "Belly": "EDDEF5",
+          "Accent": "FFE1F6",
+          "Blush": "FFBDD3",
+          "Sheen": "FFD8F85E"
+        }
+      }
+    },
+    {
+      "id": "murkmaw",
+      "asset": "DioramaMurkmaw",
+      "family": "Gloamer",
+      "atlas_rows": [
+        244,
+        247
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "2E3A2A",
+          "Fin": "1C2418",
+          "Belly": "8A9A7A",
+          "Accent": "FFD86A",
+          "Blush": "FF9A9A",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "5B6349",
+          "Fin": "40452F",
+          "Belly": "F2F59F",
+          "Accent": "FFE476",
+          "Blush": "FFB2A2",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "265A4D",
+          "Fin": "132115",
+          "Belly": "5A7253",
+          "Accent": "DB8541",
+          "Blush": "E67D87",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "A9BBA4",
+          "Fin": "82917B",
+          "Belly": "EBF5E1",
+          "Accent": "FFF0C6",
+          "Blush": "FFB8B8",
+          "Sheen": "FFF0C05E"
+        }
+      }
+    },
+    {
+      "id": "nightlantern",
+      "asset": "DioramaNightlantern",
+      "family": "Gloamer",
+      "atlas_rows": [
+        248,
+        251
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "1E2A4E",
+          "Fin": "121A34",
+          "Belly": "7A88B8",
+          "Accent": "FFF6C8",
+          "Blush": "FFA6C8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "34667E",
+          "Fin": "22485B",
+          "Belly": "9FDAF5",
+          "Accent": "FFEDA6",
+          "Blush": "FFA6B9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "4A1752",
+          "Fin": "150C30",
+          "Belly": "525088",
+          "Accent": "B7BD87",
+          "Blush": "E588B5",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "A2B2E1",
+          "Fin": "7C88AF",
+          "Belly": "D5DDF5",
+          "Accent": "FFFCEA",
+          "Blush": "FFC1D9",
+          "Sheen": "FFF8E05E"
+        }
+      }
+    },
+    {
+      "id": "eclipseleviathan",
+      "asset": "DioramaEclipseleviathan",
+      "family": "Gloamer",
+      "atlas_rows": [
+        252,
+        255
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "1A1A2A",
+          "Fin": "3A2A5A",
+          "Belly": "6A6A8A",
+          "Accent": "FFC860",
+          "Blush": "FF9AB0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "3D314D",
+          "Fin": "7D468E",
+          "Belly": "C79FF5",
+          "Accent": "FFE26D",
+          "Blush": "FFA2A7",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "163C43",
+          "Fin": "1E2753",
+          "Belly": "475066",
+          "Accent": "DB7238",
+          "Blush": "E67D9E",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "82829C",
+          "Fin": "D0BCF8",
+          "Belly": "DFDFF5",
+          "Accent": "FFEAC3",
+          "Blush": "FFB8C8",
+          "Sheen": "FFE0A05E"
+        }
+      }
+    },
+    {
+      "id": "starmaw",
+      "asset": "DioramaStarmaw",
+      "family": "Cometail",
+      "atlas_rows": [
+        256,
+        259
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "2E5AA8",
+          "Fin": "1E3A78",
+          "Belly": "D8E4FF",
+          "Accent": "FFF080",
+          "Blush": "FFA6B8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "51D9F5",
+          "Fin": "4CCFF5",
+          "Belly": "A6EBFF",
+          "Accent": "FFE88A",
+          "Blush": "FFA6A9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "151E7C",
+          "Fin": "22116E",
+          "Belly": "9496BD",
+          "Accent": "DBA354",
+          "Blush": "E588A4",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "B1CAF5",
+          "Fin": "AFC5F5",
+          "Belly": "F0F5FF",
+          "Accent": "FFF9CF",
+          "Blush": "FFC1CD",
+          "Sheen": "FFF8C85E"
+        }
+      }
+    },
+    {
+      "id": "meteorback",
+      "asset": "DioramaMeteorback",
+      "family": "Cometail",
+      "atlas_rows": [
+        260,
+        263
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "6A4A3A",
+          "Fin": "4A3428",
+          "Belly": "C8B8A8",
+          "Accent": "FF8A3A",
+          "Blush": "FF9A9A",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "A4935D",
+          "Fin": "786D44",
+          "Belly": "F5E49F",
+          "Accent": "FFDB4A",
+          "Blush": "FFB2A2",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "6F3262",
+          "Fin": "441E24",
+          "Belly": "947B73",
+          "Accent": "BD2D16",
+          "Blush": "E67D87",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "FFDCCB",
+          "Fin": "D9BCAC",
+          "Belly": "F5EDE6",
+          "Accent": "FFD3B4",
+          "Blush": "FFB8B8",
+          "Sheen": "FFE0C05E"
+        }
+      }
+    },
+    {
+      "id": "nebulafin",
+      "asset": "DioramaNebulafin",
+      "family": "Cometail",
+      "atlas_rows": [
+        264,
+        267
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "4AA8C8",
+          "Fin": "8AD8E8",
+          "Belly": "E8F8FF",
+          "Accent": "FFB0F0",
+          "Blush": "FFA6C0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "67F5D7",
+          "Fin": "9AF5DA",
+          "Belly": "EFF3E3",
+          "Accent": "FFA6C4",
+          "Blush": "FFA6B1",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "285C94",
+          "Fin": "5887AC",
+          "Belly": "D3E3F1",
+          "Accent": "B774BD",
+          "Blush": "E588AC",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "BAE6F5",
+          "Fin": "CFEEF5",
+          "Belly": "DBF6F9",
+          "Accent": "FFE1F9",
+          "Blush": "FFC1D3",
+          "Sheen": "FFD8F85E"
+        }
+      }
+    },
+    {
+      "id": "orbitail",
+      "asset": "DioramaOrbitail",
+      "family": "Cometail",
+      "atlas_rows": [
+        268,
+        271
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "E8B04A",
+          "Fin": "8A5A2A",
+          "Belly": "FFF0D0",
+          "Accent": "8AF0FF",
+          "Blush": "FF9A9A",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "F5D65B",
+          "Fin": "F5D558",
+          "Belly": "FFEDA6",
+          "Accent": "93FFDB",
+          "Blush": "FFB2A2",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "C85F28",
+          "Fin": "773316",
+          "Belly": "BDA18E",
+          "Accent": "5694BD",
+          "Blush": "E67D87",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "F5DEB5",
+          "Fin": "F5D4B4",
+          "Belly": "FFF9ED",
+          "Accent": "D3F9FF",
+          "Blush": "FFB8B8",
+          "Sheen": "D0F8FF5E"
+        }
+      }
+    },
+    {
+      "id": "quasarray",
+      "asset": "DioramaQuasarray",
+      "family": "Cometail",
+      "atlas_rows": [
+        272,
+        275
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "3A3A8A",
+          "Fin": "6A6AC8",
+          "Belly": "D0D0F8",
+          "Accent": "FFFFFF",
+          "Blush": "FFA6C8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "AF72F5",
+          "Fin": "BC8BF5",
+          "Belly": "CAA1F8",
+          "Accent": "FFF4D4",
+          "Blush": "FFA6B9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "213366",
+          "Fin": "415794",
+          "Belly": "8E99B8",
+          "Accent": "BFC7DC",
+          "Blush": "E588B5",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "BFBFF5",
+          "Fin": "C9C9F5",
+          "Belly": "EEEEFD",
+          "Accent": "D9F7F4",
+          "Blush": "FFC1D9",
+          "Sheen": "E8E8FF5E"
+        }
+      }
+    },
+    {
+      "id": "novatusk",
+      "asset": "DioramaNovatusk",
+      "family": "Cometail",
+      "atlas_rows": [
+        276,
+        279
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "2E8A7A",
+          "Fin": "1E5A50",
+          "Belly": "D8F4EC",
+          "Accent": "C8FF8A",
+          "Blush": "FFA6B0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "5FF595",
+          "Fin": "348E58",
+          "Belly": "E4F0D5",
+          "Accent": "FFFF93",
+          "Blush": "FFABA6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "175F66",
+          "Fin": "133E53",
+          "Belly": "C6E0E2",
+          "Accent": "71BD56",
+          "Blush": "E5889C",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "B7F5EA",
+          "Fin": "ADF8EB",
+          "Belly": "D1F3ED",
+          "Accent": "EAFFD3",
+          "Blush": "FFC1C8",
+          "Sheen": "F0FFD05E"
+        }
+      }
+    },
+    {
+      "id": "cosmocarp",
+      "asset": "DioramaCosmocarp",
+      "family": "Cometail",
+      "atlas_rows": [
+        280,
+        283
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "F2F2F8",
+          "Fin": "E89AC8",
+          "Belly": "FFFFFF",
+          "Accent": "6A5AE8",
+          "Blush": "FFA6B8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "F9ECC7",
+          "Fin": "F59FAA",
+          "Belly": "FFF8E3",
+          "Accent": "BB6BF5",
+          "Blush": "FFA6A9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "B9C1D8",
+          "Fin": "AC65A1",
+          "Belly": "E5E9F1",
+          "Accent": "3244AC",
+          "Blush": "E588A4",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "C5F2EE",
+          "Fin": "F5D6E8",
+          "Belly": "EAFAF9",
+          "Accent": "C2BCF5",
+          "Blush": "FFC1CD",
+          "Sheen": "E0D8FF5E"
+        }
+      }
+    },
+    {
+      "id": "celestialwyrm",
+      "asset": "DioramaCelestialwyrm",
+      "family": "Cometail",
+      "atlas_rows": [
+        284,
+        287
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "1E3A8A",
+          "Fin": "E8C8FF",
+          "Belly": "F8F0FF",
+          "Accent": "FFE8A0",
+          "Blush": "FFA6C8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "45C4F5",
+          "Fin": "FFA6FB",
+          "Belly": "FAEDE3",
+          "Accent": "FFEDA6",
+          "Blush": "FFA6B9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "0B0B66",
+          "Fin": "9887BD",
+          "Belly": "E0DDF1",
+          "Accent": "DBA16F",
+          "Blush": "E588B5",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "ACBFF5",
+          "Fin": "F6EAFF",
+          "Belly": "E6F1F9",
+          "Accent": "FFF6DB",
+          "Blush": "FFC1D9",
+          "Sheen": "FFF0D05E"
+        }
+      }
     }
   ],
   "rig": {
@@ -3654,6 +4360,246 @@
       "srgb_hex": "#FFF8F0"
     },
     "DK_PearlemperorBlush": {
+      "srgb_hex": "#FFA6C8"
+    },
+    "DK_MoonmouthBody": {
+      "srgb_hex": "#2E3A6E"
+    },
+    "DK_MoonmouthFin": {
+      "srgb_hex": "#1E2648"
+    },
+    "DK_MoonmouthBelly": {
+      "srgb_hex": "#8C93C8"
+    },
+    "DK_MoonmouthAccent": {
+      "srgb_hex": "#FFF2B0"
+    },
+    "DK_MoonmouthBlush": {
+      "srgb_hex": "#FF9EC0"
+    },
+    "DK_GloomfinBody": {
+      "srgb_hex": "#2A4A4E"
+    },
+    "DK_GloomfinFin": {
+      "srgb_hex": "#16282C"
+    },
+    "DK_GloomfinBelly": {
+      "srgb_hex": "#7FA8A8"
+    },
+    "DK_GloomfinAccent": {
+      "srgb_hex": "#6AF0FF"
+    },
+    "DK_GloomfinBlush": {
+      "srgb_hex": "#FF9EB0"
+    },
+    "DK_ShadebackBody": {
+      "srgb_hex": "#3A2E4A"
+    },
+    "DK_ShadebackFin": {
+      "srgb_hex": "#241A30"
+    },
+    "DK_ShadebackBelly": {
+      "srgb_hex": "#9A88B0"
+    },
+    "DK_ShadebackAccent": {
+      "srgb_hex": "#B8FF6A"
+    },
+    "DK_ShadebackBlush": {
+      "srgb_hex": "#FFA0B8"
+    },
+    "DK_HushrayBody": {
+      "srgb_hex": "#5E5C66"
+    },
+    "DK_HushrayFin": {
+      "srgb_hex": "#3A3844"
+    },
+    "DK_HushrayBelly": {
+      "srgb_hex": "#CACAD8"
+    },
+    "DK_HushrayAccent": {
+      "srgb_hex": "#9AE8FF"
+    },
+    "DK_HushrayBlush": {
+      "srgb_hex": "#FFA6C0"
+    },
+    "DK_DuskdrifterBody": {
+      "srgb_hex": "#4E2E5A"
+    },
+    "DK_DuskdrifterFin": {
+      "srgb_hex": "#2E1A38"
+    },
+    "DK_DuskdrifterBelly": {
+      "srgb_hex": "#B090C0"
+    },
+    "DK_DuskdrifterAccent": {
+      "srgb_hex": "#FFB0E8"
+    },
+    "DK_DuskdrifterBlush": {
+      "srgb_hex": "#FFA0C0"
+    },
+    "DK_MurkmawBody": {
+      "srgb_hex": "#2E3A2A"
+    },
+    "DK_MurkmawFin": {
+      "srgb_hex": "#1C2418"
+    },
+    "DK_MurkmawBelly": {
+      "srgb_hex": "#8A9A7A"
+    },
+    "DK_MurkmawAccent": {
+      "srgb_hex": "#FFD86A"
+    },
+    "DK_MurkmawBlush": {
+      "srgb_hex": "#FF9A9A"
+    },
+    "DK_NightlanternBody": {
+      "srgb_hex": "#1E2A4E"
+    },
+    "DK_NightlanternFin": {
+      "srgb_hex": "#121A34"
+    },
+    "DK_NightlanternBelly": {
+      "srgb_hex": "#7A88B8"
+    },
+    "DK_NightlanternAccent": {
+      "srgb_hex": "#FFF6C8"
+    },
+    "DK_NightlanternBlush": {
+      "srgb_hex": "#FFA6C8"
+    },
+    "DK_EclipseleviathanBody": {
+      "srgb_hex": "#1A1A2A"
+    },
+    "DK_EclipseleviathanFin": {
+      "srgb_hex": "#3A2A5A"
+    },
+    "DK_EclipseleviathanBelly": {
+      "srgb_hex": "#6A6A8A"
+    },
+    "DK_EclipseleviathanAccent": {
+      "srgb_hex": "#FFC860"
+    },
+    "DK_EclipseleviathanBlush": {
+      "srgb_hex": "#FF9AB0"
+    },
+    "DK_StarmawBody": {
+      "srgb_hex": "#2E5AA8"
+    },
+    "DK_StarmawFin": {
+      "srgb_hex": "#1E3A78"
+    },
+    "DK_StarmawBelly": {
+      "srgb_hex": "#D8E4FF"
+    },
+    "DK_StarmawAccent": {
+      "srgb_hex": "#FFF080"
+    },
+    "DK_StarmawBlush": {
+      "srgb_hex": "#FFA6B8"
+    },
+    "DK_MeteorbackBody": {
+      "srgb_hex": "#6A4A3A"
+    },
+    "DK_MeteorbackFin": {
+      "srgb_hex": "#4A3428"
+    },
+    "DK_MeteorbackBelly": {
+      "srgb_hex": "#C8B8A8"
+    },
+    "DK_MeteorbackAccent": {
+      "srgb_hex": "#FF8A3A"
+    },
+    "DK_MeteorbackBlush": {
+      "srgb_hex": "#FF9A9A"
+    },
+    "DK_NebulafinBody": {
+      "srgb_hex": "#4AA8C8"
+    },
+    "DK_NebulafinFin": {
+      "srgb_hex": "#8AD8E8"
+    },
+    "DK_NebulafinBelly": {
+      "srgb_hex": "#E8F8FF"
+    },
+    "DK_NebulafinAccent": {
+      "srgb_hex": "#FFB0F0"
+    },
+    "DK_NebulafinBlush": {
+      "srgb_hex": "#FFA6C0"
+    },
+    "DK_OrbitailBody": {
+      "srgb_hex": "#E8B04A"
+    },
+    "DK_OrbitailFin": {
+      "srgb_hex": "#8A5A2A"
+    },
+    "DK_OrbitailBelly": {
+      "srgb_hex": "#FFF0D0"
+    },
+    "DK_OrbitailAccent": {
+      "srgb_hex": "#8AF0FF"
+    },
+    "DK_OrbitailBlush": {
+      "srgb_hex": "#FF9A9A"
+    },
+    "DK_QuasarrayBody": {
+      "srgb_hex": "#3A3A8A"
+    },
+    "DK_QuasarrayFin": {
+      "srgb_hex": "#6A6AC8"
+    },
+    "DK_QuasarrayBelly": {
+      "srgb_hex": "#D0D0F8"
+    },
+    "DK_QuasarrayAccent": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_QuasarrayBlush": {
+      "srgb_hex": "#FFA6C8"
+    },
+    "DK_NovatuskBody": {
+      "srgb_hex": "#2E8A7A"
+    },
+    "DK_NovatuskFin": {
+      "srgb_hex": "#1E5A50"
+    },
+    "DK_NovatuskBelly": {
+      "srgb_hex": "#D8F4EC"
+    },
+    "DK_NovatuskAccent": {
+      "srgb_hex": "#C8FF8A"
+    },
+    "DK_NovatuskBlush": {
+      "srgb_hex": "#FFA6B0"
+    },
+    "DK_CosmocarpBody": {
+      "srgb_hex": "#F2F2F8"
+    },
+    "DK_CosmocarpFin": {
+      "srgb_hex": "#E89AC8"
+    },
+    "DK_CosmocarpBelly": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_CosmocarpAccent": {
+      "srgb_hex": "#6A5AE8"
+    },
+    "DK_CosmocarpBlush": {
+      "srgb_hex": "#FFA6B8"
+    },
+    "DK_CelestialwyrmBody": {
+      "srgb_hex": "#1E3A8A"
+    },
+    "DK_CelestialwyrmFin": {
+      "srgb_hex": "#E8C8FF"
+    },
+    "DK_CelestialwyrmBelly": {
+      "srgb_hex": "#F8F0FF"
+    },
+    "DK_CelestialwyrmAccent": {
+      "srgb_hex": "#FFE8A0"
+    },
+    "DK_CelestialwyrmBlush": {
       "srgb_hex": "#FFA6C8"
     }
   },
@@ -7145,6 +8091,1008 @@
       ]
     },
     {
+      "triangles": 12100,
+      "vertices": 6108,
+      "bounds_unity_m": {
+        "min": [
+          -0.3935985565185547,
+          -0.2999156415462494,
+          -0.6605434417724609
+        ],
+        "max": [
+          0.3935985565185547,
+          0.5222173929214478,
+          0.5922074913978577
+        ],
+        "size": [
+          0.7871971130371094,
+          0.8221330344676971,
+          1.2527509331703186
+        ]
+      },
+      "id": "DioramaMoonmouth",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaMoonmouth.fbx",
+      "sha256": "70412cff35dd3362e73137332cc33a9e66180b5b17156c6de40d5acf533b71f5",
+      "bytes": 251164,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_MoonmouthAccent",
+        "DK_MoonmouthBelly",
+        "DK_MoonmouthBlush",
+        "DK_MoonmouthBody",
+        "DK_MoonmouthFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 17788,
+      "vertices": 8962,
+      "bounds_unity_m": {
+        "min": [
+          -0.48876142501831055,
+          -0.29583117365837097,
+          -0.592282772064209
+        ],
+        "max": [
+          0.48876142501831055,
+          0.4449796676635742,
+          0.6293919086456299
+        ],
+        "size": [
+          0.9775228500366211,
+          0.7408108413219452,
+          1.2216746807098389
+        ]
+      },
+      "id": "DioramaGloomfin",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaGloomfin.fbx",
+      "sha256": "a0498e26004d45fd0ab8a3ade5bea0ac938d4225408eb7d3e506b3f53b08fa68",
+      "bytes": 345980,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_GloomfinAccent",
+        "DK_GloomfinBelly",
+        "DK_GloomfinBlush",
+        "DK_GloomfinBody",
+        "DK_GloomfinFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 13604,
+      "vertices": 6880,
+      "bounds_unity_m": {
+        "min": [
+          -0.35299375653266907,
+          -0.2799678444862366,
+          -0.6245030164718628
+        ],
+        "max": [
+          0.35299375653266907,
+          0.47469380497932434,
+          0.5796945691108704
+        ],
+        "size": [
+          0.7059875130653381,
+          0.7546616494655609,
+          1.2041975855827332
+        ]
+      },
+      "id": "DioramaShadeback",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaShadeback.fbx",
+      "sha256": "f4b4108cb0f154cb6d3bc96dd1e08816ec254a44d06ec7ca11b6e7a5c8060237",
+      "bytes": 278284,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_ShadebackAccent",
+        "DK_ShadebackBelly",
+        "DK_ShadebackBlush",
+        "DK_ShadebackBody",
+        "DK_ShadebackFin"
+      ]
+    },
+    {
+      "triangles": 12636,
+      "vertices": 6378,
+      "bounds_unity_m": {
+        "min": [
+          -0.8127294778823853,
+          -0.18000000715255737,
+          -0.5601235032081604
+        ],
+        "max": [
+          0.8127294778823853,
+          0.3659374713897705,
+          0.9209232330322266
+        ],
+        "size": [
+          1.6254589557647705,
+          0.5459374785423279,
+          1.481046736240387
+        ]
+      },
+      "id": "DioramaHushray",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaHushray.fbx",
+      "sha256": "2ee609a265cf8e6c784c0e18e6307cdd3ba18f6bf7b718c053f716c15a0528e5",
+      "bytes": 259324,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_HushrayAccent",
+        "DK_HushrayBelly",
+        "DK_HushrayBlush",
+        "DK_HushrayBody",
+        "DK_HushrayFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 14280,
+      "vertices": 7198,
+      "bounds_unity_m": {
+        "min": [
+          -0.418301522731781,
+          -0.3023630976676941,
+          -0.6144239902496338
+        ],
+        "max": [
+          0.418301522731781,
+          0.48739516735076904,
+          0.8866804838180542
+        ],
+        "size": [
+          0.836603045463562,
+          0.7897582650184631,
+          1.501104474067688
+        ]
+      },
+      "id": "DioramaDuskdrifter",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaDuskdrifter.fbx",
+      "sha256": "608e3fd1dcbee3278e5665fa05db5134f97f0e1081c5c80242ba234c1c30154a",
+      "bytes": 292716,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_DuskdrifterAccent",
+        "DK_DuskdrifterBelly",
+        "DK_DuskdrifterBlush",
+        "DK_DuskdrifterBody",
+        "DK_DuskdrifterFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 12240,
+      "vertices": 6188,
+      "bounds_unity_m": {
+        "min": [
+          -0.369009405374527,
+          -0.32987266778945923,
+          -0.6508040428161621
+        ],
+        "max": [
+          0.369009405374527,
+          0.5008646249771118,
+          0.5764811038970947
+        ],
+        "size": [
+          0.738018810749054,
+          0.830737292766571,
+          1.2272851467132568
+        ]
+      },
+      "id": "DioramaMurkmaw",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaMurkmaw.fbx",
+      "sha256": "b28db2b876a3802befc24c3b054b0bf79cd1da3966534bc12424a50b48799164",
+      "bytes": 254716,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_MurkmawAccent",
+        "DK_MurkmawBelly",
+        "DK_MurkmawBlush",
+        "DK_MurkmawBody",
+        "DK_MurkmawFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 16808,
+      "vertices": 8498,
+      "bounds_unity_m": {
+        "min": [
+          -0.33599621057510376,
+          -0.2697218060493469,
+          -0.6061939597129822
+        ],
+        "max": [
+          0.33599621057510376,
+          0.47514253854751587,
+          0.5922074913978577
+        ],
+        "size": [
+          0.6719924211502075,
+          0.7448643445968628,
+          1.1984014511108398
+        ]
+      },
+      "id": "DioramaNightlantern",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaNightlantern.fbx",
+      "sha256": "c4d3af190c601fa109ba71e8529a5baee67ed0db0901f809b688ea7ace457039",
+      "bytes": 327996,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_NightlanternAccent",
+        "DK_NightlanternBelly",
+        "DK_NightlanternBlush",
+        "DK_NightlanternBody",
+        "DK_NightlanternFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 21676,
+      "vertices": 10956,
+      "bounds_unity_m": {
+        "min": [
+          -0.5715371370315552,
+          -0.2999655604362488,
+          -0.695143461227417
+        ],
+        "max": [
+          0.5715371370315552,
+          0.5270968675613403,
+          0.7587893605232239
+        ],
+        "size": [
+          1.1430742740631104,
+          0.8270624279975891,
+          1.4539328217506409
+        ]
+      },
+      "id": "DioramaEclipseleviathan",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaEclipseleviathan.fbx",
+      "sha256": "11b9652f1b1f5f9111d0cfda944cf2ed2770416db666ea8133912101bc7b666f",
+      "bytes": 403564,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Lantern pivot",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EclipseleviathanAccent",
+        "DK_EclipseleviathanBelly",
+        "DK_EclipseleviathanBlush",
+        "DK_EclipseleviathanBody",
+        "DK_EclipseleviathanFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 12052,
+      "vertices": 6078,
+      "bounds_unity_m": {
+        "min": [
+          -0.2764590382575989,
+          -0.2298988550901413,
+          -0.46000000834465027
+        ],
+        "max": [
+          0.2764590382575989,
+          0.3494010269641876,
+          0.8993347883224487
+        ],
+        "size": [
+          0.5529180765151978,
+          0.5792998820543289,
+          1.359334796667099
+        ]
+      },
+      "id": "DioramaStarmaw",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaStarmaw.fbx",
+      "sha256": "92ebd1f2b3cf525efecc72e77fa6f2cf15e413b4c7dfc1ee2be702955ec88cac",
+      "bytes": 256492,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_StarmawAccent",
+        "DK_StarmawBelly",
+        "DK_StarmawBlush",
+        "DK_StarmawBody",
+        "DK_StarmawFin"
+      ]
+    },
+    {
+      "triangles": 12660,
+      "vertices": 6384,
+      "bounds_unity_m": {
+        "min": [
+          -0.327070415019989,
+          -0.26996752619743347,
+          -0.4560000002384186
+        ],
+        "max": [
+          0.327070415019989,
+          0.3224071264266968,
+          0.8980143070220947
+        ],
+        "size": [
+          0.654140830039978,
+          0.5923746526241302,
+          1.3540143072605133
+        ]
+      },
+      "id": "DioramaMeteorback",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaMeteorback.fbx",
+      "sha256": "a927064f058cecbef266eca630660e065c07a638061ba00160ea83c7e9dba03a",
+      "bytes": 268188,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_MeteorbackAccent",
+        "DK_MeteorbackBelly",
+        "DK_MeteorbackBlush",
+        "DK_MeteorbackBody",
+        "DK_MeteorbackFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 14648,
+      "vertices": 7406,
+      "bounds_unity_m": {
+        "min": [
+          -0.42235067486763,
+          -0.24999213218688965,
+          -0.4350000023841858
+        ],
+        "max": [
+          0.42235067486763,
+          0.37259340286254883,
+          0.856425404548645
+        ],
+        "size": [
+          0.84470134973526,
+          0.6225855350494385,
+          1.2914254069328308
+        ]
+      },
+      "id": "DioramaNebulafin",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaNebulafin.fbx",
+      "sha256": "c0f805b7692c85035a57888c1e7f20183239625052809edba1afb6d7a2840e14",
+      "bytes": 289020,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_NebulafinAccent",
+        "DK_NebulafinBelly",
+        "DK_NebulafinBlush",
+        "DK_NebulafinBody",
+        "DK_NebulafinFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 12316,
+      "vertices": 6200,
+      "bounds_unity_m": {
+        "min": [
+          -0.2840014696121216,
+          -0.2399073839187622,
+          -0.43400001525878906
+        ],
+        "max": [
+          0.2840014696121216,
+          0.30368849635124207,
+          0.8594322204589844
+        ],
+        "size": [
+          0.5680029392242432,
+          0.5435958802700043,
+          1.2934322357177734
+        ]
+      },
+      "id": "DioramaOrbitail",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaOrbitail.fbx",
+      "sha256": "caa088273703628f63c0e1c22ab0639423324a59ef1933d07441dde3a6617766",
+      "bytes": 260092,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_OrbitailAccent",
+        "DK_OrbitailBelly",
+        "DK_OrbitailBlush",
+        "DK_OrbitailBody",
+        "DK_OrbitailFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 13636,
+      "vertices": 6864,
+      "bounds_unity_m": {
+        "min": [
+          -0.5564865469932556,
+          -0.1999228298664093,
+          -0.43400001525878906
+        ],
+        "max": [
+          0.5564865469932556,
+          0.371224582195282,
+          0.8793834447860718
+        ],
+        "size": [
+          1.1129730939865112,
+          0.5711474120616913,
+          1.3133834600448608
+        ]
+      },
+      "id": "DioramaQuasarray",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaQuasarray.fbx",
+      "sha256": "2ca46be221313c5ad1e8992711224292b1a0fdeea5ccb8536566946c9a71e5a9",
+      "bytes": 281644,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_QuasarrayAccent",
+        "DK_QuasarrayBelly",
+        "DK_QuasarrayBlush",
+        "DK_QuasarrayBody",
+        "DK_QuasarrayFin"
+      ]
+    },
+    {
+      "triangles": 12532,
+      "vertices": 6308,
+      "bounds_unity_m": {
+        "min": [
+          -0.29447150230407715,
+          -0.24990352988243103,
+          -0.7000000476837158
+        ],
+        "max": [
+          0.29447150230407715,
+          0.30175358057022095,
+          0.8781238794326782
+        ],
+        "size": [
+          0.5889430046081543,
+          0.551657110452652,
+          1.578123927116394
+        ]
+      },
+      "id": "DioramaNovatusk",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaNovatusk.fbx",
+      "sha256": "2f1e43c844f642e8758073f89026a86678c3791f08e067948be95a58829852dc",
+      "bytes": 263420,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_NovatuskAccent",
+        "DK_NovatuskBelly",
+        "DK_NovatuskBlush",
+        "DK_NovatuskBody",
+        "DK_NovatuskFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 15020,
+      "vertices": 7600,
+      "bounds_unity_m": {
+        "min": [
+          -0.32545006275177,
+          -0.24999213218688965,
+          -0.45399999618530273
+        ],
+        "max": [
+          0.32545006275177,
+          0.33529365062713623,
+          0.8981238603591919
+        ],
+        "size": [
+          0.65090012550354,
+          0.5852857828140259,
+          1.3521238565444946
+        ]
+      },
+      "id": "DioramaCosmocarp",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCosmocarp.fbx",
+      "sha256": "22abd346e3fccd25602b5b5d3f4617999a35fda4d82fa514c914e80f44af98d5",
+      "bytes": 305404,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_CosmocarpAccent",
+        "DK_CosmocarpBelly",
+        "DK_CosmocarpBlush",
+        "DK_CosmocarpBody",
+        "DK_CosmocarpFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 19004,
+      "vertices": 9600,
+      "bounds_unity_m": {
+        "min": [
+          -0.6486966609954834,
+          -0.24997130036354065,
+          -0.531000018119812
+        ],
+        "max": [
+          0.6486966609954834,
+          0.3678241968154907,
+          1.0493104457855225
+        ],
+        "size": [
+          1.2973933219909668,
+          0.6177954971790314,
+          1.5803104639053345
+        ]
+      },
+      "id": "DioramaCelestialwyrm",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCelestialwyrm.fbx",
+      "sha256": "eb958c903510be2b70356f44695d5c18df33d0ef4c41d2a401dd2b89f8793c7f",
+      "bytes": 368956,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_CelestialwyrmAccent",
+        "DK_CelestialwyrmBelly",
+        "DK_CelestialwyrmBlush",
+        "DK_CelestialwyrmBody",
+        "DK_CelestialwyrmFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
       "triangles": 16592,
       "vertices": 8374,
       "bounds_unity_m": {
@@ -7683,7 +9631,7 @@
     "row": "species index * 4 + variant index, counted from the top",
     "colour_space": "sRGB",
     "sheen": "the Sheen column is Shimmer's iridescent rim; its alpha is the strength (0 for the other variants)",
-    "sha256": "c7dc00a41510ad07163c1aec382579a7bf5f36b9d3a1765dae5f39b42778c2e3",
+    "sha256": "4100cabb13c3ab177447c7f34576c27b46f0fc4f09e8b9c005e86d8c21e75ef0",
     "review_swatches": "ArtSource/DioramaKit/DioramaKit_VariantSwatches.png"
   },
   "renders": [
@@ -7727,7 +9675,11 @@
     "ArtSource/DioramaKit/DioramaKit_Reefback_Front.png",
     "ArtSource/DioramaKit/DioramaKit_Reefback_Side.png",
     "ArtSource/DioramaKit/DioramaKit_Saltscale_Front.png",
-    "ArtSource/DioramaKit/DioramaKit_Saltscale_Side.png"
+    "ArtSource/DioramaKit/DioramaKit_Saltscale_Side.png",
+    "ArtSource/DioramaKit/DioramaKit_Gloamer_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Gloamer_Side.png",
+    "ArtSource/DioramaKit/DioramaKit_Cometail_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Cometail_Side.png"
   ],
   "validation_limits": [
     "Workbench review renders show shape and colour only, not the in-game toon shading, outline or bloom.",

@@ -16,8 +16,10 @@ namespace EvolutionShop.Growth
 
         public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : null;
 
-        /// <summary>GR-12's families done so far (waves 1 to 3), shown in the AD look.</summary>
-        public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale" };
+        /// <summary>GR-12's families (waves 1 to 4: all nine), shown in the AD look.</summary>
+        public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale", "gloamer", "cometail" };
+        /// <summary>GR-12's newest wave, which the creatures start point shows in two colours each (the user's look is at it).</summary>
+        public static readonly string[] NewestFamilies = { "gloamer", "cometail" };
 
         /// <summary>The start of era 3: 3 stars, 1,200 credits, 45 RP, unit B, Bloom, Flow, Ember and Spark, the founders of
         /// the first families and four hybrids, the breeding tank, a Large tank, stocked tanks, levels 2-3.</summary>
@@ -121,14 +123,14 @@ namespace EvolutionShop.Growth
             return shop;
         }
 
-        /// <summary>GR-12's look at waves 1 to 3 (Docs/Evidence/gr-12/LOOK.md): the spaces start with shop unit C and the
-        /// exhibition hall open, every Brookkin, Sparkline, Airfin, Cinderling, Dewling, Reefback and Saltscale known in all four
-        /// colours, and tanks for each family, each of its species in Classic and one other colour (Sunny, Deep and Shimmer in
-        /// turn): Show tanks for the Brookkin on unit B's feature place and the Sparkline and the Airfin on unit C's feature wall;
-        /// Large tanks fitted to 16 spaces for the Airfin's second colours (c3), the Cinderling (c4, its second colours c5), the
-        /// Dewling (c6), the Reefback (the hall's e1 and e2, four large creatures each, its second colours on unit B's back wall,
-        /// b1 and b2) and the Saltscale (b3, its second colours on a3); the spaces start's own small tanks on a3, b1 and b2
-        /// emptied and sold to make room.</summary>
+        /// <summary>GR-12's look at wave 4 (Docs/Evidence/gr-12/LOOK.md): the spaces start with shop unit C and the exhibition
+        /// hall open, all nine families' species known in all four colours. Wave 4's Gloamer and Cometail, each species in Classic
+        /// and one other colour (Sunny, Deep and Shimmer in turn), in Large tanks fitted to 16 spaces (four large creatures each):
+        /// the Gloamer in the hall (e1, e2), its second colours on unit B's back wall (b1, b2), the Cometail along unit C's long
+        /// wall (c3, c4), its second colours beside them (c5, c6). Waves 1 to 3, which the user approved, each species in Classic:
+        /// the Brookkin with the Saltscale in unit B's Show tank (b4, fitted to 24 spaces), the Sparkline with the Dewling and the
+        /// Airfin in unit C's Show tanks (c1, c2), the Cinderling on a1 and the Reefback on a3 and b3 (Large tanks). The spaces
+        /// start's own tanks on a1, a3, b1 and b2 are emptied and sold to make room.</summary>
         public static GrowthShop CreaturesStart()
         {
             var shop = SpacesStart();
@@ -141,32 +143,34 @@ namespace EvolutionShop.Growth
                 foreach (Colour colour in System.Enum.GetValues(typeof(Colour)))
                     if (!shop.Journal.Contains(GrowthShop.JournalKey(s.Id, colour))) shop.Journal.Add(GrowthShop.JournalKey(s.Id, colour));
             }
-            foreach (var place in new[] { "a3", "b1", "b2" })
+            foreach (var place in new[] { "a1", "a3", "b1", "b2" })
             {
                 var old = shop.ContainerAt(place);
                 if (old == null) continue;
                 old.Occupants.Clear();
                 shop.SellContainer(old.Id);
             }
-            foreach (var (kind, place) in new[] { ("show", "b4"), ("show", "c1"), ("show", "c2"), ("large", "c3"), ("large", "c4"), ("large", "c5"), ("large", "c6"),
-                ("large", "e1"), ("large", "e2"), ("large", "b1"), ("large", "b2"), ("large", "b3"), ("large", "a3") })
+            foreach (var (kind, place) in new[] { ("show", "b4"), ("show", "c1"), ("show", "c2"), ("large", "a1"), ("large", "a3"), ("large", "b3"),
+                ("large", "e1"), ("large", "e2"), ("large", "b1"), ("large", "b2"), ("large", "c3"), ("large", "c4"), ("large", "c5"), ("large", "c6") })
             {
                 shop.BuyContainer(kind, place);
-                // The Large tanks fitted to their third level (16 spaces), as a player would at night.
+                // The Large tanks fitted to their third level (16 spaces) and unit B's Show tank to its second (24), as a player
+                // would at night.
                 if (kind == "large") shop.ContainerAt(place).Level = 3;
+                else if (place == "b4") shop.ContainerAt(place).Level = 2;
             }
             var others = new[] { Colour.Sunny, Colour.Deep, Colour.Shimmer };
-            var tankFor = new Dictionary<string, string[]> { { "brookkin", new[] { "b4" } }, { "sparkline", new[] { "c1" } }, { "airfin", new[] { "c2" } },
-                { "cinderling", new[] { "c4" } }, { "dewling", new[] { "c6" } }, { "reefback", new[] { "e1", "e2" } }, { "saltscale", new[] { "b3" } } };
-            var besideFor = new Dictionary<string, string[]> { { "airfin", new[] { "c3" } }, { "cinderling", new[] { "c5" } }, { "reefback", new[] { "b1", "b2" } },
-                { "saltscale", new[] { "a3" } } };
-            // Every species in Classic in its family's tanks first, then its second colour there while they have room, else beside them.
+            var tankFor = new Dictionary<string, string[]> { { "brookkin", new[] { "b4" } }, { "saltscale", new[] { "b4" } }, { "sparkline", new[] { "c1" } },
+                { "dewling", new[] { "c1" } }, { "airfin", new[] { "c2" } }, { "cinderling", new[] { "a1" } }, { "reefback", new[] { "a3", "b3" } },
+                { "gloamer", new[] { "e1", "e2" } }, { "cometail", new[] { "c3", "c4" } } };
+            var besideFor = new Dictionary<string, string[]> { { "gloamer", new[] { "b1", "b2" } }, { "cometail", new[] { "c5", "c6" } } };
+            // Every species in Classic in its family's tanks; the newest wave's in a second colour beside them too.
             foreach (var s in wave) tankFor[s.Family].Any(place => Stock(shop, place, s.Id, Colour.Classic));
-            for (int i = 0; i < wave.Count; i++)
+            var newest = wave.Where(s => NewestFamilies.Contains(s.Family)).ToList();
+            for (int i = 0; i < newest.Count; i++)
             {
-                var s = wave[i];
-                if (!tankFor[s.Family].Any(place => Stock(shop, place, s.Id, others[i % 3])) && besideFor.TryGetValue(s.Family, out var beside))
-                    beside.Any(place => Stock(shop, place, s.Id, others[i % 3]));
+                var s = newest[i];
+                besideFor[s.Family].Any(place => Stock(shop, place, s.Id, others[i % 3]));
             }
             shop.Credits = 20000;
             shop.TakeEvents();
