@@ -74,7 +74,9 @@ namespace EvolutionShop.Tests
                     else Assert.That(bodyBounds.size.z, Is.EqualTo(L).Within(L * .02f), s.Id + " body length");
                     // It faces the way it swims (+Z in the greybox; the kit faces -Z): its lips ahead of its body's middle.
                     float lips = view.transform.InverseTransformPoint(view.Kit.DioramaLips.position).z;
-                    Assert.That(lips, Is.GreaterThan(bodyBounds.center.z + L * (s.Remade ? .15f : .3f)), s.Id + " faces +Z");
+                    // GR-12B: a remade species' body may run far past its mouth (a sawfish's saw, a narwhal's tusk), so its lips need
+                    // only be ahead, as the rig test has them (its tail behind, there too).
+                    Assert.That(lips, Is.GreaterThan(bodyBounds.center.z + L * (s.Remade ? .05f : .3f)), s.Id + " faces +Z");
                     var parts = view.Kit.GetComponentsInChildren<Transform>(true).Select(p => p.name).ToArray();
                     Assert.That(parts, Is.SupersetOf(new[] { "Body", "Lids", "Lips", "Tail pivot", "Left fin pivot", "Right fin pivot", "Crest pivot" }), s.Id + " on its family rig");
                     Assert.That(view.GetComponentsInChildren<Renderer>(true).All(r => r.shadowCastingMode == ShadowCastingMode.Off), Is.True, s.Id + " casts no shadow (GR.5's budget)");
@@ -284,9 +286,12 @@ namespace EvolutionShop.Tests
                     Assert.That(far, Is.LessThanOrEqualTo(view.TrickReach), id + " its trick's reach");
                     Assert.That(high, Is.LessThanOrEqualTo(view.TrickHalf), id + " its trick's height");
                 }
-                var crown = Make(parent, "coralossus", Colour.Classic, 21); crown.FitTo(large);
-                var small = Make(parent, "puddlepup", Colour.Classic, 22); small.FitTo(large);
-                Assert.That(crown.PeekScale, Is.LessThan(GrowthCreatureView.PeekGrowth), "Coralossus is enlarged less in a Large tank");
+                // The crown its trick takes furthest or highest (GR-12B wave 2: no longer the Coralossus, a decorator crab now, whose
+                // span, legs and all, is its class's length) is enlarged less.
+                var crown = DioramaSpecies.All.Where(s => s.Crown).Select((s, i) => { var v = Make(parent, s.Id, Colour.Classic, 21 + i); v.FitTo(large); return v; })
+                    .OrderBy(v => v.PeekScale).First();
+                var small = Make(parent, "puddlepup", Colour.Classic, 99); small.FitTo(large);
+                Assert.That(crown.PeekScale, Is.LessThan(GrowthCreatureView.PeekGrowth), "a crown is enlarged less in a Large tank (" + crown.Kit.DioramaSpecies.Id + ")");
                 Assert.That(small.PeekScale, Is.EqualTo(GrowthCreatureView.PeekGrowth), "a Puddlepup the full 1.35");
             }
             finally { Object.DestroyImmediate(parent.gameObject); }

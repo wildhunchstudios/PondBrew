@@ -234,12 +234,13 @@ namespace EvolutionShop
             yield return null; yield return null;
         }
 
-        /// <summary>Keeps two of each announced creature still to buy in stock outside the spotlit places, making room by
-        /// taking out a creature that was not announced (labelled development stock).</summary>
+        /// <summary>Keeps three of each announced creature still to buy in stock outside the spotlit places, making room by
+        /// taking out a creature that was not announced (labelled development stock). Three, not two (GR-12B wave 2): ordinary
+        /// visitors bought both of two between top-ups once, while the guests' walk in runs at the game's own pace.</summary>
         static void ExhibitionStock(GrowthShop shop, string except)
         {
             foreach (var o in shop.ExhibitionOrders.Where(o => !o.Bought && o.Species != except))
-                for (int guard = 0; guard < 8 && shop.Stock.Count(x => x.Species == o.Species && x.ReservedBy == 0) < 2; guard++)
+                for (int guard = 0; guard < 12 && shop.Stock.Count(x => x.Species == o.Species && x.ReservedBy == 0) < 3; guard++)
                 {
                     var open = shop.ShopContainers.Where(c => !GrowthShop.SpotlitPlaces.Contains(c.Place)).ToList();
                     if (open.Any(c => shop.DevelopmentStock(c.Id, o.Species).Success)) continue;

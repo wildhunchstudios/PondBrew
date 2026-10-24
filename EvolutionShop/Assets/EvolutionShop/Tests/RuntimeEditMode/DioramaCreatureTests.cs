@@ -89,7 +89,7 @@ namespace EvolutionShop.Tests
                 Assert.That(Shapes(root, "Lips"), Is.SupersetOf(new[] { "Happy", "Surprised" }), s.Id);
                 // Front -Z: the lips are ahead of the body's middle and the tail behind it (GR-12B: behind its body's middle; a
                 // squid's cloak, on its Tail pivot, under it); left is -X.
-                Assert.That(Centre(root.Find("Lips")).z, Is.LessThan(Centre(root.Find("Body")).z - (s.Remade ? .15f : .2f)), "Lips at the front / " + s.Id);
+                Assert.That(Centre(root.Find("Lips")).z, Is.LessThan(Centre(root.Find("Body")).z - (s.Remade ? .05f : .2f)), "Lips at the front / " + s.Id);
                 if (s.Gait == DioramaGait.Pulse)
                     Assert.That(root.Find("Tail pivot").localPosition.y, Is.LessThan(Centre(root.Find("Body")).y - .1f), "A cloak under its body / " + s.Id);
                 else
@@ -109,7 +109,9 @@ namespace EvolutionShop.Tests
             // wave runs down an oarfish's body from head to tail, its tail fin riding it; a squid's cloak opens and closes. None of
             // it with Reduced motion.
             Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Gloamer).All(s => s.Remade), Is.True, "GR-12B wave 1: the Gloamer");
-            Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(), Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse }));
+            Assert.That(DioramaSpecies.All.Where(s => s.Family == DioramaFamily.Cometail || s.Family == DioramaFamily.Reefback).All(s => s.Remade), Is.True,
+                "GR-12B wave 2: the Cometail and the Reefback");
+            Assert.That(DioramaSpecies.All.Where(s => s.Remade).Select(s => s.Gait).Distinct(), Is.SupersetOf(new[] { DioramaGait.Flap, DioramaGait.Scull, DioramaGait.Undulate, DioramaGait.Pulse, DioramaGait.Fluke }));
             var parent = new GameObject("GR-12B gaits").transform;
             try
             {
@@ -192,10 +194,25 @@ namespace EvolutionShop.Tests
                 }
                 Assert.That(open, Is.GreaterThan(.08f), "the squid's cloak opens"); Assert.That(shut, Is.GreaterThan(.08f), "and closes");
 
+                // A narwhal: its fluke beats up and down, far, and its tail swings little from side to side.
+                var narwhal = Kit("novatusk");
+                var fluke = Part(narwhal, "Tail pivot");
+                float up = 0, down = 0, aside = 0;
+                for (float t = 0; t < 8; t += .05f)
+                {
+                    narwhal.AnimateSpecies(t, 1, false);
+                    float beat = Mathf.DeltaAngle(0, fluke.localEulerAngles.x);
+                    up = Mathf.Max(up, beat); down = Mathf.Min(down, beat);
+                    aside = Mathf.Max(aside, Mathf.Abs(Mathf.DeltaAngle(0, fluke.localEulerAngles.y)));
+                }
+                Assert.That(up, Is.GreaterThan(12), "the narwhal's fluke beats up"); Assert.That(down, Is.LessThan(-12), "and down");
+                Assert.That(aside, Is.LessThan(up / 2), "more than it swings aside");
+
                 // None of it with Reduced motion.
                 for (float t = 0; t < 4; t += .25f)
                 {
-                    foreach (var v in new[] { ray, sunfish, oarfish, squid }) v.AnimateSpecies(t, 1, true);
+                    foreach (var v in new[] { ray, sunfish, oarfish, squid, narwhal }) v.AnimateSpecies(t, 1, true);
+                    Assert.That(Mathf.DeltaAngle(0, fluke.localEulerAngles.x), Is.EqualTo(0).Within(.01f));
                     Assert.That(Roll(right), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(crest), Is.EqualTo(0).Within(.01f)); Assert.That(Roll(keel), Is.EqualTo(0).Within(.01f));
                     Assert.That((tail.localPosition - tailRest).magnitude, Is.LessThan(1e-5f)); Assert.That(cloak.localScale.x, Is.EqualTo(cloakRest.x).Within(1e-5f));
                     for (int k = 0; k < body.sharedMesh.blendShapeCount; k++)

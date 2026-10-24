@@ -256,17 +256,18 @@ namespace EvolutionShop
             }
         }
         /// <summary>GR-12B: how far each way of swimming turns a remade species' parts at full drive: its fins' roll and pitch and its
-        /// tail's yaw (its DioramaStroke), its crest's and keel's sway (degrees) and its cloak's pulse (a share of its size). Its
-        /// swim room samples them all.</summary>
-        public static (float roll, float pitch, float tail, float crest, float keel, float pulse) DioramaGaitStroke(DioramaGait gait)
+        /// tail's yaw (its DioramaStroke), its crest's and keel's sway (degrees), its cloak's pulse (a share of its size) and its
+        /// fluke's beat up and down (degrees). Its swim room samples them all.</summary>
+        public static (float roll, float pitch, float tail, float crest, float keel, float pulse, float fluke) DioramaGaitStroke(DioramaGait gait)
         {
             switch (gait)
             {
-                case DioramaGait.Flap: return (24, 5, 8, 0, 0, 0);
-                case DioramaGait.Scull: return (16, 0, 6, 22, 22, 0);
-                case DioramaGait.Undulate: return (10, 4, 8, 4, 0, 0);
-                case DioramaGait.Pulse: return (20, 0, 0, 0, 0, .12f);
-                default: return (0, 0, 0, 0, 0, 0);
+                case DioramaGait.Flap: return (24, 5, 8, 0, 0, 0, 0);
+                case DioramaGait.Scull: return (16, 0, 6, 22, 22, 0, 0);
+                case DioramaGait.Undulate: return (10, 4, 8, 4, 0, 0, 0);
+                case DioramaGait.Pulse: return (20, 0, 0, 0, 0, .12f, 0);
+                case DioramaGait.Fluke: return (10, 4, 4, 0, 0, 0, 16);
+                default: return (0, 0, 0, 0, 0, 0, 0);
             }
         }
         /// <summary>The most a kit tail ever turns, with a trick's swing and the hatch's wake (degrees).</summary>
@@ -371,7 +372,7 @@ namespace EvolutionShop
                 }
             }
             // GR-12B: a species remade as an animal of its own swims by its body plan, at its tempo.
-            float keelRoll = 0, pulse = 0, waveC = 0, waveS = 0;
+            float keelRoll = 0, pulse = 0, waveC = 0, waveS = 0, flukePitch = 0;
             var gait = dioramaSpecies.Gait;
             if (gait != DioramaGait.Family)
             {
@@ -404,6 +405,15 @@ namespace EvolutionShop
                         finPitch = Mathf.Sin(t * w) * g.pitch * drive; crestRoll = Mathf.Sin(t * w * .5f) * g.crest * drive;
                         break;
                     }
+                    case DioramaGait.Fluke:
+                    {
+                        // Its tail beats up and down, a whale's, its flippers trimming together.
+                        float w = 2.0f * tempo;
+                        flukePitch = Mathf.Sin(t * w) * g.fluke * drive;
+                        finRoll = finRollOther = Mathf.Sin(t * w - .8f) * g.roll * drive; finPitch = Mathf.Sin(t * w - 1.4f) * g.pitch * drive;
+                        tailYaw = Mathf.Sin(t * w * .5f) * g.tail * drive; crestRoll = 0;
+                        break;
+                    }
                     case DioramaGait.Pulse:
                     {
                         // Its cloak opens and closes, a squid's pulse, its ear fins flapping together.
@@ -425,7 +435,7 @@ namespace EvolutionShop
             if (keel) keel.localRotation = keelRest * Quaternion.Euler(0, 0, keelRoll);
             float tailAngle = Mathf.Clamp(tailYaw + wake.Tail + (reduced ? 0 : actionTail), -DioramaTailLimit, DioramaTailLimit);
             float spread = reduced ? 0 : actionFins;
-            if (tail) tail.localRotation = pondletTailRest * Quaternion.Euler(0, tailAngle, 0);
+            if (tail) tail.localRotation = pondletTailRest * Quaternion.Euler(flukePitch, tailAngle, 0);
             if (finLeft) finLeft.localRotation = pondletLeftRest * Quaternion.Euler(finPitch, 0, -finRoll - wake.Fin - spread);
             if (finRight) finRight.localRotation = pondletRightRest * Quaternion.Euler(-finPitch, 0, finRollOther + wake.Fin + spread);
             if (crest)

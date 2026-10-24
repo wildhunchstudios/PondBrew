@@ -269,7 +269,7 @@ namespace EvolutionShop
         /// Reefback's corals: Reach, HalfHeight; x, y), and through its trick with its habit on top (turns, rolls, bows, lifts, the
         /// crest at each moment's flare, its fins and tail at their strokes' extremes with the trick's spread and swing:
         /// TrickReach, TrickHalf; z, w). GR-12B: a remade species' way of swimming too: its crest's and keel's sway, its cloak's
-        /// pulse, and its body's wave, with its tail fin riding it.</summary>
+        /// pulse, its fluke's beat up and down, and its body's wave, with its tail fin riding it.</summary>
         static Vector4 Envelope(string species, DioramaFamily family, Transform holder, Transform root, float L)
         {
             Transform crest = null;
@@ -317,7 +317,8 @@ namespace EvolutionShop
                     // GR-12B: a squid's cloak (its tail) at its widest pulse.
                     if (swing && on == 2 && sway.pulse > 0)
                         at = pivotAt[2] + axes[2] * Vector3.Scale(Quaternion.Inverse(axes[2]) * (at - pivotAt[2]), new Vector3(1 + sway.pulse, 1, 1 + sway.pulse));
-                    int ways = !swing ? 1 : onCrest ? (sway.crest > 0 ? 3 : 1) : on < 0 ? 1 : on < 2 ? 9 : on == 2 ? (tailShift > 0 ? 9 : 3) : 3;
+                    int beats = sway.fluke > 0 ? 3 : 1;
+                    int ways = !swing ? 1 : onCrest ? (sway.crest > 0 ? 3 : 1) : on < 0 ? 1 : on < 2 ? 9 : on == 2 ? 3 * beats * (tailShift > 0 ? 3 : 1) : 3;
                     for (int k = 0; k < ways; k++)
                     {
                         var q = at;
@@ -328,12 +329,13 @@ namespace EvolutionShop
                                 q = crestAt + crestAxes * Quaternion.Euler(0, 0, sway.crest * (k - 1)) * Quaternion.Inverse(crestAxes) * (at - crestAt);
                             else
                             {
-                                // A fin at each corner of its roll and pitch, the tail at either side (riding a body's wave to either side
-                                // too), a sunfish's keel at either side of its sway.
+                                // A fin at each corner of its roll and pitch, the tail at either side (and a fluke at the top and the
+                                // bottom of its beat; riding a body's wave to either side too), a sunfish's keel at either side of its sway.
                                 var e = on < 2 ? new Vector3(stroke.pitch * (k / 3 - 1), 0, roll * (k % 3 - 1))
-                                    : on == 2 ? new Vector3(0, yaw * (k % 3 - 1), 0) : new Vector3(0, 0, sway.keel * (k - 1));
+                                    : on == 2 ? new Vector3(beats > 1 ? sway.fluke * ((k / 3) % 3 - 1) : 0, yaw * (k % 3 - 1), 0)
+                                    : new Vector3(0, 0, sway.keel * (k - 1));
                                 q = pivotAt[on] + axes[on] * Quaternion.Euler(e) * Quaternion.Inverse(axes[on]) * (at - pivotAt[on]);
-                                if (on == 2 && tailShift > 0) q += Vector3.right * (tailShift * (k / 3 - 1));
+                                if (on == 2 && tailShift > 0) q += Vector3.right * (tailShift * (k / (3 * beats) - 1));
                             }
                         }
                         q = turn * q + Vector3.up * lift;
