@@ -6,8 +6,8 @@ namespace EvolutionShop
 {
     /// <summary>AD-B creature families. Each family shares one rig (the same pivots, face parts and face shape keys); its
     /// species differ by body, fins, colours and the family's signature part (Sparkline: the lantern). GR-12 completes each
-    /// family to eight species, wave by wave (wave 1: these three).</summary>
-    public enum DioramaFamily { Brookkin, Sparkline, Airfin }
+    /// family to eight species, wave by wave (wave 1: the first three; wave 2: the Cinderling and the Dewling).</summary>
+    public enum DioramaFamily { Brookkin, Sparkline, Airfin, Cinderling, Dewling }
 
     /// <summary>AD.3's four colour variants. Colour swaps only; in the greybox a specimen's colour (GR.7.2) picks it.</summary>
     public enum DioramaVariant { Classic, Sunny, Deep, Shimmer }
@@ -42,7 +42,8 @@ namespace EvolutionShop
         /// <summary>AD-B's five, then GR-12's waves in the kit script's order (the atlas rows follow it forever). AD-B's scales
         /// are on top of each classic container's size, and the AD-A and AD-B routes check those stay inside their glass; the
         /// greybox shows every species at its GR size class instead. Signatures name the trick: AD-B's five keep their own,
-        /// each family's other species play its family's (splash, twinkle, glide) at their own tempo, and each crown its own.</summary>
+        /// each family's other species play its family's (splash, twinkle, glide, flare, sprinkle) at their own tempo, and each
+        /// crown its own.</summary>
         public static readonly IReadOnlyList<DioramaSpecies> All = new[]
         {
             new DioramaSpecies("pondlet", "DioramaPondlet", DioramaFamily.Brookkin, 0, .9f, 1.6f, 1.5f, .82f, .6f, "bubble"),
@@ -70,6 +71,23 @@ namespace EvolutionShop
             Wave("cloudcarp", DioramaFamily.Airfin, 21, 2f, .85f, "glide"),
             Wave("breezeling", DioramaFamily.Airfin, 22, 1.5f, 1.2f, "glide"),
             Wave("zephyray", DioramaFamily.Airfin, 23, 2f, .75f, "gale", true),
+            // GR-12 wave 2 (2026-10-24): the Cinderling and the Dewling, eight each (lively species quicker, calm ones slower).
+            Wave("emberpuff", DioramaFamily.Cinderling, 24, 1.2f, 1.15f, "flare"),
+            Wave("cindertail", DioramaFamily.Cinderling, 25, 1.05f, 1.3f, "flare"),
+            Wave("coalbelly", DioramaFamily.Cinderling, 26, 1.6f, .8f, "flare"),
+            Wave("sizzlesnout", DioramaFamily.Cinderling, 27, 1.1f, 1.25f, "flare"),
+            Wave("kindlekoi", DioramaFamily.Cinderling, 28, 1.5f, .9f, "flare"),
+            Wave("sootsnap", DioramaFamily.Cinderling, 29, 1.15f, 1.2f, "flare"),
+            Wave("ashfin", DioramaFamily.Cinderling, 30, 1.45f, .95f, "flare"),
+            Wave("phoenixfry", DioramaFamily.Cinderling, 31, 2f, 1f, "rebirth", true),
+            Wave("dewdrop", DioramaFamily.Dewling, 32, 1.2f, 1f, "sprinkle"),
+            Wave("fogfin", DioramaFamily.Dewling, 33, 1.05f, 1.25f, "sprinkle"),
+            Wave("mistlet", DioramaFamily.Dewling, 34, 1.3f, .95f, "sprinkle"),
+            Wave("drizzler", DioramaFamily.Dewling, 35, 1f, 1.3f, "sprinkle"),
+            Wave("pearlpip", DioramaFamily.Dewling, 36, 1.4f, .85f, "sprinkle"),
+            Wave("haloling", DioramaFamily.Dewling, 37, 1.5f, .8f, "sprinkle"),
+            Wave("rainskipper", DioramaFamily.Dewling, 38, .95f, 1.35f, "sprinkle"),
+            Wave("rainbowregent", DioramaFamily.Dewling, 39, 2f, .8f, "rainbow", true),
         };
 
         /// <summary>The classic game's species, AD-B's five: the classic shop, its creature study and AD-B's route show only
@@ -155,6 +173,8 @@ namespace EvolutionShop
     public struct DioramaTrickPose
     {
         public float Pitch, Yaw, Roll, Lift, Puffed, Happy, Surprised, Glow, Tail, Fins;
+        /// <summary>GR-12: the Cinderling's ember spines flaring, standing taller from their roots (0 at rest, 1 blazing).</summary>
+        public float Flare;
         /// <summary>A bubble, sparkle or puff the container releases this frame (crossing a beat).</summary>
         public bool Release;
     }
@@ -271,6 +291,55 @@ namespace EvolutionShop
                     p.Happy = Bump(u, 0, 1) * .9f;
                     p.Release = Crossed(before, u, .08f) || Crossed(before, u, .25f);
                     break;
+                case "flare":
+                    // The Cinderling's: it rears up with a start, its ember spines stand tall and blaze, its tail flicks like a
+                    // flame, and a puff of sparks flies from its spines.
+                    p.Flare = Ease(u / .25f) * (1 - Ease((u - .7f) / .3f));
+                    p.Glow = p.Flare * 2.8f;
+                    p.Surprised = Bump(u, 0, .3f) * .6f;
+                    p.Happy = Mathf.Clamp01((u - .25f) / .2f) * (1 - Ease((u - .85f) / .15f));
+                    p.Pitch = Bump(u, 0, .55f) * 12;
+                    p.Puffed = Bump(u, .05f, .6f) * .3f;
+                    p.Tail = Mathf.Sin(u * Mathf.PI * 4) * 26 * Bump(u, .3f, 1);
+                    p.Release = Crossed(before, u, .5f);
+                    break;
+                case "sprinkle":
+                {
+                    // The Dewling's: it gathers itself round, then shakes itself from nose to tail, its dew beads scattering a
+                    // shimmer of droplets, and settles with a happy look.
+                    float shake = Bump(u, .15f, .85f);
+                    p.Puffed = Bump(u, 0, .6f) * .45f;
+                    p.Roll = Mathf.Sin(u * Mathf.PI * 14) * 50 * shake;
+                    p.Yaw = Mathf.Sin(u * Mathf.PI * 7) * 18 * shake;
+                    p.Pitch = Bump(u, .1f, .9f) * 12;
+                    p.Lift = Bump(u, .1f, .9f) * .02f;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .55f);
+                    break;
+                }
+                case "rebirth":
+                    // Phoenix Fry: its flames blaze up and it somersaults forward through them, rising, bursting into sparks as it
+                    // goes over and again as it comes round, reborn.
+                    p.Flare = Ease(u / .2f) * (1 - Ease((u - .8f) / .2f));
+                    p.Glow = p.Flare * 3f;
+                    p.Pitch = -Ease((u - .2f) / .6f) * 360;
+                    p.Lift = Bump(u, .1f, .95f) * .05f;
+                    p.Puffed = Bump(u, 0, .25f) * .4f + Bump(u, .8f, 1) * .3f;
+                    p.Fins = Bump(u, .1f, .9f) * 22;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .22f) || Crossed(before, u, .85f);
+                    break;
+                case "rainbow":
+                    // Rainbow Regent: rises and turns slowly once like a royal display, fins spread wide and its rainbow tail
+                    // sweeping, spraying droplets three times.
+                    p.Yaw = Ease((u - .05f) / .85f) * 360;
+                    p.Lift = Bump(u, 0, 1) * .045f;
+                    p.Fins = Bump(u, 0, 1) * 22;
+                    p.Tail = Mathf.Sin(u * Mathf.PI * 6) * 14 * Bump(u, 0, 1);
+                    p.Roll = Bump(u, .1f, .9f) * 12;
+                    p.Happy = Bump(u, 0, 1);
+                    p.Release = Crossed(before, u, .3f) || Crossed(before, u, .55f) || Crossed(before, u, .8f);
+                    break;
             }
             return p;
         }
@@ -297,8 +366,8 @@ namespace EvolutionShop
             if (!DioramaSpecies.TryGet(species, out var s)) return 0;
             switch (s.Signature)
             {
-                case "flash": case "aurora": case "gale": return 2;
-                case "fountain": return 3;
+                case "flash": case "aurora": case "gale": case "rebirth": return 2;
+                case "fountain": case "rainbow": return 3;
                 default: return 1;
             }
         }
@@ -340,6 +409,23 @@ namespace EvolutionShop
                         // Hovering: sails held out with a slow tilt.
                         p.Fins = 6 + 4 * Mathf.Sin(t * .9f * tempo); p.Roll = Mathf.Sin(t * .7f * tempo) * 6;
                         break;
+                    case DioramaFamily.Cinderling:
+                    {
+                        // Smouldering: its embers pulse slowly, and every few seconds its spines bristle with a brighter glow.
+                        float age = Mathf.Repeat(t * tempo, 7f);
+                        float bristle = Bump(age, 0, .9f);
+                        p.Glow = .3f + .3f * Mathf.Sin(t * 1.1f * tempo) + bristle * 1.2f;
+                        p.Flare = bristle * .45f;
+                        break;
+                    }
+                    case DioramaFamily.Dewling:
+                    {
+                        // A gentle bob, and every few seconds a little puff as if gathering a drop.
+                        float age = Mathf.Repeat(t * tempo, 5f);
+                        float gather = Bump(age, 0, 1.2f);
+                        p.Lift = (.5f + .5f * Mathf.Sin(t * 1.8f * tempo)) * .008f; p.Puffed = gather * .3f; p.Happy = gather * .3f;
+                        break;
+                    }
                 }
                 return p;
             }
@@ -380,10 +466,12 @@ namespace EvolutionShop
     {
         /// <summary>AD.4's family water tints (glass base colour, alpha its strength), so no species blends into its water:
         /// a periwinkle stream for the Brookkin (coral, yellow and teal), a green lagoon for the Sparkline's indigo and gold, warm
-        /// sand for the lilac Airfin.</summary>
+        /// sand for the lilac Airfin; GR-12: a cool blue for the ember-warm Cinderling, a mint pool for the pastel Dewling.</summary>
         public static Color Tint(DioramaFamily family) =>
             family == DioramaFamily.Sparkline ? new Color(.2f, .74f, .58f, .13f) :
-            family == DioramaFamily.Airfin ? new Color(1f, .8f, .55f, .13f) : new Color(.55f, .62f, .98f, .1f);
+            family == DioramaFamily.Airfin ? new Color(1f, .8f, .55f, .13f) :
+            family == DioramaFamily.Cinderling ? new Color(.3f, .62f, .85f, .13f) :
+            family == DioramaFamily.Dewling ? new Color(.55f, .85f, .6f, .13f) : new Color(.55f, .62f, .98f, .1f);
 
         /// <summary>The incubator fluid for a family (more opaque, since the creature grows inside it).</summary>
         /// <summary>How much more opaque the water's far side (behind the creature, and the sand) is than its near side, so the
@@ -394,6 +482,8 @@ namespace EvolutionShop
 
         public static Color Fluid(DioramaFamily family) =>
             family == DioramaFamily.Sparkline ? new Color(.25f, .88f, .55f, .2f) :
-            family == DioramaFamily.Airfin ? new Color(1f, .86f, .66f, .2f) : new Color(.35f, .85f, .9f, .2f);
+            family == DioramaFamily.Airfin ? new Color(1f, .86f, .66f, .2f) :
+            family == DioramaFamily.Cinderling ? new Color(.4f, .72f, .95f, .2f) :
+            family == DioramaFamily.Dewling ? new Color(.62f, .92f, .66f, .2f) : new Color(.35f, .85f, .9f, .2f);
     }
 }

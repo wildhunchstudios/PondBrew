@@ -7,7 +7,7 @@ namespace EvolutionShop
 {
     /// <summary>
     /// A creature at its size class (GR.5: a small one is 6-9 cm, a medium 12-18, a large 25-40). GR-12: a species the diorama
-    /// kit has (wave 1: the Brookkin, Sparkline and Airfin) is its kit model in its colour from the variant atlas, its body set
+    /// kit has (waves 1 and 2: the Brookkin, Sparkline, Airfin, Cinderling and Dewling) is its kit model in its colour from the variant atlas, its body set
     /// to the class's length, with its family's strokes and habit at its own tempo, blinks and pupils on the player, and its
     /// trick when the player lingers on it in peek. Any other is GR-02's placeholder, with a head 1.3 times the usual size for
     /// small species (GR.14 readability), eyes, a tail and a fin, coloured from its recipe's cultures, with (GR-03) its
@@ -317,7 +317,7 @@ namespace EvolutionShop
             var trick = trickAge < 0 ? default : Species == "pondlet" ? DioramaTricks.PondletBubble(trickAge, trickBefore) : DioramaTricks.Trick(Species, trickAge, trickBefore);
             bool tricking = trickAge >= 0;
             kit.SetDioramaFace(tricking ? Mathf.Max(.2f, trick.Happy) : .2f + idle.Happy, Mathf.Max(idle.Surprised, trick.Surprised), Mathf.Max(idle.Puffed, trick.Puffed));
-            kit.SetDioramaAction(idle.Glow + trick.Glow, idle.Tail + trick.Tail, idle.Fins + trick.Fins);
+            kit.SetDioramaAction(idle.Glow + trick.Glow, idle.Tail + trick.Tail, idle.Fins + trick.Fins, idle.Flare + trick.Flare);
             if (ViewerSet && !reduced) kit.SetLookTarget(Viewer); else kit.ClearLookTarget();
             kitHolder.localRotation = KitTurn * Quaternion.Euler(idle.Pitch + trick.Pitch, idle.Yaw + trick.Yaw, idle.Roll + trick.Roll);
             kitHolder.localPosition = Vector3.up * ((idle.Lift + trick.Lift) * Length * LiftShare);
@@ -408,11 +408,13 @@ namespace EvolutionShop
             return (result, copies, plain);
         }
 
-        /// <summary>The bubbles (Brookkin, from its lips), sparkles (Sparkline, from its lantern) or puff of mist (Airfin) a trick or
-        /// habit lets go on its beat.</summary>
+        /// <summary>The bubbles (Brookkin, from its lips), sparkles (Sparkline, from its lantern), puff of mist (Airfin), sparks
+        /// (Cinderling, from its spines) or droplets (Dewling, from its dew beads) a trick or habit lets go on its beat.</summary>
         void Burst(bool trick)
         {
-            var from = family == DioramaFamily.Sparkline && kit.DioramaLanternPoint ? kit.DioramaLanternPoint : kit.DioramaLips ? kit.DioramaLips : transform;
+            bool fromCrest = (family == DioramaFamily.Cinderling || family == DioramaFamily.Dewling) && kit.DioramaCrestPoint;
+            var from = family == DioramaFamily.Sparkline && kit.DioramaLanternPoint ? kit.DioramaLanternPoint : fromCrest ? kit.DioramaCrestPoint :
+                kit.DioramaLips ? kit.DioramaLips : transform;
             GrowthCreatureBurst.Spawn(transform.parent, from.position, family, trick ? 5 : 2, Length);
             BurstsReleased++; Bursts++;
         }

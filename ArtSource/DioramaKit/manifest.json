@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 wave 1)",
+  "title": "Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 and 2)",
   "origin": {
     "author": "Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)",
     "external_sources": [],
@@ -10,7 +10,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_diorama_kit.py",
-  "source_script_sha256": "76a697acc5d910ad0ad882c038a502b23f0371f1c1e37b0ad4e7994e8bdcad77",
+  "source_script_sha256": "b4c606f5f3b7fd346f779ad17e83faae61e47953d3f7f608ab3c8f070235ae1a",
   "blend_source": "ArtSource/DioramaKit/EvolutionShop_DioramaKit.blend",
   "scale": "1 unit = 1 metre",
   "up": "Unity +Y",
@@ -39,6 +39,22 @@
     "DioramaCloudcarp": "local -Z (creature)",
     "DioramaBreezeling": "local -Z (creature)",
     "DioramaZephyray": "local -Z (creature)",
+    "DioramaEmberpuff": "local -Z (creature)",
+    "DioramaCindertail": "local -Z (creature)",
+    "DioramaCoalbelly": "local -Z (creature)",
+    "DioramaSizzlesnout": "local -Z (creature)",
+    "DioramaKindlekoi": "local -Z (creature)",
+    "DioramaSootsnap": "local -Z (creature)",
+    "DioramaAshfin": "local -Z (creature)",
+    "DioramaPhoenixfry": "local -Z (creature)",
+    "DioramaDewdrop": "local -Z (creature)",
+    "DioramaFogfin": "local -Z (creature)",
+    "DioramaMistlet": "local -Z (creature)",
+    "DioramaDrizzler": "local -Z (creature)",
+    "DioramaPearlpip": "local -Z (creature)",
+    "DioramaHaloling": "local -Z (creature)",
+    "DioramaRainskipper": "local -Z (creature)",
+    "DioramaRainbowregent": "local -Z (creature)",
     "DioramaCasualVisitor": "local +Z (character)",
     "DioramaBargainVisitor": "local +Z (character)",
     "DioramaCollectorVisitor": "local +Z (character)",
@@ -129,7 +145,9 @@
   "families": {
     "Brookkin": "river fish: pouty lips, round fins",
     "Sparkline": "Spark: a glowing lantern on a stalk",
-    "Airfin": "Mist: wide gliding sails"
+    "Airfin": "Mist: wide gliding sails",
+    "Cinderling": "Ember: a row of glowing ember spines down the back",
+    "Dewling": "Mist: round and pearly, shiny dew beads on the head and back"
   },
   "species": [
     {
@@ -1163,6 +1181,694 @@
           "Sheen": "FFF0C05E"
         }
       }
+    },
+    {
+      "id": "emberpuff",
+      "asset": "DioramaEmberpuff",
+      "family": "Cinderling",
+      "atlas_rows": [
+        96,
+        99
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "FF7A4D",
+          "Fin": "FFB25E",
+          "Belly": "FFE9D6",
+          "Accent": "FFD84A",
+          "Blush": "FF9EA0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "FFD15B",
+          "Fin": "FFE16B",
+          "Belly": "FFEDA6",
+          "Accent": "FFDE58",
+          "Blush": "FFB3A6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "BD2527",
+          "Fin": "DB6837",
+          "Belly": "BD9B92",
+          "Accent": "DB7D25",
+          "Blush": "E6808D",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "FFCCBB",
+          "Fin": "FFE2C2",
+          "Belly": "FFF7EF",
+          "Accent": "FFF0BA",
+          "Blush": "FFBBBC",
+          "Sheen": "B8F0FF5E"
+        }
+      }
+    },
+    {
+      "id": "cindertail",
+      "asset": "DioramaCindertail",
+      "family": "Cinderling",
+      "atlas_rows": [
+        100,
+        103
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "E8442E",
+          "Fin": "FF8A3D",
+          "Belly": "FFE2CC",
+          "Accent": "FFE066",
+          "Blush": "FF9EA8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "F5AA40",
+          "Fin": "FFDB4D",
+          "Belly": "FFEDA6",
+          "Accent": "FFE372",
+          "Blush": "FFABA6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "AC0E26",
+          "Fin": "BD2E18",
+          "Belly": "BD938B",
+          "Accent": "DB8C3D",
+          "Blush": "E68095",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "F5B3AA",
+          "Fin": "FFD3B5",
+          "Belly": "FFF4EC",
+          "Accent": "FFF3C5",
+          "Blush": "FFBBC2",
+          "Sheen": "C8E8FF5E"
+        }
+      }
+    },
+    {
+      "id": "coalbelly",
+      "asset": "DioramaCoalbelly",
+      "family": "Cinderling",
+      "atlas_rows": [
+        104,
+        107
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "3E3A40",
+          "Fin": "6B5E5A",
+          "Belly": "B8A8A0",
+          "Accent": "FF9A2E",
+          "Blush": "FF9EA0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "95886B",
+          "Fin": "A59D8C",
+          "Belly": "F5E49F",
+          "Accent": "FFD93F",
+          "Blush": "FFB3A6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "5F657C",
+          "Fin": "624950",
+          "Belly": "88706E",
+          "Accent": "DB4B0D",
+          "Blush": "E6808D",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "95B2B1",
+          "Fin": "FFF1ED",
+          "Belly": "F5EDE9",
+          "Accent": "FFD9B0",
+          "Blush": "FFBBBC",
+          "Sheen": "FFD0A85E"
+        }
+      }
+    },
+    {
+      "id": "sizzlesnout",
+      "asset": "DioramaSizzlesnout",
+      "family": "Cinderling",
+      "atlas_rows": [
+        108,
+        111
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "C8323A",
+          "Fin": "F2A43A",
+          "Belly": "FFE0D0",
+          "Accent": "FFF07A",
+          "Blush": "FFA0B0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "F5924C",
+          "Fin": "F5D34A",
+          "Belly": "FFEDA6",
+          "Accent": "FFE785",
+          "Blush": "FFA6A6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "94153D",
+          "Fin": "D05019",
+          "Belly": "BD918E",
+          "Accent": "DBA14F",
+          "Blush": "E5829D",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "F5AFB3",
+          "Fin": "F7D9B0",
+          "Belly": "FFF3ED",
+          "Accent": "FFF9CC",
+          "Blush": "FFBDC8",
+          "Sheen": "B8FFE65E"
+        }
+      }
+    },
+    {
+      "id": "kindlekoi",
+      "asset": "DioramaKindlekoi",
+      "family": "Cinderling",
+      "atlas_rows": [
+        112,
+        115
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "FFE2C4",
+          "Fin": "FFC9A0",
+          "Belly": "FFFFFF",
+          "Accent": "FF7A2E",
+          "Blush": "FFA6B0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "FFE993",
+          "Fin": "FFEDA6",
+          "Belly": "FFF8E3",
+          "Accent": "FFD93F",
+          "Blush": "FFABA6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "BD9284",
+          "Fin": "BD7567",
+          "Belly": "E5E9F1",
+          "Accent": "BD1D0C",
+          "Blush": "E5889C",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "FFF7EF",
+          "Fin": "FFEADB",
+          "Belly": "EAFAF9",
+          "Accent": "FFCCB0",
+          "Blush": "FFC1C8",
+          "Sheen": "FFD6F05E"
+        }
+      }
+    },
+    {
+      "id": "sootsnap",
+      "asset": "DioramaSootsnap",
+      "family": "Cinderling",
+      "atlas_rows": [
+        116,
+        119
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "5A5560",
+          "Fin": "3A3640",
+          "Belly": "A8A0A8",
+          "Accent": "FF6A2E",
+          "Blush": "FF9EA8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "A4977D",
+          "Fin": "685B6B",
+          "Belly": "C2B5A6",
+          "Accent": "FFD03F",
+          "Blush": "FFABA6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "6D728C",
+          "Fin": "2C2D3B",
+          "Belly": "A09DAB",
+          "Accent": "BD100C",
+          "Blush": "E68095",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "9FBBBC",
+          "Fin": "BEB8C6",
+          "Belly": "B2BDC1",
+          "Accent": "FFC6B0",
+          "Blush": "FFBBC2",
+          "Sheen": "FFE0B05E"
+        }
+      }
+    },
+    {
+      "id": "ashfin",
+      "asset": "DioramaAshfin",
+      "family": "Cinderling",
+      "atlas_rows": [
+        120,
+        123
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "C9C2BC",
+          "Fin": "E8E2DC",
+          "Belly": "F6F2EE",
+          "Accent": "FF8A3A",
+          "Blush": "FFA6B0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "EDDBA9",
+          "Fin": "F2E4C1",
+          "Belly": "F9EFD7",
+          "Accent": "FFDB4A",
+          "Blush": "FFABA6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "A4A9BA",
+          "Fin": "B3B9CA",
+          "Belly": "DEDEE3",
+          "Accent": "BD2D16",
+          "Blush": "E5889C",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "C6E1DD",
+          "Fin": "D1ECE8",
+          "Belly": "E5F2EE",
+          "Accent": "FFD3B4",
+          "Blush": "FFC1C8",
+          "Sheen": "FFD0C05E"
+        }
+      }
+    },
+    {
+      "id": "phoenixfry",
+      "asset": "DioramaPhoenixfry",
+      "family": "Cinderling",
+      "atlas_rows": [
+        124,
+        127
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "D9283A",
+          "Fin": "FFB23A",
+          "Belly": "FFE8C8",
+          "Accent": "FFF5A0",
+          "Blush": "FFA0B0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "F5803D",
+          "Fin": "FFDB4A",
+          "Belly": "FFEDA6",
+          "Accent": "FFEDA6",
+          "Blush": "FFA6A6",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "A10B42",
+          "Fin": "DB5418",
+          "Belly": "BD9887",
+          "Accent": "DBB06F",
+          "Blush": "E5829D",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "F5A9B1",
+          "Fin": "FFE2B4",
+          "Belly": "FFF6EA",
+          "Accent": "FFFBDB",
+          "Blush": "FFBDC8",
+          "Sheen": "FFF0B05E"
+        }
+      }
+    },
+    {
+      "id": "dewdrop",
+      "asset": "DioramaDewdrop",
+      "family": "Dewling",
+      "atlas_rows": [
+        128,
+        131
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "A8E6F2",
+          "Fin": "D6F6FF",
+          "Belly": "F2FDFF",
+          "Accent": "F4FFFF",
+          "Blush": "FFB0C0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "8DF5C9",
+          "Fin": "A6FFE9",
+          "Belly": "F6F6E3",
+          "Accent": "F9F4D4",
+          "Blush": "FFA6A9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "6F96B3",
+          "Fin": "92A8BD",
+          "Belly": "DBE7F1",
+          "Accent": "BAC7DC",
+          "Blush": "E691AA",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "DAF2F7",
+          "Fin": "EFFCFF",
+          "Belly": "E2F9F9",
+          "Accent": "D5F7F4",
+          "Blush": "FFC8D3",
+          "Sheen": "FFE6F55E"
+        }
+      }
+    },
+    {
+      "id": "fogfin",
+      "asset": "DioramaFogfin",
+      "family": "Dewling",
+      "atlas_rows": [
+        132,
+        135
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "B8B0E0",
+          "Fin": "E0DCF4",
+          "Belly": "F4F2FC",
+          "Accent": "FFFFFF",
+          "Blush": "FFB0C8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "DB8DF5",
+          "Fin": "EEE1CE",
+          "Belly": "F7EFE0",
+          "Accent": "FFF4D4",
+          "Blush": "FFA6B2",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "777CA6",
+          "Fin": "B0B6D6",
+          "Belly": "DDDEEE",
+          "Accent": "BFC7DC",
+          "Blush": "E691B3",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "E4E1F5",
+          "Fin": "CEEAF0",
+          "Belly": "E3F2F7",
+          "Accent": "D9F7F4",
+          "Blush": "FFC8D9",
+          "Sheen": "C8FFE85E"
+        }
+      }
+    },
+    {
+      "id": "mistlet",
+      "asset": "DioramaMistlet",
+      "family": "Dewling",
+      "atlas_rows": [
+        136,
+        139
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "F4B8D8",
+          "Fin": "FFE0EE",
+          "Belly": "FFF6FA",
+          "Accent": "FFFFFF",
+          "Blush": "FF9EB8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "F59FA5",
+          "Fin": "FFA7A6",
+          "Belly": "FFF2DF",
+          "Accent": "FFF4D4",
+          "Blush": "FFA6AF",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "B57CA9",
+          "Fin": "BD9AB3",
+          "Belly": "E5E1ED",
+          "Accent": "BFC7DC",
+          "Blush": "E680A6",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "F9E2EE",
+          "Fin": "FFF3F9",
+          "Belly": "EAF5F6",
+          "Accent": "D9F7F4",
+          "Blush": "FFBBCD",
+          "Sheen": "C8F0FF5E"
+        }
+      }
+    },
+    {
+      "id": "drizzler",
+      "asset": "DioramaDrizzler",
+      "family": "Dewling",
+      "atlas_rows": [
+        140,
+        143
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "7084C8",
+          "Fin": "A8C4F0",
+          "Belly": "DCE8FF",
+          "Accent": "E8FBFF",
+          "Blush": "FFA6C0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "92D6F5",
+          "Fin": "9FE8F5",
+          "Belly": "A6EEFF",
+          "Accent": "F2F2D4",
+          "Blush": "FFA6B1",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "494694",
+          "Fin": "6F77B2",
+          "Belly": "979ABD",
+          "Accent": "B3C5DC",
+          "Blush": "E588AC",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "CCD5F5",
+          "Fin": "D9E4F5",
+          "Belly": "F2F6FF",
+          "Accent": "D1F5F4",
+          "Blush": "FFC1D3",
+          "Sheen": "FFE6C85E"
+        }
+      }
+    },
+    {
+      "id": "pearlpip",
+      "asset": "DioramaPearlpip",
+      "family": "Dewling",
+      "atlas_rows": [
+        144,
+        147
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "F4F0F8",
+          "Fin": "E0D4F4",
+          "Belly": "FFFFFF",
+          "Accent": "FFFBF0",
+          "Blush": "FFB0C8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "FAEBC7",
+          "Fin": "E79FF5",
+          "Belly": "FFF8E3",
+          "Accent": "FFF2CC",
+          "Blush": "FFA6B2",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "BAC0D8",
+          "Fin": "9692B5",
+          "Belly": "E5E9F1",
+          "Accent": "BFC5D4",
+          "Blush": "E691B3",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "C5F2EE",
+          "Fin": "F1EDF9",
+          "Belly": "EAFAF9",
+          "Accent": "D9F5EF",
+          "Blush": "FFC8D9",
+          "Sheen": "FFD6F05E"
+        }
+      }
+    },
+    {
+      "id": "haloling",
+      "asset": "DioramaHaloling",
+      "family": "Dewling",
+      "atlas_rows": [
+        148,
+        151
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "FAEAB0",
+          "Fin": "FFF4D0",
+          "Belly": "FFFCEE",
+          "Accent": "FFE070",
+          "Blush": "FFA6B8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "FAE17D",
+          "Fin": "FFEDA6",
+          "Belly": "FFF6D7",
+          "Accent": "FFE57B",
+          "Blush": "FFA6A9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "B99875",
+          "Fin": "BDA58E",
+          "Belly": "E5E6E3",
+          "Accent": "DB8E46",
+          "Blush": "E588A4",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "FFF9E2",
+          "Fin": "FFFBED",
+          "Belly": "EAF9EE",
+          "Accent": "FFF3C9",
+          "Blush": "FFC1CD",
+          "Sheen": "D0E8FF5E"
+        }
+      }
+    },
+    {
+      "id": "rainskipper",
+      "asset": "DioramaRainskipper",
+      "family": "Dewling",
+      "atlas_rows": [
+        152,
+        155
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "5AAAF0",
+          "Fin": "B0DCFF",
+          "Belly": "E8F6FF",
+          "Accent": "F0FFFF",
+          "Blush": "FFA6C0",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "68F5F5",
+          "Fin": "A6FFFD",
+          "Belly": "EFF2E3",
+          "Accent": "F7F4D4",
+          "Blush": "FFA6B1",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "3153B2",
+          "Fin": "7489BD",
+          "Belly": "D3E1F1",
+          "Accent": "B8C7DC",
+          "Blush": "E588AC",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "BBDAF5",
+          "Fin": "E1F2FF",
+          "Belly": "DBF5F9",
+          "Accent": "D3F7F4",
+          "Blush": "FFC1D3",
+          "Sheen": "FFE6B05E"
+        }
+      }
+    },
+    {
+      "id": "rainbowregent",
+      "asset": "DioramaRainbowregent",
+      "family": "Dewling",
+      "atlas_rows": [
+        156,
+        159
+      ],
+      "variants": {
+        "Classic": {
+          "Body": "C4AEF4",
+          "Fin": "7FD3F7",
+          "Belly": "FFF8EC",
+          "Accent": "FFB0D0",
+          "Blush": "FFA6C8",
+          "Sheen": "FFFFFF00"
+        },
+        "Sunny": {
+          "Body": "EA8DF5",
+          "Fin": "89F7E5",
+          "Belly": "FFF3D5",
+          "Accent": "FFABA6",
+          "Blush": "FFA6B9",
+          "Sheen": "FFFFFF00"
+        },
+        "Deep": {
+          "Body": "7774B5",
+          "Fin": "4E7BB7",
+          "Belly": "E5E3E2",
+          "Accent": "BD74A5",
+          "Blush": "E588B5",
+          "Sheen": "FFFFFF00"
+        },
+        "Shimmer": {
+          "Body": "E6DEF9",
+          "Fin": "CEEEFC",
+          "Belly": "EAF6ED",
+          "Accent": "FFE1ED",
+          "Blush": "FFC1D9",
+          "Sheen": "FFF0B05E"
+        }
+      }
     }
   ],
   "rig": {
@@ -1397,6 +2103,12 @@
     },
     "DK_CrateSlat": {
       "srgb_hex": "#A87A48"
+    },
+    "DK_RainbowYellow": {
+      "srgb_hex": "#FFE27A"
+    },
+    "DK_RainbowGreen": {
+      "srgb_hex": "#8FE08A"
     },
     "DK_PondletBody": {
       "srgb_hex": "#FF6F57"
@@ -1756,6 +2468,246 @@
       "srgb_hex": "#FFD45A"
     },
     "DK_ZephyrayBlush": {
+      "srgb_hex": "#FFA6C8"
+    },
+    "DK_EmberpuffBody": {
+      "srgb_hex": "#FF7A4D"
+    },
+    "DK_EmberpuffFin": {
+      "srgb_hex": "#FFB25E"
+    },
+    "DK_EmberpuffBelly": {
+      "srgb_hex": "#FFE9D6"
+    },
+    "DK_EmberpuffAccent": {
+      "srgb_hex": "#FFD84A"
+    },
+    "DK_EmberpuffBlush": {
+      "srgb_hex": "#FF9EA0"
+    },
+    "DK_CindertailBody": {
+      "srgb_hex": "#E8442E"
+    },
+    "DK_CindertailFin": {
+      "srgb_hex": "#FF8A3D"
+    },
+    "DK_CindertailBelly": {
+      "srgb_hex": "#FFE2CC"
+    },
+    "DK_CindertailAccent": {
+      "srgb_hex": "#FFE066"
+    },
+    "DK_CindertailBlush": {
+      "srgb_hex": "#FF9EA8"
+    },
+    "DK_CoalbellyBody": {
+      "srgb_hex": "#3E3A40"
+    },
+    "DK_CoalbellyFin": {
+      "srgb_hex": "#6B5E5A"
+    },
+    "DK_CoalbellyBelly": {
+      "srgb_hex": "#B8A8A0"
+    },
+    "DK_CoalbellyAccent": {
+      "srgb_hex": "#FF9A2E"
+    },
+    "DK_CoalbellyBlush": {
+      "srgb_hex": "#FF9EA0"
+    },
+    "DK_SizzlesnoutBody": {
+      "srgb_hex": "#C8323A"
+    },
+    "DK_SizzlesnoutFin": {
+      "srgb_hex": "#F2A43A"
+    },
+    "DK_SizzlesnoutBelly": {
+      "srgb_hex": "#FFE0D0"
+    },
+    "DK_SizzlesnoutAccent": {
+      "srgb_hex": "#FFF07A"
+    },
+    "DK_SizzlesnoutBlush": {
+      "srgb_hex": "#FFA0B0"
+    },
+    "DK_KindlekoiBody": {
+      "srgb_hex": "#FFE2C4"
+    },
+    "DK_KindlekoiFin": {
+      "srgb_hex": "#FFC9A0"
+    },
+    "DK_KindlekoiBelly": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_KindlekoiAccent": {
+      "srgb_hex": "#FF7A2E"
+    },
+    "DK_KindlekoiBlush": {
+      "srgb_hex": "#FFA6B0"
+    },
+    "DK_SootsnapBody": {
+      "srgb_hex": "#5A5560"
+    },
+    "DK_SootsnapFin": {
+      "srgb_hex": "#3A3640"
+    },
+    "DK_SootsnapBelly": {
+      "srgb_hex": "#A8A0A8"
+    },
+    "DK_SootsnapAccent": {
+      "srgb_hex": "#FF6A2E"
+    },
+    "DK_SootsnapBlush": {
+      "srgb_hex": "#FF9EA8"
+    },
+    "DK_AshfinBody": {
+      "srgb_hex": "#C9C2BC"
+    },
+    "DK_AshfinFin": {
+      "srgb_hex": "#E8E2DC"
+    },
+    "DK_AshfinBelly": {
+      "srgb_hex": "#F6F2EE"
+    },
+    "DK_AshfinAccent": {
+      "srgb_hex": "#FF8A3A"
+    },
+    "DK_AshfinBlush": {
+      "srgb_hex": "#FFA6B0"
+    },
+    "DK_PhoenixfryBody": {
+      "srgb_hex": "#D9283A"
+    },
+    "DK_PhoenixfryFin": {
+      "srgb_hex": "#FFB23A"
+    },
+    "DK_PhoenixfryBelly": {
+      "srgb_hex": "#FFE8C8"
+    },
+    "DK_PhoenixfryAccent": {
+      "srgb_hex": "#FFF5A0"
+    },
+    "DK_PhoenixfryBlush": {
+      "srgb_hex": "#FFA0B0"
+    },
+    "DK_DewdropBody": {
+      "srgb_hex": "#A8E6F2"
+    },
+    "DK_DewdropFin": {
+      "srgb_hex": "#D6F6FF"
+    },
+    "DK_DewdropBelly": {
+      "srgb_hex": "#F2FDFF"
+    },
+    "DK_DewdropAccent": {
+      "srgb_hex": "#F4FFFF"
+    },
+    "DK_DewdropBlush": {
+      "srgb_hex": "#FFB0C0"
+    },
+    "DK_FogfinBody": {
+      "srgb_hex": "#B8B0E0"
+    },
+    "DK_FogfinFin": {
+      "srgb_hex": "#E0DCF4"
+    },
+    "DK_FogfinBelly": {
+      "srgb_hex": "#F4F2FC"
+    },
+    "DK_FogfinAccent": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_FogfinBlush": {
+      "srgb_hex": "#FFB0C8"
+    },
+    "DK_MistletBody": {
+      "srgb_hex": "#F4B8D8"
+    },
+    "DK_MistletFin": {
+      "srgb_hex": "#FFE0EE"
+    },
+    "DK_MistletBelly": {
+      "srgb_hex": "#FFF6FA"
+    },
+    "DK_MistletAccent": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_MistletBlush": {
+      "srgb_hex": "#FF9EB8"
+    },
+    "DK_DrizzlerBody": {
+      "srgb_hex": "#7084C8"
+    },
+    "DK_DrizzlerFin": {
+      "srgb_hex": "#A8C4F0"
+    },
+    "DK_DrizzlerBelly": {
+      "srgb_hex": "#DCE8FF"
+    },
+    "DK_DrizzlerAccent": {
+      "srgb_hex": "#E8FBFF"
+    },
+    "DK_DrizzlerBlush": {
+      "srgb_hex": "#FFA6C0"
+    },
+    "DK_PearlpipBody": {
+      "srgb_hex": "#F4F0F8"
+    },
+    "DK_PearlpipFin": {
+      "srgb_hex": "#E0D4F4"
+    },
+    "DK_PearlpipBelly": {
+      "srgb_hex": "#FFFFFF"
+    },
+    "DK_PearlpipAccent": {
+      "srgb_hex": "#FFFBF0"
+    },
+    "DK_PearlpipBlush": {
+      "srgb_hex": "#FFB0C8"
+    },
+    "DK_HalolingBody": {
+      "srgb_hex": "#FAEAB0"
+    },
+    "DK_HalolingFin": {
+      "srgb_hex": "#FFF4D0"
+    },
+    "DK_HalolingBelly": {
+      "srgb_hex": "#FFFCEE"
+    },
+    "DK_HalolingAccent": {
+      "srgb_hex": "#FFE070"
+    },
+    "DK_HalolingBlush": {
+      "srgb_hex": "#FFA6B8"
+    },
+    "DK_RainskipperBody": {
+      "srgb_hex": "#5AAAF0"
+    },
+    "DK_RainskipperFin": {
+      "srgb_hex": "#B0DCFF"
+    },
+    "DK_RainskipperBelly": {
+      "srgb_hex": "#E8F6FF"
+    },
+    "DK_RainskipperAccent": {
+      "srgb_hex": "#F0FFFF"
+    },
+    "DK_RainskipperBlush": {
+      "srgb_hex": "#FFA6C0"
+    },
+    "DK_RainbowregentBody": {
+      "srgb_hex": "#C4AEF4"
+    },
+    "DK_RainbowregentFin": {
+      "srgb_hex": "#7FD3F7"
+    },
+    "DK_RainbowregentBelly": {
+      "srgb_hex": "#FFF8EC"
+    },
+    "DK_RainbowregentAccent": {
+      "srgb_hex": "#FFB0D0"
+    },
+    "DK_RainbowregentBlush": {
       "srgb_hex": "#FFA6C8"
     }
   },
@@ -3257,6 +4209,1002 @@
       ]
     },
     {
+      "triangles": 10284,
+      "vertices": 5196,
+      "bounds_unity_m": {
+        "min": [
+          -0.37864673137664795,
+          -0.3100000023841858,
+          -0.37359383702278137
+        ],
+        "max": [
+          0.37864673137664795,
+          0.4846004843711853,
+          0.5245855450630188
+        ],
+        "size": [
+          0.7572934627532959,
+          0.7946004867553711,
+          0.8981793820858002
+        ]
+      },
+      "id": "DioramaEmberpuff",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaEmberpuff.fbx",
+      "sha256": "3149ee344cf981a0fa8d407106d74d2a94d87e95e5ddf4315d52a64a6d24c0a9",
+      "bytes": 220748,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EmberpuffAccent",
+        "DK_EmberpuffBelly",
+        "DK_EmberpuffBlush",
+        "DK_EmberpuffBody",
+        "DK_EmberpuffFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 10948,
+      "vertices": 5536,
+      "bounds_unity_m": {
+        "min": [
+          -0.2306436002254486,
+          -0.1898830085992813,
+          -0.4309999942779541
+        ],
+        "max": [
+          0.2306436002254486,
+          0.36601635813713074,
+          0.7799999713897705
+        ],
+        "size": [
+          0.4612872004508972,
+          0.555899366736412,
+          1.2109999656677246
+        ]
+      },
+      "id": "DioramaCindertail",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCindertail.fbx",
+      "sha256": "9a931f576651f4fb264c7cc43c5e218f634ff92b378ff5d1a4067b3b01807fbf",
+      "bytes": 234012,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_CindertailAccent",
+        "DK_CindertailBelly",
+        "DK_CindertailBlush",
+        "DK_CindertailBody",
+        "DK_CindertailFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 10628,
+      "vertices": 5364,
+      "bounds_unity_m": {
+        "min": [
+          -0.3384094834327698,
+          -0.2800000011920929,
+          -0.4129999876022339
+        ],
+        "max": [
+          0.3384094834327698,
+          0.44432589411735535,
+          0.572207510471344
+        ],
+        "size": [
+          0.6768189668655396,
+          0.7243258953094482,
+          0.9852074980735779
+        ]
+      },
+      "id": "DioramaCoalbelly",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaCoalbelly.fbx",
+      "sha256": "cd9e7aea061230c8c51493b8426d5dfb58aa22a89b5a4c26d1ea1f10fff7c9d9",
+      "bytes": 226412,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_CoalbellyAccent",
+        "DK_CoalbellyBelly",
+        "DK_CoalbellyBlush",
+        "DK_CoalbellyBody",
+        "DK_CoalbellyFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 11068,
+      "vertices": 5592,
+      "bounds_unity_m": {
+        "min": [
+          -0.2260129749774933,
+          -0.20000000298023224,
+          -0.5270000100135803
+        ],
+        "max": [
+          0.2260129749774933,
+          0.3236808776855469,
+          0.5782384276390076
+        ],
+        "size": [
+          0.4520259499549866,
+          0.5236808806657791,
+          1.105238437652588
+        ]
+      },
+      "id": "DioramaSizzlesnout",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaSizzlesnout.fbx",
+      "sha256": "4a6475eb714d2cbf4fe90c52645a4ed7b1e0b21260c4b531b16d021b2f5abff5",
+      "bytes": 236860,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_SizzlesnoutAccent",
+        "DK_SizzlesnoutBelly",
+        "DK_SizzlesnoutBlush",
+        "DK_SizzlesnoutBody",
+        "DK_SizzlesnoutFin"
+      ]
+    },
+    {
+      "triangles": 13068,
+      "vertices": 6588,
+      "bounds_unity_m": {
+        "min": [
+          -0.31661683320999146,
+          -0.22307994961738586,
+          -0.453000009059906
+        ],
+        "max": [
+          0.31661683320999146,
+          0.35728609561920166,
+          0.7049380540847778
+        ],
+        "size": [
+          0.6332336664199829,
+          0.5803660452365875,
+          1.1579380631446838
+        ]
+      },
+      "id": "DioramaKindlekoi",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaKindlekoi.fbx",
+      "sha256": "4b176fee22d65fa6595cb2378f218c9a5ded8d3e1774a537a1bbf46abc417340",
+      "bytes": 277564,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_KindlekoiAccent",
+        "DK_KindlekoiBelly",
+        "DK_KindlekoiBlush",
+        "DK_KindlekoiBody",
+        "DK_KindlekoiFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 10196,
+      "vertices": 5158,
+      "bounds_unity_m": {
+        "min": [
+          -0.3400000035762787,
+          -0.24990352988243103,
+          -0.41999998688697815
+        ],
+        "max": [
+          0.3400000035762787,
+          0.44095873832702637,
+          0.5058075189590454
+        ],
+        "size": [
+          0.6800000071525574,
+          0.6908622682094574,
+          0.9258075058460236
+        ]
+      },
+      "id": "DioramaSootsnap",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaSootsnap.fbx",
+      "sha256": "f65e1782fbd404bda5a5f7de9a7637ecb10fcc14465c8f68e1c19464db1d9842",
+      "bytes": 223068,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_SootsnapAccent",
+        "DK_SootsnapBelly",
+        "DK_SootsnapBlush",
+        "DK_SootsnapBody",
+        "DK_SootsnapFin"
+      ]
+    },
+    {
+      "triangles": 13268,
+      "vertices": 6688,
+      "bounds_unity_m": {
+        "min": [
+          -0.43142062425613403,
+          -0.199982687830925,
+          -0.4309999942779541
+        ],
+        "max": [
+          0.43142062425613403,
+          0.37805530428886414,
+          0.6196939945220947
+        ],
+        "size": [
+          0.8628412485122681,
+          0.5780379921197891,
+          1.0506939888000488
+        ]
+      },
+      "id": "DioramaAshfin",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaAshfin.fbx",
+      "sha256": "5f4cf46e99513b3f949a84dbb69a499bc05fbb6c908d59dda736563026071053",
+      "bytes": 273452,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_AshfinAccent",
+        "DK_AshfinBelly",
+        "DK_AshfinBlush",
+        "DK_AshfinBody",
+        "DK_AshfinFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 13944,
+      "vertices": 7078,
+      "bounds_unity_m": {
+        "min": [
+          -0.5028822422027588,
+          -0.26996901631355286,
+          -0.47599998116493225
+        ],
+        "max": [
+          0.5028822422027588,
+          0.6388730406761169,
+          0.9470239877700806
+        ],
+        "size": [
+          1.0057644844055176,
+          0.9088420569896698,
+          1.4230239689350128
+        ]
+      },
+      "id": "DioramaPhoenixfry",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaPhoenixfry.fbx",
+      "sha256": "0dd737b09878d99e9439836dc9dc7f448e6ed6de88319cd718d4f5aa3fa53581",
+      "bytes": 281404,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Mouth",
+        "DK_PhoenixfryAccent",
+        "DK_PhoenixfryBelly",
+        "DK_PhoenixfryBlush",
+        "DK_PhoenixfryBody",
+        "DK_PhoenixfryFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 12596,
+      "vertices": 6360,
+      "bounds_unity_m": {
+        "min": [
+          -0.3417784869670868,
+          -0.3100000023841858,
+          -0.3428857922554016
+        ],
+        "max": [
+          0.3417784869670868,
+          0.3752577006816864,
+          0.5290884375572205
+        ],
+        "size": [
+          0.6835569739341736,
+          0.6852577030658722,
+          0.8719742298126221
+        ]
+      },
+      "id": "DioramaDewdrop",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaDewdrop.fbx",
+      "sha256": "1484ef52c43905bd359a0e4c65c4f3e4b44896bdb180a3e28db31c4a63d1cd6c",
+      "bytes": 253388,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_DewdropAccent",
+        "DK_DewdropBelly",
+        "DK_DewdropBlush",
+        "DK_DewdropBody",
+        "DK_DewdropFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 12168,
+      "vertices": 6134,
+      "bounds_unity_m": {
+        "min": [
+          -0.27845707535743713,
+          -0.22263972461223602,
+          -0.4309999942779541
+        ],
+        "max": [
+          0.27845707535743713,
+          0.27570122480392456,
+          0.8109999895095825
+        ],
+        "size": [
+          0.5569141507148743,
+          0.4983409494161606,
+          1.2419999837875366
+        ]
+      },
+      "id": "DioramaFogfin",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaFogfin.fbx",
+      "sha256": "bbd27e3d9d1612f70b893a50e3479e119c3556a6ae4814d10e17616a6c711765",
+      "bytes": 252012,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_FogfinAccent",
+        "DK_FogfinBelly",
+        "DK_FogfinBlush",
+        "DK_FogfinBody",
+        "DK_FogfinFin",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 10484,
+      "vertices": 5288,
+      "bounds_unity_m": {
+        "min": [
+          -0.2992072105407715,
+          -0.25999999046325684,
+          -0.31217774748802185
+        ],
+        "max": [
+          0.2992072105407715,
+          0.3329700231552124,
+          0.4384956657886505
+        ],
+        "size": [
+          0.598414421081543,
+          0.5929700136184692,
+          0.7506734132766724
+        ]
+      },
+      "id": "DioramaMistlet",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaMistlet.fbx",
+      "sha256": "83774cc91d36e290cf6b26818ca394feeb635be750a136fd5cda95f4f1af2d5a",
+      "bytes": 217100,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_MistletAccent",
+        "DK_MistletBelly",
+        "DK_MistletBlush",
+        "DK_MistletBody",
+        "DK_MistletFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 13940,
+      "vertices": 7052,
+      "bounds_unity_m": {
+        "min": [
+          -0.4050000011920929,
+          -0.24990352988243103,
+          -0.3920000195503235
+        ],
+        "max": [
+          0.4050000011920929,
+          0.3245696425437927,
+          0.4901077151298523
+        ],
+        "size": [
+          0.8100000023841858,
+          0.5744731724262238,
+          0.8821077346801758
+        ]
+      },
+      "id": "DioramaDrizzler",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaDrizzler.fbx",
+      "sha256": "ab0521dbcd0435119ef224c7b456c4703e3f1061bfa2ede3cb0feda19984df82",
+      "bytes": 265324,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_DrizzlerAccent",
+        "DK_DrizzlerBelly",
+        "DK_DrizzlerBlush",
+        "DK_DrizzlerBody",
+        "DK_DrizzlerFin",
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 12504,
+      "vertices": 6304,
+      "bounds_unity_m": {
+        "min": [
+          -0.3441927134990692,
+          -0.2800000011920929,
+          -0.332983136177063
+        ],
+        "max": [
+          0.3441927134990692,
+          0.41522395610809326,
+          0.4684956669807434
+        ],
+        "size": [
+          0.6883854269981384,
+          0.6952239573001862,
+          0.8014788031578064
+        ]
+      },
+      "id": "DioramaPearlpip",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaPearlpip.fbx",
+      "sha256": "85f112ac3041b9cea29b33f925de84c8f0c6bc97dbd372ffa40b4a95367e7107",
+      "bytes": 254220,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_PearlpipAccent",
+        "DK_PearlpipBelly",
+        "DK_PearlpipBlush",
+        "DK_PearlpipBody",
+        "DK_PearlpipFin",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 13348,
+      "vertices": 6732,
+      "bounds_unity_m": {
+        "min": [
+          -0.3471147119998932,
+          -0.23000000417232513,
+          -0.3709999918937683
+        ],
+        "max": [
+          0.3471147119998932,
+          0.3672807812690735,
+          0.46641212701797485
+        ],
+        "size": [
+          0.6942294239997864,
+          0.5972807854413986,
+          0.8374121189117432
+        ]
+      },
+      "id": "DioramaHaloling",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaHaloling.fbx",
+      "sha256": "710e1234e65ff3c0b92830f35385deb2660a49c2661dd6872650ac1a48268f5d",
+      "bytes": 258780,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_HalolingAccent",
+        "DK_HalolingBelly",
+        "DK_HalolingBlush",
+        "DK_HalolingBody",
+        "DK_HalolingFin",
+        "DK_Mouth",
+        "DK_Pupil"
+      ]
+    },
+    {
+      "triangles": 14624,
+      "vertices": 7388,
+      "bounds_unity_m": {
+        "min": [
+          -0.5029960870742798,
+          -0.16998785734176636,
+          -0.4300000071525574
+        ],
+        "max": [
+          0.5029960870742798,
+          0.25215303897857666,
+          0.6035767793655396
+        ],
+        "size": [
+          1.0059921741485596,
+          0.422140896320343,
+          1.033576786518097
+        ]
+      },
+      "id": "DioramaRainskipper",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaRainskipper.fbx",
+      "sha256": "96babd707bb80b81242b2d77b22d6939feac74a0f23062e5ad0fa33969c83a7a",
+      "bytes": 287516,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_RainskipperAccent",
+        "DK_RainskipperBelly",
+        "DK_RainskipperBlush",
+        "DK_RainskipperBody",
+        "DK_RainskipperFin"
+      ]
+    },
+    {
+      "triangles": 15880,
+      "vertices": 8024,
+      "bounds_unity_m": {
+        "min": [
+          -0.3831261098384857,
+          -0.3036346435546875,
+          -0.45500001311302185
+        ],
+        "max": [
+          0.3831261098384857,
+          0.41431087255477905,
+          0.800000011920929
+        ],
+        "size": [
+          0.7662522196769714,
+          0.7179455161094666,
+          1.2550000250339508
+        ]
+      },
+      "id": "DioramaRainbowregent",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/DioramaKit/DioramaRainbowregent.fbx",
+      "sha256": "3582b0fe9598c3c2b3404303bd5995216056608ff385fcd8819dcc0de344b092",
+      "bytes": 304796,
+      "objects": [
+        "Blush",
+        "Body",
+        "Crest pivot",
+        "Eyes",
+        "Glints",
+        "Left fin pivot",
+        "Lids",
+        "Lips",
+        "Pupils",
+        "Right fin pivot",
+        "Tail pivot"
+      ],
+      "shape_keys": {
+        "Body": [
+          "Puffed"
+        ],
+        "Lids": [
+          "Blink",
+          "Happy"
+        ],
+        "Lips": [
+          "Happy",
+          "Surprised"
+        ]
+      },
+      "material_slots": [
+        "DK_EyeWhite",
+        "DK_Glint",
+        "DK_Gold",
+        "DK_Mouth",
+        "DK_Pupil",
+        "DK_RainbowGreen",
+        "DK_RainbowYellow",
+        "DK_RainbowregentAccent",
+        "DK_RainbowregentBelly",
+        "DK_RainbowregentBlush",
+        "DK_RainbowregentBody",
+        "DK_RainbowregentFin"
+      ]
+    },
+    {
       "triangles": 16592,
       "vertices": 8374,
       "bounds_unity_m": {
@@ -3795,7 +5743,7 @@
     "row": "species index * 4 + variant index, counted from the top",
     "colour_space": "sRGB",
     "sheen": "the Sheen column is Shimmer's iridescent rim; its alpha is the strength (0 for the other variants)",
-    "sha256": "fe2e914e945ddcce3d11e8918ce25d1efbb7dbc6aa54c2794d06ddc7b1f6b6f2",
+    "sha256": "9182847c73454fbb4e70029cb73970937bc1b6a8c5d3e6e19f50468fbe30bd15",
     "review_swatches": "ArtSource/DioramaKit/DioramaKit_VariantSwatches.png"
   },
   "renders": [
@@ -3831,7 +5779,11 @@
     "ArtSource/DioramaKit/DioramaKit_Sparkline_Front.png",
     "ArtSource/DioramaKit/DioramaKit_Sparkline_Side.png",
     "ArtSource/DioramaKit/DioramaKit_Airfin_Front.png",
-    "ArtSource/DioramaKit/DioramaKit_Airfin_Side.png"
+    "ArtSource/DioramaKit/DioramaKit_Airfin_Side.png",
+    "ArtSource/DioramaKit/DioramaKit_Cinderling_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Cinderling_Side.png",
+    "ArtSource/DioramaKit/DioramaKit_Dewling_Front.png",
+    "ArtSource/DioramaKit/DioramaKit_Dewling_Side.png"
   ],
   "validation_limits": [
     "Workbench review renders show shape and colour only, not the in-game toon shading, outline or bloom.",

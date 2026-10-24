@@ -71,7 +71,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 colours").transform;
             try
             {
-                foreach (var id in new[] { "puddlepup", "starglimmer", "zephyray", "pondlet" })
+                foreach (var id in new[] { "puddlepup", "starglimmer", "zephyray", "pondlet", "kindlekoi", "rainbowregent" })
                 {
                     DioramaSpecies.TryGet(id, out var s);
                     var def = GrowthContent.Get(id);
@@ -93,6 +93,8 @@ namespace EvolutionShop.Tests
                 Assert.That(star.Kit.DioramaGlowMaterial, Is.Not.Null, "A Sparkline glows");
                 Assert.That(star.Kit.DioramaLanternPoint, Is.Not.Null, "with its lantern's bulb");
                 Assert.That(Make(parent, "lilyfin").Kit.DioramaGlowMaterial, Is.Null, "A Brookkin does not");
+                Assert.That(Make(parent, "coalbelly").Kit.DioramaGlowMaterial, Is.Not.Null, "A Cinderling's embers glow (its spines' tips, its coal belly)");
+                Assert.That(Make(parent, "haloling").Kit.DioramaGlowMaterial, Is.Null, "A Dewling does not");
             }
             finally { Object.DestroyImmediate(parent.gameObject); }
         }
@@ -102,7 +104,7 @@ namespace EvolutionShop.Tests
             var parent = new GameObject("GR-12 tricks").transform;
             try
             {
-                foreach (var id in new[] { "pondlet", "splashkit", "fizzlet", "gustgill", "brookmonarch", "aurorafin", "zephyray" })
+                foreach (var id in new[] { "pondlet", "splashkit", "fizzlet", "gustgill", "brookmonarch", "aurorafin", "zephyray", "sootsnap", "fogfin", "phoenixfry", "rainbowregent" })
                 {
                     var view = Make(parent, id);
                     int played = GrowthCreatureView.TricksPlayed, bursts = GrowthCreatureView.BurstsReleased;
@@ -131,6 +133,53 @@ namespace EvolutionShop.Tests
                     for (float s = 0; s < 4; s += dt) calm.Tick(s, true);
                     Assert.That(GrowthCreatureView.TricksPlayed, Is.EqualTo(before), id + " no trick with Reduced motion");
                     Assert.That(Quaternion.Angle(calm.Kit.transform.localRotation, Quaternion.Euler(0, 180, 0)), Is.LessThan(.01f), id + " at rest with Reduced motion");
+                    Object.DestroyImmediate(view.gameObject); Object.DestroyImmediate(calm.gameObject);
+                    foreach (var burst in parent.GetComponentsInChildren<GrowthCreatureBurst>(true)) Object.DestroyImmediate(burst.gameObject);
+                }
+            }
+            finally { Object.DestroyImmediate(parent.gameObject); }
+        }
+
+        [Test] public void ACinderlingsSpinesFlareAndItsSparksAndADewlingsDropletsFlyFromTheCrest()
+        {
+            var parent = new GameObject("GR-12 crests").transform;
+            try
+            {
+                foreach (var id in new[] { "emberpuff", "phoenixfry", "pearlpip", "rainbowregent" })
+                {
+                    var view = Make(parent, id);
+                    var crest = view.Kit.GetComponentsInChildren<Transform>(true).First(t => t.name == "Crest pivot");
+                    var rest = crest.localScale;
+                    Assert.That(view.Kit.DioramaCrestPoint, Is.Not.Null, id + " has the top of its crest");
+                    float t = 0, dt = 1 / 60f, widest = 0;
+                    view.Tick(t);
+                    view.Highlighted = true;
+                    int bursts = view.Bursts;
+                    var crestAtBurst = new List<(Vector3 crest, Vector3 lips)>();
+                    while (view.TrickAge < 0 && t < 3) view.Tick(t += dt);
+                    for (float end = t + DioramaTricks.Duration(id); t < end; t += dt)
+                    {
+                        int was = view.Bursts;
+                        view.Tick(t);
+                        widest = Mathf.Max(widest, crest.localScale.y / rest.y);
+                        if (view.Bursts > was) crestAtBurst.Add((view.Kit.DioramaCrestPoint.position, view.Kit.DioramaLips.position));
+                    }
+                    bool cinderling = GrowthContent.Get(id).Family == "cinderling";
+                    if (cinderling) Assert.That(widest, Is.GreaterThan(1.25f), id + " its spines flare during its trick");
+                    else Assert.That(widest, Is.EqualTo(1).Within(1e-4f), id + " a Dewling's crest never flares");
+                    Assert.That(view.Bursts - bursts, Is.EqualTo(DioramaTricks.Releases(id)), id + " bursts on its beats");
+                    var spawned = parent.GetComponentsInChildren<GrowthCreatureBurst>(true);
+                    Assert.That(spawned.Length, Is.EqualTo(crestAtBurst.Count), id);
+                    for (int i = 0; i < spawned.Length; i++)
+                        Assert.That(Vector3.Distance(spawned[i].transform.position, crestAtBurst[i].crest), Is.LessThan(Vector3.Distance(spawned[i].transform.position, crestAtBurst[i].lips)),
+                            id + " its " + (cinderling ? "sparks fly from its spines" : "droplets fly from its dew beads"));
+                    var piece = spawned[0].GetComponentInChildren<Renderer>();
+                    Assert.That(piece.sharedMaterial.IsKeywordEnabled("_EMISSION"), Is.EqualTo(cinderling), id + (cinderling ? " its sparks glow" : " its droplets do not"));
+                    // Reduced motion: the spines never flare.
+                    var calm = Make(parent, id, Colour.Classic, 9);
+                    var calmCrest = calm.Kit.GetComponentsInChildren<Transform>(true).First(x => x.name == "Crest pivot");
+                    calm.Highlighted = true;
+                    for (float s = 0; s < 4; s += dt) { calm.Tick(s, true); Assert.That(calmCrest.localScale, Is.EqualTo(rest), id + " calm with Reduced motion"); }
                     Object.DestroyImmediate(view.gameObject); Object.DestroyImmediate(calm.gameObject);
                     foreach (var burst in parent.GetComponentsInChildren<GrowthCreatureBurst>(true)) Object.DestroyImmediate(burst.gameObject);
                 }

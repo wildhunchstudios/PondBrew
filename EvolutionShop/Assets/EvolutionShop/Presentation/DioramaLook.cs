@@ -104,12 +104,16 @@ namespace EvolutionShop
             { "DK_NoriSkin", "8A5A3C" }, { "DK_NoriHair", "1E1612" }, { "DK_NoriGlove", "C9A06A" },
             { "DK_MossSkin", "F0C8A0" }, { "DK_MossHair", "5E8F3A" }, { "DK_MossGoggle", "2B3B4F" },
             { "DK_Crate", "C99A62" }, { "DK_CrateSlat", "A87A48" },
+            // GR-12 wave 2: the Rainbow Regent's middle tail bands.
+            { "DK_RainbowYellow", "FFE27A" }, { "DK_RainbowGreen", "8FE08A" },
         };
 
         /// <summary>Slots that glow (bloom) as well as being lit: a Sparkline's accent, its lantern (GR-12: and what else its
-        /// species paints with it, a glowing stripe, belly, fin tips or stars).</summary>
+        /// species paints with it, a glowing stripe, belly, fin tips or stars), and (GR-12 wave 2) a Cinderling's accent, its
+        /// embers: the tips of its spines and its flames, a coal belly, a sizzling snout, glowing patches.</summary>
         public static bool GlowSlot(string slot) =>
-            DioramaVariants.TryParse(slot, out var species, out int column) && species.Family == DioramaFamily.Sparkline && column == 3;
+            DioramaVariants.TryParse(slot, out var species, out int column) && column == 3 &&
+            (species.Family == DioramaFamily.Sparkline || species.Family == DioramaFamily.Cinderling);
 
         /// <summary>A kit slot's colour: shared slots from the palette, a species' own slots from the atlas's Classic row.</summary>
         public static bool TryGetSlotColor(string slot, out Color color)

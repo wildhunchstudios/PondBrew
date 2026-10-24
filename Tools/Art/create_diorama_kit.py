@@ -68,13 +68,16 @@ PALETTE = {
     'DK_NoriSkin': '8A5A3C', 'DK_NoriHair': '1E1612', 'DK_NoriGlove': 'C9A06A',
     'DK_MossSkin': 'F0C8A0', 'DK_MossHair': '5E8F3A', 'DK_MossGoggle': '2B3B4F',
     'DK_Crate': 'C99A62', 'DK_CrateSlat': 'A87A48',
+    # GR-12 wave 2: the Rainbow Regent's middle tail bands (its other bands are its own colours).
+    'DK_RainbowYellow': 'FFE27A', 'DK_RainbowGreen': '8FE08A',
 }
 
 # AD-B: the creature families and the colour variant atlas. Species keep their order here forever (the atlas rows and the
 # game's DioramaSpecies table follow it; GR-12 appends each wave's species, 72 in nine families when all three are in). Each species has five colour slots, named
 # DK_<Species><Slot>, and a sheen (Shimmer's iridescent rim; its alpha is the strength). Variants are colour swaps only.
 FAMILIES = {'Brookkin': 'river fish: pouty lips, round fins', 'Sparkline': 'Spark: a glowing lantern on a stalk',
-            'Airfin': 'Mist: wide gliding sails'}  # GR-12's waves 2 to 4 add the other six families
+            'Airfin': 'Mist: wide gliding sails', 'Cinderling': 'Ember: a row of glowing ember spines down the back',
+            'Dewling': 'Mist: round and pearly, shiny dew beads on the head and back'}  # GR-12's waves 3 and 4 add the other four families
 SLOTS = ['Body', 'Fin', 'Belly', 'Accent', 'Blush', 'Sheen']
 VARIANT_NAMES = ['Classic', 'Sunny', 'Deep', 'Shimmer']
 ATLAS_SPECIES_CAPACITY = 72  # GR.7's 72 species
@@ -201,6 +204,86 @@ SPECIES = [  # id, kit asset, family, {variant: [Body, Fin, Belly, Accent, Blush
         'Sunny':   ['9068F5', '84DDF5', 'F3EFE3', 'FFE167', 'FFA6B9', 'FFFFFF00'],
         'Deep':    ['1C3E66', '4A50B5', 'D8DEF1', 'DB7D33', 'E588B5', 'FFFFFF00'],
         'Shimmer': ['BBC6F5', 'CADAFA', 'DFF2F9', 'FFEFC0', 'FFC1D9', 'FFF0C05E']}),
+    ('emberpuff', 'DioramaEmberpuff', 'Cinderling', {
+        'Classic': ['FF7A4D', 'FFB25E', 'FFE9D6', 'FFD84A', 'FF9EA0', 'FFFFFF00'],
+        'Sunny':   ['FFD15B', 'FFE16B', 'FFEDA6', 'FFDE58', 'FFB3A6', 'FFFFFF00'],
+        'Deep':    ['BD2527', 'DB6837', 'BD9B92', 'DB7D25', 'E6808D', 'FFFFFF00'],
+        'Shimmer': ['FFCCBB', 'FFE2C2', 'FFF7EF', 'FFF0BA', 'FFBBBC', 'B8F0FF5E']}),
+    ('cindertail', 'DioramaCindertail', 'Cinderling', {
+        'Classic': ['E8442E', 'FF8A3D', 'FFE2CC', 'FFE066', 'FF9EA8', 'FFFFFF00'],
+        'Sunny':   ['F5AA40', 'FFDB4D', 'FFEDA6', 'FFE372', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['AC0E26', 'BD2E18', 'BD938B', 'DB8C3D', 'E68095', 'FFFFFF00'],
+        'Shimmer': ['F5B3AA', 'FFD3B5', 'FFF4EC', 'FFF3C5', 'FFBBC2', 'C8E8FF5E']}),
+    ('coalbelly', 'DioramaCoalbelly', 'Cinderling', {
+        'Classic': ['3E3A40', '6B5E5A', 'B8A8A0', 'FF9A2E', 'FF9EA0', 'FFFFFF00'],
+        'Sunny':   ['95886B', 'A59D8C', 'F5E49F', 'FFD93F', 'FFB3A6', 'FFFFFF00'],
+        'Deep':    ['5F657C', '624950', '88706E', 'DB4B0D', 'E6808D', 'FFFFFF00'],
+        'Shimmer': ['95B2B1', 'FFF1ED', 'F5EDE9', 'FFD9B0', 'FFBBBC', 'FFD0A85E']}),
+    ('sizzlesnout', 'DioramaSizzlesnout', 'Cinderling', {
+        'Classic': ['C8323A', 'F2A43A', 'FFE0D0', 'FFF07A', 'FFA0B0', 'FFFFFF00'],
+        'Sunny':   ['F5924C', 'F5D34A', 'FFEDA6', 'FFE785', 'FFA6A6', 'FFFFFF00'],
+        'Deep':    ['94153D', 'D05019', 'BD918E', 'DBA14F', 'E5829D', 'FFFFFF00'],
+        'Shimmer': ['F5AFB3', 'F7D9B0', 'FFF3ED', 'FFF9CC', 'FFBDC8', 'B8FFE65E']}),
+    ('kindlekoi', 'DioramaKindlekoi', 'Cinderling', {
+        'Classic': ['FFE2C4', 'FFC9A0', 'FFFFFF', 'FF7A2E', 'FFA6B0', 'FFFFFF00'],
+        'Sunny':   ['FFE993', 'FFEDA6', 'FFF8E3', 'FFD93F', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['BD9284', 'BD7567', 'E5E9F1', 'BD1D0C', 'E5889C', 'FFFFFF00'],
+        'Shimmer': ['FFF7EF', 'FFEADB', 'EAFAF9', 'FFCCB0', 'FFC1C8', 'FFD6F05E']}),
+    ('sootsnap', 'DioramaSootsnap', 'Cinderling', {
+        'Classic': ['5A5560', '3A3640', 'A8A0A8', 'FF6A2E', 'FF9EA8', 'FFFFFF00'],
+        'Sunny':   ['A4977D', '685B6B', 'C2B5A6', 'FFD03F', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['6D728C', '2C2D3B', 'A09DAB', 'BD100C', 'E68095', 'FFFFFF00'],
+        'Shimmer': ['9FBBBC', 'BEB8C6', 'B2BDC1', 'FFC6B0', 'FFBBC2', 'FFE0B05E']}),
+    ('ashfin', 'DioramaAshfin', 'Cinderling', {
+        'Classic': ['C9C2BC', 'E8E2DC', 'F6F2EE', 'FF8A3A', 'FFA6B0', 'FFFFFF00'],
+        'Sunny':   ['EDDBA9', 'F2E4C1', 'F9EFD7', 'FFDB4A', 'FFABA6', 'FFFFFF00'],
+        'Deep':    ['A4A9BA', 'B3B9CA', 'DEDEE3', 'BD2D16', 'E5889C', 'FFFFFF00'],
+        'Shimmer': ['C6E1DD', 'D1ECE8', 'E5F2EE', 'FFD3B4', 'FFC1C8', 'FFD0C05E']}),
+    ('phoenixfry', 'DioramaPhoenixfry', 'Cinderling', {
+        'Classic': ['D9283A', 'FFB23A', 'FFE8C8', 'FFF5A0', 'FFA0B0', 'FFFFFF00'],
+        'Sunny':   ['F5803D', 'FFDB4A', 'FFEDA6', 'FFEDA6', 'FFA6A6', 'FFFFFF00'],
+        'Deep':    ['A10B42', 'DB5418', 'BD9887', 'DBB06F', 'E5829D', 'FFFFFF00'],
+        'Shimmer': ['F5A9B1', 'FFE2B4', 'FFF6EA', 'FFFBDB', 'FFBDC8', 'FFF0B05E']}),
+    ('dewdrop', 'DioramaDewdrop', 'Dewling', {
+        'Classic': ['A8E6F2', 'D6F6FF', 'F2FDFF', 'F4FFFF', 'FFB0C0', 'FFFFFF00'],
+        'Sunny':   ['8DF5C9', 'A6FFE9', 'F6F6E3', 'F9F4D4', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['6F96B3', '92A8BD', 'DBE7F1', 'BAC7DC', 'E691AA', 'FFFFFF00'],
+        'Shimmer': ['DAF2F7', 'EFFCFF', 'E2F9F9', 'D5F7F4', 'FFC8D3', 'FFE6F55E']}),
+    ('fogfin', 'DioramaFogfin', 'Dewling', {
+        'Classic': ['B8B0E0', 'E0DCF4', 'F4F2FC', 'FFFFFF', 'FFB0C8', 'FFFFFF00'],
+        'Sunny':   ['DB8DF5', 'EEE1CE', 'F7EFE0', 'FFF4D4', 'FFA6B2', 'FFFFFF00'],
+        'Deep':    ['777CA6', 'B0B6D6', 'DDDEEE', 'BFC7DC', 'E691B3', 'FFFFFF00'],
+        'Shimmer': ['E4E1F5', 'CEEAF0', 'E3F2F7', 'D9F7F4', 'FFC8D9', 'C8FFE85E']}),
+    ('mistlet', 'DioramaMistlet', 'Dewling', {
+        'Classic': ['F4B8D8', 'FFE0EE', 'FFF6FA', 'FFFFFF', 'FF9EB8', 'FFFFFF00'],
+        'Sunny':   ['F59FA5', 'FFA7A6', 'FFF2DF', 'FFF4D4', 'FFA6AF', 'FFFFFF00'],
+        'Deep':    ['B57CA9', 'BD9AB3', 'E5E1ED', 'BFC7DC', 'E680A6', 'FFFFFF00'],
+        'Shimmer': ['F9E2EE', 'FFF3F9', 'EAF5F6', 'D9F7F4', 'FFBBCD', 'C8F0FF5E']}),
+    ('drizzler', 'DioramaDrizzler', 'Dewling', {
+        'Classic': ['7084C8', 'A8C4F0', 'DCE8FF', 'E8FBFF', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['92D6F5', '9FE8F5', 'A6EEFF', 'F2F2D4', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['494694', '6F77B2', '979ABD', 'B3C5DC', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['CCD5F5', 'D9E4F5', 'F2F6FF', 'D1F5F4', 'FFC1D3', 'FFE6C85E']}),
+    ('pearlpip', 'DioramaPearlpip', 'Dewling', {
+        'Classic': ['F4F0F8', 'E0D4F4', 'FFFFFF', 'FFFBF0', 'FFB0C8', 'FFFFFF00'],
+        'Sunny':   ['FAEBC7', 'E79FF5', 'FFF8E3', 'FFF2CC', 'FFA6B2', 'FFFFFF00'],
+        'Deep':    ['BAC0D8', '9692B5', 'E5E9F1', 'BFC5D4', 'E691B3', 'FFFFFF00'],
+        'Shimmer': ['C5F2EE', 'F1EDF9', 'EAFAF9', 'D9F5EF', 'FFC8D9', 'FFD6F05E']}),
+    ('haloling', 'DioramaHaloling', 'Dewling', {
+        'Classic': ['FAEAB0', 'FFF4D0', 'FFFCEE', 'FFE070', 'FFA6B8', 'FFFFFF00'],
+        'Sunny':   ['FAE17D', 'FFEDA6', 'FFF6D7', 'FFE57B', 'FFA6A9', 'FFFFFF00'],
+        'Deep':    ['B99875', 'BDA58E', 'E5E6E3', 'DB8E46', 'E588A4', 'FFFFFF00'],
+        'Shimmer': ['FFF9E2', 'FFFBED', 'EAF9EE', 'FFF3C9', 'FFC1CD', 'D0E8FF5E']}),
+    ('rainskipper', 'DioramaRainskipper', 'Dewling', {
+        'Classic': ['5AAAF0', 'B0DCFF', 'E8F6FF', 'F0FFFF', 'FFA6C0', 'FFFFFF00'],
+        'Sunny':   ['68F5F5', 'A6FFFD', 'EFF2E3', 'F7F4D4', 'FFA6B1', 'FFFFFF00'],
+        'Deep':    ['3153B2', '7489BD', 'D3E1F1', 'B8C7DC', 'E588AC', 'FFFFFF00'],
+        'Shimmer': ['BBDAF5', 'E1F2FF', 'DBF5F9', 'D3F7F4', 'FFC1D3', 'FFE6B05E']}),
+    ('rainbowregent', 'DioramaRainbowregent', 'Dewling', {
+        'Classic': ['C4AEF4', '7FD3F7', 'FFF8EC', 'FFB0D0', 'FFA6C8', 'FFFFFF00'],
+        'Sunny':   ['EA8DF5', '89F7E5', 'FFF3D5', 'FFABA6', 'FFA6B9', 'FFFFFF00'],
+        'Deep':    ['7774B5', '4E7BB7', 'E5E3E2', 'BD74A5', 'E588B5', 'FFFFFF00'],
+        'Shimmer': ['E6DEF9', 'CEEEFC', 'EAF6ED', 'FFE1ED', 'FFC1D9', 'FFF0B05E']}),
 ]
 def slot_name(species_id, slot):
     return 'DK_' + species_id[:1].upper() + species_id[1:] + slot
@@ -1461,8 +1544,476 @@ WAVE1_BUILDERS = {'puddlepup': puddlepup, 'splashkit': splashkit, 'reedwhisker':
                   'puffglider': puffglider, 'hazewing': hazewing, 'gustgill': gustgill, 'mistrunner': mistrunner,
                   'cloudcarp': cloudcarp, 'breezeling': breezeling, 'zephyray': zephyray}
 
+# ================================================================ GR-12 wave 2: the Cinderling and the Dewling
+# Two new families on the same rig (AD-B's parts, pivots and face shape keys). The user chose their looks (2026-10-24): the
+# Cinderling's ember spines (a row of glowing ember spines down the back, its Crest pivot, which the game flares) and the
+# Dewling's dew beads (round, pearly little fish with shiny dew beads on the head and back, the beads on its Crest pivot).
+
+def ember_spines(part, sid, spines, slot='Fin'):
+    """The Cinderling's crest: a row of ember spines, each a sharp spine whose upper part is a glowing ember (the species'
+    accent glows). spines: [(base point, height, lean back in degrees, radius)]."""
+    S = lambda s: slot_name(sid, s)
+    for base, height, lean, radius in spines:
+        base = Vector(base)
+        tip = base + rot((0, height, 0), (lean, 0, 0))
+        cone(part, tuple(base), tuple(tip), radius, S(slot), 12, 6, .15)
+        ember = base + (tip - base) * .38
+        cone(part, tuple(ember), tuple(tip + (tip - base) * .03), radius * .68, S('Accent'), 12, 5, .15)
+
+def fan_tail(part, base, lobes, thick=.02):
+    """A tail of flat lobes fanned from its base: lobes [(angle down from straight back in degrees, length, width, slot)]."""
+    base = Vector(base)
+    for a, length, width, slot in lobes:
+        c = base + rot((0, 0, length * .85), (a, 0, 0))
+        ellipsoid(part, tuple(c), (thick, width, length), slot, (a, 0, 0), 20, 12)
+
+def back_spines(prof, Z0, Z1, ts, heights, lean=22, radius=.034, sink=.012, yoff=lambda t: 0):
+    """Spine bases along a loft body's back at its length fractions, just inside the surface."""
+    out = []
+    for t, h in zip(ts, heights):
+        p = on_body(prof, Z0, Z1, t, 90, 1.0, yoff)
+        out.append(((0, p.y - sink, p.z), h, lean, radius))
+    return out
+
+def rimmed_lobes(part, base, lobes, rim, thick=.02, edge=.74):
+    """fan_tail's lobes with a band of the rim slot round each lobe's edge (where its flat shape is past edge of its size)."""
+    base = Vector(base)
+    band = part.slot(rim)
+    for a, length, width, slot in lobes:
+        c = base + rot((0, 0, length * .85), (a, 0, 0))
+        first = len(part.faces)
+        ellipsoid(part, tuple(c), (thick, width, length), slot, (a, 0, 0), 32, 16)
+        for fi in range(first, len(part.faces)):
+            vs = [part.verts[i] for i in part.faces[fi]]
+            d = Vector((sum(v.x for v in vs), sum(v.y for v in vs), sum(v.z for v in vs))) / len(vs) - c
+            d = rot(d, (-a, 0, 0))
+            if math.hypot(d.y / width, d.z / length) > edge:
+                part.slots[fi] = band
+
+def dew_beads(part, sid, beads, slot='Accent'):
+    """The Dewling's dew beads: shiny pearls, each with a glint. beads: [(centre, radius)]."""
+    S = lambda s: slot_name(sid, s)
+    for c, r in beads:
+        c = Vector(c); r *= 1.15
+        ellipsoid(part, tuple(c), (r, r * 1.02, r), S(slot), (0, 0, 0), 18, 12)
+        ellipsoid(part, tuple(c + Vector((-r * .35, r * .45, -r * .55))), (r * .28, r * .24, r * .18), 'DK_Glint', (0, 0, 0), 10, 6)
+
+def bead_row(prof, Z0, Z1, ts, radii, angle=90, yoff=lambda t: 0, k=1.0):
+    """Bead centres sitting on a loft body's surface at its length fractions and an angle round it."""
+    out = []
+    for t, r in zip(ts, radii):
+        p = on_body(prof, Z0, Z1, t, angle, k, yoff)
+        n = Vector((math.cos(math.radians(angle)), math.sin(math.radians(angle)), 0))
+        out.append((tuple(p + n * r * .55), r))
+    return out
+
+def snout_profile(snout, nose, taper, rx, ryt, ryb, tip=.3, neck=.42):
+    """A body with a long snout: a narrow snout (tip to neck, shares of the full radius, rounded at its end) over the snout
+    fraction, then the head swelling to the nose fraction and AD-B's taper."""
+    def prof(t):
+        if t < snout:
+            f = tip + (neck - tip) * t / snout
+            f *= math.sqrt(max(0, 1 - (1 - t / .03) ** 2)) if t < .03 else 1
+        elif t < nose:
+            s = (t - snout) / (nose - snout)
+            f = neck + (1 - neck) * math.sin(s * math.pi / 2)
+        else:
+            s = (t - nose) / (1 - nose)
+            f = 1 - taper * (s * s * (3 - 2 * s))
+        return rx * f, ryt * f, ryb * f
+    return prof
+
+# ---------------------------------------------------------------- Cinderling: Emberpuff, a round puff with short ember spines
+def emberpuff():
+    sid = 'emberpuff'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaEmberpuff')
+    R = (.33, .31, .35)
+    round_creature(root, sid, R, 30, 10, (.09, .108, .074), 30, .83, (50, -14), (.05, .03, .016), -8,
+                   (.036, .021, (1.15, .95, 1.0)), .62, .03, -.38, 1.0, 1.2)
+    side_fins(root, sid, (.3, -.06, .0), [((.03, -.03, .06), (.03, .06, .09), (0, 20, -32), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .36), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        for a in (-30, 30):
+            base = Vector((0, 0, .37)); tip = base + rot((0, 0, .17), (a, 0, 0))
+            flame(part, base, tip, .055, S('Fin'), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, 0, .34), tail)
+    def spines(part):
+        ember_spines(part, sid, [(on_ellipsoid(R, 0, el, .96), h, lean, .048)
+                                 for el, h, lean in ((60, .15, -12), (77, .19, 6), (88, .17, 26), (72, .12, 46))])
+    simple_part(root, 'Crest pivot', (0, .3, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling: Cindertail, sleek with a long flaming tail
+def cindertail():
+    sid = 'cindertail'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaCindertail')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.38, .74, .22, .22, .19)
+    loft_creature(root, sid, Z0, Z1, prof, .13, 31, (.08, .096, .066), 31, .76, None, -12, (.042, .025, .015),
+                  -.034, (.034, .019, (1.2, .82, 1.0)), .6, .026)
+    side_fins(root, sid, (.17, -.07, -.04), [((.03, -.05, .1), (.024, .05, .13), (12, 16, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.034, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        for a, length, r in ((-26, .3, .06), (0, .4, .07), (26, .3, .06)):
+            base = Vector((0, .01, .36)); tip = base + rot((0, 0, length), (a, 0, 0))
+            flame(part, base, tip, r, S('Fin'), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def spines(part):
+        ember_spines(part, sid, back_spines(prof, Z0, Z1, (.3, .42, .54, .66, .76), (.13, .17, .17, .14, .1), 24, .04))
+    simple_part(root, 'Crest pivot', (0, .2, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling: Coalbelly, a stout coal with a glowing belly
+def coalbelly():
+    sid = 'coalbelly'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaCoalbelly')
+    Z0, Z1 = -.38, .36
+    prof = nose_profile(.5, .6, .29, .28, .28)
+    def marks(body):
+        # Its belly glows like a coal (the accent), with a pale ash rim.
+        repaint(body, 0, Z0, Z1, S('Accent'), lambda sn, t, c: sn < -.64 and .14 < t < .8)
+    loft_creature(root, sid, Z0, Z1, prof, .16, 30, (.09, .108, .074), 30, .77, None, -12, (.048, .028, .016),
+                  -.04, (.036, .021, (1.15, .92, 1.0)), .62, .028, belly=lambda sn, t: sn < -.44 and .08 < t < .86,
+                  marks=marks, gain=.14)
+    side_fins(root, sid, (.26, -.08, -.02), [((.03, -.03, .06), (.03, .06, .085), (0, 22, -30), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .35), (.04, .05, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .36), ((-30, .13, .06, S('Fin')), (30, .13, .06, S('Fin'))), .024)
+    simple_part(root, 'Tail pivot', (0, 0, .33), tail)
+    def spines(part):
+        ember_spines(part, sid, back_spines(prof, Z0, Z1, (.36, .5, .64, .76), (.14, .18, .15, .11), 18, .05))
+    simple_part(root, 'Crest pivot', (0, .27, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling: Sizzlesnout, a long snout that sizzles at the tip
+def sizzlesnout():
+    sid = 'sizzlesnout'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaSizzlesnout')
+    Z0, Z1 = -.5, .36
+    prof = snout_profile(.3, .5, .74, .22, .22, .2)
+    def marks(body):
+        # The snout's tip sizzles (glows).
+        repaint(body, 0, Z0, Z1, S('Accent'), lambda sn, t, c: t < .06)
+    loft_creature(root, sid, Z0, Z1, prof, .41, 34, (.078, .094, .064), 30, .78, .47, -12, (.04, .024, .014),
+                  -.012, (.026, .015, (1.2, .85, 1.0)), .6, .022, marks=marks, rings=36, seg=36, gain=.12)
+    side_fins(root, sid, (.17, -.07, .02), [((.025, -.05, .1), (.022, .05, .13), (12, 16, -34), 'Fin', .85)])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.032, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        for s in (-1, 1):
+            base = Vector((0, .01, .36)); tip = base + rot((0, 0, .24), (s * 30, 0, 0))
+            flame(part, base, tip, .05, S('Fin'), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def spines(part):
+        ember_spines(part, sid, back_spines(prof, Z0, Z1, (.5, .59, .68, .77, .85), (.1, .14, .15, .12, .08), 26, .034))
+    simple_part(root, 'Crest pivot', (0, .2, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling: Kindlekoi, a koi with glowing ember patches
+def kindlekoi():
+    sid = 'kindlekoi'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaKindlekoi')
+    Z0, Z1 = -.42, .38
+    prof = nose_profile(.38, .7, .21, .25, .22)
+    def marks(body):
+        near(body, 0, S('Accent'), [on_body(prof, Z0, Z1, .36, 74), on_body(prof, Z0, Z1, .6, 118),
+                                     on_body(prof, Z0, Z1, .68, 44), on_body(prof, Z0, Z1, .22, 104)], .1)
+    def barbels(body):
+        for side in (-1, 1):
+            start = Vector((side * .05, -.05, -.37))
+            pts = [tuple(start + Vector((side * .06 * s, -.03 * s, .1 * s))) for s in (0, .33, .66, 1)]
+            taper_tube(body, pts, .011, .007, S('Fin'), 8)
+    loft_creature(root, sid, Z0, Z1, prof, .14, 30, (.084, .1, .07), 30, .76, None, -12, (.044, .026, .015),
+                  -.04, (.036, .021, (1.2, .85, 1.0)), .6, .028, marks=marks, extra=barbels, rings=44, seg=52)
+    # Long flowing koi fins.
+    side_fins(root, sid, (.2, -.07, -.03), [((.04, -.08, .12), (.026, .07, .18), (16, 20, -40), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, .01, .37), (.035, .05, .055), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .37), ((-26, .2, .075, S('Fin')), (26, .2, .075, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, .01, .35), tail)
+    def spines(part):
+        ember_spines(part, sid, back_spines(prof, Z0, Z1, (.38, .5, .62), (.12, .15, .12), 28, .04))
+    simple_part(root, 'Crest pivot', (0, .27, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling: Sootsnap, a sooty snapper with a big pout
+def sootsnap():
+    sid = 'sootsnap'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaSootsnap')
+    Z0, Z1 = -.38, .34
+    prof = nose_profile(.48, .62, .27, .27, .25)
+    def flecks(body):
+        for tt, ang, r in ((.42, 46, .02), (.55, 128, .018), (.64, 66, .016), (.34, 150, .016), (.72, 104, .014)):
+            ellipsoid(body, tuple(on_body(prof, Z0, Z1, tt, ang, .97)), (r, r, r), S('Belly'), (0, 0, 0), 12, 8)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.088, .104, .072), 32, .76, None, -12, (.044, .026, .015),
+                  -.048, (.05, .028, (1.25, .9, 1.0)), .6, .02, extra=flecks)
+    # Snappy pointed fins.
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .23, -.07, -.02)
+        fin = Part(label + ' fin')
+        base = Vector(pivot) + Vector((side * .01, 0, .02))
+        cone(fin, tuple(base), tuple(base + Vector((side * .1, -.08, .14))), .045, S('Fin'), 12, 6, .5)
+        make_object(fin, root, pivot, label + ' fin pivot')
+    def tail(part):
+        ellipsoid(part, (0, 0, .33), (.034, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        for a in (-34, 34):
+            base = Vector((0, 0, .34)); tip = base + rot((0, 0, .2), (a, 0, 0))
+            cone(part, tuple(base), tuple(tip), .06, S('Fin'), 12, 6, .5)
+    simple_part(root, 'Tail pivot', (0, 0, .31), tail)
+    def spines(part):
+        ember_spines(part, sid, back_spines(prof, Z0, Z1, (.32, .44, .56, .68), (.15, .19, .16, .11), 20, .048), 'Body')
+    simple_part(root, 'Crest pivot', (0, .25, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling: Ashfin, pale ash with fan fins edged in ember
+def ashfin():
+    sid = 'ashfin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaAshfin')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.38, .72, .21, .23, .2)
+    loft_creature(root, sid, Z0, Z1, prof, .13, 31, (.08, .096, .066), 31, .76, None, -12, (.042, .025, .015),
+                  -.034, (.034, .019, (1.2, .82, 1.0)), .6, .026, rings=32, seg=36)
+    # Large fan fins, their rims glowing like embers.
+    side_fins(root, sid, (.18, -.04, -.02), [((.12, -.04, .06), (.14, .022, .13), (0, -12, -20), 'Fin', 1.0, 'Accent')])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.032, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        rimmed_lobes(part, (0, .01, .35), ((-26, .16, .075, S('Fin')), (26, .16, .075, S('Fin'))), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def spines(part):
+        ember_spines(part, sid, back_spines(prof, Z0, Z1, (.3, .4, .5, .6, .7), (.13, .18, .19, .16, .11), 30, .036))
+    simple_part(root, 'Crest pivot', (0, .21, .0), spines)
+    return root
+
+# ---------------------------------------------------------------- Cinderling crown: Phoenix Fry, a phoenix crest and flame wings
+def phoenixfry():
+    sid = 'phoenixfry'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaPhoenixfry')
+    Z0, Z1 = -.44, .44
+    prof = nose_profile(.44, .68, .31, .31, .27)
+    loft_creature(root, sid, Z0, Z1, prof, .14, 30, (.1, .118, .08), 30, .77, None, -12, (.05, .03, .017),
+                  -.04, (.042, .024, (1.2, .85, 1.0)), .62, .03)
+    # Wings of flame feathers, three a side.
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .27, -.02, -.02)
+        fin = Part(label + ' fin')
+        for k, (ang, length) in enumerate(((-20, .3), (4, .34), (26, .26))):
+            d = rot((side * .62, -.08, .78), (0, 0, side * ang))
+            base = Vector(pivot) + Vector((side * .01, 0, .03 + .04 * k))
+            flame(fin, base, base + d.normalized() * length, .06, S('Fin'), S('Accent'))
+        make_object(fin, root, pivot, label + ' fin pivot')
+    def tail(part):
+        ellipsoid(part, (0, 0, .42), (.045, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
+        for a, length in ((-30, .42), (-10, .5), (10, .5), (30, .42)):
+            base = Vector((0, 0, .43)); tip = base + rot((0, 0, length), (a, 0, 0))
+            flame(part, base, tip, .06, S('Fin'), S('Accent'))
+    simple_part(root, 'Tail pivot', (0, 0, .4), tail)
+    def crest(part):
+        # The phoenix crest: five tall flame plumes over a little gold crown.
+        top = on_body(prof, Z0, Z1, .26, 90, 1.0)
+        gold_crown(part, (0, top.y + .01, top.z), .085, 5, .07, 'DK_Gold', -10)
+        for dz, h, lean in ((-.04, .24, -16), (0, .32, 0), (.05, .3, 16), (.11, .25, 34), (.17, .18, 50)):
+            base = Vector((0, top.y + .02, top.z + dz))
+            flame(part, base, base + rot((0, h, 0), (lean, 0, 0)), .05, S('Fin'), S('Accent'))
+    simple_part(root, 'Crest pivot', (0, .3, -.12), crest)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Dewdrop, a pale drop with beads and a dripping tail
+def dewdrop():
+    sid = 'dewdrop'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaDewdrop')
+    R = (.3, .31, .32)
+    def side_beads(body):
+        dew_beads(body, sid, [(tuple(on_ellipsoid(R, az, el, 1.0)), r) for az, el, r in ((120, 30, .03), (-120, 30, .03), (150, 12, .024), (-150, 12, .024))])
+    round_creature(root, sid, R, 30, 10, (.09, .108, .074), 30, .83, (50, -14), (.05, .03, .016), -8,
+                   (.034, .02, (1.15, .95, 1.0)), .62, .03, -.38, 1.0, 1.16, extra=side_beads)
+    side_fins(root, sid, (.27, -.06, .0), [((.03, -.02, .05), (.026, .055, .075), (0, 20, -30), 'Fin')])
+    def tail(part):
+        # A drip curling up behind it.
+        ellipsoid(part, (0, 0, .33), (.04, .045, .045), S('Fin'), (0, 0, 0), 14, 8)
+        ellipsoid(part, (0, .07, .47), (.055, .06, .06), S('Fin'), (0, 0, 0), 18, 10)
+        cone(part, (0, .07, .47), (0, .0, .33), .055, S('Fin'), 14, 7, .5)
+    simple_part(root, 'Tail pivot', (0, 0, .31), tail)
+    def beads(part):
+        dew_beads(part, sid, [(tuple(on_ellipsoid(R, 0, el, 1.0) + Vector((0, r * .6, 0))), r)
+                              for el, r in ((60, .05), (76, .042), (90, .036))])
+    simple_part(root, 'Crest pivot', (0, .3, -.05), beads)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Fogfin, wispy fins trailing like fog
+def fogfin():
+    sid = 'fogfin'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaFogfin')
+    Z0, Z1 = -.4, .34
+    prof = nose_profile(.42, .72, .22, .22, .2)
+    loft_creature(root, sid, Z0, Z1, prof, .14, 31, (.086, .102, .07), 32, .76, None, -12, (.044, .026, .015),
+                  -.035, (.034, .019, (1.2, .82, 1.0)), .6, .03)
+    # Two long wisps a side.
+    side_fins(root, sid, (.18, -.05, -.02), [((.03, -.05, .14), (.018, .04, .19), (14, 20, -36), 'Fin'),
+                                            ((.025, -.09, .12), (.016, .035, .16), (30, 28, -54), 'Belly')])
+    def tail(part):
+        ellipsoid(part, (0, .01, .33), (.03, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .33), ((-24, .22, .04, S('Fin')), (0, .26, .034, S('Belly')), (24, .22, .04, S('Fin'))), .012)
+    simple_part(root, 'Tail pivot', (0, .01, .31), tail)
+    def beads(part):
+        dew_beads(part, sid, bead_row(prof, Z0, Z1, (.32, .46), (.036, .03)))
+        ellipsoid(part, tuple(on_body(prof, Z0, Z1, .6, 90, 1.0) + Vector((0, .02, .04))), (.012, .05, .11), S('Belly'), (24, 0, 0), 14, 8)
+    simple_part(root, 'Crest pivot', (0, .22, .0), beads)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Mistlet, a tiny pink puff with a cloud tail
+def mistlet():
+    sid = 'mistlet'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaMistlet')
+    R = (.27, .26, .29)
+    round_creature(root, sid, R, 30, 10, (.088, .104, .072), 30, .83, (50, -14), (.048, .028, .015), -8,
+                   (.032, .019, (1.15, .95, 1.0)), .62, .03, -.38, 1.0, 1.18)
+    side_fins(root, sid, (.24, -.05, .02), [((.025, -.02, .04), (.022, .045, .06), (0, 20, -30), 'Fin')])
+    def tail(part):
+        for y, z, r in ((.06, .33, .055), (-.05, .33, .05), (.0, .38, .06)):
+            ellipsoid(part, (0, y, z), (.04, r, r), S('Fin'), (0, 0, 0), 14, 8)
+    simple_part(root, 'Tail pivot', (0, 0, .28), tail)
+    def beads(part):
+        top = on_ellipsoid(R, 0, 80, 1.0)
+        dew_beads(part, sid, [(tuple(top + Vector((0, .03, -.02))), .04), (tuple(top + Vector((-.045, .015, .03))), .03),
+                              (tuple(top + Vector((.045, .015, .03))), .03)])
+    simple_part(root, 'Crest pivot', (0, .26, .0), beads)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Drizzler, a raincloud with drops beneath its fins
+def drizzler():
+    sid = 'drizzler'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaDrizzler')
+    Z0, Z1 = -.36, .32
+    prof = nose_profile(.48, .62, .27, .26, .25)
+    loft_creature(root, sid, Z0, Z1, prof, .16, 30, (.09, .106, .072), 30, .77, None, -12, (.046, .028, .016),
+                  -.038, (.034, .02, (1.15, .92, 1.0)), .62, .03, belly=lambda sn, t: sn < -.3 and .06 < t < .88)
+    # Cloud-puff fins with drizzle drops hanging below them.
+    for side, label in ((-1, 'Left'), (1, 'Right')):
+        pivot = (side * .24, -.03, -.02)
+        fin = Part(label + ' fin')
+        for off, r in (((.07, 0, .02), .055), ((.12, .01, .07), .045), ((.06, -.01, .09), .045)):
+            ellipsoid(fin, (pivot[0] + side * off[0], pivot[1] + off[1], pivot[2] + off[2]), (r, r * .6, r), S('Fin'), (0, 0, 0), 14, 8)
+        for k, (x, z) in enumerate(((.07, .03), (.12, .08))):
+            c = Vector((pivot[0] + side * x, pivot[1] - .07 - .02 * k, pivot[2] + z))
+            cone(fin, tuple(c + Vector((0, .035, 0))), tuple(c + Vector((0, .06, 0))), .012, S('Accent'), 8, 3, .1)
+            dew_beads(fin, sid, [(tuple(c), .02)])
+        make_object(fin, root, pivot, label + ' fin pivot')
+    def tail(part):
+        ellipsoid(part, (0, 0, .31), (.035, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .31), ((-30, .11, .055, S('Fin')), (30, .11, .055, S('Fin'))), .022)
+    simple_part(root, 'Tail pivot', (0, 0, .29), tail)
+    def beads(part):
+        dew_beads(part, sid, bead_row(prof, Z0, Z1, (.3, .44, .58, .7), (.034, .038, .032, .026)))
+    simple_part(root, 'Crest pivot', (0, .26, .0), beads)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Pearlpip, pearl-white with a big pearl and shell fins
+def pearlpip():
+    sid = 'pearlpip'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaPearlpip')
+    R = (.29, .28, .31)
+    round_creature(root, sid, R, 30, 10, (.09, .106, .074), 30, .83, (50, -14), (.048, .028, .016), -8,
+                   (.034, .02, (1.15, .95, 1.0)), .62, .03, -.4, 1.0, 1.16)
+    # Scalloped shell fins: three overlapping lobes.
+    side_fins(root, sid, (.26, -.05, .02), [((.04, -.02, .03), (.02, .05, .05), (0, 20, -40), 'Fin'),
+                                           ((.05, -.04, .07), (.02, .05, .05), (0, 30, -24), 'Fin'),
+                                           ((.03, -.06, .1), (.02, .045, .045), (0, 40, -10), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .32), (.035, .045, .045), S('Fin'), (0, 0, 0), 14, 8)
+        for a in (-40, 0, 40):
+            d = rot((0, 0, .08), (a, 0, 0))
+            ellipsoid(part, (0, d.y, .33 + d.z), (.022, .05, .06), S('Fin'), (a, 0, 0), 14, 8)
+    simple_part(root, 'Tail pivot', (0, 0, .3), tail)
+    def pearl(part):
+        top = on_ellipsoid(R, 0, 70, 1.0)
+        dew_beads(part, sid, [(tuple(top + Vector((0, .07, 0))), .07), (tuple(on_ellipsoid(R, 0, 88, 1.0) + Vector((0, .02, .06))), .03)])
+        torus(part, top + Vector((0, .015, 0)), .05, .014, S('Fin'), (1, 1, 1), 24, 8, (90, 0, 0))
+    simple_part(root, 'Crest pivot', (0, .27, -.06), pearl)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Haloling, a halo of dew beads above its head
+def haloling():
+    sid = 'haloling'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaHaloling')
+    Z0, Z1 = -.34, .32
+    prof = nose_profile(.5, .62, .25, .25, .23)
+    loft_creature(root, sid, Z0, Z1, prof, .17, 30, (.088, .104, .072), 30, .77, None, -12, (.046, .028, .016),
+                  -.036, (.032, .019, (1.15, .92, 1.0)), .62, .03)
+    side_fins(root, sid, (.22, -.04, -.02), [((.06, -.01, .04), (.07, .02, .06), (0, -10, -14), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, 0, .3), (.032, .045, .045), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, 0, .3), ((-28, .1, .05, S('Fin')), (28, .1, .05, S('Fin'))), .02)
+    simple_part(root, 'Tail pivot', (0, 0, .28), tail)
+    def halo(part):
+        # A ring of light floating over its head, set with six beads.
+        top = on_body(prof, Z0, Z1, .3, 90, 1.0)
+        c = Vector((0, top.y + .11, top.z))
+        torus(part, c, .12, .017, S('Accent'), (1, 1, 1), 40, 10, (90, 0, 0))
+        dew_beads(part, sid, [(tuple(c + Vector((.12 * math.cos(a), .0, .12 * math.sin(a)))), .024) for a in
+                              [math.tau * k / 6 for k in range(6)]], 'Belly')
+    simple_part(root, 'Crest pivot', (0, .24, -.06), halo)
+    return root
+
+# ---------------------------------------------------------------- Dewling: Rainskipper, sleek with long skipping fins
+def rainskipper():
+    sid = 'rainskipper'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaRainskipper')
+    Z0, Z1 = -.4, .36
+    prof = nose_profile(.34, .74, .19, .19, .17)
+    def lateral(body):
+        beads = []
+        for side in (-1, 1):
+            for t in (.3, .42, .54, .66):
+                p = on_body(prof, Z0, Z1, t, 0 if side > 0 else 180, 1.0)
+                beads.append((tuple(p + Vector((side * .006, 0, 0))), .016))
+        dew_beads(body, sid, beads)
+    loft_creature(root, sid, Z0, Z1, prof, .12, 30, (.076, .092, .064), 30, .76, None, -12, (.04, .024, .014),
+                  -.033, (.032, .018, (1.2, .82, 1.0)), .6, .026, extra=lateral, rings=32, seg=32)
+    side_fins(root, sid, (.15, -.04, -.06), [((.16, -.02, .06), (.2, .018, .055), (0, -14, -6), 'Fin')])
+    def tail(part):
+        ellipsoid(part, (0, .01, .35), (.03, .045, .05), S('Fin'), (0, 0, 0), 14, 8)
+        fan_tail(part, (0, .01, .35), ((-24, .15, .045, S('Fin')), (24, .15, .045, S('Fin'))), .02)
+    simple_part(root, 'Tail pivot', (0, .01, .33), tail)
+    def beads(part):
+        dew_beads(part, sid, bead_row(prof, Z0, Z1, (.3, .42), (.03, .026)))
+        ellipsoid(part, tuple(on_body(prof, Z0, Z1, .55, 90, 1.0) + Vector((0, .04, .03))), (.014, .045, .09), S('Fin'), (26, 0, 0), 14, 8)
+    simple_part(root, 'Crest pivot', (0, .19, .0), beads)
+    return root
+
+# ---------------------------------------------------------------- Dewling crown: Rainbow Regent, a rainbow tail and a pearl crown
+def rainbowregent():
+    sid = 'rainbowregent'; S = lambda slot: slot_name(sid, slot)
+    root = creature_root('DioramaRainbowregent')
+    Z0, Z1 = -.42, .42
+    prof = nose_profile(.46, .64, .3, .3, .27)
+    loft_creature(root, sid, Z0, Z1, prof, .15, 30, (.098, .116, .08), 30, .77, None, -12, (.05, .03, .017),
+                  -.04, (.04, .023, (1.2, .85, 1.0)), .62, .03)
+    side_fins(root, sid, (.25, -.05, -.02), [((.05, -.06, .12), (.026, .075, .18), (14, 22, -40), 'Fin'),
+                                            ((.04, -.1, .18), (.022, .06, .14), (26, 30, -58), 'Accent')])
+    def tail(part):
+        # A rainbow fan: five bands.
+        ellipsoid(part, (0, 0, .41), (.045, .06, .06), S('Fin'), (0, 0, 0), 14, 8)
+        for a, slot in ((-52, S('Accent')), (-26, 'DK_RainbowYellow'), (0, 'DK_RainbowGreen'), (26, S('Fin')), (52, S('Body'))):
+            d = rot((0, 0, .18), (a, 0, 0))
+            ellipsoid(part, (0, d.y, .42 + d.z), (.024, .06, .2), slot, (a, 0, 0), 20, 12)
+    simple_part(root, 'Tail pivot', (0, 0, .39), tail)
+    def crown(part):
+        top = on_body(prof, Z0, Z1, .26, 90, 1.0)
+        gold_crown(part, (0, top.y + .005, top.z), .09, 5, .08, 'DK_Gold', -10)
+        # A pearl on every point.
+        for k in range(5):
+            a = math.tau * (k + .5) / 5
+            base = Vector((0, top.y + .005, top.z)) + rot((.09 * math.cos(a), 0, .09 * math.sin(a)), (-10, 0, 0))
+            dew_beads(part, sid, [(tuple(base + rot((0, .1, 0), (-10, 0, 0))), .022)])
+    simple_part(root, 'Crest pivot', (0, .3, -.12), crown)
+    return root
+
+WAVE2_BUILDERS = {'emberpuff': emberpuff, 'cindertail': cindertail, 'coalbelly': coalbelly, 'sizzlesnout': sizzlesnout,
+                  'kindlekoi': kindlekoi, 'sootsnap': sootsnap, 'ashfin': ashfin, 'phoenixfry': phoenixfry,
+                  'dewdrop': dewdrop, 'fogfin': fogfin, 'mistlet': mistlet, 'drizzler': drizzler, 'pearlpip': pearlpip,
+                  'haloling': haloling, 'rainskipper': rainskipper, 'rainbowregent': rainbowregent}
+
 CREATURE_BUILDERS = {'pondlet': pondlet, 'bubblebelly': bubblebelly, 'ribbonfin': ribbonfin, 'lanternfin': lanternfin,
-                     'driftwing': driftwing, **WAVE1_BUILDERS}
+                     'driftwing': driftwing, **WAVE1_BUILDERS, **WAVE2_BUILDERS}
 assert [sid for sid, _, _, _ in SPECIES] == list(CREATURE_BUILDERS), 'every species has its builder, in the atlas order'
 
 # ================================================================ AD-C: the humanoid rig (front +Z)
@@ -2127,7 +2678,7 @@ if not args.no_render:
 blend = SOURCE / 'EvolutionShop_DioramaKit.blend'
 bpy.ops.wm.save_as_mainfile(filepath=str(blend))
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 wave 1)',
+    'schema': 1, 'title': 'Evolution Shop Pocket Aquarium Diorama kit (AD-A slice, AD-B creature families, AD-C characters, GR-12 waves 1 and 2)',
     'origin': {'author': 'Original local Blender authorship by Claude for Evolution Shop (generated from Tools/Art/create_diorama_kit.py)',
                'external_sources': [], 'license': 'Original project work; no third-party source or asset license',
                'paid_generation': False, 'external_uploads': False},

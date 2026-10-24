@@ -16,8 +16,8 @@ namespace EvolutionShop.Growth
 
         public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : null;
 
-        /// <summary>GR-12's families done so far (wave 1), shown in the AD look.</summary>
-        public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin" };
+        /// <summary>GR-12's families done so far (waves 1 and 2), shown in the AD look.</summary>
+        public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling" };
 
         /// <summary>The start of era 3: 3 stars, 1,200 credits, 45 RP, unit B, Bloom, Flow, Ember and Spark, the founders of
         /// the first families and four hybrids, the breeding tank, a Large tank, stocked tanks, levels 2-3.</summary>
@@ -121,11 +121,12 @@ namespace EvolutionShop.Growth
             return shop;
         }
 
-        /// <summary>GR-12's look at wave 1 (Docs/Evidence/gr-12/LOOK.md): the spaces start with shop unit C open, every Brookkin,
-        /// Sparkline and Airfin known in all four colours, and a Show tank for each family: the Brookkin on unit B's feature place
-        /// and the Sparkline and the Airfin on unit C's feature wall, each of its species in Classic and one other colour (Sunny,
-        /// Deep and Shimmer in turn); the Airfin's second colours, which the Show tank has no room for, in Large tanks on c3 and
-        /// c4.</summary>
+        /// <summary>GR-12's look at waves 1 and 2 (Docs/Evidence/gr-12/LOOK.md): the spaces start with shop unit C open, every
+        /// Brookkin, Sparkline, Airfin, Cinderling and Dewling known in all four colours, and a tank for each family: Show tanks for
+        /// the Brookkin on unit B's feature place and the Sparkline and the Airfin on unit C's feature wall, and Large tanks
+        /// (fitted to 16 spaces) for the Cinderling on c4 and the Dewling on c6, each of its species in Classic and one other
+        /// colour (Sunny, Deep and Shimmer in turn); the medium families' second colours, which their tanks have no room for, beside
+        /// them, the Airfin's on c3 and the Cinderling's on c5.</summary>
         public static GrowthShop CreaturesStart()
         {
             var shop = SpacesStart();
@@ -138,14 +139,20 @@ namespace EvolutionShop.Growth
                 foreach (Colour colour in System.Enum.GetValues(typeof(Colour)))
                     if (!shop.Journal.Contains(GrowthShop.JournalKey(s.Id, colour))) shop.Journal.Add(GrowthShop.JournalKey(s.Id, colour));
             }
-            foreach (var (kind, place) in new[] { ("show", "b4"), ("show", "c1"), ("show", "c2"), ("large", "c3"), ("large", "c4") })
+            foreach (var (kind, place) in new[] { ("show", "b4"), ("show", "c1"), ("show", "c2"), ("large", "c3"), ("large", "c4"), ("large", "c5"), ("large", "c6") })
+            {
                 shop.BuyContainer(kind, place);
+                // The Large tanks fitted to their third level (16 spaces), as a player would at night.
+                if (kind == "large") shop.ContainerAt(place).Level = 3;
+            }
             var others = new[] { Colour.Sunny, Colour.Deep, Colour.Shimmer };
-            var tankFor = new Dictionary<string, string> { { "brookkin", "b4" }, { "sparkline", "c1" }, { "airfin", "c2" } };
+            var tankFor = new Dictionary<string, string> { { "brookkin", "b4" }, { "sparkline", "c1" }, { "airfin", "c2" }, { "cinderling", "c4" }, { "dewling", "c6" } };
+            var besideFor = new Dictionary<string, string> { { "airfin", "c3" }, { "cinderling", "c5" } };
             // Every species in Classic in its family's tank first, then its second colour there while it has room, else beside it.
             foreach (var s in wave) Stock(shop, tankFor[s.Family], s.Id, Colour.Classic);
             for (int i = 0; i < wave.Count; i++)
-                if (!Stock(shop, tankFor[wave[i].Family], wave[i].Id, others[i % 3]) && !Stock(shop, "c3", wave[i].Id, others[i % 3])) Stock(shop, "c4", wave[i].Id, others[i % 3]);
+                if (!Stock(shop, tankFor[wave[i].Family], wave[i].Id, others[i % 3]) && besideFor.TryGetValue(wave[i].Family, out var beside))
+                    Stock(shop, beside, wave[i].Id, others[i % 3]);
             shop.Credits = 20000;
             shop.TakeEvents();
             return shop;

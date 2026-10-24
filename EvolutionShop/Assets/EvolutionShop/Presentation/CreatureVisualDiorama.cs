@@ -14,14 +14,15 @@ namespace EvolutionShop
         readonly List<Material> dioramaMaterials = new List<Material>();
         readonly Dictionary<string, Material> dioramaSlots = new Dictionary<string, Material>();
         SkinnedMeshRenderer dioramaBody, dioramaLids, dioramaLips;
-        Transform dioramaPupils, dioramaLipsPoint, dioramaLantern, dioramaLanternPoint;
+        Transform dioramaPupils, dioramaLipsPoint, dioramaLantern, dioramaLanternPoint, dioramaCrestPoint;
+        Vector3 dioramaCrestScale = Vector3.one;
         Material dioramaGlow;
         Color dioramaGlowBase;
         Vector3 dioramaPupilRest;
         Quaternion dioramaLanternRest;
         DioramaSpecies dioramaSpecies;
         int bodyPuffed = -1, lidBlink = -1, lidHappy = -1, lipHappy = -1, lipSurprised = -1;
-        float faceHappy = .2f, faceSurprised, facePuffed, faceBlink, actionGlow, actionTail, actionFins;
+        float faceHappy = .2f, faceSurprised, facePuffed, faceBlink, actionGlow, actionTail, actionFins, actionFlare;
         Vector3 lookTarget;
         bool lookTargetSet;
 
@@ -32,6 +33,9 @@ namespace EvolutionShop
         public Transform DioramaLips => dioramaLipsPoint;
         /// <summary>The lantern's bulb (Sparkline), where its flash sparkles; null for the other families.</summary>
         public Transform DioramaLanternPoint => dioramaLanternPoint;
+        /// <summary>GR-12: the top of the crest (the Cinderling's spine tips, the Dewling's dew beads), where their sparks and
+        /// droplets fly from; null without a crest mesh.</summary>
+        public Transform DioramaCrestPoint => dioramaCrestPoint;
         public Material DioramaGlowMaterial => dioramaGlow;
 
         /// <summary>Extra container scale: a kit creature reads about twice as large in display tanks and the incubator.</summary>
@@ -61,6 +65,19 @@ namespace EvolutionShop
             model.localScale = Vector3.one * spec.ModelScale;
             tail = model.Find("Tail pivot"); finLeft = model.Find("Left fin pivot"); finRight = model.Find("Right fin pivot");
             crest = model.Find("Crest pivot");
+            dioramaCrestPoint = null;
+            if (crest)
+            {
+                dioramaCrestScale = crest.localScale;
+                var crestMesh = crest.GetComponent<MeshFilter>();
+                if (crestMesh && crestMesh.sharedMesh)
+                {
+                    var b = crestMesh.sharedMesh.bounds;
+                    dioramaCrestPoint = new GameObject("Diorama crest point").transform;
+                    dioramaCrestPoint.SetParent(crest, false);
+                    dioramaCrestPoint.localPosition = new Vector3(b.center.x, b.max.y, b.center.z);
+                }
+            }
             foreach (var material in dioramaMaterials) if (material) dioramaSlots[material.name.Replace("Diorama / ", "")] = material;
             dioramaBody = Skinned(model, "Body"); dioramaLids = Skinned(model, "Lids"); dioramaLips = Skinned(model, "Lips");
             dioramaPupils = model.Find("Pupils");
@@ -124,11 +141,11 @@ namespace EvolutionShop
             faceHappy = happy; faceSurprised = surprised; facePuffed = puffed; faceBlink = blink;
         }
         /// <summary>A trick's or habit's extras for the next pose: lantern glow (0 at rest, about 3 for a flash), extra tail
-        /// swing and extra fin spread, in degrees.</summary>
-        public void SetDioramaAction(float glow, float tail, float fins)
+        /// swing and extra fin spread, in degrees, and (GR-12) the Cinderling's spines flaring (0 at rest, 1 blazing).</summary>
+        public void SetDioramaAction(float glow, float tail, float fins, float flare = 0)
         {
             actionGlow = FxParticleRequest.Finite(glow) ? glow : 0; actionTail = FxParticleRequest.Finite(tail) ? tail : 0;
-            actionFins = FxParticleRequest.Finite(fins) ? fins : 0;
+            actionFins = FxParticleRequest.Finite(fins) ? fins : 0; actionFlare = FxParticleRequest.Finite(flare) ? Mathf.Clamp(flare, 0, 1.5f) : 0;
         }
         public void SetLookTarget(Vector3 world) { lookTarget = world; lookTargetSet = true; }
         public void ClearLookTarget() { lookTargetSet = false; }
@@ -184,6 +201,24 @@ namespace EvolutionShop
                     crestRoll = Mathf.Sin(t * 2.1f * tempo - 1) * 5 * drive;
                     break;
                 }
+                case DioramaFamily.Cinderling:
+                {
+                    // A slow, strong beat of the tail, the chunky body following, its spines swaying like embers.
+                    float w = 3f * tempo;
+                    float beat = Mathf.Sin(t * w), delayed = Mathf.Sin(t * w - .7f);
+                    tailYaw = delayed * 18 * drive; finRoll = beat * 10 * drive; finRollOther = delayed * 10 * drive;
+                    finPitch = beat * 5 * drive; crestRoll = Mathf.Sin(t * w * .5f - 1.1f) * 4 * drive;
+                    break;
+                }
+                case DioramaFamily.Dewling:
+                {
+                    // Little round fins paddling quickly in turn, and a short flutter of the tail.
+                    float w = 5.4f * tempo;
+                    float paddle = Mathf.Sin(t * w), other = Mathf.Sin(t * w - Mathf.PI * .5f);
+                    tailYaw = Mathf.Sin(t * w - .6f) * 10 * drive; finRoll = paddle * 16 * drive; finRollOther = other * 16 * drive;
+                    finPitch = paddle * 7 * drive; crestRoll = Mathf.Sin(t * w * .4f) * 3 * drive;
+                    break;
+                }
                 case DioramaFamily.Sparkline:
                 {
                     float w = 4.6f * tempo;
@@ -207,7 +242,12 @@ namespace EvolutionShop
             if (tail) tail.localRotation = pondletTailRest * Quaternion.Euler(0, tailAngle, 0);
             if (finLeft) finLeft.localRotation = pondletLeftRest * Quaternion.Euler(finPitch, 0, -finRoll - wake.Fin - spread);
             if (finRight) finRight.localRotation = pondletRightRest * Quaternion.Euler(-finPitch, 0, finRollOther + wake.Fin + spread);
-            if (crest) crest.localRotation = pondletCrestRest * Quaternion.Euler(0, 0, crestRoll + wake.Crest);
+            if (crest)
+            {
+                crest.localRotation = pondletCrestRest * Quaternion.Euler(0, 0, crestRoll + wake.Crest);
+                // GR-12: the Cinderling's spines flare, standing taller from their roots (never with Reduced motion).
+                crest.localScale = dioramaCrestScale * (1 + (reduced ? 0 : actionFlare) * .3f);
+            }
             if (dioramaLantern) dioramaLantern.localRotation = dioramaLanternRest * Quaternion.Euler(reduced ? 0 : Mathf.Sin(t * 1.7f) * 5 * drive, 0, 0);
         }
 
