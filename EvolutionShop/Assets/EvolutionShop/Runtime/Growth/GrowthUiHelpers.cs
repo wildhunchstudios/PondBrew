@@ -6,10 +6,10 @@ using UnityEngine.UIElements;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-09's cards (GR.10): the staff board (who could work here, what each needs and does, hiring at night) and each
-    /// helper's card (their level and what the next one gives, their duty and wage, training at night, what they are doing
-    /// now, and their job's settings: Nori's stock targets, which the sorter shares; Moss's known recipe and known pair, and
-    /// at level 2 which of the two he runs).
+    /// GR-09's cards (GR.10) in GR-13's style: the staff board (each helper as a panel: who they are, what they need and
+    /// cost, or their level, duty and wage, hiring at night) and each helper's card, Job (their duty and what they are
+    /// doing; their job's settings: Nori's stock targets, which the sorter shares; Moss's known recipe and known pair, and
+    /// at level 2 which of the two he runs) and Training (a track of their levels, the next one with its price).
     /// </summary>
     public sealed partial class GrowthUi
     {
@@ -27,40 +27,54 @@ namespace EvolutionShop
             }
         }
 
-        VisualElement Section(VisualElement body, string title)
+        /// <summary>A helper's round badge with their initial.</summary>
+        static VisualElement Avatar(HelperDef def)
         {
-            var section = new VisualElement(); section.style.marginTop = 12; section.style.borderTopWidth = 2; section.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); section.style.paddingTop = 8;
-            var head = Text(title); head.style.unityFontStyleAndWeight = FontStyle.Bold; section.Add(head);
-            body.Add(section);
-            return section;
+            var a = Box("gr-avatar");
+            a.Add(L(def.Name.Substring(0, 1), "gr-avatar__letter"));
+            return a;
         }
 
         void FillStaff()
         {
             var shop = s.Shop;
-            var body = Head("Staff board", shop.Staff.Count + " of " + GrowthContent.Helpers.Length + " hired");
-            Live(body);
-            body.Add(Text("Helpers are hired and trained at night. Each is paid a wage for a night and the day after it, when the night starts; one the shop cannot pay stays home and says so, and comes back when you call them."));
+            var body = Head("Staff board", "", null, "Helpers are hired and trained at night. Each is paid a wage for a night and the day after it, when the night starts; one the shop cannot pay stays home and says so, and comes back when you call them.");
+            LiveStatus();
             foreach (var def in GrowthContent.Helpers)
             {
-                var section = Section(body, def.Name + ", " + def.Job);
                 var h = shop.Helper(def.Id);
                 string id = def.Id;
-                if (h != null)
+                var panel = Box("gr-benefit");
+                panel.tooltip = Duties(id);
+                var top = Box("gr-row"); top.style.flexWrap = Wrap.NoWrap;
+                top.Add(Avatar(def));
+                var words = Box("gr-result__text");
+                words.Add(L(def.Name + ", " + def.Job, "gr-strong"));
+                words.Add(L(h != null ? "Level " + h.Level + " · " + (h.OnDuty ? "on duty" : "home") + " · " + def.Wages[h.Level - 1] + " credits a night and day. " + h.Status + "." :
+                    GrowthShop.LevelText(id, 1) + ".", "gr-hint"));
+                top.Add(words);
+                if (h != null) top.Add(Link("Open", () => s.SetCard(GrowthCard.Helper, id)));
+                panel.Add(top);
+                if (h == null)
                 {
-                    section.Add(Text("Level " + h.Level + " · " + (h.OnDuty ? "on duty" : "home") + " · " + def.Wages[h.Level - 1] + " credits a night and day. " + h.Status + "."));
-                    section.Add(Button("Open " + def.Name + "'s card", () => s.SetCard(GrowthCard.Helper, id)));
-                    continue;
+                    var failure = shop.HireCheck(id, out string why);
+                    var chips = Gates(0, def.Stars, def.Fee + def.Wages[0], 0, true);
+                    // The deed it waits for (150 sales, a Large tank, a powered generator), coral until done.
+                    string deed = def.Gate.Contains(" and ") ? def.Gate.Substring(def.Gate.IndexOf(" and ") + 5) : def.Gate;
+                    string later = shop.HelperAchievement(id);
+                    chips.Insert(0, Chip(char.ToUpperInvariant(deed[0]) + deed.Substring(1), later != null, later));
+                    LockChip(chips, failure, why);
+                    panel.Add(chips);
+                    var hire = Wide("Hire " + def.Name + " for " + (def.Fee + def.Wages[0]) + " cr (the fee and tonight's wage)", () => { if (s.Act(() => shop.Hire(id)).Success) s.SetCard(GrowthCard.Helper, id); }, true, failure == GrowthFailure.None, why);
+                    hire.style.marginTop = 10; hire.style.marginBottom = 0;
+                    panel.Add(hire);
                 }
-                section.Add(Text(Duties(id), "es-text--muted"));
-                section.Add(Text("Needs " + def.Gate + ". The fee is " + def.Fee + " credits, then " + def.Wages[0] + " a night and day.", "es-text--muted"));
-                var failure = shop.HireCheck(id, out string why);
-                section.Add(Button(failure == GrowthFailure.None ? "Hire " + def.Name + " for " + (def.Fee + def.Wages[0]) + " cr (the fee and tonight's wage)" : why,
-                    () => { if (s.Act(() => shop.Hire(id)).Success) s.SetCard(GrowthCard.Helper, id); }, true, failure == GrowthFailure.None));
+                body.Add(panel);
             }
             Footer(body);
         }
 
+        /// <summary>GR-13's helper card: Job (duty, what they are doing, their job's settings) and Training.</summary>
         void FillHelper(string id)
         {
             var shop = s.Shop;
@@ -69,33 +83,39 @@ namespace EvolutionShop
             if (def == null || h == null)
             {
                 var none = Head(def?.Name ?? "Helper", "not hired");
-                none.Add(Text("Hire them at the staff board, on the shop's north wall."));
+                none.Add(L("Hire them at the staff board, on the shop's north wall.", "gr-hint"));
                 Footer(none);
                 return;
             }
-            var body = Head(def.Name + ", " + def.Job, "level " + h.Level);
-            Live(body);
-            body.Add(Text(GrowthShop.LevelText(id, h.Level) + "."));
+            var body = Head(def.Name + ", " + def.Job, "", "Job", Duties(id) + " Hired and trained at night; paid a wage for a night and the day after it.");
+            LiveStatus();
+            body.Add(L(GrowthShop.LevelText(id, h.Level) + ".", "gr-strong"));
             int wage = def.Wages[h.Level - 1];
             bool paid = h.PaidPeriod == shop.Period;
-            var duty = Row();
-            var dutyText = Text(h.OnDuty ? "On duty: " + wage + " credits a night and day, paid when the night starts." : "Home: no wage. " + (paid ? "Tonight is paid: calling " + def.Name + " back costs nothing." : "Calling " + def.Name + " back pays tonight's wage (" + wage + " credits)."));
-            dutyText.style.width = 330; dutyText.style.flexGrow = 1; duty.Add(dutyText);
             bool on = h.OnDuty;
-            duty.Add(Button(on ? "Send home" : paid ? "Call back" : "Call back for " + wage + " cr", () => s.Act(() => shop.SetDuty(id, !on)), !on));
+            var duty = Item(on ? "On duty" : "Home", on ? wage + " credits a night and day, paid when the night starts" : paid ? "Tonight is paid: calling " + def.Name + " back costs nothing" : "No wage; calling " + def.Name + " back pays tonight's " + wage + " credits",
+                Button(on ? "Send home" : paid ? "Call back" : "Call back for " + wage + " cr", () => s.Act(() => shop.SetDuty(id, !on)), !on));
+            duty.style.marginTop = 10;
             body.Add(duty);
-            var train = Section(body, "Training");
-            if (h.Level >= 3) train.Add(Text("Highest level.", "es-text--muted"));
+            if (id == "pip")
+                body.Add(L("Pip takes the front of the queue. " + (shop.SecondTill ? "At the second till you serve beside Pip: while you hold the counter the front of the queue is yours, and Pip takes the visitor behind." : "You serve only at the counter's second till (its level 4) while Pip is at work."), "gr-hint"));
+            else if (id == "nori") { var targets = Box("gr-section"); targets.style.marginTop = 10; TargetsSection(targets, "No targets yet: Nori moves nothing to the shop's tanks until you set some."); body.Add(targets); }
+            else MossSection(body, h);
+            // Training: their levels on a track, the next one with its price.
+            var train = AddTab("Training");
+            train.Add(L(def.Name + " · level " + h.Level + " of 3", "gr-upgrade__head"));
+            train.Add(Track(3, h.Level, h.Level < 3 ? h.Level + 1 : -1, n => n + ". " + GrowthShop.LevelText(id, n) + " · " + def.Wages[n - 1] + " credits a night and day" + (n > 1 ? " · training " + def.TrainCosts[n - 2] + " cr" : "")));
+            if (h.Level >= 3) train.Add(L("Highest level.", "gr-hint"));
             else
             {
-                train.Add(Text("Level " + (h.Level + 1) + ": " + GrowthShop.LevelText(id, h.Level + 1) + ". The wage rises to " + def.Wages[h.Level] + " from the next night.", "es-text--muted"));
                 var failure = shop.TrainCheck(id, out string why);
-                train.Add(Button(failure == GrowthFailure.None ? "Train to level " + (h.Level + 1) + " for " + def.TrainCosts[h.Level - 1] + " cr" : why, () => s.Act(() => shop.Train(id)), true, failure == GrowthFailure.None));
+                int cost = def.TrainCosts[h.Level - 1];
+                var chips = Gates(0, 0, cost, 0, true);
+                LockChip(chips, failure, why);
+                train.Add(Benefit("Level " + (h.Level + 1), GrowthShop.LevelText(id, h.Level + 1), "The wage rises to " + def.Wages[h.Level] + " from the next night.", chips));
+                train.Add(Wide("Train to level " + (h.Level + 1) + " for " + cost + " cr", () => s.Act(() => shop.Train(id)), true, failure == GrowthFailure.None,
+                    failure == GrowthFailure.NotEnoughCredits ? cost - shop.Credits + " more credits" : why));
             }
-            if (id == "pip")
-                body.Add(Text("Pip takes the front of the queue. " + (shop.SecondTill ? "At the second till you serve beside Pip: while you hold the counter the front of the queue is yours, and Pip takes the visitor behind." : "You serve only at the counter's second till (its level 4) while Pip is at work."), "es-text--muted"));
-            else if (id == "nori") TargetsSection(body, "No targets yet: Nori moves nothing to the shop's tanks until you set some.");
-            else MossSection(body, h);
             Footer(body);
         }
 
@@ -103,22 +123,27 @@ namespace EvolutionShop
         void TargetsSection(VisualElement body, string empty)
         {
             var shop = s.Shop;
-            var section = Section(body, "Stock targets");
+            body.Add(L("Stock targets", "gr-label"));
             var known = GrowthContent.Species.Where(x => shop.Discovered.Contains(x.Id)).Select(x => x.Id).ToList();
-            section.Add(Text(shop.StockTargets.Count == 0 ? empty :
-                "Targets: " + string.Join(", ", known.Where(sp => shop.Target(sp) > 0).Select(sp => GrowthContent.Get(sp).Name + " " + shop.Shown(sp) + "/" + shop.Target(sp))) + ". Below its target, a species goes to the shop's tanks; the rest to the racks.", "es-text--muted"));
+            var summary = L(shop.StockTargets.Count == 0 ? empty :
+                "Targets: " + string.Join(", ", known.Where(sp => shop.Target(sp) > 0).Select(sp => GrowthContent.Get(sp).Name + " " + shop.Shown(sp) + "/" + shop.Target(sp))) + ".", "gr-hint");
+            summary.tooltip = "Below its target, a species goes to the shop's tanks; the rest to the racks.";
+            body.Add(summary);
             if (known.Count == 0) return;
             if (targetPick == null || !known.Contains(targetPick)) targetPick = known.FirstOrDefault(sp => shop.Target(sp) > 0) ?? known[0];
-            int at = known.IndexOf(targetPick);
-            var row = Row();
-            row.Add(Button("◀", () => { targetPick = known[(at + known.Count - 1) % known.Count]; RefreshCard(); }, false, known.Count > 1));
-            var label = Text(GrowthContent.Get(targetPick).Name + " · in the shop " + shop.Shown(targetPick) + " · in racks " + shop.Racked(targetPick) + " · target " + shop.Target(targetPick));
-            label.style.width = 300; label.style.flexGrow = 1; label.style.flexShrink = 1; row.Add(label);
-            row.Add(Button("▶", () => { targetPick = known[(at + 1) % known.Count]; RefreshCard(); }, false, known.Count > 1));
             string pick = targetPick;
-            row.Add(Button("−", () => s.Act(() => shop.SetTarget(pick, shop.Target(pick) - 1)), false, shop.Target(pick) > 0));
-            row.Add(Button("+", () => s.Act(() => shop.SetTarget(pick, shop.Target(pick) + 1)), true, shop.Target(pick) < GrowthShop.MostTarget));
-            section.Add(row);
+            int target = shop.Target(pick);
+            var row = Box("gr-pair"); row.style.marginTop = 10;
+            row.Add(Picker(known, pick, v => targetPick = v, sp => "in the shop " + shop.Shown(sp) + " · in racks " + shop.Racked(sp)));
+            var set = Box("gr-dose"); set.style.backgroundColor = new Color(0.914f, 0.949f, 0.941f); set.style.marginLeft = 10; set.style.marginBottom = 0;
+            set.Add(PlusMinus("−", () => s.Act(() => shop.SetTarget(pick, target - 1)), target > 0, "No target to lower"));
+            var words = Box("gr-dose__text");
+            words.Add(L("Target " + target, "gr-dose__name"));
+            words.Add(L(target == 0 ? "none set" : "kept in the shop", "gr-dose__count"));
+            set.Add(words);
+            set.Add(PlusMinus("+", () => s.Act(() => shop.SetTarget(pick, target + 1)), target < GrowthShop.MostTarget, "The most is " + GrowthShop.MostTarget));
+            row.Add(set);
+            body.Add(row);
         }
 
         static string RecipeText(string species)
@@ -131,29 +156,30 @@ namespace EvolutionShop
         void MossSection(VisualElement body, GrowthHelper h)
         {
             var shop = s.Shop;
-            var recipe = Section(body, "Recipe");
+            var recipe = Box("gr-section"); recipe.style.marginTop = 10; body.Add(recipe);
+            recipe.Add(L("Recipe", "gr-label"));
             var founders = GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder && shop.Discovered.Contains(x.Id)).Select(x => x.Id).ToList();
-            recipe.Add(Text(shop.MossRecipe == null ? "No recipe chosen yet." : "Running a " + GrowthContent.Get(shop.MossRecipe).Name + ": " + RecipeText(shop.MossRecipe) + ". " + shop.MossBatches + " batch" + (shop.MossBatches == 1 ? "" : "es") + " so far."));
-            if (founders.Count == 0) recipe.Add(Text("No founder made yet: Moss runs only recipes you have made.", "es-text--muted"));
+            recipe.Add(L(shop.MossRecipe == null ? "No recipe chosen yet." : "Running a " + GrowthContent.Get(shop.MossRecipe).Name + ": " + RecipeText(shop.MossRecipe) + ". " + shop.MossBatches + " batch" + (shop.MossBatches == 1 ? "" : "es") + " so far.", "gr-hint"));
+            if (founders.Count == 0) recipe.Add(L("No founder made yet: Moss runs only recipes you have made.", "gr-hint"));
             else
             {
                 if (mossRecipePick == null || !founders.Contains(mossRecipePick)) mossRecipePick = shop.MossRecipe ?? founders[0];
-                int at = founders.IndexOf(mossRecipePick);
-                var row = Row();
-                row.Add(Button("◀", () => { mossRecipePick = founders[(at + founders.Count - 1) % founders.Count]; RefreshCard(); }, false, founders.Count > 1));
-                var label = Text(GrowthContent.Get(mossRecipePick).Name + " · " + RecipeText(mossRecipePick)); label.style.width = 260; label.style.flexGrow = 1; label.style.flexShrink = 1; row.Add(label);
-                row.Add(Button("▶", () => { mossRecipePick = founders[(at + 1) % founders.Count]; RefreshCard(); }, false, founders.Count > 1));
                 string pick = mossRecipePick;
+                var row = Box("gr-pair"); row.style.marginTop = 8;
+                row.Add(Picker(founders, pick, v => mossRecipePick = v, RecipeText));
                 var failure = shop.MossRecipeCheck(pick, out string why);
                 bool chosen = pick == shop.MossRecipe;
-                row.Add(Button(chosen ? "Running" : failure == GrowthFailure.None ? "Run it" : why, () => s.Act(() => shop.SetMossRecipe(pick)), true, !chosen && failure == GrowthFailure.None));
+                var run = Button(chosen ? "Running" : "Run it", () => s.Act(() => shop.SetMossRecipe(pick)), true, !chosen && failure == GrowthFailure.None, chosen ? null : why);
+                run.style.marginLeft = 10;
+                row.Add(run);
                 recipe.Add(row);
             }
-            var pair = Section(body, "Pair");
-            if (h.Level < 2) { pair.Add(Text("At level 2, Moss keeps a pair you have bred breeding.", "es-text--muted")); return; }
-            pair.Add(Text(shop.MossPairA == null ? "No pair chosen yet." : "Keeping a " + GrowthContent.Get(shop.MossPairA).Name + " and a " + GrowthContent.Get(shop.MossPairB).Name + " breeding."));
+            var pair = Box("gr-section"); body.Add(pair);
+            pair.Add(L("Pair", "gr-label"));
+            if (h.Level < 2) { pair.Add(L("At level 2, Moss keeps a pair you have bred breeding.", "gr-hint")); return; }
+            pair.Add(L(shop.MossPairA == null ? "No pair chosen yet." : "Keeping a " + GrowthContent.Get(shop.MossPairA).Name + " and a " + GrowthContent.Get(shop.MossPairB).Name + " breeding.", "gr-hint"));
             var log = shop.PairLog;
-            if (log.Count == 0) pair.Add(Text("No pair bred yet: Moss keeps only pairs you have bred.", "es-text--muted"));
+            if (log.Count == 0) pair.Add(L("No pair bred yet: Moss keeps only pairs you have bred.", "gr-hint"));
             else
             {
                 if (mossPairPick < 0 || mossPairPick >= log.Count)
@@ -163,18 +189,25 @@ namespace EvolutionShop
                 }
                 int at = mossPairPick;
                 var entry = log[at];
-                var row = Row();
-                row.Add(Button("◀", () => { mossPairPick = (at + log.Count - 1) % log.Count; RefreshCard(); }, false, log.Count > 1));
-                var label = Text(GrowthContent.Get(entry.A).Name + " and " + GrowthContent.Get(entry.B).Name + " make a " + GrowthContent.Get(entry.Species).Name); label.style.width = 260; label.style.flexGrow = 1; label.style.flexShrink = 1; row.Add(label);
-                row.Add(Button("▶", () => { mossPairPick = (at + 1) % log.Count; RefreshCard(); }, false, log.Count > 1));
+                var row = Box("gr-pair"); row.style.marginTop = 8;
+                var picker = Box("gr-picker");
+                picker.Add(PlusMinus("◀", () => mossPairPick = (at + log.Count - 1) % log.Count, log.Count > 1, "Only one pair bred"));
+                var words = Box("gr-picker__words");
+                words.Add(L(GrowthContent.Get(entry.A).Name + " and " + GrowthContent.Get(entry.B).Name + " make a " + GrowthContent.Get(entry.Species).Name, "gr-tile__name"));
+                picker.Add(words);
+                picker.Add(PlusMinus("▶", () => mossPairPick = (at + 1) % log.Count, log.Count > 1, "Only one pair bred"));
+                row.Add(picker);
                 bool chosen = shop.MossPairA != null && shop.PairEntry(shop.MossPairA, shop.MossPairB) == entry;
-                row.Add(Button(chosen ? "Breeding" : "Keep them breeding", () => s.Act(() => shop.SetMossPair(entry.A, entry.B)), true, !chosen));
+                var keep = Button(chosen ? "Breeding" : "Keep them breeding", () => s.Act(() => shop.SetMossPair(entry.A, entry.B)), true, !chosen);
+                keep.style.marginLeft = 10;
+                row.Add(keep);
                 pair.Add(row);
             }
-            var job = Section(body, "Job");
-            if (h.Level >= 3) { job.Add(Text("At level 3 Moss does both, in turn.", "es-text--muted")); return; }
-            job.Add(Text("At level 2 Moss runs one of the two jobs; at level 3 both.", "es-text--muted"));
-            var jobs = Row();
+            var job = Box("gr-section"); body.Add(job);
+            job.Add(L("Job", "gr-label"));
+            if (h.Level >= 3) { job.Add(L("At level 3 Moss does both, in turn.", "gr-hint")); return; }
+            job.Add(L("At level 2 Moss runs one of the two jobs; at level 3 both.", "gr-hint"));
+            var jobs = Box("gr-row");
             bool recipeJob = shop.MossTask == GrowthShop.MossRecipeJob;
             jobs.Add(Button("Run the recipe", () => s.Act(() => shop.SetMossTask(GrowthShop.MossRecipeJob)), recipeJob, !recipeJob));
             jobs.Add(Button("Keep the pair breeding", () => s.Act(() => shop.SetMossTask(GrowthShop.MossPairJob)), !recipeJob, recipeJob));

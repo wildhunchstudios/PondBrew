@@ -66,7 +66,8 @@ namespace EvolutionShop
         /// <summary>The generator's place, the power board and the buffer places (their dashed squares until bought).</summary>
         void LabStations()
         {
-            ghostOk = Transparent("GR pipe preview", new Color(0.55f, 0.95f, 0.75f, 0.45f));
+            // GR-13: the ghost is honey where the pipe fits, coral where it is refused (the mockup).
+            ghostOk = Transparent("GR pipe preview", new Color(0.98f, 0.78f, 0.37f, 0.5f));
             ghostBad = Transparent("GR pipe preview (refused)", new Color(0.95f, 0.45f, 0.35f, 0.45f));
             lampOk = Glow("GR power lamp ok", new Color(0.45f, 0.95f, 0.55f), 0.5f);
             lampSlow = Glow("GR power lamp slow", new Color(1f, 0.72f, 0.25f), 0.5f);

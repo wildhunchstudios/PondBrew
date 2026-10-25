@@ -425,7 +425,7 @@ namespace EvolutionShop
             LookAt(new Vector3(1.0f, 0, -0.6f), new Vector3(8.0f, 1.0f, 0.5f)); yield return Shot("18-unit-b-open");
             LookAt(new Vector3(9.5f, 0, -2.6f), new Vector3(4.0f, 1.2f, 1.0f)); yield return Shot("19-unit-b-inside");
             s.SetCard(GrowthCard.Board); yield return Shot("20-pinboard"); s.SetCard(GrowthCard.None);
-            s.SetCard(GrowthCard.Journal); yield return Shot("21-journal"); s.SetCard(GrowthCard.None);
+            s.SetCard(GrowthCard.Journal); s.Ui.ShowTabNamed("Creatures"); yield return Shot("21-journal"); s.SetCard(GrowthCard.None);
 
             // Save and reload: the same shop comes back.
             Check(s.SaveNow(), "Save");

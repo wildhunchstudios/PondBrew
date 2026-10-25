@@ -129,7 +129,7 @@ namespace EvolutionShop
             // Moss's card: a known recipe, run by hand from the growers.
             s.SetCard(GrowthCard.Helper, "moss");
             card = s.Ui.CardText();
-            Check(card.Contains("Runs one known recipe.") && card.Contains("No recipe chosen yet.") && card.Contains("Pondlet · 1 Bloom, 1 Flow") && card.Contains("Run it") &&
+            Check(card.Contains("Runs one known recipe.") && card.Contains("No recipe chosen yet.") && card.Contains("Pondlet") && card.Contains("1 Bloom, 1 Flow") && card.Contains("Run it") &&
                 card.Contains("At level 2, Moss keeps a pair you have bred breeding."), "Moss's card (the staff card's Open button): choose a known recipe; the pair comes with level 2");
             Ok(s.Act(() => shop.SetMossRecipe("pondlet")), "Moss runs the Pondlet (the card's Run it button)");
             s.SetCard(GrowthCard.None);

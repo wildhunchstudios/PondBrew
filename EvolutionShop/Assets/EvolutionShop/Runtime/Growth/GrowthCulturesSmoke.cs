@@ -50,6 +50,7 @@ namespace EvolutionShop
             Check(journal.Contains("Bloom · grower · level 1") && journal.Contains("Ember · where to get it: supplier catalog, page 2") && journal.Contains("Spark · where to get it: research at the pinboard: 10 research points")
                 && journal.Contains("Mist · where to get it: supplier catalog, page 3") && journal.Contains("Dusk · where to get it: research"),
                 "The journal's Cultures page lists all seven: Bloom and Flow owned, the rest with where to get them");
+            s.Ui.ShowTabNamed("Cultures"); yield return null;
             yield return Shot("60-journal-cultures");
             s.SetCard(GrowthCard.None);
             Check(GrowthWorld.GrowerPositions.Count == 7 && !s.World.HasSource("ember"), "The back room has a slot for each of the seven sources; Ember's is empty");
@@ -62,7 +63,7 @@ namespace EvolutionShop
             yield return Press(Key.E);
             Check(s.Card == GrowthCard.Catalog, "E opens the supplier catalog");
             string catalog = s.Ui.CardText();
-            Check(catalog.Contains("Ember grower · 150 credits") && catalog.Contains("Order for 150 cr") && catalog.Contains("Catalog page 4: needs 4 stars") && catalog.Contains("Page 3 · 3 stars (opens at 3 stars)"),
+            Check(catalog.Contains("Ember grower") && catalog.Contains("150 credits") && catalog.Contains("Order for 150 cr") && catalog.Contains("Catalog page 4: needs 4 stars") && catalog.Contains("Page 3 · 3 stars") && catalog.Contains("Opens at 3 stars"),
                 "The catalog's pages: page 2 open (the Ember grower for 150 credits), pages 3 and 4 waiting for their stars");
             yield return Shot("62-catalog");
             Ok(s.Act(() => shop.Order("grower-ember")), "Order the Ember grower");
@@ -135,7 +136,8 @@ namespace EvolutionShop
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Board, null, "The reticle focuses the pinboard on the back room's east wall");
             yield return Press(Key.E);
-            Check(s.Card == GrowthCard.Board && s.Ui.CardText().Contains("Research Spark · 10 RP") && s.Ui.CardText().Contains("Dusk: Needs era 5"), "The pinboard offers Spark's research for 10 research points; Dusk waits for era 5");
+            Check(s.Card == GrowthCard.Board && s.Ui.CardText().Contains("Research Spark · 10 RP") && s.Ui.CardText().Contains("Research Dusk · ") && s.Ui.CardText().Contains("Needs era 5"), "The pinboard offers Spark's research for 10 research points; Dusk waits for era 5");
+            s.Ui.ShowTabNamed("Research"); yield return null;
             yield return Shot("67-research");
             int rp = shop.Rp;
             Ok(s.Act(() => shop.Research("spark")), "Research Spark");
@@ -177,6 +179,7 @@ namespace EvolutionShop
             journal = s.Ui.CardText();
             Check(journal.Contains("Mist · conditioning vat") && journal.Contains("Spark · researched, its grower") && journal.Contains("Brine · grower from the supplier") && !journal.Contains("where to get it"),
                 "The journal's Cultures page shows all seven owned with their sources");
+            s.Ui.ShowTabNamed("Cultures"); yield return null;
             yield return Shot("71-journal-all");
             s.SetCard(GrowthCard.None);
 

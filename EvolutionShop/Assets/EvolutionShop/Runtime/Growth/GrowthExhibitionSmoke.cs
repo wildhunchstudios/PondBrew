@@ -34,7 +34,7 @@ namespace EvolutionShop
             yield return Press(Key.E);
             string card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Board && card.Contains("Now · Era 1 · Back room") && card.Contains("Next: era 2 · Real shop") && card.Contains("Gate: 2 stars, 3 creatures discovered, 2 tanks") &&
-                card.Contains("Discover creatures: 0 / 72 · Journal: 0 / 288 · Exhibition: 0 of 6 requirements") && card.Contains("· Discover 48 of the 72 creatures (0/48)") && card.Contains("· Discover 5 of the 9 crowns (0/5)"),
+                card.Contains("Discover creatures: 0 / 72 · Journal: 0 / 288 · Exhibition: 0 of 6 requirements") && card.Contains("Discover 48 of the 72 creatures (0/48)") && card.Contains("Discover 5 of the 9 crowns (0/5)"),
                 "E opens the pinboard: now (era 1's goal and steps), next (era 2 and its gate) and the long goal with the Grand Exhibition's requirements, from the first night");
             yield return Shot("150-board-first-night");
             s.SetCard(GrowthCard.None);
@@ -56,7 +56,7 @@ namespace EvolutionShop
             Check(s.FocusName(out string status) == "Exhibition hall" && status == "E the Grand Exhibition", "It is the Grand Exhibition's board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Hall && card.Contains("The Grand Exhibition") && card.Contains("✓ Discover 48 of the 72 creatures (48/48)") && card.Contains("On display: 5 different crowns (0/5)") &&
+            Check(s.Card == GrowthCard.Hall && card.Contains("The Grand Exhibition") && shop.ExhibitionOpen && card.Contains("Discover 48 of the 72 creatures (48/48)") && card.Contains("On display: 5 different crowns (0/5)") &&
                 card.Contains("Put 5 different crowns on display in tanks on the spotlit places (0/5)"), "E opens its card: every requirement met, no crown on display, preparing waits for five");
             yield return Shot("152-exhibition-card");
             s.SetCard(GrowthCard.None);

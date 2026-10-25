@@ -35,7 +35,7 @@ namespace EvolutionShop
         /// </summary>
         VisualElement Head(string title, string status = "", string tab = null, string info = null, bool shopStrip = false)
         {
-            tabList.Clear(); tabRow = null; footer = null; infoChip = null;
+            tabList.Clear(); tabRow = null; footer = null; infoChip = null; notebook = false;
             strip = new VisualElement(); strip.AddToClassList("es-card__strip"); strip.AddToClassList("gr-strip"); strip.style.flexShrink = 0;
             if (shopStrip) strip.AddToClassList("es-card__strip--shop");
             var top = new VisualElement(); top.AddToClassList("gr-strip__top");
@@ -66,16 +66,80 @@ namespace EvolutionShop
             return tab != null ? AddTab(tab) : cardBody;
         }
 
+        /// <summary>
+        /// GR-13's planning view (the classic notebook, UX-06): a wide sheet over the dimmed shop with its title and a line,
+        /// tabs when <paramref name="tab"/> is given, a body that fits, and a footer (<see cref="NotebookFooter"/>).
+        /// </summary>
+        VisualElement Notebook(string title, string subtitle, string tab = null)
+        {
+            tabList.Clear(); tabRow = null; footer = null; infoChip = null; notebook = true;
+            var head = Box("gr-nb__head");
+            head.Add(L(title, "gr-nb__title"));
+            statusLabel = L(subtitle ?? "", "gr-nb__subtitle");
+            head.Add(statusLabel);
+            var close = new Button(() => s.SetCard(GrowthCard.None)) { text = "×", tooltip = "Close (Esc)" }; close.AddToClassList("gr-close"); close.AddToClassList("gr-nb__close");
+            head.Add(close);
+            card.Add(head);
+            if (tab != null) { tabRow = Box("gr-nb__tabs"); card.Add(tabRow); }
+            var scroll = new ScrollView(ScrollViewMode.Vertical); scroll.AddToClassList("gr-nb__body");
+            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            card.Add(scroll);
+            cardBody = scroll.contentContainer;
+            return tab != null ? AddTab(tab) : cardBody;
+        }
+
+        /// <summary>A planning view's footer: Esc and the way back, a line of its own, and its main button.</summary>
+        void NotebookFooter(string back, Action main = null, string mainText = null, string line = null)
+        {
+            var row = Box("gr-nb__foot");
+            row.Add(L("Esc", "es-keycap"));
+            var t = L(back, "gr-foot__text"); row.Add(t);
+            if (line != null) row.Add(L(line, "gr-hint"));
+            if (main != null) { var b = Button(mainText ?? back, main, true); b.style.marginLeft = 16; b.style.marginTop = 0; row.Add(b); }
+            footer = row;
+            card.Add(row);
+        }
+
+        bool notebook;
+        /// <summary>The page shown of the open view's pager (the journal's families), kept while it stays open.</summary>
+        int pageShown;
+
+        /// <summary>
+        /// Pages a list instead of scrolling it (the journal's families): each page built, one shown, with ◀ page n of m ▶
+        /// under them.
+        /// </summary>
+        void Pager(VisualElement body, IList<VisualElement> pages, string what)
+        {
+            int at = pageShown = Mathf.Clamp(pageShown, 0, Mathf.Max(0, pages.Count - 1));
+            var holder = Box("gr-pages");
+            for (int i = 0; i < pages.Count; i++) { pages[i].AddToClassList("gr-page"); pages[i].style.display = i == at ? DisplayStyle.Flex : DisplayStyle.None; holder.Add(pages[i]); }
+            body.Add(holder);
+            if (pages.Count < 2) return;
+            var nav = Box("gr-row", "gr-pager");
+            nav.Add(PlusMinus("◀", () => pageShown = at - 1, at > 0, "The first page"));
+            nav.Add(L(what + " · page " + (at + 1) + " of " + pages.Count, "gr-pager__words"));
+            nav.Add(PlusMinus("▶", () => pageShown = at + 1, at < pages.Count - 1, "The last page"));
+            body.Add(nav);
+        }
+
+        /// <summary>Whether something on the open card is on a tab or page not shown.</summary>
+        bool Hidden(VisualElement e)
+        {
+            for (var v = e; v != null && v != card; v = v.parent) if (v.style.display.value == DisplayStyle.None) return true;
+            return false;
+        }
+
         /// <summary>Adds a tab and its body (built now, shown when chosen; the footer stays last).</summary>
         VisualElement AddTab(string name)
         {
             var body = new VisualElement { name = "gr-tab-" + name.ToLowerInvariant() };
             body.AddToClassList("gr-body");
             var b = new Button(() => { tabChosen = name; ShowTab(); }) { text = name };
-            b.AddToClassList("gr-tab");
+            b.AddToClassList(notebook ? "gr-nb-tab" : "gr-tab");
             tabRow.Insert(tabList.Count, b);
             if (footer != null && footer.parent == cardBody) cardBody.Insert(cardBody.IndexOf(footer), body); else cardBody.Add(body);
             tabList.Add((b, body));
+            tabRow.EnableInClassList("gr-tabs--many", !notebook && tabList.Count >= 4);
             ShowTab();
             return body;
         }
@@ -219,35 +283,138 @@ namespace EvolutionShop
             var shop = s.Shop;
             var block = Box("gr-upgrade");
             block.Add(L(head, "gr-upgrade__head"));
-            var track = Box("gr-track");
-            foreach (var l in levels)
-            {
-                if (l.Level > 1) { var line = Box("gr-lv-line"); if (l.Level <= now) line.AddToClassList("gr-lv-line--done"); track.Add(line); }
-                var dot = L(l.Level.ToString(), "gr-lv");
-                if (l.Level <= now) dot.AddToClassList("gr-lv--done"); else if (next != null && l.Level == next.Level) dot.AddToClassList("gr-lv--next");
-                dot.tooltip = LevelLine(l, now);
-                track.Add(dot);
-            }
-            block.Add(track);
+            block.Add(Track(levels.Length, now, next?.Level ?? -1, n => LevelLine(levels.First(l => l.Level == n), now)));
             if (next == null) { block.Add(L("Highest level: every change is in.", "gr-hint")); return block; }
-            var benefit = Box("gr-benefit");
-            benefit.Add(Eyebrow("Level " + next.Level));
-            benefit.Add(L(next.Change, "gr-strong"));
-            var chips = Box("gr-chips");
-            chips.Add(Chip("Era " + next.Era, shop.Era < next.Era));
-            if (next.Stars > 0) chips.Add(Chip(Stars(next.Stars), shop.Stars < next.Stars));
-            chips.Add(Chip(next.Credits + " credits", shop.Credits < next.Credits));
-            if (next.Rp > 0) chips.Add(Chip(next.Rp + " RP", shop.Rp < next.Rp));
-            // A lock the price and gates don't cover (busy, at night, another station first) is a chip of its own.
-            bool gate = why != null && (why.StartsWith("Needs ") || failure == GrowthFailure.None);
-            if (failure != GrowthFailure.None && !gate) chips.Add(Chip(why, true));
-            benefit.Add(chips);
-            block.Add(benefit);
+            var chips = Gates(next.Era, next.Stars, next.Credits, next.Rp, false);
+            LockChip(chips, failure, why);
+            block.Add(Benefit("Level " + next.Level, next.Change, null, chips));
             string reason = failure == GrowthFailure.NotEnoughCredits ? next.Credits - shop.Credits + " more credits" : why;
             block.Add(Wide(verb + " · " + Cost(next), buy, true, failure == GrowthFailure.None, reason));
             var after = levels.FirstOrDefault(l => l.Level == next.Level + 1);
             if (after != null) { var then = L("Then, at level " + after.Level + ": " + after.Change, "gr-hint"); then.style.unityTextAlign = TextAnchor.MiddleCenter; block.Add(then); }
             return block;
+        }
+
+        // ---------------------------------------------------------------- wave 2's pieces
+
+        /// <summary>A track of levels: those done filled, the next ringed, each level's words on hover.</summary>
+        static VisualElement Track(int count, int now, int next, Func<int, string> tip)
+        {
+            var track = Box("gr-track");
+            for (int level = 1; level <= count; level++)
+            {
+                if (level > 1) { var line = Box("gr-lv-line"); if (level <= now) line.AddToClassList("gr-lv-line--done"); track.Add(line); }
+                var dot = L(level.ToString(), "gr-lv");
+                if (level <= now) dot.AddToClassList("gr-lv--done"); else if (level == next) dot.AddToClassList("gr-lv--next");
+                dot.tooltip = tip(level);
+                track.Add(dot);
+            }
+            return track;
+        }
+
+        /// <summary>What something needs, as chips: the era, stars, credits, research points and the night; one not met in coral.</summary>
+        VisualElement Gates(int era, int stars, int credits, int rp, bool night)
+        {
+            var shop = s.Shop;
+            var chips = Box("gr-chips");
+            if (era > 0) chips.Add(Chip("Era " + era, shop.Era < era));
+            if (stars > 0) chips.Add(Chip(Stars(stars), shop.Stars < stars));
+            if (credits > 0) chips.Add(Chip(credits + " credits", shop.Credits < credits));
+            if (rp > 0) chips.Add(Chip(rp + " RP", shop.Rp < rp));
+            if (night) chips.Add(Chip("At night", shop.Phase != GrowthPhase.Night));
+            return chips;
+        }
+
+        /// <summary>A lock the gates don't cover (busy, at night, another room first) is a chip of its own.</summary>
+        static void LockChip(VisualElement chips, GrowthFailure failure, string why)
+        {
+            if (failure == GrowthFailure.None || failure == GrowthFailure.NotAtNight && chips.Children().OfType<Label>().Any(c => c.text == "At night")) return;
+            if (why != null && !why.StartsWith("Needs ")) chips.Add(Chip(why, true));
+        }
+
+        /// <summary>A panel saying what something gives: an eyebrow, a title, a line and its chips.</summary>
+        static VisualElement Benefit(string eyebrow, string title, string line, VisualElement chips)
+        {
+            var benefit = Box("gr-benefit");
+            if (eyebrow != null) benefit.Add(Eyebrow(eyebrow));
+            benefit.Add(L(title, "gr-strong"));
+            if (line != null) { var h = L(line, "gr-hint"); h.style.marginTop = 4; benefit.Add(h); }
+            if (chips != null) benefit.Add(chips);
+            return benefit;
+        }
+
+        /// <summary>
+        /// GR-13's purchase on a card (a room, a place's buffer or rack): what it gives in a panel with its gates as chips,
+        /// and its button, which says why on hover; a purchase that opens something closes the card.
+        /// </summary>
+        void BuyPanel(VisualElement body, string eyebrow, string title, string line, VisualElement gates, GrowthFailure failure, string why, string button, Func<GrowthResult> buy, bool close = true)
+        {
+            LockChip(gates, failure, why);
+            body.Add(Benefit(eyebrow, title, line, gates));
+            body.Add(Wide(button, () => { if (s.Act(buy).Success && close) s.SetCard(GrowthCard.None); }, true, failure == GrowthFailure.None, why));
+        }
+
+        /// <summary>A status as a pill in words: 0 going, 1 slowed, 2 waiting.</summary>
+        static Label Pill(string text, int tone)
+        {
+            var p = L(text, "gr-pill");
+            p.AddToClassList(tone == 0 ? "gr-pill--go" : tone == 1 ? "gr-pill--slow" : "gr-pill--wait");
+            return p;
+        }
+
+        /// <summary>A bar read at a glance: a part filled in a colour, and optionally a second part after it in another.</summary>
+        static VisualElement Bar(float part01, Color fill, float second01 = 0, Color? second = null)
+        {
+            var bar = Box("gr-bar");
+            var a = Box("gr-bar__fill"); a.style.width = new Length(Mathf.Clamp01(part01) * 100, LengthUnit.Percent); a.style.backgroundColor = fill; bar.Add(a);
+            if (second01 > 0 && second.HasValue) { var b = Box("gr-bar__fill"); b.style.width = new Length(Mathf.Clamp01(second01) * 100, LengthUnit.Percent); b.style.backgroundColor = second.Value; bar.Add(b); }
+            return bar;
+        }
+
+        /// <summary>A row on a card: a title and a line, and what can be done with it at its end.</summary>
+        static VisualElement Item(string title, string line, params VisualElement[] end)
+        {
+            var row = Box("gr-item");
+            var words = Box("gr-result__text");
+            words.Add(L(title, "gr-item__title"));
+            if (!string.IsNullOrEmpty(line)) words.Add(L(line, "gr-hint"));
+            row.Add(words);
+            foreach (var e in end) if (e != null) row.Add(e);
+            return row;
+        }
+
+        /// <summary>A laid pipe or chute: where it runs and how it is doing, and Take it down at night.</summary>
+        VisualElement PipeItem(string title, string status, int id)
+        {
+            var shop = s.Shop;
+            bool night = shop.Phase == GrowthPhase.Night;
+            var take = Link("Take it down", () => s.Act(() => shop.RemovePipe(id)), night, "Pipes are taken down at night");
+            return Item(title, status, take);
+        }
+
+        /// <summary>A big number with a word under it (the generator's units, the counter's stock).</summary>
+        static VisualElement Stat(string number, string words)
+        {
+            var stat = Box("gr-stat");
+            stat.Add(L(number, "gr-stat__number"));
+            stat.Add(L(words, "gr-hint"));
+            return stat;
+        }
+
+        /// <summary>A picker: ◀ the shown name and its line ▶, stepping through a list (the planner's two, the targets' species).</summary>
+        VisualElement Picker(List<string> ids, string now, Action<string> set, Func<string, string> line)
+        {
+            int at = ids.IndexOf(now);
+            var pick = Box("gr-picker");
+            pick.Add(PlusMinus("◀", () => set(ids[(at + ids.Count - 1) % ids.Count]), ids.Count > 1, "Only one to choose"));
+            var words = Box("gr-picker__words");
+            var def = GrowthContent.Get(now);
+            var g = new GrowthGlyph(GrowthCreatureView.ColourOf(def)); g.AddToClassList("gr-tile__glyph"); words.Add(g);
+            words.Add(L(def.Name, "gr-tile__name"));
+            if (line != null) words.Add(L(line(now), "gr-dose__count"));
+            pick.Add(words);
+            pick.Add(PlusMinus("▶", () => set(ids[(at + 1) % ids.Count]), ids.Count > 1, "Only one to choose"));
+            return pick;
         }
 
         // ---------------------------------------------------------------- the hover tip (UX.3.3)
@@ -302,6 +469,8 @@ namespace EvolutionShop
             if (pendingScroll == null || card == null) return;
             var label = card.Query<Label>().ToList().FirstOrDefault(l => l.text.StartsWith(pendingScroll));
             if (label == null) { pendingScroll = null; return; }
+            // On a tab or page not shown, ScrollTo shows it first and asks again.
+            if (Hidden(label)) { ScrollTo(pendingScroll); return; }
             if (float.IsNaN(label.layout.height) || label.layout.height <= 0) return;
             string want = pendingScroll; pendingScroll = null;
             ScrollTo(want);
@@ -353,9 +522,13 @@ namespace EvolutionShop
         float progress;
         public readonly Label TimeLabel;
 
-        public GrowthRing()
+        readonly bool small;
+
+        public GrowthRing(bool small = false)
         {
+            this.small = small;
             AddToClassList("gr-ring");
+            if (small) AddToClassList("gr-ring--small");
             pickingMode = PickingMode.Ignore;
             TimeLabel = new Label(); TimeLabel.AddToClassList("gr-ring__time");
             Add(TimeLabel);
@@ -374,9 +547,9 @@ namespace EvolutionShop
             Rect r = contentRect;
             if (r.width <= 0 || r.height <= 0) return;
             Vector2 c = r.center;
-            float radius = Mathf.Min(r.width, r.height) * 0.5f - 8f;
+            float radius = Mathf.Min(r.width, r.height) * 0.5f - (small ? 6f : 8f);
             var p = context.painter2D;
-            p.lineWidth = 14f; p.lineCap = LineCap.Round;
+            p.lineWidth = small ? 10f : 14f; p.lineCap = LineCap.Round;
             p.strokeColor = Track;
             p.BeginPath(); p.Arc(c, radius, Angle.Degrees(0), Angle.Degrees(360)); p.Stroke();
             if (progress <= 0.001f) return;
