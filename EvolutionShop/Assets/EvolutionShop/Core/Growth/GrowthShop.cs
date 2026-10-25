@@ -140,7 +140,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide }
 
     public sealed class GrowthEvent
     {
@@ -1159,6 +1159,7 @@ namespace EvolutionShop.Growth
             // Visitors who left are gone once they have walked out (the presentation walks them in that time).
             foreach (var v in Visitors) if (v.State == GrowthVisitorState.Leaving) v.Clock += Phase == GrowthPhase.Day ? 0 : seconds;
             Visitors.RemoveAll(v => v.State == GrowthVisitorState.Leaving && v.Clock >= LeaveSeconds);
+            TickGuide();
         }
 
         void TickDay(float seconds)
@@ -1472,6 +1473,7 @@ namespace EvolutionShop.Growth
             SaveLine(save);
             SaveHelpers(save);
             SaveExhibition(save);
+            SaveGuide(save);
             return save;
         }
 
@@ -1592,7 +1594,7 @@ namespace EvolutionShop.Growth
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -1606,7 +1608,8 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>10: GR-11 (the Grand Exhibition: prepared, under way or held, its six purchases, the crowns on display, its results);
+        /// <summary>11: GR-14 (the guided first night: on, done or skipped; older saves have none);
+        /// 10: GR-11 (the Grand Exhibition: prepared, under way or held, its six purchases, the crowns on display, its results);
         /// 9: GR-10 (shop unit C and the exhibition hall finish);
         /// 8: GR-09 (the helpers: their levels, duty and wages paid, the step each is on and what they carry; Moss's jobs);
         /// 7: GR-08 (the workshop, racks, the sorter and its chute, stock targets, the line's days, the analyzer's hint);
@@ -1614,7 +1617,7 @@ namespace EvolutionShop.Growth
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1669,6 +1672,8 @@ namespace EvolutionShop.Growth
         public int mossBatches;
         /// <summary>Comfort settings kept with the slot: peek on or off, reduced motion.</summary>
         public bool peekOff, reducedMotion;
+        /// <summary>GR-14: the guided first night ("" for none, "on", "done" or "skipped").</summary>
+        public string guide;
         public float sensitivity = 1;
 
         [Serializable] public sealed class Specimen

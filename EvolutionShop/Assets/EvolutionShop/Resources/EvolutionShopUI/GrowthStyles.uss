@@ -1470,3 +1470,16 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* GR-14: the guided first night's marker (HudStyles' es-arrow): above the thing to use, its label on top of the disc. */
+.gr-guide {
+    position: absolute;
+}
+
+.gr-guide--over {
+    flex-direction: column-reverse;
+}
+
+.gr-guide--over .es-arrow__label {
+    margin: 0 0 6px 0;
+}

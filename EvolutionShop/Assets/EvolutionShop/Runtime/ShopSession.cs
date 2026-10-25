@@ -51,8 +51,8 @@ namespace EvolutionShop
         }
         void Awake()
         {
-            // GR-02: when the grow-from-nothing greybox is asked for (development builds and the Editor only), it runs
-            // in place of the classic game, with its own session and save file; the classic code below never starts.
+            // GR-14: the grow-from-nothing shop is the game; it runs, with its own session and save file, unless the classic
+            // game is asked for (-evolutionClassic, the Editor's classic menu or a classic tool's flag). Then the code below.
             if (GrowthGreybox.Requested) { gameObject.AddComponent<GrowthSession>(); enabled = false; Destroy(this); return; }
             Application.targetFrameRate = 120;
             Config = GameConfig.CreateDefault();

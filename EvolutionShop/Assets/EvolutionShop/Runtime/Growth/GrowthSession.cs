@@ -9,34 +9,57 @@ using UnityEngine.InputSystem;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-02's switch (GR.15): the grow-from-nothing greybox runs instead of the classic game only in development builds
-    /// and the Editor, when asked for (-evolutionGrowth, its validation route, or the Editor menu). Release builds never see it.
+    /// GR-14's switch (GR.43): the new game is the game. It runs unless the classic game is asked for: with
+    /// -evolutionClassic, the Editor's classic menu, or any of the classic game's own tools (its validation routes and
+    /// probes, each asked for by a flag the new game doesn't know). Until GR-14 the new game ran only when asked for, in
+    /// development builds and the Editor (GR-02's switch).
     /// </summary>
     public static class GrowthGreybox
     {
-        public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke", EditorFlag = "EvolutionShop.GrowthGreybox",
+        public const string Argument = "-evolutionGrowth", SmokeArgument = "-evolutionGrowthSmoke",
             TanksSmokeArgument = "-evolutionGrowthTanksSmoke", DensitySmokeArgument = "-evolutionGrowthDensitySmoke", CulturesSmokeArgument = "-evolutionGrowthCulturesSmoke",
             BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke", PowerSmokeArgument = "-evolutionGrowthPowerSmoke",
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
-            ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke";
+            ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
+            GuideSmokeArgument = "-evolutionGrowthGuideSmoke", ClassicArgument = "-evolutionClassic", ClassicEditorFlag = "EvolutionShop.ClassicGame";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), or null.</summary>
+        /// <summary>The flags both games take: where evidence goes, the routes' synthetic input and video encoder, and the build's revision.</summary>
+        static readonly string[] SharedFlags = { "-evolutionEvidence", "-evolutionIsolateSyntheticInput", "-evolutionFxReviewEncoder", "-evolutionBuildRevision" };
+
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : null;
+        /// <summary>
+        /// Whether a command line asks for the classic game: -evolutionClassic, the classic default route (-evolutionSmoke with no
+        /// new-game route), or a flag only the classic game's tools use (such as -evolutionCycleSmoke, -evolutionNativeQa or
+        /// -evolutionStaffReload). The new game's own flags (-evolutionGrowth...) and the shared ones don't.
+        /// </summary>
+        public static bool ClassicAsked(IReadOnlyList<string> args)
+        {
+            bool smoke = false, newRoute = false;
+            foreach (string a in args)
+            {
+                if (a == null || !a.StartsWith("-evolution", StringComparison.Ordinal)) continue;
+                if (a == ClassicArgument) return true;
+                if (a == "-evolutionSmoke") { smoke = true; continue; }
+                if (a.StartsWith("-evolutionGrowth", StringComparison.Ordinal)) { if (a.EndsWith("Smoke", StringComparison.Ordinal)) newRoute = true; continue; }
+                if (Array.IndexOf(SharedFlags, a) >= 0) continue;
+                return true;
+            }
+            return smoke && !newRoute;
+        }
+
+        /// <summary>Whether the new game runs (GR-14: unless the classic game is asked for).</summary>
         public static bool Requested
         {
             get
             {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 #if UNITY_EDITOR
-                if (UnityEditor.SessionState.GetBool(EditorFlag, false)) return true;
+                if (UnityEditor.SessionState.GetBool(ClassicEditorFlag, false)) return false;
 #endif
-                return ShopSession.Arg(Argument) != null || SmokeRoute != null;
-#else
-                return false;
-#endif
+                return !ClassicAsked(Environment.GetCommandLineArgs());
             }
         }
     }
@@ -101,7 +124,10 @@ namespace EvolutionShop
                 SavePath = Path.Combine(Application.persistentDataPath, (start == GrowthStarts.Creatures ? "growth-gr12-" : start == GrowthStarts.Exhibition ? "growth-gr11-" : start == GrowthStarts.Spaces ? "growth-gr10-" : "growth-gr07-") + start + ".json");
             }
             string notice = null;
-            Shop = StartPoint != null && !File.Exists(SavePath) ? GrowthStarts.Make(StartPoint) : LoadOrNew(SavePath, out notice);
+            bool fresh = !File.Exists(SavePath);
+            Shop = StartPoint != null && fresh ? GrowthStarts.Make(StartPoint) : LoadOrNew(SavePath, out notice);
+            // GR-14: a brand new game starts with the guided first night (never a start point, an old save or a route).
+            if (fresh && StartPoint == null && !ValidationMode) Shop.Guide = GrowthGuideMode.On;
             Notice = notice;
             var camera = new GameObject("Player camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
@@ -149,7 +175,7 @@ namespace EvolutionShop
             // Never lose a save silently: the unreadable one is kept beside the new one.
             string kept = Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + ".unreadable-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json");
             try { File.Move(path, kept); } catch (Exception) { kept = path; }
-            notice = "The greybox save could not be read (" + problem + "), so a new shop started. The old file is kept: " + Path.GetFileName(kept);
+            notice = "The save could not be read (" + problem + "), so a new shop started. The old file is kept: " + Path.GetFileName(kept);
             Debug.LogWarning(notice);
             return new GrowthShop();
         }
@@ -171,10 +197,11 @@ namespace EvolutionShop
             catch (Exception e) { Debug.LogError("GR-02 save failed: " + e.Message); return false; }
         }
 
-        /// <summary>Starts a brand new greybox shop (the pause menu's Start over); the classic game is untouched.</summary>
+        /// <summary>Starts a brand new shop (the pause menu's Start over), with the guided first night (GR-14); the classic game is untouched.</summary>
         public void StartOver()
         {
             Shop = StartPoint != null ? GrowthStarts.Make(StartPoint) : new GrowthShop();
+            if (StartPoint == null && !ValidationMode) Shop.Guide = GrowthGuideMode.On;
             World.ResetForNewShop();
             World.Sync(Shop, 0);
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));

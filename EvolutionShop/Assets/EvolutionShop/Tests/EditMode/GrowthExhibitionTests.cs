@@ -300,7 +300,7 @@ namespace EvolutionShop.Tests
             var shop = Ready();
             Assert.That(shop.PrepareExhibition().Success, Is.True);
             var save = shop.Snapshot();
-            Assert.That(save.version, Is.EqualTo(10));
+            Assert.That(save.version, Is.GreaterThanOrEqualTo(10), "version 10 or later (GR-14 is 11)");
             string json = JsonUtility.ToJson(save);
             var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(json), out string problem);
             Assert.That(problem, Is.Null);

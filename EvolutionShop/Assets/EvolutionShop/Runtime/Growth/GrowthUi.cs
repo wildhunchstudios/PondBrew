@@ -167,6 +167,7 @@ namespace EvolutionShop
             eventBox = Note("gr-toast--event", ShopUiTheme.Symbol.Star, out eventLabel);
             toastBox = Note(null, ShopUiTheme.Symbol.Leaf, out toastLabel);
             top.Add(eventBox); top.Add(toastBox); hud.Add(top);
+            BuildGuide();
         }
 
         static VisualElement ModeKey(string key, string words)
@@ -203,8 +204,10 @@ namespace EvolutionShop
             creditsLabel.text = shop.Credits.ToString();
             for (int i = 0; i < stars.Count; i++) stars[i].style.unityBackgroundImageTintColor = i < shop.Stars ? Color.white : new Color(0.78f, 0.72f, 0.58f, 0.45f);
             rpLabel.text = shop.Rp > 0 ? shop.Rp + " RP" : "";
-            // GR-13: one next step, the first goal still to do (the pinboard and the journal have the whole list).
-            string next = shop.Objectives().Where(g => !g.done).Select(g => g.text).FirstOrDefault() ?? shop.EraGoal;
+            // GR-13: one next step, the first goal still to do (the pinboard and the journal have the whole list); during the
+            // guided first night (GR-14), the guide's step.
+            var guide = shop.GuideNow();
+            string next = guide?.Text ?? shop.Objectives().Where(g => !g.done).Select(g => g.text).FirstOrDefault() ?? shop.EraGoal;
             bool free = s.Card == GrowthCard.None;
             // A label measured while hidden, or before its font had drawn its glyphs, keeps that width: measure it again for the
             // frames after it changes or shows (setting its words anew makes it measure itself again).
@@ -228,6 +231,7 @@ namespace EvolutionShop
                 modeLay.style.display = s.PipeReady ? DisplayStyle.Flex : DisplayStyle.None;
                 nextBox.style.display = DisplayStyle.None;
             }
+            TickGuideMarker(guide, free && !piping);
             string name = free && !piping ? s.FocusName(out string status) : null;
             promptBox.style.display = name == null ? DisplayStyle.None : DisplayStyle.Flex;
             if (name != null)
@@ -1370,7 +1374,8 @@ namespace EvolutionShop
 
         void FillWelcome()
         {
-            var body = Notebook("Evolution Shop", "the new start (GR-02 greybox)");
+            bool guided = s.Shop.Guide == GrowthGuideMode.On;
+            var body = Notebook("Evolution Shop", guided ? "your first night" : "Day " + s.Shop.Day + " · Era " + s.Shop.Era);
             body.Add(L("A tiny shop and a back room. Make creatures, fill your first tank, sell them, and grow.", "gr-strong"));
             var steps = new[]
             {
@@ -1387,7 +1392,17 @@ namespace EvolutionShop
                 step.Add(L(steps[i], "gr-step__text"));
                 body.Add(step);
             }
-            body.Add(L("This is a greybox: its own save. The classic game is untouched.", "gr-hint"));
+            // GR-14: the guided first night, and a word on the classic game's save, kept as it was.
+            if (guided)
+            {
+                var guide = Box("gr-callout"); guide.style.marginTop = 10;
+                guide.Add(L("Your first night is guided: a marker shows the next thing to use, and the line at the bottom says what to do. Skip it any time from the pause menu (Esc).", "gr-strong"));
+                var skip = Link("Play without guidance", () => { s.Shop.SkipGuide(); s.SaveNow(); s.SetCard(GrowthCard.None); });
+                skip.style.alignSelf = Align.FlexStart; skip.style.marginLeft = 0; skip.style.marginTop = 8;
+                guide.Add(skip);
+                body.Add(guide);
+            }
+            if (ClassicSaveKept) body.Add(L("Your shop from the classic game is kept as it was: Play-classic starts it.", "gr-hint"));
             if (s.Notice != null) { var notice = Box("gr-callout"); notice.style.marginTop = 10; notice.Add(L(s.Notice, "gr-hint")); body.Add(notice); }
             NotebookFooter("Start", () => s.SetCard(GrowthCard.None), "Start");
         }
@@ -1399,8 +1414,10 @@ namespace EvolutionShop
             body.Add(Item("Peek", "look closely at a tank's glass to read each creature", ChipButton(s.PeekOn ? "On" : "Off", () => { s.PeekOn = !s.PeekOn; s.SaveNow(); }, true)));
             body.Add(Item("Reduced motion", "no creature tricks, gentler movement", ChipButton(s.ReducedMotion ? "On" : "Off", () => { s.ReducedMotion = !s.ReducedMotion; s.SaveNow(); }, true)));
             body.Add(Item("Mouse", "how far the view turns", ChipButton(s.Sensitivity.ToString("0.0") + "×", () => { s.Sensitivity = s.Sensitivity >= 2f ? 0.5f : s.Sensitivity + 0.25f; s.SaveNow(); }, true)));
+            if (s.Shop.Guide == GrowthGuideMode.On)
+                body.Add(Item("Guided first night", "a marker and the line at the bottom show what to do next", ChipButton("Skip it", () => { s.Shop.SkipGuide(); s.SaveNow(); }, true)));
             var danger = Box("gr-row"); danger.style.marginTop = 14;
-            var over = Button("Start over (new greybox shop)", () => s.StartOver()); over.RemoveFromClassList("es-button--secondary"); over.AddToClassList("es-button--danger");
+            var over = Button("Start over (a new shop)", () => s.StartOver()); over.RemoveFromClassList("es-button--secondary"); over.AddToClassList("es-button--danger");
             danger.Add(over);
             danger.Add(Button("Save and quit", () => { s.SaveNow(); Application.Quit(); }));
             body.Add(danger);
