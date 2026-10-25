@@ -149,6 +149,8 @@ namespace EvolutionShop
             partition = ShopWorld.MakeMaterial("GR partition", new Color(0.78f, 0.74f, 0.66f), 0, 0.2f);
             sign = ShopWorld.MakeMaterial("GR sign", new Color(0.84f, 0.38f, 0.27f), 0, 0.2f);
             foreach (var c in GrowthContent.Cultures) culture[c.Id] = ShopWorld.MakeMaterial("GR culture " + c.Id, Hex(c.Hex), 0, 0.6f);
+            // GR-16: the look's palette for everything built from here on (GrowthWorldLook).
+            if (LookOn) RestyleForLook();
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(.72f, .78f, .84f);
@@ -184,6 +186,8 @@ namespace EvolutionShop
             tanksRoot = new GameObject("Tanks").transform; tanksRoot.SetParent(transform, false);
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
+            // GR-16: the dressed rooms and stations, and the look's light (GrowthWorldLook).
+            if (LookOn) { DressRooms(); DressStations(); BuildLookLight(); }
         }
 
         Light Lamp(string name, Vector3 position, float range, float intensity)
@@ -524,7 +528,7 @@ namespace EvolutionShop
             if (shop.IncubatorTint != null && !tintedDome.TryGetValue(shop.IncubatorTint, out domeWant))
             {
                 var tint = Hex(GrowthContent.Culture(shop.IncubatorTint).Hex); tint.a = 0.3f;
-                tintedDome[shop.IncubatorTint] = domeWant = Transparent("GR incubator dome " + shop.IncubatorTint, tint);
+                tintedDome[shop.IncubatorTint] = domeWant = TintedDome("GR incubator dome " + shop.IncubatorTint, tint);
             }
             if (incubatorDome.sharedMaterial != domeWant) incubatorDome.sharedMaterial = domeWant;
             SyncLevelLooks(shop);
@@ -534,6 +538,7 @@ namespace EvolutionShop
             SyncHelpers(shop);
             SyncSpaces(shop);
             SyncExhibition(shop);
+            if (LookOn) TickLook(shop, dt);
         }
 
         // ---------------------------------------------------------------- the breeding tank (GR-05)
@@ -588,7 +593,7 @@ namespace EvolutionShop
             if (shop.Tint != null && !tintedWater.TryGetValue(shop.Tint, out want))
             {
                 var tint = Hex(GrowthContent.Culture(shop.Tint).Hex); tint.a = 0.32f;
-                tintedWater[shop.Tint] = want = Transparent("GR breeding water " + shop.Tint, tint);
+                tintedWater[shop.Tint] = want = LookOn ? LookGlass("GR breeding water " + shop.Tint, tint, 0.4f, 0.5f) : Transparent("GR breeding water " + shop.Tint, tint);
             }
             if (breedingWater.sharedMaterial != want) breedingWater.sharedMaterial = want;
             var inside = shop.AllParents.Concat(shop.AllOffspring).ToList();
@@ -658,6 +663,7 @@ namespace EvolutionShop
             if (levelParts.TryGetValue(key, out var old) && old) Destroy(old.gameObject);
             var parts = new GameObject("Level " + level + " parts (" + key + ")").transform; parts.SetParent(root, false);
             build(parts, level);
+            if (LookOn) DressLevel(key, parts, level);
             levelParts[key] = parts; builtLevels[key] = level;
         }
 
@@ -813,6 +819,7 @@ namespace EvolutionShop
                 Box(g, "Label", new Vector3(0, 0.75f, 0.36f), new Vector3(0.5f, 0.18f, 0.02f), culture[id]);
                 s = new Source { Root = g, Fill = fill, BaseY = 1.0f, Height = 0.25f, Width = 0.36f };
             }
+            if (LookOn) DressSource(g, id, vat);
             Target(g.gameObject, GrowthTargetKind.Grower, id);
             AddCollider(g.gameObject, new Vector3(0, 0.8f, 0), new Vector3(0.85f, 1.6f, 0.75f));
             return s;
@@ -875,6 +882,7 @@ namespace EvolutionShop
             frame.SetActive(false);
             Target(root.gameObject, GrowthTargetKind.Tank, c.Id);
             AddCollider(root.gameObject, new Vector3(0, top * 0.5f, 0), new Vector3(W, top, D));
+            if (LookOn) DressTank(root, c, W, D, top, frame);
             return new TankView
             {
                 Root = root, ContainerId = c.Id, Place = c.Place, Signature = TankView.SignatureOf(c), HarmonyFrame = frame, ShowLight = showLight,

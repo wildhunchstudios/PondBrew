@@ -13,7 +13,8 @@ namespace EvolutionShop.Editor
             bool diorama = assetPath.StartsWith(DioramaKit);
             if (!assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/RedesignKit/") &&
                 !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/LabRefreshKit/") &&
-                !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/CollectorKit/") && !diorama) return;
+                !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/CollectorKit/") &&
+                !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/GrowthKit/") && !diorama) return;
             var importer = (ModelImporter)assetImporter;
             importer.globalScale = 1;
             importer.useFileScale = true;

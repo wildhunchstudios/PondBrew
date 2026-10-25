@@ -21,16 +21,16 @@ namespace EvolutionShop
             BreedingSmokeArgument = "-evolutionGrowthBreedingSmoke", StationsSmokeArgument = "-evolutionGrowthStationsSmoke", PowerSmokeArgument = "-evolutionGrowthPowerSmoke",
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
-            GuideSmokeArgument = "-evolutionGrowthGuideSmoke", ClassicArgument = "-evolutionClassic", ClassicEditorFlag = "EvolutionShop.ClassicGame";
+            GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", ClassicArgument = "-evolutionClassic", ClassicEditorFlag = "EvolutionShop.ClassicGame";
 
         /// <summary>The flags both games take: where evidence goes, the routes' synthetic input and video encoder, and the build's revision.</summary>
         static readonly string[] SharedFlags = { "-evolutionEvidence", "-evolutionIsolateSyntheticInput", "-evolutionFxReviewEncoder", "-evolutionBuildRevision" };
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : null;
         /// <summary>
         /// Whether a command line asks for the classic game: -evolutionClassic, the classic default route (-evolutionSmoke with no
         /// new-game route), or a flag only the classic game's tools use (such as -evolutionCycleSmoke, -evolutionNativeQa or
