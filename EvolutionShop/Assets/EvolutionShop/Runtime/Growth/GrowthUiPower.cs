@@ -27,7 +27,7 @@ namespace EvolutionShop
         void FillGenerator()
         {
             var shop = s.Shop;
-            var body = Head("Generator", shop.HasGenerator ? "level " + shop.Level("generator") : "not bought");
+            var body = Head("Generator", shop.HasGenerator ? "level " + shop.Level("generator") : "not bought", shop.HasGenerator ? "Power" : null);
             Live(body);
             body.Add(Text(!shop.HasGenerator ? "The generator powers electric pumps and the incubator's auto-doser. Its hand crank gives a unit of power while you crank it; the bubble turbine gives 3 by itself." :
                 shop.HandCrank ? "Hold the left mouse on the crank: 1 unit of power flows while you crank, for the machines first on the power board." :
@@ -39,10 +39,10 @@ namespace EvolutionShop
         void FillPowerBoard()
         {
             var shop = s.Shop;
-            var body = Head("Power board", shop.HasGenerator ? "generator level " + shop.Level("generator") : "no generator");
+            var body = Head("Power board", shop.HasGenerator ? "generator level " + shop.Level("generator") : "no generator", "Board");
             Live(body);
             body.Add(Text("Machines are served in this order. One short of power runs slower and says so; nothing stops without a reason.", "es-text--muted"));
-            if (shop.PowerOrder.Count == 0) body.Add(Text(shop.HasPumps ? "Nothing to power yet: pipe a grower's tap to a buffer." : "Nothing to power yet: buy pumps and pipes below, then pipe a grower's tap to a buffer."));
+            if (shop.PowerOrder.Count == 0) body.Add(Text(shop.HasPumps ? "Nothing to power yet: pipe a grower's tap to a buffer." : "Nothing to power yet: buy pumps and pipes on the Upgrade tab, then pipe a grower's tap to a buffer."));
             for (int i = 0; i < shop.PowerOrder.Count; i++)
             {
                 string id = shop.PowerOrder[i];
@@ -62,7 +62,7 @@ namespace EvolutionShop
             }
             if (shop.Pipes.Count > 0) body.Add(Text("Pipes: " + shop.Pipes.Count + " laid, " + shop.Pipes.Sum(p => p.Length).ToString("0.#") + " m in all.", "es-text--muted"));
             UpgradeSection(body, "pump", "Pumps and pipes");
-            Footer(body, "Pipes start on a grower's or a buffer's card; the chute on the sorter's.");
+            Footer(body, "pipes start on a grower's or a buffer's card; the chute on the sorter's");
         }
 
         void FillBuffer(string target)

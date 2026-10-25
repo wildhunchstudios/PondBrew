@@ -1,0 +1,762 @@
+/* GR-13: the greybox's own pieces in the UX tokens (GR.13, UX.3). The classic sheets (ShopTokens, HudStyles,
+   CardStyles, ScreenStyles) draw the rest: the HUD's chips, notes and next-step line, cards, buttons and keycaps.
+   Sizes are for the 1920x1080 reference panel. Every class starts with gr- so none overlaps a classic sheet. */
+
+/* ---------------------------------------------------------------- the HUD */
+
+.gr-chip--money {
+    height: 88px;
+}
+
+.gr-chip__money {
+    flex-direction: column;
+    justify-content: center;
+}
+
+.gr-stars {
+    flex-direction: row;
+    align-items: center;
+    margin-top: -2px;
+}
+
+.gr-star {
+    width: 22px;
+    height: 22px;
+    margin-right: 2px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.gr-stars__rp {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    color: var(--es-muted);
+    margin: 0 0 0 8px;
+    padding: 0;
+}
+
+.gr-carry {
+    position: absolute;
+    right: 34px;
+    bottom: 40px;
+    padding: 10px 22px 10px 22px;
+    background-color: var(--es-paper);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-bottom-width: 5px;
+    border-color: var(--es-paper-lip);
+}
+
+.gr-carry__line {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+/* Notes at the top stay narrower than the gap beside a station card, so a long one wraps instead of reaching it. */
+.gr-note {
+    max-width: 600px;
+}
+
+.gr-toast--event {
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 5px;
+    border-color: var(--es-teal);
+}
+
+.gr-toast--event .es-toast__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+}
+
+/* ---------------------------------------------------------------- the station card's strip and tabs */
+
+.gr-strip {
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: 0;
+}
+
+.gr-strip--plain {
+    padding-bottom: 12px;
+}
+
+.gr-strip__top {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gr-close {
+    width: 40px;
+    height: 40px;
+    margin: 0 0 0 10px;
+    padding: 0;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 26px;
+    -unity-text-align: middle-center;
+    color: var(--es-paper);
+    background-color: rgba(255, 246, 223, 0.14);
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    flex-shrink: 0;
+}
+
+.gr-close:hover {
+    background-color: rgba(255, 246, 223, 0.3);
+}
+
+.es-card__strip--shop .gr-close {
+    color: var(--es-ink);
+    background-color: rgba(27, 65, 62, 0.1);
+}
+
+.gr-tabs {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-top: 12px;
+}
+
+.gr-tab {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    color: rgba(255, 246, 223, 0.78);
+    background-color: rgba(0, 0, 0, 0);
+    margin: 0 6px 0 0;
+    padding: 8px 22px 10px 22px;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.gr-tab:hover {
+    color: var(--es-paper);
+    background-color: rgba(255, 246, 223, 0.12);
+}
+
+.es-card__strip--shop .gr-tab {
+    color: rgba(27, 65, 62, 0.6);
+}
+
+.es-card__strip--shop .gr-tab:hover {
+    color: var(--es-ink);
+    background-color: rgba(27, 65, 62, 0.08);
+}
+
+.gr-tab--on,
+.gr-tab--on:hover,
+.es-card__strip--shop .gr-tab--on,
+.es-card__strip--shop .gr-tab--on:hover {
+    color: var(--es-ink);
+    background-color: var(--es-paper);
+}
+
+.gr-info {
+    width: 34px;
+    height: 34px;
+    margin: 0 0 8px auto;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 21px;
+    -unity-text-align: middle-center;
+    color: var(--es-paper);
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: rgba(255, 246, 223, 0.7);
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+    border-bottom-left-radius: 17px;
+    border-bottom-right-radius: 17px;
+    padding: 0;
+}
+
+.es-card__strip--shop .gr-info {
+    color: var(--es-ink);
+    border-color: rgba(27, 65, 62, 0.5);
+}
+
+/* ---------------------------------------------------------------- card bodies */
+
+.gr-body {
+    flex-direction: column;
+}
+
+.gr-section {
+    margin-bottom: 16px;
+}
+
+.gr-label {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    color: var(--es-muted);
+    margin: 0 0 8px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.gr-hint {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.gr-strong {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 24px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.gr-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.gr-row--spread {
+    justify-content: space-between;
+    flex-wrap: nowrap;
+}
+
+.gr-callout {
+    padding: 12px 16px 14px 16px;
+    margin-bottom: 16px;
+    background-color: #FBE8BE;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.gr-newtag {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: #6B4A0C;
+    background-color: var(--es-honey);
+    margin: 0 0 0 8px;
+    padding: 2px 12px 2px 12px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.gr-wide {
+    align-self: stretch;
+    margin-top: 2px;
+    margin-bottom: 14px;
+}
+
+.gr-pip {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+/* A text link: a button drawn as underlined teal words. */
+.gr-link {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 19px;
+    color: var(--es-teal);
+    background-color: rgba(0, 0, 0, 0);
+    margin: 0 0 0 16px;
+    padding: 0 0 2px 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 2px;
+    border-color: var(--es-teal);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.gr-link:hover {
+    color: var(--es-teal-hover);
+    border-color: var(--es-teal-hover);
+}
+
+.gr-link:disabled {
+    color: #B5AB91;
+    border-color: #CFC6AE;
+}
+
+.gr-foot {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 6px;
+    padding-top: 12px;
+    border-top-width: 2px;
+    border-color: var(--es-paper-deep);
+}
+
+.gr-foot__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    color: var(--es-muted);
+    margin: 0 0 0 8px;
+    padding: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+/* ---------------------------------------------------------------- tiles, chips and slots */
+
+.gr-tile {
+    width: 146px;
+    margin: 0 10px 10px 0;
+    padding: 8px 10px 8px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #FFFDF6;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-paper-deep);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+    transition-property: border-color;
+    transition-duration: 0.1s;
+}
+
+.gr-tile:hover {
+    border-color: var(--es-teal);
+}
+
+.gr-tile:disabled {
+    opacity: 0.78;
+}
+
+.gr-tile--unknown {
+    background-color: var(--es-paper-deep);
+}
+
+.gr-tile__glyph {
+    width: 58px;
+    height: 34px;
+}
+
+.gr-tile__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    margin: 2px 0 0 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-tile__meta {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.gr-tile__time {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: var(--es-muted);
+    margin: 0 0 0 4px;
+    padding: 0;
+}
+
+.gr-dose {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 10px 10px 0;
+    padding: 6px 8px 6px 8px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.gr-dose__text {
+    flex-direction: column;
+    margin: 0 10px 0 10px;
+    min-width: 92px;
+}
+
+.gr-dose__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-dose__count {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: var(--es-muted);
+    margin: -2px 0 0 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-pm {
+    width: 38px;
+    height: 38px;
+    margin: 0;
+    padding: 0 0 2px 0;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 26px;
+    -unity-text-align: middle-center;
+    color: var(--es-teal);
+    background-color: #FFFFFF;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-teal);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.gr-pm:hover {
+    background-color: #E9F2F0;
+}
+
+.gr-pm:disabled {
+    color: #B5AB91;
+    border-color: #CFC6AE;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.gr-chip {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 17px;
+    color: var(--es-teal);
+    background-color: #E9F2F0;
+    margin: 8px 8px 0 0;
+    padding: 3px 12px 3px 12px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    white-space: nowrap;
+}
+
+.gr-chip--miss {
+    color: var(--es-coral-ink);
+    background-color: var(--es-coral-soft);
+}
+
+.gr-chip--button {
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+}
+
+.gr-chip--button:hover {
+    background-color: #D6EDE7;
+}
+
+.gr-chip--button:disabled {
+    color: #B5AB91;
+    background-color: rgba(233, 242, 240, 0.6);
+}
+
+.gr-meter {
+    flex-direction: row;
+    align-items: center;
+}
+
+.gr-meter__seg {
+    width: 44px;
+    height: 14px;
+    margin-left: 8px;
+    background-color: #E4D8BA;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+.gr-meter__seg--on {
+    background-color: var(--es-honey);
+}
+
+/* ---------------------------------------------------------------- the Upgrade tab */
+
+.gr-upgrade {
+    margin-bottom: 18px;
+}
+
+.gr-upgrade__head {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    margin: 0 0 10px 0;
+    padding: 0;
+}
+
+.gr-track {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.gr-lv {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 21px;
+    -unity-text-align: middle-center;
+    color: var(--es-muted);
+    background-color: var(--es-paper-deep);
+    margin: 0;
+    padding: 0;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.gr-lv--done {
+    color: var(--es-paper);
+    background-color: var(--es-teal);
+}
+
+.gr-lv--next {
+    color: var(--es-teal);
+    background-color: #FFFFFF;
+    border-left-width: 4px;
+    border-right-width: 4px;
+    border-top-width: 4px;
+    border-bottom-width: 4px;
+    border-color: var(--es-teal);
+}
+
+.gr-lv-line {
+    flex-grow: 1;
+    height: 5px;
+    margin: 0 6px 0 6px;
+    background-color: var(--es-paper-deep);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.gr-lv-line--done {
+    background-color: var(--es-teal);
+}
+
+.gr-benefit {
+    padding: 12px 16px 14px 16px;
+    margin-bottom: 12px;
+    background-color: #FFFFFF;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-paper-deep);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.gr-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+
+/* ---------------------------------------------------------------- containers */
+
+.gr-spaces {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.gr-space {
+    height: 64px;
+    margin: 0 8px 14px 0;
+    align-items: center;
+    justify-content: center;
+    background-color: #E9F2F0;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: #CFE2DE;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.gr-space--empty {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: #CDBF9B;
+}
+
+.gr-space--sold {
+    opacity: 0.5;
+}
+
+.gr-space__glyph {
+    width: 54px;
+    height: 32px;
+}
+
+.gr-badge {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: -11px;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 13px;
+    -unity-text-align: middle-center;
+    color: var(--es-ink);
+    background-color: var(--es-honey);
+    margin: 0;
+    padding: 0 0 1px 0;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+    border-bottom-left-radius: 9px;
+    border-bottom-right-radius: 9px;
+}
+
+.gr-face {
+    width: 46px;
+    height: 46px;
+    margin-right: 14px;
+    flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- the breeding tank */
+
+.gr-pair {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.gr-parent {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 112px;
+    margin: 0;
+    padding: 8px 8px 8px 8px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #FFFFFF;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-paper-deep);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.gr-parent:hover {
+    border-color: var(--es-teal);
+}
+
+.gr-parent--empty {
+    background-color: rgba(0, 0, 0, 0);
+    border-color: #CDBF9B;
+}
+
+.gr-parent--empty:hover {
+    border-color: #CDBF9B;
+}
+
+.gr-parent__glyph {
+    width: 72px;
+    height: 42px;
+}
+
+.gr-times {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 40px;
+    color: var(--es-muted);
+    margin: 0 10px 0 10px;
+    padding: 0;
+}
+
+.gr-ring {
+    width: 132px;
+    height: 132px;
+    flex-shrink: 0;
+    margin-right: 18px;
+    align-items: center;
+    justify-content: center;
+}
+
+.gr-ring__time {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 34px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.gr-result {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 14px 10px 14px;
+    margin-bottom: 10px;
+    background-color: #E9F2F0;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.gr-result__glyph {
+    width: 60px;
+    height: 36px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.gr-result__text {
+    flex-shrink: 1;
+    flex-grow: 1;
+}

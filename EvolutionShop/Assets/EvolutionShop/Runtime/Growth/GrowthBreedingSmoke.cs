@@ -118,8 +118,8 @@ namespace EvolutionShop
                 "Puddlepup × Reedwhisker, the Brookkin special pair: the crown, a Brook Monarch, 20 research points");
             s.SetCard(GrowthCard.Breeding); yield return new WaitForSeconds(0.2f);
             string card = s.Ui.CardText();
-            Check(card.Contains("In the nursery: a Brook Monarch — new to your journal!") && card.Contains("Puddlepup × Reedwhisker → Brook Monarch (a crown!)") && card.Contains("Pair log · 3 pairs tried"),
-                "The card shows the crown in the nursery and the pair log (3 pairs tried)");
+            Check(card.Contains("In the nursery: a Brook Monarch — new to your journal!") && card.Contains("a crown · bred ×1 so far") && card.Contains("Pair log · 3 pairs tried"),
+                "The card shows the crown in the nursery, what the pair makes (a crown, bred once) and its link to the pair log (3 pairs tried)");
             yield return Shot("84-crown");
             s.SetCard(GrowthCard.None);
 

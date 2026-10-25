@@ -8,27 +8,35 @@ using UnityEngine.UIElements;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-02's interface in the game's UI Toolkit style (the UX tokens, HUD and card sheets): the HUD (day and clock,
-    /// credits and stars, the current goal, the siphon and what is carried), the prompt under the reticle with its hold
-    /// progress, the peek label, notes, station cards (GR.13: the incubator's dose slots, "close to something new" and mix
-    /// log; a container's occupants as space icons; Upgrade on every station), and the journal, night receipt, welcome and
-    /// pause screens. Greybox: plain layout, the words in English only.
+    /// GR-02's interface in the game's UI Toolkit style (the UX tokens, HUD and card sheets, and GR-13's GrowthStyles):
+    /// the HUD (the day chip, money with the stars, one next-step line, and what the siphon and hands hold while they
+    /// hold something), the prompt under the reticle with its hold progress, one note at a time, station cards with their
+    /// tabs (GR.13: the incubator's recipes, doses and "close to something new"; a container's occupants as space icons
+    /// and its comfort; the breeding tank's pair, timer and result; Upgrade on every station), and the journal, night
+    /// receipt, welcome and pause screens. The words in English only.
     /// </summary>
     public sealed partial class GrowthUi : MonoBehaviour
     {
+        public const string GrowthStylesResource = ShopUiRoot.ResourceFolder + "GrowthStyles";
         GrowthSession s;
         UIDocument document;
         PanelSettings settings;
-        VisualElement root, hud, cardLayer, screenLayer, toasts, peekTag, promptBox, promptProgress, card, banner;
-        Label dayLabel, clockLabel, creditsLabel, starsLabel, goalLabel, promptName, promptStatus, siphonLabel, carryLabel, hintLabel, peekLabel, bannerLabel, liveLabel;
-        float hintUntil, bannerUntil, refreshClock;
+        ShopUiTheme theme;
+        VisualElement root, hud, cardLayer, screenLayer, promptBox, promptProgress, card, dayIcon, nextBox, carryBox, toastBox, eventBox;
+        readonly List<VisualElement> stars = new List<VisualElement>();
+        Label dayLabel, clockLabel, creditsLabel, rpLabel, nextLabel, promptName, promptStatus, siphonLabel, carryLabel, hintLabel, toastLabel, eventLabel;
+        TextElement liveLabel;
+        Texture2D dayTexture;
+        float hintUntil, toastUntil, eventUntil, refreshClock;
         string cardSignature;
-        readonly List<(VisualElement element, float until)> toastItems = new List<(VisualElement, float)>();
         public bool Ready { get; private set; }
         public VisualElement Root => root;
         public VisualElement CardElement => card;
         /// <summary>Notes shown so far (validation reads them).</summary>
         public readonly List<string> Log = new List<string>();
+        /// <summary>The HUD's next-step line and the note showing now (validation).</summary>
+        public string HudNext => nextLabel == null ? "" : nextLabel.text;
+        public string HudNote => toastBox != null && toastBox.style.display == DisplayStyle.Flex ? toastLabel.text : null;
 
         public void Initialize(GrowthSession session)
         {
@@ -38,7 +46,8 @@ namespace EvolutionShop
             var hudStyles = Resources.Load<StyleSheet>(ShopUiRoot.HudStylesResource);
             var cardStyles = Resources.Load<StyleSheet>(ShopUiRoot.CardStylesResource);
             var screenStyles = Resources.Load<StyleSheet>(ShopUiRoot.ScreenStylesResource);
-            if (!theme || !tokens || !hudStyles || !cardStyles || !screenStyles) { Debug.LogError("GR-02: a UI Toolkit resource is missing"); return; }
+            var growthStyles = Resources.Load<StyleSheet>(GrowthStylesResource);
+            if (!theme || !tokens || !hudStyles || !cardStyles || !screenStyles || !growthStyles) { Debug.LogError("GR-02: a UI Toolkit resource is missing"); return; }
             settings = ScriptableObject.CreateInstance<PanelSettings>();
             settings.name = "GR-02 greybox UI";
             settings.themeStyleSheet = theme;
@@ -54,11 +63,19 @@ namespace EvolutionShop
             document.panelSettings = settings;
             holder.SetActive(true);
             root = document.rootVisualElement;
-            foreach (var sheet in new[] { tokens, hudStyles, cardStyles, screenStyles }) root.styleSheets.Add(sheet);
+            foreach (var sheet in new[] { tokens, hudStyles, cardStyles, screenStyles, growthStyles }) root.styleSheets.Add(sheet);
             root.pickingMode = PickingMode.Ignore;
             hud = Layer("gr-hud"); cardLayer = Layer("gr-cards"); screenLayer = Layer("gr-screens");
+            this.theme = new ShopUiTheme();
             BuildHud();
+            BuildTip();
             Ready = true;
+        }
+
+        void OnDestroy()
+        {
+            theme?.Dispose();
+            theme = null;
         }
 
         VisualElement Layer(string name)
@@ -78,28 +95,6 @@ namespace EvolutionShop
             return l;
         }
 
-        /// <summary>A one-line HUD label in ink on the paper chips (never wrapped, so the chip grows to fit it).</summary>
-        static Label Line(string text, float size, bool title)
-        {
-            var l = new Label(text);
-            l.AddToClassList("es-text");
-            l.style.whiteSpace = WhiteSpace.NoWrap;
-            l.style.fontSize = size;
-            l.style.color = title ? new Color(0.17f, 0.14f, 0.11f) : new Color(0.33f, 0.29f, 0.23f);
-            if (title) l.style.unityFontStyleAndWeight = FontStyle.Bold;
-            return l;
-        }
-
-        static VisualElement Paper(float padding = 14)
-        {
-            var p = new VisualElement();
-            p.style.backgroundColor = new Color(1f, 0.965f, 0.875f, 0.96f);
-            p.style.borderTopLeftRadius = p.style.borderTopRightRadius = p.style.borderBottomLeftRadius = p.style.borderBottomRightRadius = 18;
-            p.style.borderBottomWidth = 4; p.style.borderBottomColor = new Color(0.79f, 0.72f, 0.56f);
-            p.style.paddingLeft = p.style.paddingRight = padding + 4; p.style.paddingTop = p.style.paddingBottom = padding * 0.6f;
-            return p;
-        }
-
         Button Button(string text, Action click, bool primary = false, bool enabled = true, string tooltip = null)
         {
             var b = new Button(() => { if (enabled) { click(); RefreshCard(); } }) { text = text };
@@ -112,38 +107,65 @@ namespace EvolutionShop
             return b;
         }
 
+        Texture2D Icon(ShopUiTheme.Symbol symbol) => theme?.IconTexture(symbol);
+
         // ---------------------------------------------------------------- the HUD
 
+        /// <summary>
+        /// GR-13 (UX.4): three fixed elements, the day chip, money with the stars and one next-step line (the goal's full
+        /// list is on the pinboard and in the journal); what the siphon and the hands hold shows only while they hold
+        /// something; notes come one at a time at the top, a big moment above them, clear of the station cards.
+        /// </summary>
         void BuildHud()
         {
-            var crosshair = new VisualElement(); crosshair.AddToClassList("es-crosshair"); hud.Add(crosshair);
-            var left = Paper(); left.style.position = Position.Absolute; left.style.left = 32; left.style.top = 28; left.style.minWidth = 300;
-            dayLabel = Line("Night 1", 26, true); clockLabel = Line("", 17, false);
-            left.Add(dayLabel); left.Add(clockLabel); hud.Add(left);
-            var right = Paper(); right.style.position = Position.Absolute; right.style.right = 32; right.style.top = 28; right.style.alignItems = Align.FlexEnd;
-            creditsLabel = Line("10 credits", 26, true); starsLabel = Line("", 17, false);
-            right.Add(creditsLabel); right.Add(starsLabel); hud.Add(right);
-            var goal = Paper(10); goal.style.position = Position.Absolute; goal.style.left = 32; goal.style.top = 140; goal.style.maxWidth = 520;
-            goalLabel = Text(""); goalLabel.style.fontSize = 18; goal.Add(goalLabel); hud.Add(goal);
-            var pockets = Paper(10); pockets.style.position = Position.Absolute; pockets.style.left = 32; pockets.style.bottom = 32;
-            siphonLabel = Line("", 19, false); carryLabel = Line("", 19, false);
-            pockets.Add(siphonLabel); pockets.Add(carryLabel); hud.Add(pockets);
-            var prompts = new VisualElement(); prompts.AddToClassList("es-prompts"); hud.Add(prompts);
-            promptBox = new VisualElement(); promptBox.AddToClassList("es-prompt");
-            promptName = new Label(); promptName.AddToClassList("es-prompt__name");
-            promptStatus = new Label(); promptStatus.AddToClassList("es-prompt__status");
-            promptProgress = new VisualElement(); promptProgress.AddToClassList("es-prompt__progress");
+            hud.Add(Box("es-crosshair"));
+            var day = Box("es-chip", "es-chip--day");
+            dayIcon = Box("es-chip__icon");
+            var dayText = Box("es-chip__text");
+            dayLabel = L("Night 1", "es-chip__title"); clockLabel = L("", "es-chip__detail");
+            dayText.Add(dayLabel); dayText.Add(clockLabel);
+            day.Add(dayIcon); day.Add(dayText); hud.Add(day);
+            var money = Box("es-chip", "es-chip--money", "gr-chip--money");
+            var coin = Box("es-chip__icon"); coin.style.backgroundImage = new StyleBackground(Icon(ShopUiTheme.Symbol.Coin));
+            var moneyText = Box("gr-chip__money");
+            creditsLabel = L("10", "es-chip__amount");
+            var starRow = Box("gr-stars");
+            for (int i = 0; i < 5; i++) { var star = Box("gr-star"); star.style.backgroundImage = new StyleBackground(Icon(ShopUiTheme.Symbol.Star)); stars.Add(star); starRow.Add(star); }
+            rpLabel = L("", "gr-stars__rp"); starRow.Add(rpLabel);
+            moneyText.Add(creditsLabel); moneyText.Add(starRow);
+            money.Add(coin); money.Add(moneyText); hud.Add(money);
+            nextBox = Box("es-next");
+            var nextCard = Box("es-next__card");
+            var leaf = Box("es-next__icon"); leaf.style.backgroundImage = new StyleBackground(Icon(ShopUiTheme.Symbol.Leaf));
+            nextLabel = L("", "es-next__text");
+            nextCard.Add(leaf); nextCard.Add(nextLabel); nextBox.Add(nextCard); hud.Add(nextBox);
+            carryBox = Box("gr-carry");
+            siphonLabel = L("", "gr-carry__line"); carryLabel = L("", "gr-carry__line");
+            carryBox.Add(siphonLabel); carryBox.Add(carryLabel); hud.Add(carryBox);
+            var prompts = Box("es-prompts"); hud.Add(prompts);
+            promptBox = Box("es-prompt");
+            promptName = L("", "es-prompt__name");
+            promptStatus = L("", "es-prompt__status");
+            promptProgress = Box("es-prompt__progress");
             promptBox.Add(promptName); promptBox.Add(promptStatus); promptBox.Add(promptProgress);
             prompts.Add(promptBox);
             hintLabel = Text(""); hintLabel.style.color = new Color(1f, 0.92f, 0.75f); hintLabel.style.fontSize = 18; hintLabel.style.marginLeft = 8;
             prompts.Add(hintLabel);
-            toasts = new VisualElement(); toasts.AddToClassList("es-floaters"); hud.Add(toasts);
-            peekTag = Paper(6); peekTag.style.position = Position.Absolute; peekTag.pickingMode = PickingMode.Ignore;
-            peekTag.style.translate = new Translate(new Length(-50, LengthUnit.Percent), new Length(-100, LengthUnit.Percent));
-            peekLabel = Line("", 19, true); peekTag.Add(peekLabel); peekTag.style.display = DisplayStyle.None; hud.Add(peekTag);
-            banner = Paper(20); banner.style.position = Position.Absolute; banner.style.left = new Length(50, LengthUnit.Percent); banner.style.top = 220;
-            banner.style.translate = new Translate(new Length(-50, LengthUnit.Percent), 0); banner.style.display = DisplayStyle.None;
-            bannerLabel = Text(""); bannerLabel.style.fontSize = 40; bannerLabel.style.unityTextAlign = TextAnchor.MiddleCenter; banner.Add(bannerLabel); hud.Add(banner);
+            var top = Box("es-hud-top");
+            eventBox = Note("gr-toast--event", ShopUiTheme.Symbol.Star, out eventLabel);
+            toastBox = Note(null, ShopUiTheme.Symbol.Leaf, out toastLabel);
+            top.Add(eventBox); top.Add(toastBox); hud.Add(top);
+        }
+
+        VisualElement Note(string modifier, ShopUiTheme.Symbol symbol, out Label label)
+        {
+            var note = Box("es-toast", "gr-note");
+            if (modifier != null) note.AddToClassList(modifier);
+            var icon = Box("es-toast__icon"); icon.style.backgroundImage = new StyleBackground(Icon(symbol));
+            label = L("", "es-toast__text");
+            note.Add(icon); note.Add(label);
+            note.style.display = DisplayStyle.None;
+            return note;
         }
 
         public static string StarsText(int stars) => new string('★', stars) + new string('☆', 5 - stars);
@@ -152,21 +174,25 @@ namespace EvolutionShop
         {
             if (!Ready) return;
             var shop = s.Shop;
-            dayLabel.text = (shop.Phase == GrowthPhase.Night ? "Night " : "Day ") + shop.Day + " · Era " + shop.Era;
-            clockLabel.text = shop.Phase == GrowthPhase.Day ? ShopClock(shop.DaySecondsLeft) + " left · " + shop.Queue.Count() + " waiting" + (shop.ExhibitionToday ? " · exhibition guests " + shop.GuestsServed + "/" + GrowthShop.ExhibitionPurchases : "") :
-                shop.ExhibitionPrepared ? "Untimed: the Grand Exhibition opens with the shop" : "Untimed: open the shop at the counter";
-            creditsLabel.text = shop.Credits + " credits";
-            int next = shop.Stars < 5 ? GrowthContent.StarThresholds[shop.Stars] : GrowthContent.ReputationMax;
-            starsLabel.text = StarsText(shop.Stars) + "  reputation " + shop.Reputation + (shop.Stars < 5 ? "/" + next : "") + (shop.Rp > 0 ? " · " + shop.Rp + " RP" : "");
-            var goals = shop.Objectives();
-            // GR-05: the HUD keeps to what is still to do, three lines at most; the pinboard has every line.
-            var todo = goals.Where(g => !g.done).ToList();
-            goalLabel.text = "Goal: " + shop.EraGoal + (todo.Count == 0 ? "" : "\n" + string.Join("\n", todo.Take(3).Select(g => "· " + g.text))) +
-                (todo.Count > 3 ? "\n· " + (todo.Count - 3) + " more on the pinboard" : "");
-            siphonLabel.text = "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity + (shop.Held.Count == 0 ? ": empty" : ": " + string.Join(", ", shop.Held.GroupBy(c => c).Select(g => g.Count() + " " + GrowthShop.Name(g.Key))));
-            carryLabel.text = shop.Carried.Count == 0 ? "Hands free" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(GrowthSession.Named)) + " · E on a tank to put in";
+            bool night = shop.Phase == GrowthPhase.Night;
+            dayLabel.text = (night ? "Night " : "Day ") + shop.Day + " · Era " + shop.Era;
+            var dayIconNow = Icon(night ? ShopUiTheme.Symbol.Moon : ShopUiTheme.Symbol.Sun);
+            if (dayIconNow != dayTexture) { dayTexture = dayIconNow; dayIcon.style.backgroundImage = new StyleBackground(dayIconNow); }
+            clockLabel.text = !night ? ShopClock(shop.DaySecondsLeft) + " left · " + shop.Queue.Count() + " waiting" + (shop.ExhibitionToday ? " · exhibition guests " + shop.GuestsServed + "/" + GrowthShop.ExhibitionPurchases : "") :
+                shop.ExhibitionPrepared ? "the Grand Exhibition opens with the shop" : "no rush";
+            creditsLabel.text = shop.Credits.ToString();
+            for (int i = 0; i < stars.Count; i++) stars[i].style.unityBackgroundImageTintColor = i < shop.Stars ? Color.white : new Color(0.78f, 0.72f, 0.58f, 0.45f);
+            rpLabel.text = shop.Rp > 0 ? shop.Rp + " RP" : "";
+            // GR-13: one next step, the first goal still to do (the pinboard and the journal have the whole list).
+            nextLabel.text = shop.Objectives().Where(g => !g.done).Select(g => g.text).FirstOrDefault() ?? shop.EraGoal;
             bool free = s.Card == GrowthCard.None;
             hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Welcome ? DisplayStyle.None : DisplayStyle.Flex;
+            nextBox.style.display = free ? DisplayStyle.Flex : DisplayStyle.None;
+            siphonLabel.text = shop.Held.Count == 0 ? "" : "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity + ": " + string.Join(", ", shop.Held.GroupBy(c => c).Select(g => g.Count() + " " + GrowthShop.Name(g.Key)));
+            carryLabel.text = shop.Carried.Count == 0 ? "" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(GrowthSession.Named));
+            siphonLabel.style.display = shop.Held.Count == 0 ? DisplayStyle.None : DisplayStyle.Flex;
+            carryLabel.style.display = shop.Carried.Count == 0 ? DisplayStyle.None : DisplayStyle.Flex;
+            carryBox.style.display = free && (shop.Held.Count > 0 || shop.Carried.Count > 0) ? DisplayStyle.Flex : DisplayStyle.None;
             string name = free ? s.FocusName(out string status) : null;
             promptBox.style.display = name == null ? DisplayStyle.None : DisplayStyle.Flex;
             if (name != null)
@@ -178,43 +204,29 @@ namespace EvolutionShop
                 promptProgress.style.width = new Length(Mathf.Clamp01(progress) * 100, LengthUnit.Percent);
             }
             if (Time.unscaledTime > hintUntil) hintLabel.text = "";
-            if (Time.unscaledTime > bannerUntil) banner.style.display = DisplayStyle.None;
-            for (int i = toastItems.Count - 1; i >= 0; i--)
-                if (Time.unscaledTime > toastItems[i].until) { toastItems[i].element.RemoveFromHierarchy(); toastItems.RemoveAt(i); }
-            UpdatePeek();
+            if (Time.unscaledTime > eventUntil) eventBox.style.display = DisplayStyle.None;
+            if (Time.unscaledTime > toastUntil) toastBox.style.display = DisplayStyle.None;
             refreshClock += dt;
             if (refreshClock >= 0.1f) { refreshClock = 0; if (card != null && Signature() != cardSignature) RefreshCard(); }
             if (liveLabel != null) liveLabel.text = LiveText();
+            TickRings();
+            ApplyPendingScroll();
+            UpdateTip();
         }
 
         static string ShopClock(float seconds) { int t = Mathf.Max(0, Mathf.CeilToInt(seconds)); return t / 60 + ":" + (t % 60).ToString("00"); }
 
-        void UpdatePeek()
-        {
-            var creature = s.PeekCreature;
-            if (creature == null || document == null || document.rootVisualElement.panel == null) { peekTag.style.display = DisplayStyle.None; return; }
-            var spec = s.Shop.Stock.FirstOrDefault(x => x.Id == creature.SpecimenId);
-            if (spec == null) { peekTag.style.display = DisplayStyle.None; return; }
-            var holder = s.Shop.HolderOf(spec.Id);
-            peekLabel.text = GrowthSession.Named(spec) + (GrowthShop.IsOnDisplay(spec) ? " (on display)" : spec.ReservedBy != 0 ? " (reserved)" : "");
-            Vector2 p = RuntimePanelUtils.CameraTransformWorldToPanel(document.rootVisualElement.panel, creature.transform.position + Vector3.up * (creature.Length * 0.9f), s.Player.View);
-            peekTag.style.display = DisplayStyle.Flex;
-            peekTag.style.left = p.x;
-            peekTag.style.top = p.y - 18;
-        }
-
         public void Hint(string text) { hintLabel.text = text; hintUntil = Time.unscaledTime + 1.5f; }
 
+        /// <summary>A note: one at a time at the top, the newest replacing the last (every note stays in <see cref="Log"/>).</summary>
         public void Toast(string text, bool warn = false)
         {
             Log.Add(text);
             if (!Ready) return;
-            var t = Paper(8); t.style.marginBottom = 6; t.style.maxWidth = 300;
-            // GR-11: a long note (the Grand Exhibition's six, or why it fell short) wraps rather than running off the screen.
-            var l = Text(text); l.style.fontSize = 20; l.style.whiteSpace = WhiteSpace.Normal; if (warn) l.style.color = new Color(0.54f, 0.18f, 0.10f);
-            t.Add(l); toasts.Add(t);
-            toastItems.Add((t, Time.unscaledTime + (warn ? 3.5f : 3f)));
-            while (toastItems.Count > 4) { toastItems[0].element.RemoveFromHierarchy(); toastItems.RemoveAt(0); }
+            toastLabel.text = text;
+            toastBox.EnableInClassList("es-toast--error", warn);
+            toastBox.style.display = DisplayStyle.Flex;
+            toastUntil = Time.unscaledTime + (warn ? 3.5f : 3f);
         }
 
         public void Event(GrowthEvent e)
@@ -232,9 +244,10 @@ namespace EvolutionShop
                 case GrowthEventKind.LineDay:
                 case GrowthEventKind.Opened:
                 case GrowthEventKind.ExhibitionWon:
+                    // A big moment sits above the notes at the top, clear of the station cards (GR-13).
                     Log.Add(e.Text);
                     if (!Ready) return;
-                    bannerLabel.text = e.Text; banner.style.display = DisplayStyle.Flex; bannerUntil = Time.unscaledTime + 3f;
+                    eventLabel.text = e.Text; eventBox.style.display = DisplayStyle.Flex; eventUntil = Time.unscaledTime + 3.5f;
                     return;
                 default: Toast(e.Text, e.Kind == GrowthEventKind.Refusal || e.Kind == GrowthEventKind.Impatient || e.Kind == GrowthEventKind.StaffHome || e.Kind == GrowthEventKind.ExhibitionFailed); return;
             }
@@ -245,7 +258,12 @@ namespace EvolutionShop
         public void ShowCard(GrowthCard which, string target)
         {
             if (!Ready) return;
-            cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null;
+            // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
+            string key = which + "|" + target;
+            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; }
+            cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null;
+            tabList.Clear(); tabRow = null; footer = null; rings.Clear();
+            tip.style.display = DisplayStyle.None; tipAnchor = null;
             if (which == GrowthCard.None) return;
             bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Results;
             card = screen ? ScreenCard() : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding || which == GrowthCard.Helper ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer || which == GrowthCard.Staff ? 540 : which == GrowthCard.PowerBoard || which == GrowthCard.Sorter ? 600 : 470);
@@ -256,20 +274,34 @@ namespace EvolutionShop
 
         public void RefreshCard() { if (card != null) ShowCard(s.Card, s.CardTarget); }
 
-        /// <summary>Validation: scrolls the open card to its first label that starts with the text (journal pages below the fold).</summary>
+        /// <summary>
+        /// Validation: scrolls the open card to its first label that starts with the text (journal pages below the fold),
+        /// first showing the tab it is on (GR-13), in which case the scroll waits for that tab's layout.
+        /// </summary>
         public bool ScrollTo(string startsWith)
         {
             if (card == null) return false;
             var label = card.Query<Label>().ToList().FirstOrDefault(l => l.text.StartsWith(startsWith));
             var scroll = card.Q<ScrollView>();
             if (label == null || scroll == null) return false;
+            var on = tabList.FirstOrDefault(t => t.body.Contains(label));
+            if (on.tab != null && on.tab.text != CurrentTab) { ShowTabNamed(on.tab.text); pendingScroll = startsWith; return true; }
             float y = label.worldBound.y - scroll.contentContainer.worldBound.y;
             scroll.scrollOffset = new Vector2(0, Mathf.Max(0, y - 8));
             return true;
         }
 
-        /// <summary>Every label and button text on the open card or screen (for the validation route).</summary>
-        public string CardText() => card == null ? "" : string.Join(" | ", card.Query<TextElement>().ToList().Select(t => t.text));
+        /// <summary>
+        /// Every label and button text on the open card or screen, every tab's included, and every hover text (why a
+        /// control can't be used, the levels on the Upgrade tab's track, the rules on the "?"), for the validation route.
+        /// </summary>
+        public string CardText() => card == null ? "" : string.Join(" | ", card.Query<VisualElement>().ToList().SelectMany(Texts));
+
+        static IEnumerable<string> Texts(VisualElement v)
+        {
+            if (v is TextElement t && !string.IsNullOrEmpty(t.text)) yield return t.text;
+            if (!string.IsNullOrEmpty(v.tooltip)) yield return v.tooltip;
+        }
 
         VisualElement Dim(VisualElement content)
         {
@@ -294,20 +326,6 @@ namespace EvolutionShop
             return c;
         }
 
-        VisualElement Head(string title, string status = "")
-        {
-            var strip = new VisualElement(); strip.AddToClassList("es-card__strip"); strip.style.flexShrink = 0;
-            var t = new Label(title); t.AddToClassList("es-card__title");
-            var st = new Label(status); st.AddToClassList("es-card__status");
-            strip.Add(t); strip.Add(st);
-            card.Add(strip);
-            // GR-03: a station card's body scrolls when it is taller than the card may be (tank cards, the crate).
-            var scroll = new ScrollView(ScrollViewMode.Vertical); scroll.AddToClassList("es-card__body");
-            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden; scroll.style.flexShrink = 1;
-            card.Add(scroll);
-            return scroll.contentContainer;
-        }
-
         VisualElement ScreenHead(string title)
         {
             var t = new Label(title); t.AddToClassList("es-screen-card__title"); t.style.fontSize = 44;
@@ -315,16 +333,6 @@ namespace EvolutionShop
             var scroll = new ScrollView(); scroll.style.flexGrow = 1; scroll.style.marginTop = 12;
             card.Add(scroll);
             return scroll.contentContainer;
-        }
-
-        void Footer(VisualElement body, string hint = "Esc closes")
-        {
-            var row = new VisualElement(); row.AddToClassList("es-row"); row.style.marginTop = 10; row.style.alignItems = Align.Center;
-            var key = new Label("Esc"); key.AddToClassList("es-keycap");
-            var t = Text(hint, "es-text--muted"); t.style.marginLeft = 8; t.style.flexGrow = 1;
-            row.Add(key); row.Add(t);
-            row.Add(Button("Close", () => s.SetCard(GrowthCard.None)));
-            body.Add(row);
         }
 
         static VisualElement Row()
@@ -349,6 +357,9 @@ namespace EvolutionShop
             return c;
         }
 
+        /// <summary>A culture's colour faded toward the paper, for a dose chip's ground.</summary>
+        static Color CultureGround(string culture) => Color.Lerp(CultureColour(culture), Color.white, 0.74f);
+
         string Signature()
         {
             var shop = s.Shop;
@@ -364,10 +375,10 @@ namespace EvolutionShop
             var shop = s.Shop;
             switch (s.Card)
             {
-                case GrowthCard.Incubator: return shop.Incubating ? "Incubating… " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : shop.Hatchlings.Count > 1 ? "A clutch of " + shop.Hatchlings.Count + " is ready." : shop.Hatchling != null ? "A hatchling is ready." : "Idle.";
+                case GrowthCard.Incubator: return shop.Incubating ? "Incubating · " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : shop.Hatchlings.Count > 1 ? "A clutch of " + shop.Hatchlings.Count + " is ready" : shop.Hatchling != null ? "A hatchling is ready" : shop.Chamber.Count > 0 ? "Ready to mix" : "Idle";
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + ShopClock(shop.DaySecondsLeft) + " left." : "Closed for the night.";
                 case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacityOf(s.CardTarget) + " doses ready";
-                case GrowthCard.Breeding: return !shop.HasBreedingTank ? "" : shop.Offspring != null ? "An offspring is in the nursery." : shop.Breeding ? "Breeding… " + Mathf.CeilToInt(shop.BreedingLeft) + " s" : "Waiting for a pair.";
+                case GrowthCard.Breeding: return !shop.HasBreedingTank ? "not bought" : shop.ActivePairs.Any(p => p.Offspring != null) ? "An offspring is waiting" : shop.ActivePairs.Any(p => p.Breeding) ? "Breeding · " + Mathf.CeilToInt(shop.ActivePairs.Where(p => p.Breeding).Min(p => p.Left)) + " s" : "Waiting for a pair";
                 default: return PowerLiveText() ?? LineLiveText() ?? HelperLiveText() ?? "";
             }
         }
@@ -376,6 +387,15 @@ namespace EvolutionShop
         {
             liveLabel = Text(LiveText()); liveLabel.style.fontSize = 22; liveLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
             body.Add(liveLabel);
+        }
+
+        /// <summary>The strip's status chip says what the station is doing now (GR-13), kept current each frame.</summary>
+        void LiveStatus()
+        {
+            if (statusLabel == null) return;
+            statusLabel.text = LiveText();
+            statusLabel.style.display = DisplayStyle.Flex;
+            liveLabel = statusLabel;
         }
 
         void Fill(GrowthCard which, string target)
@@ -412,38 +432,11 @@ namespace EvolutionShop
             }
         }
 
-        static string Cost(LevelDef l) => l.Credits + " cr" + (l.Rp > 0 ? " and " + l.Rp + " RP" : "");
-
-        /// <summary>
-        /// GR-06's upgrade framework on every station card (GR.9, GR.13): the station's levels as a ladder, those it has ticked,
-        /// the rest with their change, cost and gate or what they wait for, and the next level's button when it can be bought.
-        /// </summary>
-        void UpgradeSection(VisualElement body, string station, string title = null)
-        {
-            var shop = s.Shop;
-            var def = GrowthContent.Station(station);
-            int now = shop.Level(station);
-            var section = new VisualElement(); section.style.marginTop = 12; section.style.borderTopWidth = 2; section.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); section.style.paddingTop = 8;
-            var head = Text((title ?? def.Name) + " · level " + now + " of " + def.Levels.Length); head.style.unityFontStyleAndWeight = FontStyle.Bold;
-            section.Add(head);
-            foreach (var l in def.Levels)
-            {
-                if (l.Level <= now) { section.Add(Text("✓ " + l.Level + ". " + l.Change, "es-req--done")); continue; }
-                string waits = GrowthShop.WaitsFor(station, l.Level);
-                section.Add(Text("· " + l.Level + ". " + l.Change + " · " + (waits ?? Cost(l) + ", era " + l.Era + ", " + l.Stars + "★"), "es-text--muted"));
-            }
-            var failure = shop.UpgradeCheck(station, out var next, out string why);
-            if (next != null && GrowthShop.WaitsFor(station, next.Level) == null)
-                section.Add(Button(failure == GrowthFailure.None ? "Upgrade to level " + next.Level + " for " + Cost(next) : why, () => s.Act(() => shop.Upgrade(station)), true, failure == GrowthFailure.None));
-            else if (next == null) section.Add(Text("Highest level.", "es-text--muted"));
-            body.Add(section);
-        }
-
         void FillGrower(string culture)
         {
             var shop = s.Shop;
             bool vat = GrowthContent.Culture(culture).Source == CultureSource.Vat;
-            var body = Head(vat ? "Conditioning vat (" + GrowthShop.Name(culture) + ")" : GrowthShop.Name(culture) + " grower", vat ? "vat level " + shop.Level("vat") : "level " + shop.Level("grower"));
+            var body = Head(vat ? "Conditioning vat (" + GrowthShop.Name(culture) + ")" : GrowthShop.Name(culture) + " grower", vat ? "vat level " + shop.Level("vat") : "level " + shop.Level("grower"), vat ? "Vat" : "Grower");
             Live(body);
             body.Add(Text("Hold the left mouse on a grower to fill the siphon: " + (shop.PerHold > 1 ? shop.PerHold + " doses" : "one dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s. It holds " + shop.GrowerCapacityOf(culture) +
                 " and refills one dose every " + shop.RefillSecondsOf(culture).ToString("0.#") + " s by itself."));
@@ -451,141 +444,198 @@ namespace EvolutionShop
             TapSection(body, culture);
             if (vat) UpgradeSection(body, "vat", "The vat");
             UpgradeSection(body, "grower", "Every grower");
-            Footer(body, "One upgrade covers every grower.");
+            Footer(body, "one upgrade covers every grower");
         }
 
+        // ---------------------------------------------------------------- the incubator (GR.13)
+
+        /// <summary>
+        /// GR-13's incubator: Mix (the hatchling to take, the recipes found as tiles, the doses as chips with − and +,
+        /// "close to something new" as a meter, Start) and Upgrade; the auto-doser and the chute on a Machines tab once
+        /// there are any. The mix log is in the journal, a link away.
+        /// </summary>
         void FillIncubator()
         {
             var shop = s.Shop;
-            var body = Head("Incubator", "level " + shop.Level("incubator") + " · " + shop.MaxDoses + " doses");
-            Live(body);
+            var body = Head("Incubator", "", "Mix", "Every mix makes a creature, and an exact recipe finds a new one. + doses a culture from your siphon into the chamber, − takes it back. A recipe you have found doses itself in one press.");
+            LiveStatus();
+            bool locked = shop.Incubating || shop.ChamberLock != null;
             if (shop.Hatchling != null)
             {
                 string name = GrowthSession.Named(shop.Hatchling);
                 int clutch = shop.Hatchlings.Count;
-                body.Add(Text((clutch > 1 ? "Out came a clutch of " + clutch + ": " + GrowthShop.Plural(name) : "Out came a " + name) + (shop.LastMix != null && shop.LastMix.WasNew ? " — new to your journal!" : ".")));
-                body.Add(Button("Take " + (clutch > 1 ? "a " : "the ") + name + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(shop.TakeHatchling), true, shop.Carried.Count < GrowthShop.CarryLimit));
+                var call = Box("gr-callout");
+                var row = Box("gr-row");
+                var glyph = new GrowthGlyph(GrowthCreatureView.ColourOf(shop.Hatchling.Def, shop.Hatchling.Colour)); glyph.AddToClassList("gr-result__glyph"); row.Add(glyph);
+                row.Add(L(clutch > 1 ? "A clutch of " + clutch + " " + GrowthShop.Plural(name) : "A " + name, "gr-strong"));
+                if (shop.LastMix != null && shop.LastMix.WasNew) row.Add(L("New!", "gr-newtag"));
+                call.Add(row);
+                call.Add(Wide("Take " + (clutch > 1 ? "a " : "the ") + name + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(shop.TakeHatchling), true,
+                    shop.Carried.Count < GrowthShop.CarryLimit, "Your hands are full: put a creature in a tank first"));
+                body.Add(call);
             }
-            // The siphon's doses, each pressed into the chamber.
-            body.Add(Text("In the siphon (press to add):", "es-text--muted"));
-            var held = Row();
-            foreach (var g in shop.Held.GroupBy(c => c))
+            // The recipes found: one press doses each from the siphon (the doses already in go back first).
+            var recipes = shop.MixLog.AsEnumerable().Reverse().Where(m => m.Exact && shop.Discovered.Contains(m.Species)).Select(m => m.Species).Distinct().Take(5).ToList();
+            var close = shop.MixLog.AsEnumerable().Reverse().FirstOrDefault(m => m.DistanceToNew == 1 && !m.Exact);
+            var found = Box("gr-section");
+            found.Add(Eyebrow("Recipes you've found"));
+            var tiles = Box("gr-row");
+            foreach (var id in recipes) tiles.Add(RecipeTile(id, locked));
+            if (close != null)
             {
-                string culture = g.Key;
-                var b = Button("+ " + GrowthShop.Name(culture) + " (" + g.Count() + ")", () => s.Act(() => shop.AddDose(culture)), false, !shop.Incubating && shop.Chamber.Count < shop.MaxDoses);
-                b.style.borderLeftWidth = 8; b.style.borderLeftColor = CultureColour(culture);
-                held.Add(b);
+                var unknown = Box("gr-tile", "gr-tile--unknown");
+                unknown.tooltip = "Your mix of " + DoseWords(close.Doses) + " was one dose from something new";
+                var g = new GrowthGlyph(new Color(0.72f, 0.67f, 0.57f)); g.AddToClassList("gr-tile__glyph"); unknown.Add(g);
+                unknown.Add(L("?", "gr-tile__name"));
+                var meta = Box("gr-tile__meta");
+                for (int i = 0; i < close.Doses.Length; i++) for (int n = 0; n < close.Doses[i]; n++) meta.Add(Pip(CultureColour(GrowthContent.Cultures[i].Id)));
+                unknown.Add(meta);
+                tiles.Add(unknown);
             }
-            if (shop.Held.Count == 0) held.Add(Text("Empty: hold the mouse on a grower to collect.", "es-text--muted"));
-            body.Add(held);
-            body.Add(Text("The mix (" + shop.Chamber.Count + "/" + shop.MaxDoses + ", press a dose to take it back):", "es-text--muted"));
-            var slots = Row();
-            for (int i = 0; i < shop.MaxDoses; i++)
+            if (recipes.Count == 0 && close == null) tiles.Add(L("None yet: every mix makes a creature. Try two or three doses.", "gr-hint"));
+            found.Add(tiles);
+            body.Add(found);
+            // The chamber: a chip for each culture in the siphon or the chamber, − and + on either side.
+            var chamber = Box("gr-section");
+            chamber.Add(Eyebrow("In the chamber · " + shop.Chamber.Count + " of " + shop.MaxDoses));
+            var doses = Box("gr-row");
+            foreach (var culture in GrowthContent.Cultures.Select(c => c.Id).Where(c => shop.Held.Contains(c) || shop.Chamber.Contains(c)))
             {
-                if (i < shop.Chamber.Count)
-                {
-                    string culture = shop.Chamber[i];
-                    var b = Button(GrowthShop.Name(culture), () => s.Act(() => shop.ReturnDose(culture)), false, !shop.Incubating);
-                    b.style.backgroundColor = CultureColour(culture); b.style.color = Color.white;
-                    slots.Add(b);
-                }
-                else
-                {
-                    // An empty slot: an outlined space the next dose goes into.
-                    var empty = new VisualElement(); empty.style.width = 70; empty.style.height = 30; empty.style.marginTop = 6; empty.style.marginRight = 6;
-                    empty.style.borderTopWidth = empty.style.borderBottomWidth = empty.style.borderLeftWidth = empty.style.borderRightWidth = 2;
-                    empty.style.borderTopColor = empty.style.borderBottomColor = empty.style.borderLeftColor = empty.style.borderRightColor = new Color(0.79f, 0.72f, 0.56f);
-                    empty.style.borderTopLeftRadius = empty.style.borderTopRightRadius = empty.style.borderBottomLeftRadius = empty.style.borderBottomRightRadius = 10;
-                    slots.Add(empty);
-                }
+                string c = culture;
+                int inChamber = shop.Chamber.Count(x => x == c), held = shop.Held.Count(x => x == c);
+                var chip = Box("gr-dose"); chip.style.backgroundColor = CultureGround(c);
+                chip.Add(PlusMinus("−", () => s.Act(() => shop.ReturnDose(c)), !locked && inChamber > 0 && shop.Held.Count < shop.SiphonCapacity,
+                    locked ? "The incubator is busy" : inChamber == 0 ? "None of it in the chamber" : "Your siphon is full"));
+                var words = Box("gr-dose__text");
+                words.Add(L(GrowthShop.Name(c) + " " + inChamber, "gr-dose__name"));
+                words.Add(L(held + " in siphon", "gr-dose__count"));
+                chip.Add(words);
+                chip.Add(PlusMinus("+", () => s.Act(() => shop.AddDose(c)), !locked && held > 0 && shop.Chamber.Count < shop.MaxDoses,
+                    locked ? "The incubator is busy" : held == 0 ? "Collect " + GrowthShop.Name(c) + " at its grower" : "The chamber holds " + shop.MaxDoses));
+                doses.Add(chip);
             }
-            body.Add(slots);
+            if (shop.Held.Count == 0 && shop.Chamber.Count == 0) doses.Add(L("Your siphon is empty: hold the mouse on a grower to collect.", "gr-hint"));
+            chamber.Add(doses);
+            body.Add(chamber);
             if (shop.Chamber.Count > 0 && !shop.Incubating)
             {
                 var preview = shop.Preview();
-                if (preview.CloseToNew && !shop.Microscope) body.Add(Text("Hmm… this is one dose from something new.", "es-card__reason"));
-                // GR-06: the research bench's microscope measures every mix: warmer as it nears something new.
+                // GR-06: the research bench's microscope measures every mix; without it, only a mix one dose away says so.
                 if (shop.Microscope)
-                    body.Add(Text("Microscope: " + (preview.DistanceToNew < 0 ? "nothing new left to find with these cultures" : preview.DistanceToNew == 0 ? "this mix is something new" :
-                        preview.DistanceToNew + " dose" + (preview.DistanceToNew == 1 ? "" : "s") + " from something new" + (preview.DistanceToNew <= 1 ? " (hot)" : preview.DistanceToNew <= 2 ? " (warm)" : " (cold)")),
-                        preview.CloseToNew ? "es-card__reason" : "es-text"));
-            }
-            body.Add(Button(shop.Incubating ? "Incubating…" : "Mix and incubate (" + shop.IncubationSeconds.ToString("0") + " s)", () => s.Act(shop.StartIncubation), true,
-                !shop.Incubating && shop.Hatchling == null && shop.Chamber.Count > 0));
-            if (shop.LastMix != null && shop.LastMix.DistanceToNew == 1 && !shop.LastMix.Exact)
-                body.Add(Text("Your last mix was one dose from something new.", "es-card__reason"));
-            // The mix log: each distinct mix and what it made, with known recipes in one press.
-            var logTitle = Text("Mix log"); logTitle.style.fontSize = 17; logTitle.style.unityFontStyleAndWeight = FontStyle.Bold; logTitle.style.marginTop = 10;
-            body.Add(logTitle);
-            if (shop.MixLog.Count == 0) body.Add(Text("Every mix makes a creature. Try two or three doses.", "es-text--muted"));
-            foreach (var m in shop.MixLog.AsEnumerable().Reverse().Take(6))
-            {
-                var row = Row();
-                for (int i = 0; i < m.Doses.Length; i++) for (int n = 0; n < m.Doses[i]; n++) row.Add(Dot(CultureColour(GrowthContent.Cultures[i].Id), 16));
-                var label = Text("→ " + GrowthContent.Get(m.Species).Name + (m.Count > 1 ? " ×" + m.Count : "") + (m.DistanceToNew == 1 && !m.Exact ? " · one from new" : ""));
-                label.style.marginLeft = 6; label.style.flexGrow = 1; row.Add(label);
-                if (m.Exact && shop.Discovered.Contains(m.Species))
                 {
-                    string species = m.Species;
-                    row.Add(Button("Use", () => s.Act(() => shop.FillRecipe(species)), false, !shop.Incubating));
+                    int d = preview.DistanceToNew;
+                    var row = Box("gr-row", "gr-row--spread", "gr-section");
+                    row.Add(L("Microscope: " + (d < 0 ? "nothing new left to find with these cultures" : d == 0 ? "this mix is something new" : d + " dose" + (d == 1 ? "" : "s") + " from something new"), "gr-hint"));
+                    row.Add(Meter(d < 0 ? 0 : d == 0 ? 3 : d == 1 ? 2 : d == 2 ? 1 : 0, d <= 1 ? "Hot" : d == 2 ? "Warm" : "Cold"));
+                    body.Add(row);
                 }
-                body.Add(row);
+                else if (preview.CloseToNew)
+                {
+                    var row = Box("gr-row", "gr-row--spread", "gr-section");
+                    row.Add(L("Close to something new", "gr-hint"));
+                    row.Add(Meter(2, "One dose from something new"));
+                    body.Add(row);
+                }
             }
+            body.Add(Wide(shop.Incubating ? "Incubating · " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : "Start · " + shop.IncubationSeconds.ToString("0") + " s", () => s.Act(shop.StartIncubation), true,
+                !locked && shop.Hatchling == null && shop.Chamber.Count > 0,
+                shop.Incubating ? "It is incubating" : shop.ChamberLock ?? (shop.Hatchling != null ? "Take the hatchling first" : "Add a dose first")));
+            var links = Box("gr-row", "gr-row--spread");
+            var back = Link("Return doses", () => { foreach (var c in shop.Chamber.ToList()) shop.ReturnDose(c); s.SaveNow(); }, !locked && shop.Chamber.Count > 0, "Nothing in the chamber");
+            back.style.marginLeft = 0;
+            links.Add(back);
+            links.Add(Link("Mix log · " + shop.MixLog.Count + " tried", () => OpenJournalAt("Mix log")));
+            body.Add(links);
             // GR-06: the tint port (level 3) colours the next clutch, as the breeding tank's water does.
-            if (shop.IncubatorTintPort)
+            if (shop.IncubatorTintPort) body.Add(TintRow(shop.IncubatorTint, "clutch", c => shop.IncubatorTintCheck(c, out string w) == GrowthFailure.None ? null : w,
+                c => s.Act(() => shop.TintIncubator(c)), () => s.Act(shop.ClearIncubatorTint), "Tinted with " + (shop.IncubatorTint == null ? "" : GrowthShop.Name(shop.IncubatorTint)) + ": the next clutch is " + (shop.IncubatorTint == null ? "" : GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.IncubatorTint).ToString()) + "."));
+            if (shop.AutoDoser || shop.HasSorter)
             {
-                var tintBox = new VisualElement(); tintBox.style.marginTop = 8;
-                if (shop.IncubatorTint != null)
-                {
-                    tintBox.Add(Text("Tinted with " + GrowthShop.Name(shop.IncubatorTint) + ": the next clutch is " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.IncubatorTint) + "."));
-                    tintBox.Add(Button("Take the tint back", () => s.Act(shop.ClearIncubatorTint), false, shop.Held.Count < shop.SiphonCapacity));
-                }
-                else
-                {
-                    tintBox.Add(Text("Tint port: a dose from the siphon colours the next clutch.", "es-text--muted"));
-                    var tints = Row();
-                    foreach (var culture in GrowthShop.TintCultures)
-                    {
-                        string c = culture;
-                        var f = shop.IncubatorTintCheck(c, out string why);
-                        var b = Button(GrowthShop.Name(c) + " → " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, c), () => s.Act(() => shop.TintIncubator(c)), false, f == GrowthFailure.None,
-                            f == GrowthFailure.NoDose ? "Collect " + GrowthShop.Name(c) + " first" : why);
-                        b.style.borderLeftWidth = 8; b.style.borderLeftColor = CultureColour(c);
-                        tints.Add(b);
-                    }
-                    tintBox.Add(tints);
-                }
-                body.Add(tintBox);
+                var machines = AddTab("Machines");
+                AutoDoserSection(machines);
+                ChuteSection(machines);
             }
-            AutoDoserSection(body);
-            ChuteSection(body);
             UpgradeSection(body, "incubator");
             Footer(body);
         }
 
-        static string Holds(ContainerDef def) => def.Largest == SizeClass.Large ? "creatures of every size" : "small and medium creatures";
-
-        /// <summary>GR.13's occupant grid: one cell a space, each creature as wide as its spaces in its colour, a sold one paler.</summary>
-        VisualElement SpaceGrid(GrowthContainer c)
+        Button PlusMinus(string text, Action click, bool enabled, string why)
         {
-            var grid = Row(); grid.style.marginTop = 6; grid.style.marginBottom = 4;
-            void Cell(int spaces, Color fill, bool outline, bool sold)
-            {
-                var cell = new VisualElement();
-                cell.style.width = 22 * spaces + 4 * (spaces - 1); cell.style.height = 22; cell.style.marginRight = 4; cell.style.marginBottom = 4;
-                cell.style.borderTopLeftRadius = cell.style.borderTopRightRadius = cell.style.borderBottomLeftRadius = cell.style.borderBottomRightRadius = 6;
-                if (outline)
-                {
-                    cell.style.borderTopWidth = cell.style.borderBottomWidth = cell.style.borderLeftWidth = cell.style.borderRightWidth = 2;
-                    cell.style.borderTopColor = cell.style.borderBottomColor = cell.style.borderLeftColor = cell.style.borderRightColor = new Color(0.79f, 0.72f, 0.56f);
-                }
-                else cell.style.backgroundColor = sold ? Color.Lerp(fill, Color.white, 0.55f) : fill;
-                grid.Add(cell);
-            }
-            foreach (var o in c.Occupants.OrderBy(o => o.Species)) Cell((int)o.Def.Size, GrowthCreatureView.ColourOf(o.Def, o.Colour), false, o.ReservedBy != 0);
-            for (int i = 0; i < c.Free; i++) Cell(1, Color.clear, true, false);
-            return grid;
+            var b = new Button(() => { if (enabled) { click(); RefreshCard(); } }) { text = text };
+            b.AddToClassList("gr-pm");
+            b.SetEnabled(enabled);
+            if (!enabled) b.tooltip = why;
+            return b;
         }
+
+        static string DoseWords(int[] doses) =>
+            string.Join(" and ", Enumerable.Range(0, doses.Length).Where(i => doses[i] > 0).Select(i => doses[i] + " " + GrowthContent.Cultures[i].Name));
+
+        /// <summary>A recipe found, as a tile: its creature, its doses and time; a press doses it from the siphon.</summary>
+        VisualElement RecipeTile(string species, bool locked)
+        {
+            var shop = s.Shop;
+            var def = GrowthContent.Get(species);
+            // What the siphon and the chamber lack between them, if anything.
+            var have = new List<string>(shop.Held); have.AddRange(shop.Chamber);
+            string missing = null;
+            for (int i = 0; i < def.Recipe.Length && missing == null; i++)
+            {
+                if (def.Recipe[i] == 0) continue;
+                string c = GrowthContent.Cultures[i].Id;
+                int short_ = def.Recipe[i] - have.Count(x => x == c);
+                if (short_ > 0) missing = "Needs " + short_ + " more " + GrowthShop.Name(c) + " in your siphon";
+            }
+            if (def.Doses > shop.MaxDoses) missing = "The chamber holds " + shop.MaxDoses;
+            bool can = !locked && missing == null && shop.Hatchling == null;
+            var tile = new Button(() => { if (can) { s.Act(() => shop.FillRecipe(species)); RefreshCard(); } });
+            tile.AddToClassList("gr-tile");
+            tile.SetEnabled(can);
+            tile.tooltip = can ? "Dose " + def.Name + ": " + GrowthReport.Recipe(def.Recipe) : locked ? "The incubator is busy" : shop.Hatchling != null ? "Take the hatchling first" : missing;
+            var g = new GrowthGlyph(GrowthCreatureView.ColourOf(def)); g.AddToClassList("gr-tile__glyph"); tile.Add(g);
+            tile.Add(L(def.Name, "gr-tile__name"));
+            var meta = Box("gr-tile__meta");
+            for (int i = 0; i < def.Recipe.Length; i++) for (int n = 0; n < def.Recipe[i]; n++) meta.Add(Pip(CultureColour(GrowthContent.Cultures[i].Id)));
+            meta.Add(L(shop.IncubationSeconds.ToString("0") + " s", "gr-tile__time"));
+            tile.Add(meta);
+            return tile;
+        }
+
+        /// <summary>
+        /// A tint port as a slot: tinted, the dose's chip with what it makes (its sentence on hover) and Take it back;
+        /// otherwise a chip for each tint culture, each saying why when it can't be used.
+        /// </summary>
+        VisualElement TintRow(string tint, string what, Func<string, string> why, Action<string> put, Action clear, string tintedSentence)
+        {
+            var shop = s.Shop;
+            var row = Box("gr-row", "gr-section");
+            var label = Eyebrow("Tint"); label.style.marginBottom = 0; label.style.marginRight = 10; row.Add(label);
+            if (tint != null)
+            {
+                var chip = Box("gr-dose"); chip.style.backgroundColor = CultureGround(tint); chip.style.marginBottom = 0; chip.tooltip = tintedSentence;
+                chip.Add(L(GrowthShop.Name(tint) + " → " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, tint), "gr-dose__name"));
+                row.Add(chip);
+                row.Add(Link("Take it back", clear, shop.Held.Count < shop.SiphonCapacity, "Your siphon is full"));
+                return row;
+            }
+            foreach (var culture in GrowthShop.TintCultures)
+            {
+                string c = culture;
+                string no = why(c);
+                var b = ChipButton(GrowthShop.Name(c) + " → " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, c), () => put(c), no == null,
+                    no == null ? "A dose of " + GrowthShop.Name(c) + " makes the next " + what + " " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, c) : !shop.Held.Contains(c) ? "Collect " + GrowthShop.Name(c) + " first" : no,
+                    CultureColour(c));
+                b.style.marginTop = 0;
+                row.Add(b);
+            }
+            return row;
+        }
+
+        // ---------------------------------------------------------------- containers (GR.13)
+
+        bool moveOpen, sellAsked;
+
+        static string Holds(ContainerDef def) => def.Largest == SizeClass.Large ? "creatures of every size" : "small and medium creatures";
 
         /// <summary>Why a container is or is not in harmony (GR.5), in a few words.</summary>
         string HarmonyText(GrowthContainer c)
@@ -598,33 +648,63 @@ namespace EvolutionShop
             return "a " + odd.Def.Water.ToString().ToLowerInvariant() + "-water " + odd.Def.Name + " in " + c.Water.ToString().ToLowerInvariant() + " water: no harmony";
         }
 
+        /// <summary>GR.13's occupant grid: a cell a space, each creature as wide as its spaces in its colour, a school badged, a sold one paler.</summary>
+        VisualElement SpaceGrid(GrowthContainer c)
+        {
+            var shop = s.Shop;
+            var grid = Box("gr-spaces");
+            var badged = new HashSet<string>();
+            // The biggest first, so the cells pack into fewer rows.
+            foreach (var o in c.Occupants.OrderByDescending(o => (int)o.Def.Size).ThenBy(o => o.Species).ThenBy(o => o.Id))
+            {
+                int spaces = (int)o.Def.Size;
+                var cell = Box("gr-space");
+                cell.style.width = 64 * spaces + 8 * (spaces - 1);
+                if (o.ReservedBy != 0) cell.AddToClassList("gr-space--sold");
+                cell.tooltip = GrowthSession.Named(o) + " · " + o.Def.Size.ToString().ToLowerInvariant() + " · " + shop.Price(o.Species) + " cr" + (GrowthShop.IsOnDisplay(o) ? " · on display" : o.ReservedBy != 0 ? " · sold" : "");
+                var g = new GrowthGlyph(GrowthCreatureView.ColourOf(o.Def, o.Colour)); g.AddToClassList("gr-space__glyph");
+                if (spaces > 1) { g.style.width = 54 + 22 * Mathf.Min(spaces, 3); g.style.height = 32 + 4 * Mathf.Min(spaces, 3); }
+                cell.Add(g);
+                if (c.InSchool(o.Species) && badged.Add(o.Species)) cell.Add(L("school", "gr-badge"));
+                grid.Add(cell);
+            }
+            for (int i = 0; i < c.Free; i++) { var empty = Box("gr-space", "gr-space--empty"); empty.style.width = 64; grid.Add(empty); }
+            return grid;
+        }
+
+        /// <summary>
+        /// GR-13's container card: Tank (the space grid, each species with its price, a press taking one out; putting in
+        /// what you carry; its comfort as a face and a word; water kits; Move and Sell at night, Sell asking first) and
+        /// Upgrade. Its rules are on the "?" (UX.3.5).
+        /// </summary>
         void FillTank(string containerId)
         {
             var shop = s.Shop;
             var c = shop.Container(containerId);
             if (c == null) { s.SetCard(GrowthCard.None); return; }
-            var body = Head(c.Def.Name + " · level " + c.Level, c.Used + "/" + c.Spaces + " spaces");
-            body.Add(Text(c.Def.Lab ? "In the workshop, off the shop floor: visitors never see it. Holds " + Holds(c.Def) + "; carry creatures from here to the shop's tanks." :
-                "Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better.", "es-text--muted"));
+            bool comfort = shop.Era >= GrowthContent.ComfortEra && !c.Def.Lab;
+            string rules = c.Def.Lab ? "In the workshop, off the shop floor: visitors never see it. Holds " + Holds(c.Def) + "; carry creatures from here to the shop's tanks." :
+                "Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better." +
+                (comfort ? " Creatures that share a temperament and the tank's water are in harmony: +1 appeal." : "") + " Peek: look closely at the glass to read each creature; E takes the one under the reticle.";
+            var body = Head(c.Def.Name, c.Used + " of " + c.Spaces + " spaces", c.Def.Lab ? "Rack" : "Tank", rules, !c.Def.Lab);
             body.Add(SpaceGrid(c));
-            // Each species in it with its count; press one to take a creature of it out.
-            var grid = Row();
+            // Each species with its count and price; a press takes one out.
+            var kinds = Box("gr-row", "gr-section");
             foreach (var g in c.Occupants.GroupBy(o => (o.Species, o.Colour)))
             {
-                var free = g.FirstOrDefault(o => o.ReservedBy == 0);
+                var free = g.FirstOrDefault(o => o.ReservedBy == 0 && !GrowthShop.IsOnDisplay(o));
                 int sold = g.Count(o => o.ReservedBy != 0);
                 var def = g.First().Def;
-                var b = Button(GrowthSession.Named(g.First()) + (g.Count() > 1 ? " ×" + g.Count() : "") + (sold > 0 ? " (" + sold + " sold)" : "") + " · " + shop.Price(def.Id) + " cr",
-                    () => { if (free != null) s.Act(() => shop.TakeOut(c.Id, free.Id)); }, false, free != null && shop.Carried.Count < GrowthShop.CarryLimit, "Take one out");
-                b.style.borderLeftWidth = 10; b.style.borderLeftColor = GrowthCreatureView.ColourOf(def, g.Key.Colour);
-                grid.Add(b);
+                bool can = free != null && shop.Carried.Count < GrowthShop.CarryLimit;
+                var b = ChipButton(GrowthSession.Named(g.First()) + (g.Count() > 1 ? " ×" + g.Count() : "") + (sold > 0 ? " (" + sold + " sold)" : "") + " · " + shop.Price(def.Id) + " cr",
+                    () => s.Act(() => shop.TakeOut(c.Id, free.Id)), can, can ? "Take one out" : free == null ? "None free to take" : "Your hands are full", GrowthCreatureView.ColourOf(def, g.Key.Colour));
+                kinds.Add(b);
             }
-            body.Add(grid);
-            var schools = c.Occupants.GroupBy(o => o.Species).Where(g => g.Count() >= GrowthShop.SchoolSize).Select(g => GrowthContent.Get(g.Key).Name).ToList();
-            if (schools.Count > 0) body.Add(Text("School: " + string.Join(", ", schools), "es-card__reason"));
+            if (c.Occupants.Count == 0) kinds.Add(L("Empty: carry creatures here and press E.", "gr-hint"));
+            body.Add(kinds);
             if (shop.Carried.Count > 0)
             {
-                var put = Row();
+                var put = Box("gr-row", "gr-section");
                 foreach (var carried in shop.Carried.ToList())
                 {
                     var spec = carried;
@@ -633,47 +713,72 @@ namespace EvolutionShop
                 }
                 body.Add(put);
             }
-            // GR.5 comfort (era 3): the water, harmony and the water kits (not for a lab rack, which is never on show).
-            if (shop.Era >= GrowthContent.ComfortEra && !c.Def.Lab)
+            if (!c.Def.Lab)
             {
-                var waterLine = Text("Water: " + c.Water.ToString().ToLowerInvariant() + " · " + HarmonyText(c)); waterLine.style.marginTop = 8;
-                body.Add(waterLine);
-                var waters = Row();
-                foreach (Water w in Enum.GetValues(typeof(Water)))
+                // GR.5 comfort as a face and a word: harmony makes it happy; a creature in the wrong water, uneasy.
+                bool harmony = shop.Harmony(c);
+                bool wrongWater = comfort && c.Occupants.Any(o => o.Def.Water != c.Water);
+                int mood = !comfort ? (c.Occupants.Count == 0 ? 1 : 2) : harmony ? 2 : wrongWater ? 0 : 1;
+                var feel = Box("gr-row", "gr-section"); feel.style.flexWrap = Wrap.NoWrap;
+                feel.Add(new GrowthFace(mood));
+                var words = Box("gr-result__text");
+                words.Add(L(mood == 2 ? "Happy" : mood == 1 ? "Settled" : "Uneasy", "gr-strong"));
+                bool school = c.Occupants.GroupBy(o => o.Species).Any(x => x.Count() >= GrowthShop.SchoolSize);
+                words.Add(L(comfort ? HarmonyText(c) : c.Occupants.Count == 0 ? "nobody to please yet" : school ? "a school sells a little better" : "settled in their tank", "gr-hint"));
+                feel.Add(words);
+                int appeal = shop.Appeal(c);
+                if (appeal > 0)
+                    feel.Add(Chip("Appeal +" + appeal, false, string.Join(" and ", new[] { c.Kind == "show" ? "a lit Show tank" : null, harmony ? "harmony" : null }.Where(x => x != null)) +
+                        ": visitors look here first and stretch their budget " + (appeal * 10) + "%"));
+                body.Add(feel);
+                if (comfort)
                 {
-                    if (w == c.Water) continue;
-                    var water = w;
-                    var failure = shop.WaterCheck(c.Id, water, out string why);
-                    waters.Add(Button(water + " water · " + GrowthContent.WaterKitCredits + " cr", () => s.Act(() => shop.SetWater(c.Id, water)), false, failure == GrowthFailure.None, why));
+                    var water = Box("gr-row", "gr-section");
+                    var label = Eyebrow("Water · " + c.Water.ToString().ToLowerInvariant()); label.style.marginBottom = 0; label.style.marginRight = 6; water.Add(label);
+                    foreach (Water w in Enum.GetValues(typeof(Water)))
+                    {
+                        if (w == c.Water) continue;
+                        var to = w;
+                        var failure = shop.WaterCheck(c.Id, to, out string why);
+                        var b = ChipButton(to + " · " + GrowthContent.WaterKitCredits + " cr", () => s.Act(() => shop.SetWater(c.Id, to)), failure == GrowthFailure.None, failure == GrowthFailure.None ? "A water kit: " + to.ToString().ToLowerInvariant() + " water" : why);
+                        b.style.marginTop = 0;
+                        water.Add(b);
+                    }
+                    body.Add(water);
                 }
-                body.Add(waters);
             }
-            int appeal = shop.Appeal(c);
-            if (appeal > 0)
-                body.Add(Text("Appeal +" + appeal + " (" + string.Join(", ", new[] { c.Kind == "show" ? "lit Show tank" : null, shop.Harmony(c) ? "harmony" : null }.Where(x => x != null)) +
-                    "): visitors look here first and stretch their budget " + (appeal * 10) + "%.", "es-card__reason"));
-            // The next level.
-            var section = new VisualElement(); section.style.marginTop = 10; section.style.borderTopWidth = 2; section.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); section.style.paddingTop = 6;
-            var upgrade = shop.ContainerUpgradeCheck(c.Id, out var next, out string upgradeWhy);
-            if (next == null) section.Add(Text("Highest level.", "es-text--muted"));
-            else
-            {
-                section.Add(Text("Level " + next.Level + ": " + next.Change + " · " + next.Credits + " credits"));
-                section.Add(Button(upgrade == GrowthFailure.None ? "Fit it for " + next.Credits + " cr" : upgradeWhy, () => s.Act(() => shop.UpgradeContainer(c.Id)), true, upgrade == GrowthFailure.None));
-            }
-            // Arranging, at night: move it with its creatures to a free place it fits, or sell it empty.
-            if (shop.Phase == GrowthPhase.Night)
+            // Arranging: Move lists the free places it fits; Sell asks first. Both say why when they can't, on hover.
+            var arrange = Box("gr-row", "gr-section");
+            if (!c.Def.Lab)
             {
                 var places = shop.OwnedPlaces.Where(p => shop.MoveCheck(c.Id, p, out _) == GrowthFailure.None).ToList();
-                var arrange = Row();
-                foreach (var p in places) { var place = p; arrange.Add(Button("Move to " + place, () => { if (s.Act(() => shop.MoveContainer(c.Id, place)).Success) s.SetCard(GrowthCard.None); })); }
-                var sell = shop.SellCheck(c.Id, out string sellWhy);
-                arrange.Add(Button(sell == GrowthFailure.None ? "Sell (+" + GrowthShop.SellValue(c) + " cr)" : "Sell: " + sellWhy.Substring(0, 1).ToLowerInvariant() + sellWhy.Substring(1), () => { if (s.Act(() => shop.SellContainer(c.Id)).Success) s.SetCard(GrowthCard.None); }, false, sell == GrowthFailure.None));
-                section.Add(arrange);
+                string moveWhy = shop.Phase != GrowthPhase.Night ? "Containers are moved at night" : places.Count == 0 ? "No free place it fits" : null;
+                var move = Button(moveOpen ? "Move: pick a place" : "Move", () => moveOpen = !moveOpen, false, moveWhy == null, moveWhy);
+                arrange.Add(move);
+                if (moveOpen && moveWhy == null)
+                    foreach (var p in places) { var place = p; arrange.Add(ChipButton("To " + place, () => { if (s.Act(() => shop.MoveContainer(c.Id, place)).Success) s.SetCard(GrowthCard.None); }, true, "Move it with its creatures to " + place)); }
             }
-            body.Add(section);
-            body.Add(Text("Peek: look closely at the glass to read each creature; E takes the one under the reticle.", "es-text--muted"));
-            Footer(body);
+            var sell = shop.SellCheck(c.Id, out string sellWhy);
+            if (sell == GrowthFailure.None && sellAsked)
+            {
+                arrange.Add(L("Sell it for " + GrowthShop.SellValue(c) + " cr?", "gr-hint"));
+                var yes = Button("Sell", () => { sellAsked = false; if (s.Act(() => shop.SellContainer(c.Id)).Success) s.SetCard(GrowthCard.None); });
+                yes.RemoveFromClassList("es-button--secondary"); yes.AddToClassList("es-button--danger"); yes.style.marginLeft = 10;
+                arrange.Add(yes);
+                arrange.Add(Button("Keep it", () => sellAsked = false));
+            }
+            else
+            {
+                var b = Button("Sell " + (c.Def.Lab ? "rack" : "tank") + (sell == GrowthFailure.None ? " · +" + GrowthShop.SellValue(c) + " cr" : ""), () => sellAsked = true, false, sell == GrowthFailure.None, sellWhy);
+                b.RemoveFromClassList("es-button--secondary"); b.AddToClassList("es-button--danger");
+                arrange.Add(b);
+            }
+            body.Add(arrange);
+            // Upgrade: the container's levels as every station's are.
+            var upgrade = AddTab(UpgradeTab);
+            var check = shop.ContainerUpgradeCheck(c.Id, out var next, out string upgradeWhy);
+            upgrade.Add(UpgradeBlock(c.Def.Name + " · level " + c.Level + " of " + c.Def.Levels.Length, c.Def.Levels, c.Level, next, check, upgradeWhy, "Upgrade", () => s.Act(() => shop.UpgradeContainer(c.Id))));
+            Footer(body, "peek and E takes one");
         }
 
         void FillPlace(string place)
@@ -728,13 +833,13 @@ namespace EvolutionShop
                 }
                 body.Add(row);
             }
-            Footer(body, "F8 or Esc closes");
+            Footer(body, "F8 closes it too");
         }
 
         void FillCounter()
         {
             var shop = s.Shop;
-            var body = Head("Counter", "level " + shop.Level("counter"));
+            var body = Head("Counter", "level " + shop.Level("counter"), "Counter");
             Live(body);
             if (shop.Phase == GrowthPhase.Night)
             {
@@ -763,7 +868,7 @@ namespace EvolutionShop
         void FillWorkbench()
         {
             var shop = s.Shop;
-            var body = Head("Research bench", "bench level " + shop.Level("bench") + " · siphon level " + shop.Level("siphon"));
+            var body = Head("Research bench", "bench " + shop.Level("bench") + " · siphon " + shop.Level("siphon"), "Bench");
             body.Add(Text("Your siphon holds " + shop.SiphonCapacity + " doses and takes " + (shop.PerHold > 1 ? shop.PerHold + " doses" : "one dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s" +
                 (shop.Vacuum ? "; the vacuum keeps pulling from the next grower in reach when the one you aim at runs dry." : ".")));
             UpgradeSection(body, "siphon", "The siphon");
@@ -865,110 +970,157 @@ namespace EvolutionShop
             Footer(body);
         }
 
-        // ---------------------------------------------------------------- the breeding tank (GR-05)
+        // ---------------------------------------------------------------- the breeding tank (GR.13)
 
+        readonly List<(GrowthRing ring, int pair)> rings = new List<(GrowthRing, int)>();
+
+        /// <summary>Each breeding pair's ring fills and counts down as it breeds (the card is rebuilt only when something changes).</summary>
+        void TickRings()
+        {
+            if (rings.Count == 0) return;
+            var shop = s.Shop;
+            foreach (var (ring, k) in rings)
+            {
+                var pair = shop.Pairs[k];
+                if (pair.Offspring != null) ring.Set(1, "✓");
+                else if (pair.Breeding) ring.Set(1 - pair.Left / Mathf.Max(0.01f, shop.BreedSeconds), Mathf.CeilToInt(pair.Left) + "s");
+                else ring.Set(0, "–");
+            }
+        }
+
+        /// <summary>
+        /// GR-13's breeding tank: Pair (each pair's parents side by side, a press taking one out; a timer ring while they
+        /// breed; what they'll make, "?" for a pair not tried, or what the pair log or the planner knows; the offspring in
+        /// the nursery; the tint port as a slot) and Upgrade. The pair log is in the journal, a link away.
+        /// </summary>
         void FillBreeding()
         {
             var shop = s.Shop;
             var levels = GrowthContent.Station("breeding").Levels;
+            const string rules = "Two creatures in, one offspring out, and the parents stay. Every pair makes something: hybrids, the families' crowns and new colours come from breeding, and a pair breeds the same thing every time, so a known pair makes more stock without cultures. Untinted, an offspring takes the higher parent colour (Classic, Sunny, Deep, Shimmer); the tint port (level 2) colours the next one.";
             if (!shop.HasBreedingTank)
             {
-                var intro = Head("Breeding tank", "not bought");
-                intro.Add(Text("Two creatures in, one offspring out, and the parents stay. Every pair makes something: hybrids, the families' crowns and new colours come from breeding, and a known pair makes more stock without cultures."));
+                var intro = Head("Breeding tank", "not bought", null, rules);
                 var first = levels[0];
-                intro.Add(Text("Level 1: " + first.Change + " · " + first.Credits + " credits and " + first.Rp + " research points (era " + first.Era + ", " + first.Stars + " stars).", "es-text--muted"));
                 var buy = shop.UpgradeCheck("breeding", out _, out string buyWhy);
-                intro.Add(Button(buy == GrowthFailure.None ? "Buy the breeding tank for " + first.Credits + " cr and " + first.Rp + " RP" : buyWhy,
-                    () => s.Act(() => shop.Upgrade("breeding")), true, buy == GrowthFailure.None));
+                var benefit = Box("gr-benefit");
+                benefit.Add(Eyebrow("Level 1"));
+                benefit.Add(L(first.Change, "gr-strong"));
+                var chips = Box("gr-chips");
+                chips.Add(Chip("Era " + first.Era, shop.Era < first.Era));
+                if (first.Stars > 0) chips.Add(Chip(Stars(first.Stars), shop.Stars < first.Stars));
+                chips.Add(Chip(first.Credits + " credits", shop.Credits < first.Credits));
+                chips.Add(Chip(first.Rp + " RP", shop.Rp < first.Rp));
+                benefit.Add(chips);
+                intro.Add(benefit);
+                intro.Add(L("Two creatures in, one offspring out, and the parents stay.", "gr-hint"));
+                var b = Wide("Buy the breeding tank for " + first.Credits + " cr and " + first.Rp + " RP", () => s.Act(() => shop.Upgrade("breeding")), true, buy == GrowthFailure.None, buyWhy);
+                b.style.marginTop = 14;
+                intro.Add(b);
                 Footer(intro);
                 return;
             }
-            var body = Head("Breeding tank", "level " + shop.Level("breeding") + " · a pair every " + shop.BreedSeconds.ToString("0") + " s");
-            Live(body);
+            var body = Head("Breeding tank", "", "Pair", rules);
+            LiveStatus();
             for (int k = 0; k < shop.PairPlaces; k++)
             {
-            var pairState = shop.Pairs[k];
-            int pairIndex = k;
-            if (pairState.Offspring != null)
-            {
-                var o = pairState.Offspring;
-                body.Add(Text("In the nursery: a " + GrowthSession.Named(o) + (pairState.OffspringWasNew ? " — new to your journal!" : "."), pairState.OffspringWasNew ? "es-card__reason" : "es-text"));
-                body.Add(Button("Take the " + GrowthSession.Named(o) + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(() => shop.TakeOffspring(pairIndex)), true, shop.Carried.Count < GrowthShop.CarryLimit));
+                var pairState = shop.Pairs[k];
+                int pairIndex = k;
+                var section = Box("gr-section");
+                if (shop.PairPlaces > 1)
+                    section.Add(L("Pair " + (k + 1) + " (" + pairState.Parents.Count + "/" + GrowthShop.PairSize + ")" + (pairState.Breeding ? " · breeding" : pairState.Offspring != null ? " · offspring ready" : ""), "gr-label"));
+                if (pairState.Offspring != null)
+                {
+                    var o = pairState.Offspring;
+                    var call = Box("gr-callout");
+                    var row = Box("gr-row");
+                    var g = new GrowthGlyph(GrowthCreatureView.ColourOf(o.Def, o.Colour)); g.AddToClassList("gr-result__glyph"); row.Add(g);
+                    var words = Box("gr-result__text");
+                    words.Add(L("In the nursery: a " + GrowthSession.Named(o) + (pairState.OffspringWasNew ? " — new to your journal!" : "."), "gr-strong"));
+                    row.Add(words);
+                    call.Add(row);
+                    call.Add(Wide("Take the " + GrowthSession.Named(o) + " (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried)", () => s.Act(() => shop.TakeOffspring(pairIndex)), true,
+                        shop.Carried.Count < GrowthShop.CarryLimit, "Your hands are full: put a creature in a tank first"));
+                    section.Add(call);
+                }
+                // The parents side by side; a press takes one out, at any time.
+                var pair = Box("gr-pair");
+                for (int i = 0; i < GrowthShop.PairSize; i++)
+                {
+                    if (i == 1) pair.Add(L("×", "gr-times"));
+                    if (i < pairState.Parents.Count)
+                    {
+                        var p = pairState.Parents[i];
+                        int id = p.Id;
+                        bool can = shop.Carried.Count < GrowthShop.CarryLimit;
+                        var parent = new Button(() => { if (can) { s.Act(() => shop.TakeParent(id)); RefreshCard(); } });
+                        parent.AddToClassList("gr-parent");
+                        parent.SetEnabled(can);
+                        parent.tooltip = can ? "Take it out" : "Your hands are full";
+                        var g = new GrowthGlyph(GrowthCreatureView.ColourOf(p.Def, p.Colour)); g.AddToClassList("gr-parent__glyph"); parent.Add(g);
+                        parent.Add(L(p.Def.Name, "gr-tile__name"));
+                        parent.Add(L(p.Colour.ToString(), "gr-dose__count"));
+                        pair.Add(parent);
+                    }
+                    else
+                    {
+                        var empty = Box("gr-parent", "gr-parent--empty");
+                        empty.Add(L("Empty", "gr-tile__name"));
+                        empty.Add(L(shop.Carried.Count > 0 ? "put one in below" : "E here puts one in", "gr-dose__count"));
+                        pair.Add(empty);
+                    }
+                }
+                section.Add(pair);
+                if (pairState.Parents.Count >= GrowthShop.PairSize)
+                {
+                    var plan = Box("gr-row"); plan.style.flexWrap = Wrap.NoWrap;
+                    var ring = new GrowthRing();
+                    rings.Add((ring, k));
+                    plan.Add(ring);
+                    var right = Box("gr-result__text");
+                    right.Add(Eyebrow("They'll make"));
+                    // What the pair makes: the pair log knows a pair once tried; the planner (research bench level 4) predicts any pair.
+                    var known = shop.PairEntry(pairState.Parents[0].Species, pairState.Parents[1].Species);
+                    var planned = known == null ? shop.PlannerPredicts(pairState.Parents[0].Species, pairState.Parents[1].Species) : null;
+                    var makes = known != null ? GrowthContent.Get(known.Species) : planned;
+                    var next = shop.NextColourOf(pairState);
+                    var result = Box("gr-result");
+                    var rg = new GrowthGlyph(makes != null ? GrowthCreatureView.ColourOf(makes, next) : new Color(0.72f, 0.67f, 0.57f)); rg.AddToClassList("gr-result__glyph"); result.Add(rg);
+                    var rw = Box("gr-result__text");
+                    var nameRow = Box("gr-row");
+                    nameRow.Add(L(makes != null ? makes.Name : "?", "gr-strong"));
+                    if (planned != null && !shop.Discovered.Contains(planned.Id)) nameRow.Add(L("New", "gr-newtag"));
+                    rw.Add(nameRow);
+                    rw.Add(L(known != null ? (makes.Kind == SpeciesKind.Crown ? "a crown · " : "") + "bred ×" + known.Count + " so far" : planned != null ? "the planner's prediction" : "A pair you have not tried", "gr-hint"));
+                    if (next != Colour.Classic) rw.Add(L("Its colour: " + next + (shop.Tint != null ? " (the " + GrowthShop.Name(shop.Tint) + " tint)" : " (the higher parent colour)"), "gr-hint"));
+                    result.Add(rw);
+                    right.Add(result);
+                    plan.Add(right);
+                    section.Add(plan);
+                }
+                body.Add(section);
             }
-            string pairName = shop.PairPlaces > 1 ? "Pair " + (k + 1) : "The pair";
-            body.Add(Text(pairName + " (" + pairState.Parents.Count + "/" + GrowthShop.PairSize + ", press one to take it out at any time)" + (shop.PairPlaces > 1 && pairState.Breeding ? " · " + Mathf.CeilToInt(pairState.Left) + " s" : "") + ":", "es-text--muted"));
-            var pair = Row();
-            foreach (var p in pairState.Parents.ToList())
+            TickRings();
+            if (shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize) && shop.Carried.Count > 0)
             {
-                int id = p.Id;
-                var b = Button(GrowthSession.Named(p), () => s.Act(() => shop.TakeParent(id)), false, shop.Carried.Count < GrowthShop.CarryLimit, "Take it out");
-                b.style.borderLeftWidth = 10; b.style.borderLeftColor = GrowthCreatureView.ColourOf(p.Def, p.Colour);
-                pair.Add(b);
-            }
-            for (int i = pairState.Parents.Count; i < GrowthShop.PairSize; i++)
-            {
-                var empty = new VisualElement(); empty.style.width = 110; empty.style.height = 30; empty.style.marginTop = 6; empty.style.marginRight = 6;
-                empty.style.borderTopWidth = empty.style.borderBottomWidth = empty.style.borderLeftWidth = empty.style.borderRightWidth = 2;
-                empty.style.borderTopColor = empty.style.borderBottomColor = empty.style.borderLeftColor = empty.style.borderRightColor = new Color(0.79f, 0.72f, 0.56f);
-                empty.style.borderTopLeftRadius = empty.style.borderTopRightRadius = empty.style.borderBottomLeftRadius = empty.style.borderBottomRightRadius = 10;
-                pair.Add(empty);
-            }
-            body.Add(pair);
-            if (pairState.Parents.Count >= GrowthShop.PairSize)
-            {
-                // What the pair makes: the pair log knows a pair once tried (the planner, research bench level 4, predicts any pair).
-                var known = shop.PairEntry(pairState.Parents[0].Species, pairState.Parents[1].Species);
-                var next = shop.NextColourOf(pairState);
-                string colour = next == Colour.Classic ? "" : " Its colour: " + next + (shop.Tint != null ? " (the " + GrowthShop.Name(shop.Tint) + " tint)." : " (the higher parent colour).");
-                var planned = known == null ? shop.PlannerPredicts(pairState.Parents[0].Species, pairState.Parents[1].Species) : null;
-                body.Add(Text((known != null ? "This pair makes a " + GrowthContent.Get(known.Species).Name + " (bred ×" + known.Count + " so far)." :
-                    planned != null ? "The planner: this pair makes a " + planned.Name + (shop.Discovered.Contains(planned.Id) ? "." : " — new to your journal.") : "A pair you have not tried: every pair makes something.") + colour,
-                    known == null ? "es-card__reason" : "es-text"));
-            }
-            }
-            if (shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize))
-            {
-                if (shop.Carried.Count == 0) body.Add(Text("Bring creatures from a tank (peek and E takes one), then E here puts them in.", "es-text--muted"));
-                var put = Row();
+                var put = Box("gr-row", "gr-section");
                 foreach (var carried in shop.Carried.ToList())
                 {
                     var spec = carried;
                     var f = shop.ParentCheck(spec, out string why);
-                    put.Add(Button(f == GrowthFailure.None ? "Put in " + GrowthSession.Named(spec) : GrowthSession.Named(spec) + ": " + why, () => s.Act(() => shop.PutParent(spec.Id)), true, f == GrowthFailure.None));
+                    put.Add(Button("Put in " + GrowthSession.Named(spec), () => s.Act(() => shop.PutParent(spec.Id)), true, f == GrowthFailure.None, why));
                 }
                 body.Add(put);
             }
             // Tinting the water (level 2): Bloom makes Sunny offspring, Flow Deep, Mist Shimmer.
-            var tint = new VisualElement(); tint.style.marginTop = 10; tint.style.borderTopWidth = 2; tint.style.borderTopColor = new Color(0.79f, 0.72f, 0.56f); tint.style.paddingTop = 6;
-            if (!shop.TintPort) tint.Add(Text("Tint port at level 2: a dose of Bloom, Flow or Mist in the water makes the next offspring Sunny, Deep or Shimmer. Untinted, it takes the higher parent colour (Classic, Sunny, Deep, Shimmer).", "es-text--muted"));
-            else if (shop.Tint != null)
-            {
-                tint.Add(Text("The water is tinted with " + GrowthShop.Name(shop.Tint) + ": the next offspring is " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.Tint) + "."));
-                tint.Add(Button("Take the tint back", () => s.Act(shop.ClearTint), false, shop.Held.Count < shop.SiphonCapacity));
-            }
-            else
-            {
-                tint.Add(Text("Tint the water with a dose from the siphon (used by the next offspring):", "es-text--muted"));
-                var tints = Row();
-                foreach (var culture in GrowthShop.TintCultures)
-                {
-                    string c = culture;
-                    var f = shop.TintCheck(c, out string why);
-                    var b = Button(GrowthShop.Name(c) + " → " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, c), () => s.Act(() => shop.TintWater(c)), false, f == GrowthFailure.None,
-                        f == GrowthFailure.NoDose ? "Collect " + GrowthShop.Name(c) + " first" : why);
-                    b.style.borderLeftWidth = 8; b.style.borderLeftColor = CultureColour(c);
-                    tints.Add(b);
-                }
-                tint.Add(tints);
-            }
-            body.Add(tint);
-            // The pair log, newest first.
-            var logTitle = Text("Pair log · " + shop.PairLog.Count + " pairs tried"); logTitle.style.fontSize = 17; logTitle.style.unityFontStyleAndWeight = FontStyle.Bold; logTitle.style.marginTop = 10;
-            body.Add(logTitle);
-            if (shop.PairLog.Count == 0) body.Add(Text("Any two creatures make something; a pair breeds the same thing every time.", "es-text--muted"));
-            foreach (var p in shop.PairLog.AsEnumerable().Reverse().Take(6)) body.Add(Text(PairLine(p)));
+            if (shop.TintPort) body.Add(TintRow(shop.Tint, "offspring", c => shop.TintCheck(c, out string w) == GrowthFailure.None ? null : w, c => s.Act(() => shop.TintWater(c)), () => s.Act(shop.ClearTint),
+                shop.Tint == null ? null : "The water is tinted with " + GrowthShop.Name(shop.Tint) + ": the next offspring is " + GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.Tint) + "."));
+            int parents = shop.ActivePairs.Sum(p => p.Parents.Count);
+            if (parents > 0)
+                body.Add(Wide(parents > 1 ? "Take them out" : "Take it out", () => { foreach (var p in shop.ActivePairs.SelectMany(x => x.Parents).ToList()) if (shop.Carried.Count < GrowthShop.CarryLimit) shop.TakeParent(p.Id); s.SaveNow(); },
+                    false, shop.Carried.Count < GrowthShop.CarryLimit, "Your hands are full"));
             UpgradeSection(body, "breeding");
-            Footer(body);
+            Footer(body, null, ("Pair log · " + shop.PairLog.Count + " pairs tried", (Action)(() => OpenJournalAt("Pair log"))));
         }
 
         static string PairLine(GrowthPairEntry p) =>
@@ -1060,7 +1212,19 @@ namespace EvolutionShop
                     body.Add(row);
                 }
             }
-            body.Add(Text("Mix log: " + shop.MixLog.Count + " different mixes tried.", "es-text--muted"));
+            // GR-13: the mix log lives here (the incubator's card links to it): each mix tried and what it made, newest first.
+            var mixes = Text("Mix log · " + shop.MixLog.Count + " different mixes tried"); mixes.style.fontSize = 24; mixes.style.unityFontStyleAndWeight = FontStyle.Bold; mixes.style.marginTop = 14;
+            body.Add(mixes);
+            if (shop.MixLog.Count == 0) body.Add(Text("Every mix makes a creature. Try two or three doses at the incubator.", "es-text--muted"));
+            foreach (var m in shop.MixLog.AsEnumerable().Reverse())
+            {
+                var row = Row(); row.style.marginTop = 4; row.style.flexWrap = Wrap.NoWrap;
+                for (int i = 0; i < m.Doses.Length; i++) for (int n = 0; n < m.Doses[i]; n++) row.Add(Dot(CultureColour(GrowthContent.Cultures[i].Id), 16));
+                var entry = Text("→ " + GrowthContent.Get(m.Species).Name + (m.Count > 1 ? " ×" + m.Count : "") + (m.Exact ? " · its recipe" : m.DistanceToNew == 1 ? " · one dose from something new" : ""));
+                entry.style.marginLeft = 6; entry.style.marginBottom = 0; entry.style.flexGrow = 1;
+                row.Add(entry);
+                body.Add(row);
+            }
             // GR-05: the pair log, every pair tried and what it makes.
             var pairs = Text("Pair log · " + shop.PairLog.Count + " pairs tried"); pairs.style.fontSize = 24; pairs.style.unityFontStyleAndWeight = FontStyle.Bold; pairs.style.marginTop = 14;
             body.Add(pairs);

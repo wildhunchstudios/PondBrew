@@ -63,7 +63,7 @@ namespace EvolutionShop
             Check(s.FocusName(out status) == "Sorter (not bought)" && status.Contains("3000 credits"), "Not bought yet: 3,000 credits");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Sorter && card.Contains("The sorter · level 0 of 1") && card.Contains("Upgrade to level 1 for 3000 cr"), "Its card: the chute and sorter for 3,000 credits");
+            Check(s.Card == GrowthCard.Sorter && card.Contains("The sorter · level 0 of 1") && card.Contains("Buy · 3000 cr"), "Its card: the chute and sorter for 3,000 credits");
             Ok(s.Act(() => shop.Upgrade("sorter")), "Buy the sorter");
             s.SetCard(GrowthCard.None);
             yield return null; yield return null;

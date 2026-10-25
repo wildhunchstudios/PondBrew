@@ -80,7 +80,7 @@ namespace EvolutionShop
             Check(s.FocusName(out status) == "Generator (not bought)" && status.Contains("200 credits and 30 RP"), "Not bought yet: 200 credits and 30 RP");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Generator && card.Contains("The generator · level 0 of 4") && card.Contains("Upgrade to level 1 for 200 cr and 30 RP") && card.Contains("3. Twin turbine: 6 units · 3000 cr, era 4"),
+            Check(s.Card == GrowthCard.Generator && card.Contains("The generator · level 0 of 4") && card.Contains("Buy · 200 cr and 30 RP") && card.Contains("3. Twin turbine: 6 units · 3000 cr, era 4"),
                 "Its card: the hand crank for 200 credits and 30 RP; the twin turbine in era 4 (GR-08: in the workshop)");
             Ok(s.Act(() => shop.Upgrade("generator")), "Buy the generator's hand crank");
             s.SetCard(GrowthCard.None);
@@ -89,7 +89,7 @@ namespace EvolutionShop
             yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.PowerBoard && card.Contains("Pumps and pipes · level 0 of 3") && card.Contains("Upgrade to level 1 for 150 cr") && card.Contains("Nothing to power yet"),
+            Check(s.Card == GrowthCard.PowerBoard && card.Contains("Pumps and pipes · level 0 of 3") && card.Contains("Buy · 150 cr") && card.Contains("Nothing to power yet"),
                 "The power board's card: nothing to power yet, and pumps and pipes for 150 credits");
             Ok(s.Act(() => shop.Upgrade("pump")), "Buy the hand pump and pipes");
             s.SetCard(GrowthCard.None);

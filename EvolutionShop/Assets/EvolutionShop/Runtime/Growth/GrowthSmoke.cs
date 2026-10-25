@@ -175,6 +175,22 @@ namespace EvolutionShop
 
         void Hold(bool down) => InputSystem.QueueStateEvent(mouse, new MouseState { buttons = (ushort)(down ? 1 : 0) });
 
+        /// <summary>GR-13: points the route's mouse at an element of the open card and checks the hover tip says what it should.</summary>
+        IEnumerator HoverOn(Func<UnityEngine.UIElements.VisualElement, bool> which, string tip, string what, string shot)
+        {
+            var card = s.Ui.CardElement;
+            var element = card == null ? null : UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(card).ToList().FirstOrDefault(which);
+            if (element == null) { Check(false, what + " (nothing to point at)"); yield break; }
+            Rect r = element.worldBound; Vector2 panel = s.Ui.Root.layout.size;
+            mouse.MakeCurrent();
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(r.center.x * Screen.width / panel.x, Screen.height - r.center.y * Screen.height / panel.y) });
+            yield return null; yield return null;
+            Check(s.Ui.TipText == tip, what + " (\"" + s.Ui.TipText + "\")");
+            yield return Shot(shot);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(2, 2) });
+            yield return null;
+        }
+
         /// <summary>A creature made by the shop's own actions with the incubation advanced by its clock (labelled accelerated).</summary>
         void Produce(int bloom, int flow)
         {
@@ -264,9 +280,19 @@ namespace EvolutionShop
             Aimed(GrowthTargetKind.Incubator, null, "The reticle focuses the incubator");
             yield return Press(Key.E);
             Check(s.Card == GrowthCard.Incubator, "E opens the incubator card");
+            // GR-13: the card's tabs, a reason on hover, the HUD's one next step and one note at a time.
+            Check(s.Ui.CurrentTab == "Mix" && s.Ui.CardText().Contains("Incubator · level 1 of 4") && s.Ui.CardText().Contains("Upgrade · "),
+                "The incubator card opens on its Mix tab; its Upgrade tab has the level track and the next level's button");
+            yield return HoverOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Start"), "Add a dose first", "Start, with nothing in the chamber, says why when pointed at", "05a-start-why");
+            Check(s.Ui.HudNext == shop.Objectives().First(g => !g.done).text, "The HUD's one next step is the first goal still to do: " + s.Ui.HudNext);
+            s.Ui.Toast("Validation note 1"); s.Ui.Toast("Validation note 2");
+            Check(s.Ui.HudNote == "Validation note 2", "Notes come one at a time, the newest showing");
             Ok(s.Act(() => shop.AddDose("bloom")), "Add a Bloom dose");
             Ok(s.Act(() => shop.AddDose("flow")), "Add a Flow dose");
             yield return Shot("05-incubator-card");
+            Check(s.Ui.ShowTabNamed("Upgrade"), "The Upgrade tab opens");
+            yield return Shot("05b-incubator-upgrade");
+            Check(s.Ui.ShowTabNamed("Mix"), "Back to the Mix tab");
             Ok(s.Act(shop.StartIncubation), "Mix and incubate");
             float started = Time.realtimeSinceStartup;
             yield return Wait(() => shop.Hatchling != null, 20, "the 12 s incubation");
