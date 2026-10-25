@@ -5,7 +5,8 @@
 # Original and local (Blender 5.0, EEVEE with ray tracing):
 #   blender --background --factory-startup --python Tools/Art/gr16_look_ranch.py -- --repo C:/dev/DumbVideoGameStudio --out <folder> [--quick] [--only shop,lab,stations]
 # It renders <out>/ranch-shop.png, ranch-lab.png (from the player's eye height, 1.65 m, as the first sketches) and
-# ranch-stations.png (the stations on a backdrop), with the game's own creatures appended from ArtSource/DioramaKit.
+# ranch-stations.png, ranch-backroom.png and ranch-annex.png (the stations and machines on backdrops), with the game's own
+# creatures appended from ArtSource/DioramaKit; --night renders the two rooms at night (ranch-shop-night.png, ranch-lab-night.png).
 import bpy, math, random, sys, argparse, json, os
 from pathlib import Path
 from mathutils import Vector
@@ -17,7 +18,9 @@ ap.add_argument('--out', required=True)
 ap.add_argument('--only', default='')
 ap.add_argument('--quick', action='store_true')
 ap.add_argument('--sun-only', action='store_true')  # debugging: only the sun and the sky
+ap.add_argument('--night', action='store_true')  # the rooms at night: moonlight, the lamps on; files end in -night
 args = ap.parse_args(argv)
+NIGHT = args.night
 OUT = Path(args.out); OUT.mkdir(parents=True, exist_ok=True)
 KIT = Path(args.repo) / 'ArtSource' / 'DioramaKit' / 'EvolutionShop_DioramaKit.blend'
 KIT_COLOURS = {k: v['srgb_hex'] for k, v in json.loads((Path(args.repo) / 'ArtSource' / 'DioramaKit' / 'manifest.json').read_text()).get('materials', {}).items()}
@@ -89,11 +92,11 @@ class B:
             m.surface_render_method = 'BLENDED'; m.use_backface_culling = False
         elif kind == 'water':
             p.inputs['Roughness'].default_value = 0.05; p.inputs['Alpha'].default_value = kw.get('alpha', 0.28)
-            p.inputs['Emission Color'].default_value = base; p.inputs['Emission Strength'].default_value = 0.12
+            p.inputs['Emission Color'].default_value = base; p.inputs['Emission Strength'].default_value = 0.5 if NIGHT else 0.12
             m.surface_render_method = 'BLENDED'
         elif kind == 'liquid':
             p.inputs['Roughness'].default_value = 0.12; p.inputs['Coat Weight'].default_value = 0.6
-            p.inputs['Emission Color'].default_value = base; p.inputs['Emission Strength'].default_value = kw.get('glow', 0.9)
+            p.inputs['Emission Color'].default_value = base; p.inputs['Emission Strength'].default_value = kw.get('glow', 0.9) * (2.0 if NIGHT else 1.0)
         elif kind == 'emit':
             p.inputs['Base Color'].default_value = (0, 0, 0, 1)
             p.inputs['Emission Color'].default_value = base; p.inputs['Emission Strength'].default_value = kw.get('glow', 4.0)
@@ -373,7 +376,7 @@ def pendant(b, at, ceiling):
     b.cyl('Lamp cup', (x, y, z + 0.22), 0.05, 0.06, b.mat('plastic', C['teal']), r=0.02)
     b.ball('Lamp shade', (x, y, z + 0.08), (0.3, 0.3, 0.17), b.mat('plastic', C['yellow']))
     b.ball('Bulb', (x, y, z - 0.03), 0.08, b.mat('emit', '#FFF4D6', glow=12), shadow=False)
-    b.light('POINT', 'Lamp', (x, y, z - 0.12), 45, '#FFD9A0', size=0.12)
+    b.light('POINT', 'Lamp', (x, y, z - 0.12), 90 if NIGHT else 45, '#FFD9A0', size=0.12)
 
 
 def window(b, x_wall, yc, z0, z1, width, inward=1):
@@ -495,8 +498,8 @@ def shop(b):
             b.box('Crate slat', (cx_ - s / 2 - 0.005, cy_ + sgn * s * 0.32, cz), (0.02, 0.06, s * 0.96), b.mat('wood', C['wood_dark'], grain='z'), r=0.008)
         b.cyl('Crate label', (cx_ - s / 2 - 0.012, cy_, cz), s * 0.18, 0.01, b.mat('plastic', C['yellow']), r=0, rot=(0, 90, 0))
     # Light: the room's soft fill from the open front, a cool bounce from the window side.
-    b.light('AREA', 'Shop fill', (ox, -0.3, 2.4), 150, '#FFF1DE', size=(5.0, 2.0), rot=(90, 0, 0))
-    b.light('AREA', 'Shop bounce', (ox, 2.4, H - 0.3), 50, '#FFF4E6', size=(4.0, 4.0))
+    b.light('AREA', 'Shop fill', (ox, -0.3, 2.4), 25 if NIGHT else 150, '#FFF1DE', size=(5.0, 2.0), rot=(90, 0, 0))
+    b.light('AREA', 'Shop bounce', (ox, 2.4, H - 0.3), 12 if NIGHT else 50, '#FFF4E6', size=(4.0, 4.0))
 
 
 def lab(b):
@@ -523,7 +526,7 @@ def lab(b):
     window(b, ox - 3.1, 1.85, 1.15, 2.3, 1.3)
     # The ceiling's light strip.
     b.box('Light housing', (ox, 2.4, H - 0.04), (0.5, 4.2, 0.08), b.mat('plastic', C['cream']), r=0.03)
-    b.box('Light strip', (ox, 2.4, H - 0.085), (0.36, 4.0, 0.01), b.mat('emit', '#F5FCFF', glow=3.5), r=0, shadow=False)
+    b.box('Light strip', (ox, 2.4, H - 0.085), (0.36, 4.0, 0.01), b.mat('emit', '#F5FCFF', glow=1.5 if NIGHT else 3.5), r=0, shadow=False)
     # Two growers on the back wall, their pipes running up and along the wall to the incubator's dome.
     gy = 4.25
     for k, (gx, col) in enumerate(((ox - 1.9, BLOOM), (ox - 0.95, FLOW))):
@@ -559,8 +562,8 @@ def lab(b):
         b.ball('Flask fill', (ox + 2.75, fy, 0.97), (0.09, 0.09, 0.06), b.mat('liquid', col, glow=0.8))
         b.cyl('Flask neck', (ox + 2.75, fy, 1.15), 0.035, 0.12, b.mat('glass', '#F2FCFF', alpha=0.2), r=0)
     plant(b, (ox + 2.6, 4.55), 0.9)
-    b.light('AREA', 'Lab strip light', (ox, 2.4, H - 0.12), 110, '#F2FAFF', size=(0.5, 4.0))
-    b.light('AREA', 'Lab fill', (ox, -0.3, 2.4), 90, '#FFF6EA', size=(5.0, 2.0), rot=(90, 0, 0))
+    b.light('AREA', 'Lab strip light', (ox, 2.4, H - 0.12), 30 if NIGHT else 110, '#F2FAFF', size=(0.5, 4.0))
+    b.light('AREA', 'Lab fill', (ox, -0.3, 2.4), 15 if NIGHT else 90, '#FFF6EA', size=(5.0, 2.0), rot=(90, 0, 0))
 
 
 def outdoors(b):
@@ -579,6 +582,15 @@ def outdoors(b):
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
         g.data.materials.append(b.mat('ground', '#7CCF4E'))
         tree(base - 4.0, 6.0, 1.0); tree(base - 7.5, 11.5, 1.3); tree(base - 5.5, 1.0, 0.8)
+        if NIGHT:
+            # The moon high in each window's view, stars around it, fireflies over the bushes.
+            b.ball('Moon', (ox - 26.0, 15.5, 5.0), 1.3, b.mat('emit', '#FFF6D8', glow=6), seg=32, shadow=False)
+            for k in range(40):
+                b.ball('Star', (ox - 40.0 + b.rng.uniform(-2, 2), b.rng.uniform(-8, 40), b.rng.uniform(6, 24)), b.rng.uniform(0.05, 0.12),
+                       b.mat('emit', '#FFFFFF', glow=8), seg=8, shadow=False)
+            for k in range(14):
+                b.ball('Firefly', (base - b.rng.uniform(1.0, 4.0), b.rng.uniform(-0.5, 4.5), b.rng.uniform(0.4, 1.8)), 0.025,
+                       b.mat('emit', '#E8FF7A', glow=14), seg=8, shadow=False)
         b.ball('Bush', (base - 2.0, 3.2, 0.3), (0.7, 0.6, 0.5), b.mat('foliage', C['lime']), seg=28)
         b.ball('Bush', (base - 2.6, 0.2, 0.25), (0.6, 0.5, 0.45), b.mat('foliage', C['green']), seg=28)
         for k in range(6):
@@ -588,29 +600,333 @@ def outdoors(b):
         for k, (cx, cy, cz, s) in enumerate(((base - 40, 18, 16, 3.0), (base - 45, 2, 19, 2.4), (base - 38, 34, 14, 2.8))):
             for j in range(5):
                 b.ball('Cloud', (cx + b.rng.uniform(-1, 1), cy + (j - 2) * s * 0.7, cz + b.rng.uniform(-0.4, 0.6)),
-                       (s * 0.8, s * 0.75, s * 0.55), b.mat('liquid', '#FFFFFF', glow=0.7), seg=24, shadow=False)
+                       (s * 0.8, s * 0.75, s * 0.55), b.mat('liquid', '#FFFFFF' if not NIGHT else '#6E7FB8', glow=0.04 if NIGHT else 0.7), seg=24, shadow=False)
 
 
 def stations_sheet(b):
     ox = 400
-    # A soft backdrop: a floor curving up into a back wall.
-    me = bpy.data.meshes.new('Backdrop')
-    prof = [(-12.0, 0.0), (2.0, 0.0), (2.0, 10.0)]
-    verts = [(ox + sx, py, pz) for sx in (-16, 16) for (py, pz) in prof]
-    faces = [(0, 1, 4, 3), (1, 2, 5, 4)]
-    me.from_pydata(verts, [], faces); me.update()
-    bd = bpy.data.objects.new('Backdrop', me); bpy.context.scene.collection.objects.link(bd)
-    bd.data.materials.append(b.mat('paint', '#FFD7A6'))
-    mod = bd.modifiers.new('Bevel', 'BEVEL'); mod.width = 1.6; mod.segments = 24; mod.limit_method = 'ANGLE'; mod.affect = 'EDGES'
-    for p in bd.data.polygons: p.use_smooth = True
+    backdrop(b, ox, '#FFD7A6')
     grower(b, (ox - 3.05, 0.25), BLOOM)
     grower(b, (ox - 2.3, 0.4), FLOW)
     incubator(b, (ox - 1.15, 0.15))
     tank(b, (ox + 0.85, 0.5))
     counter(b, (ox + 3.15, 0.4), 0.95, 'x')
+    sheet_lights(b, ox)
+
+
+# ==================================================================================================== the other machines
+MIST, EMBER = '#C9B2FF', '#FF9A3C'
+
+
+def cone(b, name, center, r1, r2, depth, m, rot=(0, 0, 0)):
+    bpy.ops.mesh.primitive_cone_add(vertices=48, radius1=r1, radius2=r2, depth=depth, location=center, rotation=[math.radians(a) for a in rot])
+    o = bpy.context.object; o.name = name
+    return b._finish(o, m, min(0.02, depth * 0.2), 3)
+
+
+def heart(b, center, size, m):
+    """A puffy heart facing the camera (-y): two balls and a soft point."""
+    x, y, z = center
+    for s in (-1, 1):
+        b.ball('Heart lobe', (x + s * size * 0.5, y, z + size * 0.25), (size * 0.6, size * 0.3, size * 0.6), m, seg=20)
+    cone(b, 'Heart point', (x, y, z - size * 0.35), size * 0.98, 0.02, size * 1.1, m, rot=(180, 0, 0))
+
+
+def hand_pump(b, at, culture):
+    """A grower's hand pump on its side: a housing, a yellow crank wheel that spins, a pipe up from it."""
+    x, y, z = at
+    teal_dark = b.mat('plastic', C['teal_dark'])
+    b.box('Pump housing', (x, y, z), (0.16, 0.22, 0.26), b.mat('plastic', C['teal']), r=0.05)
+    b.cyl('Pump hub', (x + 0.09, y, z), 0.04, 0.04, teal_dark, r=0.012, rot=(0, 90, 0))
+    b.torus('Crank wheel', (x + 0.11, y, z), 0.1, 0.016, b.mat('plastic', C['yellow']), rot=(0, 90, 0))
+    for a in (0, 90):
+        b.box('Spoke', (x + 0.11, y, z), (0.012, 0.19, 0.016), b.mat('plastic', C['yellow']), r=0.005, rot=(a, 0, 0))
+    b.cyl('Crank arm', (x + 0.15, y - 0.07, z + 0.07), 0.012, 0.08, teal_dark, r=0.004, rot=(0, 90, 0))
+    b.ball('Crank knob', (x + 0.2, y - 0.07, z + 0.07), 0.032, b.mat('plastic', C['coral']), seg=20)
+    b.pipe('Pump pipe', [(x, y, z + 0.13), (x, y, 1.95), (x, y + 0.5, 1.95)], 0.032, b.mat('liquid', culture, glow=0.5), b.mat('plastic', C['teal']))
+
+
+def vat(b, at):
+    """The conditioning vat at its top level: a glass column of swirling mist on a cream base, a second batch beside it,
+    a yellow stirrer motor on top with its rod down into the mist."""
+    x, y = at
+    plastic, teal, teal_dark = b.mat('plastic', C['cream']), b.mat('plastic', C['teal']), b.mat('plastic', C['teal_dark'])
+    b.box('Vat base', (x, y, 0.16), (0.8, 0.7, 0.3), plastic, r=0.09)
+    b.box('Vat band', (x, y, 0.27), (0.82, 0.72, 0.05), teal, r=0.025)
+    b.box('Vat label', (x, y - 0.355, 0.13), (0.3, 0.01, 0.1), b.mat('plastic', MIST), r=0.02)
+    b.cyl('Vat collar', (x, y, 0.345), 0.33, 0.07, teal, r=0.03)
+    b.cyl('Vat glass', (x, y, 0.88), 0.31, 1.0, b.mat('glass', '#F2FCFF'), r=0)
+    b.cyl('Mist', (x, y, 0.74), 0.285, 0.7, b.mat('liquid', MIST, glow=0.8), r=0.05)
+    for k in range(9):
+        a = k * 1.3
+        b.ball('Mist puff', (x + 0.16 * math.cos(a), y + 0.12 * math.sin(a), 1.14 + 0.06 * (k % 3)), 0.07 + 0.02 * (k % 2),
+               b.mat('liquid', '#F1EBFF', glow=0.9), seg=16, shadow=False)
+    b.cyl('Vat cap', (x, y, 1.41), 0.33, 0.09, teal, r=0.035)
+    b.ball('Vat dome', (x, y, 1.44), (0.28, 0.28, 0.1), plastic)
+    b.box('Stirrer motor', (x, y, 1.6), (0.24, 0.2, 0.18), b.mat('plastic', C['yellow']), r=0.06)
+    for k in range(3):
+        b.box('Vent', (x - 0.06 + k * 0.06, y - 0.102, 1.62), (0.025, 0.01, 0.1), teal_dark, r=0.008)
+    b.ball('Motor light', (x + 0.09, y - 0.1, 1.67), 0.022, b.mat('emit', C['lime'], glow=6), seg=12)
+    b.cyl('Stirrer rod', (x, y, 1.0), 0.016, 0.9, b.mat('metal', '#D8E2E8'), r=0)
+    b.box('Paddle', (x, y, 0.62), (0.2, 0.02, 0.08), b.mat('plastic', C['cream']), r=0.01, rot=(0, 0, 35))
+    b.cyl('Pipe stub', (x - 0.2, y + 0.1, 1.55), 0.045, 0.2, teal_dark, r=0.015)
+    # The second batch (level 2).
+    bx = x + 0.58
+    b.cyl('Batch base', (bx, y + 0.05, 0.08), 0.16, 0.16, plastic, r=0.05)
+    b.cyl('Batch glass', (bx, y + 0.05, 0.47), 0.13, 0.62, b.mat('glass', '#F2FCFF'), r=0)
+    b.cyl('Batch mist', (bx, y + 0.05, 0.38), 0.11, 0.42, b.mat('liquid', MIST, glow=0.8), r=0.03)
+    b.cyl('Batch cap', (bx, y + 0.05, 0.8), 0.14, 0.06, teal, r=0.02)
+    b.pipe('Batch pipe', [(bx, y + 0.05, 0.83), (bx, y + 0.05, 1.0), (x + 0.3, y + 0.05, 1.0)], 0.025, b.mat('liquid', MIST, glow=0.5), teal)
+
+
+def breeding_tank(b, at, creatures=True):
+    """The breeding tank at its top level: a cream cabinet with a heart, its glass split by a divider into the pair's side
+    and a nursery, a rim with a funnel tint port."""
+    x, y = at
+    w, d = 1.06, 0.44
+    plastic, teal = b.mat('plastic', C['cream']), b.mat('plastic', C['teal'])
+    b.box('Breeding cabinet', (x, y, 0.39), (w + 0.04, d + 0.06, 0.78), plastic, r=0.07)
+    b.box('Heart plate', (x, y - d / 2 - 0.04, 0.42), (0.36, 0.02, 0.36), b.mat('plastic', C['pink']), r=0.05)
+    heart(b, (x, y - d / 2 - 0.06, 0.43), 0.09, b.mat('plastic', '#FF4F7B'))
+    b.box('Breeding kick', (x, y, 0.04), (w, d, 0.08), b.mat('plastic', C['teal_dark']), r=0.03)
+    b.box('Breeding frame', (x, y, 0.81), (w + 0.08, d + 0.08, 0.06), teal, r=0.03)
+    b.box('Breeding rim', (x, y, 1.3), (w + 0.08, d + 0.08, 0.06), teal, r=0.03)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            b.cyl('Breeding post', (x + sx * w / 2, y + sy * d / 2, 1.05), 0.03, 0.46, teal, r=0.01)
+    b.box('Breeding glass', (x, y, 1.05), (w, d, 0.46), b.mat('glass', '#EAFBFF', alpha=0.1), r=0, shadow=False)
+    b.box('Breeding water', (x, y, 1.02), (w - 0.04, d - 0.04, 0.38), b.mat('water', '#7FD8F0', alpha=0.25), r=0.01, shadow=False)
+    b.box('Breeding sand', (x, y, 0.86), (w - 0.06, d - 0.06, 0.04), b.mat('paint', C['sand']), r=0.012)
+    b.box('Divider', (x + 0.26, y, 1.04), (0.012, d - 0.03, 0.42), b.mat('glass', '#FFE9F2', alpha=0.25), r=0, shadow=False)
+    b.ball('Nursery moss', (x + 0.4, y, 0.89), (0.12, 0.13, 0.04), b.mat('foliage', C['lime']), seg=20)
+    b.ball('Water plant', (x - 0.44, y + 0.1, 1.0), (0.04, 0.03, 0.14), b.mat('foliage', C['green']), seg=16)
+    cone(b, 'Tint funnel', (x - 0.32, y + 0.05, 1.42), 0.1, 0.03, 0.16, b.mat('plastic', C['yellow']))
+    b.cyl('Funnel neck', (x - 0.32, y + 0.05, 1.33), 0.03, 0.06, b.mat('plastic', C['teal_dark']), r=0.008)
+    if creatures:
+        b.creature('Pondlet', (x - 0.28, y - 0.02, 1.02), 0.22, 300)
+        b.creature('Pondlet', (x - 0.02, y - 0.04, 1.06), 0.22, 240)
+        b.creature('Pondlet', (x + 0.4, y - 0.04, 0.97), 0.12, 200)
+
+
+def research_bench(b, at):
+    """The research bench at its top level: notes, a microscope, the analyzer with its glowing screen, the planner board
+    upright at the back, and the siphon with its canister."""
+    x, y = at
+    plastic, teal, teal_dark = b.mat('plastic', C['cream']), b.mat('plastic', C['teal']), b.mat('plastic', C['teal_dark'])
+    for s in (-1, 1):
+        b.box('Bench pedestal', (x + s * 0.47, y, 0.44), (0.36, 0.56, 0.86), b.mat('wood', C['wood'], grain='z'), r=0.04)
+        for k in range(2):
+            b.box('Drawer', (x + s * 0.47, y - 0.29, 0.26 + k * 0.34), (0.3, 0.02, 0.26), teal, r=0.02)
+            b.ball('Drawer knob', (x + s * 0.47, y - 0.31, 0.26 + k * 0.34), 0.025, b.mat('plastic', C['yellow']), seg=16)
+    b.box('Bench top', (x, y, 0.91), (1.36, 0.64, 0.06), plastic, r=0.03)
+    # The planner board on two posts at the back.
+    for s in (-1, 1):
+        b.cyl('Board post', (x + s * 0.55, y + 0.26, 1.3), 0.025, 0.8, teal_dark, r=0.01)
+    b.box('Planner frame', (x, y + 0.27, 1.45), (1.18, 0.04, 0.62), b.mat('plastic', C['coral']), r=0.04)
+    b.box('Planner board', (x, y + 0.25, 1.45), (1.06, 0.02, 0.5), b.mat('paint', '#FFF6E2'), r=0.01)
+    for k, (cx, cz, col) in enumerate(((-0.36, 1.55, '#FFE08A'), (-0.06, 1.5, '#BDEFE8'), (0.24, 1.56, '#FFC1D4'), (0.1, 1.35, '#D7C8FF'), (-0.25, 1.33, '#C8F0A8'))):
+        b.box('Plan card', (x + cx, y + 0.235, cz), (0.18, 0.01, 0.13), b.mat('paint', col), r=0.008)
+    b.tube('Plan string', [(x - 0.36, y + 0.228, 1.55), (x - 0.06, y + 0.228, 1.47), (x + 0.24, y + 0.228, 1.56)], 0.004, b.mat('plastic', C['coral']))
+    # The microscope.
+    mx = x - 0.45
+    b.box('Microscope foot', (mx, y - 0.05, 0.96), (0.16, 0.2, 0.04), teal, r=0.015)
+    b.box('Microscope arm', (mx, y + 0.02, 1.07), (0.05, 0.05, 0.2), teal, r=0.02, rot=(-15, 0, 0))
+    b.cyl('Microscope stage', (mx, y - 0.05, 1.02), 0.06, 0.015, teal_dark, r=0.005)
+    b.cyl('Microscope tube', (mx, y - 0.04, 1.16), 0.032, 0.18, plastic, r=0.01, rot=(18, 0, 0))
+    b.cyl('Eyepiece', (mx, y - 0.01, 1.26), 0.026, 0.06, b.mat('plastic', C['ink']), r=0.008, rot=(18, 0, 0))
+    # The analyzer: a rounded box with a glowing screen and a lit vial.
+    ax = x - 0.02
+    b.box('Analyzer', (ax, y - 0.02, 1.04), (0.32, 0.24, 0.2), plastic, r=0.05)
+    b.box('Analyzer screen', (ax - 0.03, y - 0.142, 1.06), (0.2, 0.01, 0.12), b.mat('emit', C['screen'], glow=1.0), r=0.015)
+    for k, h in enumerate((0.03, 0.07, 0.05, 0.09, 0.04)):
+        b.box('Wave', (ax - 0.1 + k * 0.035, y - 0.149, 1.03 + h / 2), (0.018, 0.004, h), b.mat('emit', C['lime'], glow=4), r=0.003)
+    b.cyl('Analyzer vial', (ax + 0.11, y - 0.02, 1.2), 0.025, 0.12, b.mat('liquid', BLOOM, glow=1.2), r=0.01)
+    # Notes and a pencil.
+    for k in range(3):
+        b.box('Note', (x + 0.2 + k * 0.05, y - 0.12 + k * 0.03, 0.945 + k * 0.003), (0.16, 0.2, 0.004), b.mat('paint', ('#FFFBEF', '#FFF0C2', '#E3F7FF')[k]), r=0, rot=(0, 0, -8 + k * 9))
+    b.cyl('Pencil', (x + 0.3, y - 0.2, 0.95), 0.008, 0.16, b.mat('plastic', C['yellow']), r=0.002, rot=(0, 90, 20))
+    # The siphon at its top level: a twin-chamber glass bulb on a stand, a hose to a vacuum canister.
+    sx = x + 0.48
+    b.cyl('Siphon stand', (sx, y + 0.05, 0.95), 0.06, 0.02, teal_dark, r=0.006)
+    b.cyl('Siphon rod', (sx, y + 0.05, 1.08), 0.01, 0.26, teal_dark, r=0)
+    for k in range(2):
+        b.ball('Siphon bulb', (sx, y + 0.05, 1.12 + k * 0.1), (0.045, 0.045, 0.06), b.mat('glass', '#F2FCFF', alpha=0.2), seg=24, shadow=False)
+        b.ball('Siphon fill', (sx, y + 0.05, 1.11 + k * 0.1), (0.032, 0.032, 0.035), b.mat('liquid', (FLOW, BLOOM)[k], glow=1.2), seg=16)
+    b.ball('Siphon squeeze', (sx, y + 0.05, 1.3), (0.035, 0.035, 0.04), b.mat('plastic', C['coral']), seg=20)
+    b.cyl('Canister', (sx + 0.08, y + 0.2, 1.02), 0.06, 0.16, b.mat('plastic', C['yellow']), r=0.02)
+    b.tube('Siphon hose', [(sx + 0.03, y + 0.05, 1.28), (sx + 0.12, y + 0.12, 1.3), (sx + 0.08, y + 0.2, 1.1)], 0.01, b.mat('plastic', C['teal']))
+
+
+def catalog_stand(b, at):
+    """The supplier catalog: a lectern tilted toward the player with a big open book on it."""
+    x, y = at
+    tilt = 28
+    b.cyl('Catalog foot', (x, y, 0.03), 0.24, 0.06, b.mat('plastic', C['teal_dark']), r=0.02)
+    b.cyl('Catalog post', (x, y + 0.04, 0.5), 0.05, 0.9, b.mat('plastic', C['teal']), r=0.02)
+    b.box('Lectern', (x, y, 1.0), (0.5, 0.4, 0.06), b.mat('wood', C['wood'], grain='x'), r=0.025, rot=(tilt, 0, 0))
+    b.box('Book cover', (x, y - 0.012, 1.04), (0.46, 0.34, 0.035), b.mat('plastic', C['coral']), r=0.014, rot=(tilt, 0, 0))
+    for s in (-1, 1):
+        b.box('Pages', (x + s * 0.11, y - 0.025, 1.065), (0.21, 0.31, 0.03), b.mat('paint', '#FFFBEF'), r=0.012, rot=(tilt, 0, 0))
+    b.box('Spine', (x, y - 0.03, 1.07), (0.02, 0.31, 0.03), b.mat('plastic', C['coral']), r=0.006, rot=(tilt, 0, 0))
+    b.box('Book picture', (x - 0.11, y - 0.045, 1.09), (0.15, 0.12, 0.004), b.mat('plastic', C['teal_light']), r=0.006, rot=(tilt, 0, 0))
+    b.ball('Book creature', (x - 0.11, y - 0.05, 1.095), (0.045, 0.012, 0.035), b.mat('plastic', C['yellow']), seg=16)
+    for k in range(3):
+        b.box('Book line', (x + 0.11, y - 0.05 + k * 0.035, 1.08 + k * 0.02), (0.14, 0.012, 0.003), b.mat('plastic', '#C9BFAE'), r=0, rot=(tilt, 0, 0))
+    b.box('Ribbon', (x + 0.02, y - 0.17, 0.98), (0.03, 0.006, 0.16), b.mat('fabric', C['yellow']), r=0.002)
+
+
+def generator_crank(b, at):
+    """The generator at level 1: a hand crank, a yellow housing, a big coral wheel facing the player with its handle."""
+    x, y = at
+    teal, teal_dark = b.mat('plastic', C['teal']), b.mat('plastic', C['teal_dark'])
+    b.box('Generator base', (x, y, 0.05), (1.0, 0.5, 0.1), teal_dark, r=0.04)
+    b.box('Generator housing', (x + 0.15, y + 0.02, 0.45), (0.56, 0.4, 0.7), b.mat('plastic', C['yellow']), r=0.1)
+    for k in range(4):
+        b.box('Housing vent', (x + 0.15, y - 0.185, 0.62 - k * 0.07), (0.32, 0.01, 0.025), teal_dark, r=0.008)
+    b.cyl('Generator gauge', (x + 0.15, y - 0.19, 0.3), 0.07, 0.03, teal, r=0.01, rot=(90, 0, 0))
+    b.cyl('Gauge face', (x + 0.15, y - 0.207, 0.3), 0.055, 0.005, b.mat('emit', '#FFF8E6', glow=1.2), r=0, rot=(90, 0, 0))
+    b.box('Needle', (x + 0.16, y - 0.212, 0.315), (0.01, 0.004, 0.045), b.mat('plastic', C['coral']), r=0.002, rot=(0, -40, 0))
+    b.ball('Generator lamp', (x + 0.15, y + 0.02, 0.86), 0.05, b.mat('emit', C['lime'], glow=6), seg=20)
+    b.cyl('Lamp collar', (x + 0.15, y + 0.02, 0.81), 0.05, 0.04, teal, r=0.01)
+    # The wheel on a post at the left, facing the player.
+    wx = x - 0.28
+    b.box('Wheel post', (wx, y + 0.02, 0.36), (0.12, 0.12, 0.62), teal, r=0.04)
+    b.cyl('Axle', (wx, y - 0.06, 0.6), 0.03, 0.2, teal_dark, r=0.01, rot=(90, 0, 0))
+    b.torus('Wheel', (wx, y - 0.14, 0.6), 0.27, 0.035, b.mat('plastic', C['coral']), rot=(90, 0, 0))
+    for a in (0, 60, 120):
+        b.box('Wheel spoke', (wx, y - 0.14, 0.6), (0.52, 0.02, 0.025), b.mat('plastic', C['coral']), r=0.008, rot=(0, a, 0))
+    b.cyl('Wheel hub', (wx, y - 0.15, 0.6), 0.05, 0.04, b.mat('plastic', C['yellow']), r=0.012, rot=(90, 0, 0))
+    b.cyl('Handle', (wx + 0.19, y - 0.22, 0.79), 0.022, 0.13, b.mat('plastic', C['cream']), r=0.008, rot=(90, 0, 0))
+    b.ball('Handle knob', (wx + 0.19, y - 0.29, 0.79), 0.03, b.mat('plastic', C['cream']), seg=16)
+
+
+def generator_tide(b, at):
+    """The generator at level 4, the tide engine: three glass water columns full of rising bubbles, joined by a header
+    pipe, over a big ribbed drum."""
+    x, y = at
+    plastic, teal, teal_dark = b.mat('plastic', C['cream']), b.mat('plastic', C['teal']), b.mat('plastic', C['teal_dark'])
+    b.box('Tide platform', (x, y, 0.08), (1.75, 0.7, 0.16), teal_dark, r=0.05)
+    b.box('Tide housing', (x, y + 0.08, 0.32), (1.6, 0.42, 0.32), plastic, r=0.07)
+    for k, cx in enumerate((-0.55, 0.0, 0.55)):
+        b.cyl('Column base', (x + cx, y + 0.08, 0.53), 0.22, 0.1, teal, r=0.03)
+        b.cyl('Column glass', (x + cx, y + 0.08, 1.1), 0.2, 1.05, b.mat('glass', '#EAFBFF'), r=0)
+        b.cyl('Column water', (x + cx, y + 0.08, 1.04), 0.18, 0.88, b.mat('liquid', '#5FD0F0', glow=0.6), r=0.03)
+        for j in range(7):
+            b.ball('Bubble', (x + cx + b.rng.uniform(-0.09, 0.09), y + 0.08 + b.rng.uniform(-0.09, 0.0), 0.68 + j * 0.11),
+                   0.02 + 0.012 * (j % 3), b.mat('liquid', '#FFFFFF', glow=0.7), seg=12, shadow=False)
+        b.cyl('Column cap', (x + cx, y + 0.08, 1.66), 0.22, 0.08, teal, r=0.03)
+    b.cyl('Header pipe', (x, y + 0.08, 1.76), 0.05, 1.3, b.mat('plastic', C['yellow']), r=0.02, rot=(0, 90, 0))
+    for cx in (-0.55, 0.0, 0.55):
+        b.cyl('Header neck', (x + cx, y + 0.08, 1.72), 0.04, 0.06, teal_dark, r=0.01)
+    b.ball('Tide lamp', (x, y + 0.08, 1.88), 0.055, b.mat('emit', C['lime'], glow=6), seg=20)
+    # The drum in front, ribbed with coral rings.
+    b.cyl('Drum', (x, y - 0.3, 0.32), 0.17, 1.2, b.mat('plastic', C['yellow']), r=0.05, rot=(0, 90, 0))
+    for k in range(5):
+        b.torus('Drum rib', (x - 0.48 + k * 0.24, y - 0.3, 0.32), 0.172, 0.018, b.mat('plastic', C['coral']), rot=(0, 90, 0))
+    for s in (-1, 1):
+        b.box('Drum bracket', (x + s * 0.66, y - 0.3, 0.24), (0.08, 0.16, 0.3), teal, r=0.03)
+
+
+def buffer(b, at, culture, fill, number):
+    """A buffer: a glass column of stored culture on a stand, a lid, its number on a tag."""
+    x, y = at
+    teal, teal_dark = b.mat('plastic', C['teal']), b.mat('plastic', C['teal_dark'])
+    b.cyl('Buffer stand', (x, y, 0.1), 0.19, 0.2, teal_dark, r=0.05)
+    b.cyl('Buffer collar', (x, y, 0.23), 0.18, 0.06, teal, r=0.02)
+    b.cyl('Buffer glass', (x, y, 0.78), 0.165, 1.04, b.mat('glass', '#F2FCFF'), r=0)
+    h = 0.96 * fill
+    b.cyl('Buffer fill', (x, y, 0.28 + h / 2), 0.145, h, b.mat('liquid', culture, glow=0.9), r=0.03)
+    b.cyl('Buffer lid', (x, y, 1.33), 0.18, 0.07, teal, r=0.025)
+    b.ball('Lid knob', (x, y, 1.39), 0.04, b.mat('plastic', C['yellow']), seg=16)
+    b.box('Number tag', (x, y - 0.19, 0.11), (0.14, 0.01, 0.1), b.mat('plastic', C['cream']), r=0.015)
+    b.text(str(number), (x, y - 0.2, 0.105), 0.07, b.mat('plastic', C['ink']), extrude=0.004)
+
+
+def power_board(b, at):
+    """The power board on a wall: supply against draw as two bars, a lamp that says OK."""
+    x, y, z = at
+    b.box('Power frame', (x, y, z), (1.1, 0.05, 0.8), b.mat('plastic', C['teal']), r=0.05)
+    b.box('Power face', (x, y - 0.03, z), (0.98, 0.02, 0.68), b.mat('plastic', C['cream']), r=0.03)
+    for k, (col, frac, zz) in enumerate(((C['lime'], 0.8, z + 0.1), ('#FFB13C', 0.55, z - 0.12))):
+        b.box('Bar slot', (x - 0.05, y - 0.045, zz), (0.72, 0.01, 0.12), b.mat('plastic', '#2E4256'), r=0.02)
+        b.box('Bar', (x - 0.05 - 0.34 + 0.34 * frac, y - 0.052, zz), (0.68 * frac, 0.008, 0.08), b.mat('emit', col, glow=3.5), r=0.015)
+    b.ball('Power lamp', (x + 0.4, y - 0.06, z + 0.22), 0.045, b.mat('emit', C['lime'], glow=7), seg=20)
+    b.text('POWER', (x - 0.22, y - 0.05, z + 0.26), 0.07, b.mat('plastic', C['ink']), extrude=0.004)
+
+
+def sorter(b, at):
+    """The sorter: a cabinet with a slatted belt carrying a hatchling, a glass hopper on an arm where the chute arrives,
+    two gates over two trays (honey for the shop, coral for the racks), a lamp and a label."""
+    x, y = at
+    plastic, teal, teal_dark = b.mat('plastic', C['cream']), b.mat('plastic', C['teal']), b.mat('plastic', C['teal_dark'])
+    b.box('Sorter cabinet', (x, y, 0.4), (1.6, 0.9, 0.8), plastic, r=0.08)
+    for s in (-1, 1):
+        b.box('Sorter panel', (x + s * 0.4, y - 0.455, 0.42), (0.66, 0.02, 0.5), teal, r=0.04)
+    b.box('Sorter label', (x, y - 0.47, 0.72), (0.4, 0.01, 0.08), b.mat('plastic', C['yellow']), r=0.02)
+    # The belt: a dark bed of slats between two rollers.
+    b.box('Belt bed', (x, y, 0.83), (1.36, 0.42, 0.05), b.mat('plastic', '#3B4A5E'), r=0.02)
+    for k in range(14):
+        b.box('Slat', (x - 0.62 + k * 0.095, y, 0.865), (0.07, 0.4, 0.015), b.mat('plastic', '#B8E8E1'), r=0.006)
+    for s in (-1, 1):
+        b.cyl('Roller', (x + s * 0.7, y, 0.84), 0.05, 0.44, teal_dark, r=0.015, rot=(90, 0, 0))
+    b.creature('Bubblebelly', (x - 0.2, y, 0.95), 0.16, 200)
+    # The hopper on its arm, where the chute comes in.
+    hx, hy = x - 0.55, y - 0.65
+    b.box('Hopper arm', (hx, y - 0.32, 1.25), (0.08, 0.7, 0.08), teal, r=0.03)
+    b.box('Arm riser', (hx, y + 0.02, 1.04), (0.08, 0.08, 0.42), teal, r=0.03)
+    cone(b, 'Hopper', (hx, hy, 1.48), 0.05, 0.18, 0.3, b.mat('glass', '#F2FCFF', alpha=0.2))
+    b.torus('Hopper rim', (hx, hy, 1.63), 0.18, 0.02, teal)
+    b.tube('Chute', [(hx, hy, 1.66), (hx, hy + 0.15, 1.95), (hx + 0.1, hy + 0.9, 2.15), (hx + 0.2, hy + 2.6, 2.3)], 0.075, b.mat('glass', '#EAFBFF', alpha=0.25))
+    # The two gates and trays at the belt's end.
+    for k, col in enumerate((C['yellow'], C['coral'])):
+        gy = y - 0.12 + k * 0.24
+        b.box('Gate', (x + 0.7, gy, 0.98), (0.04, 0.2, 0.16), b.mat('plastic', col), r=0.02, rot=(0, 20, 0))
+        b.box('Tray', (x + 0.88, gy, 0.6), (0.3, 0.22, 0.08), b.mat('plastic', col), r=0.03)
+        b.box('Tray stand', (x + 0.88, gy, 0.3), (0.06, 0.06, 0.52), teal_dark, r=0.02)
+    b.cyl('Sorter lamp post', (x + 0.6, y + 0.35, 1.0), 0.02, 0.3, teal_dark, r=0.006)
+    b.ball('Sorter lamp', (x + 0.6, y + 0.35, 1.18), 0.045, b.mat('emit', C['yellow'], glow=6), seg=20)
+
+
+def backdrop(b, ox, color):
+    """A soft backdrop for a sheet: a floor curving up into a back wall."""
+    me = bpy.data.meshes.new('Backdrop')
+    prof = [(-12.0, 0.0), (2.0, 0.0), (2.0, 10.0)]
+    verts = [(ox + sx, py, pz) for sx in (-16, 16) for (py, pz) in prof]
+    me.from_pydata(verts, [], [(0, 1, 4, 3), (1, 2, 5, 4)]); me.update()
+    bd = bpy.data.objects.new('Backdrop', me); bpy.context.scene.collection.objects.link(bd)
+    bd.data.materials.append(b.mat('paint', color))
+    mod = bd.modifiers.new('Bevel', 'BEVEL'); mod.width = 1.6; mod.segments = 24; mod.limit_method = 'ANGLE'; mod.affect = 'EDGES'
+    for p in bd.data.polygons: p.use_smooth = True
+
+
+def sheet_lights(b, ox):
     b.light('AREA', 'Key', (ox - 4.0, -4.5, 4.5), 160, '#FFF1DC', size=3.0, aim=(ox, 0.3, 0.8))
     b.light('AREA', 'Rim', (ox + 1.5, 1.4, 2.6), 110, '#DDF6FF', size=1.5, aim=(ox + 1.5, -0.4, 0.8))
     b.light('AREA', 'Fill', (ox + 4.5, -5.0, 2.0), 40, '#FFFFFF', size=4.0, aim=(ox, 0.3, 0.8))
+
+
+def backroom_sheet(b):
+    ox = 600
+    backdrop(b, ox, '#E6DAFF')
+    grower(b, (ox - 3.1, 0.35), BLOOM)
+    hand_pump(b, (ox - 2.75, 0.35, 0.36), BLOOM)
+    vat(b, (ox - 1.9, 0.45))
+    breeding_tank(b, (ox - 0.35, 0.4))
+    research_bench(b, (ox + 1.55, 0.5))
+    catalog_stand(b, (ox + 3.15, 0.2))
+    sheet_lights(b, ox)
+
+
+def annex_sheet(b):
+    ox = 800
+    backdrop(b, ox, '#D3EAFF')
+    generator_crank(b, (ox - 2.95, 0.3))
+    generator_tide(b, (ox - 1.05, 0.45))
+    for k, (col, fill) in enumerate(((BLOOM, 0.7), (FLOW, 0.45), (MIST, 0.85))):
+        buffer(b, (ox + 0.6 + k * 0.48, 0.5), col, fill, k + 1)
+    power_board(b, (ox + 1.1, 1.97, 1.95))
+    sorter(b, (ox + 2.85, 0.55))
+    sheet_lights(b, ox)
 
 
 # ==================================================================================================== render
@@ -631,12 +947,12 @@ def setup(scene):
     nt = world.node_tree; bg = nt.nodes['Background']
     tc = nt.nodes.new('ShaderNodeTexCoord'); sep = nt.nodes.new('ShaderNodeSeparateXYZ')
     ramp = nt.nodes.new('ShaderNodeValToRGB')
-    ramp.color_ramp.elements[0].position = 0.0; ramp.color_ramp.elements[0].color = lin(C['horizon'])
-    ramp.color_ramp.elements[1].position = 0.45; ramp.color_ramp.elements[1].color = lin(C['sky'])
+    ramp.color_ramp.elements[0].position = 0.0; ramp.color_ramp.elements[0].color = lin('#3A4C8C' if NIGHT else C['horizon'])
+    ramp.color_ramp.elements[1].position = 0.45; ramp.color_ramp.elements[1].color = lin('#121C44' if NIGHT else C['sky'])
     nt.links.new(tc.outputs['Generated'], sep.inputs[0]); nt.links.new(sep.outputs['Z'], ramp.inputs['Fac'])
-    nt.links.new(ramp.outputs['Color'], bg.inputs['Color']); bg.inputs['Strength'].default_value = 1.0
+    nt.links.new(ramp.outputs['Color'], bg.inputs['Color']); bg.inputs['Strength'].default_value = 0.5 if NIGHT else 1.0
     # The sun, low enough to pour through the left windows onto the floors.
-    sun = bpy.data.lights.new('Sun', 'SUN'); sun.energy = 11.0; sun.color = lin('#FFE4BA')[:3]; sun.angle = math.radians(3)
+    sun = bpy.data.lights.new('Sun', 'SUN'); sun.energy = 0.9 if NIGHT else 11.0; sun.color = lin('#A9C0FF' if NIGHT else '#FFE4BA')[:3]; sun.angle = math.radians(3)
     so = bpy.data.objects.new('Sun', sun); so.rotation_euler = (0, math.radians(-45.6), math.radians(29.4)); scene.collection.objects.link(so)
     # A soft bloom on what glows.
     ng = bpy.data.node_groups.new('Bloom', 'CompositorNodeTree')
@@ -653,26 +969,31 @@ def main():
     scene = bpy.context.scene
     setup(scene)
     b = B()
-    shots = [s for s in ('shop', 'lab', 'stations') if not args.only or s in args.only.split(',')]
+    sheets = {'stations': 400, 'backroom': 600, 'annex': 800}
+    shots = [s for s in ('shop', 'lab', 'stations', 'backroom', 'annex') if (not args.only or s in args.only.split(',')) and not (NIGHT and s in sheets)]
     outdoors(b)
     if 'shop' in shots: shop(b)
     if 'lab' in shots: lab(b)
     if 'stations' in shots: stations_sheet(b)
+    if 'backroom' in shots: backroom_sheet(b)
+    if 'annex' in shots: annex_sheet(b)
     cam = bpy.data.objects.new('Eye', bpy.data.cameras.new('Eye')); scene.collection.objects.link(cam); scene.camera = cam
     cam.data.clip_start = 0.1
     for shot in shots:
-        if shot == 'stations':
+        if shot in sheets:
             cam.data.sensor_fit = 'AUTO'
             cam.data.lens = 40
-            cam.location = (400.2, -8.0, 1.7); target = (400.2, 0.3, 0.8)
+            sx = sheets[shot] + 0.2
+            back = -8.7 if shot == 'annex' else -8.0
+            cam.location = (sx, back, 1.75); target = (sx, 0.3, 0.85)
         else:
             ox = 0 if shot == 'shop' else 200
             cam.data.sensor_fit = 'VERTICAL'; cam.data.angle = math.radians(62)
             cam.location = (ox + 1.0, -0.6, 1.65)
             target = (ox - 0.4, 4.6, 1.15) if shot == 'shop' else (ox + 0.2, 4.6, 1.0)
         cam.rotation_euler = (Vector(target) - cam.location).to_track_quat('-Z', 'Y').to_euler()
-        scene.view_settings.exposure = {'shop': -0.1, 'lab': -0.25, 'stations': -0.75}[shot]
-        scene.render.filepath = str(OUT / ('ranch-' + shot + '.png'))
+        scene.view_settings.exposure = ({'shop': 0.35, 'lab': 0.45} if NIGHT else {'shop': -0.1, 'lab': -0.25, 'stations': -0.75, 'backroom': -0.75, 'annex': -0.75})[shot]
+        scene.render.filepath = str(OUT / ('ranch-' + shot + ('-night' if NIGHT else '') + '.png'))
         bpy.ops.render.render(write_still=True)
         print('RENDERED', scene.render.filepath)
 
