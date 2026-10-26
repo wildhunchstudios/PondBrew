@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "f5678c4dafcbc11e57dccbc722d4fb563ca476164f4930915d0b5acaceac67d2",
+  "source_script_sha256": "00a5e9cca4fffbb8d363ba4384dd2453c59f646fed8c649f33870468df4d6e10",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -737,6 +737,717 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BackRoomDressing.fbx",
       "sha256": "e65454096d689c4933b40313de3db16818e429fe1d0e31014ad3d8037f062dd8",
       "bytes": 329356
+    },
+    {
+      "triangles": 8720,
+      "materials": [
+        "GK_Cream",
+        "GK_Culture",
+        "GK_Glass",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.41,
+          0.0,
+          -0.376
+        ],
+        "max": [
+          0.41,
+          1.562,
+          0.388
+        ]
+      },
+      "id": "Vat",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/Vat.fbx",
+      "sha256": "802f45713304401923ebe3529f1d96f3f450f6f813e448d35a39ac82a54a41f3",
+      "bytes": 198668
+    },
+    {
+      "triangles": 2212,
+      "materials": [
+        "GK_Cream",
+        "GK_Culture",
+        "GK_Glass",
+        "GK_Teal"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          0.261,
+          0.0,
+          -0.34
+        ],
+        "max": [
+          0.64,
+          1.004,
+          -0.02
+        ]
+      },
+      "id": "VatBatch",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/VatBatch.fbx",
+      "sha256": "72701789c7fe97f593581ba29ff2d0c0d2b37b5cf9304b0e31ce18034ee307cc",
+      "bytes": 66828
+    },
+    {
+      "triangles": 2220,
+      "materials": [
+        "GK_Cream",
+        "GK_GlowLime",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.12,
+          0.53,
+          -0.11
+        ],
+        "max": [
+          0.12,
+          1.645,
+          0.125
+        ]
+      },
+      "id": "VatStirrer",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/VatStirrer.fbx",
+      "sha256": "b9dda94ac89a23cbd817f7f841bbaef788f1016ad3795ea623bf1a760fa0052a",
+      "bytes": 66140
+    },
+    {
+      "triangles": 13608,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_Glass",
+        "GK_Green",
+        "GK_Lime",
+        "GK_Pebble1",
+        "GK_Pebble2",
+        "GK_Pebble3",
+        "GK_Pebble4",
+        "GK_Pink",
+        "GK_Sand",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.56,
+          0.0,
+          -0.26
+        ],
+        "max": [
+          0.56,
+          1.25,
+          0.291
+        ]
+      },
+      "id": "BreedingTank",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BreedingTank.fbx",
+      "sha256": "4fb5b95c8dc04ee26a1afc394436cec4176a7c9c12a75eefe9511d27530d9c90",
+      "bytes": 322684
+    },
+    {
+      "triangles": 2340,
+      "materials": [
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.573,
+          1.217,
+          0.107
+        ],
+        "max": [
+          -0.387,
+          1.4,
+          0.293
+        ]
+      },
+      "id": "BreedingPort",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BreedingPort.fbx",
+      "sha256": "08785db809b232d1e9a88daeb6e30262e2412e62408ff79c8dc45896172e2f4b",
+      "bytes": 68092
+    },
+    {
+      "triangles": 2220,
+      "materials": [
+        "GK_Coral",
+        "GK_Pink",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.156,
+          0.38,
+          -0.225
+        ],
+        "max": [
+          0.14,
+          1.215,
+          0.282
+        ]
+      },
+      "id": "BreedingPair",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BreedingPair.fbx",
+      "sha256": "a8bc8f1ac7589c0bfdbc099933584e8d4230a81887329e55a0b915be137f93f9",
+      "bytes": 65980
+    },
+    {
+      "triangles": 4628,
+      "materials": [
+        "GK_Cream",
+        "GK_Paper",
+        "GK_Pebble3",
+        "GK_Pebble4",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Wood",
+        "GK_WoodDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.68,
+          0.0,
+          -0.32
+        ],
+        "max": [
+          0.68,
+          0.926,
+          0.328
+        ]
+      },
+      "id": "Bench",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/Bench.fbx",
+      "sha256": "7168508870f896cce69a18ca97ffb23fe1ca721ca553f018b152b388ed5a29a7",
+      "bytes": 120956
+    },
+    {
+      "triangles": 2632,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_Ink",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.5,
+          0.91,
+          -0.114
+        ],
+        "max": [
+          -0.34,
+          1.284,
+          0.1
+        ]
+      },
+      "id": "BenchMicroscope",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BenchMicroscope.fbx",
+      "sha256": "773d0057d59c33d9aafffc1ca5db663648dc0ee81cac0f05ddbfc7e10d77345e",
+      "bytes": 80716
+    },
+    {
+      "triangles": 3396,
+      "materials": [
+        "GK_Cream",
+        "GK_GlowCoral",
+        "GK_GlowLime",
+        "GK_GlowYellow",
+        "GK_Screen",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.03,
+          0.91,
+          -0.22
+        ],
+        "max": [
+          0.27,
+          1.21,
+          -0.004
+        ]
+      },
+      "id": "BenchAnalyzer",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BenchAnalyzer.fbx",
+      "sha256": "13596159757d0174aecd01b19115fa1d91bdad0f64bc663ac31bed32ff3c1dba",
+      "bytes": 93356
+    },
+    {
+      "triangles": 3112,
+      "materials": [
+        "GK_Coral",
+        "GK_Lime",
+        "GK_Paper",
+        "GK_Pebble1",
+        "GK_Pebble2",
+        "GK_Pebble3",
+        "GK_Pebble4",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.3,
+          0.91,
+          -0.268
+        ],
+        "max": [
+          0.54,
+          1.61,
+          -0.212
+        ]
+      },
+      "id": "BenchPlanner",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BenchPlanner.fbx",
+      "sha256": "fc5be97d6c3fe0f09dbbe3c4e1dce2cb5711ceea86995daeceb4b9155a500136",
+      "bytes": 88780
+    },
+    {
+      "triangles": 2100,
+      "materials": [
+        "GK_Coral",
+        "GK_Glass",
+        "GK_GlowBlue",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          0.165,
+          0.91,
+          0.025
+        ],
+        "max": [
+          0.275,
+          1.171,
+          0.135
+        ]
+      },
+      "id": "SiphonBulb",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SiphonBulb.fbx",
+      "sha256": "ac44e92d5d078394baf27b764fb0b23cd28e424eee0abf676a772276db5714d6",
+      "bytes": 66460
+    },
+    {
+      "triangles": 2056,
+      "materials": [
+        "GK_Coral",
+        "GK_Glass",
+        "GK_GlowBlue",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          0.315,
+          0.91,
+          0.055
+        ],
+        "max": [
+          0.445,
+          1.16,
+          0.185
+        ]
+      },
+      "id": "SiphonBig",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SiphonBig.fbx",
+      "sha256": "79be028e2e49444c57e3a165b22699a498d6e5f378eaca015c43a85043a0eeb3",
+      "bytes": 65212
+    },
+    {
+      "triangles": 2472,
+      "materials": [
+        "GK_Glass",
+        "GK_GlowCoral",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          0.315,
+          0.91,
+          -0.185
+        ],
+        "max": [
+          0.445,
+          1.075,
+          0.06
+        ]
+      },
+      "id": "SiphonTwin",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SiphonTwin.fbx",
+      "sha256": "e79016ab35d51dfa12340810d4e3a6898c0cf8beb956d7f8f25e1e9b3d871a13",
+      "bytes": 71596
+    },
+    {
+      "triangles": 1880,
+      "materials": [
+        "GK_GaugeFace",
+        "GK_Ink",
+        "GK_Teal",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          0.393,
+          0.92,
+          -0.07
+        ],
+        "max": [
+          0.61,
+          1.211,
+          0.11
+        ]
+      },
+      "id": "SiphonVacuum",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SiphonVacuum.fbx",
+      "sha256": "dd5d2bbe4b7c26dacc598416cc13c60d471c928bf57fa447ba128124cec8026d",
+      "bytes": 60780
+    },
+    {
+      "triangles": 3300,
+      "materials": [
+        "GK_Paper",
+        "GK_Teal",
+        "GK_Wood",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.72,
+          0.71,
+          -0.12
+        ],
+        "max": [
+          0.72,
+          0.985,
+          0.218
+        ]
+      },
+      "id": "VialShelf",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/VialShelf.fbx",
+      "sha256": "0e3b20e3dcd88ed952e01669dfed54cd6ac9616f59c90c40c8667ff5ca5f44d6",
+      "bytes": 85452
+    },
+    {
+      "triangles": 2472,
+      "materials": [
+        "GK_Glass",
+        "GK_Paper",
+        "GK_Teal",
+        "GK_WoodLight"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.055,
+          0.0,
+          -0.055
+        ],
+        "max": [
+          0.061,
+          0.272,
+          0.063
+        ]
+      },
+      "id": "VialBottle",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/VialBottle.fbx",
+      "sha256": "56cf3c1039b35424018c1a1bd29971c2680778f4772aac7edc103c9d0b2247ad",
+      "bytes": 72460
+    },
+    {
+      "triangles": 5020,
+      "materials": [
+        "GK_Coral",
+        "GK_Paper",
+        "GK_Sand",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_TealLight",
+        "GK_Wood",
+        "GK_WoodDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.25,
+          0.0,
+          -0.2
+        ],
+        "max": [
+          0.25,
+          1.137,
+          0.2
+        ]
+      },
+      "id": "Catalog",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/Catalog.fbx",
+      "sha256": "9c932830c8e3c774049392d8ac01f873f05fcb6ca49260e4bc39e23a36f8c935",
+      "bytes": 139084
+    },
+    {
+      "triangles": 6880,
+      "materials": [
+        "GK_Coral",
+        "GK_Lilac",
+        "GK_Paper",
+        "GK_Pebble3",
+        "GK_Pink",
+        "GK_Sand",
+        "GK_Teal",
+        "GK_TealLight",
+        "GK_WoodMid",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.73,
+          -0.45,
+          -0.053
+        ],
+        "max": [
+          0.73,
+          0.45,
+          0.035
+        ]
+      },
+      "id": "Pinboard",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/Pinboard.fbx",
+      "sha256": "963ad9aa129c80e3b71a0c7eab1220b7f97a8bc9a67da9cab19accf62fdbdf4a",
+      "bytes": 173260
+    },
+    {
+      "triangles": 4092,
+      "materials": [
+        "GK_Cream",
+        "GK_GlowWhite",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -1.285,
+          0.0,
+          -0.535
+        ],
+        "max": [
+          1.285,
+          1.65,
+          0.565
+        ]
+      },
+      "id": "TankLarge",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankLarge.fbx",
+      "sha256": "fc55a170b71708f6bcd2d200f0fe8b5f0d146bd33d065fabfd25e2c339ac1561",
+      "bytes": 103068
+    },
+    {
+      "triangles": 23856,
+      "materials": [
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Lime",
+        "GK_Pebble1",
+        "GK_Pebble2",
+        "GK_Pebble3",
+        "GK_Pebble4",
+        "GK_Rock",
+        "GK_Sand"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -1.202,
+          0.66,
+          -0.454
+        ],
+        "max": [
+          1.188,
+          1.355,
+          0.457
+        ]
+      },
+      "id": "TankBedLarge",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankBedLarge.fbx",
+      "sha256": "ac91b1b54b1ee48802c5de55160c47c9fb954beceec482d7ea75d4de38bbaa70",
+      "bytes": 479964
+    },
+    {
+      "triangles": 900,
+      "materials": [
+        "GK_Cream",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -1.27,
+          1.59,
+          -0.52
+        ],
+        "max": [
+          1.27,
+          1.67,
+          0.52
+        ]
+      },
+      "id": "TankLidLarge",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankLidLarge.fbx",
+      "sha256": "037157817f06e3c028b682b21c01aacb3a10c801230cf358ba31827d532fb7ec",
+      "bytes": 35244
+    },
+    {
+      "triangles": 7012,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_GlowWarm",
+        "GK_Gold",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Wood",
+        "GK_WoodDark",
+        "GK_WoodLight",
+        "GK_WoodMid",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -1.544,
+          0.0,
+          -0.795
+        ],
+        "max": [
+          1.544,
+          1.688,
+          0.809
+        ]
+      },
+      "id": "TankShow",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankShow.fbx",
+      "sha256": "ea9c46a18a377f333dafb53499f730aa18e56fdb97d83dc9c9914b6d87854360",
+      "bytes": 169708
+    },
+    {
+      "triangles": 36636,
+      "materials": [
+        "GK_Coral",
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Lime",
+        "GK_Pebble1",
+        "GK_Pebble2",
+        "GK_Pebble3",
+        "GK_Pebble4",
+        "GK_Pink",
+        "GK_Rock",
+        "GK_Sand",
+        "GK_TealLight"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -1.433,
+          0.32,
+          -0.705
+        ],
+        "max": [
+          1.44,
+          1.302,
+          0.704
+        ]
+      },
+      "id": "TankBedShow",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankBedShow.fbx",
+      "sha256": "81b1e68b5ae4995a300ae1dbec3a05bb3d50430037bfc647683febd2efe9d7ba",
+      "bytes": 827980
+    },
+    {
+      "triangles": 1224,
+      "materials": [
+        "GK_GlowWarm",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.116,
+          2.591,
+          0.792
+        ],
+        "max": [
+          0.116,
+          3.2,
+          1.009
+        ]
+      },
+      "id": "TankSpotlight",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankSpotlight.fbx",
+      "sha256": "beb09353adc042f794d112f26628e35290257d92c9a61d8dcf62cc01bff839d1",
+      "bytes": 46140
+    },
+    {
+      "triangles": 9876,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_Glass",
+        "GK_GlowBlue",
+        "GK_GlowCoral",
+        "GK_GlowLime",
+        "GK_Paper",
+        "GK_Pebble3",
+        "GK_Pebble4",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Wood",
+        "GK_WoodLight",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.77,
+          0.0,
+          -0.52
+        ],
+        "max": [
+          0.77,
+          1.803,
+          0.522
+        ]
+      },
+      "id": "TankRack",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankRack.fbx",
+      "sha256": "cb6aef53f8d814ad8405ca1461bfb76f918b968fb9d13886aafb2ccb4885771d",
+      "bytes": 232124
+    },
+    {
+      "triangles": 600,
+      "materials": [
+        "GK_Cream",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.77,
+          1.24,
+          -0.52
+        ],
+        "max": [
+          0.77,
+          1.32,
+          0.52
+        ]
+      },
+      "id": "TankLidRack",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankLidRack.fbx",
+      "sha256": "434b02343755ee8113fd3216a1ba69cdfa164fcdacba8dbec167824d9ce53038",
+      "bytes": 29292
     }
   ]
 }

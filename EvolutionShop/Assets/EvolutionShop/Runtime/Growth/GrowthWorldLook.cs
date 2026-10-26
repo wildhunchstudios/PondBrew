@@ -10,8 +10,10 @@ namespace EvolutionShop
     /// <summary>
     /// GR-16: the new game's look (GR.48, approved by the user on 2026-10-25): juicy soft colours, glossy plastic, cartoon
     /// glass, glowing cultures and screens, sunlight through the window by day and lamps by night. Wave 1 dresses the back
-    /// room and shop unit A and their stations (growers, the incubator, Starter tanks, the counter) with the growth kit
-    /// (Tools/Art/create_growth_kit.py, Resources/Art/GrowthKit) as decorative children: the greybox's shapes keep their
+    /// room and shop unit A and their stations (growers, the incubator, Starter tanks, the counter); wave 2 the other stations
+    /// and tanks (the vat, the breeding tank, the research bench and its siphon, the vial shelf, the catalog, the pinboard, Large
+    /// and Show tanks, lab racks). The growth kit's pieces
+    /// (Tools/Art/create_growth_kit.py, Resources/Art/GrowthKit) are decorative children: the greybox's shapes keep their
     /// colliders and targets, only their renderers are switched off, so positions, footprints, aisles and save ids stay as
     /// they are (AD.4). Every other greybox material takes the look's palette. -evolutionGrowthPlain keeps the greybox look.
     /// </summary>
@@ -219,23 +221,52 @@ namespace EvolutionShop
         {
             Kit(incubatorRoot, "Incubator", default, null, "Base", "Tray");
             Kit(counterRoot, "Counter", default, null, "Counter body", "Counter top", "Bell");
+            // Wave 2: the research bench and the siphon's first bulb, the vial shelf and each bottle (their culture fills stay),
+            // the supplier catalog and the pinboard.
+            Kit(benchRoot, "Bench", default, null, "Bench top", "Bench legs", "Siphon bulb");
+            Kit(benchRoot, "SiphonBulb");
+            Kit(stationsRoot.Find("Vial shelf"), "VialShelf", default, null, "Shelf", "Bracket");
+            foreach (var bottle in vials.Values) Kit(bottle, "VialBottle", default, null, "Glass", "Cork");
+            Kit(stationsRoot.Find("Supplier catalog"), "Catalog", default, null, "Stand", "Book", "Pages");
+            Kit(stationsRoot.Find("Pinboard"), "Pinboard", default, null, "Board", "Note 0", "Note 1", "Note 2");
         }
 
+        /// <summary>A grower or the vat in the kit's shapes; the culture's fill (how full it is) stays, inside the kit's glass.</summary>
         void DressSource(Transform root, string id, bool vat)
         {
-            if (vat) return; // the vat comes with wave 2
-            Kit(root, "Grower", default, id, "Cabinet", "Jar", "Label");
+            if (vat) Kit(root, "Vat", default, id, "Vat base", "Vat", "Pipe", "Label");
+            else Kit(root, "Grower", default, id, "Cabinet", "Jar", "Label");
         }
 
-        /// <summary>A Starter tank's cabinet and frame, pebbles and plants, and its level's filter and lid; the greybox's water,
-        /// glass and gravel stay (in the look's materials). The harmony frame sits on the kit's rim, a little wider.</summary>
+        /// <summary>The breeding tank at its level (rebuilt when the level changes): its cabinet, frame, divider and bed, the tint
+        /// port (2) and the second pair's frame (3); the greybox's glass, the pair's water and the second pair's divider stay.</summary>
+        void DressBreeding(Transform root, int level)
+        {
+            Kit(root, "BreedingTank", default, null, "Cabinet", "Divider", "Gravel", "Label", "Heart", "Nursery label", "Rim", "Tint port");
+            if (level >= 2) Kit(root, "BreedingPort");
+            if (level >= 3) Kit(root, "BreedingPair");
+        }
+
+        /// <summary>A tank's cabinet and frame (a Starter or Large tank's cabinet, the Show tank's plinth and light hood, a lab
+        /// rack's shelving), its pebbles and plants (never in a rack), and its level's filter, lid and (Show) spotlight; the
+        /// greybox's water, glass and gravel stay (in the look's materials). The harmony frame sits on the kit's rim, a little wider.</summary>
         void DressTank(Transform root, GrowthContainer c, float W, float D, float top, GameObject harmonyFrame)
         {
-            if (c.Kind != "starter" || c.Def.Lab) return; // Large and Show tanks and racks come with wave 2
-            Kit(root, "TankStarter", default, null, "Stand", "Rim");
-            Kit(root, "TankBed", default, null, "Plant");
-            if (c.Level >= 2) Kit(root, "TankFilter", default, null, "Filter");
-            if (c.Level >= 3) Kit(root, "TankLid", default, null, "Lid");
+            switch (c.Kind)
+            {
+                case "starter": Kit(root, "TankStarter", default, null, "Stand", "Rim"); Kit(root, "TankBed", default, null, "Plant"); break;
+                case "large": Kit(root, "TankLarge", default, null, "Stand", "Rim"); Kit(root, "TankBedLarge", default, null, "Plant"); break;
+                case "show": Kit(root, "TankShow", default, null, "Stand", "Rim", "Light bar"); Kit(root, "TankBedShow", default, null, "Plant"); break;
+                case "rack": Kit(root, "TankRack", default, null, "Stand", "Rim", "Rack post", "Rack shelf", "Rack label"); break;
+                default: return;
+            }
+            // The filter is the Starter tank's piece, moved to this tank's back corner and height.
+            var starter = GrowthContent.Container("starter");
+            var (starterStand, starterGlass) = Proportions("starter");
+            var filterAt = new Vector3((W - starter.Width) * 0.5f, top - (starterStand + starterGlass), (starter.Depth - D) * 0.5f);
+            if (c.Level >= 2) Kit(root, "TankFilter", filterAt, null, "Filter");
+            if (c.Level >= 2 && c.Kind == "show") Kit(root, "TankSpotlight", default, null, "Spotlight");
+            if (c.Level >= 3) Kit(root, c.Kind == "large" ? "TankLidLarge" : c.Kind == "rack" ? "TankLidRack" : "TankLid", default, null, "Lid");
             if (harmonyFrame)
             {
                 harmonyFrame.transform.localPosition = new Vector3(0, top + 0.055f, 0);
@@ -261,12 +292,32 @@ namespace EvolutionShop
                 if (level >= 3) Kit(parts, "CounterReader");
                 if (level >= 4) Kit(parts, "CounterTill");
             }
-            else if (key.StartsWith("grower:") && GrowthContent.Culture(key.Substring(7)).Source != CultureSource.Vat)
+            else if (key.StartsWith("grower:") && GrowthContent.Culture(key.Substring(7)).Source == CultureSource.Vat)
+            {
+                Replace();
+                if (level >= 2) Kit(parts, "VatBatch", default, key.Substring(7));
+                if (level >= 3) Kit(parts, "VatStirrer");
+            }
+            else if (key.StartsWith("grower:"))
             {
                 Replace();
                 if (level >= 2) Kit(parts, "GrowerRing");
                 if (level >= 3) Kit(parts, "GrowerTap");
                 if (level >= 4) { Kit(parts, "GrowerTap", new Vector3(0.16f, 0, 0)); Kit(parts, "GrowerLid"); }
+            }
+            else if (key == "bench")
+            {
+                Replace(); // level 1's notes are on the kit's bench
+                if (level >= 2) Kit(parts, "BenchMicroscope");
+                if (level >= 3) Kit(parts, "BenchAnalyzer");
+                if (level >= 4) Kit(parts, "BenchPlanner");
+            }
+            else if (key == "siphon")
+            {
+                Replace();
+                if (level >= 2) Kit(parts, "SiphonBig");
+                if (level >= 3) Kit(parts, "SiphonTwin");
+                if (level >= 4) Kit(parts, "SiphonVacuum");
             }
         }
 

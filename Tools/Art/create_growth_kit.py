@@ -3,6 +3,11 @@ no external assets or add-ons; everything is generated from the numbers below.
 
 Run: blender --background --factory-startup --python Tools/Art/create_growth_kit.py -- --repo C:/dev/DumbVideoGameStudio [--only A,B] [--no-render]
 
+Wave 2 (GR.45): the other stations and tanks: the conditioning vat (its second batch and stirrer), the breeding tank (its
+tint port and second pair), the research bench (its microscope, analyzer and planner) and the siphon (its bigger bulb, twin
+chamber and vacuum), the vial shelf and its bottles, the supplier catalog, the pinboard, and the Large tank, the Show tank
+(its light hood and spotlight) and the lab rack, each with its pebbles and plants, filter and lid.
+
 Wave 1 (GR.45's slice): the back room and shop unit A dressed in the look (floors, wall panelling, rails, beams, door and window
 frames, lamps, a sign, a shelf, a rug, plants, and the street outside unit A's window and door), and the stations there with
 the parts each level adds: the grower (and its tap and lid), the incubator (its screen, tint port and tray, auto-doser port),
@@ -424,6 +429,496 @@ def counter_till():
     return join('CounterTill')
 
 
+# ================================================================ wave 2: the other stations and the other tanks (GR-16, GR.45's wave 2)
+def heart(center, s, mat, depth=0.3):
+    """A puffy heart facing +Z: a square turned 45 degrees and two round lobes on its upper sides."""
+    x, y, z = center
+    box((x, y - s * 0.12, z), (s * 0.72, s * 0.72, s * depth), mat, r=s * 0.1, rot=(0, 0, 45))
+    for sx in (-1, 1):
+        ball((x + sx * s * 0.26, y + s * 0.14, z), (s * 0.37, s * 0.37, s * depth * 0.5), mat, seg=20)
+
+
+def vat():
+    """GrowthWorld.BuildSource's conditioning vat (Mist): a base 0.8 x 0.3 x 0.7 and a glass column 0.62 wide from 0.3 to
+    1.3, front +Z; the culture's level is the greybox's own fill (kept, inside the glass). A cream base with its label in the
+    culture's colour, a turquoise collar and cap, a dome, two rods at the back, a spout on the back where a pipe meets the vat
+    (its tap point, 1.3 m) and a stub on top."""
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl((sx * 0.3, 0.03, sz * 0.25), 0.055, 0.06, 'GK_TealDark', r=0.02)
+    box((0, 0.18, 0), (0.8, 0.3, 0.7), 'GK_Cream', r=0.09)
+    box((0, 0.31, 0), (0.82, 0.05, 0.72), 'GK_Teal', r=0.025)
+    box((0, 0.17, 0.352), (0.34, 0.11, 0.02), 'GK_Culture', r=0.03)
+    for sx in (-1, 1):
+        ball((sx * 0.27, 0.17, 0.36), 0.028, 'GK_Yellow', seg=14)
+    cyl((0, 0.36, 0), 0.345, 0.08, 'GK_Teal', r=0.03)
+    cyl((0, 0.84, 0), 0.31, 0.9, 'GK_Glass', r=0, verts=40)
+    for a in (210, 330):
+        rad = math.radians(a)
+        cyl((0.33 * math.cos(rad), 0.84, 0.33 * math.sin(rad)), 0.018, 0.9, 'GK_TealDark', r=0.006, verts=12)
+    cyl((0, 1.32, 0), 0.345, 0.07, 'GK_Teal', r=0.03)
+    ball((0, 1.355, 0), (0.29, 0.1, 0.29), 'GK_Cream')
+    cyl((0, 1.3, -0.335), 0.034, 0.07, 'GK_Teal', r=0.01, rot=(90, 0, 0))
+    ring((0, 1.3, -0.365), 0.042, 0.011, 'GK_TealDark', rot=(90, 0, 0))
+    cyl((0.18, 1.47, -0.06), 0.04, 0.16, 'GK_TealDark', r=0.012)
+    ring((0.18, 1.55, -0.06), 0.045, 0.012, 'GK_Teal')
+    return join('Vat')
+
+
+def vat_batch():
+    """Level 2: the second batch beside the column (the greybox's at 0.48, 0.45, -0.18): its own base, glass, Mist inside
+    (the culture's own colour) and a pipe into the column."""
+    x, z = 0.48, -0.18
+    cyl((x, 0.07, z), 0.16, 0.14, 'GK_Cream', r=0.05)
+    cyl((x, 0.15, z), 0.15, 0.03, 'GK_Teal', r=0.012)
+    cyl((x, 0.455, z), 0.13, 0.58, 'GK_Glass', r=0, verts=32)
+    cyl((x, 0.36, z), 0.11, 0.38, 'GK_Culture', r=0.03)
+    cyl((x, 0.765, z), 0.145, 0.06, 'GK_Teal', r=0.02)
+    tube([(x, 0.79, z), (x, 0.98, z), (0.27, 0.98, -0.1)], 0.025, 'GK_Teal')
+    return join('VatBatch')
+
+
+def vat_stirrer():
+    """Level 3: a yellow stirrer motor on the dome with vents and a light, its rod down into the Mist with a paddle."""
+    box((0, 1.52, 0), (0.24, 0.17, 0.22), 'GK_Yellow', r=0.06)
+    for k in range(3):
+        box((-0.06 + k * 0.06, 1.53, 0.112), (0.025, 0.09, 0.008), 'GK_TealDark', r=0.006)
+    ball((0.085, 1.575, 0.105), 0.02, 'GK_GlowLime', seg=12)
+    cyl((0, 1.625, 0), 0.04, 0.04, 'GK_TealDark', r=0.012)
+    cyl((0, 0.98, 0), 0.016, 0.9, 'GK_TealDark', r=0, verts=12)
+    box((0, 0.6, 0), (0.22, 0.02, 0.08), 'GK_Cream', r=0.01, rot=(0, 35, 0))
+    return join('VatStirrer')
+
+
+def breeding_tank():
+    """GrowthWorld.BuildBreeding (front +Z): a cabinet 1.1 x 0.78 x 0.5 and the glass from 0.78 to 1.22 (the greybox's glass
+    and the pair's water kept), the divider at x 0.22 making the nursery on the right. A cream cabinet with a pink heart
+    plate and the nursery's yellow sign, a turquoise frame open at the top, the divider a pane in a frame, a sand bed with
+    pebbles, moss in the nursery and a plant."""
+    box((0, 0.05, 0), (1.06, 0.1, 0.46), 'GK_TealDark', r=0.03)
+    box((0, 0.435, 0), (1.1, 0.69, 0.5), 'GK_Cream', r=0.08)
+    box((-0.2, 0.46, 0.255), (0.32, 0.3, 0.02), 'GK_Pink', r=0.07)
+    heart((-0.2, 0.46, 0.27), 0.14, 'GK_Coral')
+    box((0.34, 0.6, 0.255), (0.24, 0.1, 0.02), 'GK_Yellow', r=0.035)
+    ball((0.34, 0.6, 0.268), (0.028, 0.036, 0.012), 'GK_Cream', seg=14)
+    box((0, 0.79, 0), (1.12, 0.04, 0.52), 'GK_Teal', r=0.018)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl((sx * 0.535, 1.0, sz * 0.235), 0.024, 0.44, 'GK_Teal', r=0.008, verts=16)
+    for sz in (-1, 1):
+        box((0, 1.235, sz * 0.235), (1.1, 0.03, 0.035), 'GK_Teal', r=0.012)
+    for sx in (-1, 1):
+        box((sx * 0.535, 1.235, 0), (0.035, 0.03, 0.5), 'GK_Teal', r=0.012)
+    box((0.22, 1.0, 0), (0.01, 0.4, 0.43), 'GK_Glass', r=0)
+    for sz in (-1, 1):
+        box((0.22, 1.0, sz * 0.212), (0.022, 0.42, 0.022), 'GK_TealDark', r=0.008)
+    box((0.22, 1.205, 0), (0.024, 0.02, 0.45), 'GK_TealDark', r=0.008)
+    box((0, 0.815, 0), (1.0, 0.03, 0.42), 'GK_Sand', r=0.01)
+    pebbles = ['GK_Pebble1', 'GK_Pebble2', 'GK_Pebble3', 'GK_Pebble4', 'GK_Sand']
+    for k in range(48):
+        ball((RNG.uniform(-0.47, 0.47), 0.835, RNG.uniform(-0.18, 0.18)), (0.022, 0.012, 0.019), pebbles[k % 5], seg=10,
+             rot=(0, RNG.uniform(0, 180), 0))
+    ball((0.36, 0.84, 0.02), (0.11, 0.03, 0.12), 'GK_Lime', seg=20)
+    ball((-0.44, 0.9, -0.15), (0.032, 0.07, 0.026), 'GK_Green', seg=14)
+    ball((-0.39, 0.88, -0.16), (0.028, 0.05, 0.022), 'GK_Lime', seg=14)
+    return join('BreedingTank')
+
+
+def breeding_port():
+    """Level 2: the tint port, a yellow funnel on the rim's front left corner (the greybox's at -0.48, 1.29, 0.2)."""
+    box((-0.48, 1.235, 0.2), (0.11, 0.035, 0.11), 'GK_Teal', r=0.015)
+    cyl((-0.48, 1.27, 0.2), 0.026, 0.05, 'GK_TealDark', r=0.008)
+    cone((-0.48, 1.34, 0.2), 0.03, 0.085, 0.1, 'GK_Yellow')
+    ring((-0.48, 1.39, 0.2), 0.083, 0.01, 'GK_Yellow')
+    return join('BreedingPort')
+
+
+def breeding_pair():
+    """Level 3: the second pair's compartment, the greybox's glass divider at x -0.145 (kept) in a turquoise frame, and a
+    second heart on the cabinet."""
+    x = -0.145
+    for sz in (-1, 1):
+        box((x, 1.0, sz * 0.212), (0.02, 0.42, 0.02), 'GK_TealDark', r=0.008)
+    box((x, 1.205, 0), (0.022, 0.02, 0.45), 'GK_TealDark', r=0.008)
+    box((0.06, 0.46, 0.255), (0.16, 0.16, 0.02), 'GK_Pink', r=0.06)
+    heart((0.06, 0.46, 0.27), 0.08, 'GK_Coral')
+    return join('BreedingPair')
+
+
+def bench():
+    """GrowthWorld.Stations' research bench (1.3 x 0.6, top at 0.91, front +Z; it stands turned to face the back room): two
+    wooden pedestals with turquoise drawers, a back panel, a cream top with a turquoise edge, and the notes level 1 keeps."""
+    for s in (-1, 1):
+        box((s * 0.45, 0.04, 0), (0.36, 0.08, 0.56), 'GK_TealDark', r=0.025)
+        box((s * 0.45, 0.46, 0), (0.34, 0.78, 0.54), 'GK_Wood', r=0.04)
+        for k in range(2):
+            box((s * 0.45, 0.26 + k * 0.34, 0.272), (0.28, 0.26, 0.02), 'GK_Teal', r=0.03)
+            ball((s * 0.45, 0.26 + k * 0.34, 0.29), 0.024, 'GK_Yellow', seg=14)
+    box((0, 0.52, -0.22), (0.58, 0.56, 0.03), 'GK_WoodDark', r=0.012)
+    box((0, 0.88, 0), (1.36, 0.06, 0.64), 'GK_Cream', r=0.03)
+    box((0, 0.875, 0.322), (1.34, 0.035, 0.012), 'GK_Teal', r=0.006)
+    papers = ('GK_Paper', 'GK_Pebble3', 'GK_Pebble4')
+    for k in range(3):
+        box((-0.17 + k * 0.045, 0.912 + k * 0.003, 0.1 - k * 0.02), (0.16, 0.004, 0.2), papers[k], r=0, rot=(0, -8 + k * 9, 0))
+    cyl((-0.02, 0.918, 0.17), 0.008, 0.16, 'GK_Yellow', r=0.002, rot=(0, 20, 90))
+    return join('Bench')
+
+
+def bench_microscope():
+    """Level 2: a microscope at the bench's left end (the greybox's at -0.42), its eyepiece toward the reader."""
+    x = -0.42
+    box((x, 0.925, 0.0), (0.16, 0.03, 0.2), 'GK_Teal', r=0.012)
+    box((x, 1.04, -0.07), (0.05, 0.22, 0.05), 'GK_Teal', r=0.018, rot=(12, 0, 0))
+    cyl((x, 0.99, 0.03), 0.055, 0.015, 'GK_TealDark', r=0.005)
+    cyl((x, 1.13, 0.0), 0.03, 0.2, 'GK_Cream', r=0.01, rot=(20, 0, 0))
+    cyl((x, 1.25, 0.045), 0.024, 0.06, 'GK_Ink', r=0.008, rot=(20, 0, 0))
+    cyl((x + 0.035, 1.05, -0.07), 0.022, 0.03, 'GK_Coral', r=0.006, rot=(0, 0, 90))
+    return join('BenchMicroscope')
+
+
+def bench_analyzer():
+    """Level 3: the analyzer (the greybox's at 0.12, 1.0, -0.12): a rounded cream box, its glowing screen with a trace, two
+    lights and a lit vial."""
+    box((0.12, 1.0, -0.12), (0.3, 0.18, 0.2), 'GK_Cream', r=0.05)
+    box((0.1, 1.005, -0.018), (0.2, 0.11, 0.008), 'GK_Screen', r=0.012)
+    for k, h in enumerate((0.03, 0.06, 0.045, 0.075, 0.035)):
+        box((0.035 + k * 0.032, 0.975 + h / 2, -0.013), (0.016, h, 0.004), 'GK_GlowLime', r=0.003)
+    for k, m in enumerate(('GK_GlowCoral', 'GK_GlowYellow')):
+        ball((0.245, 1.03 - k * 0.04, -0.016), 0.012, m, seg=10)
+    cyl((0.2, 1.1, -0.17), 0.03, 0.02, 'GK_TealDark', r=0.006)
+    cyl((0.2, 1.16, -0.17), 0.02, 0.1, 'GK_GlowCoral', r=0.008)
+    return join('BenchAnalyzer')
+
+
+def bench_planner():
+    """Level 4: the planner board upright at the back (the greybox's at 0.12, 1.38, -0.2): a coral frame on two posts, cards
+    pinned to it and joined by a string."""
+    for sx in (-1, 1):
+        cyl((0.12 + sx * 0.4, 1.2, -0.25), 0.018, 0.58, 'GK_TealDark', r=0.006, verts=12)
+    box((0.12, 1.4, -0.25), (0.84, 0.42, 0.03), 'GK_Coral', r=0.03)
+    box((0.12, 1.4, -0.232), (0.76, 0.34, 0.008), 'GK_Paper', r=0.008)
+    for cx, cy, m in ((-0.18, 1.48, 'GK_Pebble3'), (0.04, 1.44, 'GK_Pebble4'), (0.27, 1.49, 'GK_Pebble1'), (0.2, 1.31, 'GK_Pebble2'), (-0.08, 1.3, 'GK_Lime')):
+        box((0.12 + cx, cy, -0.226), (0.14, 0.1, 0.004), m, r=0.006)
+        ball((0.12 + cx, cy + 0.04, -0.222), 0.01, 'GK_Coral', seg=8)
+    tube([(-0.06, 1.52, -0.221), (0.05, 1.46, -0.221), (0.16, 1.48, -0.221), (0.28, 1.47, -0.221), (0.39, 1.53, -0.221)], 0.003, 'GK_Coral', sides=6)
+    return join('BenchPlanner')
+
+
+def siphon_bulb():
+    """The siphon at level 1 (the greybox's bulb at 0.2, 1.0, 0; set a little forward, clear of the analyzer): a glass bulb of
+    Flow on a little stand, a coral squeeze bulb."""
+    x, z = 0.22, 0.08
+    cyl((x, 0.92, z), 0.055, 0.02, 'GK_TealDark', r=0.006)
+    cyl((x, 0.95, z), 0.012, 0.05, 'GK_TealDark', r=0, verts=12)
+    ball((x, 1.03, z), (0.05, 0.065, 0.05), 'GK_Glass', seg=24)
+    ball((x, 1.015, z), (0.036, 0.042, 0.036), 'GK_GlowBlue', seg=16)
+    cyl((x, 1.1, z), 0.018, 0.03, 'GK_Teal', r=0.006)
+    ball((x, 1.135, z), (0.032, 0.036, 0.032), 'GK_Coral', seg=18)
+    return join('SiphonBulb')
+
+
+def siphon_big():
+    """Level 2: a bigger bulb of Flow (the greybox's at 0.38, 0.98, 0.12) on its own stand."""
+    x, z = 0.38, 0.12
+    cyl((x, 0.92, z), 0.065, 0.02, 'GK_TealDark', r=0.006)
+    ball((x, 1.0, z), (0.065, 0.075, 0.065), 'GK_Glass', seg=24)
+    ball((x, 0.985, z), (0.05, 0.05, 0.05), 'GK_GlowBlue', seg=16)
+    cyl((x, 1.085, z), 0.02, 0.03, 'GK_Teal', r=0.006)
+    ball((x, 1.12, z), (0.034, 0.04, 0.034), 'GK_Coral', seg=18)
+    return join('SiphonBig')
+
+
+def siphon_twin():
+    """Level 3: the twin chamber of Bloom (the greybox's at 0.38, 0.98, -0.12), joined to the big bulb by a glass bridge."""
+    x, z = 0.38, -0.12
+    cyl((x, 0.92, z), 0.065, 0.02, 'GK_TealDark', r=0.006)
+    ball((x, 1.0, z), (0.065, 0.075, 0.065), 'GK_Glass', seg=24)
+    ball((x, 0.985, z), (0.05, 0.05, 0.05), 'GK_GlowCoral', seg=16)
+    cyl((x, 1.0, 0.0), 0.016, 0.12, 'GK_Glass', r=0, rot=(90, 0, 0), verts=16)
+    ring((x, 1.0, 0.0), 0.022, 0.006, 'GK_Teal', rot=(90, 0, 0))
+    return join('SiphonTwin')
+
+
+def siphon_vacuum():
+    """Level 4: the vacuum's yellow canister (the greybox's at 0.52, 1.02, 0) with a gauge, its hose to the bulbs."""
+    x = 0.54
+    cyl((x, 1.02, 0), 0.07, 0.2, 'GK_Yellow', r=0.025)
+    cyl((x, 1.13, 0), 0.06, 0.03, 'GK_Teal', r=0.01)
+    cyl((x, 1.03, 0.072), 0.028, 0.012, 'GK_GaugeFace', r=0.004, rot=(90, 0, 0))
+    box((x + 0.008, 1.035, 0.08), (0.004, 0.02, 0.003), 'GK_Ink', r=0.001, rot=(0, 0, -30))
+    tube([(x, 1.145, 0), (x - 0.04, 1.2, 0.04), (0.4, 1.13, 0.1)], 0.011, 'GK_Teal')
+    return join('SiphonVacuum')
+
+
+def vial_shelf():
+    """GR-04's vial shelf on the back room's south wall (front +Z): a wooden shelf with a turquoise lip, yellow brackets on
+    the wall, and a paper tag under each bottle's place (x -0.5 to 0.5, 0.25 apart)."""
+    box((0, 0.95, 0.05), (1.44, 0.05, 0.3), 'GK_Wood', r=0.015)
+    box((0, 0.955, 0.205), (1.44, 0.06, 0.02), 'GK_Teal', r=0.008)
+    for sx in (-1, 1):
+        box((sx * 0.6, 0.84, -0.02), (0.05, 0.18, 0.2), 'GK_Yellow', r=0.03)
+        box((sx * 0.6, 0.84, -0.09), (0.09, 0.26, 0.02), 'GK_Yellow', r=0.012)
+    for k in range(5):
+        box((-0.5 + 0.25 * k, 0.952, 0.216), (0.12, 0.03, 0.004), 'GK_Paper', r=0.003)
+    return join('VialShelf')
+
+
+def vial_bottle():
+    """A starter vial (origin: its bottle's place on the shelf): a round glass bottle (the greybox's culture fill kept inside
+    it), a neck, a cork and a little tag."""
+    cyl((0, 0.095, 0), 0.055, 0.19, 'GK_Glass', r=0, verts=24)
+    ball((0, 0.19, 0), (0.055, 0.028, 0.055), 'GK_Glass', seg=20)
+    cyl((0, 0.22, 0), 0.024, 0.045, 'GK_Glass', r=0, verts=16)
+    ring((0, 0.205, 0), 0.026, 0.006, 'GK_Teal')
+    cyl((0, 0.252, 0), 0.027, 0.04, 'GK_WoodLight', r=0.01)
+    box((0.04, 0.17, 0.045), (0.05, 0.035, 0.004), 'GK_Paper', r=0.004, rot=(0, 40, -10))
+    return join('VialBottle')
+
+
+CAT_TILT = 25
+
+
+def tilted(o, dy, dz, a=CAT_TILT):
+    """A point on the catalog's lectern: (dy, dz) in its frame, tilted about X through o."""
+    c, s = math.cos(math.radians(a)), math.sin(math.radians(a))
+    return (o[0], o[1] + dy * c - dz * s, o[2] + dy * s + dz * c)
+
+
+def catalog():
+    """GR-04's supplier catalog by the counter (front +Z, the reader's side): a round foot and a post, a wooden lectern tilted
+    toward the reader with a ledge, a big coral book open on it (a creature on one page, lines on the other), a ribbon."""
+    rot = (CAT_TILT, 0, 0)
+    cyl((0, 0.03, 0), 0.2, 0.06, 'GK_TealDark', r=0.02)
+    cyl((0, 0.5, -0.02), 0.045, 0.88, 'GK_Teal', r=0.015)
+    cyl((0, 0.93, -0.02), 0.065, 0.05, 'GK_TealDark', r=0.015)
+    o = (0, 1.0, 0)
+    box(o, (0.5, 0.05, 0.38), 'GK_Wood', r=0.02, rot=rot)
+    box(tilted(o, 0.04, 0.178), (0.5, 0.05, 0.025), 'GK_WoodDark', r=0.01, rot=rot)
+    box(tilted(o, 0.035, -0.01), (0.46, 0.022, 0.34), 'GK_Coral', r=0.01, rot=rot)
+    for s in (-1, 1):
+        box(tilted((s * 0.112, 1.0, 0), 0.058, -0.01), (0.212, 0.026, 0.31), 'GK_Paper', r=0.01, rot=rot)
+    box(tilted(o, 0.062, -0.01), (0.016, 0.028, 0.31), 'GK_Coral', r=0.005, rot=rot)
+    box(tilted((-0.112, 1.0, 0), 0.073, -0.03), (0.15, 0.004, 0.12), 'GK_TealLight', r=0.004, rot=rot)
+    ball(tilted((-0.112, 1.0, 0), 0.078, -0.03), (0.04, 0.012, 0.03), 'GK_Yellow', seg=14, rot=rot)
+    for k in range(3):
+        box(tilted((0.112, 1.0, 0), 0.073, -0.07 + k * 0.045), (0.15, 0.004, 0.014), 'GK_Sand', r=0.002, rot=rot)
+    p = tilted(o, 0.05, 0.16)
+    box((0.03, p[1] - 0.07, p[2] + 0.012), (0.028, 0.14, 0.006), 'GK_Yellow', r=0.002)
+    return join('Catalog')
+
+
+def pinboard():
+    """The pinboard on the back room's east wall (origin: its centre, 1.55 m up; front -Z, the room's side): a cork board in
+    a wooden frame, three papers pinned where the greybox's notes are (now, next and the long goal), pins, a string and a
+    sticky note."""
+    def at(x, y, dx, dy, a):
+        c, s = math.cos(math.radians(a)), math.sin(math.radians(a))
+        return x + dx * c - dy * s, y + dx * s + dy * c
+    box((0, 0, 0.005), (1.34, 0.8, 0.04), 'GK_Sand', r=0.01)
+    for sy in (-1, 1):
+        box((0, sy * 0.42, 0), (1.46, 0.06, 0.07), 'GK_WoodMid', r=0.02)
+    for sx in (-1, 1):
+        box((sx * 0.7, 0, 0), (0.06, 0.84, 0.07), 'GK_WoodMid', r=0.02)
+    heads = ('GK_Yellow', 'GK_TealLight', 'GK_Pink')
+    pins = ('GK_Coral', 'GK_Teal', 'GK_Lilac')
+    tops = []
+    for i in range(3):
+        x, y, a = -0.4 + 0.4 * i, 0.05 * (i % 2) - 0.02, (-3, 2, -2)[i]
+        box((x, y, -0.022), (0.3, 0.34, 0.006), 'GK_Paper', r=0.006, rot=(0, 0, a))
+        hx, hy = at(x, y, 0, 0.125, a)
+        box((hx, hy, -0.027), (0.28, 0.06, 0.004), heads[i], r=0.004, rot=(0, 0, a))
+        for k in range(3):
+            lx, ly = at(x, y, -0.02, 0.03 - k * 0.06, a)
+            box((lx, ly, -0.027), (0.2, 0.014, 0.003), 'GK_TealLight', r=0.002, rot=(0, 0, a))
+        px, py = at(x, y, 0, 0.15, a)
+        ball((px, py, -0.035), 0.018, pins[i], seg=12)
+        tops.append((px, py))
+    pts = []
+    for i, (px, py) in enumerate(tops):
+        pts.append((px, py, -0.04))
+        if i < 2:
+            nx, ny = tops[i + 1]
+            pts.append(((px + nx) / 2, min(py, ny) - 0.035, -0.04))
+    tube(pts, 0.004, 'GK_Coral', sides=6)
+    box((0.52, -0.3, -0.022), (0.12, 0.12, 0.004), 'GK_Pebble3', r=0.004, rot=(0, 0, 8))
+    return join('Pinboard')
+
+
+def tank_cabinet(W, D, S, G, doors):
+    """A tank's cabinet and frame (front +Z), as the Starter tank's: a kick, a cream cabinet with turquoise doors and yellow
+    knobs, the frame's rails and posts round the glass, and a light bar on top at the back."""
+    top = S + G
+    box((0, 0.05, 0), (W - 0.04, 0.1, D - 0.04), 'GK_TealDark', r=0.03)
+    box((0, S / 2 + 0.03, 0), (W, S - 0.06, D), 'GK_Cream', r=0.08)
+    dw = (W - 0.12) / doors
+    for i in range(doors):
+        cx = -W / 2 + 0.06 + dw * (i + 0.5)
+        box((cx, S * 0.48, D / 2 + 0.01), (dw - 0.06, S * 0.62, 0.03), 'GK_Teal', r=0.025)
+        ball((cx + (dw / 2 - 0.1) * (-1 if i == doors - 1 else 1), S * 0.52, D / 2 + 0.035), 0.03, 'GK_Yellow', seg=16)
+    box((0, S - 0.005, 0), (W + 0.06, 0.06, D + 0.06), 'GK_Teal', r=0.025)
+    box((0, top + 0.02, 0), (W + 0.06, 0.05, D + 0.06), 'GK_Teal', r=0.02)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl((sx * (W / 2 + 0.005), S + G / 2, sz * (D / 2 + 0.005)), 0.03, G, 'GK_Teal', r=0.01, verts=16)
+    box((0, top + 0.075, -D * 0.15), (W * 0.8, 0.05, 0.14), 'GK_Cream', r=0.02)
+    box((0, top + 0.05, -D * 0.15), (W * 0.74, 0.006, 0.09), 'GK_GlowWhite', r=0)
+
+
+def pebble_bed(W, D, y, n):
+    pebbles = ['GK_Sand', 'GK_Pebble1', 'GK_Pebble2', 'GK_Pebble3', 'GK_Pebble4']
+    for k in range(n):
+        ball((RNG.uniform(-W / 2 + 0.07, W / 2 - 0.07), y, RNG.uniform(-D / 2 + 0.07, D / 2 - 0.07)), (0.03, 0.017, 0.026),
+             pebbles[k % len(pebbles)], seg=10, rot=(0, RNG.uniform(0, 180), 0))
+
+
+def water_plants(y, plants):
+    for k, (px, pz, h, m) in enumerate(plants):
+        ball((px, y + h / 2, pz), (0.05, h / 2, 0.035), m, seg=16, rot=(0, 0, (k % 5 - 2) * 6))
+
+
+LARGE = (2.5, 1.0, 0.8, 0.75)
+SHOW = (3.0, 1.5, 0.55, 1.0)
+RACK = (1.5, 1.0, 0.45, 0.75)
+
+
+def tank_large():
+    """GrowthWorld.BuildTank for a Large tank (2.5 x 1.0; stand 0.8, glass 0.75): the Starter tank's cabinet and frame, longer,
+    with three doors."""
+    tank_cabinet(*LARGE, 3)
+    return join('TankLarge')
+
+
+def tank_bed_large():
+    """The Large tank's pebbles, two clumps of plants and one in the middle at the back, a rock and an arch."""
+    W, D, S, G = LARGE
+    y = S + 0.06
+    pebble_bed(W, D, y, 150)
+    water_plants(y, ((1.0, -0.3, 0.5, 'GK_Green'), (1.1, -0.18, 0.36, 'GK_Lime'), (0.9, -0.38, 0.3, 'GK_GreenDark'),
+                     (-1.05, -0.3, 0.44, 'GK_Lime'), (-0.95, -0.38, 0.3, 'GK_Green'), (-0.1, -0.38, 0.32, 'GK_GreenDark')))
+    ball((-0.55, y + 0.05, -0.25), (0.2, 0.1, 0.14), 'GK_Rock', seg=20)
+    ring((0.45, y, -0.28), 0.15, 0.05, 'GK_Rock', rot=(90, 0, 0))
+    return join('TankBedLarge')
+
+
+def tank_lid_large():
+    """Large tank level 3: a cream lid with two handles (the greybox's at top + 0.05)."""
+    W, D, S, G = LARGE
+    top = S + G
+    box((0, top + 0.06, 0), (W + 0.04, 0.04, D + 0.04), 'GK_Cream', r=0.018)
+    for sx in (-1, 1):
+        box((sx * W / 4, top + 0.1, 0.15), (0.3, 0.04, 0.06), 'GK_Yellow', r=0.02)
+    return join('TankLidLarge')
+
+
+def tank_show():
+    """GrowthWorld.BuildTank for a Show tank (3.0 x 1.5; stand 0.55, glass 1.0): a low wooden plinth planked on its front,
+    a cream band with gold trim, a coral plaque with a gold medal, the frame round the glass with gold corner caps, and a
+    light hood along the top front (in place of the greybox's light bar; the game's lamp inside stays)."""
+    W, D, S, G = SHOW
+    top = S + G
+    box((0, 0.05, 0), (W - 0.04, 0.1, D - 0.04), 'GK_TealDark', r=0.03)
+    box((0, S / 2 + 0.01, 0), (W, S - 0.1, D), 'GK_WoodDark', r=0.05)
+    woods = ['GK_Wood', 'GK_WoodLight', 'GK_WoodMid']
+    for k in range(12):
+        box((-W / 2 + 0.125 + k * 0.25, S / 2 - 0.01, D / 2 + 0.008), (0.235, S - 0.22, 0.02), woods[k % 3], r=0.01, seg=2)
+    box((0, S - 0.04, 0), (W + 0.04, 0.07, D + 0.04), 'GK_Cream', r=0.03)
+    box((0, S - 0.002, 0), (W + 0.07, 0.025, D + 0.07), 'GK_Gold', r=0.008)
+    box((0, S * 0.46, D / 2 + 0.03), (0.36, 0.2, 0.02), 'GK_Coral', r=0.05)
+    ball((0, S * 0.46, D / 2 + 0.045), (0.055, 0.055, 0.014), 'GK_Gold', seg=20)
+    ring((0, S * 0.46, D / 2 + 0.045), 0.06, 0.008, 'GK_Yellow', rot=(90, 0, 0))
+    box((0, top + 0.02, 0), (W + 0.06, 0.05, D + 0.06), 'GK_Teal', r=0.02)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl((sx * (W / 2 + 0.005), S + G / 2, sz * (D / 2 + 0.005)), 0.035, G, 'GK_Teal', r=0.012, verts=16)
+            ball((sx * (W / 2 + 0.005), top + 0.06, sz * (D / 2 + 0.005)), 0.04, 'GK_Gold', seg=14)
+    box((0, top + 0.09, D / 2 - 0.14), (W * 0.92, 0.08, 0.24), 'GK_Cream', r=0.03)
+    box((0, top + 0.047, D / 2 - 0.14), (W * 0.86, 0.006, 0.14), 'GK_GlowWarm', r=0)
+    box((0, top + 0.12, D / 2 - 0.01), (W * 0.92, 0.035, 0.03), 'GK_Teal', r=0.012)
+    return join('TankShow')
+
+
+def tank_bed_show():
+    """The Show tank's scene: pebbles, a sand dune, tall plants at the back corners, an arch, rocks, coral branches and a
+    bubble stone, all clear of the middle where the creatures swim."""
+    W, D, S, G = SHOW
+    y = S + 0.06
+    pebble_bed(W, D, y, 220)
+    ball((-0.7, y + 0.01, -0.25), (0.65, 0.07, 0.4), 'GK_Sand', seg=28)
+    water_plants(y, ((1.25, -0.5, 0.7, 'GK_Green'), (1.35, -0.38, 0.5, 'GK_Lime'), (1.15, -0.62, 0.42, 'GK_GreenDark'), (1.3, -0.15, 0.32, 'GK_Lime'),
+                     (-1.3, -0.5, 0.64, 'GK_Lime'), (-1.2, -0.62, 0.46, 'GK_Green'), (-1.38, -0.3, 0.36, 'GK_GreenDark'),
+                     (0.1, -0.62, 0.4, 'GK_Green'), (0.25, -0.6, 0.28, 'GK_Lime')))
+    ring((0.62, y, -0.45), 0.22, 0.07, 'GK_Rock', rot=(90, 0, 0))
+    ball((-0.3, y + 0.06, -0.5), (0.24, 0.12, 0.16), 'GK_Rock', seg=20)
+    ball((0.95, y + 0.04, 0.35), (0.14, 0.07, 0.1), 'GK_Rock', seg=18)
+    for k, (cx, cz, a, h, m) in enumerate(((-0.95, 0.2, -18, 0.24, 'GK_Coral'), (-0.88, 0.22, 14, 0.3, 'GK_Coral'), (-0.82, 0.16, 32, 0.2, 'GK_Pink'))):
+        cyl((cx, y + h / 2, cz), 0.025, h, m, r=0.01, rot=(0, 0, a), verts=12)
+        tip = (cx - math.sin(math.radians(a)) * h / 2, y + h / 2 + math.cos(math.radians(a)) * h / 2, cz)
+        ball(tip, 0.035, m, seg=12)
+    ball((-0.5, y + 0.02, 0.45), (0.06, 0.03, 0.06), 'GK_TealLight', seg=16)
+    return join('TankBedShow')
+
+
+def tank_spotlight():
+    """Show tank level 2: the spotlight above its front (the greybox's at 0, 2.7, D/2 + 0.2): a rod from the 3.2 m ceiling,
+    a yellow shade turned toward the tank and its warm glowing face."""
+    W, D, S, G = SHOW
+    z = D / 2 + 0.2
+    cyl((0, 3.0, z), 0.014, 0.4, 'GK_TealDark', r=0, verts=12)
+    cyl((0, 3.185, z), 0.05, 0.02, 'GK_TealDark', r=0.006)
+    ball((0, 2.8, z), 0.03, 'GK_TealDark', seg=12)
+    o = (0, 2.71, z - 0.02)
+    cone(o, 0.12, 0.05, 0.16, 'GK_Yellow', rot=(25, 0, 0))
+    face = tilted(o, -0.078, 0, 25)
+    cyl(face, 0.105, 0.006, 'GK_GlowWarm', r=0, rot=(25, 0, 0))
+    return join('TankSpotlight')
+
+
+def tank_rack():
+    """GrowthWorld.BuildTank for a lab rack (1.5 x 1.0; stand 0.45, glass 0.75; GR-08): turquoise steel shelving round a plain
+    tank: four posts with cross rails, a lower shelf with crates, the shelf the tank stands on with its label holder, a top
+    shelf with jars and a box, and the glass's rails. No plants: a rack is never on show."""
+    W, D, S, G = RACK
+    top = S + G
+    H = top + 0.42
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            box((sx * (W / 2 - 0.03), H / 2, sz * (D / 2 - 0.03)), (0.05, H, 0.05), 'GK_TealDark', r=0.012)
+        box((sx * (W / 2 - 0.03), 0.26, 0), (0.03, 0.03, D - 0.06), 'GK_Teal', r=0.008)
+    for sz in (-1, 1):
+        box((0, 0.26, sz * (D / 2 - 0.03)), (W - 0.06, 0.03, 0.03), 'GK_Teal', r=0.008)
+    box((0, 0.08, 0), (W - 0.02, 0.03, D - 0.02), 'GK_WoodLight', r=0.01)
+    box((0, S - 0.02, 0), (W, 0.04, D), 'GK_Wood', r=0.012)
+    box((0, top + 0.4, 0), (W, 0.04, D), 'GK_Wood', r=0.012)
+    for k, x in enumerate((-0.38, 0.32)):
+        box((x, 0.21, 0.02), (0.5, 0.22, 0.6), 'GK_Cream', r=0.03)
+        box((x, 0.25, 0.322), (0.16, 0.04, 0.008), 'GK_TealDark', r=0.01)
+        box((x, 0.18, 0.322), (0.22, 0.07, 0.004), ('GK_Pebble3', 'GK_Pebble4')[k], r=0.004)
+    box((0, S - 0.02, D / 2 + 0.012), (0.34, 0.07, 0.012), 'GK_Yellow', r=0.01)
+    box((0, S - 0.02, D / 2 + 0.02), (0.28, 0.045, 0.004), 'GK_Paper', r=0.003)
+    box((0, top + 0.02, 0), (W + 0.04, 0.04, D + 0.04), 'GK_Teal', r=0.015)
+    box((0, S + 0.015, 0), (W + 0.02, 0.03, D + 0.02), 'GK_Teal', r=0.01)
+    for k, x in enumerate((-0.45, -0.28, -0.11)):
+        cyl((x, top + 0.42 + 0.08, -0.15), 0.06, 0.16, 'GK_Glass', r=0, verts=20)
+        cyl((x, top + 0.42 + 0.06, -0.15), 0.048, 0.1, ('GK_GlowCoral', 'GK_GlowBlue', 'GK_GlowLime')[k], r=0.01)
+        cyl((x, top + 0.42 + 0.17, -0.15), 0.062, 0.025, 'GK_Teal', r=0.008)
+    box((0.35, top + 0.42 + 0.07, -0.1), (0.36, 0.14, 0.26), 'GK_Coral', r=0.03)
+    return join('TankRack')
+
+
+def tank_lid_rack():
+    """Lab rack level 3: a cream lid with a handle (the greybox's at top + 0.05), under the top shelf."""
+    W, D, S, G = RACK
+    top = S + G
+    box((0, top + 0.06, 0), (W + 0.04, 0.04, D + 0.04), 'GK_Cream', r=0.018)
+    box((0, top + 0.1, 0.15), (0.3, 0.04, 0.06), 'GK_Yellow', r=0.02)
+    return join('TankLidRack')
+
+
+WAVE2 = [vat, vat_batch, vat_stirrer, breeding_tank, breeding_port, breeding_pair, bench, bench_microscope, bench_analyzer,
+         bench_planner, siphon_bulb, siphon_big, siphon_twin, siphon_vacuum, vial_shelf, vial_bottle, catalog, pinboard,
+         tank_large, tank_bed_large, tank_lid_large, tank_show, tank_bed_show, tank_spotlight, tank_rack, tank_lid_rack]
+
+
 # ================================================================ the rooms (origin: the world's origin; GrowthWorld.Rooms' walls are 0.2
 # thick on their lines, so their inside faces are 0.1 in)
 def planks_x(x0, x1, z0, z1, y, width, mats, thick=0.03):
@@ -645,7 +1140,7 @@ def back_room_dressing():
 
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing]
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2  # wave 2 last, so wave 1 draws its random numbers as before
 
 
 def stats(root):
@@ -683,17 +1178,22 @@ for build in BUILDS:
     records.append(rec)
     print('GK_EXPORTED', root.name, rec['triangles'], rec['bounds_unity_m'])
 
-if not ONLY:
-    manifest = {
-        'schema': 1, 'title': 'Evolution Shop growth kit (GR-16): the new game\'s look',
-        'origin': {'author': 'Original local asset authorship for Evolution Shop (GR-16)', 'external_sources': [],
-                   'paid_generation': False, 'external_uploads': False},
-        'blender_version': bpy.app.version_string, 'source_script': 'Tools/Art/create_growth_kit.py',
-        'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-        'axis_mapping': 'Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)',
-        'export_settings': {'format': 'FBX', 'forward': '-Z', 'up': 'Y', 'bake_space_transform': True, 'mesh_smooth_type': 'OFF'},
-        'materials': {k: {'srgb_hex': v} for k, v in PALETTE.items()},
-        'assets': records,
-    }
-    (SOURCE / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+# With --only, the manifest keeps the other assets' records and takes the rebuilt ones'.
+kept = []
+if ONLY and (SOURCE / 'manifest.json').is_file():
+    kept = [r for r in json.loads((SOURCE / 'manifest.json').read_text(encoding='utf-8'))['assets'] if r['id'] not in ONLY]
+names = list(built)
+records = sorted(kept + records, key=lambda r: names.index(r['id']) if r['id'] in names else len(names))
+manifest = {
+    'schema': 1, 'title': 'Evolution Shop growth kit (GR-16): the new game\'s look',
+    'origin': {'author': 'Original local asset authorship for Evolution Shop (GR-16)', 'external_sources': [],
+               'paid_generation': False, 'external_uploads': False},
+    'blender_version': bpy.app.version_string, 'source_script': 'Tools/Art/create_growth_kit.py',
+    'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    'axis_mapping': 'Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)',
+    'export_settings': {'format': 'FBX', 'forward': '-Z', 'up': 'Y', 'bake_space_transform': True, 'mesh_smooth_type': 'OFF'},
+    'materials': {k: {'srgb_hex': v} for k, v in PALETTE.items()},
+    'assets': records,
+}
+(SOURCE / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 print('GROWTH_KIT_COMPLETE', len(records))

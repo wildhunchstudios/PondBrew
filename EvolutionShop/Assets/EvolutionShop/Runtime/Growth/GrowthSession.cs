@@ -89,7 +89,7 @@ namespace EvolutionShop
         public bool ValidationMode { get; private set; }
         public bool AllowValidationInput;
         public string SavePath { get; private set; }
-        /// <summary>GR-07: a development-only start point for the playtest (-evolutionGrowthStart era3 or era4; GR-10's spaces; GR-11's exhibition; GR-12's creatures), with its own save; null for the usual greybox.</summary>
+        /// <summary>GR-07: a development-only start point for the playtest (-evolutionGrowthStart era3 or era4; GR-10's spaces; GR-11's exhibition; GR-12's creatures; GR-16's look), with its own save; null for the usual greybox.</summary>
         public string StartPoint { get; private set; }
         public string Notice { get; private set; }
         public bool PeekOn = true, ReducedMotion;
@@ -121,7 +121,7 @@ namespace EvolutionShop
             {
                 // GR-07: a start point keeps its own save, so the usual greybox shop is never touched.
                 StartPoint = start;
-                SavePath = Path.Combine(Application.persistentDataPath, (start == GrowthStarts.Creatures ? "growth-gr12-" : start == GrowthStarts.Exhibition ? "growth-gr11-" : start == GrowthStarts.Spaces ? "growth-gr10-" : "growth-gr07-") + start + ".json");
+                SavePath = Path.Combine(Application.persistentDataPath, (start == GrowthStarts.Look ? "growth-gr16-" : start == GrowthStarts.Creatures ? "growth-gr12-" : start == GrowthStarts.Exhibition ? "growth-gr11-" : start == GrowthStarts.Spaces ? "growth-gr10-" : "growth-gr07-") + start + ".json");
             }
             string notice = null;
             bool fresh = !File.Exists(SavePath);

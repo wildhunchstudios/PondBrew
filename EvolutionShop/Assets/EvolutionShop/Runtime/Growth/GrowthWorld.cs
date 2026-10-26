@@ -570,6 +570,7 @@ namespace EvolutionShop
             }
             Target(root.gameObject, GrowthTargetKind.Breeding, "breeding");
             AddCollider(root.gameObject, new Vector3(0, 0.62f, 0), new Vector3(1.12f, 1.24f, 0.52f));
+            if (LookOn) DressBreeding(root, level);
             return root.gameObject;
         }
 

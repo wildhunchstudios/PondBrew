@@ -12,9 +12,9 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look";
 
-        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : null;
+        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : null;
 
         /// <summary>GR-12's families (waves 1 to 4: all nine), shown in the AD look.</summary>
         public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale", "gloamer", "cometail" };
@@ -79,6 +79,34 @@ namespace EvolutionShop.Growth
         {
             var shop = Era4Start();
             shop.Era = 5; shop.Day = 20; shop.Reputation = GrowthContent.StarThresholds[4] + 50; shop.Credits = 30000;
+            shop.TakeEvents();
+            return shop;
+        }
+
+        /// <summary>GR-16's look at the new game's look (Docs/Evidence/gr-16/LOOK.md): the spaces start with every station the
+        /// look dresses at its top level (the growers, the incubator, the counter, the breeding tank, the research bench, the
+        /// siphon, and the conditioning vat with Mist owned), five starter vials on the shelf, the Large tank on a3 at level 3, a
+        /// Show tank at level 2 on unit B's feature place, and the workshop open with lab racks at levels 3 and 1. The workshop,
+        /// the Show tank and the racks are bought with the shop's own actions; the levels, Mist and the vials are set as the
+        /// routes' fixtures set them, and the creatures in the new tanks put there as the routes' fixtures put them.</summary>
+        public static GrowthShop LookStart()
+        {
+            var shop = SpacesStart();
+            shop.Credits = 100000;
+            shop.BuyWorkshop();
+            shop.BuyContainer("show", "b4");
+            shop.BuyRack("r1"); shop.BuyRack("r2");
+            if (!shop.Owns("mist")) shop.Cultures.Add("mist");
+            foreach (var (station, level) in new[] { ("grower", 4), ("incubator", 4), ("counter", 4), ("breeding", 3), ("bench", 4), ("siphon", 4), ("vat", 3) })
+                shop.Levels[station] = level;
+            foreach (var c in shop.Cultures) shop.GrowerUnits[c] = shop.GrowerCapacityOf(c);
+            foreach (var (culture, doses) in new[] { ("ember", 3), ("spark", 2), ("mist", 3), ("brine", 1), ("dusk", 2) }) shop.Vials[culture] = doses;
+            foreach (var (place, level) in new[] { ("a3", 3), ("b4", 2), ("r1", 3), ("r2", 1) })
+                if (shop.ContainerAt(place) != null) shop.ContainerAt(place).Level = level;
+            foreach (var (place, count) in new[] { ("b4", 10), ("r1", 3), ("r2", 2) })
+                if (shop.ContainerAt(place) != null)
+                    foreach (var species in shop.Discovered.Take(count)) shop.DevelopmentStock(shop.ContainerAt(place).Id, species);
+            shop.Credits = 30000;
             shop.TakeEvents();
             return shop;
         }
