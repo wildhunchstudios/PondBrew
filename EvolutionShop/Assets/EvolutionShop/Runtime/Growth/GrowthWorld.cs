@@ -187,7 +187,7 @@ namespace EvolutionShop
             visitorsRoot = new GameObject("Visitors").transform; visitorsRoot.SetParent(transform, false);
             foreach (var place in Places) markers[place.Key] = PlaceMarker(place.Key, place.Value);
             // GR-16: the dressed rooms and stations, and the look's light (GrowthWorldLook).
-            if (LookOn) { DressRooms(); DressStations(); BuildLookLight(); }
+            if (LookOn) { DressRooms(); DressStations(); DressSpaces(); BuildLookLight(); }
         }
 
         Light Lamp(string name, Vector3 position, float range, float intensity)

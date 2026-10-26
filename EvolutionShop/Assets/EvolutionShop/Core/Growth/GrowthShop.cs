@@ -1672,6 +1672,8 @@ namespace EvolutionShop.Growth
         public int mossBatches;
         /// <summary>Comfort settings kept with the slot: peek on or off, reduced motion.</summary>
         public bool peekOff, reducedMotion;
+        /// <summary>GR-16 wave 5: the sounds and the machines' hum, 0 full, 1 half, 2 off (an older save, without them, is full).</summary>
+        public int soundLevel, humLevel;
         /// <summary>GR-14: the guided first night ("" for none, "on", "done" or "skipped").</summary>
         public string guide;
         public float sensitivity = 1;

@@ -1413,9 +1413,20 @@ namespace EvolutionShop
             body.Add(L("Settings", "gr-label"));
             body.Add(Item("Peek", "look closely at a tank's glass to read each creature", ChipButton(s.PeekOn ? "On" : "Off", () => { s.PeekOn = !s.PeekOn; s.SaveNow(); }, true)));
             body.Add(Item("Reduced motion", "no creature tricks, gentler movement", ChipButton(s.ReducedMotion ? "On" : "Off", () => { s.ReducedMotion = !s.ReducedMotion; s.SaveNow(); }, true)));
+            // GR-16 wave 5: the sounds and the machines' hum, on one row (the card fits at 1280x720), each full, half or off.
+            body.Add(Item("Sound", "the crank, the hand pumps, the breeding pop and a school's swish; the machines' hum",
+                ChipButton("Sounds " + GrowthAudio.Name(s.SoundLevel), () => { s.SoundLevel = GrowthAudio.Next(s.SoundLevel); s.SaveNow(); }, true),
+                ChipButton("Hum " + GrowthAudio.Name(s.HumLevel), () => { s.HumLevel = GrowthAudio.Next(s.HumLevel); s.SaveNow(); }, true)));
             body.Add(Item("Mouse", "how far the view turns", ChipButton(s.Sensitivity.ToString("0.0") + "×", () => { s.Sensitivity = s.Sensitivity >= 2f ? 0.5f : s.Sensitivity + 0.25f; s.SaveNow(); }, true)));
             if (s.Shop.Guide == GrowthGuideMode.On)
-                body.Add(Item("Guided first night", "a marker and the line at the bottom show what to do next", ChipButton("Skip it", () => { s.Shop.SkipGuide(); s.SaveNow(); }, true)));
+            {
+                // GR-16 wave 5: a line of its own rather than a settings row, so with the sound row the card still fits at 1280x720.
+                var guide = Box("gr-row"); guide.style.marginTop = 8; guide.style.alignItems = Align.Center;
+                guide.Add(L("Guided first night: a marker and the line at the bottom show what to do next", "gr-hint"));
+                var skipGuide = ChipButton("Skip it", () => { s.Shop.SkipGuide(); s.SaveNow(); }, true); skipGuide.style.marginLeft = 8;
+                guide.Add(skipGuide);
+                body.Add(guide);
+            }
             var danger = Box("gr-row"); danger.style.marginTop = 14;
             var over = Button("Start over (a new shop)", () => s.StartOver()); over.RemoveFromClassList("es-button--secondary"); over.AddToClassList("es-button--danger");
             danger.Add(over);

@@ -10,17 +10,18 @@ using UnityEngine.Rendering.Universal;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-16's Windows route (-evolutionGrowthLookSmoke): waves 1 and 2 of the new game's look (GR.48). The back room and shop
+    /// GR-16's Windows route (-evolutionGrowthLookSmoke): waves 1 to 5 of the new game's look (GR.48) and its sounds. The back room and shop
     /// unit A dressed with the growth kit; the growers, the incubator, Starter tanks and the counter in the kit's shapes at every
     /// level (wave 1); the vat, the breeding tank, the research bench and its siphon, the vial shelf, the catalog, the pinboard,
     /// Large and Show tanks and lab racks at every level (wave 2); the machines, the lab annex and the workshop, and the pipes and
-    /// the chute (wave 3); the greybox's shapes hidden but still solid and still focused; every kit piece in the look's own materials; the
+    /// the chute (wave 3); units B and C, the hall, the set pieces, the exhibition's pieces, the boards and the partitions (wave
+    /// 4); the sounds and their settings (wave 5); the greybox's shapes hidden but still solid and still focused; every kit piece in the look's own materials; the
     /// reflection probes rendered; the light following the shop from night through morning, midday and closing; the dressed
     /// rooms inside the frame budget; and captures of each by night and by day.
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string LookScenarioText = "GR-16 waves 1 and 2, the new game's look: the back room and shop unit A dressed with the growth kit; growers, the incubator, Starter tanks and the counter (wave 1), the vat, the breeding tank, the research bench and its siphon, the vial shelf, the catalog, the pinboard, Large and Show tanks and lab racks (wave 2), the generator, pumps, buffers, the power board, the sorter, the lab annex, the workshop, the pipes and the chute (wave 3), in the kit's shapes at every level; the greybox's shapes hidden but still solid and focused; the look's own materials; reflections; the light from night through morning, midday and closing; the dressed rooms inside the frame budget; captures by night and by day";
+        const string LookScenarioText = "GR-16 waves 1 and 2, the new game's look: the back room and shop unit A dressed with the growth kit; growers, the incubator, Starter tanks and the counter (wave 1), the vat, the breeding tank, the research bench and its siphon, the vial shelf, the catalog, the pinboard, Large and Show tanks and lab racks (wave 2), the generator, pumps, buffers, the power board, the sorter, the lab annex, the workshop, the pipes and the chute (wave 3), units B and C, the hall's banners and spotlights, the bay window bench, the window display, the feature wall and tank, the exhibition sign, award and tags, the staff board, the hall's plans and the partitions (wave 4), in the kit's shapes at every level; the sounds where they happen, scaled by their settings (wave 5); the greybox's shapes hidden but still solid and focused; the look's own materials; reflections; the light from night through morning, midday and closing; the dressed rooms inside the frame budget; captures by night and by day";
 
         Transform Station(string path) => s.World.transform.Find("Stations/" + path);
 
@@ -37,7 +38,7 @@ namespace EvolutionShop
 
         IEnumerator LookScenario()
         {
-            limitations.Add("GR-16 look route: the fixtures are labelled: an era 4 shop with 20,000 credits, Ember owned, a Starter tank on a1 with three creatures, every station at level 1; then the same shop with the growers, the incubator and the counter at level 4 and Starter tanks at levels 2 and 3 on a1 and a3; then (wave 2) the shop with Ember and Mist owned, unit B, the annex and the workshop open, the vat at level 3, the breeding tank at 3, the research bench and the siphon at 4, five starter vials on the shelf, a Large tank at level 3 on a3 and one at level 2 on b1, a Show tank at level 2 on b4 and lab racks at levels 3 and 1 on r1 and r2, with creatures; then (wave 3) the look start point (GrowthStarts.Look: the spaces start with every station at its top level, three piped buffers, the tide engine, fast pumps, the sorter and its chute), whose generator and pumps are then set back to levels 1, 2 and 3 to see each (labelled); pipes are watched flowing on the shop's own power for up to 8 s. The day is opened by the shop's own action and its clock set to the morning, midday and closing marks (labelled); frame times are measured as the player runs (vSync on) for 6 s at each view after 1 s settling. Waves 1 to 3 dress the back room, unit A, the lab annex and the workshop and every station, tank and machine; unit B, unit C and the hall take the look's palette only (wave 4).");
+            limitations.Add("GR-16 look route: the fixtures are labelled: an era 4 shop with 20,000 credits, Ember owned, a Starter tank on a1 with three creatures, every station at level 1; then the same shop with the growers, the incubator and the counter at level 4 and Starter tanks at levels 2 and 3 on a1 and a3; then (wave 2) the shop with Ember and Mist owned, unit B, the annex and the workshop open, the vat at level 3, the breeding tank at 3, the research bench and the siphon at 4, five starter vials on the shelf, a Large tank at level 3 on a3 and one at level 2 on b1, a Show tank at level 2 on b4 and lab racks at levels 3 and 1 on r1 and r2, with creatures; then (wave 3) the look start point (GrowthStarts.Look: the spaces start with every station at its top level, three piped buffers, the tide engine, fast pumps, the sorter and its chute), whose generator and pumps are then set back to levels 1, 2 and 3 to see each (labelled); pipes are watched flowing on the shop's own power for up to 8 s. The day is opened by the shop's own action and its clock set to the morning, midday and closing marks (labelled); frame times are measured as the player runs (vSync on) for 6 s at each view after 1 s settling. Waves 1 to 3 dress the back room, unit A, the lab annex and the workshop and every station, tank and machine. Wave 4 runs on the look start too (with unit C and the hall open, Show tanks on c1 and c2, a Large tank on e1); the exhibition's sign, a display tag and the award are shown by setting the shop's exhibition flags and one creature's display mark directly for a few frames (labelled), then setting them back; the partitions are seen on two fixtures of their own (an era 5, five-star shop with 30,000 credits and every room closed; the same with unit B and the annex open), and unit C is opened on the second with the shop's own action. Wave 5 (sounds) can only be checked as voices, volumes and positions (requests, not a listening measurement): the hum and the whirr on the look start's own power, the crank and the hand pump held with the route's mouse after setting the generator and pumps back to level 1 (labelled), an offspring put in the breeding tank and taken out again, and Pondlets put into the emptied Large tank on e1 with the routes' fixture action to make a school (labelled).");
             yield return Opening();
             TakeInput();
             var w = s.World;
@@ -83,8 +84,8 @@ namespace EvolutionShop
             var cam = s.Player.View;
             Check(cam.GetUniversalAdditionalCameraData().renderPostProcessing, "The camera renders the look's grade (post-processing on)");
             Check(FindObjectsByType<Volume>(FindObjectsSortMode.None).Any(v => v.isGlobal && v.sharedProfile != null && v.sharedProfile.name == "GR look grade"), "The look's grade: bloom, neutral tonemapping, colour, white balance, vignette");
-            yield return Wait(() => FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None).Count(p => p.name.StartsWith("Look /") && p.realtimeTexture != null) == 4, 5, "the rooms' reflections");
-            Check(true, "The dressed rooms' reflection probes are rendered (unit A, the back room, the lab annex, the workshop)");
+            yield return Wait(() => FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None).Count(p => p.name.StartsWith("Look /") && p.realtimeTexture != null) == 6, 5, "the rooms' reflections");
+            Check(true, "The dressed rooms' reflection probes are rendered (unit A, the back room, the lab annex, the workshop, unit B, unit C)");
 
             // Still the same stations: the reticle focuses them through the kit.
             LookAt(GrowthWorld.GrowerFront("bloom"), GrowthWorld.GrowerPositions["bloom"] + new Vector3(0, 0.8f, 0)); yield return null; yield return null;
@@ -326,6 +327,179 @@ namespace EvolutionShop
             LookAt(gen + new Vector3(-0.5f, 0, -2.0f), gen + new Vector3(0, 1.0f, 0)); yield return Shot("452-twin-turbine-level-3");
             shop.Levels["generator"] = 4; shop.Levels["pump"] = 3;
             yield return null; yield return null; yield return null;
+
+            // Wave 4: units B and C and the hall, their set pieces, the exhibition's pieces, the boards, on the look start (unit C
+            // and the hall open, Show tanks on c1 and c2, a Large tank on e1).
+            Check(shop.UnitC && shop.Hall && shop.ContainerAt("c1") != null && shop.ContainerAt("e1") != null,
+                "Fixture: the look start with unit C and the exhibition hall open, Show tanks on c1 and c2, a Large tank on e1");
+            foreach (var asset in new[] { "UnitBFloor", "UnitBDressing", "StreetEast", "UnitCFloor", "UnitCDressing", "FeatureWall" })
+                Check(HasPiece(dressed, asset), "Units B and C wear the kit's " + asset);
+            Replaced(w.transform.Find("Rooms"), "Unit B floor", true, "Unit B");
+            var unitC = w.transform.Find("Shop unit C");
+            Replaced(unitC, "Unit C floor", true, "Unit C"); Replaced(unitC, "Feature wall", false, "Unit C");
+            var bay = sets.Find("Bay window bench");
+            Check(HasPiece(bay, "BayWindow"), "The bay window bench: its window, seat, cushion and pillows, and the hanging bowls");
+            Replaced(bay, "Seat", true, "The bay window bench"); Replaced(sets, "Bay window sill", true, "The bay window");
+            Check(HasPiece(sets.Find("Window display"), "WindowDisplay") && sets.Find("Window display/Water").GetComponent<Renderer>().enabled,
+                "Unit A's window display: its base, light hood and scene, the greybox's water kept");
+            var feature = unitC.Find("Feature tank (set piece)");
+            Check(HasPiece(feature, "FeatureTank") && feature.Find("Water").GetComponent<Renderer>().enabled && feature.Find("Glass").GetComponent<Renderer>().enabled,
+                "Unit C's feature tank: its cabinet, bezel, light hood and scene, the greybox's water and glass kept");
+            Replaced(feature, "Frame", true, "The feature tank");
+            var hall = w.transform.Find("Exhibition hall finish");
+            var banners = hall.Cast<Transform>().Where(t => t.name.StartsWith("Banner ") && t.name != "Banner rod").ToList();
+            Check(banners.Count == 5 && banners.All(b => HasPiece(b, "BannerCoral") || HasPiece(b, "BannerYellow") || HasPiece(b, "BannerBlue")) && w.BannersShown == 5,
+                "The hall's five banners in the kit's coral, yellow and blue, unrolled");
+            Replaced(hall, "Banner rod", false, "The hall's banners");
+            var fixtures = hall.Cast<Transform>().Where(t => t.name.StartsWith("Fixture over ")).ToList();
+            Check(fixtures.Count == 5 && fixtures.All(x => x.gameObject.activeSelf && HasPiece(x, "HallSpot")) && w.LampIntensity("hall") > 10.9f,
+                "A fixture over each of the hall's five spotlights, lit");
+            var staff = w.transform.Find("Staff board"); var plans = w.transform.Find("Exhibition hall plans");
+            Check(HasPiece(staff, "StaffBoard") && HasPiece(plans, "HallBoard"), "The staff board and the hall's plans in the kit's shapes");
+            Replaced(staff, "Board", true, "The staff board"); Replaced(plans, "Board", true, "The hall's plans");
+            foreach (var (root, piece) in new[] { ("Unit B partition", "PartitionB"), ("Unit C partition", "PartitionC"), ("Lab annex partition", "PartitionAnnex"), ("Workshop partition", "PartitionWorkshop") })
+            {
+                Check(HasPiece(w.transform.Find(root), piece), "The " + root.ToLowerInvariant() + " a painted hoarding (" + piece + ")");
+                Replaced(w.transform.Find(root), "Partition", false, "The " + root.ToLowerInvariant());
+            }
+            Check(Mathf.Abs(w.LampIntensity("unit-b") - w.LampFull("unit-b")) < 0.05f && w.LampFull("unit-b") > 2.6f && Mathf.Abs(w.LampIntensity("unit-c") - w.LampFull("unit-c")) < 0.05f && w.LampFull("unit-c") > 2.6f,
+                "Units B and C have two lamps each under their pendants, at the night key (" + w.LampFull("unit-b").ToString("0.0") + " and " + w.LampFull("unit-c").ToString("0.0") + ")");
+            stray = w.LookPieces.SelectMany(p => p.GetComponentsInChildren<Renderer>(true)).SelectMany(r => r.sharedMaterials).Where(m => m == null || m.name.StartsWith("GK_")).ToList();
+            Check(stray.Count == 0, "Every kit piece of the four waves (" + w.LookPieces.Count + ") is in the look's own materials");
+            Check(!w.LookPieces.Any(p => p.GetComponentInChildren<Collider>(true) != null), "Still no kit piece brings a collider");
+
+            // The reticle still focuses the boards.
+            LookAt(new Vector3(-0.45f, 0, 2.4f), GrowthWorld.StaffBoardPosition); yield return null; yield return null;
+            Aimed(GrowthTargetKind.StaffBoard, null, "The reticle focuses the staff board");
+            yield return Shot("464-staff-board");
+            LookAt(new Vector3(10.3f, 0, 7.3f), GrowthWorld.HallBoardPosition); yield return null; yield return null;
+            Aimed(GrowthTargetKind.HallBoard, null, "The reticle focuses the hall's plans");
+            yield return Shot("465-hall-plans");
+
+            // By night: unit B, the bay window, unit C, the feature tank, the window display, the banners.
+            LookAt(new Vector3(4.8f, 0, 1.6f), new Vector3(10.5f, 1.3f, -2.4f)); yield return Shot("460-unit-b");
+            LookAt(new Vector3(8.0f, 0, -1.2f), new Vector3(8.0f, 1.6f, -3.9f)); yield return Shot("461-bay-window");
+            LookAt(new Vector3(11.0f, 0, 4.6f), new Vector3(4.0f, 1.4f, 8.4f)); yield return Shot("462-unit-c");
+            LookAt(new Vector3(5.975f, 0, 6.4f), new Vector3(5.975f, 1.4f, 8.75f)); yield return Shot("463-feature-tank");
+            LookAt(new Vector3(-2.6f, 0, -2.6f), new Vector3(-2.6f, 1.1f, -3.93f)); yield return Shot("470-window-display");
+            LookAt(new Vector3(6.0f, 0, 1.0f), new Vector3(8.0f, 2.6f, -3.8f)); yield return Shot("471-hall-banners");
+            yield return Measure("425-look-unit-b", new Vector3(4.8f, 0, 1.6f), new Vector3(10.5f, 1.3f, -2.4f), 6);
+            yield return Measure("426-look-unit-c", new Vector3(11.0f, 0, 4.6f), new Vector3(4.0f, 1.4f, 8.4f), 6);
+
+            // GR-11's pieces: the sign while the exhibition is prepared and on its day, a tag over a tank on display, the award once
+            // it is held (the shop's flags and a display mark set directly for a few frames: labelled).
+            shop.ExhibitionPrepared = true; yield return null; yield return null;
+            var grand = w.transform.Find("Grand Exhibition");
+            Check(w.SignShowing && !w.SignToday && HasPiece(grand.Find("Exhibition sign"), "ExhibitionSign") && grand.Find("Exhibition sign/Face").GetComponent<Renderer>().enabled,
+                "The exhibition sign over the door, prepared: its board, letters and rosette round the pale gold face");
+            LookAt(new Vector3(-0.2f, 0, -1.6f), new Vector3(-0.5f, 2.6f, -3.86f)); yield return Shot("466-exhibition-sign-prepared");
+            shop.ExhibitionPrepared = false; shop.ExhibitionToday = true; yield return null; yield return null;
+            Check(w.SignToday && grand.Find("Exhibition sign/Face").GetComponent<Renderer>().sharedMaterial.IsKeywordEnabled("_EMISSION"), "On its day: the face glows gold and its lamp is lit");
+            yield return Shot("467-exhibition-sign-today");
+            var shown = shop.ContainerAt("b4").Occupants[0];
+            shown.ReservedBy = GrowthShop.ExhibitionReservation; yield return null; yield return null;
+            Check(w.DisplayTagsShown >= 1 && HasPiece(grand.Find("Display tag b4"), "DisplayTag"), "A tag over the Show tank on display: a coral ribbon, ON SHOW and a gold rosette");
+            LookAt(new Vector3(9.6f, 0, -0.2f), new Vector3(11.1f, 2.1f, -0.2f)); yield return Shot("468-display-tag");
+            shown.ReservedBy = 0; shop.ExhibitionToday = false; shop.ExhibitionDone = true; shop.ExhibitionResults = new GrowthExhibitionResults { Day = shop.Day };
+            yield return null; yield return null;
+            Check(w.AwardShowing && HasPiece(grand.Find("Grand Exhibition award"), "Award"), "Once it is held, the award on unit A's front wall: a wooden plaque, a gold medal and its card");
+            LookAt(new Vector3(0.6f, 0, -1.8f), GrowthWorld.AwardPosition); yield return null; yield return null;
+            Aimed(GrowthTargetKind.Award, null, "The reticle focuses the award");
+            yield return Shot("469-award");
+            shop.ExhibitionDone = false; shop.ExhibitionResults = null; yield return null; yield return null;
+
+            // The rooms' partitions, closed, on two shops of their own; and unit C opened in the look: its hoarding sinks and its
+            // lamps fade up to the night key.
+            var closed = new GrowthShop { Era = 5, Reputation = GrowthContent.StarThresholds[4] + 50, Credits = 30000 };
+            s.LoadFixture(closed);
+            yield return null; yield return null; yield return null;
+            foreach (var (root, piece, room) in new[] { ("Unit B partition", "PartitionB", "unit-b"), ("Lab annex partition", "PartitionAnnex", "annex") })
+            {
+                Check(w.PartitionShowing(room) && HasPiece(w.transform.Find(root), piece), "Closed, the " + room + " partition is a painted hoarding: COMING SOON");
+                Replaced(w.transform.Find(root), "Partition", true, "The " + room + " partition");
+            }
+            LookAt(new Vector3(1.4f, 0, 0.4f), new Vector3(4.0f, 1.3f, 0f)); yield return Shot("472-partition-unit-b");
+            LookAt(new Vector3(0.9f, 0, 6.6f), new Vector3(1.15f, 1.4f, 9f)); yield return Shot("473-partition-annex");
+            var half = new GrowthShop { Era = 5, Reputation = GrowthContent.StarThresholds[4] + 50, Credits = 30000, UnitB = true, Annex = true };
+            s.LoadFixture(half);
+            yield return null; yield return null; yield return null;
+            foreach (var (root, piece, room) in new[] { ("Unit C partition", "PartitionC", "unit-c"), ("Workshop partition", "PartitionWorkshop", "workshop") })
+            {
+                Check(w.PartitionShowing(room) && HasPiece(w.transform.Find(root), piece), "Closed, the " + room + " partition is a painted hoarding: COMING SOON");
+                Replaced(w.transform.Find(root), "Partition", true, "The " + room + " partition");
+            }
+            LookAt(new Vector3(10.6f, 0, 1.4f), new Vector3(10.875f, 1.3f, 4f)); yield return Shot("474-partition-unit-c");
+            LookAt(new Vector3(1.6f, 0, 10.4f), new Vector3(4.0f, 1.4f, 10.3f)); yield return Shot("475-partition-workshop");
+            Ok(s.Act(half.BuyUnitC), "Open unit C (the card's button)");
+            yield return new WaitForSeconds(0.9f);
+            float lamps = w.LampIntensity("unit-c"), lampsFull = w.LampFull("unit-c");
+            Check(w.Revealing("unit-c") && lamps > 0.05f && lamps < lampsFull - 0.05f && lampsFull > 2.6f,
+                "Unit C opening in the look: its hoarding sinking, its two lamps fading up (" + lamps.ToString("0.00") + " of " + lampsFull.ToString("0.00") + ")");
+            yield return Wait(() => !w.Revealing("unit-c"), 6, "unit C's reveal");
+            yield return null;
+            Check(Mathf.Abs(w.LampIntensity("unit-c") - w.LampFull("unit-c")) < 0.05f && !w.PartitionShowing("unit-c"), "Revealed: its lamps at the night key, its hoarding gone");
+
+            // Wave 5: the sounds, on the look start again. The tide engine hums and the fast pumps whirr on the shop's own power;
+            // the settings scale them; the hand crank's ratchet and a hand pump's strokes while held; an offspring's pop and a
+            // school's swish.
+            s.LoadFixture(GrowthStarts.Make(GrowthStarts.Look));
+            shop = s.Shop;
+            yield return null; yield return null; yield return null;
+            var audio = s.Audio;
+            Check(audio != null && audio.Clips.All(c => c != null && c.length > 0.03f) && audio.Voices.All(v => v != null && v.spatialBlend == 1f),
+                "Six sounds made by the game itself (nothing recorded), played by five voices placed where each happens");
+            s.SoundLevel = GrowthAudio.Level.Full; s.HumLevel = GrowthAudio.Level.Full;
+            yield return Wait(() => audio.HumPlaying && audio.MotorPlaying && audio.HumVolume >= GrowthAudio.HumGain - 0.001f, 4, "the generator's hum and the pumps' whirr, settled");
+            Check(Vector3.Distance(audio.HumPosition, w.GeneratorPlace) < 1.2f && Mathf.Abs(audio.HumPitch - 0.8f) < 0.01f, "The tide engine hums from the workshop's corner, deepest at level 4");
+            Check(GrowthWorld.GrowerPositions.Values.Any(g => Vector3.Distance(audio.MotorPosition, g) < 1.2f), "The electric pumps whirr from the running pump nearest the player");
+            float fullHum = audio.HumVolume;
+            s.HumLevel = GrowthAudio.Level.Half;
+            yield return Wait(() => Mathf.Abs(audio.HumVolume - fullHum * 0.5f) < 0.01f, 3, "the hum at half");
+            Check(true, "Machine hum at half: the hum settles at half (" + audio.HumVolume.ToString("0.00") + " of " + fullHum.ToString("0.00") + ")");
+            s.HumLevel = GrowthAudio.Level.Off;
+            yield return Wait(() => !audio.HumPlaying && !audio.MotorPlaying, 3, "the hum off");
+            Check(true, "Machine hum off: the hum and the whirr fade out and stop");
+            s.HumLevel = GrowthAudio.Level.Full;
+            yield return Wait(() => audio.HumPlaying, 3, "the hum back");
+            s.SetCard(GrowthCard.Pause);
+            yield return Wait(() => !audio.HumPlaying, 3, "the hum while paused");
+            Check(s.Ui.CardText().Contains("Sounds Full") && s.Ui.CardText().Contains("Hum Full"), "Paused: the hum fades out; the pause screen's Sound row has Sounds and Hum, each full, half or off");
+            yield return Shot("480-pause-sounds");
+            s.SetCard(GrowthCard.None);
+            yield return Wait(() => audio.HumPlaying, 3, "the hum after the pause");
+            // The hand crank and the hand pumps (set back to level 1 on the same shop: labelled): no hum; a ratchet and strokes while held.
+            shop.Levels["generator"] = 1; shop.Levels["pump"] = 1;
+            yield return Wait(() => !audio.HumPlaying && !audio.MotorPlaying, 3, "no hum from the hand crank and hand pumps");
+            int clicks = audio.Clicks;
+            var crankAt = w.GeneratorPlace;
+            yield return HoldAt(crankAt + new Vector3(0, 0, -1.6f), crankAt + new Vector3(0, 0.9f, 0), GrowthTargetKind.Generator, null, () => audio.Clicks >= clicks + 6, "the crank's ratchet", "The reticle focuses the hand crank");
+            Check(audio.Clicks >= clicks + 6, "Cranking: the ratchet clicks in time while it turns (" + (audio.Clicks - clicks) + " clicks)");
+            shop.BufferAt(0).Units = 0;
+            int strokes = audio.Strokes;
+            yield return HoldAt(GrowthWorld.GrowerFront("bloom") + new Vector3(0.25f, 0, -0.26f), PumpPoint("bloom"), GrowthTargetKind.Pump, "bloom", () => audio.Strokes >= strokes + 3, "the hand pump's strokes", "The reticle focuses the Bloom grower's hand pump");
+            Check(audio.Strokes >= strokes + 3, "Pumping by hand: a stroke at each turn (" + (audio.Strokes - strokes) + "), from the pump");
+            shop.Levels["generator"] = 4; shop.Levels["pump"] = 3;
+            yield return null; yield return null;
+            // The moments.
+            int pops = audio.Pops;
+            shop.Pairs[0].Offspring = new GrowthSpecimen { Id = 990001, Species = shop.Discovered[0] };
+            yield return null; yield return null;
+            Check(audio.Pops == pops + 1 && Vector3.Distance(audio.LastPop, GrowthWorld.BreedingPosition) < 1.2f && audio.LastMomentGain > 0.6f, "An offspring arrives in the breeding tank: a pop from the tank");
+            shop.Pairs[0].Offspring = null; yield return null;
+            var e1 = shop.ContainerAt("e1");
+            e1.Occupants.Clear(); yield return null; yield return null;
+            int swishes = audio.Swishes;
+            for (int i = 0; i < 3; i++) Ok(shop.DevelopmentStock(e1.Id, "pondlet"), "A Pondlet into the Large tank on e1 (the routes' fixture action)");
+            yield return null; yield return null;
+            Check(audio.Swishes == swishes + 1 && Vector3.Distance(audio.LastSwish, w.Tanks[e1.Id].Root.position) < 1.2f && audio.LastMomentGain > 0.5f,
+                "Three Pondlets make a school: a swish from their tank");
+            s.SoundLevel = GrowthAudio.Level.Off;
+            e1.Occupants.Clear(); yield return null; yield return null;
+            swishes = audio.Swishes;
+            for (int i = 0; i < 3; i++) shop.DevelopmentStock(e1.Id, "pondlet");
+            yield return null; yield return null;
+            Check(audio.Swishes == swishes + 1 && audio.LastMomentGain == 0, "Sounds off: the swish is asked for and played at nothing");
+            s.SoundLevel = GrowthAudio.Level.Full;
 
             // By day: the shop opens in the morning; the sun comes in by the window; midday; closing.
             Ok(s.Act(shop.OpenShop), "Open the shop");

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace EvolutionShop.Tests
 {
-    /// <summary>GR-16 waves 1 to 3: the growth kit (Tools/Art/create_growth_kit.py) against the game. Every piece loads as one mesh
+    /// <summary>GR-16 waves 1 to 4: the growth kit (Tools/Art/create_growth_kit.py) against the game. Every piece loads as one mesh
     /// whose material slots the look maps; the manifest lists them all with the palette's colours; each station's piece stays
     /// within its station's footprint, so the dressing never reaches into an aisle or a neighbour; and each room's dressing
     /// stays inside its room.</summary>
@@ -28,6 +28,9 @@ namespace EvolutionShop.Tests
             "GenCrank", "GenCrankWheel", "GenTurbine", "GenTwin", "GenTide", "PumpHand", "PumpHandWheel", "PumpMotor", "Buffer",
             "BufferTag1", "BufferTag2", "BufferTag3", "BufferTag4", "BufferTag5", "BufferTag6", "PowerBoard", "Sorter", "IncubatorOutlet",
             "PipeGallery", "WorkshopDome", "AnnexFloor", "AnnexDressing", "WorkshopFloor", "WorkshopDressing",
+            "UnitBFloor", "UnitBDressing", "StreetEast", "BayWindow", "WindowDisplay", "UnitCFloor", "UnitCDressing", "FeatureWall", "FeatureTank",
+            "PartitionB", "PartitionC", "PartitionAnnex", "PartitionWorkshop", "BannerCoral", "BannerYellow", "BannerBlue", "HallSpot",
+            "ExhibitionSign", "Award", "DisplayTag", "StaffBoard", "HallBoard",
         };
 
         static GameObject Piece(string name) => Resources.Load<GameObject>(GrowthWorld.KitPath + name);
@@ -50,6 +53,15 @@ namespace EvolutionShop.Tests
                 }
             }
             return b;
+        }
+
+        /// <summary>A piece's vertices in its own space (the kit's one mesh under its root).</summary>
+        static Vector3[] Vertices(string name)
+        {
+            var piece = Piece(name);
+            var filter = piece.GetComponentInChildren<MeshFilter>(true);
+            var toPiece = piece.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+            return filter.sharedMesh.vertices.Select(v => toPiece.MultiplyPoint3x4(v)).ToArray();
         }
 
         [Test] public void EveryPieceLoadsAsOneMeshWhoseSlotsTheLookMaps()
@@ -164,6 +176,12 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Level("generator") == 4 && shop.Level("pump") == 3 && shop.HasSorter, Is.True, "wave 3: the tide engine, fast pumps and the sorter");
             Assert.That(shop.Buffers.Count >= 3 && shop.Lines.Count() >= 3, Is.True, "three buffers, each piped from a grower");
             Assert.That(shop.Chute != null && shop.Pipes.Any(p => p.To == GrowthLab.Port), Is.True, "the sorter's chute and the auto-doser's port pipe");
+            Assert.That(shop.UnitC && shop.Hall, Is.True, "wave 4: unit C and the exhibition hall open");
+            foreach (var (place, kind, level) in new[] { ("c1", "show", 2), ("c2", "show", 1), ("e1", "large", 3) })
+            {
+                var c = shop.ContainerAt(place);
+                Assert.That(c != null && c.Kind == kind && c.Level == level && c.Occupants.Count > 0, Is.True, kind + " on " + place + " at level " + level + ", with creatures");
+            }
             Assert.That(shop.Guide, Is.EqualTo(GrowthGuideMode.Off), "a start point is never guided");
             Assert.That(shop.Snapshot(), Is.Not.Null, "it saves");
         }
@@ -206,9 +224,9 @@ namespace EvolutionShop.Tests
             {
                 ("unit A's entrance", new Vector2(-0.5f, -4f), true, 1.4f), ("the back room's door", new Vector2(0.8f, 4f), true, 1.2f),
                 ("the arch to unit B", new Vector2(4f, 0f), false, 3.2f), ("the lab annex's doorway", new Vector2(1.15f, 9f), true, 1.4f),
-                ("the workshop's doorway", new Vector2(4f, 10.3f), false, 1.4f),
+                ("the workshop's doorway", new Vector2(4f, 10.3f), false, 1.4f), ("the arch to unit C", new Vector2(10.875f, 4f), true, 1.95f),
             };
-            foreach (var name in new[] { "UnitADressing", "BackRoomDressing", "AnnexDressing", "WorkshopDressing" })
+            foreach (var name in new[] { "UnitADressing", "BackRoomDressing", "AnnexDressing", "WorkshopDressing", "UnitBDressing", "UnitCDressing", "FeatureWall" })
             {
                 var filter = Piece(name).GetComponentInChildren<MeshFilter>(true);
                 var mesh = filter.sharedMesh;
@@ -246,6 +264,60 @@ namespace EvolutionShop.Tests
                 }
             }
             Assert.That(MeshBounds(Piece("Street")).max.z, Is.LessThanOrEqualTo(-4.05f), "the street stays outside unit A's front wall");
+            // GR-16 wave 4: unit B, x 4..12, z -4..4, and unit C, x 2..12, z 4..9, both with a 3.2 m ceiling; the street outside unit B.
+            foreach (var (name, min, max) in new[] { ("UnitBFloor", new Vector3(4, -0.05f, -4), new Vector3(12, 0.01f, 4)), ("UnitBDressing", new Vector3(4, 0, -4), new Vector3(12, 3.2f, 4)),
+                                                    ("UnitCFloor", new Vector3(2, -0.05f, 4), new Vector3(12, 0.01f, 9)), ("UnitCDressing", new Vector3(2, 0, 4), new Vector3(12, 3.2f, 9)) })
+            {
+                var b = MeshBounds(Piece(name));
+                for (int a = 0; a < 3; a++)
+                {
+                    Assert.That(b.min[a], Is.GreaterThanOrEqualTo(min[a] - 0.01f), name + " min on axis " + a);
+                    Assert.That(b.max[a], Is.LessThanOrEqualTo(max[a] + 0.01f), name + " max on axis " + a);
+                }
+            }
+            Assert.That(MeshBounds(Piece("StreetEast")).max.z, Is.LessThanOrEqualTo(-4.05f), "the street stays outside unit B's front wall");
+        }
+
+        /// <summary>Wave 4's pieces where their greybox has them: the bay window bench in front of its wall, its bowls hanging over
+        /// head height; the feature tank between unit C's two feature places and against the wall; the feature wall a paint layer
+        /// on its wall (its cove of light only at the top); each board, the sign and the award on its wall; each partition inside
+        /// its doorway, as thick as the greybox's; a banner inside the cloth it replaces, which unrolls; a spotlight's fixture under
+        /// the ceiling; the window display on unit A's sill.</summary>
+        [Test] public void WaveFoursPiecesStayWhereTheyBelong()
+        {
+            var bay = Vertices("BayWindow");
+            Assert.That(bay.All(v => Mathf.Abs(v.x) <= 1.03f && v.z >= -0.3f), Is.True, "the bay window's frame within its opening, nothing past the glass");
+            Assert.That(bay.Where(v => v.y < 2.0f).All(v => v.z <= 0.28f), Is.True, "below the bowls, nothing reaches past the bench's front (its knobs)");
+            Assert.That(bay.Where(v => v.y < 0.8f).All(v => Mathf.Abs(v.x) <= 0.93f), Is.True, "the bench within its seat's width");
+            Assert.That(bay.Where(v => v.z > 0.28f).All(v => v.y >= 2.05f), Is.True, "the hanging bowls over head height");
+            var tank = MeshBounds(Piece("FeatureTank"));
+            Assert.That(Mathf.Max(tank.max.x, -tank.min.x), Is.LessThanOrEqualTo(0.725f), "the feature tank between the feature places (c1 to x 5.25, c2 from 6.7)");
+            Assert.That(tank.max.z, Is.LessThanOrEqualTo(0.15f + 0.001f), "its back against unit C's north wall");
+            Assert.That(Vertices("FeatureWall").All(v => v.x >= 2.18f && v.x <= 9.82f && v.z <= 8.9f + 0.001f && (v.z >= 8.85f || v.y >= 3.05f)), Is.True,
+                "the feature wall a paint layer on the wall's face, only its cove of light standing out at the top");
+            Assert.That(MeshBounds(Piece("StaffBoard")).max.z, Is.LessThanOrEqualTo(0.04f), "the staff board on unit A's north wall");
+            Assert.That(MeshBounds(Piece("HallBoard")).min.z, Is.GreaterThanOrEqualTo(-0.04f), "the hall's plans on unit C's north wall");
+            Assert.That(MeshBounds(Piece("Award")).min.z, Is.GreaterThanOrEqualTo(-0.03f - 0.001f), "the award on unit A's front wall");
+            Assert.That(MeshBounds(Piece("ExhibitionSign")).min.z, Is.GreaterThanOrEqualTo(-0.04f - 0.001f), "the sign on unit A's front wall");
+            foreach (var (name, alongX, line, a0, a1, height) in new[] { ("PartitionB", false, 4f, -1.6f, 1.6f, 2.4f), ("PartitionC", true, 4f, 9.9f, 11.85f, 2.4f),
+                                                                       ("PartitionAnnex", true, 9f, 0.45f, 1.85f, 2.8f), ("PartitionWorkshop", false, 4f, 9.6f, 11.0f, 2.8f) })
+            {
+                var b = MeshBounds(Piece(name));
+                float along0 = alongX ? b.min.x : b.min.z, along1 = alongX ? b.max.x : b.max.z, across0 = alongX ? b.min.z : b.min.x, across1 = alongX ? b.max.z : b.max.x;
+                Assert.That(along0 >= a0 - 0.01f && along1 <= a1 + 0.01f, Is.True, name + " within its doorway");
+                Assert.That(across0 >= line - 0.08f && across1 <= line + 0.06f + 0.001f, Is.True, name + " as thick as the greybox's partition, its paint on the open side");
+                Assert.That(b.min.y >= -0.01f && b.max.y <= height + 0.01f, Is.True, name + " from the floor to the doorway's head");
+            }
+            foreach (var name in new[] { "BannerCoral", "BannerYellow", "BannerBlue" })
+            {
+                var b = MeshBounds(Piece(name));
+                Assert.That(b.max.y <= 0.05f && b.min.y >= -1.26f && Mathf.Max(b.max.x, -b.min.x) <= 0.56f && Mathf.Max(b.max.z, -b.min.z) <= 0.045f, Is.True,
+                    name + " hangs from its rod as the greybox's cloth did, 1.2 m, both faces painted");
+            }
+            var spot = MeshBounds(Piece("HallSpot"));
+            Assert.That(spot.max.y <= 0.15f + 0.001f && spot.min.y >= -0.01f && spot.extents.x <= 0.1f, Is.True, "a spotlight's fixture under the 3.2 m ceiling");
+            var display = MeshBounds(Piece("WindowDisplay"));
+            Assert.That(display.min.y >= -0.01f && Mathf.Max(display.max.z, -display.min.z) <= 0.1f, Is.True, "the window display on unit A's sill");
         }
     }
 }

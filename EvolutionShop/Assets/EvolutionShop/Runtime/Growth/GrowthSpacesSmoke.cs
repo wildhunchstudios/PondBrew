@@ -52,12 +52,13 @@ namespace EvolutionShop
             Check(shop.UnitC && !s.World.UnitCWallStanding && s.World.Revealing("unit-c") && s.World.PartitionShowing("unit-c") && clear,
                 "The partition comes down: it is still sinking, and the way into unit C is clear at once");
             yield return new WaitForSeconds(0.9f);
-            float drop = s.World.PartitionDrop("unit-c"), lamp = s.World.LampIntensity("unit-c");
-            Check(drop > 0.3f && drop < 2.4f && lamp > 0.05f && lamp < 1.24f && s.Ui.Log.Any(l => l == "Shop unit C opened"),
-                "Halfway: the partition has sunk " + drop.ToString("0.00") + " m and the lamp is at " + lamp.ToString("0.00") + " of 1.25; the banner names the room");
+            // GR-16: in the look a room's lamps follow the light key, so their full intensity is the world's (1.25 in the greybox).
+            float drop = s.World.PartitionDrop("unit-c"), lamp = s.World.LampIntensity("unit-c"), full = s.World.LampFull("unit-c");
+            Check(drop > 0.3f && drop < 2.4f && lamp > 0.05f && lamp < full - 0.01f && s.Ui.Log.Any(l => l == "Shop unit C opened"),
+                "Halfway: the partition has sunk " + drop.ToString("0.00") + " m and the lamps are at " + lamp.ToString("0.00") + " of " + full.ToString("0.00") + "; the banner names the room");
             LookAt(GrowthWorld.UnitCArch + new Vector3(-0.4f, 0, -3.0f), GrowthWorld.UnitCArch + new Vector3(-1.0f, 1.2f, 2.0f)); yield return Shot("132-unit-c-revealing");
             yield return Wait(() => !s.World.Revealing("unit-c"), 6, "unit C's reveal");
-            Check(!s.World.PartitionShowing("unit-c") && Mathf.Abs(s.World.LampIntensity("unit-c") - 1.25f) < 0.01f && shop.FreePlaces.Count(p => p.StartsWith("c")) == 6,
+            Check(!s.World.PartitionShowing("unit-c") && Mathf.Abs(s.World.LampIntensity("unit-c") - s.World.LampFull("unit-c")) < 0.01f && s.World.LampFull("unit-c") >= 1.25f && shop.FreePlaces.Count(p => p.StartsWith("c")) == 6,
                 "Revealed: the partition is gone, the lamp full, and unit C's six places show");
             LookAt(new Vector3(10.6f, 0, 5.2f), new Vector3(4.0f, 1.1f, 7.2f)); yield return Shot("133-unit-c-open");
 
@@ -135,7 +136,7 @@ namespace EvolutionShop
             Check(shop.Hall && s.World.Revealing("hall") && s.World.BannersShown == 0, "The hall's reveal starts: its banners unrolling");
             yield return new WaitForSeconds(0.9f);
             float spots = s.World.LampIntensity("hall");
-            Check(spots > 0.5f && spots < 11f && s.Ui.Log.Any(l => l == "The exhibition hall is finished"), "Halfway: the spotlights at " + spots.ToString("0.0") + " of 11; the banner names it");
+            Check(spots > 0.5f && spots < s.World.LampFull("hall") - 0.01f && Mathf.Abs(s.World.LampFull("hall") - 11f) < 0.01f && s.Ui.Log.Any(l => l == "The exhibition hall is finished"), "Halfway: the spotlights at " + spots.ToString("0.0") + " of 11; the banner names it");
             LookAt(new Vector3(8f, 0, 1.2f), new Vector3(8f, 2.0f, -3.6f)); yield return Shot("137-hall-revealing");
             yield return Wait(() => !s.World.Revealing("hall"), 6, "the hall's reveal");
             Check(s.World.BannersShown == 5 && Mathf.Abs(s.World.LampIntensity("hall") - 11f) < 0.01f && shop.FreePlaces.Contains("e1") && shop.FreePlaces.Contains("e2") && shop.VisitorsAtOnce == 5,

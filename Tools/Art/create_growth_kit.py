@@ -3,6 +3,11 @@ no external assets or add-ons; everything is generated from the numbers below.
 
 Run: blender --background --factory-startup --python Tools/Art/create_growth_kit.py -- --repo C:/dev/DumbVideoGameStudio [--only A,B] [--no-render]
 
+Wave 4 (GR.45): shop units B and C and the exhibition hall: their floors and dressing (boards, rails, beams, frames, lamps,
+rugs), the street outside unit B, GR-10's set pieces (the bay window bench and its hanging bowls, unit A's window display,
+unit C's feature wall and built-in feature tank), the hall's banners and spotlights, GR-11's exhibition sign, award and
+display tags, the staff board and the hall's plans, and the four rooms' partitions as painted hoardings (COMING SOON).
+
 Wave 3 (GR.45): the machines: the generator (the hand crank and its wheel, the bubble turbine, the twin turbine, the tide
 engine), the pumps (the hand pump and its wheel, the electric motor), buffers and their numbered tags, the power board, the
 sorter and the incubator's outlet; the lab annex and the workshop dressed, with GR-10's pipe gallery and dome light. (The
@@ -183,12 +188,15 @@ def tube(points, radius, mat, sides=12):
     return finish(o, mat, weighted=False)
 
 
-def text(body, center, size, mat, euler=(0, 0, 0), extrude=0.02):
-    """Letters reading left to right along Unity +X, facing Unity -Z (rot turns them), extruded toward +Z."""
+def text(body, center, size, mat, euler=(0, 0, 0), extrude=0.02, res=None):
+    """Letters reading left to right along Unity +X, facing Unity -Z (rot turns them), extruded toward +Z. res, when given,
+    is a coarser curve resolution (wave 4's signs and boards: their letters are small, so fewer triangles do)."""
     bpy.ops.object.text_add()
     o = bpy.context.object
     o.data.body = body; o.data.size = 1.0; o.data.extrude = extrude / size; o.data.align_x = 'CENTER'; o.data.align_y = 'CENTER'
     o.data.bevel_depth = 0.25 * extrude / size; o.data.bevel_resolution = 2
+    if res is not None:
+        o.data.resolution_u = res; o.data.bevel_resolution = 1
     font = Path('C:/Windows/Fonts/seguibl.ttf')
     if font.exists(): o.data.font = bpy.data.fonts.load(str(font))
     bpy.ops.object.convert(target='MESH')
@@ -1477,9 +1485,439 @@ def back_room_dressing():
     return join('BackRoomDressing')
 
 
+# ================================================================ wave 4: units B and C, the hall, the boards and the signs (GR-16, GR.45's
+# wave 4). Rooms and partitions in world coordinates; the set pieces, boards, banners and tags at their greybox roots.
+def shop_walls(walls, rail_gaps=None):
+    """The shop's turquoise boards to 0.9 with a rail and skirting along each wall's inside face, broken at its gaps."""
+    boards = ['GK_Panel', 'GK_TealLight']
+    for k, (a, b, n, gaps) in enumerate(walls):
+        wall_boards(a, b, n, 0.9, gaps, boards)
+        wall_strip(a, b, n, 0.93, 0.07, 0.07, 'GK_Teal', (rail_gaps or {}).get(k, gaps))
+        wall_strip(a, b, n, 0.05, 0.1, 0.06, 'GK_TealDark', gaps, r=0.015)
+
+
+def arch_frame_east_corner(x0, x1, z, inner, height=2.4):
+    """A frame round the arch from unit B into unit C (x 9.9..11.85), whose east side is the room's corner: one post on its
+    west side and a head across to the east wall's face (x 11.9)."""
+    off = inner * (0.1 + 0.04)
+    box((x0 - 0.05, height / 2, z + off), (0.12, height, 0.08), 'GK_Teal', r=0.04)
+    box(((x0 - 0.11 + 11.9) / 2, height + 0.06, z + off), (11.9 - (x0 - 0.11), 0.12, 0.08), 'GK_Teal', r=0.04)
+
+
+def poster(x, y, z, inner_x):
+    """A framed poster on an east or west wall: a coral frame, a paper sheet with a teal creature and bubbles."""
+    s = -1 if inner_x < 0 else 1
+    box((x + s * 0.02, y, z), (0.04, 0.8, 0.62), 'GK_Coral', r=0.03)
+    box((x + s * 0.045, y, z), (0.02, 0.7, 0.52), 'GK_Paper', r=0.01)
+    ball((x + s * 0.06, y - 0.04, z), (0.02, 0.14, 0.17), 'GK_TealLight', seg=18)
+    ball((x + s * 0.075, y, z - s * 0.06), (0.01, 0.04, 0.04), 'GK_Paper', seg=12)
+    ball((x + s * 0.08, y, z - s * 0.06), (0.01, 0.018, 0.018), 'GK_Ink', seg=10)
+    for k, (dy, dz, r) in enumerate(((0.16, 0.1, 0.03), (0.24, 0.05, 0.022), (0.3, 0.11, 0.016))):
+        ball((x + s * 0.06, y + dy, z + s * dz), (0.008, r, r), 'GK_Sky', seg=10)
+
+
+def wall_clock(x, y, z, inner_x):
+    s = -1 if inner_x < 0 else 1
+    cyl((x + s * 0.03, y, z), 0.24, 0.06, 'GK_Teal', r=0.025, rot=(0, 0, 90))
+    cyl((x + s * 0.06, y, z), 0.19, 0.01, 'GK_Cream', r=0, rot=(0, 0, 90))
+    box((x + s * 0.07, y + 0.05, z), (0.01, 0.12, 0.02), 'GK_Ink', r=0.004)
+    box((x + s * 0.07, y, z + 0.04), (0.01, 0.02, 0.09), 'GK_Ink', r=0.004)
+
+
+def unit_b_floor():
+    """Unit B's floor (x 4..12, z -4..4): planks a shade lighter than unit A's, in three tones."""
+    planks_x(4, 12, -4, 4, 0.006, 0.296, ['GK_WoodLight', 'GK_Sand', 'GK_Wood'])
+    box((8, -0.034, 0), (8, 0.02, 8), 'GK_WoodDark', r=0)
+    return join('UnitBFloor')
+
+
+def unit_b_dressing():
+    """Unit B (x 4..12, z -4..4, a 3.2 m ceiling; GrowthWorld.Rooms): unit A's boards, rail and skirting round its walls
+    (clear of the arch from unit A, the arch into unit C, and for the rail the bay window), chunky beams, frames round both
+    arches, two pendant lamps (the game lights them), a striped rug, a poster and a clock on the east wall and a plant in the
+    south-east corner, all clear of its places (b1 to b4, and the hall's e1 and e2 along the front wall)."""
+    shop_walls((((4, -4), (4, 4), (1, 0), [(2.4, 5.6)]),
+                ((4, 4), (12, 4), (0, -1), [(5.9, 7.85)]),
+                ((12, -4), (12, 4), (-1, 0), []),
+                ((4, -4), (12, -4), (0, 1), [])), rail_gaps={3: [(3.0, 5.0)]})
+    for z in (-3.0, -1.0, 1.0, 3.0):
+        box((8, 3.1, z), (7.8, 0.2, 0.22), 'GK_Beam', r=0.05)
+    door_frame(4, 0, False, 3.2, 2.4, 'GK_Teal', (1, 0))
+    arch_frame_east_corner(9.9, 11.85, 4, -1)
+    pendant(6.0, 2.5, 2.0, 3.2)
+    pendant(9.8, 2.5, -2.0, 3.2)
+    for w, d, y, m in ((3.0, 1.3, 0.004, 'GK_Coral'), (2.8, 1.1, 0.008, 'GK_Cream'), (2.5, 0.8, 0.012, 'GK_Pink')):
+        box((8.0, y, 1.55), (w, 0.008, d), m, r=0)
+    for k in range(5):
+        box((6.95 + k * 0.52, 0.016, 1.55), (0.12, 0.008, 0.6), 'GK_Yellow', r=0)
+    poster(11.9, 2.15, -2.75, -1)
+    wall_clock(11.9, 2.35, 2.65, -1)
+    potted_plant(11.65, -3.6, 0.8)
+    return join('UnitBDressing')
+
+
+def street_east():
+    """Outside unit B (x 6..16, south of z -4): the pavement and the fence go on past unit A's, with a lamp post, two bushes
+    and a tree, so the bay window looks out on the street too."""
+    box((11, -0.03, -5.4), (10, 0.06, 2.6), 'GK_Pavement', r=0.01)
+    for k in range(6):
+        box((7.5 + k * 1.5, 0.45, -7.0), (0.12, 0.9, 0.12), 'GK_WoodLight', r=0.04)
+    for y in (0.62, 0.32):
+        box((10.58, y, -7.0), (8.96, 0.1, 0.06), 'GK_WoodLight', r=0.03)
+    cyl((10.4, 1.35, -6.4), 0.05, 2.7, 'GK_TealDark', r=0.02)
+    cyl((10.4, 2.72, -6.4), 0.16, 0.05, 'GK_Teal', r=0.02)
+    ball((10.4, 2.86, -6.4), (0.15, 0.17, 0.15), 'GK_GlowWarm', seg=20)
+    cyl((10.4, 3.04, -6.4), 0.19, 0.06, 'GK_Teal', r=0.025)
+    cyl((10.4, 0.04, -6.4), 0.14, 0.08, 'GK_TealDark', r=0.02)
+    for x, z, r, m in ((8.2, -7.8, 0.55, 'GK_Lime'), (14.4, -7.9, 0.62, 'GK_Green')):
+        ball((x, r * 0.5, z), (r, r * 0.8, r * 0.9), m, seg=20)
+    cyl((12.6, 0.9 * 1.2, -10.5), 0.16 * 1.2, 1.8 * 1.2, 'GK_Beam', r=0.05)
+    for dx, dz, dy, r, m in ((0, 0, 2.4, 1.15, 'GK_Green'), (-0.7, 0.3, 1.9, 0.8, 'GK_Lime'), (0.7, -0.2, 2.0, 0.85, 'GK_GreenDark'), (0.1, -0.5, 2.9, 0.7, 'GK_Lime')):
+        ball((12.6 + dx * 1.2, dy * 1.2, -10.5 + dz * 1.2), r * 1.2, m, seg=20)
+    return join('StreetEast')
+
+
+def bay_window():
+    """GR-10's bay window bench in unit B's front wall (origin: the bench's place, x 8, z -3.675; front +Z, into the shop;
+    the wall's inside face at local z -0.225): the window's frame (shallow at its head, so the hall's banner hangs clear in
+    front of it), mullions and sill; a wooden window seat with three drawers, a coral cushion, two pillows and a book; and two
+    glass bowls with water, pebbles and a plant hanging either side of the banner."""
+    wz = -0.225
+    box((0, 2.46, wz + 0.0275), (2.04, 0.1, 0.055), 'GK_Teal', r=0.025)
+    for s in (-1, 1):
+        box((s * 0.96, 1.65, wz + 0.035), (0.12, 1.62, 0.07), 'GK_Teal', r=0.03)
+    box((0, 1.65, wz - 0.05), (0.05, 1.5, 0.04), 'GK_TealDark', r=0.015)
+    box((0, 1.95, wz - 0.05), (1.8, 0.04, 0.04), 'GK_TealDark', r=0.015)
+    box((0, 0.875, wz + 0.09), (1.98, 0.05, 0.18), 'GK_Teal', r=0.02)
+    # The window seat.
+    box((0, 0.03, 0), (1.76, 0.06, 0.42), 'GK_TealDark', r=0.02)
+    box((0, 0.23, 0), (1.8, 0.34, 0.45), 'GK_Cream', r=0.05)
+    for k in range(3):
+        x = -0.58 + k * 0.58
+        box((x, 0.23, 0.228), (0.5, 0.24, 0.02), 'GK_Teal', r=0.02)
+        ball((x, 0.25, 0.245), 0.025, 'GK_Yellow', seg=14)
+    box((0, 0.425, 0), (1.84, 0.05, 0.47), 'GK_Wood', r=0.015)
+    box((0, 0.49, 0.01), (1.72, 0.08, 0.4), 'GK_Coral', r=0.035)
+    for s, m in ((-1, 'GK_Yellow'), (1, 'GK_TealLight')):
+        box((s * 0.6, 0.64, -0.12), (0.34, 0.24, 0.1), m, r=0.045, rot=(-14, 0, s * 6))
+    box((0.18, 0.545, 0.06), (0.2, 0.03, 0.14), 'GK_Lilac', r=0.008, rot=(0, 12, 0))
+    box((0.18, 0.565, 0.06), (0.18, 0.012, 0.12), 'GK_Paper', r=0.003, rot=(0, 12, 0))
+    # The hanging bowls.
+    for s in (-1, 1):
+        x, z, y = s * 0.62, 0.12, 2.25
+        cyl((x, 3.185, z), 0.04, 0.03, 'GK_Teal', r=0.01)
+        cyl((x, (3.17 + 2.55) / 2, z), 0.005, 3.17 - 2.55, 'GK_Ink', r=0)
+        for a in (0, 120, 240):
+            ra = math.radians(a)
+            tube([(x, 2.55, z), (x + 0.15 * math.cos(ra), 2.31, z + 0.15 * math.sin(ra))], 0.004, 'GK_Ink', sides=6)
+        ball((x, 2.55, z), 0.02, 'GK_Wood', seg=10)
+        ring((x, 2.31, z), 0.15, 0.012, 'GK_Teal')
+        ball((x, y, z), (0.17, 0.15, 0.17), 'GK_Glass', seg=28)
+        ball((x, y - 0.035, z), (0.145, 0.09, 0.145), 'GK_Pebble4', seg=24)
+        for k, m in enumerate(('GK_Pebble1', 'GK_Pebble3', 'GK_Pebble2')):
+            ball((x - 0.05 + k * 0.05, y - 0.11, z + (k % 2) * 0.03), (0.025, 0.014, 0.022), m, seg=10)
+        ball((x + s * 0.02, y - 0.02, z - 0.02), (0.03, 0.08, 0.025), 'GK_Green', seg=14, rot=(0, 0, s * 10))
+        ball((x - s * 0.03, y - 0.04, z + 0.02), (0.025, 0.06, 0.02), 'GK_Lime', seg=14, rot=(0, 0, -s * 14))
+    return join('BayWindow')
+
+
+def window_display():
+    """GR-10's window display on unit A's sill (origin: its place, x -2.6, y 0.9, z -3.93; front +Z, the shop's side): a
+    turquoise base, a light hood over the greybox's water and glass (they stay), pebbles, plants and a rock arch inside, and a
+    price card."""
+    box((0, 0.03, 0), (0.72, 0.06, 0.18), 'GK_Teal', r=0.02)
+    box((0, 0.065, 0.085), (0.6, 0.02, 0.01), 'GK_Yellow', r=0.004)
+    box((0, 0.46, 0), (0.66, 0.04, 0.16), 'GK_Cream', r=0.015)
+    box((0, 0.438, 0), (0.58, 0.004, 0.1), 'GK_GlowWarm', r=0)
+    pebbles = ['GK_Sand', 'GK_Pebble1', 'GK_Pebble2', 'GK_Pebble3', 'GK_Pebble4']
+    for k in range(26):
+        ball((-0.27 + (k % 13) * 0.045, 0.1, -0.035 + (k // 13) * 0.07), (0.02, 0.011, 0.017), pebbles[k % 5], seg=10)
+    water_plants(0.1, ((-0.22, -0.02, 0.24, 'GK_Green'), (-0.17, 0.01, 0.17, 'GK_Lime'), (0.2, -0.02, 0.2, 'GK_GreenDark')))
+    ring((0.04, 0.1, -0.01), 0.07, 0.022, 'GK_Rock', rot=(90, 0, 0))
+    box((0.42, 0.05, 0.05), (0.1, 0.07, 0.006), 'GK_Paper', r=0.004, rot=(-18, 0, 0))
+    box((0.42, 0.055, 0.054), (0.06, 0.012, 0.002), 'GK_Coral', r=0.002, rot=(-18, 0, 0))
+    return join('WindowDisplay')
+
+
+def unit_c_floor():
+    """Unit C's floor (x 2..12, z 4..9): a basketweave of wood blocks, a metre square each, four planks turned each way."""
+    woods = ['GK_WoodLight', 'GK_Wood', 'GK_WoodMid']
+    for i in range(10):
+        for j in range(5):
+            x0, z0 = 2 + i, 4 + j
+            for k in range(4):
+                c = 0.125 + 0.25 * k
+                m = woods[(i * 3 + j * 5 + k) % 3]
+                if (i + j) % 2 == 0:
+                    box((x0 + 0.5, 0.006 - 0.015, z0 + c), (0.988, 0.03, 0.238), m, r=0.008, seg=2)
+                else:
+                    box((x0 + c, 0.006 - 0.015, z0 + 0.5), (0.238, 0.03, 0.988), m, r=0.008, seg=2)
+    box((7, -0.034, 6.5), (10, 0.02, 5), 'GK_WoodDark', r=0)
+    return join('UnitCFloor')
+
+
+def unit_c_dressing():
+    """Unit C (x 2..12, z 4..9, a 3.2 m ceiling; GrowthWorldSpaces.UnitCRoom): the boards, rail and skirting round its walls
+    (the north wall's only east of the feature wall, x 9.8..12; clear of the arch from unit B), beams, a frame round the arch,
+    two pendant lamps (the game lights them) and a rug along its aisle, clear of its places (c1 to c6)."""
+    shop_walls((((2, 4), (12, 4), (0, 1), [(7.9, 9.85)]),
+                ((2, 4), (2, 9), (1, 0), []),
+                ((12, 4), (12, 9), (-1, 0), []),
+                ((2, 9), (12, 9), (0, -1), [(0, 7.8)])))
+    for z in (5.25, 7.75):
+        box((7, 3.1, z), (9.8, 0.2, 0.22), 'GK_Beam', r=0.05)
+    arch_frame_east_corner(9.9, 11.85, 4, 1)
+    pendant(5.0, 2.5, 6.5, 3.2)
+    pendant(9.0, 2.5, 6.5, 3.2)
+    for w, d, y, m in ((4.6, 1.2, 0.004, 'GK_Teal'), (4.4, 1.0, 0.008, 'GK_Cream'), (4.1, 0.7, 0.012, 'GK_TealLight')):
+        box((6.5, y, 6.25), (w, 0.008, d), m, r=0)
+    for k in range(7):
+        ball((4.7 + k * 0.6, 0.012, 6.25), (0.08, 0.006, 0.08), 'GK_Yellow', seg=14)
+    return join('UnitCDressing')
+
+
+def feature_wall():
+    """GR-10's feature wall along unit C's north wall (x 2.2..9.8, on its inside face at z 8.9; 4 cm deep at most, since the
+    Show tanks' backs reach the wall): a light turquoise lower wall with a wavy top, the deeper teal above it with painted
+    bubbles, starfish and shells, and a cove of light along its top."""
+    zf = 8.9
+    box((6, 1.6, zf - 0.01), (7.6, 3.2, 0.02), 'GK_Teal', r=0)
+    box((6, 1.07, zf - 0.024), (7.6, 2.14, 0.004), 'GK_TealLight', r=0)
+    for k in range(19):
+        x = 2.4 + k * 0.4
+        cyl((x, 2.14, zf - 0.024), 0.21, 0.004, 'GK_TealLight', r=0, rot=(90, 0, 0), verts=24)
+    for k in range(18):
+        x = 2.6 + k * 0.4
+        cyl((x, 2.3, zf - 0.028), 0.12, 0.004, 'GK_Teal', r=0, rot=(90, 0, 0), verts=24)
+    box((6, 0.42, zf - 0.028), (7.6, 0.06, 0.004), 'GK_Panel', r=0)
+    rng = random.Random(41)
+    for k in range(34):
+        x, y, r = rng.uniform(2.35, 9.65), rng.uniform(2.55, 3.0), rng.choice((0.025, 0.035, 0.05, 0.07))
+        cyl((x, y, zf - 0.032), r, 0.004, 'GK_Paper', r=0, rot=(90, 0, 0), verts=16)
+        cyl((x, y, zf - 0.036), r * 0.7, 0.004, 'GK_Pebble4', r=0, rot=(90, 0, 0), verts=16)
+    for cx, cy, s, m in ((2.75, 2.75, 0.2, 'GK_Coral'), (9.3, 2.7, 0.24, 'GK_Yellow'), (5.98, 2.78, 0.16, 'GK_Pink')):
+        for a in range(0, 360, 72):
+            box((cx, cy, zf - 0.04), (0.06, s, 0.006), m, r=0.004, rot=(0, 0, a))
+        cyl((cx, cy, zf - 0.044), 0.05, 0.006, m, r=0, rot=(90, 0, 0), verts=16)
+    box((6, 3.12, zf - 0.05), (7.6, 0.06, 0.1), 'GK_Cream', r=0.02)
+    box((6, 3.088, zf - 0.04), (7.5, 0.004, 0.06), 'GK_GlowWhite', r=0)
+    return join('FeatureWall')
+
+
+def feature_tank():
+    """GR-10's built-in feature tank between unit C's two Show tank places (origin: x 5.975, z 8.75; front -Z, into the
+    shop): a cream cabinet with turquoise doors, a turquoise bezel round the window (the greybox's water and glass stay in
+    it), a light hood with gold trim, and inside, a painted sea at the back, pebbles, plants, a rock arch, coral and bubbles."""
+    box((0, 0.05, -0.005), (1.26, 0.1, 0.28), 'GK_TealDark', r=0.03)
+    box((0, 0.36, 0), (1.3, 0.52, 0.3), 'GK_Cream', r=0.05)
+    for s in (-1, 1):
+        box((s * 0.3, 0.36, -0.155), (0.52, 0.36, 0.02), 'GK_Teal', r=0.025)
+        ball((s * 0.08, 0.38, -0.17), 0.025, 'GK_Yellow', seg=14)
+    box((0, 0.625, -0.02), (1.3, 0.05, 0.34), 'GK_Gold', r=0.01)
+    # The bezel round the window (x -0.525..0.525, y 0.65..1.85), its front just in front of the glass.
+    for s in (-1, 1):
+        box((s * 0.585, 1.25, -0.02), (0.13, 1.3, 0.34), 'GK_Teal', r=0.03)
+    box((0, 0.67, -0.02), (1.3, 0.06, 0.34), 'GK_Teal', r=0.02)
+    box((0, 1.89, -0.02), (1.3, 0.08, 0.34), 'GK_Teal', r=0.02)
+    box((0, 2.0, -0.02), (1.34, 0.16, 0.34), 'GK_Cream', r=0.04)
+    box((0, 1.925, -0.18), (1.2, 0.012, 0.02), 'GK_Gold', r=0.004)
+    box((0, 1.916, -0.06), (1.0, 0.004, 0.18), 'GK_GlowWarm', r=0)
+    ball((0, 2.12, -0.12), (0.1, 0.07, 0.03), 'GK_Gold', seg=18)
+    # Inside, behind the greybox's water (z -0.16..-0.04): the back painted as the sea, the scene standing in front of it.
+    box((0, 1.25, 0.1), (1.05, 1.2, 0.02), 'GK_Sky', r=0)
+    for k in range(6):
+        cyl((-0.45 + k * 0.18, 1.55 + 0.08 * (k % 2), 0.088), 0.06, 0.004, 'GK_Pebble4', r=0, rot=(90, 0, 0), verts=16)
+    box((0, 0.69, -0.03), (1.05, 0.04, 0.26), 'GK_Sand', r=0.01)
+    pebbles = ['GK_Pebble1', 'GK_Pebble2', 'GK_Pebble3', 'GK_Pebble4']
+    for k in range(30):
+        ball((-0.48 + (k % 15) * 0.068, 0.72, -0.12 + (k // 15) * 0.09), (0.024, 0.013, 0.02), pebbles[k % 4], seg=10)
+    water_plants(0.72, ((-0.42, 0.02, 0.62, 'GK_Green'), (-0.33, 0.05, 0.44, 'GK_Lime'), (0.4, 0.03, 0.56, 'GK_GreenDark'), (0.32, 0.06, 0.36, 'GK_Lime')))
+    ring((0.05, 0.72, 0.03), 0.16, 0.05, 'GK_Rock', rot=(90, 0, 0))
+    for k, (cx, a, h, m) in enumerate(((-0.12, -16, 0.2, 'GK_Coral'), (-0.07, 12, 0.26, 'GK_Pink'), (0.2, 22, 0.18, 'GK_Coral'))):
+        cyl((cx, 0.72 + h / 2, 0.05), 0.02, h, m, r=0.008, rot=(0, 0, a), verts=12)
+        ball((cx - math.sin(math.radians(a)) * h / 2, 0.72 + h / 2 + math.cos(math.radians(a)) * h / 2, 0.05), 0.03, m, seg=12)
+    for k in range(7):
+        ball((0.28 + 0.015 * (k % 2), 0.85 + k * 0.12, 0.0), 0.012 + 0.004 * (k % 3), 'GK_Paper', seg=10)
+    return join('FeatureTank')
+
+
+def hoarding(name, a0, a1, line, along_x, height, label):
+    """A room's partition as a painted hoarding, on its doorway's line from a0 to a1 (0.12 thick, the greybox's), its face to
+    the open side (-Z or -X): upright planks in three pale tones, a coral oval painted COMING SOON, the room's name under
+    it, and yellow and teal stripes along its foot."""
+    width = a1 - a0
+    n = max(4, int(round(width / 0.22)))
+    w = width / n
+    tones = ('GK_Cream', 'GK_Sand', 'GK_WoodLight')
+    for k in range(n):
+        c = a0 + w * (k + 0.5)
+        if along_x: box((c, height / 2, line), (w - 0.012, height, 0.12), tones[k % 3], r=0.012, seg=2)
+        else: box((line, height / 2, c), (0.12, height, w - 0.012), tones[k % 3], r=0.012, seg=2)
+    mid = (a0 + a1) / 2
+    f = line - 0.062
+    rx, ry = min(0.75, width * 0.38), min(0.42, width * 0.22)
+    y = min(1.55, height * 0.6)
+    if along_x:
+        cyl((mid, y, f), rx, 0.006, 'GK_Coral', r=0, rot=(90, 0, 0), rz=ry, verts=40)
+        cyl((mid, y, f - 0.004), rx * 0.92, 0.006, 'GK_Coral', r=0, rot=(90, 0, 0), rz=ry * 0.86, verts=40)
+        text('COMING', (mid, y + ry * 0.3, f - 0.01), ry * 0.42, 'GK_Cream', extrude=0.006, res=3)
+        text('SOON', (mid, y - ry * 0.3, f - 0.01), ry * 0.42, 'GK_Cream', extrude=0.006, res=3)
+        text(label, (mid, y - ry - 0.18, f - 0.004), 0.13, 'GK_Ink', extrude=0.005, res=3)
+        for k in range(int(width / 0.16)):
+            box((a0 + 0.08 + k * 0.16, 0.2, f), (0.1, 0.16, 0.006), ('GK_Yellow', 'GK_Teal')[k % 2], r=0.004, rot=(0, 0, 30))
+    else:
+        cyl((f, y, mid), ry, 0.006, 'GK_Coral', r=0, rot=(0, 0, 90), rz=rx, verts=40)
+        text('COMING', (f - 0.01, y + ry * 0.3, mid), ry * 0.42, 'GK_Cream', euler=(0, 90, 0), extrude=0.006, res=3)
+        text('SOON', (f - 0.01, y - ry * 0.3, mid), ry * 0.42, 'GK_Cream', euler=(0, 90, 0), extrude=0.006, res=3)
+        text(label, (f - 0.004, y - ry - 0.18, mid), 0.13, 'GK_Ink', euler=(0, 90, 0), extrude=0.005, res=3)
+        for k in range(int(width / 0.16)):
+            box((f, 0.2, a1 - 0.08 - k * 0.16), (0.006, 0.16, 0.1), ('GK_Yellow', 'GK_Teal')[k % 2], r=0.004, rot=(30, 0, 0))
+    return join(name)
+
+
+def banner(name, cloth, trim):
+    """A hall banner (origin: its rod, on the ceiling's line; it unrolls downward as the game scales it): a gold rod with
+    finials, the cloth with a trim band and a pointed foot with a tassel, and a cream disc with a gold star on both faces."""
+    cyl((0, 0, 0), 0.025, 1.0, 'GK_Gold', r=0.008, rot=(0, 0, 90))
+    for s in (-1, 1):
+        ball((s * 0.52, 0, 0), 0.04, 'GK_Gold', seg=14)
+    box((0, -0.47, 0), (0.8, 0.9, 0.03), cloth, r=0.012)
+    box((0, -0.92, 0), (0.4, 0.4, 0.03), cloth, r=0.012, rot=(0, 0, 45))
+    box((0, -0.09, 0), (0.82, 0.08, 0.036), trim, r=0.012)
+    box((0, -0.86, 0), (0.82, 0.04, 0.036), trim, r=0.01)
+    ball((0, -1.22, 0), 0.035, 'GK_Gold', seg=12)
+    cyl((0, -0.45, 0), 0.19, 0.044, 'GK_Cream', r=0.01, rot=(90, 0, 0), verts=32)
+    for side in (-1, 1):
+        for a in range(0, 360, 72):
+            box((0, -0.45, side * 0.025), (0.05, 0.24, 0.006), 'GK_Gold', r=0.006, rot=(0, 0, a))
+    return join(name)
+
+
+def hall_spot():
+    """A hall spotlight's fixture (origin: the game's spotlight, 0.15 under the 3.2 m ceiling): a ceiling plate, a turquoise
+    can, a gold ring and its warm lens."""
+    cyl((0, 0.135, 0), 0.09, 0.03, 'GK_TealDark', r=0.008)
+    cyl((0, 0.07, 0), 0.075, 0.11, 'GK_Teal', r=0.02)
+    ring((0, 0.012, 0), 0.075, 0.012, 'GK_Gold')
+    cyl((0, 0.008, 0), 0.06, 0.006, 'GK_GlowWarm', r=0)
+    return join('HallSpot')
+
+
+def exhibition_sign():
+    """GR-11's sign over the shop door, inside (origin: its centre, 2.78 m up; front +Z, the shop's side): a turquoise
+    board and frame round the greybox's gold face (it stays: pale while prepared, deep and lit on the day), GRAND
+    EXHIBITION in ink letters and a coral rosette."""
+    box((0, 0, -0.02), (1.5, 0.42, 0.04), 'GK_TealDark', r=0.02)
+    for s in (-1, 1):
+        box((0, s * 0.18, 0.02), (1.5, 0.06, 0.06), 'GK_Teal', r=0.02)
+        box((s * 0.72, 0, 0.02), (0.06, 0.42, 0.06), 'GK_Teal', r=0.02)
+    text('GRAND EXHIBITION', (0.08, -0.005, 0.038), 0.085, 'GK_Ink', euler=(0, 180, 0), extrude=0.008, res=3)
+    cyl((-0.56, 0, 0.04), 0.085, 0.014, 'GK_Coral', r=0.004, rot=(90, 0, 0), verts=24)
+    cyl((-0.56, 0, 0.049), 0.05, 0.008, 'GK_Gold', r=0.002, rot=(90, 0, 0), verts=24)
+    for s in (-1, 1):
+        box((-0.56 + s * 0.035, -0.12, 0.036), (0.04, 0.12, 0.006), 'GK_Coral', r=0.004, rot=(0, 0, s * 12))
+    return join('ExhibitionSign')
+
+
+def award():
+    """GR-11's award, on unit A's front wall east of the door (origin: its centre; front +Z, the shop's side): a wooden
+    plaque with a gold rim, a gold medal with a star and its coral ribbon, and a cream card engraved GRAND EXHIBITION."""
+    box((0, 0, -0.005), (0.6, 0.75, 0.05), 'GK_WoodDark', r=0.04)
+    box((0, 0, 0.02), (0.52, 0.67, 0.012), 'GK_Wood', r=0.02)
+    for s in (-1, 1):
+        box((0, s * 0.345, 0.024), (0.54, 0.012, 0.006), 'GK_Gold', r=0.003)
+        box((s * 0.27, 0, 0.024), (0.012, 0.69, 0.006), 'GK_Gold', r=0.003)
+    for s in (-1, 1):
+        box((s * 0.05, 0.27, 0.03), (0.07, 0.16, 0.006), 'GK_Coral', r=0.004, rot=(0, 0, -s * 14))
+    cyl((0, 0.1, 0.035), 0.12, 0.016, 'GK_Gold', r=0.005, rot=(90, 0, 0), verts=32)
+    ring((0, 0.1, 0.045), 0.1, 0.008, 'GK_Yellow', rot=(90, 0, 0))
+    for a in range(0, 360, 72):
+        box((0, 0.1, 0.046), (0.025, 0.11, 0.006), 'GK_Yellow', r=0.004, rot=(0, 0, a))
+    box((0, -0.2, 0.03), (0.42, 0.16, 0.01), 'GK_Cream', r=0.01)
+    text('GRAND', (0, -0.165, 0.037), 0.05, 'GK_Ink', euler=(0, 180, 0), extrude=0.003, res=3)
+    text('EXHIBITION', (0, -0.23, 0.037), 0.05, 'GK_Ink', euler=(0, 180, 0), extrude=0.003, res=3)
+    return join('Award')
+
+
+def display_tag():
+    """GR-11's tag over a tank on display (origin: its place, 2.2 m up, 0.2 in front of the tank's centre; front +Z): a coral
+    ribbon with notched ends, ON SHOW in cream letters and a gold rosette at its middle."""
+    box((0, 0, 0), (0.5, 0.15, 0.02), 'GK_Coral', r=0.02)
+    for s in (-1, 1):
+        box((s * 0.29, -0.015, -0.004), (0.12, 0.12, 0.016), 'GK_Coral', r=0.01, rot=(0, 0, s * 8))
+        box((s * 0.36, -0.015, -0.004), (0.06, 0.06, 0.016), 'GK_Coral', r=0.01, rot=(0, 0, 45))
+    text('ON SHOW', (0, 0, 0.012), 0.06, 'GK_Cream', euler=(0, 180, 0), extrude=0.004, res=3)
+    cyl((0, 0.13, 0.012), 0.07, 0.016, 'GK_Gold', r=0.004, rot=(90, 0, 0), verts=24)
+    for a in range(0, 360, 72):
+        box((0, 0.13, 0.022), (0.016, 0.07, 0.004), 'GK_Yellow', r=0.003, rot=(0, 0, a))
+    return join('DisplayTag')
+
+
+def staff_board():
+    """GR-09's staff board on unit A's north wall (origin: its centre, 1.6 m up; front -Z, the shop's side): a cork board in
+    a wooden frame, STAFF on a turquoise plaque, and a card pinned up for each helper (Pip, Nori, Moss) with their colour,
+    a round portrait and their name."""
+    box((0, 0, 0.005), (0.94, 0.64, 0.04), 'GK_Sand', r=0.01)
+    for sy in (-1, 1):
+        box((0, sy * 0.34, 0), (1.04, 0.06, 0.07), 'GK_WoodMid', r=0.02)
+    for sx in (-1, 1):
+        box((sx * 0.49, 0, 0), (0.06, 0.74, 0.07), 'GK_WoodMid', r=0.02)
+    box((0, 0.25, -0.03), (0.4, 0.1, 0.02), 'GK_Teal', r=0.02)
+    text('STAFF', (0, 0.25, -0.042), 0.07, 'GK_Cream', extrude=0.005, res=3)
+    for i, (who, col, cap) in enumerate((('PIP', 'GK_Pink', 'GK_TealDark'), ('NORI', 'GK_Green', 'GK_TealDark'), ('MOSS', 'GK_Paper', 'GK_Ink'))):
+        x = -0.3 + 0.3 * i
+        a = (-3, 2, -2)[i]
+        box((x, -0.06, -0.022), (0.22, 0.3, 0.006), 'GK_Paper', r=0.008, rot=(0, 0, a))
+        box((x, 0.06, -0.027), (0.2, 0.05, 0.004), col, r=0.004, rot=(0, 0, a))
+        cyl((x, -0.04, -0.028), 0.055, 0.004, col if col != 'GK_Paper' else 'GK_Cream', r=0, rot=(90, 0, 0), verts=24)
+        cyl((x, -0.035, -0.031), 0.035, 0.004, 'GK_Pebble1', r=0, rot=(90, 0, 0), verts=20)
+        box((x, 0.0, -0.032), (0.07, 0.016, 0.004), cap, r=0.003)
+        text(who, (x, -0.15, -0.031), 0.04, 'GK_Ink', extrude=0.003, res=3)
+        ball((x, 0.08, -0.035), 0.016, ('GK_Coral', 'GK_Yellow', 'GK_Teal')[i], seg=12)
+    return join('StaffBoard')
+
+
+def hall_board():
+    """GR-10's exhibition hall plans in unit C's north-east corner (origin: its centre, 1.6 m up; front +Z in its own frame,
+    the room's side; the wall at local z -0.04): a wooden frame round a blueprint: the shop's units drawn in white lines, the
+    banners as coral flags, the spotlit places as gold stars, and HALL PLANS across its top."""
+    box((0, 0, -0.01), (0.84, 0.64, 0.04), 'GK_Ink', r=0.01)
+    for sy in (-1, 1):
+        box((0, sy * 0.34, 0), (0.94, 0.06, 0.07), 'GK_WoodMid', r=0.02)
+    for sx in (-1, 1):
+        box((sx * 0.44, 0, 0), (0.06, 0.74, 0.07), 'GK_WoodMid', r=0.02)
+    text('HALL PLANS', (0, 0.24, 0.016), 0.06, 'GK_Paper', euler=(0, 180, 0), extrude=0.003, res=3)
+    # The plan (the units seen from above, the street at the bottom): unit A and unit B side by side, unit C behind them.
+    def line(x0, y0, x1, y1):
+        if abs(y1 - y0) < 1e-6: box(((x0 + x1) / 2, y0, 0.013), (abs(x1 - x0) + 0.008, 0.008, 0.004), 'GK_Paper', r=0)
+        else: box((x0, (y0 + y1) / 2, 0.013), (0.008, abs(y1 - y0) + 0.008, 0.004), 'GK_Paper', r=0)
+    # Local x runs right to left as the room sees it (front +Z), so the plan's east is local -x.
+    for (x0, y0, x1, y1) in ((0.3, -0.24, -0.3, -0.24), (0.3, 0.16, -0.3, 0.16), (0.3, -0.24, 0.3, 0.16), (-0.3, -0.24, -0.3, 0.16),
+                             (0.0, -0.24, 0.0, -0.04), (0.3, -0.04, -0.3, -0.04)):
+        line(x0, y0, x1, y1)
+    for (x, y) in ((0.15, -0.14), (-0.15, -0.14), (0.15, 0.06), (-0.15, 0.06), (-0.22, -0.19)):
+        for a in range(0, 360, 72):
+            box((x, y, 0.016), (0.008, 0.036, 0.003), 'GK_Gold', r=0.002, rot=(0, 0, a))
+    for (x, y) in ((0.24, 0.12), (-0.08, 0.12), (-0.24, -0.08)):
+        box((x, y, 0.016), (0.03, 0.04, 0.003), 'GK_Coral', r=0.003)
+    ball((0.36, -0.27, 0.03), 0.02, 'GK_Coral', seg=12)
+    ball((-0.36, 0.27, 0.03), 0.02, 'GK_Yellow', seg=12)
+    return join('HallBoard')
+
+
+WAVE4 = [unit_b_floor, unit_b_dressing, street_east, bay_window, window_display, unit_c_floor, unit_c_dressing, feature_wall,
+         feature_tank,
+         lambda: hoarding('PartitionB', -1.6, 1.6, 4.0, False, 2.4, 'UNIT B'),
+         lambda: hoarding('PartitionC', 9.9, 11.85, 4.0, True, 2.4, 'UNIT C'),
+         lambda: hoarding('PartitionAnnex', 0.45, 1.85, 9.0, True, 2.8, 'LAB ANNEX'),
+         lambda: hoarding('PartitionWorkshop', 9.6, 11.0, 4.0, False, 2.8, 'WORKSHOP'),
+         lambda: banner('BannerCoral', 'GK_Coral', 'GK_Yellow'), lambda: banner('BannerYellow', 'GK_Yellow', 'GK_Teal'),
+         lambda: banner('BannerBlue', 'GK_Sky', 'GK_Coral'), hall_spot, exhibition_sign, award, display_tag, staff_board, hall_board]
+
+
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3  # later waves last, so earlier ones draw their random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

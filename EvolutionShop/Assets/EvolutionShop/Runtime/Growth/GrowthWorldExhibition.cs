@@ -33,8 +33,9 @@ namespace EvolutionShop
 
         void ExhibitionPieces()
         {
-            goldPale = ShopWorld.MakeMaterial("GR exhibition gold (pale)", new Color(0.93f, 0.84f, 0.55f), 0, 0.3f);
-            goldDeep = ShopWorld.MakeMaterial("GR exhibition gold", new Color(0.86f, 0.64f, 0.16f), 0.3f, 0.5f);
+            // GR-16: in the look, the sign's face is a pale gold while it is prepared and a glowing gold on the day.
+            goldPale = LookOn ? Plastic("exhibition gold (pale)", C("#FFE7A3"), 0.45f) : ShopWorld.MakeMaterial("GR exhibition gold (pale)", new Color(0.93f, 0.84f, 0.55f), 0, 0.3f);
+            goldDeep = LookOn ? Glowing("exhibition gold", C("#FFC93C"), 0.6f, 0.7f) : ShopWorld.MakeMaterial("GR exhibition gold", new Color(0.86f, 0.64f, 0.16f), 0.3f, 0.5f);
             var root = new GameObject("Grand Exhibition").transform; root.SetParent(transform, false);
 
             // The sign over the door, inside, its face to the shop.

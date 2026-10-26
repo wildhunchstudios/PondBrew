@@ -13,8 +13,11 @@ namespace EvolutionShop
     /// room and shop unit A and their stations (growers, the incubator, Starter tanks, the counter); wave 2 the other stations
     /// and tanks (the vat, the breeding tank, the research bench and its siphon, the vial shelf, the catalog, the pinboard, Large
     /// and Show tanks, lab racks); wave 3 the machines (the generator, pumps, buffers, the power board, the sorter), the lab
-    /// annex and the workshop with GR-10's pipe gallery and dome light, and the pipes and the chute (GrowthWorldLookPipes.cs).
-    /// The growth kit's pieces
+    /// annex and the workshop with GR-10's pipe gallery and dome light, and the pipes and the chute (GrowthWorldLookPipes.cs);
+    /// wave 4 shop units B and C and the exhibition hall: their dressing and lamps, the street outside unit B, GR-10's set
+    /// pieces (the bay window bench and its hanging bowls, unit A's window display, unit C's feature wall and feature tank), the
+    /// hall's banners and spotlights, GR-11's exhibition sign, award and display tags, the staff board, the hall's plans, and the
+    /// rooms' partitions as painted hoardings. The growth kit's pieces
     /// (Tools/Art/create_growth_kit.py, Resources/Art/GrowthKit) are decorative children: the greybox's shapes keep their
     /// colliders and targets, only their renderers are switched off, so positions, footprints, aisles and save ids stay as
     /// they are (AD.4). Every other greybox material takes the look's palette. -evolutionGrowthPlain keeps the greybox look.
@@ -32,6 +35,8 @@ namespace EvolutionShop
         Light[] shopLamps = new Light[0];
         Light labLamp;
         Light[] labLamps = new Light[0];
+        /// <summary>Unit B's and unit C's lamps (two each, wave 4): they follow the light keys and still fade up as their room opens.</summary>
+        readonly List<Light> roomLamps = new List<Light>();
         Volume lookVolume;
         VolumeProfile lookProfile;
         readonly List<ReflectionProbe> lookProbes = new List<ReflectionProbe>();
@@ -228,6 +233,63 @@ namespace EvolutionShop
             if (annexLight) annexLight.transform.localPosition = new Vector3(0, 3.3f, 13);
             if (workshopLight) workshopLight.transform.localPosition = new Vector3(8, 3.1f, 12);
             labLamps = new[] { annexLight, workshopLight };
+            // Wave 4: unit B and unit C, and the street outside unit B's bay window; their lamps hang where the kit's pendants are,
+            // a second one each, revealed with the room.
+            Hide(rooms, "Unit B floor");
+            Hide(transform.Find("Shop unit C"), "Unit C floor", "Feature wall");
+            foreach (var asset in new[] { "UnitBFloor", "UnitBDressing", "StreetEast", "UnitCFloor", "UnitCDressing", "FeatureWall" }) Kit(dressing, asset);
+            RoomLamp("unit-b", unitBLight, new Vector3(6.0f, 2.35f, 2.0f), new Vector3(9.8f, 2.35f, -2.0f));
+            RoomLamp("unit-c", unitCLight, new Vector3(5.0f, 2.35f, 6.5f), new Vector3(9.0f, 2.35f, 6.5f));
+        }
+
+        /// <summary>A room's lamp moved under the first pendant, and a copy of it under the second, which its opening reveals too.</summary>
+        void RoomLamp(string room, Light lamp, Vector3 first, Vector3 second)
+        {
+            if (lamp == null || !openings.TryGetValue(room, out var opening)) return;
+            lamp.transform.localPosition = first;
+            var copy = Instantiate(lamp.gameObject, transform).GetComponent<Light>();
+            copy.name = lamp.name + " 2"; copy.transform.localPosition = second;
+            opening.Lights.Add((copy, opening.Lights.First(l => l.light == lamp).intensity));
+            roomLamps.Add(lamp); roomLamps.Add(copy);
+        }
+
+        /// <summary>Wave 4's set pieces, the hall, the exhibition's pieces, the boards and the partitions: each greybox part the kit
+        /// replaces is hidden (its collider and target stay); the hall's spotlight fixtures show only while the hall is open.</summary>
+        void DressSpaces()
+        {
+            var sets = transform.Find("Set pieces");
+            Kit(sets.Find("Bay window bench"), "BayWindow", default, null, "Seat", "Cushion", "Pillow");
+            Hide(sets, "Bay window sill");
+            Kit(sets.Find("Window display"), "WindowDisplay", default, null, "Stand", "Price card");
+            Kit(transform.Find("Shop unit C/Feature tank (set piece)"), "FeatureTank", default, null, "Frame", "Light strip", "Weed");
+            // The hall: the kit's banners unroll as the greybox's cloths did (their rods with them); a fixture over each spotlight.
+            var hall = transform.Find("Exhibition hall finish");
+            Hide(hall, "Banner rod");
+            var banners = new[] { "BannerCoral", "BannerYellow", "BannerBlue" };
+            for (int i = 1; hall.Find("Banner " + i) != null; i++) Kit(hall.Find("Banner " + i), banners[(i - 1) % banners.Length], default, null, "Cloth", "Emblem");
+            foreach (var spot in hall.Cast<Transform>().Where(c => c.name.StartsWith("Spotlight on ")).ToList())
+            {
+                var fixture = new GameObject("Fixture over " + spot.name.Substring("Spotlight on ".Length)).transform;
+                fixture.SetParent(hall, false); fixture.localPosition = spot.localPosition;
+                Kit(fixture, "HallSpot");
+                openings["hall"].Shown.Add(fixture.gameObject);
+                fixture.gameObject.SetActive(openings["hall"].Open);
+            }
+            // GR-11's pieces: the sign keeps the greybox's face (pale while prepared, glowing on the day), the award, the tags.
+            Kit(exhibitionSign, "ExhibitionSign", default, null, "Board", "Rosette");
+            Kit(award, "Award", default, null, "Plaque", "Card", "Medal", "Ribbon");
+            foreach (var tag in displayTags.Values) Kit(tag, "DisplayTag", default, null, "Ribbon", "Star");
+            // The boards.
+            var staff = new List<string> { "Board", "Heading" };
+            foreach (var def in GrowthContent.Helpers) { staff.Add(def.Name + "'s card"); staff.Add(def.Name + "'s stripe"); }
+            Kit(staffBoard, "StaffBoard", default, null, staff.ToArray());
+            Kit(hallBoard, "HallBoard", default, null, "Board", "Plan", "Plan outline", "Banner sketch");
+            // The rooms' partitions, painted hoardings that sink into the floor with them.
+            var hoarding = new[] { "Partition", "Coming soon sign", "Sign stripe" };
+            Kit(unitBWall.transform, "PartitionB", default, null, hoarding);
+            Kit(transform.Find("Unit C partition"), "PartitionC", default, null, hoarding);
+            Kit(annexWall.transform, "PartitionAnnex", default, null, hoarding);
+            Kit(workshopWall.transform, "PartitionWorkshop", default, null, hoarding);
         }
 
         void DressStations()
@@ -421,7 +483,8 @@ namespace EvolutionShop
             // A reflection probe in each dressed room, rendered once the room is built and again when night turns to day, so
             // the glossy plastic reflects the room rather than nothing.
             foreach (var (name, center, size) in new[] { ("unit A", new Vector3(0, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("back room", new Vector3(-1, 1.8f, 6.5f), new Vector3(6, 3.6f, 5)),
-                                                         ("lab annex", new Vector3(0, 1.8f, 13), new Vector3(8, 3.6f, 8)), ("workshop", new Vector3(8, 1.8f, 12), new Vector3(8, 3.6f, 6)) })
+                                                         ("lab annex", new Vector3(0, 1.8f, 13), new Vector3(8, 3.6f, 8)), ("workshop", new Vector3(8, 1.8f, 12), new Vector3(8, 3.6f, 6)),
+                                                         ("unit B", new Vector3(8, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("unit C", new Vector3(7, 1.6f, 6.5f), new Vector3(10, 3.2f, 5)) })
             {
                 var probe = new GameObject("Look / reflections (" + name + ")").AddComponent<ReflectionProbe>();
                 probe.transform.SetParent(transform, false); probe.transform.localPosition = center;
@@ -449,8 +512,9 @@ namespace EvolutionShop
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = lookNow.Sky; RenderSettings.ambientEquatorColor = lookNow.Equator; RenderSettings.ambientGroundColor = lookNow.Ground;
             foreach (var l in shopLamps) if (l) l.intensity = lookNow.Lamps;
+            foreach (var l in roomLamps) if (l) SetOpeningLamp(l, lookNow.Lamps);
             if (labLamp) labLamp.intensity = lookNow.Strip;
-            foreach (var l in labLamps) if (l) l.intensity = lookNow.Strip;
+            foreach (var l in labLamps) if (l) SetOpeningLamp(l, lookNow.Strip);
             var cam2 = Camera.main;
             if (cam2) cam2.backgroundColor = lookNow.Background;
             if (lookProfile.TryGet<ColorAdjustments>(out var color)) color.postExposure.value = lookNow.Exposure;

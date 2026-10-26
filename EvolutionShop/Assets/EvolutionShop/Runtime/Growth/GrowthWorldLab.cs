@@ -39,6 +39,8 @@ namespace EvolutionShop
         public int BuiltBuffers => bufferViews.Count;
         public bool PumpStanding(string culture) => pumps.ContainsKey(culture);
         public int GeneratorLookLevel => generatorLevel;
+        /// <summary>GR-16 wave 5: where the generator stands now (the annex, or the workshop from level 3), for its hum.</summary>
+        public Vector3 GeneratorPlace => generatorRoot != null ? generatorRoot.position : GeneratorPosition;
         public bool GhostShowing => ghostRoot != null && ghostRoot.childCount > 0;
 
         /// <summary>The annex: floor, ceiling and walls, its lamp, and the partition in the back room's doorway.</summary>

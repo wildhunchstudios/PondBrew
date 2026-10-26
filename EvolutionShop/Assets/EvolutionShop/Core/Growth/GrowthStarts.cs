@@ -88,7 +88,8 @@ namespace EvolutionShop.Growth
         /// siphon, and the conditioning vat with Mist owned), five starter vials on the shelf, the Large tank on a3 at level 3, a
         /// Show tank at level 2 on unit B's feature place, and the workshop open with lab racks at levels 3 and 1; and (wave 3)
         /// the line at its top: three buffers piped from Bloom, Flow and Ember, the tide engine, fast pumps, the sorter and its
-        /// chute, and the auto-doser's pipe from buffer 1. The workshop, the Show tank, the racks, the buffers, the pipes, the
+        /// chute, and the auto-doser's pipe from buffer 1; and (wave 4) unit C and the exhibition hall open, Show tanks at levels
+        /// 2 and 1 on unit C's feature places and a Large tank at level 3 on the hall's first exhibition place, with creatures. The workshop, the Show tank, the racks, the buffers, the pipes, the
         /// generator, the pumps and the sorter are bought with the shop's own actions; the other levels, Mist and the vials are
         /// set as the routes' fixtures set them, and the creatures in the new tanks put there as the routes' fixtures put them.</summary>
         public static GrowthShop LookStart()
@@ -115,6 +116,15 @@ namespace EvolutionShop.Growth
             shop.Upgrade("sorter");
             shop.LayPipe(GrowthLab.Out, GrowthLab.Sorter);
             shop.LayPipe(GrowthLab.Buffer(0), GrowthLab.Port);
+            // Wave 4: unit C and the exhibition hall, Show tanks on unit C's feature wall and a Large tank on an exhibition place.
+            shop.BuyUnitC(); shop.BuyHall();
+            shop.BuyContainer("show", "c1"); shop.BuyContainer("show", "c2"); shop.BuyContainer("large", "e1");
+            foreach (var (place, level, count) in new[] { ("c1", 2, 8), ("c2", 1, 6), ("e1", 3, 4) })
+                if (shop.ContainerAt(place) != null)
+                {
+                    shop.ContainerAt(place).Level = level;
+                    foreach (var species in shop.Discovered.Skip(2).Take(count)) shop.DevelopmentStock(shop.ContainerAt(place).Id, species);
+                }
             shop.Credits = 30000;
             shop.TakeEvents();
             return shop;

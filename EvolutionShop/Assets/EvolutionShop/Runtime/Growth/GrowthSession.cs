@@ -94,6 +94,9 @@ namespace EvolutionShop
         public string Notice { get; private set; }
         public bool PeekOn = true, ReducedMotion;
         public float Sensitivity = 1;
+        /// <summary>GR-16 wave 5: the sounds (the crank, the hand pump, the pop, the swish) and the machines' hum, each full, half or off.</summary>
+        public GrowthAudio.Level SoundLevel, HumLevel;
+        public GrowthAudio Audio { get; private set; }
         /// <summary>The held-mouse actions, for the HUD's progress: collecting at a grower or a buffer, bagging at the counter,
         /// cranking a hand pump or the generator (GR-07).</summary>
         public bool CollectingNow { get; private set; }
@@ -125,6 +128,8 @@ namespace EvolutionShop
             }
             string notice = null;
             bool fresh = !File.Exists(SavePath);
+            // The comfort settings kept with the slot come back with it (GR-16 wave 5 found them saved but never read back).
+            if (!fresh) ApplySettings(ReadSettings(SavePath));
             Shop = StartPoint != null && fresh ? GrowthStarts.Make(StartPoint) : LoadOrNew(SavePath, out notice);
             // GR-14: a brand new game starts with the guided first night (never a start point, an old save or a route).
             if (fresh && StartPoint == null && !ValidationMode) Shop.Guide = GrowthGuideMode.On;
@@ -143,6 +148,8 @@ namespace EvolutionShop
             World = new GameObject("GR-02 greybox").AddComponent<GrowthWorld>();
             World.Build(this);
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));
+            Audio = gameObject.AddComponent<GrowthAudio>();
+            Audio.Initialize(this);
             Ui = gameObject.AddComponent<GrowthUi>();
             Ui.Initialize(this);
             World.Sync(Shop, 0);
@@ -155,6 +162,22 @@ namespace EvolutionShop
         }
 
         // ---------------------------------------------------------------- saving (its own file, never the classic slot)
+
+        /// <summary>The comfort settings in a save file, or null when it cannot be read (the shop's own load says why).</summary>
+        public static GrowthSave ReadSettings(string path)
+        {
+            try { return JsonUtility.FromJson<GrowthSave>(File.ReadAllText(path)); }
+            catch (Exception) { return null; }
+        }
+
+        /// <summary>Puts a save's comfort settings in play: peek, reduced motion, the mouse, the sounds and the hum.</summary>
+        public void ApplySettings(GrowthSave save)
+        {
+            if (save == null) return;
+            PeekOn = !save.peekOff; ReducedMotion = save.reducedMotion;
+            Sensitivity = save.sensitivity >= 0.5f && save.sensitivity <= 2f ? save.sensitivity : 1;
+            SoundLevel = (GrowthAudio.Level)Mathf.Clamp(save.soundLevel, 0, 2); HumLevel = (GrowthAudio.Level)Mathf.Clamp(save.humLevel, 0, 2);
+        }
 
         public static GrowthShop LoadOrNew(string path, out string notice)
         {
@@ -185,6 +208,7 @@ namespace EvolutionShop
             if (Shop == null) return false;
             var save = Shop.Snapshot();
             save.peekOff = !PeekOn; save.reducedMotion = ReducedMotion; save.sensitivity = Sensitivity;
+            save.soundLevel = (int)SoundLevel; save.humLevel = (int)HumLevel;
             string temp = SavePath + ".tmp";
             try
             {

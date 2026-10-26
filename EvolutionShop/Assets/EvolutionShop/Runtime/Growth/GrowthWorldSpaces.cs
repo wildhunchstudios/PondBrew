@@ -30,6 +30,8 @@ namespace EvolutionShop
             public float Height;
             public readonly List<(Light light, float intensity)> Lights = new List<(Light, float)>();
             public readonly List<Transform> Unroll = new List<Transform>();
+            /// <summary>GR-16: things shown only while the room is open (the hall's spotlight fixtures).</summary>
+            public readonly List<GameObject> Shown = new List<GameObject>();
             public bool Open, Known;
             public float Progress = 1;
         }
@@ -49,6 +51,8 @@ namespace EvolutionShop
         public bool PartitionShowing(string room) => openings.TryGetValue(room, out var o) && o.Partition != null && o.Partition.activeSelf;
         public float PartitionDrop(string room) => openings.TryGetValue(room, out var o) && o.Partition != null ? -o.Partition.transform.localPosition.y : 0;
         public float LampIntensity(string room) => openings.TryGetValue(room, out var o) ? o.Lights.Where(l => l.light.enabled).Sum(l => l.light.intensity) : 0;
+        /// <summary>What a room's lamps come to once it is open (GR-16: the look's light keys set it).</summary>
+        public float LampFull(string room) => openings.TryGetValue(room, out var o) ? o.Lights.Sum(l => l.intensity) : 0;
         public int BannersShown => openings.TryGetValue("hall", out var o) ? o.Unroll.Count(b => b.gameObject.activeSelf && b.localScale.y > 0.99f) : 0;
         public bool UnitCWallStanding => Standing("unit-c");
 
@@ -72,6 +76,21 @@ namespace EvolutionShop
             if (o.Partition != null) { o.Partition.transform.localPosition = Vector3.zero; o.Partition.SetActive(!open); }
             foreach (var (light, intensity) in o.Lights) { light.enabled = open; light.intensity = intensity; }
             foreach (var b in o.Unroll) { b.gameObject.SetActive(open); b.localScale = Vector3.one; }
+            foreach (var g in o.Shown) g.SetActive(open);
+        }
+
+        /// <summary>GR-16: a room's lamp at the look's light key; a room still being revealed fades up to it.</summary>
+        void SetOpeningLamp(Light light, float intensity)
+        {
+            foreach (var o in openings.Values)
+                for (int i = 0; i < o.Lights.Count; i++)
+                    if (o.Lights[i].light == light)
+                    {
+                        o.Lights[i] = (light, intensity);
+                        if (o.Progress >= 1) light.intensity = intensity;
+                        return;
+                    }
+            light.intensity = intensity;
         }
 
         static IEnumerable<Collider> Colliders(Opening o) => o.Partition == null ? new Collider[0] : o.Partition.GetComponentsInChildren<Collider>(true);
@@ -87,6 +106,7 @@ namespace EvolutionShop
             }
             foreach (var (light, intensity) in o.Lights) { light.enabled = true; light.intensity = intensity * e; }
             foreach (var b in o.Unroll) { b.gameObject.SetActive(true); b.localScale = new Vector3(1, Mathf.Max(0.02f, e), 1); }
+            foreach (var g in o.Shown) g.SetActive(true);
         }
 
         void AnimateOpenings(float dt)
@@ -113,7 +133,16 @@ namespace EvolutionShop
 
         void SpaceMaterials()
         {
-            accent = ShopWorld.MakeMaterial("GR feature wall", new Color(0.20f, 0.42f, 0.47f), 0, 0.25f);
+            if (LookOn)
+            {
+                // GR-16: the look's colours for what the kit does not replace (the confetti's banner colours, a pillow's).
+                accent = Plastic("feature wall", C("#22BFB0"));
+                copper = Plastic("copper", C("#E39A5A"), 0.5f);
+                cushion = Plastic("cushion", C("#FF7A7A"), 0.3f);
+                foreach (var hex in new[] { "#FF7A7A", "#FFC93C", "#9ADBFF" }) bannerMats.Add(Plastic("banner " + bannerMats.Count, C(hex), 0.3f));
+                return;
+            }
+            accent =ShopWorld.MakeMaterial("GR feature wall", new Color(0.20f, 0.42f, 0.47f), 0, 0.25f);
             copper = ShopWorld.MakeMaterial("GR copper", new Color(0.72f, 0.45f, 0.26f), 0.6f, 0.45f);
             cushion = ShopWorld.MakeMaterial("GR cushion", new Color(0.86f, 0.64f, 0.52f), 0, 0.15f);
             foreach (var c in new[] { new Color(0.84f, 0.38f, 0.27f), new Color(0.98f, 0.78f, 0.37f), new Color(0.31f, 0.55f, 0.66f) })
