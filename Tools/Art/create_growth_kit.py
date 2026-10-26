@@ -3,6 +3,11 @@ no external assets or add-ons; everything is generated from the numbers below.
 
 Run: blender --background --factory-startup --python Tools/Art/create_growth_kit.py -- --repo C:/dev/DumbVideoGameStudio [--only A,B] [--no-render]
 
+Wave 3 (GR.45): the machines: the generator (the hand crank and its wheel, the bubble turbine, the twin turbine, the tide
+engine), the pumps (the hand pump and its wheel, the electric motor), buffers and their numbered tags, the power board, the
+sorter and the incubator's outlet; the lab annex and the workshop dressed, with GR-10's pipe gallery and dome light. (The
+pipes and the chute are drawn by the game: Runtime/Growth/GrowthWorldLookPipes.cs.)
+
 Wave 2 (GR.45): the other stations and tanks: the conditioning vat (its second batch and stirrer), the breeding tank (its
 tint port and second pair), the research bench (its microscope, analyzer and planner) and the siphon (its bigger bulb, twin
 chamber and vacuum), the vial shelf and its bottles, the supplier catalog, the pinboard, and the Large tank, the Show tank
@@ -919,6 +924,336 @@ WAVE2 = [vat, vat_batch, vat_stirrer, breeding_tank, breeding_port, breeding_pai
          tank_large, tank_bed_large, tank_lid_large, tank_show, tank_bed_show, tank_spotlight, tank_rack, tank_lid_rack]
 
 
+# ================================================================ wave 3: the machines, the annex and the workshop (GR-16, GR.45's wave 3)
+def gen_crank():
+    """GrowthWorld.BuildGenerator at level 1, the hand crank (origin: the generator's root; front +Z, into the room): a
+    platform, a yellow housing with vents, a gauge, a plate and a lamp, and the axle the wheel turns on. The wheel is a
+    piece of its own (GenCrankWheel), placed on the greybox's crank wheel, so it turns while it is cranked."""
+    box((0, 0.05, 0), (1.0, 0.1, 0.8), 'GK_TealDark', r=0.04)
+    box((0, 0.5, -0.1), (0.72, 0.8, 0.5), 'GK_Yellow', r=0.12)
+    box((0, 0.16, -0.1), (0.74, 0.05, 0.52), 'GK_Teal', r=0.02)
+    for k in range(4):
+        box((0.362, 0.7 - k * 0.08, -0.1), (0.008, 0.035, 0.3), 'GK_TealDark', r=0.006)
+    cyl((0.22, 0.32, 0.16), 0.07, 0.03, 'GK_Teal', r=0.01, rot=(90, 0, 0))
+    cyl((0.22, 0.32, 0.176), 0.055, 0.005, 'GK_GaugeFace', r=0, rot=(90, 0, 0))
+    box((0.23, 0.335, 0.181), (0.008, 0.045, 0.004), 'GK_Coral', r=0.002, rot=(0, 0, -40))
+    box((-0.2, 0.32, 0.157), (0.2, 0.12, 0.012), 'GK_Cream', r=0.025)
+    box((-0.2, 0.32, 0.165), (0.04, 0.08, 0.004), 'GK_Yellow', r=0.004, rot=(0, 0, 20))
+    cyl((0.2, 0.92, -0.1), 0.05, 0.04, 'GK_Teal', r=0.01)
+    ball((0.2, 0.97, -0.1), 0.05, 'GK_GlowLime', seg=20)
+    cyl((0, 0.85, 0.24), 0.035, 0.18, 'GK_TealDark', r=0.01, rot=(90, 0, 0))
+    return join('GenCrank')
+
+
+def gen_crank_wheel():
+    """The hand crank's wheel (origin: its centre, facing +Z): a coral rim with three spokes, a yellow hub and a cream handle."""
+    ring((0, 0, 0), 0.27, 0.035, 'GK_Coral', rot=(90, 0, 0))
+    for a in (0, 60, 120):
+        box((0, 0, 0), (0.52, 0.025, 0.02), 'GK_Coral', r=0.008, rot=(0, 0, a))
+    cyl((0, 0, 0.01), 0.055, 0.05, 'GK_Yellow', r=0.015, rot=(90, 0, 0))
+    cyl((0.24, 0, 0.08), 0.022, 0.13, 'GK_Cream', r=0.008, rot=(90, 0, 0))
+    ball((0.24, 0, 0.15), 0.032, 'GK_Cream', seg=16)
+    return join('GenCrankWheel')
+
+
+def gen_turbine(name, columns):
+    """GrowthWorld.BuildGenerator at levels 2 to 4 (front +Z): the bubble turbine (one glass column), the twin turbine (two)
+    and the tide engine (three, and a ribbed drum behind). A platform, a cream base with a turquoise band, the yellow turbine
+    housing with vents and a lamp, and each column's glass between a collar and a cap, joined by a yellow header; the
+    greybox's water and its rising bubbles stay inside each column."""
+    w = 0.7 + 0.45 * (columns - 1)
+    W = max(1.0, w)
+    box((0, 0.05, 0), (W + 0.08, 0.1, 0.84), 'GK_TealDark', r=0.04)
+    box((0, 0.26, 0), (W, 0.32, 0.8), 'GK_Cream', r=0.07)
+    box((0, 0.42, 0), (W + 0.02, 0.04, 0.82), 'GK_Teal', r=0.015)
+    box((0, 0.61, 0), (w, 0.36, 0.6), 'GK_Yellow', r=0.08)
+    for k in range(3):
+        box((-w * 0.12, 0.68 - k * 0.07, 0.302), (w * 0.5, 0.025, 0.008), 'GK_TealDark', r=0.006)
+    lamp_x = 0.28 + 0.22 * (columns - 1)
+    cyl((lamp_x, 0.72, 0.305), 0.045, 0.02, 'GK_Teal', r=0.006, rot=(90, 0, 0))
+    ball((lamp_x, 0.72, 0.318), 0.032, 'GK_GlowLime', seg=16)
+    xs = [(k - (columns - 1) * 0.5) * 0.5 for k in range(columns)]
+    for x in xs:
+        cyl((x, 0.82, 0), 0.245, 0.06, 'GK_Teal', r=0.02)
+        cyl((x, 1.3, 0), 0.22, 0.92, 'GK_Glass', r=0, verts=40)
+        cyl((x, 1.79, 0), 0.245, 0.07, 'GK_Teal', r=0.025)
+    if columns >= 2:
+        cyl((0, 1.9, 0), 0.045, (columns - 1) * 0.5 + 0.1, 'GK_Yellow', r=0.02, rot=(0, 0, 90))
+        for x in xs:
+            cyl((x, 1.85, 0), 0.035, 0.06, 'GK_TealDark', r=0.01)
+    else:
+        ball((0, 1.85, 0), (0.12, 0.06, 0.12), 'GK_Cream', seg=20)
+    if columns >= 3:
+        cyl((0, 0.6, -0.32), 0.21, 1.0, 'GK_Yellow', r=0.05, rot=(0, 0, 90))
+        for k in range(5):
+            ring((-0.4 + k * 0.2, 0.6, -0.32), 0.212, 0.016, 'GK_Coral', rot=(0, 0, 90))
+        for s in (-1, 1):
+            box((s * 0.55, 0.43, -0.32), (0.08, 0.3, 0.16), 'GK_Teal', r=0.03)
+    return join(name)
+
+
+def pump_hand():
+    """A grower's hand pump (pumps' level 1; origin: the greybox's pump on the grower's front, front +Z): a turquoise housing
+    with a foot and a hub; its wheel is a piece of its own (PumpHandWheel), so it turns while it pumps."""
+    box((0, 0, 0), (0.2, 0.26, 0.14), 'GK_Teal', r=0.05)
+    box((0, -0.14, -0.01), (0.16, 0.04, 0.12), 'GK_TealDark', r=0.015)
+    cyl((0, 0, 0.08), 0.035, 0.04, 'GK_TealDark', r=0.01, rot=(90, 0, 0))
+    return join('PumpHand')
+
+
+def pump_hand_wheel():
+    """The hand pump's wheel (origin: its centre, facing +Z): a yellow rim with spokes and a coral knob on its handle."""
+    ring((0, 0, 0), 0.09, 0.014, 'GK_Yellow', rot=(90, 0, 0))
+    for a in (0, 90):
+        box((0, 0, 0), (0.17, 0.016, 0.012), 'GK_Yellow', r=0.005, rot=(0, 0, a))
+    cyl((0.08, 0, 0.035), 0.012, 0.06, 'GK_TealDark', r=0.004, rot=(90, 0, 0))
+    ball((0.08, 0, 0.07), 0.024, 'GK_Coral', seg=14)
+    return join('PumpHandWheel')
+
+
+def pump_motor():
+    """An electric pump (levels 2 and 3): the housing with a cream motor can, its cooling fins and its shaft cap (the
+    greybox's light, green or amber by level, stays)."""
+    box((0, 0, 0), (0.2, 0.26, 0.14), 'GK_Teal', r=0.05)
+    cyl((0, 0.02, 0.1), 0.075, 0.08, 'GK_Cream', r=0.02, rot=(90, 0, 0))
+    for k in range(4):
+        ring((0, 0.02, 0.068 + k * 0.018), 0.077, 0.006, 'GK_TealLight', rot=(90, 0, 0))
+    cyl((0, 0.02, 0.145), 0.03, 0.012, 'GK_TealDark', r=0.004, rot=(90, 0, 0))
+    return join('PumpMotor')
+
+
+def buffer_column():
+    """A buffer (origin: its place by the annex's south wall; its tag faces +Z, into the annex): a stand, a collar, a tall
+    glass column (the greybox's culture fill kept inside, rising as it fills), a band, a lid and the inlet the pipe drops to
+    (1.5 m)."""
+    cyl((0, 0.1, 0), 0.2, 0.2, 'GK_TealDark', r=0.05)
+    cyl((0, 0.23, 0), 0.195, 0.06, 'GK_Teal', r=0.02)
+    cyl((0, 0.84, 0), 0.185, 1.2, 'GK_Glass', r=0, verts=40)
+    ring((0, 0.5, 0), 0.19, 0.01, 'GK_Teal')
+    cyl((0, 1.465, 0), 0.2, 0.05, 'GK_Teal', r=0.02)
+    cyl((0, 1.505, 0), 0.045, 0.03, 'GK_TealDark', r=0.01)
+    return join('Buffer')
+
+
+def buffer_tag(n):
+    """Buffer n's tag on its band, its number facing into the annex."""
+    def build():
+        box((0, 0.42, 0.205), (0.15, 0.12, 0.014), 'GK_Cream', r=0.03)
+        text(str(n), (0, 0.42, 0.217), 0.08, 'GK_Ink', euler=(0, 180, 0), extrude=0.004)
+        return join('BufferTag' + str(n))
+    build.__name__ = 'buffer_tag_' + str(n)
+    return build
+
+
+def power_board():
+    """The power board on the annex's east wall (origin: its centre; front -Z, into the annex): a turquoise frame, a cream
+    face with POWER on it, dark slots behind the greybox's supply and draw bars (kept, they move), a green and an amber dot
+    beside them, and a bezel round the greybox's lamp (kept, its colour says whether supply meets draw)."""
+    box((0, 0, 0), (1.16, 0.86, 0.06), 'GK_Teal', r=0.05)
+    box((0, 0, -0.033), (1.04, 0.74, 0.006), 'GK_Cream', r=0.03)
+    for y in (0.16, -0.04):
+        box((0, y, -0.0375), (0.94, 0.11, 0.003), 'GK_Ink', r=0.02)
+    for y, m in ((0.16, 'GK_GlowLime'), (-0.04, 'GK_GlowYellow')):
+        ball((-0.495, y, -0.04), 0.018, m, seg=10)
+    text('POWER', (-0.05, 0.3, -0.041), 0.07, 'GK_Ink', extrude=0.004)
+    ring((0.42, -0.26, -0.037), 0.05, 0.01, 'GK_TealDark', rot=(90, 0, 0))
+    return join('PowerBoard')
+
+
+def sorter():
+    """GrowthWorld.BuildSorter (origin: the sorter's root; front +Z, into the workshop): a cream cabinet with turquoise panels,
+    its label and lamp; a belt of slats between two rollers; the glass hopper on its arm where the chute arrives (local z
+    0.65, its rim at 1.6 m) with a spout down to the belt; the two gates (honey for the shop, coral for the racks) and their
+    trays."""
+    hz = 0.65
+    box((0, 0.05, 0), (1.56, 0.1, 0.76), 'GK_TealDark', r=0.03)
+    box((0, 0.48, 0), (1.6, 0.76, 0.8), 'GK_Cream', r=0.08)
+    for s in (-1, 1):
+        box((s * 0.4, 0.42, 0.405), (0.66, 0.46, 0.02), 'GK_Teal', r=0.04)
+    box((-0.3, 0.73, 0.412), (0.42, 0.08, 0.012), 'GK_Yellow', r=0.02)
+    cyl((0.5, 0.75, 0.41), 0.045, 0.02, 'GK_Teal', r=0.006, rot=(90, 0, 0))
+    ball((0.5, 0.75, 0.422), 0.03, 'GK_GlowLime', seg=14)
+    box((0, 0.89, 0), (1.4, 0.05, 0.42), 'GK_Ink', r=0.02)
+    for k in range(14):
+        box((-0.62 + k * 0.095, 0.922, 0), (0.07, 0.015, 0.4), 'GK_TealLight', r=0.006)
+    for s in (-1, 1):
+        cyl((s * 0.7, 0.9, 0), 0.05, 0.44, 'GK_TealDark', r=0.015, rot=(90, 0, 0))
+    box((0, 1.08, 0.3), (0.07, 0.36, 0.07), 'GK_Teal', r=0.025)
+    box((0, 1.28, (0.3 + hz) / 2), (0.07, 0.07, hz - 0.3 + 0.07), 'GK_Teal', r=0.025)
+    cyl((0, 1.32, hz), 0.055, 0.06, 'GK_TealDark', r=0.015)
+    cone((0, 1.47, hz), 0.06, 0.19, 0.26, 'GK_Glass')
+    ring((0, 1.6, hz), 0.19, 0.02, 'GK_Teal')
+    tube([(0, 1.32, hz), (0, 1.12, 0.42), (0, 0.98, 0.18)], 0.035, 'GK_Glass')
+    for s, m in ((-1, 'GK_Yellow'), (1, 'GK_Coral')):
+        for z in (-0.22, 0.22):
+            box((s * 0.55, 1.1, z), (0.04, 0.36, 0.04), 'GK_TealDark', r=0.012)
+        box((s * 0.55, 1.29, 0), (0.05, 0.04, 0.48), 'GK_TealDark', r=0.012)
+        box((s * 0.55, 1.08, 0), (0.035, 0.24, 0.38), m, r=0.02)
+        box((s * 0.7, 0.62, 0.49), (0.3, 0.06, 0.18), m, r=0.02)
+        box((s * 0.7, 0.575, 0.43), (0.08, 0.05, 0.08), 'GK_TealDark', r=0.015)
+    return join('Sorter')
+
+
+def incubator_outlet():
+    """The incubator's outlet beside it (GR-08, shown once the sorter is bought; origin: the outlet's place): a turquoise box
+    and the yellow mouth the chute leaves from (0.95 m)."""
+    box((0, 0.82, 0), (0.16, 0.28, 0.24), 'GK_Teal', r=0.05)
+    cyl((0, 0.91, 0), 0.06, 0.06, 'GK_TealDark', r=0.015)
+    cone((0, 0.975, 0), 0.06, 0.1, 0.06, 'GK_Yellow')
+    return join('IncubatorOutlet')
+
+
+def pipe_gallery():
+    """GR-10's pipe gallery on the annex's west wall (origin: its place, x -3.84, z 12.7; facing +X, into the annex): four
+    glass risers glowing with the cultures' colours on turquoise brackets, coral valve wheels, gauges, two headers and a
+    placard."""
+    cores = ('GK_GlowCoral', 'GK_GlowBlue', 'GK_GlowYellow', 'GK_GlowLime')
+    for i in range(4):
+        z = -1.2 + 0.8 * i
+        cyl((0, 1.8, z), 0.055, 3.2, 'GK_Glass', r=0, verts=24)
+        cyl((0, 1.8, z), 0.026, 3.16, cores[i], r=0, verts=12)
+        for y in (0.9, 2.7):
+            box((-0.03, y, z), (0.07, 0.05, 0.14), 'GK_Teal', r=0.02)
+        cyl((0.07, 1.35, z), 0.015, 0.1, 'GK_TealDark', r=0.004, rot=(0, 0, 90))
+        ring((0.12, 1.35, z), 0.1, 0.018, 'GK_Coral', rot=(0, 0, 90))
+        for a in (0, 90):
+            box((0.12, 1.35, z), (0.012, 0.18, 0.016), 'GK_Coral', r=0.005, rot=(a, 0, 0))
+        cyl((0.07, 2.1, z + 0.12), 0.012, 0.07, 'GK_TealDark', r=0.004)
+        cyl((0.09, 2.1, z + 0.18), 0.07, 0.03, 'GK_Teal', r=0.01, rot=(0, 0, 90))
+        cyl((0.106, 2.1, z + 0.18), 0.055, 0.005, 'GK_GaugeFace', r=0, rot=(0, 0, 90))
+    for y in (0.5, 3.1):
+        cyl((0, y, 0), 0.075, 2.9, 'GK_Teal', r=0.03, rot=(90, 0, 0))
+    box((0.05, 2.6, 1.55), (0.02, 0.25, 0.5), 'GK_Cream', r=0.02)
+    text('LINES', (0.065, 2.6, 1.55), 0.08, 'GK_Ink', euler=(0, -90, 0), extrude=0.004)
+    return join('PipeGallery')
+
+
+def workshop_dome():
+    """GR-10's dome light under the workshop's ceiling (origin: its centre, at the 3.6 m ceiling): a glass dome, a turquoise
+    ring, a ceiling plate and the warm glow inside."""
+    ball((0, 0, 0), (1.2, 0.45, 1.2), 'GK_Glass', seg=40)
+    ring((0, -0.01, 0), 1.2, 0.045, 'GK_Teal')
+    cyl((0, -0.005, 0), 1.26, 0.02, 'GK_TealDark', r=0)
+    ball((0, -0.03, 0), (0.75, 0.14, 0.75), 'GK_GlowWarm', seg=32)
+    return join('WorkshopDome')
+
+
+def lab_panels(a, b, inner, gaps, h=0.95):
+    """The back room's rounded turquoise panels along a wall's inside face, leaving its gaps (distances along it from a)."""
+    a, b = Vector(a), Vector(b)
+    d = (b - a).normalized(); length = (b - a).length; n = Vector(inner)
+    t = (length - int(length // 0.9) * 0.9) / 2
+    while t + 0.9 <= length + 1e-6:
+        c = t + 0.45
+        if not any(g0 - 0.45 < c < g1 + 0.45 for g0, g1 in gaps):
+            p = a + d * c + n * (0.1 + 0.025)
+            size = (0.84, h, 0.05) if abs(d.x) > 0.5 else (0.05, h, 0.84)
+            box((p.x, 0.08 + h / 2, p.y), size, 'GK_Panel', r=0.05)
+        t += 0.9
+
+
+def lab_walls(walls):
+    for a, b, n, gaps, rail_gaps in walls:
+        lab_panels(a, b, n, gaps)
+        wall_strip(a, b, n, 1.07, 0.07, 0.07, 'GK_Teal', rail_gaps)
+        wall_strip(a, b, n, 0.04, 0.08, 0.06, 'GK_TealDark', gaps, r=0.015)
+
+
+def jar_shelf(x, z, along_x, inner):
+    """A wooden shelf on a wall with five jars of glowing culture."""
+    n = Vector(inner)
+    cores = ('GK_GlowCoral', 'GK_GlowBlue', 'GK_GlowYellow', 'GK_GlowLime', 'GK_GlowTeal')
+    off = 0.1 + 0.15
+    cx, cz = x + n.x * off, z + n.y * off
+    box((cx, 1.6, cz), (1.4, 0.05, 0.3) if along_x else (0.3, 0.05, 1.4), 'GK_Wood', r=0.015)
+    for k in range(5):
+        t = -0.5 + 0.25 * k
+        jx, jz = (cx + t, cz) if along_x else (cx, cz + t)
+        cyl((jx, 1.72, jz), 0.06, 0.18, 'GK_Glass', r=0, verts=20)
+        cyl((jx, 1.69, jz), 0.048, 0.11, cores[k], r=0.01)
+        cyl((jx, 1.82, jz), 0.064, 0.03, 'GK_Teal', r=0.008)
+
+
+def annex_floor():
+    """The lab annex's floor (x -4..4, z 9..17): the back room's glossy tiles."""
+    for i in range(16):
+        for j in range(16):
+            m = 'GK_TileAccent' if (i + j) % 4 == 0 else ('GK_Tile' if (i + j) % 2 else 'GK_Tile2')
+            box((-4 + 0.25 + i * 0.5, 0.006 - 0.015, 9 + 0.25 + j * 0.5), (0.49, 0.03, 0.49), m, r=0.012, seg=2)
+    # A base under the boards or tiles, so their joints show it rather than the sky behind the hidden greybox floor.
+    box((0, -0.034, 13), (8, 0.02, 8), 'GK_Pavement', r=0)
+    return join('AnnexFloor')
+
+
+def annex_dressing():
+    """The lab annex (x -4..4, z 9..17, a 3.6 m ceiling; GrowthWorldLab.AnnexRoom): the back room's panels, rail and skirting
+    round its walls, clear of the doorway from the back room (x 0.45..1.85), the doorway into the workshop (z 9.6..11), the
+    pipe gallery (z 11.25..14.15 on the west wall) and, for the rail, the power board (z 11.9..13.1 on the east wall); frames
+    round both doorways; two light strips down the ceiling; a shelf of glowing jars; a plant."""
+    back, workshop, gallery, board = (4.45, 5.85), (0.6, 2.0), (2.25, 5.15), (2.9, 4.1)
+    lab_walls((((-4, 9), (4, 9), (0, 1), [back], [back]),
+               ((-4, 9), (-4, 17), (1, 0), [gallery], [gallery]),
+               ((-4, 17), (4, 17), (0, -1), [], []),
+               ((4, 9), (4, 17), (-1, 0), [workshop], [workshop, board])))
+    door_frame(-4 + (back[0] + back[1]) / 2, 9, True, back[1] - back[0], 2.8, 'GK_Teal', (0, 1))
+    door_frame(4, 9 + (workshop[0] + workshop[1]) / 2, False, workshop[1] - workshop[0], 2.8, 'GK_Teal', (-1, 0))
+    for x in (-1.5, 1.5):
+        box((x, 3.56, 13), (0.5, 0.08, 6.0), 'GK_Cream', r=0.03)
+        box((x, 3.515, 13), (0.36, 0.01, 5.8), 'GK_GlowWhite', r=0)
+    jar_shelf(-1.6, 17, True, (0, -1))
+    potted_plant(-3.45, 16.45, 0.85)
+    return join('AnnexDressing')
+
+
+def workshop_floor():
+    """The workshop's floor (x 4..12, z 9..15): big sandy tiles with a turquoise one now and then."""
+    for i in range(8):
+        for j in range(6):
+            m = 'GK_TileAccent' if (i * 3 + j) % 7 == 0 else ('GK_Tile2' if (i + j) % 2 else 'GK_Sand')
+            box((4 + 0.5 + i, 0.006 - 0.015, 9 + 0.5 + j), (0.98, 0.03, 0.98), m, r=0.02, seg=2)
+    # A base under the boards or tiles, so their joints show it rather than the sky behind the hidden greybox floor.
+    box((8, -0.034, 12), (8, 0.02, 6), 'GK_Pavement', r=0)
+    return join('WorkshopFloor')
+
+
+def workshop_dressing():
+    """The workshop (x 4..12, z 9..15, a 3.6 m ceiling; GrowthWorldLine.WorkshopRoom): the panels, rail and skirting round
+    its walls, clear of the doorway from the annex (z 9.6..11 on its west wall); a frame round it; two light strips either
+    side of the dome; a pegboard of tools; a stack of crates in the south-east corner; a plant."""
+    workshop = (0.6, 2.0)
+    lab_walls((((4, 9), (12, 9), (0, 1), [], []),
+               ((12, 9), (12, 15), (-1, 0), [], []),
+               ((4, 15), (12, 15), (0, -1), [], []),
+               ((4, 9), (4, 15), (1, 0), [workshop], [workshop])))
+    door_frame(4, 9 + (workshop[0] + workshop[1]) / 2, False, workshop[1] - workshop[0], 2.8, 'GK_Teal', (1, 0))
+    for z in (10.3, 13.7):
+        box((8, 3.56, z), (6.0, 0.08, 0.5), 'GK_Cream', r=0.03)
+        box((8, 3.515, z), (5.8, 0.01, 0.36), 'GK_GlowWhite', r=0)
+    # The pegboard on the west wall (z 12..14), with a wrench, a hammer and a screwdriver.
+    px = 4 + 0.1 + 0.02
+    box((px, 1.75, 13.0), (0.04, 0.9, 1.6), 'GK_Sand', r=0.015)
+    for y in (1.3, 2.2):
+        box((px + 0.01, y, 13.0), (0.05, 0.04, 1.64), 'GK_WoodMid', r=0.01)
+    box((px + 0.04, 1.85, 12.55), (0.02, 0.36, 0.06), 'GK_Teal', r=0.012, rot=(0, 0, 0))
+    ring((px + 0.04, 2.05, 12.55), 0.05, 0.014, 'GK_Teal', rot=(0, 0, 90))
+    box((px + 0.04, 1.8, 13.0), (0.02, 0.4, 0.04), 'GK_WoodDark', r=0.01)
+    box((px + 0.05, 2.0, 13.0), (0.04, 0.08, 0.18), 'GK_Coral', r=0.02)
+    box((px + 0.04, 1.75, 13.45), (0.02, 0.26, 0.05), 'GK_Yellow', r=0.015)
+    box((px + 0.04, 1.95, 13.45), (0.02, 0.14, 0.012), 'GK_TealDark', r=0.004)
+    # Crates in the south-east corner, clear of the racks (r2 to x 9.5, r3 from z 10.85).
+    for (cx, cy, cz, s, m) in ((11.35, 0.22, 9.6, 0.44, 'GK_WoodMid'), (10.85, 0.22, 9.55, 0.42, 'GK_Wood'), (11.3, 0.64, 9.6, 0.4, 'GK_WoodLight')):
+        box((cx, cy, cz), (s, s, s), m, r=0.03)
+        box((cx, cy, cz + s / 2 + 0.002), (s * 0.8, 0.04, 0.004), 'GK_WoodDark', r=0.002)
+    potted_plant(4.5, 14.5, 0.85)
+    return join('WorkshopDressing')
+
+
+WAVE3 = [gen_crank, gen_crank_wheel, lambda: gen_turbine('GenTurbine', 1), lambda: gen_turbine('GenTwin', 2),
+         lambda: gen_turbine('GenTide', 3), pump_hand, pump_hand_wheel, pump_motor, buffer_column] + \
+        [buffer_tag(n) for n in range(1, 7)] + \
+        [power_board, sorter, incubator_outlet, pipe_gallery, workshop_dome, annex_floor, annex_dressing, workshop_floor, workshop_dressing]
+
+
 # ================================================================ the rooms (origin: the world's origin; GrowthWorld.Rooms' walls are 0.2
 # thick on their lines, so their inside faces are 0.1 in)
 def planks_x(x0, x1, z0, z1, y, width, mats, thick=0.03):
@@ -1004,6 +1339,8 @@ def potted_plant(x, z, s=1.0):
 def unit_a_floor():
     """Unit A's floor (8 x 8 at the origin, its top at y 0): warm planks in three tones."""
     planks_x(-4, 4, -4, 4, 0.006, 0.296, ['GK_Wood', 'GK_WoodLight', 'GK_WoodMid'])
+    # A base under the boards or tiles, so their joints show it rather than the sky behind the hidden greybox floor.
+    box((0, -0.034, 0), (8, 0.02, 8), 'GK_WoodDark', r=0)
     return join('UnitAFloor')
 
 
@@ -1101,6 +1438,8 @@ def back_room_floor():
         for j in range(10):
             m = 'GK_TileAccent' if (i + j) % 4 == 0 else ('GK_Tile' if (i + j) % 2 else 'GK_Tile2')
             box((-4 + 0.25 + i * 0.5, 0.006 - 0.015, 4 + 0.25 + j * 0.5), (0.49, 0.03, 0.49), m, r=0.012, seg=2)
+    # A base under the boards or tiles, so their joints show it rather than the sky behind the hidden greybox floor.
+    box((-1, -0.034, 6.5), (6, 0.02, 5), 'GK_Pavement', r=0)
     return join('BackRoomFloor')
 
 
@@ -1119,7 +1458,7 @@ def back_room_dressing():
                 box((p.x, 0.08 + h / 2, p.y), size, 'GK_Panel', r=0.05)
             t += 0.9
     door = (4.2, 5.4)  # along unit A's north wall from x -4: x 0.2..1.4
-    annex = (0.45, 1.85)  # along the back room's north wall from x -4
+    annex = (4.45, 5.85)  # along the back room's north wall from x -4: the doorway at x 0.45..1.85 (GrowthWorld.AnnexDoorFrom, AnnexDoorTo)
     panels((-4, 4), (2, 4), (0, 1), [(door[0], door[1])])
     panels((-4, 4), (-4, 9), (1, 0), [])
     panels((-4, 9), (2, 9), (0, -1), [annex])
@@ -1134,13 +1473,13 @@ def back_room_dressing():
     door_frame(-4 + (annex[0] + annex[1]) / 2, 9, True, annex[1] - annex[0], 2.8, 'GK_Teal', (0, -1))
     box((-1, 3.56, 6.5), (0.5, 0.08, 4.2), 'GK_Cream', r=0.03)
     box((-1, 3.515, 6.5), (0.36, 0.01, 4.0), 'GK_GlowWhite', r=0)
-    potted_plant(1.6, 8.55, 0.85)
+    potted_plant(1.6, 4.55, 0.75)  # the south-east corner, clear of both doorways
     return join('BackRoomDressing')
 
 
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2  # wave 2 last, so wave 1 draws its random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace EvolutionShop.Tests
 {
-    /// <summary>GR-16 waves 1 and 2: the growth kit (Tools/Art/create_growth_kit.py) against the game. Every piece loads as one mesh
+    /// <summary>GR-16 waves 1 to 3: the growth kit (Tools/Art/create_growth_kit.py) against the game. Every piece loads as one mesh
     /// whose material slots the look maps; the manifest lists them all with the palette's colours; each station's piece stays
     /// within its station's footprint, so the dressing never reaches into an aisle or a neighbour; and each room's dressing
     /// stays inside its room.</summary>
@@ -25,6 +25,9 @@ namespace EvolutionShop.Tests
             "Vat", "VatBatch", "VatStirrer", "BreedingTank", "BreedingPort", "BreedingPair", "Bench", "BenchMicroscope", "BenchAnalyzer",
             "BenchPlanner", "SiphonBulb", "SiphonBig", "SiphonTwin", "SiphonVacuum", "VialShelf", "VialBottle", "Catalog", "Pinboard",
             "TankLarge", "TankBedLarge", "TankLidLarge", "TankShow", "TankBedShow", "TankSpotlight", "TankRack", "TankLidRack",
+            "GenCrank", "GenCrankWheel", "GenTurbine", "GenTwin", "GenTide", "PumpHand", "PumpHandWheel", "PumpMotor", "Buffer",
+            "BufferTag1", "BufferTag2", "BufferTag3", "BufferTag4", "BufferTag5", "BufferTag6", "PowerBoard", "Sorter", "IncubatorOutlet",
+            "PipeGallery", "WorkshopDome", "AnnexFloor", "AnnexDressing", "WorkshopFloor", "WorkshopDressing",
         };
 
         static GameObject Piece(string name) => Resources.Load<GameObject>(GrowthWorld.KitPath + name);
@@ -105,6 +108,10 @@ namespace EvolutionShop.Tests
         [TestCase("TankBedShow", 1.5f, 0.75f, 0.0f)]
         [TestCase("TankRack", 0.75f, 0.5f, 0.03f)]
         [TestCase("TankLidRack", 0.75f, 0.5f, 0.03f)]
+        [TestCase("GenCrank", 0.55f, 0.45f, 0.0f)]
+        [TestCase("GenTurbine", 0.55f, 0.45f, 0.0f)]
+        [TestCase("Buffer", 0.21f, 0.21f, 0.0f)]
+        [TestCase("IncubatorOutlet", 0.1f, 0.12f, 0.0f)]
         public void EachStationsPieceStaysWithinItsFootprint(string name, float halfX, float halfZ, float leeway)
         {
             var b = MeshBounds(Piece(name));
@@ -154,15 +161,82 @@ namespace EvolutionShop.Tests
                 Assert.That(c != null && c.Kind == kind && c.Level == level, Is.True, kind + " on " + place + " at level " + level);
             }
             Assert.That(shop.ContainerAt("b4").Occupants.Count, Is.GreaterThan(0), "the Show tank has creatures");
+            Assert.That(shop.Level("generator") == 4 && shop.Level("pump") == 3 && shop.HasSorter, Is.True, "wave 3: the tide engine, fast pumps and the sorter");
+            Assert.That(shop.Buffers.Count >= 3 && shop.Lines.Count() >= 3, Is.True, "three buffers, each piped from a grower");
+            Assert.That(shop.Chute != null && shop.Pipes.Any(p => p.To == GrowthLab.Port), Is.True, "the sorter's chute and the auto-doser's port pipe");
             Assert.That(shop.Guide, Is.EqualTo(GrowthGuideMode.Off), "a start point is never guided");
             Assert.That(shop.Snapshot(), Is.Not.Null, "it saves");
+        }
+
+        /// <summary>Wave 3's machines where their greybox has them: the generator's turbines in the workshop's north-east corner, its
+        /// back clear of the north wall; the sorter against that wall; the crank's and the hand pump's wheels round their axles
+        /// (they turn); the pumps on a grower's front; the power board on its wall; buffers up to the inlet the pipe drops to.</summary>
+        [Test] public void WaveThreesMachinesStayWhereTheyBelong()
+        {
+            foreach (var name in new[] { "GenTwin", "GenTide" })
+            {
+                var b = MeshBounds(Piece(name));
+                Assert.That(-b.min.z, Is.LessThanOrEqualTo(14.9f - 14.35f), name + " clear of the workshop's north wall");
+                Assert.That(b.max.x - b.min.x, Is.LessThanOrEqualTo(1.8f), name + " within the workshop's corner");
+            }
+            var sorter = MeshBounds(Piece("Sorter"));
+            Assert.That(-sorter.min.z, Is.LessThanOrEqualTo(0.45f), "the sorter's back within its footprint, clear of the wall");
+            Assert.That(sorter.max.x, Is.LessThanOrEqualTo(0.85f), "the sorter within its footprint's width");
+            foreach (var name in new[] { "GenCrankWheel", "PumpHandWheel" })
+            {
+                var b = MeshBounds(Piece(name));
+                Assert.That(Mathf.Abs(b.center.y) < 0.02f && Mathf.Abs(b.min.x + b.max.x) < 0.05f, Is.True, name + " centred on its axle, so it turns in place");
+            }
+            foreach (var name in new[] { "PumpHand", "PumpMotor" })
+            {
+                var b = MeshBounds(Piece(name));
+                Assert.That(b.max.x <= 0.15f && -b.min.z <= 0.07f + 0.001f, Is.True, name + " on the grower's front, not into it");
+            }
+            Assert.That(MeshBounds(Piece("PowerBoard")).max.z, Is.LessThanOrEqualTo(0.031f), "the power board on its wall (its back where the greybox board's is)");
+            var buffer = MeshBounds(Piece("Buffer"));
+            Assert.That(buffer.max.y, Is.LessThanOrEqualTo(GrowthLab.Height(GrowthLab.Buffer(0)) + 0.03f), "a buffer's inlet where its pipe drops to");
+        }
+
+        /// <summary>No room's dressing reaches into a doorway (GR-16 wave 3 found wave 1's back room panels across the doorway to the
+        /// lab annex): no part of it between a doorway's posts, from the floor's skirting to under its head, either side of its wall.</summary>
+        [Test] public void NoRoomsDressingCrossesADoorway()
+        {
+            // Each doorway: its centre on the floor plane, whether its wall runs along x, and its width (GrowthWorld.Rooms, AnnexRoom, WorkshopRoom).
+            var doorways = new[]
+            {
+                ("unit A's entrance", new Vector2(-0.5f, -4f), true, 1.4f), ("the back room's door", new Vector2(0.8f, 4f), true, 1.2f),
+                ("the arch to unit B", new Vector2(4f, 0f), false, 3.2f), ("the lab annex's doorway", new Vector2(1.15f, 9f), true, 1.4f),
+                ("the workshop's doorway", new Vector2(4f, 10.3f), false, 1.4f),
+            };
+            foreach (var name in new[] { "UnitADressing", "BackRoomDressing", "AnnexDressing", "WorkshopDressing" })
+            {
+                var filter = Piece(name).GetComponentInChildren<MeshFilter>(true);
+                var mesh = filter.sharedMesh;
+                var vertices = mesh.vertices;
+                Assert.That(vertices.Length, Is.GreaterThan(1000), name + "'s vertices are read (the test would pass on none)");
+                var toPiece = Piece(name).transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                foreach (var (door, centre, alongX, width) in doorways)
+                {
+                    int inside = 0;
+                    foreach (var v in vertices)
+                    {
+                        var p = toPiece.MultiplyPoint3x4(v);
+                        float along = alongX ? p.x - centre.x : p.z - centre.y, across = alongX ? p.z - centre.y : p.x - centre.x;
+                        if (Mathf.Abs(along) < width / 2 - 0.04f && Mathf.Abs(across) < 0.3f && p.y > 0.05f && p.y < 2.0f) inside++;
+                    }
+                    Assert.That(inside, Is.EqualTo(0), name + " reaches into " + door);
+                }
+            }
         }
 
         [Test] public void EachRoomsDressingStaysInsideItsRoom()
         {
             // Unit A: x -4..4, z -4..4, ceiling 3.2; the back room: x -4..2, z 4..9, ceiling 3.6 (GrowthWorld.Rooms).
+            // GR-16 wave 3: the lab annex, x -4..4, z 9..17, and the workshop, x 4..12, z 9..15, both with a 3.6 m ceiling.
             foreach (var (name, min, max) in new[] { ("UnitAFloor", new Vector3(-4, -0.05f, -4), new Vector3(4, 0.01f, 4)), ("UnitADressing", new Vector3(-4, 0, -4), new Vector3(4, 3.2f, 4)),
-                                                    ("BackRoomFloor", new Vector3(-4, -0.05f, 4), new Vector3(2, 0.01f, 9)), ("BackRoomDressing", new Vector3(-4, 0, 4), new Vector3(2, 3.6f, 9)) })
+                                                    ("BackRoomFloor", new Vector3(-4, -0.05f, 4), new Vector3(2, 0.01f, 9)), ("BackRoomDressing", new Vector3(-4, 0, 4), new Vector3(2, 3.6f, 9)),
+                                                    ("AnnexFloor", new Vector3(-4, -0.05f, 9), new Vector3(4, 0.01f, 17)), ("AnnexDressing", new Vector3(-4, 0, 9), new Vector3(4, 3.6f, 17)),
+                                                    ("WorkshopFloor", new Vector3(4, -0.05f, 9), new Vector3(12, 0.01f, 15)), ("WorkshopDressing", new Vector3(4, 0, 9), new Vector3(12, 3.6f, 15)) })
             {
                 var b = MeshBounds(Piece(name));
                 for (int a = 0; a < 3; a++)

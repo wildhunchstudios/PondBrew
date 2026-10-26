@@ -110,6 +110,7 @@ namespace EvolutionShop
             foreach (var p in pumps.Values) if (p.root) Destroy(p.root.gameObject);
             pumps.Clear();
             for (int i = pipesRoot.childCount - 1; i >= 0; i--) Destroy(pipesRoot.GetChild(i).gameObject);
+            ClearLookPipes();
             pipeSignature = "";
             HidePipeGhost();
             generatorLevel = -1;
@@ -199,6 +200,7 @@ namespace EvolutionShop
                 }
                 Box(p, "Lamp", new Vector3(0.28f + 0.22f * (columns - 1), 0.75f, 0.31f), new Vector3(0.08f, 0.08f, 0.02f), lampOk);
             }
+            if (LookOn) DressGenerator(p, level);
         }
 
         BufferView BuildBuffer(int place)
@@ -212,6 +214,7 @@ namespace EvolutionShop
             Box(root, "Number", new Vector3(0, 0.45f, 0.19f), new Vector3(0.06f + 0.03f * place, 0.05f, 0.02f), paper);
             Target(root.gameObject, GrowthTargetKind.Buffer, place.ToString());
             AddCollider(root.gameObject, new Vector3(0, 0.75f, 0), new Vector3(0.42f, 1.5f, 0.42f));
+            if (LookOn) { Kit(root, "Buffer", default, null, "Stand", "Tank", "Lid", "Number"); Kit(root, "BufferTag" + (place + 1)); }
             return new BufferView { Root = root, Fill = fill };
         }
 
@@ -235,6 +238,11 @@ namespace EvolutionShop
             }
             Target(p.gameObject, GrowthTargetKind.Pump, id);
             AddCollider(p.gameObject, new Vector3(0, 0, 0.06f), new Vector3(0.3f, 0.34f, 0.24f));
+            if (LookOn)
+            {
+                if (wheel != null) { Kit(p, "PumpHand", default, null, "Housing"); Kit(wheel, "PumpHandWheel", default, null, "Wheel", "Handle"); }
+                else Kit(p, "PumpMotor", default, null, "Housing", "Motor");
+            }
             return (p, level, wheel);
         }
 
@@ -267,6 +275,7 @@ namespace EvolutionShop
         void BuildPipes(GrowthShop shop)
         {
             for (int i = pipesRoot.childCount - 1; i >= 0; i--) Destroy(pipesRoot.GetChild(i).gameObject);
+            ClearLookPipes();
             var laid = new List<GrowthPipe>();
             KeepChutePath(new List<Vector3>());
             foreach (var pipe in shop.Pipes)
@@ -277,7 +286,8 @@ namespace EvolutionShop
                 var root = new GameObject("Pipe " + pipe.Id + ": " + pipe.From + " to " + pipe.To).transform; root.SetParent(pipesRoot, false);
                 var path = PipePath(pipe, crossings);
                 // GR-08: the hatchling chute is a wider glass tube; its bead follows its path.
-                if (pipe.Chute) { DrawPath(root, path, chuteMat, ChuteRadius); KeepChutePath(path); }
+                if (pipe.Chute) { if (LookOn) DrawLookChute(root, path); else DrawPath(root, path, chuteMat, ChuteRadius); KeepChutePath(path); }
+                else if (LookOn) DrawLookPipe(root, path, pipe, c);
                 else DrawPath(root, path, c == null ? stand : culture[c]);
                 laid.Add(pipe);
             }
@@ -327,6 +337,7 @@ namespace EvolutionShop
             foreach (var kv in pumps)
                 if (kv.Value.wheel != null && session.PumpingNow && session.Focused != null && session.Focused.Id == kv.Key)
                     kv.Value.wheel.localRotation *= Quaternion.Euler(0, 0, -300 * dt);
+            if (LookOn) AnimateLookPipes(shop, dt);
         }
     }
 }

@@ -12,7 +12,9 @@ namespace EvolutionShop
     /// glass, glowing cultures and screens, sunlight through the window by day and lamps by night. Wave 1 dresses the back
     /// room and shop unit A and their stations (growers, the incubator, Starter tanks, the counter); wave 2 the other stations
     /// and tanks (the vat, the breeding tank, the research bench and its siphon, the vial shelf, the catalog, the pinboard, Large
-    /// and Show tanks, lab racks). The growth kit's pieces
+    /// and Show tanks, lab racks); wave 3 the machines (the generator, pumps, buffers, the power board, the sorter), the lab
+    /// annex and the workshop with GR-10's pipe gallery and dome light, and the pipes and the chute (GrowthWorldLookPipes.cs).
+    /// The growth kit's pieces
     /// (Tools/Art/create_growth_kit.py, Resources/Art/GrowthKit) are decorative children: the greybox's shapes keep their
     /// colliders and targets, only their renderers are switched off, so positions, footprints, aisles and save ids stay as
     /// they are (AD.4). Every other greybox material takes the look's palette. -evolutionGrowthPlain keeps the greybox look.
@@ -29,6 +31,7 @@ namespace EvolutionShop
         public IReadOnlyList<Transform> LookPieces => lookPieces.Where(t => t != null).ToList();
         Light[] shopLamps = new Light[0];
         Light labLamp;
+        Light[] labLamps = new Light[0];
         Volume lookVolume;
         VolumeProfile lookProfile;
         readonly List<ReflectionProbe> lookProbes = new List<ReflectionProbe>();
@@ -215,6 +218,16 @@ namespace EvolutionShop
             }
             labLamp = transform.Find("Back room lamp")?.GetComponent<Light>();
             if (labLamp) { labLamp.transform.localPosition = new Vector3(-1, 3.3f, 6.5f); labLamp.range = 10; }
+            // Wave 3: the lab annex and the workshop, their lamps under their light strips, and GR-10's pipe gallery and dome light.
+            Hide(labRoot, "Annex floor");
+            Hide(transform.Find("Workshop"), "Workshop floor");
+            foreach (var asset in new[] { "AnnexFloor", "AnnexDressing", "WorkshopFloor", "WorkshopDressing" }) Kit(dressing, asset);
+            var sets = transform.Find("Set pieces");
+            Kit(sets.Find("Pipe gallery"), "PipeGallery", default, null, "Riser", "Valve", "Gauge", "Header", "Placard");
+            Kit(sets.Find("Workshop dome"), "WorkshopDome", default, null, "Dome", "Ring", "Glow");
+            if (annexLight) annexLight.transform.localPosition = new Vector3(0, 3.3f, 13);
+            if (workshopLight) workshopLight.transform.localPosition = new Vector3(8, 3.1f, 12);
+            labLamps = new[] { annexLight, workshopLight };
         }
 
         void DressStations()
@@ -229,6 +242,22 @@ namespace EvolutionShop
             foreach (var bottle in vials.Values) Kit(bottle, "VialBottle", default, null, "Glass", "Cork");
             Kit(stationsRoot.Find("Supplier catalog"), "Catalog", default, null, "Stand", "Book", "Pages");
             Kit(stationsRoot.Find("Pinboard"), "Pinboard", default, null, "Board", "Note 0", "Note 1", "Note 2");
+            // Wave 3: the power board (its bars and lamp stay, they move) and the incubator's outlet.
+            Kit(labRoot.Find("Power board"), "PowerBoard", default, null, "Board", "Supply track", "Draw track");
+            Kit(outlet.transform, "IncubatorOutlet", default, null, "Outlet", "Chute mouth");
+        }
+
+        /// <summary>The generator at its level (rebuilt when the level changes): the hand crank and its wheel, which turns while
+        /// it is cranked; the bubble turbine, the twin turbine and the tide engine, their water and rising bubbles kept.</summary>
+        void DressGenerator(Transform look, int level)
+        {
+            if (level <= 0) return;
+            if (level == 1)
+            {
+                Kit(look, "GenCrank", default, null, "Base", "Housing");
+                if (crankWheel) Kit(crankWheel, "GenCrankWheel", default, null, "Wheel", "Spoke", "Handle");
+            }
+            else Kit(look, level == 2 ? "GenTurbine" : level == 3 ? "GenTwin" : "GenTide", default, null, "Base", "Turbine", "Column", "Tide drum", "Lamp");
         }
 
         /// <summary>A grower or the vat in the kit's shapes; the culture's fill (how full it is) stays, inside the kit's glass.</summary>
@@ -391,7 +420,8 @@ namespace EvolutionShop
             lookVolume = go.AddComponent<Volume>(); lookVolume.isGlobal = true; lookVolume.priority = 40; lookVolume.sharedProfile = lookProfile;
             // A reflection probe in each dressed room, rendered once the room is built and again when night turns to day, so
             // the glossy plastic reflects the room rather than nothing.
-            foreach (var (name, center, size) in new[] { ("unit A", new Vector3(0, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("back room", new Vector3(-1, 1.8f, 6.5f), new Vector3(6, 3.6f, 5)) })
+            foreach (var (name, center, size) in new[] { ("unit A", new Vector3(0, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("back room", new Vector3(-1, 1.8f, 6.5f), new Vector3(6, 3.6f, 5)),
+                                                         ("lab annex", new Vector3(0, 1.8f, 13), new Vector3(8, 3.6f, 8)), ("workshop", new Vector3(8, 1.8f, 12), new Vector3(8, 3.6f, 6)) })
             {
                 var probe = new GameObject("Look / reflections (" + name + ")").AddComponent<ReflectionProbe>();
                 probe.transform.SetParent(transform, false); probe.transform.localPosition = center;
@@ -420,6 +450,7 @@ namespace EvolutionShop
             RenderSettings.ambientSkyColor = lookNow.Sky; RenderSettings.ambientEquatorColor = lookNow.Equator; RenderSettings.ambientGroundColor = lookNow.Ground;
             foreach (var l in shopLamps) if (l) l.intensity = lookNow.Lamps;
             if (labLamp) labLamp.intensity = lookNow.Strip;
+            foreach (var l in labLamps) if (l) l.intensity = lookNow.Strip;
             var cam2 = Camera.main;
             if (cam2) cam2.backgroundColor = lookNow.Background;
             if (lookProfile.TryGet<ColorAdjustments>(out var color)) color.postExposure.value = lookNow.Exposure;

@@ -140,6 +140,7 @@ namespace EvolutionShop
             }
             Box(p, "Lamp", new Vector3(0.5f, 0.75f, 0.41f), new Vector3(0.08f, 0.08f, 0.02f), lampOk);
             Box(p, "Label", new Vector3(-0.3f, 0.5f, 0.41f), new Vector3(0.6f, 0.16f, 0.02f), paper);
+            if (LookOn) Kit(p, "Sorter", default, null, "Cabinet", "Belt", "Belt slat", "Hopper", "Hopper arm", "Gate", "Outlet tray", "Lamp", "Label");
         }
 
         /// <summary>The chute's path in the world (its bead follows it), kept as the pipes are built.</summary>

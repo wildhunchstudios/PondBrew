@@ -86,9 +86,11 @@ namespace EvolutionShop.Growth
         /// <summary>GR-16's look at the new game's look (Docs/Evidence/gr-16/LOOK.md): the spaces start with every station the
         /// look dresses at its top level (the growers, the incubator, the counter, the breeding tank, the research bench, the
         /// siphon, and the conditioning vat with Mist owned), five starter vials on the shelf, the Large tank on a3 at level 3, a
-        /// Show tank at level 2 on unit B's feature place, and the workshop open with lab racks at levels 3 and 1. The workshop,
-        /// the Show tank and the racks are bought with the shop's own actions; the levels, Mist and the vials are set as the
-        /// routes' fixtures set them, and the creatures in the new tanks put there as the routes' fixtures put them.</summary>
+        /// Show tank at level 2 on unit B's feature place, and the workshop open with lab racks at levels 3 and 1; and (wave 3)
+        /// the line at its top: three buffers piped from Bloom, Flow and Ember, the tide engine, fast pumps, the sorter and its
+        /// chute, and the auto-doser's pipe from buffer 1. The workshop, the Show tank, the racks, the buffers, the pipes, the
+        /// generator, the pumps and the sorter are bought with the shop's own actions; the other levels, Mist and the vials are
+        /// set as the routes' fixtures set them, and the creatures in the new tanks put there as the routes' fixtures put them.</summary>
         public static GrowthShop LookStart()
         {
             var shop = SpacesStart();
@@ -106,6 +108,13 @@ namespace EvolutionShop.Growth
             foreach (var (place, count) in new[] { ("b4", 10), ("r1", 3), ("r2", 2) })
                 if (shop.ContainerAt(place) != null)
                     foreach (var species in shop.Discovered.Take(count)) shop.DevelopmentStock(shop.ContainerAt(place).Id, species);
+            shop.BuyBuffer(2);
+            shop.LayPipe(GrowthLab.Tap("ember"), GrowthLab.Buffer(2));
+            shop.Upgrade("generator"); shop.Upgrade("generator");
+            shop.Upgrade("pump");
+            shop.Upgrade("sorter");
+            shop.LayPipe(GrowthLab.Out, GrowthLab.Sorter);
+            shop.LayPipe(GrowthLab.Buffer(0), GrowthLab.Port);
             shop.Credits = 30000;
             shop.TakeEvents();
             return shop;
