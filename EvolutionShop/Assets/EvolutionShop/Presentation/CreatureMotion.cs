@@ -11,10 +11,13 @@ namespace EvolutionShop
         // Seconds, deliberately shared with the established Pondlet identity contract.
         public static float IdentityPhase(string id) => PondletMotion.IdentityPhase(id);
 
+        /// <summary>Whether a number is a real one (neither NaN nor infinite): a pose never takes a broken time or value.</summary>
+        public static bool Finite(float v) => !float.IsNaN(v) && !float.IsInfinity(v);
+
         public static PondletPose Resolve(string species, float time, float phase, bool reduced)
         {
-            if (!FxParticleRequest.Finite(time)) time = 0;
-            if (!FxParticleRequest.Finite(phase)) phase = 0;
+            if (!CreatureMotion.Finite(time)) time = 0;
+            if (!CreatureMotion.Finite(phase)) phase = 0;
             if (species == "pondlet") return PondletMotion.Resolve(time, phase, reduced);
             if (reduced) return new PondletPose { Angles = new Vector3(0, -90, 0), Effort = .12f };
             bool round = species == "bubblebelly", ribbon = species == "ribbonfin", wing = species == "driftwing";

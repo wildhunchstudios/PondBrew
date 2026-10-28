@@ -446,8 +446,8 @@ namespace EvolutionShop
             }
             // Its distant look is at rest: no face, habit or trick to run.
             if (detail != 0) { lastTick = -1; return; }
-            float dt = lastTick < 0 || !FxParticleRequest.Finite(t) ? 0 : Mathf.Clamp(t - lastTick, 0, .25f);
-            lastTick = FxParticleRequest.Finite(t) ? t : lastTick;
+            float dt = lastTick < 0 || !CreatureMotion.Finite(t) ? 0 : Mathf.Clamp(t - lastTick, 0, .25f);
+            lastTick = CreatureMotion.Finite(t) ? t : lastTick;
             float before = clock;
             if (!reduced) clock += dt;
             focus = highlighted ? focus + dt : 0;

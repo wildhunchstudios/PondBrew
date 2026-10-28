@@ -16,7 +16,7 @@ namespace EvolutionShop
         public static FxHatchPose Resolve(float age, bool first, bool reduced)
         {
             var pose = new FxHatchPose { Scale = Vector3.one, IdleWeight = 1, FluidScale = 1 };
-            if (reduced || !FxParticleRequest.Finite(age) || age <= 0 || age >= Duration(first)) return pose;
+            if (reduced || !CreatureMotion.Finite(age) || age <= 0 || age >= Duration(first)) return pose;
             float release = Release(first), speed = first ? 1 : .6f, amplitude = first ? 1 : .7f;
             float pop = release + .18f * speed, rebound = release + .43f * speed;
             float beat = age < release ? -Mathf.SmoothStep(0,1,age/release) : age < pop ? Mathf.Lerp(-1,1,Mathf.SmoothStep(0,1,(age-release)/(pop-release))) :

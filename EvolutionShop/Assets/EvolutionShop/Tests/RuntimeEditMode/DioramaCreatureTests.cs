@@ -17,17 +17,10 @@ namespace EvolutionShop.Tests
         static string Manifest => File.ReadAllText(Path.Combine(Repo, "ArtSource", "DioramaKit", "manifest.json"));
         static readonly string[] RigParts = { "Body", "Eyes", "Pupils", "Glints", "Lids", "Blush", "Lips", "Tail pivot", "Left fin pivot", "Right fin pivot", "Crest pivot" };
 
-        /// <summary>The classic game's five species (the classic containers show only those).</summary>
-        static IEnumerable<DioramaSpecies> Classic()
-        {
-            var game = GameConfig.CreateDefault().Species.Select(s => s.Id).ToArray();
-            return DioramaSpecies.All.Where(s => game.Contains(s.Id));
-        }
-
         [Test] public void EveryGameSpeciesHasAKitSpeciesInManifestOrder()
         {
-            var game = GameConfig.CreateDefault().Species.Select(s => s.Id).ToArray();
-            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.SupersetOf(game), "Every species the classic game has is a kit species");
+            var game = new[] { "pondlet", "bubblebelly", "ribbonfin", "lanternfin", "driftwing" };
+            Assert.That(DioramaSpecies.All.Select(s => s.Id), Is.SupersetOf(game), "AD-B's five are kit species");
             Assert.That(DioramaSpecies.All.Take(5).Select(s => s.Id), Is.EquivalentTo(game), "AD-B's five first, at their atlas blocks");
             // GR-12 waves 1 to 4: all of GR.7's roster, the nine families' eight each.
             var waves = GrowthContent.Species.ToArray();
@@ -351,35 +344,29 @@ namespace EvolutionShop.Tests
 
         [Test] public void AVariantRecoloursTheCreatureFromTheAtlas()
         {
-            bool was = DioramaLook.Active;
-            DioramaLook.Active = true;
-            try
+            foreach (var s in DioramaSpecies.All)
             {
-                foreach (var s in DioramaSpecies.All)
+                var go = new GameObject("variant test");
+                try
                 {
-                    var go = new GameObject("variant test");
-                    try
+                    var creature = go.AddComponent<CreatureVisual>();
+                    Assert.That(creature.BuildKit(s.Id), Is.True, s.Id);
+                    Assert.That(creature.IsDiorama && creature.DioramaSpecies.Id == s.Id, Is.True, s.Id);
+                    foreach (DioramaVariant v in Enum.GetValues(typeof(DioramaVariant)))
                     {
-                        var creature = go.AddComponent<CreatureVisual>();
-                        creature.Build(s.Id);
-                        Assert.That(creature.IsDiorama && creature.DioramaSpecies.Id == s.Id, Is.True, s.Id);
-                        foreach (DioramaVariant v in Enum.GetValues(typeof(DioramaVariant)))
+                        creature.SetDioramaVariant(v);
+                        for (int slot = 0; slot < DioramaVariants.Sheen; slot++)
                         {
-                            creature.SetDioramaVariant(v);
-                            for (int slot = 0; slot < DioramaVariants.Sheen; slot++)
-                            {
-                                var material = creature.DioramaSlotForValidation(slot);
-                                Assert.That(material, Is.Not.Null, s.Id + " slot " + slot);
-                                var expected = DioramaVariants.Color(s.Index, v, slot); expected.a = 1;
-                                Assert.That(Distance(material.GetColor("_BaseColor"), expected), Is.LessThan(.005f), s.Id + " " + v + " " + slot);
-                                Assert.That(material.GetFloat("_SheenStrength") > 0, Is.EqualTo(v == DioramaVariant.Shimmer), s.Id + " " + v + " sheen");
-                            }
+                            var material = creature.DioramaSlotForValidation(slot);
+                            Assert.That(material, Is.Not.Null, s.Id + " slot " + slot);
+                            var expected = DioramaVariants.Color(s.Index, v, slot); expected.a = 1;
+                            Assert.That(Distance(material.GetColor("_BaseColor"), expected), Is.LessThan(.005f), s.Id + " " + v + " " + slot);
+                            Assert.That(material.GetFloat("_SheenStrength") > 0, Is.EqualTo(v == DioramaVariant.Shimmer), s.Id + " " + v + " sheen");
                         }
                     }
-                    finally { UnityEngine.Object.DestroyImmediate(go); }
                 }
+                finally { UnityEngine.Object.DestroyImmediate(go); }
             }
-            finally { DioramaLook.Active = was; }
         }
 
         [Test] public void EachTrickPlaysOutAndEndsAtRest()
@@ -530,112 +517,5 @@ namespace EvolutionShop.Tests
             Assert.That(DioramaTricks.Idle("lanternfin", 0, 0).Glow, Is.InRange(-.8f, 1.01f));
         }
 
-        [Test] public void FamilyWaterTintsAreDistinctAndNeverMatchTheirSpecies()
-        {
-            var tints = ((DioramaFamily[])Enum.GetValues(typeof(DioramaFamily))).Select(DioramaWater.Tint).ToArray();
-            Assert.That(tints.Length, Is.EqualTo(9));
-            for (int i = 0; i < tints.Length; i++)
-            {
-                Assert.That(tints[i].a, Is.InRange(.05f, .2f));
-                for (int j = i + 1; j < tints.Length; j++) Assert.That(Distance(tints[i], tints[j]), Is.GreaterThan(.2f));
-            }
-            foreach (var s in DioramaSpecies.All)
-                Assert.That(Distance(DioramaVariants.Color(s.Index, DioramaVariant.Classic, 0), DioramaWater.Tint(s.Family)), Is.GreaterThan(.3f),
-                    s.Id + " stands out from its water (AD.4)");
-        }
-
-        [Test] public void TheWaterCarriesItsFamilyTintOnTheFarSide()
-        {
-            // At the tint's own opacity (10-13%) the family water never read on screen; the far side carries it at a visible
-            // strength that still leaves the creature and the back wall clear. The AD-B route reads the result off the screen.
-            var glass = Resources.Load<Shader>("EvolutionDioramaGlass");
-            Assert.That(glass, Is.Not.Null);
-            var material = new Material(glass);
-            try { Assert.That(material.HasProperty("_FarSide") && material.GetFloat("_FarSide") == 1, Is.True, "The far side is plain unless asked"); }
-            finally { UnityEngine.Object.DestroyImmediate(material); }
-            foreach (DioramaFamily family in Enum.GetValues(typeof(DioramaFamily)))
-            {
-                float far = DioramaWater.Tint(family).a * DioramaWater.FarSide;
-                Assert.That(far, Is.InRange(.25f, .45f), family + " far-side water opacity");
-                var fluid = DioramaWater.Fluid(family);
-                Assert.That(fluid.a * DioramaWater.FarSide, Is.InRange(.25f, .65f), family + " far-side fluid opacity");
-            }
-            Assert.That(DioramaWater.GlowShare, Is.InRange(.4f, .8f));
-            Assert.That(DioramaWater.FluidGlowShare, Is.InRange(.15f, .35f));
-        }
-
-        [Test] public void EveryTrickStaysInsideTheTankGlass()
-        {
-            // Drives the real creature through its trick at mid-water (DioramaTricks.Settle), broadside either way, with its
-            // tail and sails swishing, and measures its renderers' bounds as the AD-B route does every frame. The resident origin
-            // sits 0.52 above the bottom of the water and 0.54 below its surface, 0.62 from the front and the back glass. The
-            // classic shop's five only: GR-12's species swim in the greybox's tanks (GrowthKitCreatureTests and its route).
-            bool was = DioramaLook.Active;
-            DioramaLook.Active = true;
-            try
-            {
-                foreach (var s in Classic())
-                {
-                    var tank = new GameObject("tank test");
-                    try
-                    {
-                        var resident = new GameObject(s.Id).transform;
-                        resident.SetParent(tank.transform, false);
-                        resident.localScale = Vector3.one * (s.Id == "driftwing" ? .59f : .69f) * s.TankScale;
-                        var creature = resident.gameObject.AddComponent<CreatureVisual>();
-                        creature.Build(s.Id);
-                        float d = DioramaTricks.Duration(s.Id), worst = 0;
-                        string at = "";
-                        for (float age = 0; age < d; age += .02f)
-                            foreach (float heading in new[] { 90f, -90f })
-                                for (int k = 0; k < 4; k++)
-                                {
-                                    var p = DioramaTricks.Trick(s.Id, age);
-                                    creature.SetDioramaFace(Mathf.Max(.2f, p.Happy), p.Surprised, p.Puffed);
-                                    creature.SetDioramaAction(p.Glow, p.Tail, p.Fins);
-                                    resident.localPosition = Vector3.up * p.Lift;
-                                    resident.localRotation = Quaternion.Euler(0, heading, 0) * Quaternion.Euler(p.Pitch, p.Yaw, p.Roll);
-                                    creature.AnimateSpecies(age + k * 1.7f, .7f, false);
-                                    foreach (var r in resident.GetComponentsInChildren<Renderer>())
-                                    {
-                                        var b = r.bounds;
-                                        float over = Mathf.Max(Mathf.Max(b.max.y / .54f, -b.min.y / .52f), Mathf.Max(b.max.z, -b.min.z) / .62f);
-                                        if (over > worst) { worst = over; at = r.name + " at " + age.ToString("0.00") + " s"; }
-                                    }
-                                }
-                        Assert.That(worst, Is.LessThan(.97f), s.Id + " / " + at + " / largest tank scale about " + (s.TankScale * .97f / worst).ToString("0.00"));
-                    }
-                    finally { UnityEngine.Object.DestroyImmediate(tank); }
-                }
-            }
-            finally { DioramaLook.Active = was; }
-        }
-
-        [Test] public void EveryKitSpeciesFitsTheDisplayTankAtItsScale()
-        {
-            // Static fit, with the swim path and the trick's lift and puff; the AD-B route checks every frame of the real swim.
-            var interior = new Vector3(1.94f, 1.06f, 1.24f);
-            foreach (var s in Classic())
-            {
-                var kit = Resources.Load<GameObject>(DioramaLook.KitPath + s.Kit).transform;
-                var bounds = new Bounds();
-                bool first = true;
-                foreach (var r in kit.GetComponentsInChildren<Renderer>())
-                {
-                    var filter = r.GetComponent<MeshFilter>();
-                    var mesh = filter ? filter.sharedMesh : ((SkinnedMeshRenderer)r).sharedMesh;
-                    var b = new Bounds(r.transform.localPosition + mesh.bounds.center, mesh.bounds.size);
-                    if (first) { bounds = b; first = false; } else bounds.Encapsulate(b);
-                }
-                float scale = s.ModelScale * (s.Id == "driftwing" ? .59f : .69f) * s.TankScale;
-                float puff = s.Id == "bubblebelly" ? 1.28f : 1.05f;
-                // Swimming broadside: its length runs along the tank, its width across it; the Driftwing's loop stands its whole
-                // length upright at mid-water, and the Bubblebelly's spin turns its width.
-                float length = bounds.size.z * scale, width = bounds.size.x * scale * puff, height = bounds.size.y * scale * puff;
-                Assert.That(Mathf.Max(width, s.Id == "driftwing" ? length : 0), Is.LessThan(interior.z), s.Id + " across the tank");
-                Assert.That(Mathf.Max(height, s.Id == "driftwing" ? length : s.Id == "bubblebelly" ? Mathf.Min(length, width) : height) + .1f, Is.LessThan(interior.y), s.Id + " top to bottom");
-                Assert.That(length, Is.LessThan(interior.x * .75f), s.Id + " along the tank, with room to swim");
-            }
-        }
     }
 }

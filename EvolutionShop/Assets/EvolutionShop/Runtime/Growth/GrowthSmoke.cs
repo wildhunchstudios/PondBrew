@@ -206,13 +206,13 @@ namespace EvolutionShop
             Ok(shop.TakeHatchling(), "Take fixture hatchling");
         }
 
-        /// <summary>Every route's first checks: the greybox replaced the classic session, saves in the evidence folder only, at the requested size.</summary>
+        /// <summary>Every route's first checks: the scene's start handed over to the game's session, saves in the evidence folder only, at the requested size.</summary>
         IEnumerator Opening()
         {
             yield return new WaitForSeconds(1);
-            Check(!FindObjectsByType<ShopSession>(FindObjectsSortMode.None).Any(), "The greybox replaced the classic session (no ShopSession in the scene)");
+            Check(!FindObjectsByType<ShopSession>(FindObjectsSortMode.None).Any(), "The scene's start handed over to the game's session (no ShopSession left in the scene)");
             Check(Path.GetFullPath(s.SavePath) == Path.GetFullPath(Path.Combine(evidence, GrowthSession.SaveFileName)), "The greybox saves to its own isolated file in the evidence folder");
-            Check(!string.Equals(Path.GetFullPath(s.SavePath), Path.GetFullPath(SaveStore.DefaultPath), StringComparison.OrdinalIgnoreCase), "The greybox never writes the classic save slot");
+            Check(!string.Equals(Path.GetFullPath(s.SavePath), Path.GetFullPath(Path.Combine(Application.persistentDataPath, GrowthSession.OldSaveFileName)), StringComparison.OrdinalIgnoreCase), "The game never writes the removed classic game's save file");
             if (!Application.isEditor)
             {
                 int width = int.Parse(ShopSession.Arg("-screen-width")), height = int.Parse(ShopSession.Arg("-screen-height"));

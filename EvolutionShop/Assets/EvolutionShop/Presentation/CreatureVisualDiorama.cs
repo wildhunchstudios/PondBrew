@@ -35,7 +35,7 @@ namespace EvolutionShop
         int waveSin = -1, waveSinNeg = -1, waveCos = -1, waveCosNeg = -1;
         float dioramaSpan;
 
-        /// <summary>True for a kit creature; false for every classic one.</summary>
+        /// <summary>True once a kit creature is built.</summary>
         public bool IsDiorama { get; private set; }
         public DioramaSpecies DioramaSpecies => dioramaSpecies;
         public DioramaVariant DioramaVariant { get; private set; }
@@ -45,27 +45,23 @@ namespace EvolutionShop
         /// <summary>GR-12: the top of the crest (the Cinderling's spine tips, the Dewling's dew beads), where their sparks and
         /// droplets fly from; null without a crest mesh.</summary>
         public Transform DioramaCrestPoint => dioramaCrestPoint;
-        /// <summary>GR-12: a kit creature's tail pivot, where a Cometail's stardust streams from; null for a classic creature.</summary>
+        /// <summary>GR-12: a kit creature's tail pivot, where a Cometail's stardust streams from; null before a kit creature is built.</summary>
         public Transform DioramaTailPivot => IsDiorama ? tail : null;
         public Material DioramaGlowMaterial => dioramaGlow;
 
-        /// <summary>Extra container scale: a kit creature reads about twice as large in display tanks and the incubator.</summary>
-        public float ContainerScale(bool incubator) => IsDiorama ? (incubator ? dioramaSpecies.IncubatorScale : dioramaSpecies.TankScale) : 1;
-        /// <summary>How much of its swim path a kit creature uses in the large tanks, so the larger model stays in the glass.</summary>
-        public float DioramaSwim => IsDiorama ? dioramaSpecies.SwimAmplitude : 1;
         /// <summary>GR-12: the kit body's length (its Body mesh, nose to tail root, before the model's scale), which the greybox
         /// sets to the species' GR size class. GR-12B: a remade species' span instead (its largest extent, not counting a lure), so a
         /// squid with a small mantle and long arms, or a sunfish with tall fins, is its class's size overall.</summary>
         public float DioramaBodyLength => IsDiorama && dioramaSpecies.Remade ? dioramaSpan
             : dioramaBody && dioramaBody.sharedMesh ? dioramaBody.sharedMesh.bounds.size.z : 0;
 
-        /// <summary>GR-12: builds the kit creature whatever the classic look switch says, for the greybox, which shows every kit
+        /// <summary>GR-12: builds the kit creature, for the greybox, which shows every kit
         /// species in the AD look. False when the species or its model is missing.</summary>
         public bool BuildKit(string speciesId)
         {
             species = speciesId;
             if (!DioramaSpecies.TryGet(speciesId, out _) || !BuildDioramaCreature(speciesId)) return false;
-            Animate(0);
+            AnimateSpecies(0, .7f, false);
             return true;
         }
 
@@ -73,7 +69,7 @@ namespace EvolutionShop
         {
             if (!DioramaSpecies.TryGet(speciesId, out var spec)) return false;
             var model = DioramaLook.InstantiateKit(spec.Kit, transform, DioramaLook.Style.Creature, dioramaMaterials);
-            if (!model) { Debug.LogWarning("Missing diorama " + spec.Kit + "; using the classic model."); return false; }
+            if (!model) { Debug.LogWarning("Missing kit creature " + spec.Kit + "; the creature is not built."); return false; }
             IsDiorama = true; dioramaSpecies = spec; DioramaVariant = DioramaVariant.Classic;
             model.localScale = Vector3.one * spec.ModelScale;
             tail = model.Find("Tail pivot"); finLeft = model.Find("Left fin pivot"); finRight = model.Find("Right fin pivot");
@@ -201,8 +197,8 @@ namespace EvolutionShop
         /// swing and extra fin spread, in degrees, and (GR-12) the Cinderling's spines flaring (0 at rest, 1 blazing).</summary>
         public void SetDioramaAction(float glow, float tail, float fins, float flare = 0)
         {
-            actionGlow = FxParticleRequest.Finite(glow) ? glow : 0; actionTail = FxParticleRequest.Finite(tail) ? tail : 0;
-            actionFins = FxParticleRequest.Finite(fins) ? fins : 0; actionFlare = FxParticleRequest.Finite(flare) ? Mathf.Clamp(flare, 0, 1.5f) : 0;
+            actionGlow = CreatureMotion.Finite(glow) ? glow : 0; actionTail = CreatureMotion.Finite(tail) ? tail : 0;
+            actionFins = CreatureMotion.Finite(fins) ? fins : 0; actionFlare = CreatureMotion.Finite(flare) ? Mathf.Clamp(flare, 0, 1.5f) : 0;
         }
         public void SetLookTarget(Vector3 world) { lookTarget = world; lookTargetSet = true; }
         public void ClearLookTarget() { lookTargetSet = false; }
@@ -282,12 +278,11 @@ namespace EvolutionShop
         /// their own primitives). The hatch wake follows FX's choreography, as the Pondlet's does.</summary>
         void AnimateDioramaSpecies(float time, float effort, bool reduced, float hatchAge = -1, bool firstHatch = false)
         {
-            if (!FxParticleRequest.Finite(time)) time = 0;
-            effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
+            if (!CreatureMotion.Finite(time)) time = 0;
+            effort = CreatureMotion.Finite(effort) ? Mathf.Clamp01(effort) : 0;
             AnimateDioramaFace(time, reduced);
             var wake = FxHatchChoreography.Resolve(hatchAge, firstHatch, reduced);
             float t = time + pondletIdentityPhase;
-            if (MimicPoseActive && !reduced) t = Mathf.Floor(mimicTime * 2f) * .25f;
             float drive = reduced ? 0 : Mathf.Lerp(.28f, 1, effort) * wake.IdleWeight;
             float tailYaw, finRoll, finRollOther, finPitch, crestRoll;
             // GR-12: each family strokes its own way (AD-B's Driftwing, Lanternfin and Brookkin), each species at its own tempo
@@ -471,16 +466,6 @@ namespace EvolutionShop
             if (dioramaLantern) dioramaLantern.localRotation = dioramaLanternRest * Quaternion.Euler(reduced ? 0 : Mathf.Sin(t * 1.7f) * DioramaLanternSway * drive, 0, 0);
         }
 
-        /// <summary>Validation: a face shape key's current weight (0..100), whichever part carries it.</summary>
-        public float DioramaWeightForValidation(string shape)
-        {
-            foreach (var renderer in new[] { dioramaLips, dioramaLids, dioramaBody })
-            {
-                int index = Shape(renderer, shape);
-                if (index >= 0) return renderer.GetBlendShapeWeight(index);
-            }
-            return -1;
-        }
         /// <summary>Validation: the material of one of the species' own colour slots (Body, Fin, Belly, Accent, Blush).</summary>
         public Material DioramaSlotForValidation(int slot) =>
             IsDiorama && dioramaSlots.TryGetValue(DioramaVariants.SlotName(dioramaSpecies.Id, slot), out var m) ? m : null;

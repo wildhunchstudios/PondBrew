@@ -25,10 +25,6 @@ namespace EvolutionShop
         public Vector2 GuidePoint { get; private set; }
         public string GuideLabel => guideLabel == null ? "" : guideLabel.text;
 
-        /// <summary>Whether a classic game's save is on this computer (the welcome says it is kept; never shown on a route, whose
-        /// captures would then depend on the computer).</summary>
-        bool ClassicSaveKept => !s.ValidationMode && File.Exists(SaveStore.DefaultPath);
-
         void BuildGuide()
         {
             guideBox = new VisualElement { name = "gr-guide", pickingMode = PickingMode.Ignore };

@@ -48,27 +48,19 @@ namespace EvolutionShop
     {
         Quaternion pondletTailRest, pondletLeftRest, pondletRightRest, pondletCrestRest;
         float pondletIdentityPhase;
-        float mimicTime;
-        int mimicFrame = -10;
-        bool mimicReduced;
         void CapturePondletRest()
         {
             pondletTailRest = tail.localRotation; pondletLeftRest = finLeft.localRotation;
             pondletRightRest = finRight.localRotation; pondletCrestRest = crest.localRotation;
         }
-        public void SetPondletIdentity(string id) { pondletIdentityPhase = PondletMotion.IdentityPhase(id); ClearMimicPose(); }
-        public void RequestMimicPose(float elapsed, bool reduced) { mimicTime = elapsed; mimicFrame = Time.frameCount; mimicReduced = reduced; }
-        public void ClearMimicPose() { mimicFrame = -10; }
-        public bool MimicPoseActive => Time.frameCount - mimicFrame <= 1 && !mimicReduced;
+        public void SetPondletIdentity(string id) => pondletIdentityPhase = PondletMotion.IdentityPhase(id);
         public void AnimatePondlet(float time, float effort, bool reduced, float glanceAge = -1, float hatchAge = -1, bool firstHatch = false)
         {
-            if (!FxParticleRequest.Finite(time)) time = 0;
-            effort = FxParticleRequest.Finite(effort) ? Mathf.Clamp01(effort) : 0;
-            AnimateExpression(time, reduced);
+            if (!CreatureMotion.Finite(time)) time = 0;
+            effort = CreatureMotion.Finite(effort) ? Mathf.Clamp01(effort) : 0;
             if (IsDiorama) AnimateDioramaFace(time, reduced);
             float stroke = (time + pondletIdentityPhase) * 3.8f;
             float wave = Mathf.Sin(stroke), petal = Mathf.Sin(stroke - .55f);
-            if (MimicPoseActive && !reduced) wave = petal = Mathf.Sin(Mathf.Floor(mimicTime * 2) * 1.7f);
             float flick = glanceAge >= 0 && glanceAge < .6f && !reduced ? Mathf.Sin(glanceAge / .6f * Mathf.PI) * 3 : 0;
             var wake = FxHatchChoreography.Resolve(hatchAge, firstHatch, reduced);
             float tailAngle = reduced ? 0 : Mathf.Clamp(wave * Mathf.Lerp(5,14,effort)*wake.IdleWeight + wake.Tail,-24,24);

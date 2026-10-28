@@ -1392,7 +1392,7 @@ namespace EvolutionShop
                 step.Add(L(steps[i], "gr-step__text"));
                 body.Add(step);
             }
-            // GR-14: the guided first night, and a word on the classic game's save, kept as it was.
+            // GR-14: the guided first night.
             if (guided)
             {
                 var guide = Box("gr-callout"); guide.style.marginTop = 10;
@@ -1402,7 +1402,6 @@ namespace EvolutionShop
                 guide.Add(skip);
                 body.Add(guide);
             }
-            if (ClassicSaveKept) body.Add(L("Your shop from the classic game is kept as it was: Play-classic starts it.", "gr-hint"));
             if (s.Notice != null) { var notice = Box("gr-callout"); notice.style.marginTop = 10; notice.Add(L(s.Notice, "gr-hint")); body.Add(notice); }
             NotebookFooter("Start", () => s.SetCard(GrowthCard.None), "Start");
         }

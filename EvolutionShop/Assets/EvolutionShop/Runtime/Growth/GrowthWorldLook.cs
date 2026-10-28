@@ -465,7 +465,7 @@ namespace EvolutionShop
         void BuildLookLight()
         {
             sun.shadows = LightShadows.Soft;
-            // The reflection probes below are rendered at run time; the project keeps realtime probes off for the classic game.
+            // The reflection probes below are rendered at run time; the project keeps realtime probes off.
             QualitySettings.realtimeReflectionProbes = true;
             sun.shadowStrength = 0.8f;
             lookProfile = ScriptableObject.CreateInstance<VolumeProfile>(); lookProfile.name = "GR look grade";

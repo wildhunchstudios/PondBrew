@@ -171,10 +171,6 @@ namespace EvolutionShop
             Wave("celestialwyrm", DioramaFamily.Cometail, 71, 2f, .8f, "starfall", true),
         };
 
-        /// <summary>The classic game's species, AD-B's five: the classic shop, its creature study and AD-B's route show only
-        /// these (GR-12's species swim in the greybox at their GR size classes).</summary>
-        public static readonly IReadOnlyList<DioramaSpecies> Classic = new List<DioramaSpecies>(All).GetRange(0, 5);
-
         public static bool TryGet(string id, out DioramaSpecies species)
         {
             foreach (var s in All) if (s.Id == id) { species = s; return true; }
@@ -676,40 +672,5 @@ namespace EvolutionShop
             }
             return p;
         }
-    }
-
-    public static class DioramaWater
-    {
-        /// <summary>AD.4's family water tints (glass base colour, alpha its strength), so no species blends into its water:
-        /// a periwinkle stream for the Brookkin (coral, yellow and teal), a green lagoon for the Sparkline's indigo and gold, warm
-        /// sand for the lilac Airfin; GR-12: a cool blue for the ember-warm Cinderling, a mint pool for the pastel Dewling, a deep
-        /// sea teal for the Reefback's corals and shells, warm coral shallows for the blue and silver Saltscale, deep twilight
-        /// indigo for the dark Gloamer and its glowing lures, a warm violet sky for the bright-headed Cometail.</summary>
-        public static Color Tint(DioramaFamily family) =>
-            family == DioramaFamily.Sparkline ? new Color(.2f, .74f, .58f, .13f) :
-            family == DioramaFamily.Airfin ? new Color(1f, .8f, .55f, .13f) :
-            family == DioramaFamily.Cinderling ? new Color(.3f, .62f, .85f, .13f) :
-            family == DioramaFamily.Dewling ? new Color(.55f, .85f, .6f, .13f) :
-            family == DioramaFamily.Reefback ? new Color(.05f, .6f, .75f, .13f) :
-            family == DioramaFamily.Saltscale ? new Color(.98f, .66f, .8f, .13f) :
-            family == DioramaFamily.Gloamer ? new Color(.35f, .3f, .75f, .13f) :
-            family == DioramaFamily.Cometail ? new Color(.75f, .35f, .85f, .13f) : new Color(.55f, .62f, .98f, .1f);
-
-        /// <summary>The incubator fluid for a family (more opaque, since the creature grows inside it).</summary>
-        /// <summary>How much more opaque the water's far side (behind the creature, and the sand) is than its near side, so the
-        /// family tint reads around the creature without veiling it.</summary>
-        public const float FarSide = 3f;
-        /// <summary>The night glow of the water and the incubator fluid, as a share of the tint's colour.</summary>
-        public const float GlowShare = .6f, FluidGlowShare = .26f;
-
-        public static Color Fluid(DioramaFamily family) =>
-            family == DioramaFamily.Sparkline ? new Color(.25f, .88f, .55f, .2f) :
-            family == DioramaFamily.Airfin ? new Color(1f, .86f, .66f, .2f) :
-            family == DioramaFamily.Cinderling ? new Color(.4f, .72f, .95f, .2f) :
-            family == DioramaFamily.Dewling ? new Color(.62f, .92f, .66f, .2f) :
-            family == DioramaFamily.Reefback ? new Color(.1f, .7f, .85f, .2f) :
-            family == DioramaFamily.Saltscale ? new Color(1f, .75f, .85f, .2f) :
-            family == DioramaFamily.Gloamer ? new Color(.45f, .4f, .85f, .2f) :
-            family == DioramaFamily.Cometail ? new Color(.85f, .45f, .95f, .2f) : new Color(.35f, .85f, .9f, .2f);
     }
 }

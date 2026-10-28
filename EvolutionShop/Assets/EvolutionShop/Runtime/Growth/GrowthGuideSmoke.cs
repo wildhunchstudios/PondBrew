@@ -9,8 +9,7 @@ using UnityEngine.UIElements;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-14's Windows route (-evolutionGrowthGuideSmoke): the cut-over (GR.43). Which game each command line starts (the new
-    /// game with none, the classic game behind -evolutionClassic and its own tools' flags); the guided first night from a
+    /// GR-14's Windows route (-evolutionGrowthGuideSmoke): the cut-over (GR.43). The guided first night from a
     /// fresh shop: the welcome's word on it, each step's line and marker through the first loop, the marker at the screen's
     /// edge when its target is behind, hidden while a card is open, a step undone asked for again, the first sale, and the
     /// first day's receipt ending it with a note; its state saved and restored; skipping it from the pause screen and from
@@ -33,14 +32,6 @@ namespace EvolutionShop
             limitations.Add("GR-14 route: the shop's own actions drive the incubator and the day (what the card buttons call); a synthetic mouse is held on the growers and the counter and a synthetic E pressed at the incubator and the tank; the pause screen's Skip it and the welcome's Play without guidance are pressed through the panel's own dispatch; the day after the first sale runs on the shop's clock, accelerated.");
             yield return Opening();
             var shop = s.Shop;
-
-            // The switch: the new game unless the classic game is asked for.
-            Check(GrowthGreybox.Requested, "This route's command line runs the new game");
-            Check(!GrowthGreybox.ClassicAsked(new[] { "EvolutionShop.exe" }), "No flags: EvolutionShop.exe starts the new game");
-            Check(GrowthGreybox.ClassicAsked(new[] { "EvolutionShop.exe", "-evolutionClassic" }), "-evolutionClassic starts the classic game");
-            Check(GrowthGreybox.ClassicAsked(new[] { "EvolutionShop.exe", "-evolutionSmoke", "-evolutionCycleSmoke" }) && GrowthGreybox.ClassicAsked(new[] { "EvolutionShop.exe", "-evolutionSmoke" }),
-                "The classic game's routes start the classic game");
-            Check(!GrowthGreybox.ClassicAsked(new[] { "EvolutionShop.exe", "-evolutionGrowth", "-evolutionGrowthStart", "era3" }), "A start point starts the new game");
 
             Check(shop.Guide == GrowthGuideMode.Off && shop.GuideNow() == null, "A route's fresh shop has no guide (only a new game outside a route starts with it)");
             shop.Guide = GrowthGuideMode.On;
