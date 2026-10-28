@@ -469,7 +469,10 @@ namespace EvolutionShop
             yield return Wait(() => audio.HumPlaying, 3, "the hum after the pause");
             // The hand crank and the hand pumps (set back to level 1 on the same shop: labelled): no hum; a ratchet and strokes while held.
             shop.Levels["generator"] = 1; shop.Levels["pump"] = 1;
-            yield return Wait(() => !audio.HumPlaying && !audio.MotorPlaying, 3, "no hum from the hand crank and hand pumps");
+            // The hand crank stands in the annex again once the world has rebuilt it, and the ray sees it after the next physics
+            // step (transforms are not synced on every change: GR-17's run 1 aimed between the two and met the wall behind).
+            yield return Wait(() => !audio.HumPlaying && !audio.MotorPlaying && w.GeneratorLookLevel == 1, 3, "no hum from the hand crank and hand pumps, the crank rebuilt");
+            yield return new WaitForFixedUpdate();
             int clicks = audio.Clicks;
             var crankAt = w.GeneratorPlace;
             yield return HoldAt(crankAt + new Vector3(0, 0, -1.6f), crankAt + new Vector3(0, 0.9f, 0), GrowthTargetKind.Generator, null, () => audio.Clicks >= clicks + 6, "the crank's ratchet", "The reticle focuses the hand crank");
