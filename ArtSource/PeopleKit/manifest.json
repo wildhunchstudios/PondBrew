@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_people_kit.py",
-  "source_script_sha256": "b5d605c948fb30c5019b7e6b4dd1919f24ff51da1a9b39b6da9012cf98360160",
+  "source_script_sha256": "1c17226d9593be370b308b1d7b272e2e36ce439df00aeedde18efc1613409d09",
   "builder_script": "Tools/Art/gr18_characters.py",
   "builder_script_sha256": "d52edffe3caf9e3a4f341791c29ee96ea0caf63e9dc45f81dcbb5f147d2f2ac7",
   "axis_mapping": "Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z",
@@ -1184,6 +1184,9 @@
     "band": 0.016,
     "pipe": 0.34
   },
+  "gags": {
+    "starsRing": 0.15
+  },
   "materials": {
     "PK_cloth_15867F": {
       "kind": "cloth",
@@ -1353,6 +1356,10 @@
       "kind": "eye",
       "colour": "IRIS"
     },
+    "PK_glass_DFF7FF": {
+      "kind": "glass",
+      "colour": "#DFF7FF"
+    },
     "PK_glass_EAFBFF": {
       "kind": "glass",
       "colour": "#EAFBFF"
@@ -1497,6 +1504,10 @@
       "kind": "plastic",
       "colour": "#22BFB0"
     },
+    "PK_plastic_CFE6B4": {
+      "kind": "plastic",
+      "colour": "#CFE6B4"
+    },
     "PK_plastic_FF7A7A": {
       "kind": "plastic",
       "colour": "#FF7A7A"
@@ -1512,6 +1523,10 @@
     "PK_skin_B5603A": {
       "kind": "skin",
       "colour": "#B5603A"
+    },
+    "PK_skin_FF6F82": {
+      "kind": "skin",
+      "colour": "#FF6F82"
     },
     "PK_skin_FF8FA3": {
       "kind": "skin",
@@ -1763,6 +1778,22 @@
         "wrist.R__hand-open": 1160,
         "wrist.R__hand-point": 1160,
         "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Gags",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Gags.fbx",
+      "sha256": "5ddf6260157786ddef71d9a83f04352ab246e5ae7d7a168b7fea863d0736e7ba",
+      "bytes": 121260,
+      "triangles": 4480,
+      "parts": {
+        "gag__bubble": 260,
+        "gag__cloud": 528,
+        "gag__note": 676,
+        "gag__stars": 2380,
+        "head__eyes-squeeze": 112,
+        "head__mark-slap": 408,
+        "head__mouth-wobble": 116
       }
     },
     {

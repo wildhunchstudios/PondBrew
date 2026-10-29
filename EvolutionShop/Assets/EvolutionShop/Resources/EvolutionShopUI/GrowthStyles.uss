@@ -57,6 +57,43 @@
     white-space: nowrap;
 }
 
+/* GR-18 wave 4 (the comedy): a silly moment's caption, above the next-step line: who says it, and what. */
+.gr-caption {
+    position: absolute;
+    left: 50%;
+    bottom: 128px;
+    translate: -50% 0;
+    flex-direction: row;
+    align-items: center;
+    max-width: 1100px;
+    padding: 10px 26px 10px 22px;
+    background-color: rgba(18, 60, 56, 0.9);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.gr-caption__who {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-honey);
+    margin: 0 12px 0 0;
+    padding: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.gr-caption__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 24px;
+    color: var(--es-paper);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 /* Notes at the top stay narrower than the gap beside a station card, so a long one wraps instead of reaching it. */
 .gr-note {
     max-width: 600px;

@@ -474,6 +474,53 @@ namespace EvolutionShop
 
         public void SetPhase(GrowthPhase p) => phase = p;
 
+        // ---------------------------------------------------------------- GR-18 wave 4 (§6.7): the incubator's burp
+
+        Transform burpBubble;
+        float incubatorTop = -1;
+        /// <summary>Validation: whether the burp's bubble shows, and where.</summary>
+        public bool BurpShowing => burpBubble != null && burpBubble.gameObject.activeSelf;
+        public Vector3 BurpPosition => burpBubble != null ? burpBubble.position : Vector3.zero;
+        /// <summary>Validation: the incubator's height now (squashed below 1 by a burp).</summary>
+        public float IncubatorSquash => incubatorRoot != null ? incubatorRoot.localScale.y : 1;
+        /// <summary>The top of the incubator (world height), where a burp's bubble rises from.</summary>
+        public float IncubatorTop
+        {
+            get
+            {
+                if (incubatorTop > 0 || incubatorRoot == null) return incubatorTop > 0 ? incubatorTop : 1.3f;
+                var b = new Bounds(incubatorRoot.position + Vector3.up, Vector3.zero);
+                foreach (var r in incubatorRoot.GetComponentsInChildren<Renderer>())
+                    if (!r.GetComponentInParent<GrowthCreatureView>() && !(r is ParticleSystemRenderer)) b.Encapsulate(r.bounds);
+                return incubatorTop = b.max.y;
+            }
+        }
+
+        /// <summary>The incubator's burp after a hatch, at an age (-1 ends it): a squash and a stretch of the whole incubator,
+        /// then a bubble rising from its top and popping. Never before the hatchling shows (GrowthGags waits).</summary>
+        public void Belch(float age)
+        {
+            if (incubatorRoot == null) return;
+            bool on = age >= 0;
+            float squash = on && age < 0.35f ? Mathf.Sin(Mathf.PI * age / 0.35f) : 0;
+            incubatorRoot.localScale = new Vector3(1 + 0.05f * squash, 1 - 0.07f * squash, 1 + 0.05f * squash);
+            if (!on) { if (burpBubble) burpBubble.gameObject.SetActive(false); return; }
+            if (burpBubble == null && GrowthPeopleKit.Available)
+            {
+                burpBubble = new GameObject("Burp bubble").transform;
+                burpBubble.SetParent(transform, false);
+                if (GrowthPeopleKit.Prop(GrowthPerson.GagAsset, "gag__bubble", burpBubble) == null) { Destroy(burpBubble.gameObject); burpBubble = null; }
+            }
+            if (burpBubble == null) return;
+            const float rise = 1.5f;
+            bool showing = age > 0.15f && age < rise;
+            if (burpBubble.gameObject.activeSelf != showing) burpBubble.gameObject.SetActive(showing);
+            if (!showing) return;
+            float u = (age - 0.15f) / (rise - 0.15f);
+            burpBubble.position = new Vector3(IncubatorPosition.x + 0.04f * Mathf.Sin(age * 7), IncubatorTop + 0.08f + 0.5f * u, IncubatorPosition.z);
+            burpBubble.localScale = Vector3.one * (0.5f + 0.7f * Mathf.Min(1, u * 3)) * (u > 0.9f ? 1 + (u - 0.9f) * 4 : 1);
+        }
+
         public void Sync(GrowthShop shop, float dt)
         {
             phase = shop.Phase;

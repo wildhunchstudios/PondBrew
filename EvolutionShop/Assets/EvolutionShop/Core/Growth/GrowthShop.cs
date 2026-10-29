@@ -36,7 +36,7 @@ namespace EvolutionShop.Growth
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
         TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog, NoOffspring, NotTinted,
-        NoRoute, NotEnough,
+        NoRoute, NotEnough, NoSuchVisitor,
     }
 
     public readonly struct GrowthResult
@@ -86,7 +86,8 @@ namespace EvolutionShop.Growth
     }
 
     public enum GrowthVisitorState { Browsing, Queued, Leaving }
-    public enum GrowthVisitOutcome { None, Bought, NothingAffordable, TiredOfWaiting, Closed }
+    /// <summary>How a visit ended; GR-18 wave 4: Slapped, a slapped visitor who left in a huff (§6.7).</summary>
+    public enum GrowthVisitOutcome { None, Bought, NothingAffordable, TiredOfWaiting, Closed, Slapped }
 
     public sealed class GrowthVisitor
     {
@@ -107,6 +108,8 @@ namespace EvolutionShop.Growth
         /// <summary>GR-11: an exhibition guest's species and which of the six purchases they came for (-1 for other visitors).</summary>
         public string Wants;
         public int Order = -1;
+        /// <summary>GR-18 wave 4: how many times the player slapped this visitor (§6.7; a casual visitor laughs off the first).</summary>
+        public int Slaps;
     }
 
     public sealed class GrowthMixEntry
@@ -140,7 +143,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped }
 
     public sealed class GrowthEvent
     {
@@ -154,6 +157,8 @@ namespace EvolutionShop.Growth
         public int Day, Visitors, Sales, Revenue, Refusals, Impatient, ReputationGained, StarsBefore, StarsAfter;
         /// <summary>Passers-by who did not come in because every tank was empty (no reputation lost).</summary>
         public int WalkedPast;
+        /// <summary>GR-18 wave 4 (§6.7): visitors slapped who left in a huff, and casual visitors who laughed one off.</summary>
+        public int Slapped, LaughedOff;
         /// <summary>GR-11: the Grand Exhibition's day: its guests, those served, and whether it was held or why it fell short.</summary>
         public int Guests, GuestsServed;
         public bool Exhibition, ExhibitionWon;
@@ -1140,6 +1145,7 @@ namespace EvolutionShop.Growth
         public void Tick(float seconds)
         {
             if (seconds <= 0) return;
+            TickSlap(seconds);
             foreach (var c in Cultures)
                 GrowerUnits[c] = Math.Min(GrowerCapacityOf(c), GrowerUnits[c] + seconds / RefillSecondsOf(c));
             TickPower(seconds);
@@ -1307,6 +1313,7 @@ namespace EvolutionShop.Growth
                 if (Today != null) Today.Impatient++;
                 Raise(GrowthEventKind.Impatient, "A visitor got tired of waiting");
             }
+            else if (outcome == GrowthVisitOutcome.Slapped) SlapLeave(v);
             if (Today != null) Today.ReputationGained += Reputation - before;
         }
 
@@ -1674,6 +1681,10 @@ namespace EvolutionShop.Growth
         public bool peekOff, reducedMotion;
         /// <summary>GR-16 wave 5: the sounds and the machines' hum, 0 full, 1 half, 2 off (an older save, without them, is full).</summary>
         public int soundLevel, humLevel;
+        /// <summary>GR-18 wave 4 (§6.7): the silly moments' sounds (0 full, 1 half, 2 off), how many of them there are (0 every one,
+        /// 1 fewer and shorter, 2 none but the player's slap), and the slap's key ("" for F; an older save has none of them).</summary>
+        public int humourLevel, gagLevel;
+        public string slapKey;
         /// <summary>GR-14: the guided first night ("" for none, "on", "done" or "skipped").</summary>
         public string guide;
         public float sensitivity = 1;

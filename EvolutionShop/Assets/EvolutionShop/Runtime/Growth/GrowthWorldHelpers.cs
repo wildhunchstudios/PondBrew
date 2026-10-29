@@ -17,6 +17,8 @@ namespace EvolutionShop
     /// the culture Moss carries) and the clipboard; each walks in their own way and, at the moment a step picks up or puts
     /// down, does the board's work: Pip's sweep of the scanner and wave at the till, Nori's reach over the rim, Moss's drops.
     /// Without the look (-evolutionGrowthPlain) or the kit, the greybox's capsule in the helper's colour, apron and cap.
+    /// GR-18 wave 4 (§6.7): after a job, a helper with nothing to do may do a tiny victory dance (<see cref="HelperGag"/>,
+    /// GrowthGags' clock), music notes over their head; it stops the moment the rules give them a step.
     /// </summary>
     public sealed partial class GrowthWorld
     {
@@ -38,6 +40,9 @@ namespace EvolutionShop
             public string Step;
             public int Carrying;
             public readonly List<GrowthCreatureView> InJar = new List<GrowthCreatureView>();
+            // GR-18 wave 4: the silly moment the helper plays (a dance), and how far into it (-1 with none).
+            public string Gag;
+            public float GagAge = -1;
         }
 
         readonly Dictionary<string, HelperFigure> figures = new Dictionary<string, HelperFigure>();
@@ -55,6 +60,15 @@ namespace EvolutionShop
         public GrowthPerson FigurePerson(string id) => figures.TryGetValue(id, out var f) ? f.Person : null;
         public string FigureActivity(string id) => figures.TryGetValue(id, out var f) ? f.Activity : null;
         public int FigureInJar(string id) => figures.TryGetValue(id, out var f) ? f.InJar.Count : 0;
+
+        /// <summary>GR-18 wave 4: a helper's silly moment ("dance") at an age, or none (null): played only while they stand
+        /// with no step to do; the rules never wait for it.</summary>
+        public void HelperGag(string id, string gag, float age)
+        {
+            if (id == null || !figures.TryGetValue(id, out var f)) return;
+            f.Gag = gag; f.GagAge = gag == null ? -1 : age;
+            if (gag == null && f.Person != null) f.Person.HideGags();
+        }
 
         static Color HelperColour(string id) =>
             id == "pip" ? new Color(0.93f, 0.47f, 0.62f) : id == "nori" ? new Color(0.36f, 0.66f, 0.36f) : new Color(0.90f, 0.92f, 0.94f);
@@ -253,6 +267,23 @@ namespace EvolutionShop
                 else if (heldRight != "jar") GrowthPeopleMotion.HoldArms(f.Target, f.Kind, heldLeft, heldRight);
                 f.Activity = "walk";
             }
+            else if (f.Gag == "dance" && f.GagAge >= 0 && f.Step == null)
+            {
+                // GR-18 wave 4: the job done and nothing to do: a tiny victory dance, two notes rising over the head.
+                GrowthPeopleMotion.Dance(f.Target, f.GagAge);
+                if (reduced) { f.Target.Lift *= 0.3f; }
+                for (int i = 0; i < 2; i++)
+                {
+                    p.Gag("note" + i, true, "gag__note", "head", new Vector3(i == 0 ? 0.32f : -0.3f, 1.1f, 0));
+                    var holder = p.GagHolder("note" + i);
+                    if (holder == null) continue;
+                    float u = Mathf.Repeat(f.GagAge * 0.7f + i * 0.5f, 1f);
+                    holder.localPosition = new Vector3((i == 0 ? 0.32f : -0.3f) * p.HeadKit + 0.03f * Mathf.Sin(f.GagAge * 6 + i), p.HeadKit * (1.05f + 0.8f * u), 0);
+                    holder.localScale = Vector3.one * (1.6f * Mathf.Sin(Mathf.PI * u));
+                    holder.localRotation = Quaternion.Euler(0, 0, 15 * Mathf.Sin(f.GagAge * 5 + i));
+                }
+                f.Activity = "dance";
+            }
             else if (f.Step != null && f.WorkClock >= 0)
             {
                 // Pip bags the order through the serve; Nori and Moss reach in at the step's end (0.6 s, one reach or three drops).
@@ -267,6 +298,7 @@ namespace EvolutionShop
                 GrowthPeopleMotion.HoldArms(f.Target, f.Kind, heldLeft, heldRight);
                 f.Activity = "stand";
             }
+            if (f.Activity != "dance" && p.GagShown("note0")) { p.Gag("note0", false); p.Gag("note1", false); }
             // Pip's hands: the scanner's grip on the left and an open right hand to wave, at the till.
             if (f.Kind == "pip") { p.ShowHand("L", f.Activity == "work" ? "grip" : "relaxed"); p.ShowHand("R", f.Activity == "work" ? "open" : "relaxed"); }
             if (!f.Posed) { f.Pose.CopyFrom(f.Target); f.Posed = true; }

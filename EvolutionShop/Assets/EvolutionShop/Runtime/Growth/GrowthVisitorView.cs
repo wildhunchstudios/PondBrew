@@ -12,7 +12,10 @@ namespace EvolutionShop
     /// (a tapping foot and a look at the wrist as patience runs low), holds out the coins at the counter, and leaves with the
     /// creature they bought in the shop's water bag and a grin, or with a shrug, a huff, or a wave at closing. Without the look
     /// (-evolutionGrowthPlain) or the kit, the greybox's coloured capsule. Where a visitor goes stays the rules' and the
-    /// routes': the figure only shows it.
+    /// routes': the figure only shows it. GR-18 wave 4 (§6.7): a silly moment's reaction plays over what the visitor is doing
+    /// (<see cref="React"/>, driven by GrowthGags' clock): slapped (the head knocked aside, eyes squeezed shut, a hand mark, dizzy
+    /// stars, a grumble on the way out), laughing a slap off, the innocent culprit of a smell with its puff of a cloud, a sniff
+    /// and the finger at the fish, a complaint, and a fish face at the glass. It never changes where they go.
     /// </summary>
     public sealed class GrowthVisitorView : MonoBehaviour
     {
@@ -46,6 +49,36 @@ namespace EvolutionShop
         public float Walked { get; private set; }
         /// <summary>Validation: the species carried home in the shop's bag (null until one is).</summary>
         public string Carrying => bagged != null ? bagged.Species : null;
+
+        // GR-18 wave 4: the silly moment this visitor reacts to, how far into it, and where what it is about is.
+        string reaction;
+        float reactionAge, holdUntil = -1;
+        Vector3 reactionAt;
+        /// <summary>Validation: the reaction playing (slapped, laugh, culprit, sniff, blame, complain, fishface), or null; how
+        /// long the walk out was held for a slap's stagger.</summary>
+        public string Reaction => reaction;
+        public float Staggered { get; private set; }
+
+        /// <summary>Plays a reaction at an age (seconds into it) about a place (the player, a tank); each frame while it lasts.</summary>
+        public void React(string kind, float age, Vector3 at) { reaction = kind; reactionAge = age; reactionAt = at; }
+
+        /// <summary>Ends the reaction: the face, the stars and the cloud go, and the visitor is as they were.</summary>
+        public void EndReaction()
+        {
+            reaction = null;
+            if (person != null) person.HideGags();
+        }
+
+        /// <summary>A slap's stagger: the walk out waits a moment, only as long as the walk still ends before the rules let the
+        /// visitor go (GrowthShop.LeaveSeconds), so nobody vanishes on the way to the door.</summary>
+        public void Stagger(float seconds)
+        {
+            float walk = 0; var from = transform.position; from.y = 0;
+            foreach (var p in path) { var to = p; to.y = 0; walk += Vector3.Distance(from, to); from = to; }
+            float spare = GrowthShop.LeaveSeconds - walk / Speed - 0.75f - (State == GrowthVisitorState.Leaving && leftAt >= 0 ? clock - leftAt : 0);
+            Staggered = Mathf.Clamp(Mathf.Min(seconds, spare), 0, seconds);
+            holdUntil = clock + Staggered;
+        }
 
         static Color TypeColour(string type)
         {
@@ -118,7 +151,7 @@ namespace EvolutionShop
 
         public void Tick(float dt, bool reduced = false)
         {
-            float step = Speed * dt, moved = 0;
+            float step = clock < holdUntil ? 0 : Speed * dt, moved = 0;
             while (path.Count > 0 && step > 0)
             {
                 Vector3 to = path[0], from = transform.position; to.y = 0; from.y = 0;
@@ -136,6 +169,13 @@ namespace EvolutionShop
             {
                 Vector3 look = at.Position - transform.position; look.y = 0;
                 if (look.sqrMagnitude > 0.01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(look.normalized, Vector3.up), 0.2f);
+            }
+            // GR-18 wave 4: slapped or laughing it off, they turn to whoever did it while they stand (a slap's stagger, a laugh
+            // at a tank), so the face shows; the walk out turns them to the door again.
+            if ((reaction == "slapped" || reaction == "laugh") && (path.Count == 0 || clock < holdUntil))
+            {
+                Vector3 to = reactionAt - transform.position; to.y = 0;
+                if (to.sqrMagnitude > 0.01f) transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to.normalized, Vector3.up), 0.35f);
             }
             Walked += moved;
             clock += dt;
@@ -169,11 +209,12 @@ namespace EvolutionShop
                             target.E[GrowthPersonPose.Spine] += new Vector3(10, 0, 0); target.E[GrowthPersonPose.Head] += new Vector3(14, 0, 0);
                             if (sinceLeft < 1.6f) { var shrug = new GrowthPersonPose(); GrowthPeopleMotion.Shrug(shrug, sinceLeft / 1.6f); BlendArms(shrug, 0.8f); }
                             mouth = "o"; Activity = "leave-shrug"; break;
+                        case GrowthVisitOutcome.Slapped:
                         case GrowthVisitOutcome.TiredOfWaiting:
                             target.E[GrowthPersonPose.ShoulderL] = new Vector3(-40, -6, 0); target.E[GrowthPersonPose.ShoulderR] = new Vector3(-40, 6, 0);
                             target.E[GrowthPersonPose.ElbowL] = new Vector3(-100, 0, -70); target.E[GrowthPersonPose.ElbowR] = new Vector3(-100, 0, 70);
                             target.E[GrowthPersonPose.Head] += new Vector3(-12, 0, 0);
-                            mouth = "o"; Activity = "leave-huff"; break;
+                            mouth = outcome == GrowthVisitOutcome.Slapped ? "wobble" : "o"; Activity = "leave-huff"; break;
                         case GrowthVisitOutcome.Closed:
                             if (sinceLeft < 2.4f) { target.E[GrowthPersonPose.ShoulderR] = new Vector3(-10, 112, 0); target.E[GrowthPersonPose.ElbowR] = new Vector3(0, 46, 0); target.E[GrowthPersonPose.WristR] = new Vector3(0, 0, -80 + 18 * Mathf.Sin(clock * 12)); person.ShowHand("R", "open"); }
                             Activity = "leave-wave"; break;
@@ -209,11 +250,87 @@ namespace EvolutionShop
             // The right hand relaxes unless it points, holds out the coins, carries the bag, or waves.
             bool waving = Activity == "leave-wave" && sinceLeft < 2.4f;
             if (Activity != "browse" && Activity != "pay" && !waving && person.Look.HeldRight == null && !(leaving && outcome == GrowthVisitOutcome.Bought)) person.ShowHand("R", "relaxed");
+            if (reaction != null) mouth = ApplyReaction(mouth);
             person.ShowMouth(mouth ?? person.Look.Mouth);
             if (!posed) { pose.CopyFrom(target); posed = true; }
             else pose.Blend(target, 1 - Mathf.Exp(-dt * 12));
             person.Apply(pose);
             if (bagged != null) bagged.Tick(clock, reduced);
+        }
+
+        /// <summary>GR-18 wave 4: the reaction over the pose (the head turned towards what it is about), its face and props; the mouth.</summary>
+        string ApplyReaction(string mouth)
+        {
+            float a = Mathf.Max(0, reactionAge);
+            var local = transform.InverseTransformPoint(reactionAt);
+            float yaw = Mathf.Clamp(-Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, -70, 70);
+            bool talking = Mathf.Repeat(a * 7f, 1f) < 0.5f;
+            string own = person.Look.Mouth;
+            // What another reaction showed goes (the culprit's cloud once the culprit points at the fish).
+            if (reaction != "slapped" && reaction != "laugh") { person.Gag("head__mark-slap", false); person.Gag("head__eyes-squeeze", false); person.Gag("gag__stars", false); }
+            if (reaction != "culprit") person.Gag("gag__cloud", false);
+            switch (reaction)
+            {
+                case "slapped":
+                    GrowthPeopleMotion.Slapped(target, a);
+                    person.Gag("head__mark-slap", true);
+                    person.Gag("head__eyes-squeeze", a < 0.9f);
+                    Stars(a < 1.9f, a);
+                    person.ShowHand("L", "open"); person.ShowHand("R", "open");
+                    return a < 0.9f ? "o" : "wobble";
+                case "laugh":
+                    person.Gag("head__mark-slap", true);
+                    person.Gag("head__eyes-squeeze", a < 0.45f);
+                    Stars(a < 0.45f, a);
+                    if (a < 0.45f) { GrowthPeopleMotion.Slapped(target, a); return "o"; }
+                    GrowthPeopleMotion.Laugh(target, a - 0.45f);
+                    return "grin";
+                case "culprit":
+                    GrowthPeopleMotion.Innocent(target, a);
+                    Cloud(a);
+                    return "o";
+                case "sniff":
+                    GrowthPeopleMotion.Sniff(target, a, yaw);
+                    return "o";
+                case "blame":
+                    if (a < 0.8f) { GrowthPeopleMotion.Sniff(target, a, yaw); return "o"; }
+                    GrowthPeopleMotion.Accuse(target, a - 0.8f, yaw);
+                    if (person.Look.HeldRight == null) person.ShowHand("R", "point");
+                    return talking ? "o" : own;
+                case "complain":
+                    GrowthPeopleMotion.Complain(target, a, yaw);
+                    if (person.Look.HeldRight == null) person.ShowHand("R", a < 1.1f ? "point" : "open");
+                    return talking ? "o" : own;
+                case "fishface":
+                    GrowthPeopleMotion.FishFace(target, a, yaw);
+                    if (person.Look.HeldRight == null) person.ShowHand("R", "open");
+                    if (person.Look.HeldLeft == null) person.ShowHand("L", "open");
+                    return "o";
+            }
+            return mouth;
+        }
+
+        /// <summary>The dizzy stars circling over the head, spinning and bobbing.</summary>
+        void Stars(bool on, float a)
+        {
+            person.Gag("gag__stars", on, at: new Vector3(0, 1.16f, 0));
+            var holder = person.GagHolder("gag__stars");
+            if (!on || holder == null) return;
+            holder.localRotation = Quaternion.Euler(8 * Mathf.Sin(a * 5), a * 320f, 0);
+            holder.localPosition = new Vector3(0, person.HeadKit * (1.16f + 0.03f * Mathf.Sin(a * 9)), 0);
+        }
+
+        /// <summary>The culprit's puff of a cloud behind them, swelling, rising and fading.</summary>
+        void Cloud(float a)
+        {
+            const float last = 1.8f;
+            bool on = a < last;
+            person.Gag("gag__cloud", on, joint: "hips", at: new Vector3(0, 0.05f, -0.22f));
+            var holder = person.GagHolder("gag__cloud");
+            if (!on || holder == null) return;
+            float s = Mathf.Sin(Mathf.PI * Mathf.Clamp01(a / last));
+            holder.localScale = Vector3.one * (0.4f + 0.9f * s);
+            holder.localPosition = new Vector3(0.04f * Mathf.Sin(a * 4), 0.05f + 0.35f * a / last, -0.22f - 0.1f * a / last);
         }
 
         void BlendArms(GrowthPersonPose from, float w)

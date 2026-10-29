@@ -1,4 +1,4 @@
-"""Original Evolution Shop people kit (GR-18 waves 1 to 3): the visitors, the exhibition's guests, the helpers (Pip, Nori
+"""Original Evolution Shop people kit (GR-18 waves 1 to 4): the visitors, the exhibition's guests, the helpers (Pip, Nori
 and Moss) and the player's hands in the look the user approved on 2026-10-29 (GR.55, "Looks good"). Built with the look board's own builder (Tools/Art/gr18_characters.py, executed as a
 library), so the game's people are the board's. Blender 5.0, no external assets or add-ons.
 
@@ -20,6 +20,8 @@ What it makes (Resources/Art/PeopleKit; its record in ArtSource/PeopleKit/manife
   (arm__<side>, and hand-<shape>__<side> for relaxed, grip, open, point and cup), each with its wrist at the origin, the
   fingers down and the forearm up; and what they hold: the shop's water bag (bag__fp, its knot at the origin, its twist tie
   the TIE role), the siphon's bulb, tube, a fill band one metre long (DOSE) and the vacuum's canister, and a length of pipe.
+- PK_Gags.fbx (wave 4, §6.7's comedy): faces' parts on the head kit's head (a wobbly grimace, eyes squeezed shut, a
+  slap's hand mark on the left cheek) and props in metres (a ring of dizzy stars, a puff of a cloud, a burp's bubble, a note).
 - people.json (beside them, a TextAsset): each kind's joints (rest positions in Unity space), its head height, and each part's
   name, so the game assembles a person from these parts and turns their joints.
 
@@ -46,7 +48,7 @@ from mathutils import Vector
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 ap = argparse.ArgumentParser()
 ap.add_argument('--repo', required=True)
-ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held, Hands); the rest are left as they are.')
+ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held, Hands, Gags); the rest are left as they are.')
 args = ap.parse_args(argv)
 REPO = Path(args.repo).resolve()
 assert (REPO / 'EvolutionShop/ProjectSettings/ProjectVersion.txt').is_file()
@@ -440,6 +442,93 @@ def build_hands():
     return info, rec
 
 
+# ---------------------------------------------------------------------------------------------------- the comedy (wave 4)
+# GR-18 wave 4 (§6.7): the faces and props of the silly moments, apart from the head kit so its parts stay as they were.
+# The face's parts sit on a head one unit tall on its joint, as the head kit's do (the board's surface, `surf`): a wobbly
+# grimace, eyes squeezed shut (><) and a slap's hand mark on the left cheek. The props are in metres: a ring of dizzy stars
+# (centred on its axis), a puff of a cloud, a burp's bubble and a music note (each centred at its origin).
+STARS_RING, STAR_SIZE = 0.15, 0.03
+
+
+def face_surface():
+    """The board's head surface (one unit tall, its joint at the origin) to lay the face's new parts on; the head it was
+    built on is removed."""
+    r = Rig('gagface')
+    r.joint('head', None, (0, 0, 0))
+    r.d = {'H': 1.016, 'hh': 1.0}
+    spec = {'face': {'nose': 'none', 'mouth': 'none', 'brows': 0, 'blush': False, 'iris': 'IRIS', 'brow_color': 'HAIR'},
+            'hair': {'style': 'none', 'color': 'HAIR'}, 'hat': None, 'glasses': None, 'skin': 'SKIN'}
+    r.spec = spec; r.skin = slot('skin', 'SKIN')
+    for o in phase(lambda: head(b, r, spec)): bpy.data.objects.remove(o, do_unlink=True)
+    bpy.data.objects.remove(r.j['head'], do_unlink=True)
+    return r.surf
+
+
+def star(name, centre, outward, size, m):
+    """A five-pointed star standing on a ring, its face outward."""
+    out = Vector(outward).normalized(); up = Vector((0, 0, 1)); side = up.cross(out).normalized()
+    pts = []
+    for i in range(10):
+        a = math.pi / 2 + i * math.pi / 5
+        rad = size if i % 2 == 0 else size * 0.45
+        pts.append(Vector(centre) + side * (rad * math.cos(a)) + up * (rad * math.sin(a)))
+    return G['tri'](b, name, pts, size * 0.4, m)
+
+
+def build_gags():
+    C = G['C']
+    surf = face_surface()
+    ink, lip = slot('eye', G['INK']), slot('eye', G['LIP'])
+    meshes = []
+
+    def add(name, objs):
+        m = bake([o for o in objs if o.type != 'EMPTY'], name)
+        if m: meshes.append(m)
+
+    # The wobbly grimace: a zigzag where the mouth is.
+    pts = [surf(t * 0.19, -1, -0.44 + 0.026 * (1 if i % 2 else -1), 0.006)[0] for i, t in enumerate((-1, -0.6, -0.2, 0.2, 0.6, 1))]
+    add('head__mouth-wobble', [G['curve'](b, 'Grimace', pts, [0.011, 0.015, 0.016, 0.016, 0.015, 0.011], lip, poly=True)])
+    # Eyes squeezed shut: > on the right eye and < on the left, their points towards the nose.
+    eyes = []
+    for s in (-1, 1):
+        chevron = [surf(s * (0.36 + 0.08), -1, 0.06 + 0.055, 0.01)[0], surf(s * (0.36 - 0.05), -1, 0.06, 0.012)[0],
+                   surf(s * (0.36 + 0.08), -1, 0.06 - 0.055, 0.01)[0]]
+        eyes.append(G['curve'](b, 'Squeezed eye', chevron, [0.014, 0.018, 0.014], ink, poly=True))
+    add('head__eyes-squeeze', eyes)
+    # A slap's hand mark on the left cheek: a palm and four fingers, rosy pink.
+    mark = slot('skin', '#FF6F82')
+    p, n = surf(0.56, -1, -0.24, 0.004)
+    parts = [G['orient'](b.ball('Mark palm', p, (0.085, 0.01, 0.07), mark, seg=20, shadow=False), n)]
+    for k, dx in enumerate((-0.085, -0.03, 0.025, 0.075)):
+        q, nq = surf(0.56 + dx, -1, -0.24 + 0.13 - 0.02 * abs(k - 1.5), 0.004)
+        parts.append(G['orient'](b.ball('Mark finger', q, (0.022, 0.009, 0.06), mark, seg=14, shadow=False), nq, roll=(k - 1.5) * 10))
+    add('head__mark-slap', parts)
+    # Dizzy stars: five on a ring about its axis.
+    yellow = slot('gloss', C['yellow'])
+    add('gag__stars', [star('Dizzy star', (STARS_RING * math.cos(a), STARS_RING * math.sin(a), 0), (math.cos(a), math.sin(a), 0), STAR_SIZE, yellow)
+                       for a in (2 * math.pi * i / 5 for i in range(5))])
+    # A puff of a cloud: soft pale green-grey blobs.
+    puff = slot('plastic', '#CFE6B4')
+    add('gag__cloud', [b.ball('Puff', c, r, puff, seg=20, shadow=False) for c, r in
+                       (((0, 0, 0), 0.07), ((0.07, 0.01, 0.02), 0.055), ((-0.065, -0.01, 0.015), 0.05), ((0.02, 0.02, 0.06), 0.05),
+                        ((-0.03, 0.03, -0.045), 0.045), ((0.05, -0.03, -0.04), 0.04))])
+    # A burp's bubble: a glossy ball with a glint.
+    add('gag__bubble', [b.ball('Bubble', (0, 0, 0), 0.09, slot('glass', '#DFF7FF'), seg=28, shadow=False),
+                        b.ball('Bubble glint', (-0.035, -0.06, 0.04), 0.016, slot('gloss', '#FFFFFF'), seg=12, shadow=False)])
+    # A music note: a head, a stem and a flag, in the shop's coral.
+    coral = slot('gloss', C['coral'])
+    head_ball = b.ball('Note head', (0, 0, -0.045), (0.03, 0.02, 0.022), coral, seg=20, shadow=False)
+    head_ball.rotation_euler = (0, math.radians(-20), 0)
+    add('gag__note', [head_ball, b.cyl('Note stem', (0.026, 0, 0.0), 0.006, 0.1, coral, r=0),
+                      G['curve'](b, 'Note flag', [Vector((0.026, 0, 0.05)), Vector((0.05, 0, 0.025)), Vector((0.052, 0, -0.005))], [0.008, 0.007, 0.005], coral)])
+    keep = set(meshes)
+    for o in list(bpy.data.objects):
+        if o not in keep: bpy.data.objects.remove(o, do_unlink=True)
+    rec = export('PK_Gags', meshes)
+    clear()
+    return {'starsRing': STARS_RING}, rec
+
+
 # ---------------------------------------------------------------------------------------------------- build, export, record
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.scene.unit_settings.system = 'METRIC'
@@ -448,7 +537,7 @@ if (SOURCE / 'manifest.json').is_file():
     old = json.loads((SOURCE / 'manifest.json').read_text(encoding='utf-8'))
 kinds = dict(old.get('kinds', {}))
 records = {r['id']: r for r in old.get('assets', [])}
-head_info, held_info, hands_info = old.get('head'), old.get('held'), old.get('hands')
+head_info, held_info, hands_info, gags_info = old.get('head'), old.get('held'), old.get('hands'), old.get('gags')
 for kind in KINDS:
     if ONLY and 'Body_' + kind not in ONLY: continue
     info, rec = build_body(kind)
@@ -459,6 +548,8 @@ if not ONLY or 'Held' in ONLY:
     held_info, rec = build_held(); records[rec['id']] = rec
 if not ONLY or 'Hands' in ONLY:
     hands_info, rec = build_hands(); records[rec['id']] = rec
+if not ONLY or 'Gags' in ONLY:
+    gags_info, rec = build_gags(); records[rec['id']] = rec
 slots = dict(old.get('materials', {})); slots.update(SLOTS)
 manifest = {
     'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors, guests, helpers and the player\'s hands',
@@ -468,7 +559,7 @@ manifest = {
     'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'builder_script': 'Tools/Art/gr18_characters.py', 'builder_script_sha256': hashlib.sha256(LIB.read_bytes()).hexdigest(),
     'axis_mapping': 'Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z',
-    'kinds': kinds, 'head': head_info, 'held': held_info, 'hands': hands_info,
+    'kinds': kinds, 'head': head_info, 'held': held_info, 'hands': hands_info, 'gags': gags_info,
     'materials': dict(sorted(slots.items())),
     'assets': [records[k] for k in sorted(records)],
 }
@@ -482,6 +573,7 @@ game = {'kinds': [dict(id=k, height=v['height'], hh=v['hh'], build=v['build'], g
         'held': dict(hh=held_info['hh'], wristL=held_info['wrists']['L'], wristR=held_info['wrists']['R'], parts=sorted(records['PK_Held']['parts'])),
         'hands': dict(forearm=hands_info['forearm'], bagCreature=hands_info['bagCreature'], tube=hands_info['tube'], band=hands_info['band'],
                       pipe=hands_info['pipe'], parts=sorted(records['PK_Hands']['parts'])),
+        'gags': dict(starsRing=gags_info['starsRing'], parts=sorted(records['PK_Gags']['parts'])),
         'materials': [dict(name=n, kind=v['kind'], colour=v['colour']) for n, v in sorted(slots.items())]}
 (EXPORT / 'people.json').write_text(json.dumps(game, indent=1) + '\n', encoding='utf-8')
 print('PEOPLE_KIT_COMPLETE', len(records))

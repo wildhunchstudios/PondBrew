@@ -1561,6 +1561,18 @@
    "siphon_tube__fp"
   ]
  },
+ "gags": {
+  "starsRing": 0.15,
+  "parts": [
+   "gag__bubble",
+   "gag__cloud",
+   "gag__note",
+   "gag__stars",
+   "head__eyes-squeeze",
+   "head__mark-slap",
+   "head__mouth-wobble"
+  ]
+ },
  "materials": [
   {
    "name": "PK_cloth_15867F",
@@ -1773,6 +1785,11 @@
    "colour": "IRIS"
   },
   {
+   "name": "PK_glass_DFF7FF",
+   "kind": "glass",
+   "colour": "#DFF7FF"
+  },
+  {
    "name": "PK_glass_EAFBFF",
    "kind": "glass",
    "colour": "#EAFBFF"
@@ -1953,6 +1970,11 @@
    "colour": "#22BFB0"
   },
   {
+   "name": "PK_plastic_CFE6B4",
+   "kind": "plastic",
+   "colour": "#CFE6B4"
+  },
+  {
    "name": "PK_plastic_FF7A7A",
    "kind": "plastic",
    "colour": "#FF7A7A"
@@ -1971,6 +1993,11 @@
    "name": "PK_skin_B5603A",
    "kind": "skin",
    "colour": "#B5603A"
+  },
+  {
+   "name": "PK_skin_FF6F82",
+   "kind": "skin",
+   "colour": "#FF6F82"
   },
   {
    "name": "PK_skin_FF8FA3",

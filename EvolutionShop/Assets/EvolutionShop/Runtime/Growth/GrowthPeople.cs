@@ -27,8 +27,10 @@ namespace EvolutionShop
         /// <summary>GR-18 wave 3: the player's hands: the forearm's length, where a creature swims in the bag, where the siphon's tube runs
         /// along its axis, its fill's radius, the pipe's length, and the parts.</summary>
         [Serializable] public sealed class HandsData { public float forearm, band, pipe; public float[] bagCreature, tube; public string[] parts; }
+        /// <summary>GR-18 wave 4 (§6.7): the silly moments' faces (on the head kit's head) and props (in metres), and the dizzy stars' ring.</summary>
+        [Serializable] public sealed class GagsData { public float starsRing; public string[] parts; }
         [Serializable] public sealed class SlotData { public string name, kind, colour; }
-        [Serializable] public sealed class KitData { public KindData[] kinds; public HeadData head; public HeldData held; public HandsData hands; public SlotData[] materials; }
+        [Serializable] public sealed class KitData { public KindData[] kinds; public HeadData head; public HeldData held; public HandsData hands; public GagsData gags; public SlotData[] materials; }
 
         static KitData data;
         static readonly Dictionary<string, GameObject> assets = new Dictionary<string, GameObject>();
@@ -48,6 +50,30 @@ namespace EvolutionShop
         }
 
         public static bool Available => Data != null && Data.kinds != null && Data.kinds.Length > 0;
+
+        /// <summary>GR-18 wave 4: a kit part with fixed colours (a prop: the burp's bubble) under a holder, in the look's
+        /// materials, without shadows or colliders; null when the kit or the part is missing.</summary>
+        public static GameObject Prop(string asset, string part, Transform holder)
+        {
+            var source = Part(asset, part);
+            if (!source) return null;
+            var go = UnityEngine.Object.Instantiate(source, holder, false);
+            go.name = part;
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    var slot = mats[i] ? mats[i].name.Replace(" (Instance)", "") : "";
+                    var bits = slot.Split('_');
+                    if (bits.Length >= 3 && bits[0] == "PK") mats[i] = Material(bits[1], "#" + bits[bits.Length - 1]);
+                }
+                r.sharedMaterials = mats;
+                r.shadowCastingMode = ShadowCastingMode.Off;
+            }
+            foreach (var c in go.GetComponentsInChildren<Collider>(true)) UnityEngine.Object.Destroy(c);
+            return go;
+        }
 
         public static KindData Kind(string id) => Data?.kinds.FirstOrDefault(k => k.id == id);
 
@@ -510,6 +536,95 @@ namespace EvolutionShop
             p.E[GrowthPersonPose.Head] += new Vector3(10 + 10 * check, 0, 8 - 26 * check); p.E[GrowthPersonPose.Spine] += new Vector3(5 + 3 * drop, 0, 0);
             p.Lift += -0.01f * drop;
         }
+
+        // ---- GR-18 wave 4 (§6.7): the silly moments (t in seconds since the moment started; yaw, the Blender angle the head
+        // turns to look at what it is about, positive to the person's left)
+
+        /// <summary>Slapped: the head knocked to the right and wobbling back, the chin up, the arms thrown out, a little jolt
+        /// (added onto what the person is doing, so the walk out goes on underneath).</summary>
+        public static void Slapped(GrowthPersonPose p, float t)
+        {
+            float k = t < 0.06f ? t / 0.06f : Mathf.Exp(-(t - 0.06f) * 2.4f), w = t < 0.06f ? 0 : Mathf.Sin((t - 0.06f) * 15f) * Mathf.Exp(-(t - 0.06f) * 1.8f);
+            p.E[GrowthPersonPose.Head] += new Vector3(-10 * k, 0, -38 * k + 20 * w);
+            p.E[GrowthPersonPose.Spine] += new Vector3(-8 * k, 0, -12 * k + 6 * w);
+            p.E[GrowthPersonPose.ShoulderL] = new Vector3(-30 * k - 10, -40 * k - 8, 0); p.E[GrowthPersonPose.ShoulderR] = new Vector3(-30 * k - 10, 40 * k + 8, 0);
+            p.E[GrowthPersonPose.ElbowL] = new Vector3(-50 * k - 20, 0, -30 * k); p.E[GrowthPersonPose.ElbowR] = new Vector3(-50 * k - 20, 0, 30 * k);
+            p.Lift += 0.03f * k;
+        }
+
+        /// <summary>Laughing it off: leaning back, chin up, hands on the belly, shaking with laughter.</summary>
+        public static void Laugh(GrowthPersonPose p, float t)
+        {
+            float bob = Pulse(t, 3.5f, 0, 1);
+            p.E[GrowthPersonPose.Spine] = new Vector3(-10 - 6 * bob, 0, 4 * Wave(t, 1.7f)); p.E[GrowthPersonPose.Head] = new Vector3(-16 + 6 * bob, 0, 8 * Wave(t, 1.7f));
+            p.E[GrowthPersonPose.ShoulderL] = new Vector3(-32, -10, 0); p.E[GrowthPersonPose.ShoulderR] = new Vector3(-32, 10, 0);
+            p.E[GrowthPersonPose.ElbowL] = new Vector3(-96, 0, -48); p.E[GrowthPersonPose.ElbowR] = new Vector3(-96, 0, 48);
+            p.E[GrowthPersonPose.KneeL] += new Vector3(12, 0, 0); p.E[GrowthPersonPose.KneeR] += new Vector3(12, 0, 0);
+            p.E[GrowthPersonPose.HipL] += new Vector3(-8, 0, 0); p.E[GrowthPersonPose.HipR] += new Vector3(-8, 0, 0);
+            p.Lift += 0.015f * bob - 0.02f;
+        }
+
+        /// <summary>The culprit: a startled little hop, then hands behind the back, looking up and around, all innocence.</summary>
+        public static void Innocent(GrowthPersonPose p, float t)
+        {
+            float hop = t < 0.25f ? Mathf.Sin(Mathf.PI * t / 0.25f) : 0;
+            p.Lift += 0.05f * hop;
+            p.E[GrowthPersonPose.Head] = new Vector3(-16, 0, 26 * Wave(t / 1.6f));
+            p.E[GrowthPersonPose.Spine] = new Vector3(-4, 0, 0);
+            p.E[GrowthPersonPose.ShoulderL] = new Vector3(28, 0, -10); p.E[GrowthPersonPose.ShoulderR] = new Vector3(28, 0, 10);
+            p.E[GrowthPersonPose.ElbowL] = new Vector3(-70, 0, 20); p.E[GrowthPersonPose.ElbowR] = new Vector3(-70, 0, -20);
+        }
+
+        /// <summary>A sniff towards what smells, and a hand fanning in front of the nose.</summary>
+        public static void Sniff(GrowthPersonPose p, float t, float yaw)
+        {
+            float turn = Smooth(t / 0.4f);
+            p.E[GrowthPersonPose.Head] = new Vector3(6, 0, yaw * turn); p.E[GrowthPersonPose.Spine] += new Vector3(0, 0, 0.3f * yaw * turn);
+            p.E[GrowthPersonPose.ShoulderR] = new Vector3(-70, 14, 0); p.E[GrowthPersonPose.ElbowR] = new Vector3(-104, 0, 34);
+            p.E[GrowthPersonPose.WristR] = new Vector3(0, 0, 35 * Wave(t, 3));
+        }
+
+        /// <summary>Pointing at what it is about (a tank), a jab of the finger, the other hand on the hip.</summary>
+        public static void Accuse(GrowthPersonPose p, float t, float yaw)
+        {
+            float jab = Pulse(t, 2.5f, 0, 2);
+            p.E[GrowthPersonPose.Spine] += new Vector3(4, 0, 0.4f * yaw); p.E[GrowthPersonPose.Head] = new Vector3(-4, 0, 0.6f * yaw);
+            p.E[GrowthPersonPose.ShoulderR] = new Vector3(-84 - 6 * jab, 6, 0.5f * yaw); p.E[GrowthPersonPose.ElbowR] = new Vector3(-6, 0, 0);
+            p.E[GrowthPersonPose.ShoulderL] = new Vector3(-6, -24, 0); p.E[GrowthPersonPose.ElbowL] = new Vector3(-60, 0, 46);
+        }
+
+        /// <summary>A complaint: a jab at the tank, then the palms up.</summary>
+        public static void Complain(GrowthPersonPose p, float t, float yaw)
+        {
+            if (t < 1.1f) { Accuse(p, t, yaw); return; }
+            var shrug = new GrowthPersonPose(); Shrug(shrug, Mathf.Min(0.3f, (t - 1.1f) * 0.6f));
+            foreach (int i in new[] { GrowthPersonPose.ShoulderL, GrowthPersonPose.ElbowL, GrowthPersonPose.ShoulderR, GrowthPersonPose.ElbowR }) p.E[i] = shrug.E[i];
+            p.E[GrowthPersonPose.Head] = new Vector3(4, 0, 0.5f * yaw + 12 * Wave(t, 1.5f));
+        }
+
+        /// <summary>A fish face at the glass: leaning in, the hands by the cheeks flapping like fins.</summary>
+        public static void FishFace(GrowthPersonPose p, float t, float yaw)
+        {
+            p.E[GrowthPersonPose.Spine] += new Vector3(16, 0, 0.3f * yaw);
+            p.E[GrowthPersonPose.Head] = new Vector3(8 + 4 * Wave(t, 1.3f), 0, 0.6f * yaw + 10 * Wave(t, 0.9f));
+            p.E[GrowthPersonPose.ShoulderL] = new Vector3(-50, -36, 0); p.E[GrowthPersonPose.ShoulderR] = new Vector3(-50, 36, 0);
+            p.E[GrowthPersonPose.ElbowL] = new Vector3(-120, 0, -20); p.E[GrowthPersonPose.ElbowR] = new Vector3(-120, 0, 20);
+            p.E[GrowthPersonPose.WristL] = new Vector3(0, 0, 30 * Wave(t, 4)); p.E[GrowthPersonPose.WristR] = new Vector3(0, 0, -30 * Wave(t, 4));
+        }
+
+        /// <summary>A helper's tiny victory dance: two hops a second, the arms pumping, the hips wiggling.</summary>
+        public static void Dance(GrowthPersonPose p, float t)
+        {
+            Idle(p, 0.3f);
+            float hop = Pulse(t, 2, 0, 2), pump = Wave(t, 2);
+            p.Lift = 0.06f * hop - 0.02f;
+            p.E[GrowthPersonPose.KneeL] = new Vector3(18 * (1 - hop), 0, 0); p.E[GrowthPersonPose.KneeR] = new Vector3(18 * (1 - hop), 0, 0);
+            p.E[GrowthPersonPose.HipL] = new Vector3(-9 * (1 - hop), 0, 0); p.E[GrowthPersonPose.HipR] = new Vector3(-9 * (1 - hop), 0, 0);
+            p.E[GrowthPersonPose.Hips] = new Vector3(0, 0, 12 * pump); p.E[GrowthPersonPose.Spine] = new Vector3(-4, 0, -8 * pump);
+            p.E[GrowthPersonPose.Head] = new Vector3(-10, 0, -10 * pump);
+            p.E[GrowthPersonPose.ShoulderL] = new Vector3(-30 + 20 * pump, -95, 0); p.E[GrowthPersonPose.ShoulderR] = new Vector3(-30 - 20 * pump, 95, 0);
+            p.E[GrowthPersonPose.ElbowL] = new Vector3(0, -50 - 20 * pump, 0); p.E[GrowthPersonPose.ElbowR] = new Vector3(0, 50 - 20 * pump, 0);
+        }
     }
 
     /// <summary>A person assembled from the people kit: their joints, the parts on them, their face's mouths and what they hold;
@@ -524,6 +639,14 @@ namespace EvolutionShop
         readonly Dictionary<string, GameObject> hands = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> mouths = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> heldItems = new Dictionary<string, GameObject>();
+        /// <summary>GR-18 wave 4: the silly moments' parts this person has needed so far (placed the first time), by key.</summary>
+        readonly Dictionary<string, GameObject> gags = new Dictionary<string, GameObject>();
+        Transform face;
+        float headKit;
+        /// <summary>The head kit's head height for this person's kind (the unit a prop on the head is placed in, in the joint's space).</summary>
+        public float HeadKit => headKit;
+        /// <summary>GR-18 wave 4: the people kit's asset of the silly moments' faces and props.</summary>
+        public const string GagAsset = "PK_Gags";
         /// <summary>The parts whose kit slots name a role (the colour a look fills in), with their slots, for <see cref="SetColour"/>.</summary>
         readonly List<(Renderer r, string[] slots)> roleSlots = new List<(Renderer, string[])>();
         public readonly GrowthPersonPose Pose = new GrowthPersonPose();
@@ -584,7 +707,8 @@ namespace EvolutionShop
             }
             // The head: its kit is one unit tall on its joint; the person's head height scales it, their face's width its X.
             var head = jointsByName["head"];
-            var face = new GameObject("Face").transform; face.SetParent(head, false);
+            face = new GameObject("Face").transform; face.SetParent(head, false);
+            headKit = kind.hh;
             face.localScale = new Vector3(kind.hh * Look.Wide, kind.hh, kind.hh);
             foreach (var p in Look.HeadParts()) Place("PK_Head", "head__" + p, face);
             mouths[Look.Mouth] = Place("PK_Head", "head__mouth-" + Look.Mouth, face);
@@ -657,6 +781,8 @@ namespace EvolutionShop
 
         public void ShowMouth(string mouth)
         {
+            // GR-18 wave 4: the wobbly grimace of a slap is the gags' asset's, placed the first time it is needed.
+            if (mouth == "wobble" && !mouths.ContainsKey(mouth) && face != null) { var go = Place(GagAsset, "head__mouth-wobble", face); if (go) mouths[mouth] = go; }
             if (!mouths.ContainsKey(mouth)) mouth = Look.Mouth;
             foreach (var kv in mouths) if (kv.Value) kv.Value.SetActive(kv.Key == mouth);
         }
@@ -685,6 +811,49 @@ namespace EvolutionShop
                 r.sharedMaterials = slots.Select(Resolve).ToArray();
             }
         }
+
+        /// <summary>
+        /// GR-18 wave 4 (§6.7): shows or hides one of the silly moments' parts, placed the first time it is shown: a face's
+        /// ("head__eyes-squeeze", which hides the eyes, lids and lashes while it shows; never over sunglasses; "head__mark-slap")
+        /// on the face, or a prop ("gag__stars", "gag__cloud", "gag__note", ...) on a joint at a place in its space, the
+        /// head kit's head height its unit when the joint is the head. The key names it, so a prop can be shown twice.
+        /// </summary>
+        public GameObject Gag(string key, bool on, string part = null, string joint = "head", Vector3 at = default)
+        {
+            part = part ?? key;
+            if (!gags.TryGetValue(key, out var go) || go == null)
+            {
+                if (!on) return null;
+                if (part == "head__eyes-squeeze" && Look.Sunglasses) return null;
+                if (part.StartsWith("head__")) go = face != null ? Place(GagAsset, part, face) : null;
+                else
+                {
+                    var holder = new GameObject("Gag " + key).transform;
+                    holder.SetParent(Joint(joint) ?? transform, false);
+                    holder.localPosition = joint == "head" ? at * headKit : at;
+                    go = Place(GagAsset, part, holder);
+                    if (go) foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.Off;
+                    else Destroy(holder.gameObject);
+                }
+                if (go == null) return null;
+                gags[key] = go;
+            }
+            var shown = part.StartsWith("head__") ? go : go.transform.parent.gameObject;
+            if (go.activeSelf != on) go.SetActive(on);
+            if (shown.activeSelf != on) shown.SetActive(on);
+            if (part == "head__eyes-squeeze")
+                foreach (var name in new[] { "head__eyes", "head__lids", "head__lashes" }) { var t = face.Find(name); if (t) t.gameObject.SetActive(!on); }
+            return go;
+        }
+
+        /// <summary>A gag's holder (a prop's, to move and spin it), or null.</summary>
+        public Transform GagHolder(string key) => gags.TryGetValue(key, out var go) && go ? (go.transform.parent == face ? go.transform : go.transform.parent) : null;
+
+        /// <summary>Validation: whether one of the silly moments' parts shows now.</summary>
+        public bool GagShown(string key) => gags.TryGetValue(key, out var go) && go && go.activeInHierarchy;
+
+        /// <summary>Hides every silly moment's part and gives the eyes back.</summary>
+        public void HideGags() { foreach (var key in gags.Keys.ToList()) Gag(key, false); }
 
         /// <summary>Validation: a role's colour now.</summary>
         public string Colour(string role) => Look.Colours.TryGetValue(role, out var c) ? c : null;

@@ -321,7 +321,7 @@ namespace EvolutionShop.Tests
             var manifest = File.ReadAllText(Path.Combine(Repo, "ArtSource", "PeopleKit", "manifest.json"));
             StringAssert.Contains("\"external_sources\": []", manifest);
             StringAssert.Contains("\"paid_generation\": false", manifest);
-            foreach (var asset in Kinds.Select(k => "PK_Body_" + k).Concat(new[] { "PK_Head", "PK_Held", "PK_Hands" }))
+            foreach (var asset in Kinds.Select(k => "PK_Body_" + k).Concat(new[] { "PK_Head", "PK_Held", "PK_Hands", "PK_Gags" }))
             {
                 var path = Path.Combine(Application.dataPath, "EvolutionShop", "Resources", "Art", "PeopleKit", asset + ".fbx");
                 Assert.IsTrue(File.Exists(path), asset + ".fbx exists");

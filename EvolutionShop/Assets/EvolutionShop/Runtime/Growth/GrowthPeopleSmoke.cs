@@ -22,11 +22,17 @@ namespace EvolutionShop
     /// person, in the shop's yellow gloves: the siphon squeezed at a grower and banded with each dose, both hands on the crank,
     /// a pipe across them, a reach into a tank in peek for a creature, three bags carried and bobbing as the player walks, a
     /// reach to put one in another tank, lowered while a card is open, a bag held out over the counter and handed over, and
-    /// what they cost.
+    /// what they cost. Wave 4 (§6.7): the silly moments: the room's own suspicious fart (the culprit's innocent look and its
+    /// cloud, the neighbour blaming the fish), the slap on its own key with its prompt (a huff: the hand mark, squeezed eyes,
+    /// dizzy stars, a grumble and a stagger on the way out; a casual visitor laughing a first one off; the hand still
+    /// stinging), Skip, the ridiculous complaint, the fish copying a visitor's fish face inside its tank, the incubator's burp
+    /// after the hatchling shows, Pip's little dance after a sale and its end the moment a visitor queues, a slap at the
+    /// visitor Pip is serving, the Gags and Humour settings, a pause, closing time and a reload in the middle of a moment,
+    /// and a new slap key from the pause menu.
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string PeopleScenarioText = "GR-18 wave 1, the visitors and guests as people: the people kit in the look's own materials; visitors of every kind walking in their kind's way, browsing (leaning in, pointing), queueing (paying at the front, waiting and growing impatient behind), and leaving happy with the creature they bought in the shop's bag, with a shrug, a huff or a wave at closing; a lineup of every kind and of casual visitors' variety by night and by day; a visitor of the shop's own; the frame budget with a crowd in view; wave 2, the helpers as people at work: Pip at the counter and the till, Nori carrying in the jar and reaching in at the tank, Moss with the pipette in each dose's colour; wave 3, the player's hands in each thing the player does: siphoning, cranking, laying a pipe, taking from a tank in peek, carrying three bags, walking, putting one in, a card, serving at the counter; captures of each";
+        const string PeopleScenarioText = "GR-18 wave 1, the visitors and guests as people: the people kit in the look's own materials; visitors of every kind walking in their kind's way, browsing (leaning in, pointing), queueing (paying at the front, waiting and growing impatient behind), and leaving happy with the creature they bought in the shop's bag, with a shrug, a huff or a wave at closing; a lineup of every kind and of casual visitors' variety by night and by day; a visitor of the shop's own; the frame budget with a crowd in view; wave 2, the helpers as people at work: Pip at the counter and the till, Nori carrying in the jar and reaching in at the tank, Moss with the pipette in each dose's colour; wave 3, the player's hands in each thing the player does: siphoning, cranking, laying a pipe, taking from a tank in peek, carrying three bags, walking, putting one in, a card, serving at the counter; wave 4, the silly moments: the fart, the slap and its laugh, Skip, the complaint, the fish copying a face, the burp, Pip's dance, and how they end and wait; captures of each";
 
         static readonly string[] PeopleKinds = { "casual", "bargain", "collector", "premium", "guest" };
 
@@ -261,6 +267,7 @@ namespace EvolutionShop
 
             yield return PeopleHelpers();
             yield return PeopleHands();
+            yield return PeopleComedy();
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
         }
 
@@ -362,6 +369,244 @@ namespace EvolutionShop
             yield return new WaitForSeconds(0.5f);
             var leaving = w.VisitorViews.Values.First(v => v.Carrying != null);
             FaceOf(leaving.transform, 1.6f); yield return Shot("547-pip-served-them");
+        }
+
+        /// <summary>GR-18 wave 4 (§6.7): the silly moments, played by the people of waves 1 to 3.</summary>
+        IEnumerator PeopleComedy()
+        {
+            limitations.Add("GR-18 wave 4 (the silly moments): the fixture is labelled, as wave 2's: an era 4, four-star shop with 8,000 credits, unit B and the lab annex open, growers holding 10 doses each, a Starter tank on a1 to a4 with a Pondlet, a Bubblebelly and a Ribbonfin each; Pip is hired with the staff card's action and the shop opened with the counter card's. Four visitors (a bargain hunter at a2, a casual visitor at a4, a collector at a1, a big spender at a3) are put into the shop's own list by the route browsing their tank until it lets them decide (labelled); two more later, to queue for Pip. In a validation run the room's own moments are off unless the route switches them on (labelled): it does here, once the visitors stand at their tanks. The first fart is the room's own turn; the complaint, the fish and the second fart are started by the route at a chosen spot (labelled), each after it clears the comedy's quiet time (labelled, so the route need not wait 8 to 40 s between them). The slaps are the route's keyboard pressing F (then G) at the visitor under the reticle, and Backspace to skip. The hatch is the shop's own incubation with its clock advanced (labelled accelerated). The day is ended by setting its clock (labelled); the reload is the session's own (ReloadSaved). How funny it is, and how loud, are for the user to judge.");
+            var w = s.World;
+            var gags = s.Gags;
+            var hands = s.Hands;
+            Check(gags != null && gags.Sounds.Count == 11 && GrowthPeopleKit.Data.gags.parts.Length == 7, "The silly moments are in the game: " + gags.Sounds.Count + " sounds made here, and the people kit's " + GrowthPeopleKit.Data.gags.parts.Length + " faces and props");
+            Check(!gags.RoomMoments, "In a validation run the room's own moments wait for the route to ask for them");
+            var fx = new GrowthShop { Era = 4, Reputation = GrowthContent.StarThresholds[3] + 30, Credits = 8000, Rp = 300, UnitB = true, SalesTotal = 160, Annex = true };
+            fx.Discovered.AddRange(GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder).Take(12).Select(x => x.Id));
+            foreach (var sp in new[] { "pondlet", "bubblebelly", "ribbonfin" }) if (!fx.Discovered.Contains(sp)) fx.Discovered.Add(sp);
+            fx.Journal.AddRange(fx.Discovered.Select(d => GrowthShop.JournalKey(d, Colour.Classic)));
+            fx.Levels["grower"] = 2; fx.Levels["counter"] = 3;
+            foreach (var c in fx.Cultures) fx.GrowerUnits[c] = 10;
+            var tanks = new List<GrowthContainer> { fx.Containers[0] };
+            foreach (var place in new[] { "a2", "a3", "a4" }) { var c = new GrowthContainer { Id = "tank-comedy-" + place, Kind = "starter", Place = place }; fx.Containers.Add(c); tanks.Add(c); }
+            foreach (var c in tanks) { Stock(fx, c, "pondlet"); Stock(fx, c, "bubblebelly"); Stock(fx, c, "ribbonfin"); }
+            s.LoadFixture(fx);
+            var shop = s.Shop;
+            yield return null; yield return null;
+            Ok(s.Act(() => shop.Hire("pip")), "Hire Pip (the staff card's button)");
+            s.SetCard(GrowthCard.None);
+            Ok(s.Act(shop.OpenShop), "Open the shop (the counter card's button)");
+            shop.Visitors.Clear();
+            var at = tanks.ToDictionary(c => c.Place);
+            var bargain = Visitor(31, "bargain", 500, at["a2"]);
+            var casual = Visitor(32, "casual", 500, at["a4"]);
+            var collector = Visitor(33, "collector", 500, at["a1"]);
+            var premium = Visitor(34, "premium", 500, at["a3"]);
+            var four = new[] { bargain, casual, collector, premium };
+            yield return Wait(() => four.All(v => ViewOf(v) != null && ViewOf(v).Arrived && ViewOf(v).Activity == "browse"), 30, "the four visitors at their tanks");
+            Check(shop.Phase == GrowthPhase.Day && shop.Working("pip") && four.All(v => v.State == GrowthVisitorState.Browsing), "Fixture: the shop open, Pip at the till, four visitors browsing a tank each in unit A");
+
+            // The room's own fart: the visitor nearest the player squeaks and looks innocent, a puff of a cloud behind them; a
+            // neighbour sniffs and blames the fish.
+            var a1 = GrowthWorld.Places["a1"];
+            LookAt(a1.Browse + new Vector3(2.2f, 0, -0.9f), a1.Browse + new Vector3(0, 1.1f, -0.2f));
+            yield return null;
+            gags.RoomMoments = true;
+            yield return Wait(() => gags.Policy.Current == GrowthGag.Fart, 25, "the room's own turn (a fart)");
+            var culprit = gags.Subject; var blamer = gags.Other;
+            Check(culprit != null && blamer != null && culprit != blamer, "The room's own moment comes in its turn: a fart by the visitor nearest the player (" + culprit.name + "), a neighbour within " + GrowthGags.Neighbour + " m (" + blamer.name + ")");
+            var pair = (culprit.transform.position + blamer.transform.position) * 0.5f;
+            LookAt(pair + new Vector3(2.4f, 0, 1.2f), pair + Vector3.up * 0.95f);
+            yield return Wait(() => gags.Policy.Age > 1.15f, 3, "the fart's blame");
+            Check(culprit.Reaction == "culprit" && culprit.Person.GagShown("gag__cloud") && blamer.Reaction == "blame", "The culprit looks up and around, all innocence, a puff of a cloud behind them; the neighbour sniffs, then points at the fish");
+            Check(gags.Asked.TryGetValue("squeak", out int sq) || gags.Asked.TryGetValue("squeak2", out sq), "The squeak sounds (once)");
+            Check(gags.CaptionText != null && (gags.CaptionText.Contains("fish") || gags.CaptionText.Contains("tank") || GrowthContent.Species.Any(x => gags.CaptionText.Contains(x.Name))) && s.Ui.CaptionShown != null,
+                "Its caption: \"" + s.Ui.CaptionShown + "\"");
+            yield return Shot("570-a-suspicious-fart");
+            yield return Wait(() => gags.Policy.Current == null, 4, "the fart's end");
+            yield return null;
+            Check(!culprit.Person.GagShown("gag__cloud") && culprit.Reaction == null && blamer.Reaction == null && s.Ui.CaptionShown == null, "Over: the cloud, the reactions and the caption go");
+            Check(gags.Policy.WhyNot(GrowthGag.Complaint) == "quiet", "Then the room is quiet a while (nothing else starts)");
+
+            // The slap: its own key at the visitor under the reticle, with a clear prompt; a bargain hunter leaves in a huff.
+            var bv = ViewOf(bargain);
+            var a2 = GrowthWorld.Places["a2"];
+            LookAt(a2.Browse + new Vector3(1.2f, 0, 0.3f), bv.transform.position + Vector3.up * 1.3f);
+            yield return null; yield return null;
+            Check(gags.SlapTarget == bv && s.Ui.SlapPromptShown && s.Ui.SlapPromptKey == "F", "Aiming at the bargain hunter within reach, the slap's prompt shows its key (F) and whom");
+            int rep = shop.Reputation, credits = shop.Credits, slaps = hands.Slaps;
+            yield return Press(Key.F);
+            Check(bargain.State == GrowthVisitorState.Leaving && bargain.Outcome == GrowthVisitOutcome.Slapped && shop.Reputation == rep + GrowthShop.SlapReputation && shop.Credits == credits,
+                "F slaps: the bargain hunter leaves in a huff, the shop a reputation point down (" + rep + " to " + shop.Reputation + "), not a credit more");
+            Check(hands.Slaps == slaps + 1 && hands.RightDoing == "slap" && hands.ShapeOf("R") == "open", "The right hand swings the slap, open-handed");
+            yield return new WaitForSeconds(0.06f);
+            yield return Shot("571-the-slap");
+            yield return Wait(() => gags.Policy.Age > 0.45f, 3, "the slap's beats");
+            Check(Vector3.Angle(bv.transform.forward, s.Player.transform.position - bv.transform.position) < 50f, "The slapped visitor turns to face the player");
+            Check(bv.Reaction == "slapped" && bv.Person.GagShown("head__mark-slap") && bv.Person.GagShown("gag__stars") && (bv.Person.Look.Sunglasses || bv.Person.GagShown("head__eyes-squeeze") || gags.Policy.Age > 0.9f),
+                "The visitor's head is knocked aside: a hand mark on the cheek, eyes squeezed shut, dizzy stars circling");
+            Check(gags.Asked.ContainsKey("slap") && gags.Asked.ContainsKey("boing") && gags.Asked.ContainsKey("grumble") && GrowthComedy.Grumbles.Contains(gags.CaptionText) && gags.CaptionWho == "Bargain hunter",
+                "A thwack, a boing and a grumbled gibberish: \"" + s.Ui.CaptionShown + "\"");
+            Check(bv.Staggered > 0 && bv.Staggered <= 0.55f, "A stagger before the walk out (" + bv.Staggered.ToString("0.00") + " s, as long as the walk still ends before the rules let them go)");
+            yield return Shot("572-slapped");
+            Check(s.Ui.Log.Any(l => l.Contains("left in a huff")), "The note: a slapped visitor left in a huff");
+
+            // The hand still stings; then a casual visitor laughs off a first slap, and Skip ends the moment (the laugh stands).
+            var cv = ViewOf(casual);
+            var a4 = GrowthWorld.Places["a4"];
+            LookAt(a4.Browse + new Vector3(1.2f, 0, -0.3f), cv.transform.position + Vector3.up * 1.3f);
+            yield return null; yield return null;
+            Check(gags.SlapTarget == cv, "Aiming at the casual visitor");
+            if (shop.SlapWait > 0.4f)
+            {
+                yield return Press(Key.F);
+                Check(casual.Slaps == 0 && cv.Reaction == null, "Within a few seconds of a slap the hand is still stinging: nothing happens (" + shop.SlapWait.ToString("0.0") + " s to go)");
+            }
+            yield return Wait(() => shop.SlapWait <= 0, 4, "the hand to stop stinging");
+            rep = shop.Reputation;
+            yield return Press(Key.F);
+            yield return Wait(() => gags.Policy.Age > 0.9f, 3, "the laugh");
+            Check(casual.State == GrowthVisitorState.Browsing && casual.Slaps == 1 && cv.Reaction == "laugh" && cv.Person.MouthShown == "grin" && shop.Reputation == rep,
+                "A casual visitor laughs off a first slap: doubled over, grinning, still browsing, no reputation lost");
+            Check(GrowthComedy.Laughs.Contains(gags.CaptionText) && gags.Asked.ContainsKey("laugh"), "Ha ha: \"" + s.Ui.CaptionShown + "\"");
+            yield return Shot("573-laughed-off");
+            int skipped = gags.Policy.Skipped;
+            yield return Press(Key.Backspace);
+            yield return null;
+            Check(gags.Policy.Skipped == skipped + 1 && gags.Policy.Current == null && cv.Reaction == null && s.Ui.CaptionShown == null && !cv.Person.GagShown("gag__stars"),
+                "Backspace skips it: the reaction, the stars and the caption go");
+            Check(casual.Slaps == 1 && casual.State == GrowthVisitorState.Browsing, "What the slap did stands (the rules')");
+
+            // The complaint: a visitor at a tank jabs a finger at a creature.
+            gags.Policy.Clear();
+            LookAt(a4.Browse + new Vector3(-0.2f, 0, 1.0f), a4.Position + new Vector3(0.3f, 0.9f, 0));
+            yield return null;
+            Check(gags.Try(GrowthGag.Complaint) && gags.Subject == cv, "The complaint (started by the route at the casual visitor's tank, labelled)");
+            yield return Wait(() => gags.Policy.Age > 0.7f, 3, "the complaint");
+            Check(cv.Reaction == "complain" && (cv.Person.Look.HeldRight != null || cv.Person.HandShape("R") == "point") && (gags.Asked.ContainsKey("mumble") || gags.Asked.ContainsKey("mumble2")), "The visitor jabs a finger at the tank, mumbling");
+            Check(GrowthContent.Species.Any(x => gags.CaptionText.Contains(x.Name)) && gags.CaptionWho == "Casual visitor", "A ridiculous complaint about a creature: \"" + s.Ui.CaptionShown + "\"");
+            LookAt(a4.Browse + new Vector3(0.9f, 0, -1.3f), a4.Browse + new Vector3(-0.5f, 1.05f, 0));
+            yield return Shot("574-a-complaint");
+            yield return Wait(() => gags.Policy.Current == null, 4, "the complaint's end");
+
+            // The fish copies a visitor's fish face: puffing its cheeks and waggling inside its tank, a blub and its bubbles.
+            gags.Policy.Clear();
+            var a3 = GrowthWorld.Places["a3"];
+            var pv = ViewOf(premium);
+            LookAt(a3.Browse + new Vector3(1.3f, 0, -0.3f), a3.Position + new Vector3(0, 0.95f, 0));
+            yield return null; yield return null;
+            Check(gags.Try(GrowthGag.Mimic) && gags.Subject == pv && gags.Fish != null, "The fish copies a face (started by the route at the big spender's tank, labelled)");
+            var fish = gags.Fish;
+            var tankView = w.Tanks[premium.ContainerId];
+            var water = new Bounds(tankView.Root.TransformPoint(new Vector3(0, tankView.WaterY, 0)), tankView.Inner);
+            bool inside = true; float puffed = 0;
+            for (float until = Time.realtimeSinceStartup + 1.6f; Time.realtimeSinceStartup < until;)
+            {
+                yield return null;
+                var rs = fish.GetComponentsInChildren<Renderer>().Where(r => r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer)).ToList();
+                if (rs.Count == 0) continue;
+                var fb = rs[0].bounds; foreach (var r in rs) fb.Encapsulate(r.bounds);
+                inside &= water.Contains(fb.min + Vector3.one * 0.01f) && water.Contains(fb.max - Vector3.one * 0.01f);
+                if (fish.Mimic >= 0) puffed = Mathf.Max(puffed, fish.Mimic);
+            }
+            Check(pv.Reaction == "fishface" || gags.Policy.Current == null, "The visitor makes a fish face at the glass, hands flapping by the cheeks");
+            Check(puffed > 0.5f && fish.MimicBursts >= 1 && gags.Asked.ContainsKey("blub"), "The creature copies it: cheeks puffed, a waggle, a blub and a burst of its bubbles");
+            Check(inside, "Copying, it stays inside its tank's water (" + water.size.ToString("F2") + ")");
+            Check(s.Ui.Log.Any(l => l.Contains("copying me") || l.Contains("doing my face")), "Its caption: \"" + s.Ui.Log.Last(l => l.Contains("copying me") || l.Contains("doing my face")) + "\"");
+            // From the tank's far side, over it: the visitor's fish face at the glass and the creature copying it in the water.
+            LookAt(a3.Position + new Vector3(0.05f, 0, 1.5f), a3.Browse + new Vector3(0, 0.95f, 0.25f));
+            yield return Shot("575-the-fish-copies-a-face");
+            yield return Wait(() => gags.Policy.Current == null, 4, "the fish's end");
+            yield return null;
+            Check(fish == null || fish.Mimic < 0, "Over: the fish is itself again");
+
+            // The incubator's burp, after the hatchling shows (never before, and never hiding it).
+            gags.Policy.Clear();
+            var inc = GrowthWorld.IncubatorPosition;
+            LookAt(inc + new Vector3(1.6f, 0, -1.4f), inc + new Vector3(0, 1.1f, 0));
+            Ok(shop.Collect("bloom", shop.HoldSeconds), "Collect fixture Bloom"); Ok(shop.Collect("flow", shop.HoldSeconds), "Collect fixture Flow");
+            Ok(shop.AddDose("bloom"), "Dose Bloom"); Ok(shop.AddDose("flow"), "Dose Flow");
+            Ok(shop.StartIncubation(), "Start the incubation");
+            s.Advance(shop.IncubationSeconds + 0.05f);
+            float hatched = gags.Policy.Clock;
+            Check(shop.Hatchling != null, "It hatches (the shop's own clock, advanced: labelled)");
+            yield return Wait(() => gags.Policy.Current == GrowthGag.Belch, 4, "the burp");
+            Check(gags.Policy.Clock - hatched >= GrowthGags.BelchDelay - 0.05f && w.HatchlingView != null, "The burp waits for the hatchling to show (" + (gags.Policy.Clock - hatched).ToString("0.0") + " s after the hatch)");
+            float low = 2;
+            for (float until = Time.realtimeSinceStartup + 0.4f; Time.realtimeSinceStartup < until;) { yield return null; low = Mathf.Min(low, w.IncubatorSquash); }
+            yield return Wait(() => w.BurpShowing, 2, "the bubble");
+            Check(low < 0.99f && w.BurpPosition.y > w.IncubatorTop, "A squash of the incubator, then a bubble rising from its top");
+            Check(gags.Asked.ContainsKey("burp") && GrowthComedy.Belches.Contains(gags.CaptionText) && gags.CaptionWho == "The incubator", "*buuurp*: \"" + s.Ui.CaptionShown + "\"");
+            yield return Wait(() => gags.Policy.Age > 0.6f, 2, "the bubble to rise");
+            yield return Shot("576-the-incubator-burps");
+            yield return Wait(() => gags.Policy.Current == null, 4, "the burp's end");
+            yield return null;
+            Check(!w.BurpShowing, "The bubble pops");
+
+            // Pip's little dance after a sale, only with nobody waiting; it stops the moment a visitor queues.
+            gags.Policy.Clear();
+            var buyer = Visitor(35, "bargain", 500, at["a1"]); buyer.BrowseFor = 0.5f;
+            LookAt(new Vector3(1.6f, 0, -2.9f), w.FigurePosition("pip") + Vector3.up * 1.2f);
+            var pip = shop.Helper("pip");
+            int sold = shop.SalesTotal;
+            yield return Wait(() => shop.SalesTotal > sold, 30, "Pip to sell to the visitor");
+            yield return Wait(() => gags.Policy.Current == GrowthGag.Dance, 3, "Pip's dance");
+            Check(pip.Step == null && !shop.Queue.Any() && gags.Helper == "pip", "After the sale, with nobody waiting, Pip dances (" + GrowthGags.DanceAfter + " s after the job)");
+            yield return Wait(() => gags.Policy.Age > 0.5f, 2, "the dance");
+            Check(w.FigureActivity("pip") == "dance" && w.FigurePerson("pip").GagShown("note0") && gags.Asked.ContainsKey("shoe"), "A tiny victory dance, music notes over Pip's head, squeaky shoes");
+            Check(gags.CaptionWho == "Pip" && (gags.CaptionText == GrowthComedy.Cheer("pip", 0) || gags.CaptionText == GrowthComedy.Cheer("pip", 1)), "Pip's cheer: \"" + s.Ui.CaptionShown + "\"");
+            yield return Shot("577-pip-dances");
+            var next = Visitor(36, "collector", 500, at["a1"]); next.BrowseFor = 0.1f;
+            yield return Wait(() => pip.Step == "serve", 30, "the next visitor to queue");
+            yield return null; yield return null;
+            Check(gags.Policy.Current == null && w.FigureActivity("pip") != "dance" && !w.FigurePerson("pip").GagShown("note0"), "A visitor at the till: the dance stops at once and Pip serves (the work never waits for it)");
+
+            // The Gags setting off: the room's moments stop, the player's own slap still lands; Humour off: silent.
+            var ov = ViewOf(collector);
+            LookAt(a1.Browse + new Vector3(0.35f, 0, -1.1f), ov.transform.position + Vector3.up * 1.35f);
+            yield return null; yield return null;
+            yield return Wait(() => shop.SlapWait <= 0 && gags.SlapTarget == ov, 5, "the collector under the reticle");
+            s.HumourLevel = GrowthAudio.Level.Off; s.GagLevel = GrowthGagLevel.Off;
+            gags.Policy.Clear();
+            yield return null;
+            Check(!gags.Try(GrowthGag.Complaint), "With the Gags setting off, the room's own moments do not start");
+            yield return Press(Key.F);
+            Check(collector.Outcome == GrowthVisitOutcome.Slapped, "With the Gags setting off, the player's own slap still lands");
+            Check(gags.LastGain == 0, "With Humour off, the thwack is silent");
+            s.HumourLevel = GrowthAudio.Level.Full; s.GagLevel = GrowthGagLevel.Full;
+
+            // Paused, a moment waits; closing time ends it; a reload clears it.
+            gags.Policy.Clear();
+            LookAt(a4.Browse + new Vector3(-0.2f, 0, 1.0f), a4.Position + new Vector3(0.3f, 0.9f, 0));
+            yield return null;
+            Check(gags.Try(GrowthGag.Complaint), "Another complaint (labelled)");
+            yield return new WaitForSeconds(0.4f);
+            s.SetCard(GrowthCard.Pause);
+            float age = gags.Policy.Age;
+            yield return new WaitForSeconds(0.6f);
+            Check(Mathf.Abs(gags.Policy.Age - age) < 1e-4f && gags.Policy.Current == GrowthGag.Complaint, "Paused, the moment waits (" + age.ToString("0.00") + " s in)");
+            s.SetCard(GrowthCard.None);
+            yield return new WaitForSeconds(0.3f);
+            Check(gags.Policy.Age > age, "Resumed, it goes on");
+            shop.DaySecondsLeft = 0.05f;
+            yield return Wait(() => shop.Phase == GrowthPhase.Night, 3, "closing time (the day's clock set: labelled)");
+            if (s.Card == GrowthCard.Receipt) s.SetCard(GrowthCard.None);
+            yield return null; yield return null;
+            Check(gags.Policy.Current == null && cv.Reaction == null && s.Ui.CaptionShown == null, "Closing time: the moment ends as the visitor leaves");
+            Check(s.ReloadSaved() && gags.Policy.Current == null && s.Ui.CaptionShown == null, "A reload: nothing left playing");
+
+            // The slap's key from the pause menu: G, refused for E, kept with the save.
+            s.SetCard(GrowthCard.Pause);
+            yield return null;
+            gags.StartRebind();
+            yield return Press(Key.E);
+            Check(gags.Rebinding && gags.RebindProblem != null && s.SlapKey == Key.F, "E already does something: refused (" + gags.RebindProblem + ")");
+            yield return Press(Key.G);
+            Check(!gags.Rebinding && s.SlapKey == Key.G, "The slap's key is now G");
+            Check(File.ReadAllText(s.SavePath).Contains("\"slapKey\": \"G\""), "Kept with the save");
+            yield return Shot("578-the-pause-menus-comedy-row");
+            s.SetCard(GrowthCard.None);
+            s.SlapKey = Key.F; s.SaveNow();
+            gags.RoomMoments = false;
         }
 
         /// <summary>GR-18 wave 3: the player's hands, in each thing the player does.</summary>

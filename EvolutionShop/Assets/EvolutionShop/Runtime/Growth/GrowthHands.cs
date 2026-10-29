@@ -50,6 +50,14 @@ namespace EvolutionShop
         /// <summary>The player's capsule's radius: no part of the hands in view is ever drawn further from the eye.</summary>
         public const float Capsule = 0.3f;
         const float Ease = 14f, ReachSeconds = 0.6f, HandoverSeconds = 0.45f, BandGrowSeconds = 0.2f, PopSeconds = 0.25f;
+        /// <summary>GR-18 wave 4 (§6.7): the slap's swing across the view and back, in seconds.</summary>
+        public const float SlapSeconds = 0.45f;
+        float slapping = -1;
+        /// <summary>Validation: the slaps the right hand has swung.</summary>
+        public int Slaps { get; private set; }
+
+        /// <summary>GR-18 wave 4: the right hand swings a cartoon slap across the view (the session calls it on a slap that landed).</summary>
+        public void Slap() { slapping = 0; Slaps++; }
         static readonly string[] TieColours = { "#22BFB0", "#FF7A7A", "#FFC93C" };
         const string ServeTie = "#FF9EC4";
         /// <summary>Where a fist closes, in the arm's frame (along the fingers from the wrist).</summary>
@@ -287,6 +295,14 @@ namespace EvolutionShop
                         break;
                     }
                 case "pipe": w = new Vector3(0.12f, -0.2f, 0.44f); f = new Vector3(-0.28f, 0.62f, 0.5f); th = new Vector3(-1, 0.3f, 0); break;
+                case "slap":
+                    {
+                        // GR-18 wave 4: the open hand swings in from the right across the view and drops back (reach 0 to 1).
+                        float swing = Smooth(Mathf.Clamp01(reach / 0.45f)), back = Smooth(Mathf.Clamp01((reach - 0.45f) / 0.55f));
+                        w = Vector3.Lerp(Vector3.Lerp(new Vector3(0.3f, -0.04f, 0.38f), new Vector3(-0.04f, 0.0f, 0.52f), swing), new Vector3(0.2f, -0.3f, 0.4f), back);
+                        f = new Vector3(-0.25f, 0.9f, 0.3f); th = new Vector3(0, 0, -1); shape = "open";
+                        break;
+                    }
                 case "take":
                     {
                         float a = Smooth(Mathf.Sin(Mathf.PI * Mathf.Clamp01(reach)));
@@ -366,7 +382,10 @@ namespace EvolutionShop
             if (handover >= 0) { handover += dt; if (handover > HandoverSeconds) handover = -1; }
             if (reachPut >= 0) { reachPut += dt / ReachSeconds; if (reachPut >= 1) reachPut = -1; }
             if (reachTake >= 0) { reachTake += dt / ReachSeconds; if (reachTake >= 1) reachTake = -1; }
+            if (slapping >= 0) { slapping += dt / SlapSeconds; if (slapping >= 1) slapping = -1; }
             var (l, r) = Decide(s, reachPut >= 0 && !s.CardOpen, reachTake >= 0 && !s.CardOpen);
+            // GR-18 wave 4: a slap swings the right hand whatever it held (the siphon and a pipe wait in the other hand's place).
+            if (slapping >= 0 && !s.CardOpen) r = "slap";
             if (r == "rest" && handover >= 0 && !s.CardOpen) r = "handover";
             if (r == "serve" && handover >= 0) r = "handover";
             // Walking bobs the hands, standing sways them, and turning the view leaves them a little behind (none of it with
@@ -381,7 +400,7 @@ namespace EvolutionShop
             var sway = bob * motion + lookLag;
             float k = Mathf.Tan(s.Fov * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(s.NormalFov * 0.5f * Mathf.Deg2Rad);
             Drive(left, l, t, s, dt, sway, k, reachPut);
-            Drive(right, r, t, s, dt, sway, k, reachTake);
+            Drive(right, r, t, s, dt, sway, k, r == "slap" ? slapping : reachTake);
             UpdateSiphon(s, dt, t);
             // The pipe: across both fists, or in the right alone.
             bool piping = r == "pipe";

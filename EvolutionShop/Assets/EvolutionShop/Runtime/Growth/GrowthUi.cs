@@ -22,11 +22,11 @@ namespace EvolutionShop
         UIDocument document;
         PanelSettings settings;
         ShopUiTheme theme;
-        VisualElement root, hud, cardLayer, screenLayer, promptBox, promptProgress, card, dayIcon, nextBox, carryBox, toastBox, eventBox, modeBox, modeLay;
+        VisualElement root, hud, cardLayer, screenLayer, promptBox, promptProgress, card, dayIcon, nextBox, carryBox, toastBox, eventBox, modeBox, modeLay, slapBox, captionBox;
         readonly List<VisualElement> stars = new List<VisualElement>();
         bool nextShown;
         int nextRemeasure;
-        Label dayLabel, clockLabel, creditsLabel, rpLabel, nextLabel, promptName, promptStatus, siphonLabel, carryLabel, hintLabel, toastLabel, eventLabel, modeTitle, modeDetail;
+        Label dayLabel, clockLabel, creditsLabel, rpLabel, nextLabel, promptName, promptStatus, siphonLabel, carryLabel, hintLabel, toastLabel, eventLabel, modeTitle, modeDetail, slapKey, slapName, slapWho, captionWho, captionText;
         TextElement liveLabel;
         Texture2D dayTexture;
         float hintUntil, toastUntil, eventUntil, refreshClock;
@@ -151,6 +151,12 @@ namespace EvolutionShop
             promptProgress = Box("es-prompt__progress");
             promptBox.Add(promptName); promptBox.Add(promptStatus); promptBox.Add(promptProgress);
             prompts.Add(promptBox);
+            // GR-18 wave 4 (§6.7): the slap's own prompt under the reticle's, with its key, when a visitor is in reach.
+            slapBox = Box("es-prompt", "es-prompt--slap");
+            slapKey = L("F", "es-keycap"); slapName = L("Slap", "es-prompt__name"); slapWho = L("", "es-prompt__status");
+            slapBox.Add(slapKey); slapBox.Add(slapName); slapBox.Add(slapWho);
+            slapBox.style.display = DisplayStyle.None;
+            prompts.Add(slapBox);
             hintLabel = Text(""); hintLabel.style.color = new Color(1f, 0.92f, 0.75f); hintLabel.style.fontSize = 18; hintLabel.style.marginLeft = 8;
             prompts.Add(hintLabel);
             // GR-13: pipe and chute placement as a mode bar at the bottom: what is being laid, its length and price, and the keys.
@@ -163,6 +169,12 @@ namespace EvolutionShop
             modeBox.Add(ModeKey("Esc", "Done"));
             modeBox.style.display = DisplayStyle.None;
             hud.Add(modeBox);
+            // GR-18 wave 4: the silly moments' captions, above the next-step line (who says it, and what).
+            captionBox = Box("gr-caption");
+            captionWho = L("", "gr-caption__who"); captionText = L("", "gr-caption__text");
+            captionBox.Add(captionWho); captionBox.Add(captionText);
+            captionBox.style.display = DisplayStyle.None;
+            hud.Add(captionBox);
             var top = Box("es-hud-top");
             eventBox = Note("gr-toast--event", ShopUiTheme.Symbol.Star, out eventLabel);
             toastBox = Note(null, ShopUiTheme.Symbol.Leaf, out toastLabel);
@@ -242,6 +254,17 @@ namespace EvolutionShop
                     s.PumpingNow ? shop.PumpProgress / Mathf.Max(0.01f, shop.PumpDoseSeconds) : 0;
                 promptProgress.style.width = new Length(Mathf.Clamp01(progress) * 100, LengthUnit.Percent);
             }
+            // GR-18 wave 4: a caption measured before its font had drawn its glyphs keeps that width: measure it again for the
+            // frames after it changes (as the next-step line does).
+            if (captionRemeasure > 0) { captionRemeasure--; var words = captionText.text; captionText.text = ""; captionText.text = words; }
+            // GR-18 wave 4: the slap's prompt while a visitor is in reach under the reticle.
+            var slapAt = free && !piping && s.Gags != null ? s.Gags.SlapTarget : null;
+            slapBox.style.display = slapAt != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (slapAt != null)
+            {
+                slapKey.text = GrowthGags.KeyName(s.SlapKey);
+                slapWho.text = "the " + GrowthShop.TypeName(shop.Visitors.FirstOrDefault(v => v.Id == slapAt.VisitorId)?.Type).ToLowerInvariant();
+            }
             if (Time.unscaledTime > hintUntil) hintLabel.text = "";
             if (Time.unscaledTime > eventUntil) eventBox.style.display = DisplayStyle.None;
             if (Time.unscaledTime > toastUntil) toastBox.style.display = DisplayStyle.None;
@@ -256,6 +279,27 @@ namespace EvolutionShop
         static string ShopClock(float seconds) { int t = Mathf.Max(0, Mathf.CeilToInt(seconds)); return t / 60 + ":" + (t % 60).ToString("00"); }
 
         public void Hint(string text) { hintLabel.text = text; hintUntil = Time.unscaledTime + 1.5f; }
+
+        /// <summary>GR-18 wave 4 (§6.7): a silly moment's caption (who says it, and what) until it ends (every caption stays in <see cref="Log"/>).</summary>
+        public void Caption(string who, string words)
+        {
+            Log.Add((who != null ? who + ": " : "") + words);
+            if (!Ready) return;
+            captionWho.text = who ?? ""; captionText.text = words;
+            captionWho.style.display = string.IsNullOrEmpty(who) ? DisplayStyle.None : DisplayStyle.Flex;
+            captionBox.style.display = DisplayStyle.Flex;
+            captionRemeasure = 30;
+        }
+
+        int captionRemeasure;
+
+        public void ClearCaption() { if (Ready) captionBox.style.display = DisplayStyle.None; }
+
+        /// <summary>Validation: the caption showing ("who: words"), or null.</summary>
+        public string CaptionShown => Ready && captionBox.style.display == DisplayStyle.Flex ? (captionWho.text.Length > 0 ? captionWho.text + ": " : "") + captionText.text : null;
+        /// <summary>Validation: whether the slap's prompt shows, and its key.</summary>
+        public bool SlapPromptShown => Ready && slapBox.style.display == DisplayStyle.Flex;
+        public string SlapPromptKey => Ready ? slapKey.text : null;
 
         /// <summary>A note: one at a time at the top, the newest replacing the last (every note stays in <see cref="Log"/>).</summary>
         public void Toast(string text, bool warn = false)
@@ -288,7 +332,7 @@ namespace EvolutionShop
                     if (!Ready) return;
                     eventLabel.text = e.Text; eventBox.style.display = DisplayStyle.Flex; eventUntil = Time.unscaledTime + 3.5f;
                     return;
-                default: Toast(e.Text, e.Kind == GrowthEventKind.Refusal || e.Kind == GrowthEventKind.Impatient || e.Kind == GrowthEventKind.StaffHome || e.Kind == GrowthEventKind.ExhibitionFailed); return;
+                default: Toast(e.Text, e.Kind == GrowthEventKind.Refusal || e.Kind == GrowthEventKind.Impatient || e.Kind == GrowthEventKind.StaffHome || e.Kind == GrowthEventKind.ExhibitionFailed || e.Kind == GrowthEventKind.Slapped && e.Text.Contains("huff")); return;
             }
         }
 
@@ -1351,6 +1395,8 @@ namespace EvolutionShop
                 if (d.WalkedPast > 0) chips.Add(Chip(d.WalkedPast + " looked in at empty tanks", true));
                 if (d.Refusals > 0) chips.Add(Chip(d.Refusals + " found nothing to buy", true));
                 if (d.Impatient > 0) chips.Add(Chip(d.Impatient + " got tired of waiting", true));
+                if (d.Slapped > 0) chips.Add(Chip(d.Slapped + " left after a slap", true));
+                if (d.LaughedOff > 0) chips.Add(Chip(d.LaughedOff + " laughed off a slap"));
                 stats.Add(chips);
                 stats.Add(L(d.Visitors + " visitors came in and " + d.Sales + " bought, for " + d.Revenue + " credits.", "gr-hint"));
                 if (d.WalkedPast > 0) stats.Add(L("More creatures, more sales: " + d.WalkedPast + " more looked in while your tanks were empty.", "gr-hint"));
@@ -1406,6 +1452,8 @@ namespace EvolutionShop
             NotebookFooter("Start", () => s.SetCard(GrowthCard.None), "Start");
         }
 
+        public static string GagName(GrowthGagLevel level) => level == GrowthGagLevel.Full ? "Full" : level == GrowthGagLevel.Fewer ? "Fewer" : "Off";
+
         void FillPause()
         {
             var body = Notebook("Paused", "Day " + s.Shop.Day + " · " + s.Shop.Credits + " credits · " + StarsText(s.Shop.Stars) + " · saved to " + System.IO.Path.GetFileName(s.SavePath));
@@ -1413,9 +1461,15 @@ namespace EvolutionShop
             body.Add(Item("Peek", "look closely at a tank's glass to read each creature", ChipButton(s.PeekOn ? "On" : "Off", () => { s.PeekOn = !s.PeekOn; s.SaveNow(); }, true)));
             body.Add(Item("Reduced motion", "no creature tricks, gentler movement", ChipButton(s.ReducedMotion ? "On" : "Off", () => { s.ReducedMotion = !s.ReducedMotion; s.SaveNow(); }, true)));
             // GR-16 wave 5: the sounds and the machines' hum, on one row (the card fits at 1280x720), each full, half or off.
-            body.Add(Item("Sound", "the crank, the hand pumps, the breeding pop and a school's swish; the machines' hum",
+            body.Add(Item("Sound", "the stations' sounds, and the machines' hum",
                 ChipButton("Sounds " + GrowthAudio.Name(s.SoundLevel), () => { s.SoundLevel = GrowthAudio.Next(s.SoundLevel); s.SaveNow(); }, true),
                 ChipButton("Hum " + GrowthAudio.Name(s.HumLevel), () => { s.HumLevel = GrowthAudio.Next(s.HumLevel); s.SaveNow(); }, true)));
+            // GR-18 wave 4 (§6.7): the silly moments' sounds, how many there are, and the slap's key, on one row.
+            var gags = s.Gags;
+            body.Add(Item("Comedy", gags != null && gags.Rebinding ? (gags.RebindProblem ?? "press the slap's new key (Esc keeps it)") : "the silly moments and the slap's key",
+                ChipButton("Humour " + GrowthAudio.Name(s.HumourLevel), () => { s.HumourLevel = GrowthAudio.Next(s.HumourLevel); s.SaveNow(); }, true),
+                ChipButton("Gags " + GagName(s.GagLevel), () => { s.GagLevel = (GrowthGagLevel)(((int)s.GagLevel + 1) % 3); s.SaveNow(); }, true),
+                ChipButton(gags != null && gags.Rebinding ? "Slap key: press a key" : "Slap key " + GrowthGags.KeyName(s.SlapKey), () => gags?.StartRebind(), true)));
             body.Add(Item("Mouse", "how far the view turns", ChipButton(s.Sensitivity.ToString("0.0") + "×", () => { s.Sensitivity = s.Sensitivity >= 2f ? 0.5f : s.Sensitivity + 0.25f; s.SaveNow(); }, true)));
             if (s.Shop.Guide == GrowthGuideMode.On)
             {

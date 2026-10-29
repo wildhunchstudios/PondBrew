@@ -87,6 +87,12 @@ namespace EvolutionShop
         public float HalfHeight { get; private set; }
         /// <summary>The trick's age in seconds while it plays, else -1.</summary>
         public float TrickAge => trickAge;
+        /// <summary>GR-18 wave 4 (§6.7): copying a visitor's fish face, seconds in (-1 with none), for how long: its cheeks puffed and
+        /// surprised, a waggle where it swims (never further than its tricks reach) and a burst of its own bubbles. Shown only.</summary>
+        public float Mimic = -1, MimicFor = 2f;
+        bool mimicBurst;
+        /// <summary>Validation: bursts let go while copying a face.</summary>
+        public int MimicBursts { get; private set; }
         /// <summary>How far a trick has drawn the creature to mid-water (0..1).</summary>
         public float Settle => trickAge >= 0 && kit != null ? DioramaTricks.Settle(Species, trickAge) : 0;
         /// <summary>The look it is shown in: 0 the full kit creature (near, in view), 1 its distant look with its ink outline, 2
@@ -458,13 +464,19 @@ namespace EvolutionShop
             var idle = reduced ? default : DioramaTricks.Idle(Species, clock, phase, before);
             var trick = trickAge < 0 ? default : Species == "pondlet" ? DioramaTricks.PondletBubble(trickAge, trickBefore) : DioramaTricks.Trick(Species, trickAge, trickBefore);
             bool tricking = trickAge >= 0;
-            kit.SetDioramaFace(tricking ? Mathf.Max(.2f, trick.Happy) : .2f + idle.Happy, Mathf.Max(idle.Surprised, trick.Surprised), Mathf.Max(idle.Puffed, trick.Puffed));
+            // GR-18 wave 4: copying a visitor's fish face: puffed and surprised, waggling (Reduced motion: the face only).
+            float mimic = Mimic < 0 ? 0 : Mathf.Clamp01(Mimic / 0.25f) * Mathf.Clamp01((MimicFor - Mimic) / 0.3f);
+            if (Mimic < 0) mimicBurst = false;
+            kit.SetDioramaFace(tricking ? Mathf.Max(.2f, trick.Happy) : .2f + idle.Happy, Mathf.Max(Mathf.Max(idle.Surprised, trick.Surprised), 0.6f * mimic), Mathf.Max(Mathf.Max(idle.Puffed, trick.Puffed), 0.9f * mimic));
+            if (reduced) mimic = 0;
+            idle.Roll += 16f * Mathf.Sin(Mathf.Max(0, Mimic) * 12f) * mimic; idle.Pitch += -8f * mimic;
             kit.SetDioramaAction(idle.Glow + trick.Glow, idle.Tail + trick.Tail, idle.Fins + trick.Fins, idle.Flare + trick.Flare);
             if (ViewerSet && !reduced) kit.SetLookTarget(Viewer); else kit.ClearLookTarget();
             kitHolder.localRotation = KitTurn * Quaternion.Euler(idle.Pitch + trick.Pitch, idle.Yaw + trick.Yaw, idle.Roll + trick.Roll);
             kitHolder.localPosition = Vector3.up * ((idle.Lift + trick.Lift) * Length * LiftShare);
             kit.AnimateSpecies(clock, .7f, reduced);
             if (!reduced && (trick.Release || idle.Release)) Burst(trick.Release);
+            if (!reduced && Mimic >= 0.7f && !mimicBurst) { mimicBurst = true; MimicBursts++; Burst(true); }
         }
 
         /// <summary>

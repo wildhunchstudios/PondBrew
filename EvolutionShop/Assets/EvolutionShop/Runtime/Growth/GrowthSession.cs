@@ -63,6 +63,12 @@ namespace EvolutionShop
         /// <summary>GR-16 wave 5: the sounds (the crank, the hand pump, the pop, the swish) and the machines' hum, each full, half or off.</summary>
         public GrowthAudio.Level SoundLevel, HumLevel;
         public GrowthAudio Audio { get; private set; }
+        /// <summary>GR-18 wave 4 (§6.7): the silly moments: their sounds (full, half or off), how many there are (every one,
+        /// fewer, or none but the player's slap), the slap's key (F unless changed), and what plays them.</summary>
+        public GrowthAudio.Level HumourLevel;
+        public GrowthGagLevel GagLevel;
+        public Key SlapKey = GrowthGags.DefaultSlapKey;
+        public GrowthGags Gags { get; private set; }
         /// <summary>GR-18 wave 3: the player's hands in first person (in the look, with the people kit), or null.</summary>
         public GrowthHands Hands { get; private set; }
         /// <summary>The held-mouse actions, for the HUD's progress: collecting at a grower or a buffer, bagging at the counter,
@@ -119,6 +125,8 @@ namespace EvolutionShop
             if (GrowthWorld.LookOn) Hands = GrowthHands.Build(this);
             Audio = gameObject.AddComponent<GrowthAudio>();
             Audio.Initialize(this);
+            Gags = gameObject.AddComponent<GrowthGags>();
+            Gags.Initialize(this);
             Ui = gameObject.AddComponent<GrowthUi>();
             Ui.Initialize(this);
             World.Sync(Shop, 0);
@@ -146,7 +154,13 @@ namespace EvolutionShop
             PeekOn = !save.peekOff; ReducedMotion = save.reducedMotion;
             Sensitivity = save.sensitivity >= 0.5f && save.sensitivity <= 2f ? save.sensitivity : 1;
             SoundLevel = (GrowthAudio.Level)Mathf.Clamp(save.soundLevel, 0, 2); HumLevel = (GrowthAudio.Level)Mathf.Clamp(save.humLevel, 0, 2);
+            HumourLevel = (GrowthAudio.Level)Mathf.Clamp(save.humourLevel, 0, 2); GagLevel = (GrowthGagLevel)Mathf.Clamp(save.gagLevel, 0, 2);
+            SlapKey = KeyFrom(save.slapKey);
         }
+
+        /// <summary>GR-18 wave 4: the slap's key from a save ("" or anything unknown or already used: F).</summary>
+        public static Key KeyFrom(string name) =>
+            !string.IsNullOrEmpty(name) && Enum.TryParse(name, out Key key) && key != Key.None && Array.IndexOf(GrowthGags.Reserved, key) < 0 ? key : GrowthGags.DefaultSlapKey;
 
         public static GrowthShop LoadOrNew(string path, out string notice)
         {
@@ -178,6 +192,7 @@ namespace EvolutionShop
             var save = Shop.Snapshot();
             save.peekOff = !PeekOn; save.reducedMotion = ReducedMotion; save.sensitivity = Sensitivity;
             save.soundLevel = (int)SoundLevel; save.humLevel = (int)HumLevel;
+            save.humourLevel = (int)HumourLevel; save.gagLevel = (int)GagLevel; save.slapKey = SlapKey == GrowthGags.DefaultSlapKey ? "" : SlapKey.ToString();
             string temp = SavePath + ".tmp";
             try
             {
@@ -195,6 +210,7 @@ namespace EvolutionShop
         {
             Shop = StartPoint != null ? GrowthStarts.Make(StartPoint) : new GrowthShop();
             if (StartPoint == null && !ValidationMode) Shop.Guide = GrowthGuideMode.On;
+            Gags?.Clear();
             World.ResetForNewShop();
             World.Sync(Shop, 0);
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));
@@ -207,6 +223,7 @@ namespace EvolutionShop
         {
             Shop = fixture;
             Shop.TakeEvents();
+            Gags?.Clear();
             World.ResetForNewShop();
             World.Sync(Shop, 0);
             SaveNow();
@@ -218,6 +235,7 @@ namespace EvolutionShop
             var loaded = LoadOrNew(SavePath, out string notice);
             if (notice != null) return false;
             Shop = loaded;
+            Gags?.Clear();
             World.ResetForNewShop();
             World.Sync(Shop, 0);
             return true;
@@ -390,6 +408,8 @@ namespace EvolutionShop
             }
             visualClock += dt * (ReducedMotion ? 0.5f : 1f);
             World.Sync(Shop, dt);
+            // GR-18 wave 4: the silly moments, after the world followed the shop and before the people move.
+            Gags.Step(dt);
             World.Animate(visualClock, dt);
             FindFocus();
             UpdatePipe();
@@ -416,6 +436,7 @@ namespace EvolutionShop
             foreach (var e in Shop.TakeEvents())
             {
                 Ui?.Event(e);
+                Gags?.Event(e);
                 // GR-11: the Grand Exhibition held: confetti around the player.
                 if (e.Kind == GrowthEventKind.ExhibitionWon) World.Celebrate(Player != null ? Player.transform.position : new Vector3(-0.5f, 0, -1.6f), Player != null && Player.View != null ? Player.View.transform.forward : Vector3.forward);
                 if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter) SetCard(GrowthCard.Receipt); }
