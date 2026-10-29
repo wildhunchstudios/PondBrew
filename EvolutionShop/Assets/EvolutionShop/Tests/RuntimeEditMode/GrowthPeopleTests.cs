@@ -88,6 +88,9 @@ namespace EvolutionShop.Tests
                     }
                     Assert.AreEqual(p.Look.HeldLeft != null ? "grip" : "relaxed", p.HandShape("L"), kind + " " + seed + "'s left hand");
                     Assert.AreEqual(p.Look.Mouth, p.MouthShown, kind + " " + seed + " wears their own mouth");
+                    // Every part of the head the look asks for is on the person (their hair, hat, glasses, nose...), not only in the look.
+                    var placed = p.GetComponentsInChildren<Transform>(true).Select(t => t.name).ToList();
+                    foreach (var part in p.Look.HeadParts()) Assert.Contains("head__" + part, placed, kind + " " + seed + " wears their head's " + part);
                     var b = Bounds(p);
                     Assert.AreEqual(GrowthPeopleKit.Kind(kind).height * p.Look.Height, b.max.y, p.Look.Hat == "tophat" ? 0.36f : 0.16f, kind + " " + seed + " is their height (a hat may add a little, a top hat more)");
                     Assert.Less(Mathf.Abs(b.min.y), 0.03f, kind + " " + seed + " stands on the floor");
