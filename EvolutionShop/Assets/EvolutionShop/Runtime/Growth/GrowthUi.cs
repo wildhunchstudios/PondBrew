@@ -269,7 +269,8 @@ namespace EvolutionShop
             if (Time.unscaledTime > eventUntil) eventBox.style.display = DisplayStyle.None;
             if (Time.unscaledTime > toastUntil) toastBox.style.display = DisplayStyle.None;
             refreshClock += dt;
-            if (refreshClock >= 0.1f) { refreshClock = 0; if (card != null && Signature() != cardSignature) RefreshCard(); }
+            // GR-19: never while the mouse is held, so a click begun on the card is not lost to a rebuild before its release.
+            if (refreshClock >= 0.1f) { refreshClock = 0; if (card != null && !MouseHeld() && Signature() != cardSignature) RefreshCard(); }
             if (liveLabel != null) liveLabel.text = LiveText();
             TickRings();
             ApplyPendingScroll();
@@ -358,6 +359,8 @@ namespace EvolutionShop
         }
 
         public void RefreshCard() { if (card != null) ShowCard(s.Card, s.CardTarget); }
+
+        static bool MouseHeld() => UnityEngine.InputSystem.Mouse.current != null && UnityEngine.InputSystem.Mouse.current.leftButton.isPressed;
 
         /// <summary>
         /// Validation: scrolls the open card to its first label that starts with the text (journal pages below the fold),
@@ -448,7 +451,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             return s.Card + "|" + s.CardTarget + "|" + shop.Credits + "|" + shop.Phase + "|" + shop.Held.Count + string.Join(",", shop.Held) + "|" + string.Join(",", shop.Chamber) +
-                "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
+                "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place + c.Decor)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
                 "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature() + "|" + ExhibitionSignature();
