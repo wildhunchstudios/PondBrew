@@ -343,7 +343,7 @@ namespace EvolutionShop
             if (!Ready) return;
             // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
             string key = which + "|" + target;
-            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; pageShown = 0; }
+            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; }
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null;
             tabList.Clear(); tabRow = null; footer = null; rings.Clear(); notebook = false;
             tip.style.display = DisplayStyle.None; tipAnchor = null;
@@ -935,10 +935,11 @@ namespace EvolutionShop
         void FillCounter()
         {
             var shop = s.Shop;
-            var body = Head("Counter", "", "Counter", "Open the shop here at night: a day lasts 5:30, and visitors pick one creature each and wait here to pay. Hold the left mouse on the counter to bag each sale; others wait by the tanks. Nobody comes into an empty shop.");
+            var body = Head("Counter", "", "Counter", "Open the shop here at night: a day lasts 5:30, and visitors pick one creature each and wait here to pay. Hold the left mouse on the counter to bag each sale; others wait by the tanks. Nobody comes into an empty shop. You can close it here before its time too.");
             LiveStatus();
             if (shop.Phase == GrowthPhase.Night)
             {
+                closeAsked = false;
                 int stock = shop.Stock.Count();
                 body.Add(Stat(stock.ToString(), stock == 1 ? "creature on show" : "creatures on show"));
                 if (stock == 0) body.Add(L("Your tanks are empty: nobody comes into an empty shop.", "gr-hint"));
@@ -963,9 +964,34 @@ namespace EvolutionShop
                     body.Add(Item(Visitor(v.Type), "wants a " + (spec?.Def.Name ?? "?") + " · " + (spec == null ? 0 : shop.Price(spec.Species)) + " cr", patience));
                 }
                 if (!shop.Queue.Any()) body.Add(L("No one is waiting.", "gr-hint"));
+                CloseEarlySection(body);
             }
             UpgradeSection(body, "counter");
             Footer(body);
+        }
+
+        bool closeAsked;
+
+        /// <summary>GR-22: Close for the day, before its time, asking first and saying what closing now cuts short.</summary>
+        void CloseEarlySection(VisualElement body)
+        {
+            var shop = s.Shop;
+            var row = Box("gr-row", "gr-section");
+            row.name = "gr-close-early";
+            if (closeAsked)
+            {
+                var ask = L("Close the shop now, with " + GrowthShop.ClockText(shop.DaySecondsLeft) + " of the day to go?", "gr-strong");
+                body.Add(ask);
+                foreach (var cost in shop.CloseEarlyCosts()) body.Add(L(cost + ".", "gr-hint"));
+                var yes = Button("Close", () => { closeAsked = false; s.Act(shop.CloseEarly); }, false, true, "The night begins; the receipt shows the day");
+                yes.RemoveFromClassList("es-button--secondary"); yes.AddToClassList("es-button--danger");
+                row.Add(yes);
+                var no = Button("Stay open", () => closeAsked = false);
+                no.style.marginLeft = 10;
+                row.Add(no);
+            }
+            else row.Add(Button("Close for the day · " + GrowthShop.ClockText(shop.DaySecondsLeft) + " left", () => closeAsked = true, false, true, "Close the shop before its time; it asks first"));
+            body.Add(row);
         }
 
         static string Visitor(string type) => GrowthContent.Visitors.First(v => v.Id == type).Name;
@@ -1397,6 +1423,7 @@ namespace EvolutionShop
                 if (d.Impatient > 0) chips.Add(Chip(d.Impatient + " got tired of waiting", true));
                 if (d.Slapped > 0) chips.Add(Chip(d.Slapped + " left after a slap", true));
                 if (d.LaughedOff > 0) chips.Add(Chip(d.LaughedOff + " laughed off a slap"));
+                if (d.ClosedEarly) chips.Add(Chip("Closed with " + GrowthShop.ClockText(d.SecondsLeft) + " to go"));
                 stats.Add(chips);
                 stats.Add(L(d.Visitors + " visitors came in and " + d.Sales + " bought, for " + d.Revenue + " credits.", "gr-hint"));
                 if (d.WalkedPast > 0) stats.Add(L("More creatures, more sales: " + d.WalkedPast + " more looked in while your tanks were empty.", "gr-hint"));

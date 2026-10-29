@@ -163,6 +163,9 @@ namespace EvolutionShop.Growth
         public int Guests, GuestsServed;
         public bool Exhibition, ExhibitionWon;
         public readonly List<string> ExhibitionNotes = new List<string>();
+        /// <summary>GR-22: the player closed the shop before its time, with this much of the day left.</summary>
+        public bool ClosedEarly;
+        public float SecondsLeft;
     }
 
     public sealed partial class GrowthShop
@@ -1364,7 +1367,47 @@ namespace EvolutionShop.Growth
 
         public void StopServing() { ServeProgress = 0; PlayerAtTill = false; }
 
-        void CloseShop()
+        /// <summary>GR-22: why the shop cannot close early now (None when it can): only while it is open.</summary>
+        public GrowthFailure CloseEarlyCheck(out string why)
+        {
+            why = null;
+            if (Phase != GrowthPhase.Day) { why = "The shop is closed: it opens from the counter at night"; return GrowthFailure.NotDuringDay; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>GR-22: what closing now cuts short, for the counter to say before it closes (none when nothing is lost).</summary>
+        public List<string> CloseEarlyCosts()
+        {
+            var costs = new List<string>();
+            if (Phase != GrowthPhase.Day) return costs;
+            int inside = Visitors.Count(v => v.State != GrowthVisitorState.Leaving && v.Type != GuestType);
+            if (inside > 0) costs.Add(inside + (inside == 1 ? " visitor still in the shop leaves" : " visitors still in the shop leave") + " without buying");
+            if (ExhibitionToday && ExhibitionOrders.Any(o => !o.Bought))
+                costs.Add("The Grand Exhibition ends for today with " + ExhibitionOrders.Count(o => o.Bought) + " of " + ExhibitionPurchases + " guests served (nothing is lost; prepare it again any night)");
+            if (LineToday) costs.Add("Today won't count as a full day on the line");
+            return costs;
+        }
+
+        /// <summary>
+        /// GR-22 (the user's request, 2026-10-29): the player closes the shop before its time, from the counter. It closes as
+        /// at closing time (visitors still inside leave, their reservations released, no unfinished sale paid; the exhibition's
+        /// day ends; the night begins), and a day closed early never counts as a full day on the line.
+        /// </summary>
+        public GrowthResult CloseEarly()
+        {
+            var failure = CloseEarlyCheck(out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            float left = DaySecondsLeft;
+            if (Today != null) { Today.ClosedEarly = true; Today.SecondsLeft = left; }
+            LineToday = false;
+            CloseShop(left);
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>Minutes and seconds, as the day's clock shows them (5:30).</summary>
+        public static string ClockText(float seconds) { int s = Math.Max(0, (int)Math.Ceiling(seconds)); return s / 60 + ":" + (s % 60).ToString("00"); }
+
+        void CloseShop(float earlyLeft = 0)
         {
             foreach (var v in Visitors.Where(x => x.State != GrowthVisitorState.Leaving).ToList()) Leave(v, GrowthVisitOutcome.Closed);
             Phase = GrowthPhase.Night;
@@ -1374,7 +1417,7 @@ namespace EvolutionShop.Growth
             Today = null;
             EndExhibitionDay();
             EndLineDay();
-            Raise(GrowthEventKind.DayEnded, "Day " + Day + " is over");
+            Raise(GrowthEventKind.DayEnded, "Day " + Day + " is over" + (earlyLeft > 0 ? ": you closed the shop with " + ClockText(earlyLeft) + " to go" : ""));
             Day++;
             StartDutyPeriod();
             CheckEra();

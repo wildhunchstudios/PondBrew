@@ -275,6 +275,44 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void ClosingEarlyEndsTheDayAsClosingTimeDoesAndTheReceiptSaysSo()
+        {
+            // GR-22: only while the shop is open.
+            var shop = Stocked("pondlet", "pondlet", "bubblebelly");
+            Assert.That(shop.CloseEarlyCheck(out _), Is.EqualTo(GrowthFailure.NotDuringDay));
+            Assert.That(shop.CloseEarly().Failure, Is.EqualTo(GrowthFailure.NotDuringDay));
+            Assert.That(shop.CloseEarlyCosts(), Is.Empty);
+            Assert.That(shop.OpenShop().Success, Is.True);
+            Run(shop, 15);
+            var v = shop.FrontOfQueue;
+            Assert.That(v, Is.Not.Null, "a visitor chose and queued");
+            Assert.That(shop.Serve(0.5f).Detail, Is.EqualTo("bagging"), "a sale half bagged");
+            int credits = shop.Credits, reputation = shop.Reputation, sales = shop.SalesTotal;
+            float left = shop.DaySecondsLeft;
+            Assert.That(shop.CloseEarlyCosts(), Has.Some.Contains("still in the shop"), "the counter says who leaves");
+            shop.TakeEvents();
+            Assert.That(shop.CloseEarly().Success, Is.True);
+            // As at closing time: everyone leaves, reservations released, the half-bagged sale never paid, the night begins.
+            Assert.That((shop.Phase, shop.Day), Is.EqualTo((GrowthPhase.Night, 2)));
+            Assert.That(shop.Visitors.All(x => x.State == GrowthVisitorState.Leaving && x.Outcome == GrowthVisitOutcome.Closed), Is.True);
+            Assert.That(shop.Stock.All(s => s.ReservedBy == 0), Is.True);
+            Assert.That((shop.Credits, shop.SalesTotal, shop.ServeProgress), Is.EqualTo((credits, sales, 0f)));
+            Assert.That(shop.Reputation, Is.EqualTo(reputation), "closing early costs no reputation");
+            // The receipt says so.
+            Assert.That(shop.LastDay.ClosedEarly, Is.True);
+            Assert.That(shop.LastDay.SecondsLeft, Is.EqualTo(left).Within(1e-3f));
+            Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.DayEnded).Text, Is.EqualTo("Day 1 is over: you closed the shop with " + GrowthShop.ClockText(left) + " to go"));
+            Assert.That(shop.CloseEarly().Failure, Is.EqualTo(GrowthFailure.NotDuringDay), "once closed, it is night");
+            // The next day is a whole day again, and one that runs its time is not closed early.
+            Assert.That(shop.OpenShop().Success, Is.True);
+            Assert.That(shop.DaySecondsLeft, Is.EqualTo(GrowthContent.DaySeconds));
+            Run(shop, GrowthContent.DaySeconds + 1);
+            Assert.That((shop.Phase, shop.LastDay.ClosedEarly), Is.EqualTo((GrowthPhase.Night, false)));
+            Assert.That(GrowthShop.ClockText(330), Is.EqualTo("5:30"));
+            Assert.That(GrowthShop.ClockText(61.2f), Is.EqualTo("1:02"));
+        }
+
+        [Test]
         public void TwoStarsThreeCreaturesAndTwoTanksOpenEraTwoAndUnitB()
         {
             var shop = new GrowthShop { Credits = 1000 };

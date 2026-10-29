@@ -353,6 +353,25 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void ADayClosedEarlyIsNeverAFullDayOnTheLine()
+        {
+            // GR-22: five sales of what the line stocked, then closed before its time: not a full day.
+            var shop = LineDayShop();
+            Assert.That(shop.OpenShop().Success, Is.True);
+            var tank = shop.ShopContainers.Single();
+            for (int i = 0; i < GrowthShop.LineDaySales; i++) Sell(shop, Stock(shop, tank, "pondlet", fromLine: true));
+            Assert.That(shop.CloseEarlyCosts(), Has.Some.EqualTo("Today won't count as a full day on the line"));
+            Assert.That(shop.CloseEarly().Success, Is.True);
+            Assert.That((shop.LineDays, shop.Era, shop.LastDay.ClosedEarly), Is.EqualTo((0, 4, true)));
+            // The next day, run to its end, counts.
+            Assert.That(shop.OpenShop().Success, Is.True);
+            Assert.That(shop.CloseEarlyCosts(), Has.Some.EqualTo("Today won't count as a full day on the line"));
+            for (int i = 0; i < GrowthShop.LineDaySales; i++) Sell(shop, Stock(shop, tank, "pondlet", fromLine: true));
+            CloseDay(shop);
+            Assert.That(shop.LineDays, Is.EqualTo(1));
+        }
+
+        [Test]
         public void TheAnalyzerNamesOneNewThingWithinReachEachDayWithoutNamingIt()
         {
             var shop = At(4, 4);

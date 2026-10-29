@@ -632,7 +632,7 @@ namespace EvolutionShop
                     var v = Shop.FrontOfQueue;
                     bool pip = Shop.Working("pip");
                     status = pip && !Shop.SecondTill ? "Pip is at the till (" + Shop.Queue.Count() + " waiting) · E details" :
-                        v == null ? "No one waiting" : "Hold mouse to bag a sale" + (pip ? " beside Pip" : "") + " (" + Shop.Queue.Count() + " waiting)";
+                        (v == null ? "No one waiting" : "Hold mouse to bag a sale" + (pip ? " beside Pip" : "") + " (" + Shop.Queue.Count() + " waiting)") + " · E details";
                     return "Counter";
                 case GrowthTargetKind.Workbench: status = "level " + Shop.Level("bench") + " · E the siphon and the bench"; return "Research bench";
                 case GrowthTargetKind.UnitBWall: status = Shop.UnitB ? "Open" : "E see what it needs"; return "Shop unit B";

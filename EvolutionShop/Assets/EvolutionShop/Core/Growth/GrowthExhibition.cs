@@ -232,6 +232,8 @@ namespace EvolutionShop.Growth
             var reasons = ExhibitionOrders.Where(o => !o.Bought).Select(o => "the guest for a " + o.Def.Name + " " + (o.Missed.Length > 0 ? o.Missed : "never came")).ToList();
             int shown = OnDisplay.Where(s => s.Def.Kind == SpeciesKind.Crown && SpotlitPlaces.Contains(HolderOf(s.Id)?.Place)).Select(s => s.Species).Distinct().Count();
             if (shown < ExhibitionDisplays) reasons.Add("only " + shown + " of " + ExhibitionDisplays + " crowns were still on display");
+            // GR-22: closed before its time, the day says so first.
+            if (reasons.Count > 0 && LastDay != null && LastDay.ClosedEarly) reasons.Insert(0, "the shop closed with " + ClockText(LastDay.SecondsLeft) + " to go");
             var crowned = OnDisplay.Select(s => s.Species).Distinct().ToArray();
             ReleaseDisplays();
             if (LastDay != null) { LastDay.Exhibition = true; LastDay.ExhibitionNotes.Clear(); LastDay.ExhibitionNotes.AddRange(reasons); }

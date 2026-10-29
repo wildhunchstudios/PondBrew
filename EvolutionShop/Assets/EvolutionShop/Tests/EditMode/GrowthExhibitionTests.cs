@@ -276,6 +276,27 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void ClosingEarlyEndsTheExhibitionsDayLosingNothing()
+        {
+            // GR-22: closed before the first guest comes, the exhibition falls short for today, says why, and loses nothing.
+            var shop = Ready();
+            Assert.That(shop.PrepareExhibition().Success, Is.True);
+            TopUp(shop);
+            var discovered = shop.Discovered.ToList();
+            Assert.That(shop.OpenShop().Success, Is.True);
+            shop.Tick(1f);
+            Assert.That(shop.CloseEarlyCosts(), Has.Some.StartsWith("The Grand Exhibition ends for today with 0 of 6 guests served"));
+            Assert.That(shop.CloseEarly().Success, Is.True);
+            Assert.That((shop.ExhibitionDone, shop.ExhibitionAttempts, shop.LastDay.ClosedEarly), Is.EqualTo((false, 1, true)));
+            Assert.That(shop.LastDay.ExhibitionNotes.First(), Does.StartWith("the shop closed with "));
+            Assert.That(shop.ExhibitionFailure, Does.StartWith("the shop closed with "));
+            Assert.That(shop.Discovered, Is.EqualTo(discovered));
+            Assert.That((shop.OnDisplay.Count(), shop.DisplayReady), Is.EqualTo((0, 5)), "the crowns are free again");
+            // It can be prepared again the same night.
+            Assert.That(shop.PrepareExhibition().Success, Is.True);
+        }
+
+        [Test]
         public void GuestsWaitLongerAndTakeOnlyWhatTheyCameFor()
         {
             Assert.That(GrowthShop.GuestPatience, Is.EqualTo(GrowthShop.QueuePatience * 3));
