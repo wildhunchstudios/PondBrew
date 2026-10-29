@@ -286,14 +286,20 @@ namespace EvolutionShop.Tests
             // Each item is made in the arm pose the game holds it in: there it stands as the board drew it, not tipped with the wrist.
             var pose = new GrowthPersonPose();
             var nori = Build("nori", 1);
-            GrowthPeopleMotion.Stand(pose, 0); GrowthPeopleMotion.HoldArms(pose, "nori", null, "jar"); nori.Apply(pose);
+            GrowthPeopleMotion.Stand(pose, 0); GrowthPeopleMotion.HoldArms(pose, "nori", null, "jar");
+            // The arms that hold each item come up to it, as the board's poses (the item is made for them).
+            Assert.IsTrue(pose.E[GrowthPersonPose.ShoulderL].x < -40 && pose.E[GrowthPersonPose.ShoulderR].x < -40 && pose.E[GrowthPersonPose.ElbowL].x < -40 && pose.E[GrowthPersonPose.ElbowR].x < -40,
+                "Nori's both arms come up and forward to hold the jar");
+            nori.Apply(pose);
             var jar = BoundsOf(nori.HeldIn("R", "jar"));
             Assert.Greater(jar.size.y, Mathf.Max(jar.size.x, jar.size.z), "Nori's jar stands upright in both arms (" + jar.size.ToString("F3") + ")");
             Vector3 l = nori.Joint("wrist.L").position, r = nori.Joint("wrist.R").position;
             Assert.IsTrue(jar.center.x > Mathf.Min(l.x, r.x) - 0.06f && jar.center.x < Mathf.Max(l.x, r.x) + 0.06f, "the jar between Nori's hands");
             Assert.Greater(jar.center.z, 0.1f, "held out in front");
             var moss = Build("moss", 1);
-            GrowthPeopleMotion.Stand(pose, 0); GrowthPeopleMotion.HoldArms(pose, "moss", "clipboard", "pipette"); moss.Apply(pose);
+            GrowthPeopleMotion.Stand(pose, 0); GrowthPeopleMotion.HoldArms(pose, "moss", "clipboard", "pipette");
+            Assert.IsTrue(pose.E[GrowthPersonPose.ElbowR].x < -60 && pose.E[GrowthPersonPose.ElbowL].x < -60, "Moss's arms bend up to hold the pipette and the clipboard");
+            moss.Apply(pose);
             var pipette = BoundsOf(moss.HeldIn("R", "pipette"));
             Assert.Greater(pipette.size.y, Mathf.Max(pipette.size.x, pipette.size.z), "Moss's pipette held upright (" + pipette.size.ToString("F3") + ")");
             var clipboard = BoundsOf(moss.HeldIn("L", "clipboard"));
