@@ -1,6 +1,6 @@
-**Plan reviewed twice — 2026-10-29 (GR.60, GR.61).** At the user's request the whole plan was read twice for contradictions, repeats and stale parts. The user decided: **prices stay fixed** per species, and requirement 3's higher prices come from a better business (more and richer visitors, schools, themes and wishes, pricier creatures); **décor comes** on set spots near tanks, with visitors' themes (new task **GR-19**); **visitors' wishes are built**, a wish bubble that earns a reputation point and a tip when granted, as the pacing model assumes (new task **GR-20**); **R10.4 and R10.5 move after GR-15**, so they measure the tuned game; **the comedy stays mild and for all ages**; **the title and every name are final**; and the file is cleaned up (the old status lines and handoffs in `Docs/Archive/gr-status-and-handoffs.md`). Still open: music (the game has none). GR-18's four waves are built (GR.56 to GR.59) and wait for the user's look in game (`Docs/Evidence/gr-18/LOOK.md`). **Next: the user's look; then GR-19, GR-20, R09.4 and R10.3; then GR-15; then R10.4 to R10.6 and R11.**
+**Plan reviewed three times — 2026-10-29 (GR.60 to GR.62).** At the user's request the whole plan was read three times for contradictions, repeats and stale parts. The user decided: **prices stay fixed** per species, and requirement 3's higher prices come from a better business (more and richer visitors, schools, themes and wishes, pricier creatures); **décor comes** on set spots near tanks, with visitors' themes (new task **GR-19**); **visitors' wishes are built**, a wish bubble that earns a reputation point and a tip when granted, as the pacing model assumes (new task **GR-20**); **R10.4 and R10.5 move after GR-15**, so they measure the tuned game; **the comedy stays mild and for all ages**; **the title and every name are final**; and the file is cleaned up (the old status lines and handoffs in `Docs/Archive/gr-status-and-handoffs.md`). On the third pass: the game gets **music made by the game** (new task **GR-21**); wishes ask for a species, a colour or a size class (and from 3★ a pair or a school); and "Move all of a species" is dropped. No question is left open. GR-18's four waves are built (GR.56 to GR.59) and wait for the user's look in game (`Docs/Evidence/gr-18/LOOK.md`). **Next: the user's look; then GR-19, GR-20, GR-21, R09.4 and R10.3; then GR-15; then R10.4 to R10.6 and R11.**
 
-The status lines from GR's specification to GR-18 wave 4 are in `Docs/Archive/gr-status-and-handoffs.md`; each task's record is GR.19 to GR.61 at the end of this file.
+The status lines from GR's specification to GR-18 wave 4 are in `Docs/Archive/gr-status-and-handoffs.md`; each task's record is GR.19 to GR.62 at the end of this file.
 
 ## 1. Read this first
 
@@ -166,7 +166,7 @@ Use brief authored setups, clear reactions, and fast recovery. Suggested six inc
 | Fish copies a customer | Creature imitates a pose or makes an absurd noise | Visual/audio reaction only; fish stays inside bounds. |
 
 - Do not bind a slap to the ordinary service/interact button. Add remappable intentional input and a clear target prompt. Never strike on opening a menu.
-- Gags share cooldown/concurrency limits so the room is not constantly shouting. Use readable captions for important reactions and separate voice/humor volume plus a reduced-gags option.
+- Gags share cooldown/concurrency limits so the room is not constantly shouting. Use readable captions for important reactions, a separate humour volume and a reduced-gags option (built in GR-18 wave 4; there are no voices, GR.61).
 - Mild and for all ages (the user's decision, GR.61): cartoon slapstick, invented mild gibberish, no real swearing, no gore and no voices.
 - Gags must tolerate the target leaving, closing time, pause, save/load, and interrupted animations. They must not corrupt a sale, trap an NPC, punish a player repeatedly, or become a superior money/reputation farm.
 
@@ -187,7 +187,7 @@ Current code under `EvolutionShop/Assets/EvolutionShop/` (since GR-17): `Core/Gr
 
 - Art is original, made locally in Blender by the scripts in `Tools/Art/` (`create_growth_kit.py` the rooms, stations and machines; `create_diorama_kit.py` the creatures; `create_people_kit.py` the people, the player's hands and the gags; `gr16_look_ranch.py` and `gr18_characters.py` the look boards) and exported into the project; nothing bought or generated (§2).
 - One Unity unit is one metre; Y is up. Kit pieces are decorative children of their station, tank or actor root: they own no collider, trigger, stock or payment, and never change positions, targets or saves.
-- Sounds are made by the game in code (`GrowthAudio`, `GrowthGags`), short, on their own voices; comedy never masks service or discovery cues (§6.7).
+- Sounds are made by the game in code (`GrowthAudio`, `GrowthGags`), short, on their own voices; comedy never masks service or discovery cues (§6.7). Music is made by the game in code too (GR-21), on its own volume.
 - Every admitted asset keeps its source script and the validation run that admitted it. The old game's R06.2 conventions are in `Docs/Archive/gr-status-and-handoffs.md`.
 
 ### Save and migration contract
@@ -219,7 +219,7 @@ The old game's milestones (R01–R08, TUT, FX, UX and AD), their handoffs, deliv
 
 ### GR — Grow-from-nothing redesign (selected 2026-10-23)
 
-Requested by the user on 2026-10-23: a redesign of the core loop so the game starts tiny and grows toward one clear goal. The authoritative problem statement, research basis, pillars, eras, creatures and tanks, cultures, discovery (mixing and breeding), automation tiers, station levels, helpers, spaces, economy, edge cases, technical plan, risks and decisions are in **GR.1–GR.18 at the end of this file**. It replaced AD-F and folds in R09.1 to R09.3, and with GR-15 R09.5, R10.1 and R10.2.
+Requested by the user on 2026-10-23: a redesign of the core loop so the game starts tiny and grows toward one clear goal. The authoritative problem statement, research basis, pillars, eras, creatures and tanks, cultures, discovery (mixing and breeding), automation tiers, station levels, helpers, spaces, economy, edge cases, technical plan, risks and decisions are in **GR.1–GR.18 after §11** (the task records, GR.19 onward, follow them). It replaced AD-F and folds in R09.1 to R09.3, and with GR-15 R09.5, R10.1 and R10.2.
 
 - [x] GR-00 Specification (documentation only, 2026-10-23).
 - [x] GR-01 Content and pacing model: species roster, culture, station, cost and gate tables, era gates, Core-only pacing simulator and report: technically complete 2026-10-23 (GR.19). At the review the user chose 72 species (nine families of eight) and accepted the rest; the user approved the 72-species roster on 2026-10-23 ("That's good continue for gr-02"): **gate passed**.
@@ -241,10 +241,11 @@ Requested by the user on 2026-10-23: a redesign of the core loop so the game sta
 - [x] GR-17 Remove the old game (GR.53, the user's word 2026-10-28): the classic game deleted from the project (its rules, routes, tests, scene parts and the `-evolutionClassic` switch), keeping only what the new game uses; its tasks taken off this board into an archive with their history; its builds and evidence deleted from disk. A tag marks the last commit with it. **Gate: a full validation run of the new game.** *Complete 2026-10-28 (GR.54; numbered run 2 passed every step; tag `gr17-one-game-validated`; `old-game-last` marks the last commit with the old game).*
 - [~] GR-18 Characters: design and animation (GR.53, the user's word 2026-10-28): the new game's people (the visitors of each kind, the exhibition's guests, Pip, Nori and Moss) and the player's hands, designed in the approved look (GR.48) and animated: walking, browsing, queueing, paying, carrying, working at each station, reacting. Today they are greybox capsules and the player has no hands. A look board first, then waves in game. **Gate: the user's look at the board, then per wave in game.** *In progress since 2026-10-29 (Claude), at the user's word ("Yes, Start with gr-18"). The audit and look board made 2026-10-29 (GR.55, `Docs/Evidence/gr-18/AUDIT.md`, https://claude.ai/artifact/Jmur3DCfHT2FCMJjSnmsg2); **approved by the user 2026-10-29** ("Looks good"; as drawn, 3 heads tall, the yellow gloves, and §6.7's comedy as a fourth wave). **Wave 1, the visitors and guests in game, technically complete 2026-10-29** (GR.56; numbered run 1 passed every step, `Docs/Evidence/gr-18-WAVE1-VALIDATION.md`; tag `gr18-wave1-validated`); its gate is the user's look in game (`Docs/Evidence/gr-18/LOOK.md`). **Wave 2, the helpers at work, technically complete 2026-10-29** at the user's "Continue" (GR.57; numbered run 2 passed every step, `Docs/Evidence/gr-18-WAVE2-VALIDATION.md`; tag `gr18-wave2-validated`). **Wave 3, the player's hands, technically complete 2026-10-29** at the user's "Continue" (GR.58; numbered run 3 passed every step, `Docs/Evidence/gr-18-WAVE3-VALIDATION.md`; tag `gr18-wave3-validated`). **Wave 4, §6.7's comedy, technically complete 2026-10-29** at the user's "Continue" (GR.59; numbered run 4 passed every step, `Docs/Evidence/gr-18-WAVE4-VALIDATION.md`; tag `gr18-wave4-validated`). All four waves built; their gate is the user's look in game.*
 - [ ] GR-19 Décor (GR.60, the user's choice 2026-10-29): a small set of decorations sold in the supplier catalog (GR.6) and placed on set spots near tanks, with visitors' themes (décor near a tank raises what they will pay, GR.10; capped with schools at +40, GR.10.1; another copy of the same piece adds nothing, §6.3), in the approved look. **Gate: the user's look in game.**
-- [ ] GR-20 Visitors' wishes (GR.61, the user's choice 2026-10-29): ordinary visitors show a wish bubble (a species or a trait; from 3★ also a pair or a school of three, GR.10); a granted wish earns a reputation point and a 25% tip (AD-E), as the pacing model already counts (`PacingSimulator`: `WishShare`, `TipShare`); exhibition guests keep their own. **Gate: routes and the user's look in game.**
+- [ ] GR-20 Visitors' wishes (GR.61, the user's choice 2026-10-29): ordinary visitors show a wish bubble (a named species, any creature in a colour, or any small, medium or large one; from 3★ also a pair or a school of three; GR.10, GR.62); a granted wish earns a reputation point and a 25% tip (AD-E), as the pacing model already counts (`PacingSimulator`: `WishShare`, `TipShare`); exhibition guests keep their own. **Gate: routes and the user's look in game.**
+- [ ] GR-21 Music made by the game (GR.62, the user's choice 2026-10-29): a few calm loops (the night, the day, the exhibition) made in code like the game's sounds, on their own volume in the pause screen, quieter under service and discovery cues. **Gate: the user's listen in game.**
 - [ ] GR-15 Full playthrough and tuning to GR.3's targets (R08.5 measurement, R09.5, R10.1 and R10.2 folded in). **Moved to the back by the user on 2026-10-28** (GR.53): it comes once everything the user wants from the game is in. **Gate: user playthrough.**
 
-Order from 2026-10-29 (GR.60 and GR.61, updating GR.53's): the user's look at GR-18; GR-19 (décor) and GR-20 (wishes); R09.4 (onboarding in the later rooms, décor and wishes included) and R10.3 (the settings still missing), with anything else the user wants in; then GR-15; then R10.4 and R10.5 (the fullest layout, saves, windows and screens, measured on the tuned game), R10.6 and R11 (the release).
+Order from 2026-10-29 (GR.60 to GR.62, updating GR.53's): the user's look at GR-18; GR-19 (décor), GR-20 (wishes) and GR-21 (music); R09.4 (onboarding in the later rooms, décor and wishes included) and R10.3 (the settings still missing), with anything else the user wants in; then GR-15; then R10.4 and R10.5 (the fullest layout, saves, windows and screens, measured on the tuned game), R10.6 and R11 (the release).
 
 Gate: a new player starts with one small tank and two cultures, grows the shop and lab through five eras by upgrades they can feel, discovers creatures by mixing and breeding without failing or luck, builds automation that repeats only what they know, and reaches the Grand Exhibition in about four hours; the user accepts it in a playthrough.
 
@@ -255,7 +256,7 @@ Depends on: GR-14 (the new game as the game). Output: a complete campaign from n
 - [x] R09.1 *(Folded into GR-01 and GR-11, 2026-10-23; done with them.)* Build a dependency graph for room tiers, research, facilities, customers, staff, and automation. Give every required unlock a reachable source of funds/resources and a clear objective.
 - [x] R09.2 *(Folded into GR-11, 2026-10-23; done with it 2026-10-24, GR.29.)* Prototype the objective board and shortened exhibition using existing species/placeholders before completing the roster. Prove eligibility, protected displays, six ordinary purchases, retry, once-only completion, and post-ending continuation; evaluate the proposed goal.
 - [x] R09.3 *(Superseded by GR-12, 2026-10-23: 72 species in nine families; done with it, 2026-10-25.)* After the rough ending works, complete the bounded 12-species/three-family roster and needed décor/customer variations. Validate recipes, visual distinction, animation bounds, market role, and provenance; finish the exhibition's final targets, celebration, and presentation.
-- [ ] R09.4 Complete onboarding in the actual rooms and explain phase transitions, pricing, placements, staffing, automation, and the ending when each becomes relevant. The guided first night was built in GR-14 (GR.44); this task adds the later lessons, each system explained as it appears (GR.4), décor and wishes included.
+- [ ] R09.4 Complete onboarding in the actual rooms and explain phase transitions, what visitors pay and wish for, the places, staffing, automation, and the ending when each becomes relevant. The guided first night was built in GR-14 (GR.44); this task adds the later lessons, each system explained as it appears (GR.4), décor and wishes included.
 - R09.5 *(Folded into GR-15, GR.53.)* Play through the main path without development cheats; separately use seeded/test saves to exercise late edge cases. Test ending/retry/reload and optional collect-all completion.
 
 Gate: a new player can reach the ending through the supported progression. No missing content, impossible unlock, unbounded rarity grind, or compulsory total collection. Freeze feature scope after acceptance.
@@ -303,11 +304,11 @@ Classify defects by effect: **P0** save loss/security or destructive corruption;
 The game is finished when the launch-scope features, complete progression/ending, reliable automation, coherent art/audio, usable controls/settings, save migration/recovery, measured performance, and exact release package have passed their gates. A growing backlog does not postpone that definition indefinitely. Optional additions remain post-release ideas until authorized.
 
 ## 11. Current state, active work, and next action
-### Current handoff — the plan reviewed twice; the user's look at GR-18, then GR-19, GR-20, R09.4 and R10.3 (2026-10-29, Claude)
+### Current handoff — the plan reviewed three times; the user's look at GR-18, then GR-19, GR-20, GR-21, R09.4 and R10.3 (2026-10-29, Claude)
 
-**State:** GR-18's four waves are technically complete (GR.56 to GR.59; numbered run 4 passed, `Docs/Evidence/gr-18-WAVE4-VALIDATION.md`; tag `gr18-wave4-validated`); the player is `Builds/Windows-6000.3.21f1-gr18-people-4`, with `Play-GR16-look.cmd`, `Play-GR11-exhibition.cmd` and `Play-GR12-creatures.cmd`. The user has said "Continue" after each wave without saying whether they looked at it in game, so the looks of all four are open, with their choices to overrule in LOOK.md. At the user's request the plan was reviewed twice and cleaned up, with their decisions in it (GR.60, GR.61).
+**State:** GR-18's four waves are technically complete (GR.56 to GR.59; numbered run 4 passed, `Docs/Evidence/gr-18-WAVE4-VALIDATION.md`; tag `gr18-wave4-validated`); the player is `Builds/Windows-6000.3.21f1-gr18-people-4`, with `Play-GR16-look.cmd`, `Play-GR11-exhibition.cmd` and `Play-GR12-creatures.cmd`. The user has said "Continue" after each wave without saying whether they looked at it in game, so the looks of all four are open, with their choices to overrule in LOOK.md. At the user's request the plan was reviewed three times and cleaned up, with their decisions in it (GR.60 to GR.62).
 
-**Exact next action:** the user's look in game (`Docs/Evidence/gr-18/LOOK.md`). Then GR-19 (décor on set spots, with visitors' themes), GR-20 (visitors' wishes), R09.4 (onboarding in the later rooms, décor and wishes included) and R10.3 (the settings still missing, with the forecast and Low detail), and anything else the user wants in; then GR-15; then R10.4 to R10.6 and R11. Still to answer: music (none in the game or the plan).
+**Exact next action:** the user's look in game (`Docs/Evidence/gr-18/LOOK.md`). Then GR-19 (décor on set spots, with visitors' themes), GR-20 (visitors' wishes), GR-21 (music made by the game), R09.4 (onboarding in the later rooms, décor and wishes included) and R10.3 (the settings still missing, with the forecast and Low detail), and anything else the user wants in; then GR-15; then R10.4 to R10.6 and R11. No question is left open from the reviews.
 - **The comedy:** `Core/Growth/GrowthComedy.cs` holds the slap's rules (`GrowthShop.Slap`, the outcome `Slapped`, the day's `Slapped` and `LaughedOff`) and the silly moments' shared timing (`GrowthComedy`: one at a time, quiet, cooldowns, Fewer and Off, the lines). `Runtime/Growth/GrowthGags.cs`, stepped by the session after the world syncs and before the people move, plays them: the slap's target and key, the room's own moments, the burp after a hatch, a helper's dance after a job, captions, the sounds (made there) and Backspace. In a validation run the room's own moments are off unless a route sets `RoomMoments` (labelled), so no route meets a moment it did not ask for. A new silly moment needs its kind in `GrowthGag`, its cooldown, its lines, a case in `GrowthGags.TryAmbient` (or its own trigger) and `Play`, a reaction (`GrowthVisitorView.React`) or a world method, tests and a route check.
 - **The kit:** `PK_Gags` (`build_gags` in `create_people_kit.py`, `--only Gags`): the faces (a wobbly grimace, eyes squeezed shut, a slap's hand mark) on the head kit's head, and the props (dizzy stars, a cloud, a bubble, a note); placed by `GrowthPerson.Gag` and `GrowthPeopleKit.Prop`.
 
@@ -344,7 +345,7 @@ Sources: Steam pages, reviews and community guides found 2026-10-23 (reported in
 
 ### GR.3 — Pillars and targets
 
-1. **Start tiny, grow huge, toward one goal.** The goal is the collection (discover every creature), and the Grand Exhibition is the finish line. The shop is the money engine that funds discovery.
+1. **Start tiny, grow huge, toward one goal.** The goal is growing the collection, and the Grand Exhibition (48 of the 72) is the finish line; collecting every creature is optional (§3, §4). The shop is the money engine that funds discovery.
 2. **Every upgrade changes how you play.** An upgrade must add a verb, a capacity step the player feels, or a visual change; never an invisible percentage alone.
 3. **Hands first, machines later, discovery always yours.** The player does each chore by hand until it is understood, then builds the machine that does it. Machines and helpers only ever repeat what is known; choosing new mixes and pairs is never automated.
 4. **Readable abundance.** Tanks fill with small creatures; the shop looks alive and full.
@@ -363,13 +364,13 @@ Sources: Steam pages, reviews and community guides found 2026-10-23 (reported in
 
 #### GR.3.1 — What stays and what goes
 
-**Stays:** the day/night rhythm (§6.1); customers, queue, one reservation per specimen, the trade ledger and fair-price rules (§6.2); prices fixed per species (GR.60; first planned as set by the player); AD-E's stars, wishes, themes, hands-on checkout and forecast; comedy and the slap (§6.7); the creature rigs (scaled; the look is GR-16's, GR.48); the UI Toolkit interface (UX); staff job ownership, blocked reasons and recovery (§6.6); the places system and its validation (§6.4); save safety (§7).
+**Stays:** the day/night rhythm (§6.1); customers, queue, one reservation per specimen and the daily receipt (§6.1, §6.2); prices fixed per species (GR.60; first planned as set by the player); AD-E's stars, wishes, themes, hands-on checkout and forecast; comedy and the slap (§6.7); the creature rigs (scaled; the look is GR-16's, GR.48); the UI Toolkit interface (UX); staff job ownership, blocked reasons and recovery (§6.6); the places system and its validation (§6.4); save safety (§7).
 
 **Goes:** single-creature tanks and the fixed tank-a/tank-b; exact-recipe mixing that can make nothing; free hiring on the first night; stations that start maxed; the strip-shaped rooms and sideways-only expansion; automation bought as two modules.
 
 ### GR.4 — The progression spine (eras)
 
-Five eras, each with a visible goal on the objective board (GR.12). Times are targets for a first-time player playing normally.
+Five eras, each with a visible goal on the objective board (GR.12). Times are targets for a first-time player playing normally; the modelled curve is GR.19.3 (for example Pip at about 1:20).
 
 | Era | Time | Stars | Spaces | New verbs and systems | Cultures | Creatures | Helpers and machines | Era goal shown |
 |---|---|---|---|---|---|---|---|---|
@@ -419,7 +420,7 @@ Rules: an era's systems are introduced one at a time with a short contextual hin
 - **On-screen readability at the new scale:** looking at a container within 1.6 m eases the view into a **peek** (field of view 70° → 45° over 0.25 s; instant with Reduced motion; can be switched off). In peek, the creature under the reticle shows its name, colour and price, and can be picked (to move or to see a visitor's reservation). AD-B faces and glow carry over; small species gain a 1.3× head-to-body ratio for readability.
 - **Swimming:** each container runs a bounded flocking swim (separation, alignment within a school, wall avoidance), with each species' AD-B idle habit and signature trick kept. Creatures never leave bounds (§6.7 kept).
 - **Performance budget** (to be measured in GR-03): up to 180 creatures on screen at the final layout. Creatures beyond 6 m or out of view drop face blend shapes and use a cheaper swim; skinned meshes beyond 12 m freeze to a pose; per-container update spread across frames. Record frame times like AD-D.
-- **Moving creatures:** the hand net (GR.9 siphon line) picks one creature in peek; a container card lists occupants as space icons; "Move all of a species" for mastered stock. Staff move by species targets as Nori does today.
+- **Moving creatures:** the hand net (GR.9 siphon line) picks one creature in peek; a container card lists occupants as space icons; mastered stock is moved by Nori and the sorter's stock targets (a "Move all of a species" button was dropped, GR.62).
 
 ### GR.6 — Cultures and the supplier
 
@@ -485,7 +486,7 @@ The model's family data must match this table (the Lanternfin is recorded as a B
 | T4 Analyzer | 4–5 | Analyzer and planner (research bench L3–L4) | Points at undiscovered mixes and pairs; the player still chooses | Units |
 
 - **Power** is a simple budget: generators supply units, each running machine draws units, a panel shows supply and draw. Over budget, machines run slower in a set priority (shown), never stop silently or break. No fuel chores after the hand crank.
-- **Pipes** are a logical graph laid with the existing placement system on the lab grid (no fluid physics; §5 kept): a grower's tap → pump → buffer → incubator port. AD-D's glowing culture pipes become these pipes.
+- **Pipes** are a logical graph laid in pipe mode on the lab grid (no fluid physics; §5 kept): a grower's tap → pump → buffer → incubator port. AD-D's glowing culture pipes become these pipes.
 - **Staff layer on top** (GR.10): Pip serves, Nori stocks, Moss runs known recipes and known breeding pairs. Neither machines nor staff ever choose an undiscovered mix or pair.
 - **The R08 systems are re-homed, not lost:** the collector module becomes T2 pumps and buffers; the doser module becomes the auto-doser; desired stock targets (R08.3) drive the T3 line and Moss. Job ownership, reservations, blocked reasons and recovery (§6.6) stay as they are.
 - **End state:** a known creature can go from free cultures through the line to a paid sale for a whole shift without repeated clicks (§6.6 goal kept), and the analyzer points the player at what to discover next.
@@ -513,7 +514,7 @@ The AD-E hands-on checkout becomes the counter's L1; Serve-by-button stays retir
 ### GR.10 — Shop level, stars, customers and helpers
 
 - **Stars** (AD-E): 1–5 from reputation (thresholds rescaled to the new length in GR-01). Reputation rises with sales and granted wishes, falls with refusals, impatience and slaps (§6.2 kept). Stars gate expansions, catalog pages, customer types and helpers.
-- **Customers** (AD-E kept): types unlock by stars; wishes (species, trait, now also "a pair" or "a school of three" from 3★; GR-20); themes (décor near a container, GR-19); Big spenders favour Medium and Large creatures. Visitors browse a container and choose a specimen; one reservation per specimen.
+- **Customers** (AD-E kept): types unlock by stars; wishes (a species, a colour or a size class; from 3★ also "a pair" or "a school of three"; GR-20, GR.62); themes (décor near a container, GR-19); Big spenders favour Medium and Large creatures. Visitors browse a container and choose a specimen; one reservation per specimen.
 - **Helpers are earned** (gate = stars + one achievement), start at level 1 and train:
 
 | Helper | Gate | Level 1 | Training (credits, at night) |
@@ -588,6 +589,7 @@ Container card (occupant grid of space icons, schools, comfort), peek labels, in
 - New family rigs for Cinderling, Reefback and Gloamer (Blender, local, original; AD rules), species meshes per family, colour atlas per AD-B.
 - Container models per tier and level (filters, lids, spotlights), station models per level (3–4 looks each), generator and pump models, pipe pieces; units A–C and the lab annex and workshop rebuilt in the AD look.
 - Sounds: cranking, pumps, generator hum (ambience bus), breeding "pop", school swish; comfort settings scale every new moment (AD.7 rule).
+- Music (GR-21, GR.62): a few calm loops made by the game in code, on their own volume.
 
 ### GR.15 — Technical plan
 
@@ -600,7 +602,7 @@ Container card (occupant grid of space icons, schools, comfort), peek labels, in
   - Station levels (`StationUpgrades`), power grid (supply, draw, priorities), pipe graph (nodes on the lab grid), breeding tank, research points, supplier orders, objective state, helper levels.
 - **Definitions as data:** tuning and content tables (cultures, species, costs, gates, eras) in one place, loaded at start and validated (unknown IDs, unreachable unlocks, cost overflow).
 - **Pacing simulator** (GR-01): a deterministic, Core-only bot that plays the economy at accelerated time with simple policies, reporting when each unlock and era is reached, money and RP over time, and dead ends. Every tuning change reruns it; its report is evidence.
-- **Validation:** EditMode tests for every rule (mix resolution, breeding, capacity, schools, power, pipes, gates, upgrades, saves); Windows routes per era from fixture saves at 1280 × 720 and 1920 × 1080 (captures reviewed); performance routes for the densest layout; human playtest gates (GR.16).
+- **Validation:** EditMode tests for every rule (mix resolution, breeding, capacity, schools, power, pipes, gates, upgrades, saves); Windows routes per era from fixture saves at 1280 × 720 and 1920 × 1080 (captures reviewed); performance routes for the densest layout; human playtest gates (GR.18).
 
 #### GR.15.1 — Rules and edge cases (each needs a test)
 
@@ -658,7 +660,8 @@ Open for the user later: the exact numbers (set by GR-01 and playtests) and whet
 | GR-17 | Remove the old game (added 2026-10-28, GR.53): its code, routes, tests and switch, its tasks off the board, its builds and evidence off the disk | GR-16 | Full validation run of the new game |
 | GR-18 | Characters, design and animation (added 2026-10-28, GR.53): visitors, guests, the three helpers and the player's hands in the approved look, animated | GR-17 | User look at the board, then per wave in game |
 | GR-19 | Décor (added 2026-10-29, GR.60): a small set sold in the catalog, placed on set spots near tanks, with visitors' themes | GR-18 | User look in game |
-| GR-20 | Visitors' wishes (added 2026-10-29, GR.61): a wish bubble on ordinary visitors, a reputation point and a 25% tip when granted | GR-18 | Routes; user look in game |
+| GR-20 | Visitors' wishes (added 2026-10-29, GR.61): a wish bubble on ordinary visitors (a species, a colour or a size class; from 3★ a pair or a school), a reputation point and a 25% tip when granted | GR-18 | Routes; user look in game |
+| GR-21 | Music made by the game (added 2026-10-29, GR.62): a few calm loops in code, on their own volume | GR-18 | User listen in game |
 
 Superseded or folded in: AD-F → GR-12; R09.1 → GR-01 and GR-11; R09.2 → GR-11; R09.3 → GR-12; R08.5 measurement, R09.5, R10.1 and R10.2 → GR-15 (GR.53). R09.4 (contextual onboarding) stays and follows GR-14. AD-E's playtest was closed by the user on 2026-10-28 (GR.53); of what it fed, themes come with GR-19, wishes with GR-20 and the forecast with R10.3 (GR.60, GR.61).
 
@@ -1399,3 +1402,11 @@ At the user's request the plan was read a second time for contradictions. Four n
 **What changed in this file:** the top status, §2, §3 (requirement 3's note), §6.1, §6.7, §9 (GR-20 added, the order, R09.4), the handoff, GR.4, GR.5, GR.6, GR.7, GR.7.2, GR.10, GR.11, GR.17 and GR.18 (GR-20's row and the folded line). Nothing in the game changed.
 
 **Still open:** music (none is planned or built).
+
+### GR.62 — The plan's third pass: the user's decisions (2026-10-29)
+
+At the user's request the plan was read a third and last time. Three things needed the user: GR.5 promised a "Move all of a species" button that was never built; GR.10's wishes named "a trait" that nothing defined, which GR-20 needs; and music, open since GR.60, with nothing in the plan or the game. Nine were wording behind the game: GR.3 calling every creature the goal where §3 and §4 make collect-all optional; GR.3.1 keeping a trade ledger the game has never had and fair-price rules that fixed prices make moot; §6.7 asking for a voice volume with no voices; R09.4 explaining pricing and placements, which fixed prices and fixed places replaced; GR.8 laying pipes with the old placement system rather than pipe mode; GR.15 pointing at GR.16 for the playtest gates, which are GR.18's; §9 placing GR.1–GR.18 at the end of the file; GR.4's first-pass era times beside GR.19.3's modelled ones; and R09.4's list without wishes.
+
+**The user's decisions:** 1. **"Move all of a species" is dropped:** Nori and the sorter's stock targets move mastered stock. 2. **Wishes ask for a named species, any creature in a colour (Sunny, Deep or Shimmer), or any small, medium or large one;** from 3★ also a pair or a school of three (GR-20). 3. **The game gets music, made by the game in code:** a few calm loops (the night, the day, the exhibition) on their own volume, new task **GR-21**, before GR-15, with the user's listen as its gate.
+
+**What changed in this file:** the top status, §6.7, §7's asset conventions, §9 (GR-20's wishes, GR-21 added, the order, R09.4, the GR section's place), the handoff, GR.3, GR.3.1, GR.4, GR.5, GR.8, GR.10, GR.14, GR.15 and GR.18 (GR-20's and GR-21's rows). Nothing in the game changed. No question from the three passes is left open.
