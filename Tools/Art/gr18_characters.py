@@ -694,8 +694,12 @@ def glasses(b, rig, g):
         p, n = rig.surf(s * ex, -1, ey, 0.07 * hh)
         centres.append(p)
         if g.get('kind') == 'square':
-            o = b.box('Frame', p, (0.2 * hh, 0.02 * hh, 0.16 * hh), fm, r=0.03 * hh)
-            rig.put(orient(o, n), 'head')
+            # A rim of four bars round a clear lens, so the eyes show through (GR-18 wave 1: the board's solid plate hid them).
+            q = Vector(n).to_track_quat('-Y', 'Z')
+            w, h, t = 0.2 * hh, 0.16 * hh, 0.03 * hh
+            for name, off, size in (('Frame top', (0, 0, (h - t) / 2), (w, 0.02 * hh, t)), ('Frame bottom', (0, 0, -(h - t) / 2), (w, 0.02 * hh, t)),
+                                    ('Frame side', ((w - t) / 2, 0, 0), (t, 0.02 * hh, h - 2 * t + 0.01 * hh)), ('Frame side', (-(w - t) / 2, 0, 0), (t, 0.02 * hh, h - 2 * t + 0.01 * hh))):
+                rig.put(orient(b.box(name, p + q @ Vector(off), size, fm, r=0.012 * hh), n), 'head')
             rig.put(orient(b.box('Lens', p + n * 0.004, (0.165 * hh, 0.01 * hh, 0.125 * hh), b.mat('glass', '#EAFBFF', alpha=0.12), r=0.02 * hh), n), 'head')
         else:
             o = b.torus('Frame', p, 0.1 * hh, 0.014 * hh, fm)

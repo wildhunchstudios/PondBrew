@@ -1,0 +1,1247 @@
+{
+  "schema": 1,
+  "title": "Evolution Shop people kit (GR-18): the new game's visitors and guests",
+  "origin": {
+    "author": "Original local asset authorship for Evolution Shop (GR-18)",
+    "external_sources": [],
+    "paid_generation": false,
+    "external_uploads": false
+  },
+  "blender_version": "5.0.1",
+  "source_script": "Tools/Art/create_people_kit.py",
+  "source_script_sha256": "6c6ff6b4ee08310239e7584635f7a5083db90b3385f854c2f647455184395660",
+  "builder_script": "Tools/Art/gr18_characters.py",
+  "builder_script_sha256": "d52edffe3caf9e3a4f341791c29ee96ea0caf63e9dc45f81dcbb5f147d2f2ac7",
+  "axis_mapping": "Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z",
+  "kinds": {
+    "casual": {
+      "height": 1.62,
+      "hh": 0.54,
+      "build": 1.0,
+      "shoulderWidth": 0.13615257599999997,
+      "joints": {
+        "root": {
+          "parent": null,
+          "rest": [
+            -0.0,
+            0.0,
+            -0.0
+          ]
+        },
+        "hips": {
+          "parent": "root",
+          "rest": [
+            -0.0,
+            0.5832,
+            -0.0
+          ]
+        },
+        "spine": {
+          "parent": "hips",
+          "rest": [
+            -0.0,
+            0.6156,
+            -0.0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "rest": [
+            -0.0,
+            1.07136,
+            -0.0
+          ]
+        },
+        "shoulder.L": {
+          "parent": "spine",
+          "rest": [
+            -0.13615,
+            0.9774,
+            -0.0
+          ]
+        },
+        "elbow.L": {
+          "parent": "shoulder.L",
+          "rest": [
+            -0.17501,
+            0.73206,
+            -0.0
+          ]
+        },
+        "wrist.L": {
+          "parent": "elbow.L",
+          "rest": [
+            -0.19196,
+            0.51672,
+            -0.0
+          ]
+        },
+        "hip.L": {
+          "parent": "hips",
+          "rest": [
+            -0.1026,
+            0.5832,
+            -0.0
+          ]
+        },
+        "knee.L": {
+          "parent": "hip.L",
+          "rest": [
+            -0.1026,
+            0.32206,
+            -0.0
+          ]
+        },
+        "ankle.L": {
+          "parent": "knee.L",
+          "rest": [
+            -0.1026,
+            0.081,
+            -0.0
+          ]
+        },
+        "shoulder.R": {
+          "parent": "spine",
+          "rest": [
+            0.13615,
+            0.9774,
+            -0.0
+          ]
+        },
+        "elbow.R": {
+          "parent": "shoulder.R",
+          "rest": [
+            0.17501,
+            0.73206,
+            -0.0
+          ]
+        },
+        "wrist.R": {
+          "parent": "elbow.R",
+          "rest": [
+            0.19196,
+            0.51672,
+            -0.0
+          ]
+        },
+        "hip.R": {
+          "parent": "hips",
+          "rest": [
+            0.1026,
+            0.5832,
+            -0.0
+          ]
+        },
+        "knee.R": {
+          "parent": "hip.R",
+          "rest": [
+            0.1026,
+            0.32206,
+            -0.0
+          ]
+        },
+        "ankle.R": {
+          "parent": "knee.R",
+          "rest": [
+            0.1026,
+            0.081,
+            -0.0
+          ]
+        }
+      },
+      "headCentre": [
+        -0.0,
+        1.35,
+        -0.0
+      ],
+      "gripDrop": 0.081
+    },
+    "bargain": {
+      "height": 1.46,
+      "hh": 0.48666666666666664,
+      "build": 1.2,
+      "shoulderWidth": 0.14724648959999992,
+      "joints": {
+        "root": {
+          "parent": null,
+          "rest": [
+            -0.0,
+            0.0,
+            -0.0
+          ]
+        },
+        "hips": {
+          "parent": "root",
+          "rest": [
+            -0.0,
+            0.5256,
+            -0.0
+          ]
+        },
+        "spine": {
+          "parent": "hips",
+          "rest": [
+            -0.0,
+            0.5548,
+            -0.0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "rest": [
+            -0.0,
+            0.96555,
+            -0.0
+          ]
+        },
+        "shoulder.L": {
+          "parent": "spine",
+          "rest": [
+            -0.14725,
+            0.88087,
+            -0.0
+          ]
+        },
+        "elbow.L": {
+          "parent": "shoulder.L",
+          "rest": [
+            -0.18227,
+            0.65976,
+            -0.0
+          ]
+        },
+        "wrist.L": {
+          "parent": "elbow.L",
+          "rest": [
+            -0.19754,
+            0.46569,
+            -0.0
+          ]
+        },
+        "hip.L": {
+          "parent": "hips",
+          "rest": [
+            -0.11096,
+            0.5256,
+            -0.0
+          ]
+        },
+        "knee.L": {
+          "parent": "hip.L",
+          "rest": [
+            -0.11096,
+            0.29025,
+            -0.0
+          ]
+        },
+        "ankle.L": {
+          "parent": "knee.L",
+          "rest": [
+            -0.11096,
+            0.073,
+            -0.0
+          ]
+        },
+        "shoulder.R": {
+          "parent": "spine",
+          "rest": [
+            0.14725,
+            0.88087,
+            -0.0
+          ]
+        },
+        "elbow.R": {
+          "parent": "shoulder.R",
+          "rest": [
+            0.18227,
+            0.65976,
+            -0.0
+          ]
+        },
+        "wrist.R": {
+          "parent": "elbow.R",
+          "rest": [
+            0.19754,
+            0.46569,
+            -0.0
+          ]
+        },
+        "hip.R": {
+          "parent": "hips",
+          "rest": [
+            0.11096,
+            0.5256,
+            -0.0
+          ]
+        },
+        "knee.R": {
+          "parent": "hip.R",
+          "rest": [
+            0.11096,
+            0.29025,
+            -0.0
+          ]
+        },
+        "ankle.R": {
+          "parent": "knee.R",
+          "rest": [
+            0.11096,
+            0.073,
+            -0.0
+          ]
+        }
+      },
+      "headCentre": [
+        -0.0,
+        1.21667,
+        -0.0
+      ],
+      "gripDrop": 0.073
+    },
+    "collector": {
+      "height": 1.76,
+      "hh": 0.5866666666666667,
+      "build": 0.86,
+      "shoulderWidth": 0.12721020928000004,
+      "joints": {
+        "root": {
+          "parent": null,
+          "rest": [
+            -0.0,
+            0.0,
+            -0.0
+          ]
+        },
+        "hips": {
+          "parent": "root",
+          "rest": [
+            -0.0,
+            0.6336,
+            -0.0
+          ]
+        },
+        "spine": {
+          "parent": "hips",
+          "rest": [
+            -0.0,
+            0.6688,
+            -0.0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "rest": [
+            -0.0,
+            1.16395,
+            -0.0
+          ]
+        },
+        "shoulder.L": {
+          "parent": "spine",
+          "rest": [
+            -0.12721,
+            1.06187,
+            -0.0
+          ]
+        },
+        "elbow.L": {
+          "parent": "shoulder.L",
+          "rest": [
+            -0.16943,
+            0.79532,
+            -0.0
+          ]
+        },
+        "wrist.L": {
+          "parent": "elbow.L",
+          "rest": [
+            -0.18784,
+            0.56138,
+            -0.0
+          ]
+        },
+        "hip.L": {
+          "parent": "hips",
+          "rest": [
+            -0.09586,
+            0.6336,
+            -0.0
+          ]
+        },
+        "knee.L": {
+          "parent": "hip.L",
+          "rest": [
+            -0.09586,
+            0.34989,
+            -0.0
+          ]
+        },
+        "ankle.L": {
+          "parent": "knee.L",
+          "rest": [
+            -0.09586,
+            0.088,
+            -0.0
+          ]
+        },
+        "shoulder.R": {
+          "parent": "spine",
+          "rest": [
+            0.12721,
+            1.06187,
+            -0.0
+          ]
+        },
+        "elbow.R": {
+          "parent": "shoulder.R",
+          "rest": [
+            0.16943,
+            0.79532,
+            -0.0
+          ]
+        },
+        "wrist.R": {
+          "parent": "elbow.R",
+          "rest": [
+            0.18784,
+            0.56138,
+            -0.0
+          ]
+        },
+        "hip.R": {
+          "parent": "hips",
+          "rest": [
+            0.09586,
+            0.6336,
+            -0.0
+          ]
+        },
+        "knee.R": {
+          "parent": "hip.R",
+          "rest": [
+            0.09586,
+            0.34989,
+            -0.0
+          ]
+        },
+        "ankle.R": {
+          "parent": "knee.R",
+          "rest": [
+            0.09586,
+            0.088,
+            -0.0
+          ]
+        }
+      },
+      "headCentre": [
+        -0.0,
+        1.46667,
+        -0.0
+      ],
+      "gripDrop": 0.088
+    },
+    "premium": {
+      "height": 1.72,
+      "hh": 0.5733333333333334,
+      "build": 1.22,
+      "shoulderWidth": 0.17635960832000003,
+      "joints": {
+        "root": {
+          "parent": null,
+          "rest": [
+            -0.0,
+            0.0,
+            -0.0
+          ]
+        },
+        "hips": {
+          "parent": "root",
+          "rest": [
+            -0.0,
+            0.6192,
+            -0.0
+          ]
+        },
+        "spine": {
+          "parent": "hips",
+          "rest": [
+            -0.0,
+            0.6536,
+            -0.0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "rest": [
+            -0.0,
+            1.13749,
+            -0.0
+          ]
+        },
+        "shoulder.L": {
+          "parent": "spine",
+          "rest": [
+            -0.17636,
+            1.03773,
+            -0.0
+          ]
+        },
+        "elbow.L": {
+          "parent": "shoulder.L",
+          "rest": [
+            -0.21762,
+            0.77725,
+            -0.0
+          ]
+        },
+        "wrist.L": {
+          "parent": "elbow.L",
+          "rest": [
+            -0.23561,
+            0.54862,
+            -0.0
+          ]
+        },
+        "hip.L": {
+          "parent": "hips",
+          "rest": [
+            -0.1329,
+            0.6192,
+            -0.0
+          ]
+        },
+        "knee.L": {
+          "parent": "hip.L",
+          "rest": [
+            -0.1329,
+            0.34194,
+            -0.0
+          ]
+        },
+        "ankle.L": {
+          "parent": "knee.L",
+          "rest": [
+            -0.1329,
+            0.086,
+            -0.0
+          ]
+        },
+        "shoulder.R": {
+          "parent": "spine",
+          "rest": [
+            0.17636,
+            1.03773,
+            -0.0
+          ]
+        },
+        "elbow.R": {
+          "parent": "shoulder.R",
+          "rest": [
+            0.21762,
+            0.77725,
+            -0.0
+          ]
+        },
+        "wrist.R": {
+          "parent": "elbow.R",
+          "rest": [
+            0.23561,
+            0.54862,
+            -0.0
+          ]
+        },
+        "hip.R": {
+          "parent": "hips",
+          "rest": [
+            0.1329,
+            0.6192,
+            -0.0
+          ]
+        },
+        "knee.R": {
+          "parent": "hip.R",
+          "rest": [
+            0.1329,
+            0.34194,
+            -0.0
+          ]
+        },
+        "ankle.R": {
+          "parent": "knee.R",
+          "rest": [
+            0.1329,
+            0.086,
+            -0.0
+          ]
+        }
+      },
+      "headCentre": [
+        -0.0,
+        1.43333,
+        -0.0
+      ],
+      "gripDrop": 0.08600000000000001
+    },
+    "guest": {
+      "height": 1.68,
+      "hh": 0.5599999999999999,
+      "build": 0.95,
+      "shoulderWidth": 0.1341355008,
+      "joints": {
+        "root": {
+          "parent": null,
+          "rest": [
+            -0.0,
+            0.0,
+            -0.0
+          ]
+        },
+        "hips": {
+          "parent": "root",
+          "rest": [
+            -0.0,
+            0.6048,
+            -0.0
+          ]
+        },
+        "spine": {
+          "parent": "hips",
+          "rest": [
+            -0.0,
+            0.6384,
+            -0.0
+          ]
+        },
+        "head": {
+          "parent": "spine",
+          "rest": [
+            -0.0,
+            1.11104,
+            -0.0
+          ]
+        },
+        "shoulder.L": {
+          "parent": "spine",
+          "rest": [
+            -0.13414,
+            1.0136,
+            -0.0
+          ]
+        },
+        "elbow.L": {
+          "parent": "shoulder.L",
+          "rest": [
+            -0.17443,
+            0.75917,
+            -0.0
+          ]
+        },
+        "wrist.L": {
+          "parent": "elbow.L",
+          "rest": [
+            -0.19201,
+            0.53586,
+            -0.0
+          ]
+        },
+        "hip.L": {
+          "parent": "hips",
+          "rest": [
+            -0.10108,
+            0.6048,
+            -0.0
+          ]
+        },
+        "knee.L": {
+          "parent": "hip.L",
+          "rest": [
+            -0.10108,
+            0.33398,
+            -0.0
+          ]
+        },
+        "ankle.L": {
+          "parent": "knee.L",
+          "rest": [
+            -0.10108,
+            0.084,
+            -0.0
+          ]
+        },
+        "shoulder.R": {
+          "parent": "spine",
+          "rest": [
+            0.13414,
+            1.0136,
+            -0.0
+          ]
+        },
+        "elbow.R": {
+          "parent": "shoulder.R",
+          "rest": [
+            0.17443,
+            0.75917,
+            -0.0
+          ]
+        },
+        "wrist.R": {
+          "parent": "elbow.R",
+          "rest": [
+            0.19201,
+            0.53586,
+            -0.0
+          ]
+        },
+        "hip.R": {
+          "parent": "hips",
+          "rest": [
+            0.10108,
+            0.6048,
+            -0.0
+          ]
+        },
+        "knee.R": {
+          "parent": "hip.R",
+          "rest": [
+            0.10108,
+            0.33398,
+            -0.0
+          ]
+        },
+        "ankle.R": {
+          "parent": "knee.R",
+          "rest": [
+            0.10108,
+            0.084,
+            -0.0
+          ]
+        }
+      },
+      "headCentre": [
+        -0.0,
+        1.4,
+        -0.0
+      ],
+      "gripDrop": 0.08399999999999999
+    }
+  },
+  "head": {
+    "hh": 1.0,
+    "jointToCentre": 0.516
+  },
+  "held": {
+    "hh": 0.5333333333333333,
+    "wrists": {
+      "L": [
+        -0.18959,
+        0.51034,
+        -0.0
+      ],
+      "R": [
+        0.18959,
+        0.51034,
+        -0.0
+      ]
+    }
+  },
+  "materials": {
+    "PK_cloth_15867F": {
+      "kind": "cloth",
+      "colour": "#15867F"
+    },
+    "PK_cloth_1F2A40": {
+      "kind": "cloth",
+      "colour": "#1F2A40"
+    },
+    "PK_cloth_2B3A55": {
+      "kind": "cloth",
+      "colour": "#2B3A55"
+    },
+    "PK_cloth_2E2252": {
+      "kind": "cloth",
+      "colour": "#2E2252"
+    },
+    "PK_cloth_3B3F5A": {
+      "kind": "cloth",
+      "colour": "#3B3F5A"
+    },
+    "PK_cloth_3D2E6B": {
+      "kind": "cloth",
+      "colour": "#3D2E6B"
+    },
+    "PK_cloth_4A4F6E": {
+      "kind": "cloth",
+      "colour": "#4A4F6E"
+    },
+    "PK_cloth_9BDB4D": {
+      "kind": "cloth",
+      "colour": "#9BDB4D"
+    },
+    "PK_cloth_B08A52": {
+      "kind": "cloth",
+      "colour": "#B08A52"
+    },
+    "PK_cloth_BAG": {
+      "kind": "cloth",
+      "colour": "BAG"
+    },
+    "PK_cloth_BOTTOM": {
+      "kind": "cloth",
+      "colour": "BOTTOM"
+    },
+    "PK_cloth_C9A46A": {
+      "kind": "cloth",
+      "colour": "#C9A46A"
+    },
+    "PK_cloth_C9B6FF": {
+      "kind": "cloth",
+      "colour": "#C9B6FF"
+    },
+    "PK_cloth_E35D5D": {
+      "kind": "cloth",
+      "colour": "#E35D5D"
+    },
+    "PK_cloth_E8A21E": {
+      "kind": "cloth",
+      "colour": "#E8A21E"
+    },
+    "PK_cloth_FF7A7A": {
+      "kind": "cloth",
+      "colour": "#FF7A7A"
+    },
+    "PK_cloth_FF9EC4": {
+      "kind": "cloth",
+      "colour": "#FF9EC4"
+    },
+    "PK_cloth_FFE6A6": {
+      "kind": "cloth",
+      "colour": "#FFE6A6"
+    },
+    "PK_cloth_FFF3DF": {
+      "kind": "cloth",
+      "colour": "#FFF3DF"
+    },
+    "PK_cloth_FFFFFF": {
+      "kind": "cloth",
+      "colour": "#FFFFFF"
+    },
+    "PK_cloth_HAT": {
+      "kind": "cloth",
+      "colour": "HAT"
+    },
+    "PK_cloth_HATBAND": {
+      "kind": "cloth",
+      "colour": "HATBAND"
+    },
+    "PK_cloth_PRINT": {
+      "kind": "cloth",
+      "colour": "PRINT"
+    },
+    "PK_cloth_SOCKS": {
+      "kind": "cloth",
+      "colour": "SOCKS"
+    },
+    "PK_cloth_TOP": {
+      "kind": "cloth",
+      "colour": "TOP"
+    },
+    "PK_eye_2A2448": {
+      "kind": "eye",
+      "colour": "#2A2448"
+    },
+    "PK_eye_2B3A55": {
+      "kind": "eye",
+      "colour": "#2B3A55"
+    },
+    "PK_eye_5A3A24": {
+      "kind": "eye",
+      "colour": "#5A3A24"
+    },
+    "PK_eye_5B1F2B": {
+      "kind": "eye",
+      "colour": "#5B1F2B"
+    },
+    "PK_eye_7FE3D6": {
+      "kind": "eye",
+      "colour": "#7FE3D6"
+    },
+    "PK_eye_9A3448": {
+      "kind": "eye",
+      "colour": "#9A3448"
+    },
+    "PK_eye_A98BFF": {
+      "kind": "eye",
+      "colour": "#A98BFF"
+    },
+    "PK_eye_FF7A8A": {
+      "kind": "eye",
+      "colour": "#FF7A8A"
+    },
+    "PK_eye_FFFFFF": {
+      "kind": "eye",
+      "colour": "#FFFFFF"
+    },
+    "PK_eye_IRIS": {
+      "kind": "eye",
+      "colour": "IRIS"
+    },
+    "PK_glass_EAFBFF": {
+      "kind": "glass",
+      "colour": "#EAFBFF"
+    },
+    "PK_glass_F2FCFF": {
+      "kind": "glass",
+      "colour": "#F2FCFF"
+    },
+    "PK_gloss_15867F": {
+      "kind": "gloss",
+      "colour": "#15867F"
+    },
+    "PK_gloss_22BFB0": {
+      "kind": "gloss",
+      "colour": "#22BFB0"
+    },
+    "PK_gloss_2B3A55": {
+      "kind": "gloss",
+      "colour": "#2B3A55"
+    },
+    "PK_gloss_3A2418": {
+      "kind": "gloss",
+      "colour": "#3A2418"
+    },
+    "PK_gloss_5C3A24": {
+      "kind": "gloss",
+      "colour": "#5C3A24"
+    },
+    "PK_gloss_7A3E22": {
+      "kind": "gloss",
+      "colour": "#7A3E22"
+    },
+    "PK_gloss_8A5A3B": {
+      "kind": "gloss",
+      "colour": "#8A5A3B"
+    },
+    "PK_gloss_9BDB4D": {
+      "kind": "gloss",
+      "colour": "#9BDB4D"
+    },
+    "PK_gloss_A98BFF": {
+      "kind": "gloss",
+      "colour": "#A98BFF"
+    },
+    "PK_gloss_B9713D": {
+      "kind": "gloss",
+      "colour": "#B9713D"
+    },
+    "PK_gloss_BAND": {
+      "kind": "gloss",
+      "colour": "BAND"
+    },
+    "PK_gloss_E8B53A": {
+      "kind": "gloss",
+      "colour": "#E8B53A"
+    },
+    "PK_gloss_F4C04E": {
+      "kind": "gloss",
+      "colour": "#F4C04E"
+    },
+    "PK_gloss_FF7A7A": {
+      "kind": "gloss",
+      "colour": "#FF7A7A"
+    },
+    "PK_gloss_FF9EC4": {
+      "kind": "gloss",
+      "colour": "#FF9EC4"
+    },
+    "PK_gloss_FFC93C": {
+      "kind": "gloss",
+      "colour": "#FFC93C"
+    },
+    "PK_gloss_FFF3DF": {
+      "kind": "gloss",
+      "colour": "#FFF3DF"
+    },
+    "PK_gloss_FFFFFF": {
+      "kind": "gloss",
+      "colour": "#FFFFFF"
+    },
+    "PK_gloss_GLASSES": {
+      "kind": "gloss",
+      "colour": "GLASSES"
+    },
+    "PK_gloss_HAT": {
+      "kind": "gloss",
+      "colour": "HAT"
+    },
+    "PK_gloss_SHOE": {
+      "kind": "gloss",
+      "colour": "SHOE"
+    },
+    "PK_gloss_SHOEACC": {
+      "kind": "gloss",
+      "colour": "SHOEACC"
+    },
+    "PK_gloss_SOLE": {
+      "kind": "gloss",
+      "colour": "SOLE"
+    },
+    "PK_hair_6B4329": {
+      "kind": "hair",
+      "colour": "#6B4329"
+    },
+    "PK_hair_HAIR": {
+      "kind": "hair",
+      "colour": "HAIR"
+    },
+    "PK_metal_F4C04E": {
+      "kind": "metal",
+      "colour": "#F4C04E"
+    },
+    "PK_skin_4A2A1C": {
+      "kind": "skin",
+      "colour": "#4A2A1C"
+    },
+    "PK_skin_B5603A": {
+      "kind": "skin",
+      "colour": "#B5603A"
+    },
+    "PK_skin_FF8FA3": {
+      "kind": "skin",
+      "colour": "#FF8FA3"
+    },
+    "PK_skin_SKIN": {
+      "kind": "skin",
+      "colour": "SKIN"
+    },
+    "PK_water_47C6E8": {
+      "kind": "water",
+      "colour": "#47C6E8"
+    }
+  },
+  "assets": [
+    {
+      "id": "PK_Body_bargain",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Body_bargain.fbx",
+      "sha256": "2a4c5dc87ab31c519286d85abba425649e14891f762a4e2f23e63c27a7030681",
+      "bytes": 517308,
+      "triangles": 21588,
+      "parts": {
+        "ankle.L__base": 852,
+        "ankle.R__base": 852,
+        "elbow.L__base": 550,
+        "elbow.R__base": 550,
+        "hip.L__base": 456,
+        "hip.R__base": 456,
+        "hips__base": 528,
+        "knee.L__base": 970,
+        "knee.R__base": 970,
+        "shoulder.L__base": 216,
+        "shoulder.R__base": 216,
+        "spine__base": 5692,
+        "wrist.L__hand-grip": 1160,
+        "wrist.L__hand-open": 1160,
+        "wrist.L__hand-point": 1160,
+        "wrist.L__hand-relaxed": 1160,
+        "wrist.R__hand-grip": 1160,
+        "wrist.R__hand-open": 1160,
+        "wrist.R__hand-point": 1160,
+        "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Body_casual",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Body_casual.fbx",
+      "sha256": "bd3ba36d07fa7a2c2bc920ed74f7ea3093a417b53132448925c1a183f482befd",
+      "bytes": 633004,
+      "triangles": 26030,
+      "parts": {
+        "ankle.L__shorts": 2016,
+        "ankle.L__trousers": 2016,
+        "ankle.R__shorts": 2016,
+        "ankle.R__trousers": 2016,
+        "elbow.L__base": 550,
+        "elbow.R__base": 550,
+        "hip.L__shorts": 456,
+        "hip.L__trousers": 36,
+        "hip.R__shorts": 456,
+        "hip.R__trousers": 36,
+        "hips__base": 528,
+        "knee.L__shorts": 202,
+        "knee.L__trousers": 550,
+        "knee.R__shorts": 202,
+        "knee.R__trousers": 550,
+        "shoulder.L__base": 216,
+        "shoulder.R__base": 216,
+        "spine__base": 4138,
+        "wrist.L__hand-grip": 1160,
+        "wrist.L__hand-open": 1160,
+        "wrist.L__hand-point": 1160,
+        "wrist.L__hand-relaxed": 1160,
+        "wrist.R__hand-grip": 1160,
+        "wrist.R__hand-open": 1160,
+        "wrist.R__hand-point": 1160,
+        "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Body_collector",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Body_collector.fbx",
+      "sha256": "31543dc998c60cbd18f9b1ff530026af77cb3da85fa226d7124f5a4621df9821",
+      "bytes": 561868,
+      "triangles": 23028,
+      "parts": {
+        "ankle.L__base": 636,
+        "ankle.R__base": 636,
+        "elbow.L__base": 550,
+        "elbow.R__base": 550,
+        "hip.L__base": 36,
+        "hip.R__base": 36,
+        "hips__base": 528,
+        "knee.L__base": 550,
+        "knee.R__base": 550,
+        "shoulder.L__base": 216,
+        "shoulder.R__base": 216,
+        "spine__base": 9244,
+        "wrist.L__hand-grip": 1160,
+        "wrist.L__hand-open": 1160,
+        "wrist.L__hand-point": 1160,
+        "wrist.L__hand-relaxed": 1160,
+        "wrist.R__hand-grip": 1160,
+        "wrist.R__hand-open": 1160,
+        "wrist.R__hand-point": 1160,
+        "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Body_guest",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Body_guest.fbx",
+      "sha256": "4ba7ae6c414a2bf3fe188a8131f295f50cf0fa6bec1c995e4b326d774112e865",
+      "bytes": 728140,
+      "triangles": 31832,
+      "parts": {
+        "ankle.L__base": 636,
+        "ankle.R__base": 636,
+        "elbow.L__base": 550,
+        "elbow.R__base": 550,
+        "hip.L__base": 36,
+        "hip.R__base": 36,
+        "hips__base": 4976,
+        "knee.L__base": 550,
+        "knee.R__base": 550,
+        "shoulder.L__base": 216,
+        "shoulder.R__base": 216,
+        "spine__base": 13600,
+        "wrist.L__hand-grip": 1160,
+        "wrist.L__hand-open": 1160,
+        "wrist.L__hand-point": 1160,
+        "wrist.L__hand-relaxed": 1160,
+        "wrist.R__hand-grip": 1160,
+        "wrist.R__hand-open": 1160,
+        "wrist.R__hand-point": 1160,
+        "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Body_premium",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Body_premium.fbx",
+      "sha256": "279adb8b1e9874ff2049f12fa39141a948abd2325ecd0d9d9d93828afe391c1a",
+      "bytes": 702508,
+      "triangles": 30692,
+      "parts": {
+        "ankle.L__base": 636,
+        "ankle.R__base": 636,
+        "elbow.L__base": 550,
+        "elbow.R__base": 550,
+        "hip.L__base": 36,
+        "hip.R__base": 36,
+        "hips__base": 4976,
+        "knee.L__base": 550,
+        "knee.R__base": 550,
+        "shoulder.L__base": 216,
+        "shoulder.R__base": 216,
+        "spine__base": 12460,
+        "wrist.L__hand-grip": 1160,
+        "wrist.L__hand-open": 1160,
+        "wrist.L__hand-point": 1160,
+        "wrist.L__hand-relaxed": 1160,
+        "wrist.R__hand-grip": 1160,
+        "wrist.R__hand-open": 1160,
+        "wrist.R__hand-point": 1160,
+        "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Head",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Head.fbx",
+      "sha256": "c9ca15567a265fe9c6b580f34b458d815738226bded1af5344676e1a61cacaff",
+      "bytes": 1525276,
+      "triangles": 64034,
+      "parts": {
+        "head__brows": 992,
+        "head__brows-bushy": 992,
+        "head__eyes": 1116,
+        "head__freckles": 640,
+        "head__fringe-bob": 1120,
+        "head__fringe-crop": 1120,
+        "head__fringe-long": 1120,
+        "head__glasses-round": 1336,
+        "head__glasses-square": 1648,
+        "head__hair-bald": 672,
+        "head__hair-bob": 1520,
+        "head__hair-bun": 2142,
+        "head__hair-crop": 1520,
+        "head__hair-curly": 4960,
+        "head__hair-long": 2048,
+        "head__hair-pigtails": 3280,
+        "head__hair-pompadour": 2576,
+        "head__hair-ponytail": 2400,
+        "head__hair-puffs": 2764,
+        "head__hair-spiky": 4576,
+        "head__hat-bandana": 3224,
+        "head__hat-beanie": 2034,
+        "head__hat-beret": 812,
+        "head__hat-bucket": 2040,
+        "head__hat-cap": 2572,
+        "head__hat-goggles": 1680,
+        "head__hat-tophat": 1256,
+        "head__lashes": 1024,
+        "head__lids": 2212,
+        "head__mole": 80,
+        "head__mouth-grin": 500,
+        "head__mouth-o": 88,
+        "head__mouth-small": 976,
+        "head__mouth-smile": 976,
+        "head__mouth-smirk": 976,
+        "head__mustache": 448,
+        "head__nose-bulb": 180,
+        "head__nose-button": 130,
+        "head__nose-long": 180,
+        "head__skull": 2928,
+        "head__sunglasses": 1176
+      }
+    },
+    {
+      "id": "PK_Held",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Held.fbx",
+      "sha256": "ea2e9e2c9da8000c8c831bbb0cf591ecbf5628b685f5a9b6bf288df03e6f1696",
+      "bytes": 395644,
+      "triangles": 15808,
+      "parts": {
+        "bags__L": 1424,
+        "bags__R": 1424,
+        "coin__L": 568,
+        "coin__R": 568,
+        "coupons__L": 432,
+        "coupons__R": 432,
+        "creature_bag__L": 2284,
+        "creature_bag__R": 2284,
+        "netbag__L": 2656,
+        "netbag__R": 2656,
+        "notebook__L": 324,
+        "notebook__R": 324,
+        "program__L": 216,
+        "program__R": 216
+      }
+    }
+  ]
+}

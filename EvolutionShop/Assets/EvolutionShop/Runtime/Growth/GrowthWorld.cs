@@ -960,7 +960,7 @@ namespace EvolutionShop
             if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t); }
             AnimateOpenings(dt);
             AnimateConfetti(dt);
-            foreach (var v in visitors.Values) v.Tick(dt);
+            foreach (var v in visitors.Values) v.Tick(dt, session != null && session.ReducedMotion);
         }
 
         // ---------------------------------------------------------------- visitors

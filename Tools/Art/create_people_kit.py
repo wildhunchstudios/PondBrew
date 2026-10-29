@@ -1,0 +1,389 @@
+"""Original Evolution Shop people kit (GR-18 wave 1): the visitors and the exhibition's guests in the look the user approved
+on 2026-10-29 (GR.55, "Looks good"). Built with the look board's own builder (Tools/Art/gr18_characters.py, executed as a
+library), so the game's people are the board's. Blender 5.0, no external assets or add-ons.
+
+Run: blender --background --factory-startup --python Tools/Art/create_people_kit.py -- --repo C:/dev/DumbVideoGameStudio
+
+What it makes (Resources/Art/PeopleKit; its record in ArtSource/PeopleKit/manifest.json):
+- PK_Body_<kind>.fbx for each kind of visitor (casual, bargain, collector, premium, guest): a mesh per joint and variant,
+  each named "<joint>__<variant>" directly under the asset's root, in the kind's rest pose (feet at the origin): the spine
+  (the kind's top and what it wears on it), the hips, shoulders, elbows, hips, knees and ankles (with the shoes), the legs'
+  variants (the casual visitor's trousers or shorts) and four hand shapes a side (relaxed, grip, point, open).
+- PK_Head.fbx: the head's parts on a head one unit tall, its joint at the origin (the game scales it by each kind's head
+  height): the skull with its neck, ears and cheeks; the eyes; eyelids, lashes; brows; three noses; five mouths; a mustache,
+  freckles, a beauty mark; every hair style, the fringes; every hat; glasses and sunglasses.
+- PK_Held.fbx: what visitors hold, in each wrist's frame of a person whose head is 0.5333 tall (1.6 m, three heads): the
+  shop's water bag, coins, coupons, a net bag of shopping, a notebook, shopping bags, a programme.
+- people.json (beside them, a TextAsset): each kind's joints (rest positions in Unity space), its head height, and each part's
+  name, so the game assembles a person from these parts and turns their joints.
+
+Materials: every slot is named PK_<kind>_<colour>: the look's material kind (cloth, skin, hair, gloss, eye, plastic, metal,
+glass, water, liquid, ...) and a colour, either a fixed sRGB hex or a role the game fills in for each person (SKIN, HAIR,
+IRIS, TOP, BOTTOM, SOCKS, SHOE, SOLE, SHOEACC, BAG, PRINT, HAT, HATBAND, BAND, GLASSES).
+
+Coordinates: built as the board is (Blender, Z up, facing -Y); Unity sees Blender (x, y, z) at (-x, z, -y) (the mapping
+create_diorama_kit.py probed, bake_space_transform on), so people face Unity +Z with their left at Unity -X. Each part's
+mesh keeps its rest position (its object at the asset's origin), as the growth kit's do.
+"""
+import argparse
+import copy
+import hashlib
+import json
+import math
+import sys
+import tempfile
+from pathlib import Path
+
+import bpy
+from mathutils import Vector
+
+argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+ap = argparse.ArgumentParser()
+ap.add_argument('--repo', required=True)
+ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held); the rest are left as they are.')
+args = ap.parse_args(argv)
+REPO = Path(args.repo).resolve()
+assert (REPO / 'EvolutionShop/ProjectSettings/ProjectVersion.txt').is_file()
+SOURCE = REPO / 'ArtSource' / 'PeopleKit'
+EXPORT = REPO / 'EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit'
+SOURCE.mkdir(parents=True, exist_ok=True)
+EXPORT.mkdir(parents=True, exist_ok=True)
+ONLY = set(a for a in args.only.split(',') if a)
+
+# ---------------------------------------------------------------------------------------------------- the board's builder
+LIB = REPO / 'Tools' / 'Art' / 'gr18_characters.py'
+_saved = sys.argv
+sys.argv = ['gr18_lib', '--', '--repo', str(REPO), '--out', tempfile.gettempdir()]
+G = {'__name__': 'gr18_lib'}
+exec(compile(LIB.read_text(encoding='utf-8'), str(LIB), 'exec'), G)
+sys.argv = _saved
+
+# The roles a person's colours fill in, and how they preview in Blender.
+PREVIEW = dict(SKIN='#EFB088', HAIR='#6B4329', IRIS='#5A3A24', TOP='#22BFB0', BOTTOM='#5C7FD6', SOCKS='#FFFFFF', SHOE='#FFFFFF',
+               SOLE='#FF7A7A', SHOEACC='#22BFB0', BAG='#FFF3DF', PRINT='#FF7A7A', HAT='#FF7A7A', HATBAND='#FFF3DF', BAND='#FF7A7A',
+               GLASSES='#2B3A55')
+SLOTS = {}
+
+
+def slot(kind, color):
+    c = str(color)
+    role = c.lstrip('#').upper() if c.startswith('#') else c.upper()
+    name = 'PK_%s_%s' % (kind, role)
+    m = bpy.data.materials.get(name)
+    if m is None:
+        m = bpy.data.materials.new(name)
+        m.diffuse_color = G['lin'](c if c.startswith('#') else PREVIEW.get(role, '#FF00FF'))
+        SLOTS[name] = {'kind': kind, 'colour': ('#' + role) if c.startswith('#') else role}
+    return m
+
+
+class KitB(G['B']):
+    """The builder's shapes with fewer segments (a game's budget) and the kit's material slots."""
+
+    def mat(self, kind, color, **kw):
+        return slot(kind, color)
+
+    def ball(self, name, center, scale, m, seg=40, shadow=True):
+        return super().ball(name, center, scale, m, seg=max(10, int(seg * 0.55)), shadow=shadow)
+
+    def cyl(self, name, center, radius, depth, m, r=0.03, rot=(0, 0, 0), verts=48, seg=4):
+        return super().cyl(name, center, radius, depth, m, r=r, rot=rot, verts=max(12, int(verts * 0.5)), seg=min(seg, 2))
+
+    def box(self, name, center, size, m, r=0.04, seg=5, rot=(0, 0, 0), shadow=True):
+        return super().box(name, center, size, m, r=r, seg=min(seg, 2), rot=rot, shadow=shadow)
+
+    def torus(self, name, center, major, minor, m, rot=(0, 0, 0)):
+        bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, location=center, rotation=[math.radians(a) for a in rot],
+                                         major_segments=24, minor_segments=8)
+        o = bpy.context.object; o.name = name
+        return self._finish(o, m, normals=False)
+
+    def creature(self, species, at, length, yaw):
+        # The game puts its own creature in a bag or a jar (GrowthCreatureView): the kit carries none.
+        e = bpy.data.objects.new('No creature', None); bpy.context.scene.collection.objects.link(e)
+        e.location = at
+        return e
+
+
+G['M'] = lambda b, kind, color, **kw: slot(kind, color)
+_blob, _curve, _shell = G['blob'], G['curve'], G['shell']
+G['blob'] = lambda *a, **kw: _blob(*a, **dict(kw, seg=max(16, int(kw.get('seg', 40) * 0.6))))
+G['curve'] = lambda *a, **kw: _curve(*a, **dict(kw, res=min(kw.get('res', 5), 3)))
+G['shell'] = lambda *a, **kw: _shell(*a, **dict(kw, seg=40))
+b = KitB()
+person, hands, legs, head, held, Rig = G['person'], G['hands'], G['legs'], G['head'], G['held'], G['Rig']
+
+
+def unity(v):
+    return [round(-v[0], 5), round(v[2], 5), round(-v[1], 5)]
+
+
+def stem(name):
+    return name.split('.')[0]
+
+
+def bake(objs, name):
+    """Converts parts (curves, modifiers) to one plain mesh in world space, its object at the origin."""
+    objs = [o for o in objs if o.type in ('MESH', 'CURVE', 'FONT')]
+    if not objs: return None
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in objs: o.select_set(True)
+    bpy.context.view_layer.objects.active = objs[0]
+    bpy.ops.object.convert(target='MESH')
+    sel = [o for o in bpy.context.selected_objects]
+    for o in sel:
+        mw = o.matrix_world.copy(); o.parent = None; o.matrix_world = mw
+    bpy.context.view_layer.objects.active = sel[0]
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    if len(sel) > 1: bpy.ops.object.join()
+    m = bpy.context.view_layer.objects.active
+    m.name = name; m.data.name = name
+    return m
+
+
+def clear():
+    for o in list(bpy.data.objects): bpy.data.objects.remove(o, do_unlink=True)
+    for coll in (bpy.data.meshes, bpy.data.curves):
+        for d in list(coll):
+            if d.users == 0: coll.remove(d)
+
+
+def export(root_name, meshes):
+    root = bpy.data.objects.new(root_name, None); bpy.context.scene.collection.objects.link(root)
+    for m in meshes: m.parent = root
+    bpy.ops.object.select_all(action='DESELECT')
+    root.select_set(True)
+    for m in meshes: m.select_set(True)
+    bpy.context.view_layer.objects.active = root
+    dest = EXPORT / (root_name + '.fbx')
+    bpy.ops.export_scene.fbx(filepath=str(dest), use_selection=True, global_scale=1.0, apply_unit_scale=True,
+                             apply_scale_options='FBX_SCALE_UNITS', axis_forward='-Z', axis_up='Y', use_space_transform=True,
+                             bake_space_transform=True, object_types={'MESH', 'EMPTY'}, use_mesh_modifiers=False,
+                             mesh_smooth_type='OFF', use_tspace=False, add_leaf_bones=False, bake_anim=False, use_custom_props=False)
+    tris = {m.name: sum(len(p.vertices) - 2 for p in m.data.polygons) for m in meshes}
+    print('PK_EXPORTED', root_name, len(meshes), sum(tris.values()))
+    return {'id': root_name, 'export': str(dest.relative_to(REPO)).replace('\\', '/'), 'sha256': hashlib.sha256(dest.read_bytes()).hexdigest(),
+            'bytes': dest.stat().st_size, 'triangles': sum(tris.values()), 'parts': {k: tris[k] for k in sorted(tris)}}
+
+
+def phase(fn):
+    """Runs fn and returns the objects it made."""
+    before = set(bpy.data.objects)
+    fn()
+    return [o for o in bpy.data.objects if o not in before]
+
+
+# ---------------------------------------------------------------------------------------------------- the bodies
+KINDS = ['casual', 'bargain', 'collector', 'premium', 'guest']
+HAND_SHAPES = ['relaxed', 'grip', 'point', 'open']
+
+
+def body_spec(kind):
+    s = copy.deepcopy(G['cast']()[kind])
+    s['skin'] = 'SKIN'
+    s['hair'] = {'style': 'none'}; s['hat'] = None; s['glasses'] = None
+    s['face'] = {'eyes': 'round'}
+    s['top']['color'] = 'TOP'
+    s['hands'] = {}
+    s['extras'] = [e for e in s.get('extras', []) if e[0] != 'held']
+    if kind == 'casual':
+        s['bottom'] = dict(kind='trousers', color='BOTTOM')
+        s['socks'] = 'SOCKS'
+        s['shoes'] = dict(kind='sneaker', color='SHOE', sole='SOLE', accent='SHOEACC')
+        s['extras'] = [('tote', dict(color='BAG', print_='PRINT', side='R'))]
+    return s
+
+
+def build_body(kind):
+    spec = body_spec(kind)
+    rig = [None]
+
+    def make(): rig[0] = person(b, spec, kind)
+    made = phase(make)
+    r = rig[0]
+    joint_of = {e: k for k, e in r.j.items()}
+    groups = {}
+
+    def owner(o):
+        p = o.parent
+        while p is not None and p not in joint_of: p = p.parent
+        return joint_of.get(p)
+    hand_names = {'Palm', 'Finger', 'Fingertip', 'Knuckle', 'Thumb', 'Thumb tip'}
+    for o in made:
+        k = owner(o)
+        if k is None or k == 'head' or o.type == 'EMPTY': continue
+        if k.startswith('wrist.') and stem(o.name) in hand_names: tag = 'hand-relaxed'
+        elif kind == 'casual' and k.split('.')[0] in ('hip', 'knee', 'ankle'): tag = 'trousers'
+        else: tag = 'base'
+        groups.setdefault((k, tag), []).append(o)
+    for shape in HAND_SHAPES[1:]:
+        for side in ('L', 'R'):
+            for o in phase(lambda: hands(b, r, side, shape, spec)):
+                groups.setdefault(('wrist.' + side, 'hand-' + shape), []).append(o)
+    if kind == 'casual':
+        shorts = dict(spec); shorts['bottom'] = dict(kind='shorts', color='BOTTOM')
+        for side in ('L', 'R'):
+            for o in phase(lambda: legs(b, r, side, shorts)):
+                k = owner(o)
+                if k: groups.setdefault((k, 'shorts'), []).append(o)
+    meshes = [bake(objs, '%s__%s' % (k, tag)) for (k, tag), objs in sorted(groups.items())]
+    meshes = [m for m in meshes if m]
+    rest = {}
+    parent_of = {k: (joint_of.get(e.parent) if e.parent else None) for k, e in r.j.items()}
+    for k in r.j: rest[k] = {'parent': parent_of[k], 'rest': unity(r.w[k])}
+    d = r.d
+    info = {'height': d['H'], 'hh': d['hh'], 'build': spec.get('build', 1.0), 'shoulderWidth': d['sh_x'], 'joints': rest,
+            'headCentre': unity(Vector((0, 0, d['H'] - 0.5 * d['hh']))), 'gripDrop': 0.15 * d['hh']}
+    rec = export('PK_Body_' + kind, meshes)
+    clear()
+    return info, rec
+
+
+# ---------------------------------------------------------------------------------------------------- the head kit
+HEAD_BASE = {'Head': 'skull', 'Ear': 'skull', 'Blush': 'skull', 'Eye white': 'eyes', 'Iris': 'eyes', 'Pupil': 'eyes', 'Glint': 'eyes'}
+HAIRS = ['crop', 'bob', 'long', 'bun', 'curly', 'pompadour', 'puffs', 'pigtails', 'spiky', 'ponytail', 'bald']
+FRINGES = ['crop', 'bob', 'long']
+HATS = ['cap', 'bucket', 'beret', 'beanie', 'tophat', 'bandana', 'goggles']
+
+
+def head_variant(face=None, hair=None, hat=None, glasses=None, keep_base=False):
+    """Builds a head one unit tall on its own joint at the origin, and returns its parts (the base's left out unless asked)."""
+    r = Rig('headkit')
+    r.joint('head', None, (0, 0, 0))
+    r.d = {'H': 1.016, 'hh': 1.0}
+    spec = {'face': dict({'nose': 'none', 'mouth': 'none', 'brows': 0, 'blush': True}, **(face or {})),
+            'hair': hair or {'style': 'none', 'color': 'HAIR'}, 'hat': hat, 'glasses': glasses, 'skin': 'SKIN'}
+    spec['face'].setdefault('iris', 'IRIS'); spec['face'].setdefault('brow_color', 'HAIR')
+    r.spec = spec; r.skin = slot('skin', 'SKIN')
+    made = phase(lambda: head(b, r, spec))
+    made = [o for o in made if o.type != 'EMPTY']
+    bpy.data.objects.remove(r.j['head'], do_unlink=True)
+    out = {}
+    for o in made:
+        if o.type == 'EMPTY': continue
+        base = HEAD_BASE.get(stem(o.name))
+        if base and not keep_base:
+            bpy.data.objects.remove(o, do_unlink=True)
+            continue
+        out.setdefault(base or 'variant', []).append(o)
+    return out
+
+
+def build_head():
+    meshes = []
+
+    def add(name, objs):
+        m = bake(objs, name)
+        if m: meshes.append(m)
+    base = head_variant(keep_base=True)
+    neck = b.cyl('Neck', (0, 0, -0.008), 0.13, 0.2, slot('skin', 'SKIN'), r=0.01)
+    add('head__skull', base['skull'] + [neck])
+    add('head__eyes', base['eyes'])
+    add('head__lids', head_variant(face={'eyes': 'lidded'}).get('variant', []))
+    add('head__lashes', head_variant(face={'lashes': True}).get('variant', []))
+    add('head__brows', head_variant(face={'brows': 1.0}).get('variant', []))
+    add('head__brows-bushy', head_variant(face={'brows': 1.4}).get('variant', []))
+    for n in ('button', 'bulb', 'long'):
+        add('head__nose-' + n, head_variant(face={'nose': n}).get('variant', []))
+    for m in ('smile', 'small', 'smirk', 'grin', 'o'):
+        add('head__mouth-' + m, head_variant(face={'mouth': m}).get('variant', []))
+    add('head__mustache', head_variant(face={'mustache': 'HAIR'}).get('variant', []))
+    add('head__freckles', head_variant(face={'freckles': True}).get('variant', []))
+    add('head__mole', head_variant(face={'mole': True}).get('variant', []))
+    for h in HAIRS:
+        add('head__hair-' + h, head_variant(hair={'style': h, 'color': 'HAIR', 'fringe': False, 'band': 'BAND'}).get('variant', []))
+    for h in FRINGES:
+        with_f = head_variant(hair={'style': h, 'color': 'HAIR', 'fringe': True, 'band': 'BAND'}).get('variant', [])
+        fringe = [o for o in with_f if stem(o.name) == 'Fringe']
+        for o in with_f:
+            if o not in fringe: bpy.data.objects.remove(o, do_unlink=True)
+        add('head__fringe-' + h, fringe)
+    for h in HATS:
+        hat = dict(kind=h, color='HAT', band='HATBAND')
+        if h == 'cap': hat['logo'] = True
+        if h == 'bucket': hat['flower'] = '#FF9EC4'
+        if h == 'bandana': hat['dots'] = '#FFF3DF'
+        if h == 'goggles': hat['lens'] = '#7FE3D6'; hat['strap'] = '#2B3A55'
+        add('head__hat-' + h, head_variant(hat=hat).get('variant', []))
+    for g in ('round', 'square'):
+        add('head__glasses-' + g, head_variant(glasses={'kind': g, 'color': 'GLASSES'}).get('variant', []))
+    add('head__sunglasses', [o for o in head_variant(face={'eyes': 'sun'}).get('variant', [])])
+    # The base parts each variant made again, and the empties, go.
+    keep = set(meshes)
+    for o in list(bpy.data.objects):
+        if o not in keep: bpy.data.objects.remove(o, do_unlink=True)
+    rec = export('PK_Head', meshes)
+    clear()
+    return {'hh': 1.0, 'jointToCentre': 0.516}, rec
+
+
+# ---------------------------------------------------------------------------------------------------- what visitors hold
+HELD = ['creature_bag', 'coin', 'coupons', 'netbag', 'notebook', 'bags', 'program']
+
+
+def build_held():
+    spec = body_spec('casual')
+    spec['height'], spec['heads'] = 1.6, 3.0
+    r = [None]
+    phase(lambda: r.__setitem__(0, person(b, spec, 'held')))
+    rig = r[0]
+    rig.place((0, 0), 0)
+    rig.pose({})
+    meshes = []
+    wrists = {}
+    for side in ('L', 'R'):
+        bpy.context.view_layer.update()
+        wrists[side] = unity(rig.j['wrist.' + side].matrix_world.translation)
+        for item in HELD:
+            made = phase(lambda: held(b, rig, item=item, side=side))
+            m = bake([o for o in made if o.type != 'EMPTY'], '%s__%s' % (item, side))
+            if m: meshes.append(m)
+    keep = set(meshes)
+    for o in list(bpy.data.objects):
+        if o not in keep: bpy.data.objects.remove(o, do_unlink=True)
+    rec = export('PK_Held', meshes)
+    clear()
+    return {'hh': 1.6 / 3.0, 'wrists': wrists}, rec
+
+
+# ---------------------------------------------------------------------------------------------------- build, export, record
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.context.scene.unit_settings.system = 'METRIC'
+old = {}
+if (SOURCE / 'manifest.json').is_file():
+    old = json.loads((SOURCE / 'manifest.json').read_text(encoding='utf-8'))
+kinds = dict(old.get('kinds', {}))
+records = {r['id']: r for r in old.get('assets', [])}
+head_info, held_info = old.get('head'), old.get('held')
+for kind in KINDS:
+    if ONLY and 'Body_' + kind not in ONLY: continue
+    info, rec = build_body(kind)
+    kinds[kind] = info; records[rec['id']] = rec
+if not ONLY or 'Head' in ONLY:
+    head_info, rec = build_head(); records[rec['id']] = rec
+if not ONLY or 'Held' in ONLY:
+    held_info, rec = build_held(); records[rec['id']] = rec
+slots = dict(old.get('materials', {})); slots.update(SLOTS)
+manifest = {
+    'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors and guests',
+    'origin': {'author': 'Original local asset authorship for Evolution Shop (GR-18)', 'external_sources': [],
+               'paid_generation': False, 'external_uploads': False},
+    'blender_version': bpy.app.version_string, 'source_script': 'Tools/Art/create_people_kit.py',
+    'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    'builder_script': 'Tools/Art/gr18_characters.py', 'builder_script_sha256': hashlib.sha256(LIB.read_bytes()).hexdigest(),
+    'axis_mapping': 'Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z',
+    'kinds': kinds, 'head': head_info, 'held': held_info,
+    'materials': dict(sorted(slots.items())),
+    'assets': [records[k] for k in sorted(records)],
+}
+(SOURCE / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+# The game's copy: what it needs to assemble people (joints and part names), as a TextAsset.
+game = {'kinds': [dict(id=k, height=v['height'], hh=v['hh'], build=v['build'], gripDrop=v['gripDrop'], headCentre=v['headCentre'],
+                       joints=[dict(name=j, parent=jv['parent'] or '', rest=jv['rest']) for j, jv in v['joints'].items()],
+                       parts=sorted(records['PK_Body_' + k]['parts']))
+                  for k, v in sorted(kinds.items())],
+        'head': dict(jointToCentre=head_info['jointToCentre'], parts=sorted(records['PK_Head']['parts'])),
+        'held': dict(hh=held_info['hh'], wristL=held_info['wrists']['L'], wristR=held_info['wrists']['R'], parts=sorted(records['PK_Held']['parts'])),
+        'materials': [dict(name=n, kind=v['kind'], colour=v['colour']) for n, v in sorted(slots.items())]}
+(EXPORT / 'people.json').write_text(json.dumps(game, indent=1) + '\n', encoding='utf-8')
+print('PEOPLE_KIT_COMPLETE', len(records))

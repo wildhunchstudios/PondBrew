@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace EvolutionShop.Editor
 {
-    // Apply only to the authored kits: the creatures (DioramaKit) and the world (GrowthKit). No package or global importer changes.
+    // Apply only to the authored kits: the creatures (DioramaKit), the world (GrowthKit) and the people (PeopleKit, GR-18). No package or global importer changes.
     public sealed class RedesignModelImporter : AssetPostprocessor
     {
         const string DioramaKit = "Assets/EvolutionShop/Resources/Art/DioramaKit/";
@@ -11,7 +11,7 @@ namespace EvolutionShop.Editor
         void OnPreprocessModel()
         {
             bool diorama = assetPath.StartsWith(DioramaKit);
-            if (!assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/GrowthKit/") && !diorama) return;
+            if (!assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/GrowthKit/") && !assetPath.StartsWith("Assets/EvolutionShop/Resources/Art/PeopleKit/") && !diorama) return;
             var importer = (ModelImporter)assetImporter;
             importer.globalScale = 1;
             importer.useFileScale = true;
