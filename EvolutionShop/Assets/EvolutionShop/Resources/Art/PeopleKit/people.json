@@ -1527,6 +1527,40 @@
    "program__R"
   ]
  },
+ "hands": {
+  "forearm": 0.42,
+  "bagCreature": [
+   -0.0,
+   -0.1,
+   -0.0
+  ],
+  "tube": [
+   0.04,
+   0.3
+  ],
+  "band": 0.016,
+  "pipe": 0.34,
+  "parts": [
+   "arm__L",
+   "arm__R",
+   "bag__fp",
+   "hand-cup__L",
+   "hand-cup__R",
+   "hand-grip__L",
+   "hand-grip__R",
+   "hand-open__L",
+   "hand-open__R",
+   "hand-point__L",
+   "hand-point__R",
+   "hand-relaxed__L",
+   "hand-relaxed__R",
+   "pipe__fp",
+   "siphon_band__fp",
+   "siphon_bulb__fp",
+   "siphon_canister__fp",
+   "siphon_tube__fp"
+  ]
+ },
  "materials": [
   {
    "name": "PK_cloth_15867F",
@@ -1744,6 +1778,11 @@
    "colour": "#EAFBFF"
   },
   {
+   "name": "PK_glass_EBFAFF",
+   "kind": "glass",
+   "colour": "#EBFAFF"
+  },
+  {
    "name": "PK_glass_F2FCFF",
    "kind": "glass",
    "colour": "#F2FCFF"
@@ -1877,6 +1916,11 @@
    "name": "PK_gloss_SOLE",
    "kind": "gloss",
    "colour": "SOLE"
+  },
+  {
+   "name": "PK_gloss_TIE",
+   "kind": "gloss",
+   "colour": "TIE"
   },
   {
    "name": "PK_hair_6B4329",

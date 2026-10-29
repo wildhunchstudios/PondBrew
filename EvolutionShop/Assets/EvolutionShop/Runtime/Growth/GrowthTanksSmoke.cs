@@ -294,6 +294,8 @@ namespace EvolutionShop
             int count = s.World.Tanks.Values.Sum(v => v.Creatures.Count);
             Check(s.Shop.Stock.Count() == 120 && count == 120, "The densest layout: 8 containers at their highest levels, 120 creatures in the world");
             Check(s.World.Tanks.Count == 8 && s.World.Tanks.Values.Count(v => v.Width >= 3f) == 1, "Every place holds a container; one Show tank");
+            // GR-18 wave 3: the player's hands are the look's (none in the greybox, -evolutionGrowthPlain); lowered here, empty-handed.
+            Check(GrowthWorld.LookOn == (s.Hands != null) && (s.Hands == null || !s.Hands.Shown("L") && !s.Hands.Shown("R")), GrowthWorld.LookOn ? "The player's hands are on the camera, lowered while empty-handed" : "The greybox has no hands (-evolutionGrowthPlain)");
             yield return Measure("50-dense-unit-a", new Vector3(0.6f, 0, -3.2f), new Vector3(-1.5f, 1.1f, 1.5f));
             yield return Measure("51-dense-unit-b", new Vector3(5.0f, 0, -3.2f), new Vector3(10.5f, 1.1f, 1.8f));
             yield return Measure("52-dense-across", new Vector3(-3.0f, 0, -3.3f), new Vector3(11.0f, 1.1f, 0.8f));

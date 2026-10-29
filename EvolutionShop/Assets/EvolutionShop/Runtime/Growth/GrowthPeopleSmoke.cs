@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using EvolutionShop.Growth;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace EvolutionShop
 {
@@ -17,11 +18,15 @@ namespace EvolutionShop
     /// kind by night and by day, a visitor of the shop's own, and the frame budget with a crowd of people in view. Wave 2
     /// (GR.57): the helpers as the board's cast at work: Pip behind the counter, Nori carrying a clutch to the shop's tank in
     /// the jar and reaching in at the tank, Moss bringing doses to the incubator in the pipette in each culture's colour and
-    /// squeezing them in, and Pip bagging an order at the till with a wave to the visitor.
+    /// squeezing them in, and Pip bagging an order at the till with a wave to the visitor. Wave 3: the player's hands in first
+    /// person, in the shop's yellow gloves: the siphon squeezed at a grower and banded with each dose, both hands on the crank,
+    /// a pipe across them, a reach into a tank in peek for a creature, three bags carried and bobbing as the player walks, a
+    /// reach to put one in another tank, lowered while a card is open, a bag held out over the counter and handed over, and
+    /// what they cost.
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string PeopleScenarioText = "GR-18 wave 1, the visitors and guests as people: the people kit in the look's own materials; visitors of every kind walking in their kind's way, browsing (leaning in, pointing), queueing (paying at the front, waiting and growing impatient behind), and leaving happy with the creature they bought in the shop's bag, with a shrug, a huff or a wave at closing; a lineup of every kind and of casual visitors' variety by night and by day; a visitor of the shop's own; the frame budget with a crowd in view; wave 2, the helpers as people at work: Pip at the counter and the till, Nori carrying in the jar and reaching in at the tank, Moss with the pipette in each dose's colour; captures of each";
+        const string PeopleScenarioText = "GR-18 wave 1, the visitors and guests as people: the people kit in the look's own materials; visitors of every kind walking in their kind's way, browsing (leaning in, pointing), queueing (paying at the front, waiting and growing impatient behind), and leaving happy with the creature they bought in the shop's bag, with a shrug, a huff or a wave at closing; a lineup of every kind and of casual visitors' variety by night and by day; a visitor of the shop's own; the frame budget with a crowd in view; wave 2, the helpers as people at work: Pip at the counter and the till, Nori carrying in the jar and reaching in at the tank, Moss with the pipette in each dose's colour; wave 3, the player's hands in each thing the player does: siphoning, cranking, laying a pipe, taking from a tank in peek, carrying three bags, walking, putting one in, a card, serving at the counter; captures of each";
 
         static readonly string[] PeopleKinds = { "casual", "bargain", "collector", "premium", "guest" };
 
@@ -255,6 +260,7 @@ namespace EvolutionShop
             Destroy(variety.gameObject); Destroy(everyone.gameObject);
 
             yield return PeopleHelpers();
+            yield return PeopleHands();
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
         }
 
@@ -356,6 +362,202 @@ namespace EvolutionShop
             yield return new WaitForSeconds(0.5f);
             var leaving = w.VisitorViews.Values.First(v => v.Carrying != null);
             FaceOf(leaving.transform, 1.6f); yield return Shot("547-pip-served-them");
+        }
+
+        /// <summary>GR-18 wave 3: the player's hands, in each thing the player does.</summary>
+        IEnumerator PeopleHands()
+        {
+            limitations.Add("GR-18 wave 3 (the player's hands): the fixture is labelled: an era 3, four-star shop with 10,000 credits, the lab annex open, the generator at level 1 (the hand crank), growers at level 3 (a tap each) holding 10 doses, the siphon at level 3 (the twin chamber), a Starter tank on a1 with three Pondlets and a Bubblebelly and an empty one on a2. The siphon is filled at the Bloom and Flow growers, the crank turned and the counter served with the route's held mouse; two creatures are taken from the tank in peek with E and a third with the tank card's action, and one put in the other tank with E, as a player does; pipe mode starts as the cards' button starts it and is stopped by the route; the day is opened with the counter card's action and the rules' clock is run on (accelerated, labelled) until a visitor waits at the counter; a card is opened and closed by the route. The player walks by being moved 2.5 cm a frame, back and then forth. Frame times are measured uncapped (vSync off) for 4 s with three bags and the siphon up and 4 s with the hands hidden by the route, the same view.");
+            var w = s.World;
+            var hands = s.Hands;
+            Check(hands != null, "The player's hands are on the camera (the look, with the people kit's hands: " + GrowthPeopleKit.Data.hands.parts.Length + " parts)");
+            var fx = new GrowthShop { Era = 3, Reputation = GrowthContent.StarThresholds[3] + 10, Credits = 10000, Rp = 100, UnitB = true, Annex = true };
+            fx.Discovered.AddRange(GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder).Take(12).Select(x => x.Id));
+            if (!fx.Discovered.Contains("pondlet")) fx.Discovered[0] = "pondlet";
+            if (!fx.Discovered.Contains("bubblebelly")) fx.Discovered[1] = "bubblebelly";
+            fx.Journal.AddRange(fx.Discovered.Select(d => GrowthShop.JournalKey(d, Colour.Classic)));
+            fx.Levels["grower"] = 3; fx.Levels["siphon"] = 3; fx.Levels["generator"] = 1; fx.Levels["counter"] = 3;
+            foreach (var c in fx.Cultures) fx.GrowerUnits[c] = 10;
+            var tank = fx.Containers[0];
+            Stock(fx, tank, "pondlet"); Stock(fx, tank, "pondlet"); Stock(fx, tank, "pondlet"); Stock(fx, tank, "bubblebelly");
+            var other = new GrowthContainer { Id = "tank-hands-a2", Kind = "starter", Place = "a2" };
+            fx.Containers.Add(other);
+            s.LoadFixture(fx);
+            var shop = s.Shop;
+            yield return null; yield return null; yield return null;
+            Check(shop.Annex && shop.HandCrank && shop.Level("siphon") == 3 && shop.SiphonCapacity == 10 && shop.Taps >= 1 && tank.Occupants.Count == 4 && shop.Phase == GrowthPhase.Night,
+                "Fixture: the lab annex open, the generator's hand crank, growers with a tap, the twin-chamber siphon, four creatures in the a1 tank, at night");
+
+            // Empty-handed, the hands are out of view.
+            LookAt(new Vector3(1.6f, 0, -2.9f), new Vector3(-1.2f, 1.2f, 1.6f));
+            yield return new WaitForSeconds(0.8f);
+            Check(!hands.Shown("L") && !hands.Shown("R") && hands.LeftDoing == "rest" && hands.RightDoing == "rest", "Empty-handed, the hands are lowered out of view");
+
+            // The siphon at the Bloom grower: the bulb squeezed once a dose, each dose a band of Bloom in the twin tubes.
+            LookAt(GrowthWorld.GrowerPositions["bloom"] + new Vector3(1.4f, 0, 0), GrowthWorld.GrowerPositions["bloom"] + new Vector3(0, 1.0f, 0));
+            yield return null; yield return null;
+            Aimed(GrowthTargetKind.Grower, "bloom", "The reticle focuses the Bloom grower");
+            Hold(true);
+            float lo = 9, hi = 0; var shapes = new HashSet<string>();
+            for (float until = Time.realtimeSinceStartup + 1.4f; Time.realtimeSinceStartup < until;)
+            {
+                yield return null;
+                if (hands.RightDoing == "collect") { lo = Mathf.Min(lo, hands.BulbSize); hi = Mathf.Max(hi, hands.BulbSize); shapes.Add(hands.ShapeOf("R")); }
+            }
+            Check(s.CollectingNow && hands.RightDoing == "collect" && hands.SiphonShown && hands.Tubes == 2, "Holding the mouse at the grower, the right hand holds the siphon to it (the twin chamber's two tubes)");
+            Check(hi - lo > 0.2f && shapes.Contains("cup") && shapes.Contains("grip"), "The hand cups the bulb and squeezes it once a dose (its size " + lo.ToString("0.00") + " to " + hi.ToString("0.00") + ")");
+            yield return Shot("550-siphoning-the-bloom-grower");
+            yield return Wait(() => shop.Held.Count >= 4, 6, "four Bloom doses");
+            Hold(false); yield return null;
+            LookAt(GrowthWorld.GrowerPositions["flow"] + new Vector3(1.4f, 0, 0), GrowthWorld.GrowerPositions["flow"] + new Vector3(0, 1.0f, 0));
+            yield return null; yield return null;
+            Hold(true);
+            yield return Wait(() => shop.Held.Count >= 6, 6, "two Flow doses");
+            Hold(false);
+            yield return new WaitForSeconds(0.6f);
+            Check(hands.RightDoing == "siphon" && hands.BandsShown == shop.Held.Count && Enumerable.Range(0, shop.Held.Count).All(i => hands.BandColour(i) == GrowthContent.Culture(shop.Held[i]).Hex),
+                "Let go, the siphon stays in hand, a band of each dose in its culture's colour (" + string.Join(", ", Enumerable.Range(0, shop.Held.Count).Select(hands.BandColour)) + ")");
+            LookAt(GrowthWorld.GrowerPositions["flow"] + new Vector3(1.5f, 0, -0.6f), GrowthWorld.GrowerPositions["bloom"] + new Vector3(0, 1.1f, 0));
+            yield return Shot("551-the-siphon-holding-doses");
+
+            // The generator's hand crank: both hands on the handle, going round with it.
+            var crank = GrowthWorld.GeneratorPosition + new Vector3(0, 0.9f, -0.3f);
+            yield return AimAt(GrowthWorld.GeneratorPosition + new Vector3(0, 0, -1.4f), crank, GrowthTargetKind.Generator, "generator", "The reticle focuses the generator's crank");
+            Hold(true);
+            yield return Wait(() => s.CrankingNow, 3, "the crank to turn");
+            yield return new WaitForSeconds(0.6f);
+            var r0 = hands.WristOnScreen("R"); var l0 = hands.WristOnScreen("L");
+            yield return new WaitForSeconds(0.3f);
+            var r1 = hands.WristOnScreen("R"); var l1 = hands.WristOnScreen("L");
+            Check(hands.LeftDoing == "crank" && hands.RightDoing == "crank" && !hands.SiphonShown, "Cranking, both hands are on the crank (the siphon put by)");
+            Check((r1 - r0).magnitude > 0.02f && Mathf.Abs((r1 - r0).y - (l1 - l0).y) < 0.03f, "They go round with the handle, together (moved " + ((Vector2)(r1 - r0)).magnitude.ToString("0.000") + " of the screen)");
+            yield return Shot("552-cranking-the-generator");
+            Hold(false); yield return null;
+
+            // Pipe mode: a length of pipe across both hands.
+            s.StartPipe(GrowthLab.Tap("bloom"));
+            LookAt(GrowthWorld.GeneratorPosition + new Vector3(-1.2f, 0, -1.8f), GrowthWorld.GrowerPositions["bloom"] + new Vector3(0, 1.4f, 0));
+            yield return new WaitForSeconds(0.8f);
+            Check(hands.LeftDoing == "pipe" && hands.RightDoing == "pipe" && hands.PipeShown, "Laying a pipe, a length of it is held in both hands");
+            yield return Shot("553-laying-a-pipe");
+            s.StopPipe();
+
+            // In peek, E takes a creature from the tank: the right hand reaches in for it, and its bag joins the left hand's.
+            var a1 = GrowthWorld.Places["a1"];
+            bool reached = false, shot = false; float farthest = 0;
+            for (int n = 1; n <= 2; n++)
+            {
+                LookAt(a1.Browse + new Vector3(0, 0, 0.15f), a1.Position + new Vector3(0, 1.18f, -0.1f));
+                yield return Wait(() => s.Peeking, 3, "peek to ease in");
+                float hunt = Time.realtimeSinceStartup + 12;
+                while (s.PeekCreature == null && Time.realtimeSinceStartup < hunt) yield return null;
+                Check(s.PeekCreature != null, "A creature under the reticle in peek (" + n + ")");
+                yield return Press(Key.E);
+                Check(shop.Carried.Count == n, "E takes it: " + n + " carried");
+                for (float from = Time.realtimeSinceStartup; Time.realtimeSinceStartup < from + 0.7f;)
+                {
+                    reached |= hands.RightDoing == "take"; farthest = Mathf.Max(farthest, hands.FarthestInView);
+                    if (n == 1 && !shot && Time.realtimeSinceStartup > from + 0.14f) { shot = true; yield return Shot("554-taking-one-in-peek"); continue; }
+                    yield return null;
+                }
+            }
+            Check(reached, "Taking one in peek, the right hand reaches in for it");
+            // The third with the tank card's action (two creatures left swim where the reticle may not find one soon).
+            Ok(s.Act(() => shop.TakeOut(tank.Id, tank.Occupants[0].Id)), "Take a third out (the tank card's action)");
+            yield return new WaitForSeconds(0.9f);
+            Check(hands.BagsShown == 3 && hands.BagCreatures == 3 && hands.BagSpecimens.OrderBy(x => x).SequenceEqual(shop.Carried.Select(c => c.Id).OrderBy(x => x)),
+                "Three carried: three of the shop's water bags in the left hand, a creature swimming in each, the ones carried");
+            // In peek the hands drop out of the way of the glass: the same view with peek switched off has them higher.
+            float peekY = hands.WristOnScreen("L").y;
+            Check(s.Peeking, "Still in peek at the a1 tank");
+            s.PeekOn = false;
+            yield return new WaitForSeconds(0.9f);
+            float plainY = hands.WristOnScreen("L").y;
+            Check(!s.Peeking && plainY > peekY + 0.03f, "In peek the hands were lower, out of the way of the glass (" + peekY.ToString("0.00") + " of the screen up, " + plainY.ToString("0.00") + " with peek off)");
+            s.PeekOn = true;
+
+            // Carrying three, the bags in the left hand and the siphon in the right; walking, they bob.
+            var a2 = GrowthWorld.Places["a2"];
+            LookAt(a1.Browse + new Vector3(1.0f, 0, -2.4f), a2.Position + new Vector3(0, 1.0f, 0));
+            yield return new WaitForSeconds(0.9f);
+            Check(!s.Peeking && hands.LeftDoing == "carry" && hands.RightDoing == "siphon", "Carrying, the bags in the left hand, the siphon (holding doses) in the right");
+            yield return Shot("555-carrying-three");
+            float Range(List<float> ys) => ys.Max() - ys.Min();
+            var still = new List<float>(); var walking = new List<float>();
+            for (int f = 0; f < 60; f++) { yield return null; still.Add(hands.WristOnScreen("L").y); }
+            var feet = s.Player.transform.position; var dir = s.Player.transform.forward; dir.y = 0; dir.Normalize();
+            float yaw = s.Player.transform.eulerAngles.y, pitch = s.Player.Pitch;
+            for (int f = 0; f < 60; f++)
+            {
+                feet += dir * (f < 30 ? -0.025f : 0.025f);
+                s.Player.Teleport(feet, Quaternion.Euler(0, yaw, 0)); s.Player.Pitch = pitch;
+                yield return null;
+                walking.Add(hands.WristOnScreen("L").y);
+            }
+            Check(Range(walking) > 0.01f && Range(walking) > 2 * Range(still), "Walking, the hands bob (" + Range(walking).ToString("0.000") + " of the screen up and down, " + Range(still).ToString("0.000") + " standing)");
+
+            // E on the other tank puts one in: the left hand reaches with its bag and lets go.
+            LookAt(a2.Browse + new Vector3(0, 0, -0.6f), a2.Position + new Vector3(0, 1.1f, 0));
+            yield return null; yield return null;
+            Aimed(GrowthTargetKind.Tank, other.Id, "The reticle focuses the a2 tank");
+            yield return Press(Key.E);
+            Check(shop.Carried.Count == 2 && other.Occupants.Count == 1, "E puts one in the a2 tank");
+            bool put = false; shot = false;
+            for (float from = Time.realtimeSinceStartup; Time.realtimeSinceStartup < from + 0.8f;)
+            {
+                put |= hands.LeftDoing == "put"; farthest = Mathf.Max(farthest, hands.FarthestInView);
+                if (!shot && Time.realtimeSinceStartup > from + 0.16f) { shot = true; yield return Shot("556-putting-one-in"); continue; }
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.3f);
+            Check(put && hands.BagsShown == 2 && hands.LeftDoing == "carry", "Putting it in, the left hand reaches with its bag and lets go; two bags left");
+            Check(farthest < GrowthHands.Capsule, "Reaching to the tanks, nothing of the hands in view goes further from the eye than the player's capsule (" + farthest.ToString("0.000") + " m), so never through the glass");
+
+            // A card lowers the hands; closing it, they come back.
+            s.SetCard(GrowthCard.Tank, other.Id);
+            yield return new WaitForSeconds(1.2f);
+            Check(!hands.Shown("L") && !hands.Shown("R"), "A card open lowers the hands");
+            s.SetCard(GrowthCard.None);
+            yield return new WaitForSeconds(1.0f);
+            Check(hands.Shown("L") && hands.BagsShown == 2, "Closing it, they come back with the bags");
+
+            // What the hands cost: the same view with three bags and the siphon up, then with the hands hidden (labelled).
+            Ok(s.Act(() => shop.TakeOut(other.Id, other.Occupants[0].Id)), "Take it back out (three carried; the card's action)");
+            var view = (feet: a1.Browse + new Vector3(1.0f, 0, -2.4f), target: a2.Position + new Vector3(0, 1.0f, 0));
+            int timed = timings.Count;
+            int previousRate = Application.targetFrameRate, previousVSync = QualitySettings.vSyncCount;
+            Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
+            yield return Measure("560-hands-up", view.feet, view.target, 4);
+            hands.gameObject.SetActive(false);
+            yield return Measure("561-hands-hidden", view.feet, view.target, 4);
+            hands.gameObject.SetActive(true);
+            Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
+            int tris = hands.Triangles;
+            Check(tris < 60000 && hands.Renderers < 60, "The hands draw " + tris + " triangles in " + hands.Renderers + " parts with three bags and the siphon (inside 60,000 and 60)");
+            File.WriteAllText(Path.Combine(evidence, "hands-timings.json"), JsonUtility.ToJson(new DensityReport
+            {
+                note = "Uncapped frame times in shop unit A at night with the player's hands up (three bags with their creatures, the twin-chamber siphon with six doses) and hidden by the route, the same view (" + SystemInfo.graphicsDeviceName + ", " + SystemInfo.processorType + ", " + Screen.width + "x" + Screen.height + ").",
+                shopCreatures = s.Shop.Stock.Count(), stressCreatures = 0, views = timings.Skip(timed).ToArray(),
+            }, true));
+
+            // The counter by day: a bag held out over it while bagging, let go of when the sale is made.
+            Ok(s.Act(shop.OpenShop), "Open the shop");
+            for (int i = 0; i < 4000 && shop.FrontOfQueue == null; i++) { s.Advance(0.1f); if (i % 4 == 0) yield return null; }
+            var front = shop.FrontOfQueue;
+            Check(front != null, "A visitor waits at the counter");
+            yield return Wait(() => w.VisitorViews.TryGetValue(front.Id, out var v) && v.Arrived, 25, "the visitor to reach the counter");
+            LookAt(GrowthWorld.CounterPosition + new Vector3(0.2f, 0, -0.95f), GrowthWorld.CounterPosition + new Vector3(0, 1.0f, 0));
+            yield return null; yield return null;
+            Aimed(GrowthTargetKind.Counter, null, "The reticle focuses the counter");
+            int sales = shop.SalesTotal, handed = hands.Handovers;
+            Hold(true);
+            yield return Wait(() => s.ServingNow && shop.ServeProgress > 0.6f * shop.ServeSeconds, 6, "the bagging to come along");
+            Check(hands.RightDoing == "serve" && hands.ServeBagShown && hands.LeftDoing == "carry", "Serving, the right hand holds a bag out over the counter (the left still carrying)");
+            yield return Shot("557-serving-at-the-counter");
+            yield return Wait(() => shop.SalesTotal > sales, 6, "the sale");
+            yield return null;
+            Check(hands.Handovers == handed + 1, "The sale is made: the bag is handed over (" + (hands.Handovers - handed) + " handed over for " + (shop.SalesTotal - sales) + " sale)");
+            Hold(false); yield return null;
         }
     }
 }

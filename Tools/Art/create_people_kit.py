@@ -1,5 +1,5 @@
-"""Original Evolution Shop people kit (GR-18 waves 1 and 2): the visitors, the exhibition's guests and the helpers (Pip, Nori
-and Moss) in the look the user approved on 2026-10-29 (GR.55, "Looks good"). Built with the look board's own builder (Tools/Art/gr18_characters.py, executed as a
+"""Original Evolution Shop people kit (GR-18 waves 1 to 3): the visitors, the exhibition's guests, the helpers (Pip, Nori
+and Moss) and the player's hands in the look the user approved on 2026-10-29 (GR.55, "Looks good"). Built with the look board's own builder (Tools/Art/gr18_characters.py, executed as a
 library), so the game's people are the board's. Blender 5.0, no external assets or add-ons.
 
 Run: blender --background --factory-startup --python Tools/Art/create_people_kit.py -- --repo C:/dev/DumbVideoGameStudio
@@ -16,12 +16,16 @@ What it makes (Resources/Art/PeopleKit; its record in ArtSource/PeopleKit/manife
 - PK_Held.fbx: what visitors hold, in each wrist's frame of a person whose head is 0.5333 tall (1.6 m, three heads): the
   shop's water bag, coins, coupons, a net bag of shopping, a notebook, shopping bags, a programme; and the helpers' jar
   (carried in both arms, on the right wrist), pipette (its fill the DOSE role) and clipboard.
+- PK_Hands.fbx (wave 3): the player's arms in first person, the shop's yellow gloves and turquoise sleeves rolled up in cream
+  (arm__<side>, and hand-<shape>__<side> for relaxed, grip, open, point and cup), each with its wrist at the origin, the
+  fingers down and the forearm up; and what they hold: the shop's water bag (bag__fp, its knot at the origin, its twist tie
+  the TIE role), the siphon's bulb, tube, a fill band one metre long (DOSE) and the vacuum's canister, and a length of pipe.
 - people.json (beside them, a TextAsset): each kind's joints (rest positions in Unity space), its head height, and each part's
   name, so the game assembles a person from these parts and turns their joints.
 
 Materials: every slot is named PK_<kind>_<colour>: the look's material kind (cloth, skin, hair, gloss, eye, plastic, metal,
 glass, water, liquid, ...) and a colour, either a fixed sRGB hex or a role the game fills in for each person (SKIN, HAIR,
-IRIS, TOP, BOTTOM, SOCKS, SHOE, SOLE, SHOEACC, BAG, PRINT, HAT, HATBAND, BAND, GLASSES, DOSE).
+IRIS, TOP, BOTTOM, SOCKS, SHOE, SOLE, SHOEACC, BAG, PRINT, HAT, HATBAND, BAND, GLASSES, DOSE, TIE).
 
 Coordinates: built as the board is (Blender, Z up, facing -Y); Unity sees Blender (x, y, z) at (-x, z, -y) (the mapping
 create_diorama_kit.py probed, bake_space_transform on), so people face Unity +Z with their left at Unity -X. Each part's
@@ -42,7 +46,7 @@ from mathutils import Vector
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 ap = argparse.ArgumentParser()
 ap.add_argument('--repo', required=True)
-ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held); the rest are left as they are.')
+ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held, Hands); the rest are left as they are.')
 args = ap.parse_args(argv)
 REPO = Path(args.repo).resolve()
 assert (REPO / 'EvolutionShop/ProjectSettings/ProjectVersion.txt').is_file()
@@ -63,7 +67,7 @@ sys.argv = _saved
 # The roles a person's colours fill in, and how they preview in Blender.
 PREVIEW = dict(SKIN='#EFB088', HAIR='#6B4329', IRIS='#5A3A24', TOP='#22BFB0', BOTTOM='#5C7FD6', SOCKS='#FFFFFF', SHOE='#FFFFFF',
                SOLE='#FF7A7A', SHOEACC='#22BFB0', BAG='#FFF3DF', PRINT='#FF7A7A', HAT='#FF7A7A', HATBAND='#FFF3DF', BAND='#FF7A7A',
-               GLASSES='#2B3A55', DOSE='#FF5E7E')
+               GLASSES='#2B3A55', DOSE='#FF5E7E', TIE='#22BFB0')
 SLOTS = {}
 
 
@@ -381,6 +385,61 @@ def build_held():
     return {'hh': 1.6 / 3.0, 'wrists': wrists}, rec
 
 
+# ---------------------------------------------------------------------------------------------------- the player's hands
+# GR-18 wave 3: the player's arms in first person, the board's (fp_arm, s_hands_carry, s_hands_siphon): the shop's yellow
+# gloves and turquoise sleeves rolled up in cream. Each arm is built with its wrist at the origin, its fingers hanging down
+# (Blender -Z) and its forearm up (+Z), its palm toward the body as a person's hangs; each hand shape is a part of its own.
+# What the hands hold: the shop's water bag (its knot at the origin, its twist tie a role, TIE), the siphon (its bulb at the
+# origin, its tube along Blender -Y, Unity +Z), a band of the siphon's fill one metre long (the game scales one per dose,
+# in the dose's colour, DOSE), the vacuum's canister (siphon level 4), and a length of pipe across (along X).
+FP_SHAPES = ['relaxed', 'grip', 'open', 'point', 'cup']
+FP_FOREARM = 0.42
+SIPHON_TUBE = (0.04, 0.3)  # where the siphon's tube starts and ends along its axis
+SIPHON_BAND = 0.016
+PIPE_LENGTH = 0.34
+
+
+def build_hands():
+    C = G['C']
+    glove, sleeve, cuff = slot('gloss', C['yellow']), slot('cloth', C['teal']), slot('cloth', C['cream'])
+    spec = dict(gloves=C['yellow'], hand=0.62)
+    meshes = []
+
+    def add(name, objs):
+        m = bake([o for o in objs if o.type != 'EMPTY'], name)
+        if m: meshes.append(m)
+
+    def along_y(o):
+        o.rotation_euler = (math.radians(90), 0, 0)
+        return o
+
+    for side in ('L', 'R'):
+        add('arm__' + side, [b.torus('Glove cuff', (0, 0, 0.03), 0.038, 0.016, glove),
+                             G['curve'](b, 'Forearm', [Vector((0, 0, 0.02)), Vector((0, 0, FP_FOREARM))], [0.036, 0.048], sleeve, poly=True),
+                             b.torus('Rolled sleeve', (0, 0, 0.14), 0.045, 0.02, cuff)])
+        for shape in FP_SHAPES:
+            add('hand-%s__%s' % (shape, side), hands(b, None, side, shape, spec, at=Vector((0, 0, 0)), m=glove))
+    add('bag__fp', G['bag_'](b, Vector((0, 0, 0)), 0.5, color='TIE'))
+    add('siphon_bulb__fp', [b.ball('Siphon bulb', (0, 0, 0), (0.042, 0.042, 0.042), slot('gloss', C['coral']), seg=24)])
+    t0, t1 = SIPHON_TUBE
+    add('siphon_tube__fp', [along_y(b.cyl('Siphon tube', (0, -(t0 + t1) / 2, 0), 0.022, t1 - t0, slot('glass', '#F2FCFF'), r=0)),
+                            b.ball('Siphon nozzle', (0, -t1, 0), 0.014, slot('gloss', C['teal_dark']), seg=12)])
+    add('siphon_band__fp', [along_y(b.cyl('Siphon fill', (0, -0.5, 0), SIPHON_BAND, 1.0, slot('liquid', 'DOSE'), r=0))])
+    add('siphon_canister__fp', [along_y(b.cyl('Vacuum canister', (0, -0.13, -0.05), 0.03, 0.1, slot('gloss', C['teal_dark']), r=0.008)),
+                                along_y(b.cyl('Canister band', (0, -0.13, -0.05), 0.032, 0.02, slot('cloth', C['cream']), r=0.004))])
+    pipe = [b.cyl('Pipe', (0, 0, 0), 0.045, PIPE_LENGTH, slot('glass', '#EBFAFF'), r=0, rot=(0, 90, 0))]
+    for x in (-PIPE_LENGTH / 2, PIPE_LENGTH / 2):
+        pipe.append(b.ball('Pipe joint', (x, 0, 0), 0.052, slot('gloss', C['teal']), seg=20))
+    add('pipe__fp', pipe)
+    keep = set(meshes)
+    for o in list(bpy.data.objects):
+        if o not in keep: bpy.data.objects.remove(o, do_unlink=True)
+    rec = export('PK_Hands', meshes)
+    clear()
+    info = {'forearm': FP_FOREARM, 'bagCreature': unity(Vector((0, 0, -0.1))), 'tube': list(SIPHON_TUBE), 'band': SIPHON_BAND, 'pipe': PIPE_LENGTH}
+    return info, rec
+
+
 # ---------------------------------------------------------------------------------------------------- build, export, record
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.scene.unit_settings.system = 'METRIC'
@@ -389,7 +448,7 @@ if (SOURCE / 'manifest.json').is_file():
     old = json.loads((SOURCE / 'manifest.json').read_text(encoding='utf-8'))
 kinds = dict(old.get('kinds', {}))
 records = {r['id']: r for r in old.get('assets', [])}
-head_info, held_info = old.get('head'), old.get('held')
+head_info, held_info, hands_info = old.get('head'), old.get('held'), old.get('hands')
 for kind in KINDS:
     if ONLY and 'Body_' + kind not in ONLY: continue
     info, rec = build_body(kind)
@@ -398,16 +457,18 @@ if not ONLY or 'Head' in ONLY:
     head_info, rec = build_head(); records[rec['id']] = rec
 if not ONLY or 'Held' in ONLY:
     held_info, rec = build_held(); records[rec['id']] = rec
+if not ONLY or 'Hands' in ONLY:
+    hands_info, rec = build_hands(); records[rec['id']] = rec
 slots = dict(old.get('materials', {})); slots.update(SLOTS)
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors, guests and helpers',
+    'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors, guests, helpers and the player\'s hands',
     'origin': {'author': 'Original local asset authorship for Evolution Shop (GR-18)', 'external_sources': [],
                'paid_generation': False, 'external_uploads': False},
     'blender_version': bpy.app.version_string, 'source_script': 'Tools/Art/create_people_kit.py',
     'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'builder_script': 'Tools/Art/gr18_characters.py', 'builder_script_sha256': hashlib.sha256(LIB.read_bytes()).hexdigest(),
     'axis_mapping': 'Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z',
-    'kinds': kinds, 'head': head_info, 'held': held_info,
+    'kinds': kinds, 'head': head_info, 'held': held_info, 'hands': hands_info,
     'materials': dict(sorted(slots.items())),
     'assets': [records[k] for k in sorted(records)],
 }
@@ -419,6 +480,8 @@ game = {'kinds': [dict(id=k, height=v['height'], hh=v['hh'], build=v['build'], g
                   for k, v in sorted(kinds.items())],
         'head': dict(jointToCentre=head_info['jointToCentre'], parts=sorted(records['PK_Head']['parts'])),
         'held': dict(hh=held_info['hh'], wristL=held_info['wrists']['L'], wristR=held_info['wrists']['R'], parts=sorted(records['PK_Held']['parts'])),
+        'hands': dict(forearm=hands_info['forearm'], bagCreature=hands_info['bagCreature'], tube=hands_info['tube'], band=hands_info['band'],
+                      pipe=hands_info['pipe'], parts=sorted(records['PK_Hands']['parts'])),
         'materials': [dict(name=n, kind=v['kind'], colour=v['colour']) for n, v in sorted(slots.items())]}
 (EXPORT / 'people.json').write_text(json.dumps(game, indent=1) + '\n', encoding='utf-8')
 print('PEOPLE_KIT_COMPLETE', len(records))

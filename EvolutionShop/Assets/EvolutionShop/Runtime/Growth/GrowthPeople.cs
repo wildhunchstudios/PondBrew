@@ -24,8 +24,11 @@ namespace EvolutionShop
         [Serializable] public sealed class KindData { public string id; public float height, hh, build, gripDrop; public float[] headCentre; public JointData[] joints; public string[] parts; }
         [Serializable] public sealed class HeadData { public float jointToCentre; public string[] parts; }
         [Serializable] public sealed class HeldData { public float hh; public float[] wristL, wristR; public string[] parts; }
+        /// <summary>GR-18 wave 3: the player's hands: the forearm's length, where a creature swims in the bag, where the siphon's tube runs
+        /// along its axis, its fill's radius, the pipe's length, and the parts.</summary>
+        [Serializable] public sealed class HandsData { public float forearm, band, pipe; public float[] bagCreature, tube; public string[] parts; }
         [Serializable] public sealed class SlotData { public string name, kind, colour; }
-        [Serializable] public sealed class KitData { public KindData[] kinds; public HeadData head; public HeldData held; public SlotData[] materials; }
+        [Serializable] public sealed class KitData { public KindData[] kinds; public HeadData head; public HeldData held; public HandsData hands; public SlotData[] materials; }
 
         static KitData data;
         static readonly Dictionary<string, GameObject> assets = new Dictionary<string, GameObject>();

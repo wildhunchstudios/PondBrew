@@ -63,6 +63,8 @@ namespace EvolutionShop
         /// <summary>GR-16 wave 5: the sounds (the crank, the hand pump, the pop, the swish) and the machines' hum, each full, half or off.</summary>
         public GrowthAudio.Level SoundLevel, HumLevel;
         public GrowthAudio Audio { get; private set; }
+        /// <summary>GR-18 wave 3: the player's hands in first person (in the look, with the people kit), or null.</summary>
+        public GrowthHands Hands { get; private set; }
         /// <summary>The held-mouse actions, for the HUD's progress: collecting at a grower or a buffer, bagging at the counter,
         /// cranking a hand pump or the generator (GR-07).</summary>
         public bool CollectingNow { get; private set; }
@@ -114,6 +116,7 @@ namespace EvolutionShop
             World = new GameObject("GR-02 greybox").AddComponent<GrowthWorld>();
             World.Build(this);
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));
+            if (GrowthWorld.LookOn) Hands = GrowthHands.Build(this);
             Audio = gameObject.AddComponent<GrowthAudio>();
             Audio.Initialize(this);
             Ui = gameObject.AddComponent<GrowthUi>();

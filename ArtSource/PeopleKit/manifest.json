@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "title": "Evolution Shop people kit (GR-18): the new game's visitors, guests and helpers",
+  "title": "Evolution Shop people kit (GR-18): the new game's visitors, guests, helpers and the player's hands",
   "origin": {
     "author": "Original local asset authorship for Evolution Shop (GR-18)",
     "external_sources": [],
@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_people_kit.py",
-  "source_script_sha256": "879f5d3e5037886130ead40403fafc225ed2f98ca064ea80f4d8cf9aa09a3221",
+  "source_script_sha256": "b5d605c948fb30c5019b7e6b4dd1919f24ff51da1a9b39b6da9012cf98360160",
   "builder_script": "Tools/Art/gr18_characters.py",
   "builder_script_sha256": "d52edffe3caf9e3a4f341791c29ee96ea0caf63e9dc45f81dcbb5f147d2f2ac7",
   "axis_mapping": "Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z",
@@ -1170,6 +1170,20 @@
       ]
     }
   },
+  "hands": {
+    "forearm": 0.42,
+    "bagCreature": [
+      -0.0,
+      -0.1,
+      -0.0
+    ],
+    "tube": [
+      0.04,
+      0.3
+    ],
+    "band": 0.016,
+    "pipe": 0.34
+  },
   "materials": {
     "PK_cloth_15867F": {
       "kind": "cloth",
@@ -1343,6 +1357,10 @@
       "kind": "glass",
       "colour": "#EAFBFF"
     },
+    "PK_glass_EBFAFF": {
+      "kind": "glass",
+      "colour": "#EBFAFF"
+    },
     "PK_glass_F2FCFF": {
       "kind": "glass",
       "colour": "#F2FCFF"
@@ -1450,6 +1468,10 @@
     "PK_gloss_SOLE": {
       "kind": "gloss",
       "colour": "SOLE"
+    },
+    "PK_gloss_TIE": {
+      "kind": "gloss",
+      "colour": "TIE"
     },
     "PK_hair_6B4329": {
       "kind": "hair",
@@ -1741,6 +1763,33 @@
         "wrist.R__hand-open": 1160,
         "wrist.R__hand-point": 1160,
         "wrist.R__hand-relaxed": 1160
+      }
+    },
+    {
+      "id": "PK_Hands",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Hands.fbx",
+      "sha256": "cd3954a6e9e759351174b2dde7e296b25780d2dfcba1ec2a30cf6bba805eb852",
+      "bytes": 399292,
+      "triangles": 16722,
+      "parts": {
+        "arm__L": 804,
+        "arm__R": 804,
+        "bag__fp": 2284,
+        "hand-cup__L": 1160,
+        "hand-cup__R": 1160,
+        "hand-grip__L": 1160,
+        "hand-grip__R": 1160,
+        "hand-open__L": 1160,
+        "hand-open__R": 1160,
+        "hand-point__L": 1160,
+        "hand-point__R": 1160,
+        "hand-relaxed__L": 1160,
+        "hand-relaxed__R": 1160,
+        "pipe__fp": 268,
+        "siphon_band__fp": 92,
+        "siphon_bulb__fp": 130,
+        "siphon_canister__fp": 568,
+        "siphon_tube__fp": 172
       }
     },
     {
