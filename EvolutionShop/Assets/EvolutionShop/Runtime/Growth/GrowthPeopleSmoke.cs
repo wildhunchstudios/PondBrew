@@ -14,11 +14,14 @@ namespace EvolutionShop
     /// tank (leaning in, pointing), queue at the counter (the front one holding out the coins, the others waiting, a tapping
     /// foot and an "o" as patience runs low), and leave with the creature they bought in the shop's bag and a grin, with a
     /// shrug when nothing was affordable, with a huff when tired of waiting, and with a wave at closing. A lineup of every
-    /// kind by night and by day, a visitor of the shop's own, and the frame budget with a crowd of people in view.
+    /// kind by night and by day, a visitor of the shop's own, and the frame budget with a crowd of people in view. Wave 2
+    /// (GR.57): the helpers as the board's cast at work: Pip behind the counter, Nori carrying a clutch to the shop's tank in
+    /// the jar and reaching in at the tank, Moss bringing doses to the incubator in the pipette in each culture's colour and
+    /// squeezing them in, and Pip bagging an order at the till with a wave to the visitor.
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string PeopleScenarioText = "GR-18 wave 1, the visitors and guests as people: the people kit in the look's own materials; visitors of every kind walking in their kind's way, browsing (leaning in, pointing), queueing (paying at the front, waiting and growing impatient behind), and leaving happy with the creature they bought in the shop's bag, with a shrug, a huff or a wave at closing; a lineup of every kind and of casual visitors' variety by night and by day; a visitor of the shop's own; the frame budget with a crowd in view; captures of each";
+        const string PeopleScenarioText = "GR-18 wave 1, the visitors and guests as people: the people kit in the look's own materials; visitors of every kind walking in their kind's way, browsing (leaning in, pointing), queueing (paying at the front, waiting and growing impatient behind), and leaving happy with the creature they bought in the shop's bag, with a shrug, a huff or a wave at closing; a lineup of every kind and of casual visitors' variety by night and by day; a visitor of the shop's own; the frame budget with a crowd in view; wave 2, the helpers as people at work: Pip at the counter and the till, Nori carrying in the jar and reaching in at the tank, Moss with the pipette in each dose's colour; captures of each";
 
         static readonly string[] PeopleKinds = { "casual", "bargain", "collector", "premium", "guest" };
 
@@ -250,7 +253,109 @@ namespace EvolutionShop
                 shopCreatures = s.Shop.Stock.Count(), stressCreatures = 0, views = timings.ToArray(),
             }, true));
             Destroy(variety.gameObject); Destroy(everyone.gameObject);
+
+            yield return PeopleHelpers();
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
+        }
+
+        /// <summary>GR-18 wave 2: Pip, Nori and Moss as people at work (the GR-09 helpers route's fixture and steps).</summary>
+        IEnumerator PeopleHelpers()
+        {
+            limitations.Add("GR-18 wave 2 (the helpers): the fixture is labelled, as GR-09's helpers route's: an era 4, four-star shop with 8,000 credits, unit B and the lab annex open, 12 founders known, growers at level 2; a Large tank is bought on a3 with the place card's action and six Ribbonfins put in it (the routes' fixture action); the three helpers are hired with the staff card's action. The rules run the helpers' steps: the route's clock runs them on (accelerated, labelled) up to the moment it looks at, then the shop's own clock runs in real time while it checks and captures.");
+            var w = s.World;
+            var fx = new GrowthShop { Era = 4, Reputation = GrowthContent.StarThresholds[3] + 10, Credits = 8000, Rp = 300, UnitB = true, SalesTotal = 160 };
+            fx.Discovered.AddRange(GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder).Take(12).Select(x => x.Id));
+            fx.Journal.AddRange(fx.Discovered.Select(d => GrowthShop.JournalKey(d, Colour.Classic)));
+            fx.Levels["grower"] = 2; fx.Levels["generator"] = 2; fx.Levels["pump"] = 2; fx.Levels["incubator"] = 3; fx.Levels["breeding"] = 1; fx.Levels["counter"] = 3;
+            fx.Annex = true;
+            foreach (var c in fx.Cultures) fx.GrowerUnits[c] = 10;
+            s.LoadFixture(fx);
+            var shop = s.Shop;
+            yield return null; yield return null;
+            Ok(s.Act(() => shop.BuyContainer("large", "a3")), "A Large tank on a3 (the place card's button): Nori can be hired");
+            var large = shop.ContainerAt("a3");
+            for (int i = 0; i < 6; i++) Ok(shop.DevelopmentStock(large.Id, "ribbonfin"), "Fixture Ribbonfin " + (i + 1));
+            foreach (var id in new[] { "pip", "nori", "moss" }) Ok(s.Act(() => shop.Hire(id)), "Hire " + GrowthContent.Helper(id).Name + " (the staff card's button)");
+            s.SetCard(GrowthCard.None);
+            yield return null; yield return null; yield return null;
+
+            // The three, at work as people of the board's cast.
+            foreach (var id in new[] { "pip", "nori", "moss" })
+            {
+                var p = w.FigurePerson(id);
+                PersonChecks(p, id, GrowthContent.Helper(id).Name);
+                Check(w.FigureShowing(id) && w.FigureActivity(id) == "stand", GrowthContent.Helper(id).Name + " stands at work, a person of the board's cast (" + string.Join(", ", p.Look.HeadParts().Where(x => x.StartsWith("hair") || x.StartsWith("hat"))) + ")");
+            }
+            Check(w.FigurePerson("nori").HeldShown.Contains("R.jar") && w.FigurePerson("moss").HeldShown.Contains("R.pipette") && w.FigurePerson("moss").HeldShown.Contains("L.clipboard") && !w.FigurePerson("pip").HeldShown.Any(),
+                "Nori holds the shop's jar; Moss the pipette and the clipboard; Pip's hands are free for the till");
+            Check(w.FigurePerson("moss").Colour("DOSE") == GrowthPersonLook.EmptyDose, "Moss's pipette holds no dose yet (rinsed pale)");
+            LookAt(new Vector3(2.0f, 0, -1.4f), w.FigurePosition("pip") + Vector3.up * 1.2f); yield return Shot("540-pip-behind-the-counter");
+            LookAt(new Vector3(0.8f, 0, 2.2f), new Vector3(0.45f, 1.0f, 5.8f)); yield return Shot("541-nori-and-moss-in-the-back-room");
+
+            // Nori carries the player's clutch to the shop's tank, the Pondlet swimming in the jar, and reaches in at the tank.
+            Ok(s.Act(() => shop.SetTarget("pondlet", 2)), "Target 2 Pondlets (Nori's card's + button)");
+            PlayerClutch();
+            var nori = shop.Helper("nori");
+            float Walk(GrowthHelper h) => Mathf.Max(0.01f, h.StepSeconds - GrowthWalk.Handle);
+            for (int i = 0; i < 2000 && !(nori.Step == "deliver" && nori.Progress >= 0.6f * Walk(nori)); i++) { s.Advance(0.05f); if (i % 4 == 0) yield return null; }
+            Check(nori.Step == "deliver" && nori.Hands.Count == 1, "Nori is on the way to the tank with a Pondlet (the route's clock, accelerated)");
+            yield return null; yield return null;
+            var noriPerson = w.FigurePerson("nori");
+            var hip = noriPerson.Joint("hip.L").localRotation; float swing = 0;
+            for (float until = Time.time + 0.4f; Time.time < until && nori.Step == "deliver" && nori.Progress < Walk(nori);)
+            {
+                yield return null;
+                swing = Mathf.Max(swing, Quaternion.Angle(hip, noriPerson.Joint("hip.L").localRotation));
+            }
+            Check(w.FigureActivity("nori") == "walk" && swing > 8f && w.FigureCarrying("nori") == nori.Hands[0].Id && w.FigureInJar("nori") == 1,
+                "Nori walks the Pondlet to the tank (the hips swinging " + swing.ToString("0") + "°), the jar held out in front, the Pondlet swimming in it");
+            FaceOf(noriPerson.transform, 1.7f); yield return Shot("542-nori-carrying");
+            yield return Wait(() => nori.Step == "deliver" && nori.Progress > Walk(nori), 20, "Nori at the tank");
+            yield return null; // the frame the walk ends still carries its last steps
+            Check(w.FigureActivity("nori") == "work", "At the tank Nori stops and reaches the jar over its rim (the board's reach)");
+            FaceOf(noriPerson.transform, 1.6f, 1, 0.2f); yield return Shot("543-nori-at-the-tank");
+            for (int i = 0; i < 2000 && shop.Shown("pondlet") < 2; i++) { s.Advance(0.05f); if (i % 4 == 0) yield return null; }
+            yield return null; yield return null;
+            Check(shop.Shown("pondlet") == 2 && w.FigureInJar("nori") == 0, "Both Pondlets are in the shop's tank, and Nori's jar is empty again");
+
+            // Moss runs a recipe: each dose carried in the pipette, in its culture's colour, and dropped in at the incubator.
+            Ok(s.Act(() => shop.SetMossRecipe("pondlet")), "Moss runs the Pondlet (Moss's card's Run it button)");
+            var moss = shop.Helper("moss");
+            for (int i = 0; i < 2000 && !(moss.Step == "dose-back" && moss.Progress >= 0.4f * Walk(moss)); i++) { s.Advance(0.05f); if (i % 4 == 0) yield return null; }
+            yield return null; yield return null;
+            var mossPerson = w.FigurePerson("moss");
+            Check(moss.Dose != null && w.FigureHoldsDose("moss") && mossPerson.Colour("DOSE") == GrowthContent.Culture(moss.Dose).Hex && w.FigureActivity("moss") == "walk",
+                "Moss brings a dose of " + moss.Dose + " to the incubator, the pipette filled in its colour (" + mossPerson.Colour("DOSE") + ")");
+            LookAt(new Vector3(1.3f, 0, 5.8f), w.FigurePosition("moss") + Vector3.up * 1.0f); yield return Shot("544-moss-with-a-dose");
+            yield return Wait(() => moss.Step == "dose-back" && moss.Progress > Walk(moss), 20, "Moss at the incubator");
+            yield return null;
+            Check(w.FigureActivity("moss") == "work", "At the incubator Moss squeezes the drops in (the board's drops)");
+            FaceOf(mossPerson.transform, 1.5f, 1, 0.3f); yield return Shot("545-moss-dosing");
+            yield return Wait(() => moss.Dose == null, 20, "the dose in");
+            yield return null; yield return null;
+            Check(mossPerson.Colour("DOSE") == GrowthPersonLook.EmptyDose && !w.FigureHoldsDose("moss"), "The dose in, the pipette is rinsed pale again");
+
+            // Pip at the till through the day: the scanner's sweep and a wave to the visitor.
+            Ok(s.Act(shop.OpenShop), "Open the shop");
+            var pip = shop.Helper("pip");
+            for (int i = 0; i < 2000 && pip.Step != "serve"; i++) { s.Advance(0.1f); if (i % 4 == 0) yield return null; }
+            yield return null; yield return null;
+            var pipPerson = w.FigurePerson("pip");
+            Check(pip.Step == "serve" && w.FigureActivity("pip") == "work" && pipPerson.HandShape("L") == "grip" && pipPerson.HandShape("R") == "open",
+                "Pip bags an order at the till: the scanner's sweep in the left hand, the right open to wave");
+            LookAt(new Vector3(1.6f, 0, -2.9f), w.FigurePosition("pip") + Vector3.up * 1.2f); yield return Shot("546-pip-at-the-till");
+            var arm = pipPerson.Joint("shoulder.R").localRotation; float wave = 0;
+            for (float until = Time.time + 1.2f; Time.time < until && pip.Step == "serve";)
+            {
+                yield return null;
+                wave = Mathf.Max(wave, Quaternion.Angle(arm, pipPerson.Joint("shoulder.R").localRotation));
+            }
+            Check(wave > 20f, "Pip's right arm goes up to wave goodbye as the order is bagged (" + wave.ToString("0") + "°)");
+            yield return Wait(() => s.Ui.Log.Any(l => l.StartsWith("Pip sold ")) && w.VisitorViews.Values.Any(v => v.Carrying != null), 20, "the visitor Pip served leaving with the bag");
+            Check(true, "The visitor Pip served leaves with what they bought in the shop's bag");
+            yield return new WaitForSeconds(0.5f);
+            var leaving = w.VisitorViews.Values.First(v => v.Carrying != null);
+            FaceOf(leaving.transform, 1.6f); yield return Shot("547-pip-served-them");
         }
     }
 }

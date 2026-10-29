@@ -1,11 +1,12 @@
-"""Original Evolution Shop people kit (GR-18 wave 1): the visitors and the exhibition's guests in the look the user approved
-on 2026-10-29 (GR.55, "Looks good"). Built with the look board's own builder (Tools/Art/gr18_characters.py, executed as a
+"""Original Evolution Shop people kit (GR-18 waves 1 and 2): the visitors, the exhibition's guests and the helpers (Pip, Nori
+and Moss) in the look the user approved on 2026-10-29 (GR.55, "Looks good"). Built with the look board's own builder (Tools/Art/gr18_characters.py, executed as a
 library), so the game's people are the board's. Blender 5.0, no external assets or add-ons.
 
 Run: blender --background --factory-startup --python Tools/Art/create_people_kit.py -- --repo C:/dev/DumbVideoGameStudio
 
 What it makes (Resources/Art/PeopleKit; its record in ArtSource/PeopleKit/manifest.json):
-- PK_Body_<kind>.fbx for each kind of visitor (casual, bargain, collector, premium, guest): a mesh per joint and variant,
+- PK_Body_<kind>.fbx for each kind of visitor (casual, bargain, collector, premium, guest) and each helper (pip, nori, moss,
+  in their own colours, Moss in lilac gloves): a mesh per joint and variant,
   each named "<joint>__<variant>" directly under the asset's root, in the kind's rest pose (feet at the origin): the spine
   (the kind's top and what it wears on it), the hips, shoulders, elbows, hips, knees and ankles (with the shoes), the legs'
   variants (the casual visitor's trousers or shorts) and four hand shapes a side (relaxed, grip, point, open).
@@ -13,13 +14,14 @@ What it makes (Resources/Art/PeopleKit; its record in ArtSource/PeopleKit/manife
   height): the skull with its neck, ears and cheeks; the eyes; eyelids, lashes; brows; three noses; five mouths; a mustache,
   freckles, a beauty mark; every hair style, the fringes; every hat; glasses and sunglasses.
 - PK_Held.fbx: what visitors hold, in each wrist's frame of a person whose head is 0.5333 tall (1.6 m, three heads): the
-  shop's water bag, coins, coupons, a net bag of shopping, a notebook, shopping bags, a programme.
+  shop's water bag, coins, coupons, a net bag of shopping, a notebook, shopping bags, a programme; and the helpers' jar
+  (carried in both arms, on the right wrist), pipette (its fill the DOSE role) and clipboard.
 - people.json (beside them, a TextAsset): each kind's joints (rest positions in Unity space), its head height, and each part's
   name, so the game assembles a person from these parts and turns their joints.
 
 Materials: every slot is named PK_<kind>_<colour>: the look's material kind (cloth, skin, hair, gloss, eye, plastic, metal,
 glass, water, liquid, ...) and a colour, either a fixed sRGB hex or a role the game fills in for each person (SKIN, HAIR,
-IRIS, TOP, BOTTOM, SOCKS, SHOE, SOLE, SHOEACC, BAG, PRINT, HAT, HATBAND, BAND, GLASSES).
+IRIS, TOP, BOTTOM, SOCKS, SHOE, SOLE, SHOEACC, BAG, PRINT, HAT, HATBAND, BAND, GLASSES, DOSE).
 
 Coordinates: built as the board is (Blender, Z up, facing -Y); Unity sees Blender (x, y, z) at (-x, z, -y) (the mapping
 create_diorama_kit.py probed, bake_space_transform on), so people face Unity +Z with their left at Unity -X. Each part's
@@ -61,7 +63,7 @@ sys.argv = _saved
 # The roles a person's colours fill in, and how they preview in Blender.
 PREVIEW = dict(SKIN='#EFB088', HAIR='#6B4329', IRIS='#5A3A24', TOP='#22BFB0', BOTTOM='#5C7FD6', SOCKS='#FFFFFF', SHOE='#FFFFFF',
                SOLE='#FF7A7A', SHOEACC='#22BFB0', BAG='#FFF3DF', PRINT='#FF7A7A', HAT='#FF7A7A', HATBAND='#FFF3DF', BAND='#FF7A7A',
-               GLASSES='#2B3A55')
+               GLASSES='#2B3A55', DOSE='#FF5E7E')
 SLOTS = {}
 
 
@@ -174,7 +176,9 @@ def phase(fn):
 
 
 # ---------------------------------------------------------------------------------------------------- the bodies
-KINDS = ['casual', 'bargain', 'collector', 'premium', 'guest']
+KINDS = ['casual', 'bargain', 'collector', 'premium', 'guest', 'pip', 'nori', 'moss']
+# GR-18 wave 2: the helpers, each one person in their own colours (only their skin a role, for the head kit's face).
+HELPERS = ['pip', 'nori', 'moss']
 HAND_SHAPES = ['relaxed', 'grip', 'point', 'open']
 
 
@@ -183,7 +187,7 @@ def body_spec(kind):
     s['skin'] = 'SKIN'
     s['hair'] = {'style': 'none'}; s['hat'] = None; s['glasses'] = None
     s['face'] = {'eyes': 'round'}
-    s['top']['color'] = 'TOP'
+    if kind not in HELPERS: s['top']['color'] = 'TOP'
     s['hands'] = {}
     s['extras'] = [e for e in s.get('extras', []) if e[0] != 'held']
     if kind == 'casual':
@@ -318,7 +322,31 @@ def build_head():
 
 
 # ---------------------------------------------------------------------------------------------------- what visitors hold
-HELD = ['creature_bag', 'coin', 'coupons', 'netbag', 'notebook', 'bags', 'program']
+HELD = ['creature_bag', 'coin', 'coupons', 'netbag', 'notebook', 'bags', 'program', 'jar', 'pipette', 'clipboard']
+# The jar is carried in both arms on the right wrist (the builder hangs it there whichever side); the pipette's fill is a
+# role (DOSE) the game colours with the culture Moss carries.
+ONE_SIDE = {'jar': 'R'}
+# GR-18 wave 2: the arm pose the game holds each item in (GrowthPeopleMotion's, written for the side named; the other side
+# mirrored). The board makes an item where the posed hand is and hands it to the wrist; the kit then puts the arm back to
+# rest, the item following the wrist, so the game, which hangs items on a wrist at rest, finds it upright in that pose
+# (made at rest, a notebook held up or the jar in both arms tipped over with the wrist).
+HOLD = {
+    'creature_bag': {'shoulder.R': (-50, 10, 0), 'elbow.R': (-96, 0, 30)},  # hugged to the chest, leaving
+    'coin': {'shoulder.R': (-68, 6, 0), 'elbow.R': (-24, 0, 0)},  # held out at the counter
+    'notebook': {'shoulder.L': (-30, -6, 0), 'elbow.L': (-92, 0, -20)},
+    'program': {'shoulder.L': (-28, -6, 0), 'elbow.L': (-80, 0, -10)},
+    'jar': {'shoulder.L': (-48, -2, 0), 'shoulder.R': (-48, 2, 0), 'elbow.L': (-56, 0, -14), 'elbow.R': (-56, 0, 14)},  # Nori's
+    'pipette': {'shoulder.R': (-36, 8, 0), 'elbow.R': (-86, 0, 18)},
+    'clipboard': {'shoulder.L': (-22, -6, 0), 'elbow.L': (-82, 0, -24)},
+}
+
+
+def hold_pose(item, side):
+    """The arm pose for an item in a hand: as written, or mirrored onto the other side."""
+    p = HOLD.get(item, {})
+    if any(k.endswith('.' + side) for k in p) or not p: return dict(p)
+    other = 'L' if side == 'R' else 'R'
+    return {k.replace('.' + other, '.' + side): (x, -y, -z) for k, (x, y, z) in p.items()}
 
 
 def build_held():
@@ -331,11 +359,18 @@ def build_held():
     rig.pose({})
     meshes = []
     wrists = {}
+    bpy.context.view_layer.update()
+    for side in ('L', 'R'): wrists[side] = unity(rig.j['wrist.' + side].matrix_world.translation)
     for side in ('L', 'R'):
-        bpy.context.view_layer.update()
-        wrists[side] = unity(rig.j['wrist.' + side].matrix_world.translation)
         for item in HELD:
+            if ONE_SIDE.get(item, side) != side: continue
+            bloom = G['BLOOM']
+            if item == 'pipette': G['BLOOM'] = 'DOSE'
+            rig.pose(hold_pose(item, side))
             made = phase(lambda: held(b, rig, item=item, side=side))
+            rig.pose({})
+            bpy.context.view_layer.update()
+            G['BLOOM'] = bloom
             m = bake([o for o in made if o.type != 'EMPTY'], '%s__%s' % (item, side))
             if m: meshes.append(m)
     keep = set(meshes)
@@ -365,7 +400,7 @@ if not ONLY or 'Held' in ONLY:
     held_info, rec = build_held(); records[rec['id']] = rec
 slots = dict(old.get('materials', {})); slots.update(SLOTS)
 manifest = {
-    'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors and guests',
+    'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors, guests and helpers',
     'origin': {'author': 'Original local asset authorship for Evolution Shop (GR-18)', 'external_sources': [],
                'paid_generation': False, 'external_uploads': False},
     'blender_version': bpy.app.version_string, 'source_script': 'Tools/Art/create_people_kit.py',

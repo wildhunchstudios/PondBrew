@@ -132,11 +132,46 @@ namespace EvolutionShop
         /// <summary>The kind of figure for a visitor's type (the rules' visitor types; guests are the exhibition's).</summary>
         public static string KindOf(string visitorType) => visitorType == GrowthShop.GuestType ? "guest" : visitorType == "bargain" || visitorType == "collector" || visitorType == "premium" ? visitorType : "casual";
 
+        /// <summary>GR-18 wave 2: the helpers, each one person (the board's cast): their kit kind is their id.</summary>
+        public static readonly string[] Helpers = { "pip", "nori", "moss" };
+
+        /// <summary>A helper's look, the same every time: their own hair, face, hat and colours (their body is their own in the kit).</summary>
+        public static GrowthPersonLook Helper(string id)
+        {
+            var look = new GrowthPersonLook { Kind = id };
+            var c = look.Colours;
+            switch (id)
+            {
+                case "pip":
+                    c["SKIN"] = "#FFDCC2"; c["HAIR"] = "#B5502F"; c["IRIS"] = "#3F7F4F"; c["BAND"] = "#FFC93C";
+                    look.Hair = "pigtails"; look.Hat = "cap"; c["HAT"] = "#FF9EC4"; c["HATBAND"] = "#FFFFFF";
+                    look.Nose = "button"; look.Mouth = "grin"; look.Freckles = true;
+                    break;
+                case "nori":
+                    c["SKIN"] = "#B87448"; c["HAIR"] = "#2E2430"; c["IRIS"] = "#5A3A24"; c["BAND"] = "#FF7A7A";
+                    look.Hair = "crop"; look.Hat = "bandana"; c["HAT"] = "#FF7A7A"; c["HATBAND"] = "#FFF3DF";
+                    look.Nose = "bulb"; look.Mouth = "smile"; look.BushyBrows = true; look.Wide = 1.04f;
+                    look.HeldRight = "jar";
+                    break;
+                default:
+                    c["SKIN"] = "#D99467"; c["HAIR"] = "#7FB35A"; c["IRIS"] = "#3E6FB0"; c["BAND"] = "#22BFB0";
+                    look.Hair = "curly"; look.Hat = "goggles"; c["HAT"] = "#15867F"; c["HATBAND"] = "#2B3A55";
+                    look.Nose = "long"; look.Mouth = "o";
+                    look.HeldRight = "pipette"; look.HeldLeft = "clipboard"; c["DOSE"] = EmptyDose;
+                    break;
+            }
+            return look;
+        }
+
+        /// <summary>The colour of Moss's pipette when it holds no dose (a pale rinse).</summary>
+        public const string EmptyDose = "#CFEFE6";
+
         /// <summary>A kind's part of a look's seed, the same in every run (string.GetHashCode is not promised to be).</summary>
         static int KindSeed(string kind) { int h = 0; foreach (char ch in kind) h = (h * 31 + ch) % 1000; return h; }
 
         public static GrowthPersonLook For(string kind, int seed)
         {
+            if (Array.IndexOf(Helpers, kind) >= 0) return Helper(kind);
             var r = new System.Random(seed * 7919 + KindSeed(kind) * 31 + 17);
             T Pick<T>(IList<T> list) => list[r.Next(list.Count)];
             float Range(float a, float b) => a + (float)r.NextDouble() * (b - a);
@@ -270,6 +305,9 @@ namespace EvolutionShop
             ["collector"] = new Gait { Stride = 22, Knee = 36, Arm = 4, Bob = 0.012f, Sway = 0.008f, Twist = 3, Lean = -2, Head = -6, Out = 0, Elbow = -10, Behind = true, Cycle = 1.3f },
             ["premium"] = new Gait { Stride = 22, Knee = 38, Arm = 14, Bob = 0.018f, Sway = 0.03f, Twist = 11, Lean = -5, Head = -10, Out = 14, Elbow = -16, Cycle = 1.2f },
             ["guest"] = new Gait { Stride = 18, Knee = 34, Arm = 10, Bob = 0.012f, Sway = 0.01f, Twist = 4, Lean = -4, Head = -8, Out = 4, Elbow = -30, Cycle = 1.1f },
+            ["pip"] = new Gait { Stride = 24, Knee = 50, Arm = 30, Bob = 0.035f, Sway = 0.012f, Twist = 6, Lean = 4, Head = 0, Out = 4, Elbow = -24, Cycle = 1.0f },
+            ["nori"] = new Gait { Stride = 20, Knee = 34, Arm = 0, Bob = 0.014f, Sway = 0.022f, Twist = 4, Lean = 2, Head = 0, Out = 0, Elbow = 0, Carry = true, Cycle = 1.1f },
+            ["moss"] = new Gait { Stride = 18, Knee = 36, Arm = 8, Bob = 0.012f, Sway = 0.01f, Twist = 3, Lean = 8, Head = 6, Out = 2, Elbow = -40, Cycle = 0.95f },
         };
 
         static float Pulse(float t, float n, float phase = 0, float sharp = 3) => Mathf.Pow(Mathf.Max(0, Mathf.Sin(2 * Mathf.PI * (n * t + phase))), sharp);
@@ -312,6 +350,12 @@ namespace EvolutionShop
             {
                 p.E[GrowthPersonPose.ShoulderL] = new Vector3(28, 0, -10); p.E[GrowthPersonPose.ShoulderR] = new Vector3(28, 0, 10);
                 p.E[GrowthPersonPose.ElbowL] = new Vector3(-70, 0, 20); p.E[GrowthPersonPose.ElbowR] = new Vector3(-70, 0, -20);
+            }
+            else if (w.Carry)
+            {
+                // Nori: the jar carried out in front in both arms.
+                p.E[GrowthPersonPose.ShoulderL] = new Vector3(-42, -4, 0); p.E[GrowthPersonPose.ShoulderR] = new Vector3(-42, 4, 0);
+                p.E[GrowthPersonPose.ElbowL] = new Vector3(-62, 0, 0); p.E[GrowthPersonPose.ElbowR] = new Vector3(-62, 0, 0);
             }
             else
             {
@@ -413,6 +457,55 @@ namespace EvolutionShop
         {
             if (kind == "collector" && left == "notebook") { p.E[GrowthPersonPose.ShoulderL] = new Vector3(-30, -6, 0); p.E[GrowthPersonPose.ElbowL] = new Vector3(-92, 0, -20); }
             if (kind == "guest" && left == "program") { p.E[GrowthPersonPose.ShoulderL] = new Vector3(-28, -6, 0); p.E[GrowthPersonPose.ElbowL] = new Vector3(-80, 0, -10); }
+            // GR-18 wave 2 (the board's hero poses): the jar in both arms; the pipette up in the right hand, the clipboard in the left.
+            if (right == "jar")
+            {
+                p.E[GrowthPersonPose.ShoulderL] = new Vector3(-48, -2, 0); p.E[GrowthPersonPose.ShoulderR] = new Vector3(-48, 2, 0);
+                p.E[GrowthPersonPose.ElbowL] = new Vector3(-56, 0, -14); p.E[GrowthPersonPose.ElbowR] = new Vector3(-56, 0, 14);
+            }
+            if (right == "pipette") { p.E[GrowthPersonPose.ShoulderR] = new Vector3(-36, 8, 0); p.E[GrowthPersonPose.ElbowR] = new Vector3(-86, 0, 18); }
+            if (left == "clipboard") { p.E[GrowthPersonPose.ShoulderL] = new Vector3(-22, -6, 0); p.E[GrowthPersonPose.ElbowL] = new Vector3(-82, 0, -24); }
+        }
+
+        // ---- the helpers at work (the board's w_pip, w_nori, w_moss: each added onto its idle, as the board's merge does; t over a loop)
+
+        /// <summary>Pip at the till: a sweep of the scanner, a nod to the visitor, a wave goodbye.</summary>
+        public static void WorkPip(GrowthPersonPose p, float t)
+        {
+            Idle(p, 0.4f);
+            float sweep = Wave(t, 2), bye = Smooth((Wave(t, 1, 0.75f) - 0.3f) * 3);
+            p.E[GrowthPersonPose.ShoulderL] += new Vector3(-56, -10, 26 * sweep); p.E[GrowthPersonPose.ElbowL] += new Vector3(-60, 0, -20);
+            p.E[GrowthPersonPose.Head] += new Vector3(8 - 10 * Pulse(t, 2, 0.25f), 0, 10 * sweep);
+            p.E[GrowthPersonPose.ShoulderR] += new Vector3(-10 - 10 * bye, 20 + 92 * bye, 0); p.E[GrowthPersonPose.ElbowR] += new Vector3(-20 * (1 - bye), 46 * bye, 0);
+            p.E[GrowthPersonPose.WristR] += new Vector3(0, 0, -80 * bye + 18 * bye * Wave(t, 6));
+            p.E[GrowthPersonPose.Spine] += new Vector3(4, 0, 6 * sweep);
+            p.Lift += 0.015f * Pulse(t, 4);
+        }
+
+        /// <summary>Nori reaches the jar forward over a tank's rim to let the creature out (or scoop one up), and brings it back, bending the knees.</summary>
+        public static void WorkNori(GrowthPersonPose p, float t)
+        {
+            Idle(p, 0);
+            float up = 0.5f - 0.5f * Mathf.Cos(2 * Mathf.PI * t), dip = Pulse(t, 1, 0.75f, 2);
+            p.E[GrowthPersonPose.ShoulderL] += new Vector3(-48 - 26 * up, -2, 0); p.E[GrowthPersonPose.ShoulderR] += new Vector3(-48 - 26 * up, 2, 0);
+            p.E[GrowthPersonPose.ElbowL] += new Vector3(-56 + 40 * up, 0, -14); p.E[GrowthPersonPose.ElbowR] += new Vector3(-56 + 40 * up, 0, 14);
+            p.E[GrowthPersonPose.WristR] += new Vector3(34 * Pulse(t, 1, 0.1f, 2), 0, 0);
+            p.E[GrowthPersonPose.KneeL] += new Vector3(24 * dip, 0, 0); p.E[GrowthPersonPose.KneeR] += new Vector3(24 * dip, 0, 0);
+            p.E[GrowthPersonPose.HipL] += new Vector3(-12 * dip, 0, 0); p.E[GrowthPersonPose.HipR] += new Vector3(-12 * dip, 0, 0);
+            p.E[GrowthPersonPose.AnkleL] += new Vector3(-12 * dip, 0, 0); p.E[GrowthPersonPose.AnkleR] += new Vector3(-12 * dip, 0, 0);
+            p.Lift += -0.04f * dip + 0.02f * up;
+            p.E[GrowthPersonPose.Head] += new Vector3(-8 * up, 0, 0); p.E[GrowthPersonPose.Spine] += new Vector3(-4 * up, 0, 0);
+        }
+
+        /// <summary>Moss squeezes three drops from the pipette, checks the clipboard, nods.</summary>
+        public static void WorkMoss(GrowthPersonPose p, float t)
+        {
+            Idle(p, -0.3f);
+            float drop = Pulse(t, 3, 0, 4), check = Smooth((Wave(t, 1, 0.6f) - 0.2f) * 3);
+            p.E[GrowthPersonPose.ShoulderR] += new Vector3(-36 - 8 * drop, 8, 0); p.E[GrowthPersonPose.ElbowR] += new Vector3(-86 + 10 * drop, 0, 18);
+            p.E[GrowthPersonPose.ShoulderL] += new Vector3(-22 - 10 * check, -6, 0); p.E[GrowthPersonPose.ElbowL] += new Vector3(-82 - 10 * check, 0, -24);
+            p.E[GrowthPersonPose.Head] += new Vector3(10 + 10 * check, 0, 8 - 26 * check); p.E[GrowthPersonPose.Spine] += new Vector3(5 + 3 * drop, 0, 0);
+            p.Lift += -0.01f * drop;
         }
     }
 
@@ -428,6 +521,8 @@ namespace EvolutionShop
         readonly Dictionary<string, GameObject> hands = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> mouths = new Dictionary<string, GameObject>();
         readonly Dictionary<string, GameObject> heldItems = new Dictionary<string, GameObject>();
+        /// <summary>The parts whose kit slots name a role (the colour a look fills in), with their slots, for <see cref="SetColour"/>.</summary>
+        readonly List<(Renderer r, string[] slots)> roleSlots = new List<(Renderer, string[])>();
         public readonly GrowthPersonPose Pose = new GrowthPersonPose();
         /// <summary>Validation: how many renderers and triangles the person draws.</summary>
         public int Renderers { get; private set; }
@@ -522,7 +617,9 @@ namespace EvolutionShop
             foreach (var r in go.GetComponentsInChildren<Renderer>(true))
             {
                 var mats = r.sharedMaterials;
-                for (int i = 0; i < mats.Length; i++) mats[i] = Resolve(mats[i] ? mats[i].name.Replace(" (Instance)", "") : "");
+                var slots = mats.Select(m => m ? m.name.Replace(" (Instance)", "") : "").ToArray();
+                if (slots.Any(s => { string c = s.Substring(s.LastIndexOf('_') + 1); return !(c.Length == 6 && c.All(Uri.IsHexDigit)); })) roleSlots.Add((r, slots));
+                for (int i = 0; i < mats.Length; i++) mats[i] = Resolve(slots[i]);
                 r.sharedMaterials = mats;
                 r.shadowCastingMode = ShadowCastingMode.On;
                 var mf = r.GetComponent<MeshFilter>();
@@ -546,7 +643,7 @@ namespace EvolutionShop
         static string Fallback(string role) => role switch
         {
             "HAT" => "#FF7A7A", "HATBAND" => "#FFF3DF", "GLASSES" => "#2B3A55", "BOTTOM" => "#5C7FD6", "SOCKS" => "#FFFFFF",
-            "SHOE" => "#FFFFFF", "SOLE" => "#FF7A7A", "SHOEACC" => "#22BFB0", "BAG" => "#FFF3DF", "PRINT" => "#FF7A7A", _ => "#FF00FF",
+            "SHOE" => "#FFFFFF", "SOLE" => "#FF7A7A", "SHOEACC" => "#22BFB0", "BAG" => "#FFF3DF", "PRINT" => "#FF7A7A", "DOSE" => "#FF5E7E", _ => "#FF00FF",
         };
 
         public void ShowHand(string side, string shape)
@@ -568,7 +665,26 @@ namespace EvolutionShop
         }
 
         /// <summary>The shop's bag in a hand (Transform to put the bought creature in), or null.</summary>
-        public Transform BagIn(string side) => heldItems.TryGetValue(side + ".creature_bag", out var go) ? go.transform : null;
+        public Transform BagIn(string side) => HeldIn(side, "creature_bag");
+
+        /// <summary>A held item in a hand (whether shown or not), or null: the bag or the jar a creature goes in.</summary>
+        public Transform HeldIn(string side, string item) => heldItems.TryGetValue(side + "." + item, out var go) ? go.transform : null;
+
+        /// <summary>GR-18 wave 2: a role's colour changed while the person is out (Moss's pipette takes the dose's culture): every
+        /// part whose kit slot names the role is given the look's material in the new colour.</summary>
+        public void SetColour(string role, string hex)
+        {
+            if (Look.Colours.TryGetValue(role, out var was) && was == hex) return;
+            Look.Colours[role] = hex;
+            foreach (var (r, slots) in roleSlots)
+            {
+                if (!r || !slots.Any(s => s.EndsWith("_" + role))) continue;
+                r.sharedMaterials = slots.Select(Resolve).ToArray();
+            }
+        }
+
+        /// <summary>Validation: a role's colour now.</summary>
+        public string Colour(string role) => Look.Colours.TryGetValue(role, out var c) ? c : null;
 
         /// <summary>Turns the joints to a pose (the board's Blender angles turned into Unity's).</summary>
         public void Apply(GrowthPersonPose p)

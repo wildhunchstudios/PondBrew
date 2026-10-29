@@ -957,7 +957,7 @@ namespace EvolutionShop
             }
             for (int i = 0; i < hatchlingViews.Count; i++)
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t, session.ReducedMotion); }
-            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t); }
+            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t, dt, session.ReducedMotion); }
             AnimateOpenings(dt);
             AnimateConfetti(dt);
             foreach (var v in visitors.Values) v.Tick(dt, session != null && session.ReducedMotion);
