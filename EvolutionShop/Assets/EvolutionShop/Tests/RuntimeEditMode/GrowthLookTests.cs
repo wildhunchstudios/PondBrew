@@ -31,6 +31,7 @@ namespace EvolutionShop.Tests
             "UnitBFloor", "UnitBDressing", "StreetEast", "BayWindow", "WindowDisplay", "UnitCFloor", "UnitCDressing", "FeatureWall", "FeatureTank",
             "PartitionB", "PartitionC", "PartitionAnnex", "PartitionWorkshop", "BannerCoral", "BannerYellow", "BannerBlue", "HallSpot",
             "ExhibitionSign", "Award", "DisplayTag", "StaffBoard", "HallBoard",
+            "DecorReeds", "DecorLilyLamp", "DecorWatermill", "DecorVolcano", "DecorLantern", "DecorDuckSpa", "DecorLighthouse", "DecorChest", "DecorCoralArch",
         };
 
         static GameObject Piece(string name) => Resources.Load<GameObject>(GrowthWorld.KitPath + name);
@@ -62,6 +63,32 @@ namespace EvolutionShop.Tests
             var filter = piece.GetComponentInChildren<MeshFilter>(true);
             var toPiece = piece.transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
             return filter.sharedMesh.vertices.Select(v => toPiece.MultiplyPoint3x4(v)).ToArray();
+        }
+
+        /// <summary>GR-19: every piece of decor is the kit's, stands on its base (its origin at the middle of its bottom), within
+        /// 0.36 m across and 0.56 m tall, and fits on the back corner of every shop tank's top, above its lid and light bar and
+        /// well under the shop's ceiling.</summary>
+        [Test] public void EveryPieceOfDecorStandsOnEveryShopTanksTop()
+        {
+            Assert.That(EvolutionShop.Growth.GrowthContent.Decor.Select(d => d.Asset), Is.SubsetOf(Pieces));
+            foreach (var d in EvolutionShop.Growth.GrowthContent.Decor)
+            {
+                var b = MeshBounds(Piece(d.Asset));
+                Assert.That(b.min.y, Is.GreaterThan(-0.002f), d.Asset + " stands on its base");
+                Assert.That(b.max.y, Is.LessThan(0.56f), d.Asset + " is at most 0.56 m tall");
+                Assert.That(Mathf.Max(-b.min.x, b.max.x, -b.min.z, b.max.z), Is.LessThan(0.18f), d.Asset + " is within 0.36 m across");
+            }
+            foreach (var (kind, stand, glass) in new[] { ("starter", 0.9f, 0.62f), ("large", 0.8f, 0.75f), ("show", 0.55f, 1.0f) })
+            {
+                var def = EvolutionShop.Growth.GrowthContent.Container(kind);
+                float top = stand + glass;
+                var at = GrowthWorld.DecorAt(def.Width, def.Depth, top);
+                Assert.That(Mathf.Abs(at.x) + 0.18f, Is.LessThanOrEqualTo(def.Width * 0.5f + 1e-4f), kind + ": inside its top, side to side");
+                Assert.That(Mathf.Abs(at.z) + 0.18f, Is.LessThanOrEqualTo(def.Depth * 0.5f + 1e-4f), kind + ": inside its top, back to front");
+                Assert.That(at.z, Is.LessThan(0), kind + ": at the back");
+                Assert.That(at.y, Is.GreaterThanOrEqualTo(top + 0.09f), kind + ": above the lid and the light bar");
+                Assert.That(at.y + 0.56f, Is.LessThan(3.2f - 0.3f), kind + ": well under the shop's ceiling");
+            }
         }
 
         [Test] public void EveryPieceLoadsAsOneMeshWhoseSlotsTheLookMaps()

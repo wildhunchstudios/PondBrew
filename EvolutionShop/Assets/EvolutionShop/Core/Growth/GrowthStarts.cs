@@ -12,9 +12,9 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look", Decor = "decor";
 
-        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : null;
+        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : id == Decor ? DecorStart() : null;
 
         /// <summary>GR-12's families (waves 1 to 4: all nine), shown in the AD look.</summary>
         public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale", "gloamer", "cometail" };
@@ -69,6 +69,28 @@ namespace EvolutionShop.Growth
             foreach (var c in shop.Cultures) shop.GrowerUnits[c] = shop.GrowerCapacityOf(c);
             shop.BufferAt(0).Units = 8; shop.BufferAt(1).Units = 8;
             shop.Credits = 6000; shop.Rp = 60;
+            shop.TakeEvents();
+            return shop;
+        }
+
+        /// <summary>GR-19's look at the decor (Docs/Evidence/gr-19/LOOK.md): the era 4 start (4 stars, every catalog page open) with
+        /// a tank of each water: a1's fresh-water Brookkin, b1's warm-water creatures (its water warm) and two Saltscale founders
+        /// in b2 (its water brine), and 8,000 credits. Furnished, all nine pieces are delivered and three are on tanks (the reeds
+        /// on a1, the volcano on b1, the lighthouse on b2), the rest in the box; unfurnished (the GR-19 route), none yet.</summary>
+        public static GrowthShop DecorStart(bool furnished = true)
+        {
+            var shop = Era4Start();
+            shop.ContainerAt("b1").Water = Water.Warm;
+            var b2 = shop.ContainerAt("b2");
+            b2.Water = Water.Brine;
+            foreach (var species in GrowthContent.Species.Where(s => s.Family == "saltscale" && s.Kind == SpeciesKind.Founder).Select(s => s.Id).Take(2))
+                shop.DevelopmentStock(b2.Id, species);
+            shop.Credits = 8000;
+            if (furnished)
+            {
+                shop.DecorOwned.AddRange(GrowthContent.Decor.Select(d => d.Id));
+                shop.ContainerAt("a1").Decor = "reeds"; shop.ContainerAt("b1").Decor = "volcano"; b2.Decor = "lighthouse";
+            }
             shop.TakeEvents();
             return shop;
         }

@@ -140,7 +140,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void TheGuideIsSavedAndOlderSavesHaveNone()
         {
-            Assert.That(GrowthSave.CurrentVersion, Is.EqualTo(11));
+            Assert.That(GrowthSave.CurrentVersion, Is.GreaterThanOrEqualTo(11), "the guide since version 11 (GR-19 is 12)");
             foreach (var mode in new[] { GrowthGuideMode.Off, GrowthGuideMode.On, GrowthGuideMode.Done, GrowthGuideMode.Skipped })
             {
                 var shop = new GrowthShop { Guide = mode };

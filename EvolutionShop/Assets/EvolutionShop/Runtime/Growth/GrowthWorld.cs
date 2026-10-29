@@ -931,6 +931,7 @@ namespace EvolutionShop
             Target(root.gameObject, GrowthTargetKind.Tank, c.Id);
             AddCollider(root.gameObject, new Vector3(0, top * 0.5f, 0), new Vector3(W, top, D));
             if (LookOn) DressTank(root, c, W, D, top, frame);
+            BuildDecor(root, c, W, D, top);
             return new TankView
             {
                 Root = root, ContainerId = c.Id, Place = c.Place, Signature = TankView.SignatureOf(c), HarmonyFrame = frame, ShowLight = showLight,
@@ -1090,7 +1091,7 @@ namespace EvolutionShop
             readonly List<GrowthCreatureView> order = new List<GrowthCreatureView>();
             readonly Dictionary<string, int> rank = new Dictionary<string, int>();
 
-            public static string SignatureOf(GrowthContainer c) => c.Kind + "|" + c.Level + "|" + c.Water + "|" + c.Place;
+            public static string SignatureOf(GrowthContainer c) => c.Kind + "|" + c.Level + "|" + c.Water + "|" + c.Place + "|" + c.Decor;
 
             public void Sync(GrowthContainer c, GrowthShop shop)
             {

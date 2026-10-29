@@ -34,7 +34,7 @@ namespace EvolutionShop.Tests
             Assert.That(GrowthContent.Culture("mist").Source, Is.EqualTo(CultureSource.Vat));
             Assert.That(new GrowthShop().Cultures, Is.EqualTo(new[] { "bloom", "flow" }), "Bloom and Flow are free from the start");
             var catalog = GrowthContent.Catalog;
-            Assert.That(catalog.Select(i => i.Id), Is.EquivalentTo(new[] { "grower-ember", "vial-ember", "vial-spark", "vat", "vial-mist", "grower-brine", "vial-brine", "vial-dusk" }));
+            Assert.That(catalog.Where(i => i.Kind != CatalogKind.Decor).Select(i => i.Id), Is.EquivalentTo(new[] { "grower-ember", "vial-ember", "vial-spark", "vat", "vial-mist", "grower-brine", "vial-brine", "vial-dusk" }), "the cultures' items (GR-19 adds the decor)");
             Assert.That(catalog.Select(i => i.Stars), Is.Ordered, "pages by stars");
             var ember = GrowthContent.CatalogItem("grower-ember");
             Assert.That((ember.Stars, ember.Era, ember.Credits, ember.Kind), Is.EqualTo((2, 2, 150, CatalogKind.Grower)));

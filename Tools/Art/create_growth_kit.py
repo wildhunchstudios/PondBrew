@@ -3,6 +3,10 @@ no external assets or add-ons; everything is generated from the numbers below.
 
 Run: blender --background --factory-startup --python Tools/Art/create_growth_kit.py -- --repo C:/dev/DumbVideoGameStudio [--only A,B] [--no-render]
 
+GR-19 (GR.60, GR.61): nine pieces of decor in three themes (Riverbank: reeds with a dragonfly, a lily-pad lamp, a
+watermill; Hot springs: a little volcano, a stone lantern, a rubber-duck hot pool; Seaside: a lighthouse, a treasure chest, a
+coral arch), each standing on a shop tank's top (Runtime/Growth/GrowthWorldDecor.cs).
+
 Wave 4 (GR.45): shop units B and C and the exhibition hall: their floors and dressing (boards, rails, beams, frames, lamps,
 rugs), the street outside unit B, GR-10's set pieces (the bay window bench and its hanging bowls, unit A's window display,
 unit C's feature wall and built-in feature tank), the hall's banners and spotlights, GR-11's exhibition sign, award and
@@ -1915,9 +1919,262 @@ WAVE4 = [unit_b_floor, unit_b_dressing, street_east, bay_window, window_display,
          lambda: banner('BannerBlue', 'GK_Sky', 'GK_Coral'), hall_spot, exhibition_sign, award, display_tag, staff_board, hall_board]
 
 
+# ================================================================ GR-19: decor (GR.60, GR.61): nine pieces, three themes. Each stands
+# on a shop tank's top at its back corner (GrowthWorldDecor.cs), so its origin is the middle of its base, its front +Z as the
+# tank's, and it stays within about 0.36 m across and 0.52 m tall. Riverbank suits fresh-water creatures, Hot springs warm-water
+# ones and Seaside brine ones (GrowthContent.Decor).
+
+DECOR_BASE = 0.035
+
+
+def smooth(points, steps=5):
+    """Catmull-Rom points through the given ones (the decor's curling stems), for tube()."""
+    pts = [points[0]] + list(points) + [points[-1]]
+    out = []
+    for i in range(1, len(pts) - 2):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[i + 1], pts[i + 2]
+        for s in range(steps):
+            t = s / steps
+            out.append(tuple(0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * t + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * t * t +
+                                    (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * t * t * t) for k in range(3)))
+    out.append(tuple(points[-1]))
+    return out
+
+
+def decor_base(mat):
+    """The round base every piece stands on, in its theme's ground: grass, rock or sand."""
+    cyl((0, DECOR_BASE / 2, 0), 0.17, DECOR_BASE, mat, r=0.014)
+
+
+def decor_reeds():
+    """Riverbank: a clump of reeds, three with cattails, by a little puddle, and a dragonfly resting on the second tallest."""
+    decor_base('GK_Grass')
+    cyl((0.07, DECOR_BASE + 0.003, 0.07), 0.065, 0.006, 'GK_GlowTeal', r=0, rz=0.045)
+    reeds = ((-0.06, -0.05, 0.42, 'GK_Green', 6), (0.0, -0.08, 0.36, 'GK_GreenDark', -5), (-0.11, 0.02, 0.3, 'GK_Lime', 11),
+             (0.05, -0.02, 0.28, 'GK_Green', -10), (-0.02, 0.05, 0.22, 'GK_Lime', 4), (0.09, -0.07, 0.2, 'GK_GreenDark', -14))
+    tips = []
+    for k, (x, z, h, m, lean) in enumerate(reeds):
+        tx = x + math.sin(math.radians(lean)) * h
+        tip = (tx, DECOR_BASE + h, z)
+        tube([(x, DECOR_BASE - 0.005, z), ((x + tx) / 2 + 0.004, DECOR_BASE + h * 0.5, z), tip], 0.012, m)
+        tips.append(tip)
+        if k < 3:
+            head = (x + math.sin(math.radians(lean)) * (h - 0.07), DECOR_BASE + h - 0.07, z)
+            ball(head, (0.026, 0.062, 0.026), 'GK_Beam', seg=16, rot=(0, 0, -lean))
+    for k in range(4):
+        a = math.radians(30 + 90 * k)
+        ball((0.04 * math.cos(a), DECOR_BASE + 0.012, 0.04 * math.sin(a) - 0.01), (0.03, 0.012, 0.03), 'GK_GreenDark', seg=14)
+    # The dragonfly on reed 1, just under its tip: a long blue body, a head, four glassy wings.
+    x, y, z = tips[1][0] + 0.005, tips[1][1] - 0.03, tips[1][2] + 0.025
+    tube([(x - 0.06, y, z), (x + 0.05, y + 0.004, z)], 0.011, 'GK_GlowBlue')
+    ball((x + 0.06, y + 0.005, z), 0.018, 'GK_GlowBlue', seg=14)
+    for sx in (-1, 1):
+        for dx, ang in ((0.02, 12), (-0.005, -12)):
+            ball((x + dx, y + 0.014, z + sx * 0.05), (0.016, 0.004, 0.05), 'GK_Glass', seg=14, rot=(0, sx * ang, 0))
+    return join('DecorReeds')
+
+
+def decor_lily_lamp():
+    """Riverbank: a lily pad with a curling stem holding up a glowing water-lily lamp, a frog sitting on the pad."""
+    decor_base('GK_Grass')
+    cyl((0, DECOR_BASE + 0.01, 0.02), 0.155, 0.02, 'GK_Green', r=0.008, rz=0.135)
+    ring((0, DECOR_BASE + 0.02, 0.02), 0.14, 0.006, 'GK_GreenDark', sz=0.125)
+    for k in range(5):
+        a = math.radians(200 + k * 30)
+        tube([(0.02, DECOR_BASE + 0.021, 0.02), (0.02 + 0.12 * math.cos(a), DECOR_BASE + 0.021, 0.02 + 0.11 * math.sin(a))], 0.003, 'GK_Lime')
+    c = (-0.03, DECOR_BASE + 0.37, 0.0)
+    tube(smooth([(0.04, DECOR_BASE + 0.015, -0.04), (0.08, DECOR_BASE + 0.14, -0.06), (0.04, DECOR_BASE + 0.27, -0.04), (c[0], c[1] - 0.03, c[2])]), 0.013, 'GK_GreenDark')
+    tube(smooth([(0.068, DECOR_BASE + 0.11, -0.055), (0.11, DECOR_BASE + 0.16, -0.02), (0.13, DECOR_BASE + 0.15, 0.02)]), 0.007, 'GK_Green')
+    ball((0.135, DECOR_BASE + 0.15, 0.03), (0.035, 0.008, 0.03), 'GK_Lime', seg=14)
+    for ring_k, (count, rad, lift, mat) in enumerate(((8, 0.05, -0.005, 'GK_Pink'), (6, 0.032, 0.012, 'GK_Coral'))):
+        for i in range(count):
+            a = 360.0 * i / count + ring_k * 30
+            ar = math.radians(a)
+            ball((c[0] + rad * math.cos(ar), c[1] + lift, c[2] + rad * math.sin(ar)), (0.045 if ring_k == 0 else 0.03, 0.018, 0.02), mat, seg=14, rot=(0, -a, 18))
+    ball((c[0], c[1] + 0.012, c[2]), (0.03, 0.028, 0.03), 'GK_GlowWarm', seg=18)
+    # The frog: a body, two eye bumps with eyes, a smile line of a darker green.
+    fx, fz = -0.06, 0.08
+    ball((fx, DECOR_BASE + 0.045, fz), (0.04, 0.03, 0.035), 'GK_Lime', seg=18)
+    for sx in (-1, 1):
+        ball((fx + sx * 0.02, DECOR_BASE + 0.075, fz + 0.012), 0.014, 'GK_Lime', seg=12)
+        ball((fx + sx * 0.02, DECOR_BASE + 0.078, fz + 0.024), 0.007, 'GK_Ink', seg=10)
+    tube([(fx - 0.018, DECOR_BASE + 0.05, fz + 0.034), (fx, DECOR_BASE + 0.045, fz + 0.037), (fx + 0.018, DECOR_BASE + 0.05, fz + 0.034)], 0.003, 'GK_GreenDark')
+    return join('DecorLilyLamp')
+
+
+def decor_watermill():
+    """Riverbank: a little wooden watermill with a red roof and a lit window, its wheel facing front in a stream."""
+    decor_base('GK_Grass')
+    hx, hz = -0.02, -0.06
+    box((hx, DECOR_BASE + 0.08, hz), (0.2, 0.16, 0.12), 'GK_WoodLight', r=0.012)
+    for k in range(4):
+        box((hx, DECOR_BASE + 0.025 + k * 0.04, hz + 0.061), (0.202, 0.006, 0.004), 'GK_WoodMid', r=0)
+    for s in (-1, 1):
+        box((hx, DECOR_BASE + 0.205, hz + s * 0.04), (0.24, 0.014, 0.105), 'GK_Coral', r=0.006, rot=(s * -38, 0, 0))
+    box((hx, DECOR_BASE + 0.245, hz), (0.24, 0.018, 0.02), 'GK_Coral', r=0.006)
+    box((hx - 0.06, DECOR_BASE + 0.055, hz + 0.063), (0.04, 0.07, 0.006), 'GK_WoodDark', r=0.004)
+    box((hx - 0.06, DECOR_BASE + 0.125, hz + 0.063), (0.04, 0.035, 0.006), 'GK_GlowWarm', r=0.004)
+    box((hx - 0.06, DECOR_BASE + 0.125, hz + 0.066), (0.044, 0.005, 0.005), 'GK_WoodDark', r=0)
+    box((hx - 0.06, DECOR_BASE + 0.125, hz + 0.066), (0.005, 0.039, 0.005), 'GK_WoodDark', r=0)
+    # The stream across the front and the wheel standing in it before the hut's right half, its axle into the wall.
+    wx, wy, wz = 0.05, DECOR_BASE + 0.1, 0.035
+    box((0.0, DECOR_BASE + 0.006, 0.105), (0.32, 0.012, 0.07), 'GK_GlowTeal', r=0.004)
+    cyl((wx, wy, wz - 0.03), 0.011, 0.06, 'GK_WoodDark', r=0.003, rot=(90, 0, 0))
+    for s in (-1, 1):
+        ring((wx, wy, wz + s * 0.014), 0.075, 0.008, 'GK_WoodDark', rot=(90, 0, 0))
+    for i in range(8):
+        a = 45 * i
+        ar = math.radians(a)
+        box((wx + 0.068 * math.cos(ar), wy + 0.068 * math.sin(ar), wz), (0.03, 0.008, 0.045), 'GK_Wood', r=0.003, rot=(0, 0, a))
+    for i in range(4):
+        a = math.radians(45 * i)
+        box((wx, wy, wz), (0.15, 0.008, 0.008), 'GK_WoodDark', r=0.002, rot=(0, 0, 45 * i))
+    cyl((wx, wy, wz), 0.018, 0.04, 'GK_Wood', r=0.004, rot=(90, 0, 0))
+    return join('DecorWatermill')
+
+
+def decor_volcano():
+    """Hot springs: a little volcano, lava glowing in its crater and running down its front, a puff of steam above."""
+    decor_base('GK_Rock')
+    h = 0.27
+    cone((0, DECOR_BASE + h / 2, -0.01), 0.16, 0.055, h, 'GK_Rock', verts=24)
+    cone((0, DECOR_BASE + 0.03, -0.01), 0.17, 0.14, 0.06, 'GK_Lilac', verts=24)
+    top = DECOR_BASE + h
+    cyl((0, top - 0.004, -0.01), 0.047, 0.012, 'GK_GlowCoral', r=0)
+    ball((0, top + 0.004, -0.01), (0.042, 0.02, 0.042), 'GK_GlowCoral', seg=18)
+    tube([(0.01, top - 0.005, 0.035), (0.03, top - 0.07, 0.06), (0.015, top - 0.15, 0.1), (0.04, DECOR_BASE + 0.04, 0.15)], 0.013, 'GK_GlowYellow')
+    tube([(-0.02, top - 0.01, 0.03), (-0.05, top - 0.09, 0.07), (-0.07, DECOR_BASE + 0.07, 0.12)], 0.009, 'GK_GlowCoral')
+    for x, y, z, r in ((0.0, top + 0.06, -0.02, 0.04), (0.035, top + 0.115, -0.03, 0.032), (-0.012, top + 0.165, -0.035, 0.025), (0.03, top + 0.2, -0.04, 0.017)):
+        ball((x, y, z), r, 'GK_Cloud', seg=16)
+    for x, z, r, m in ((0.13, 0.07, 0.03, 'GK_Rock'), (-0.12, 0.09, 0.025, 'GK_Pebble2'), (0.1, -0.12, 0.022, 'GK_Pebble2')):
+        ball((x, DECOR_BASE + r * 0.6, z), (r, r * 0.75, r), m, seg=14)
+    return join('DecorVolcano')
+
+
+def decor_lantern():
+    """Hot springs: a stone lantern, warm light behind its paper windows, under a coral roof with a gold finial."""
+    decor_base('GK_Rock')
+    cyl((0, DECOR_BASE + 0.02, 0), 0.075, 0.04, 'GK_Sand', r=0.012, verts=6)
+    cyl((0, DECOR_BASE + 0.1, 0), 0.034, 0.12, 'GK_Sand', r=0.008, verts=12)
+    box((0, DECOR_BASE + 0.175, 0), (0.14, 0.03, 0.14), 'GK_Sand', r=0.01)
+    box((0, DECOR_BASE + 0.245, 0), (0.095, 0.105, 0.095), 'GK_GlowWarm', r=0.01)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            box((sx * 0.052, DECOR_BASE + 0.245, sz * 0.052), (0.024, 0.11, 0.024), 'GK_Sand', r=0.006)
+    for s in (-1, 1):
+        box((0, DECOR_BASE + 0.245, s * 0.049), (0.006, 0.1, 0.004), 'GK_WoodDark', r=0)
+        box((s * 0.049, DECOR_BASE + 0.245, 0), (0.004, 0.1, 0.006), 'GK_WoodDark', r=0)
+    cone((0, DECOR_BASE + 0.33, 0), 0.12, 0.018, 0.075, 'GK_Coral', rot=(0, 45, 0), verts=4)
+    box((0, DECOR_BASE + 0.296, 0), (0.15, 0.012, 0.15), 'GK_Coral', r=0.005)
+    ball((0, DECOR_BASE + 0.385, 0), 0.02, 'GK_Gold', seg=14)
+    for x, z, r in ((0.11, 0.08, 0.028), (-0.1, 0.1, 0.022), (-0.12, -0.07, 0.026)):
+        ball((x, DECOR_BASE + r * 0.6, z), (r, r * 0.7, r), 'GK_Pebble2', seg=14)
+    return join('DecorLantern')
+
+
+def decor_duck_spa():
+    """Hot springs: a round rock pool of steaming warm water with a yellow rubber duck afloat in it."""
+    decor_base('GK_Rock')
+    cyl((0, DECOR_BASE + 0.025, 0), 0.135, 0.05, 'GK_Rock', r=0.02)
+    cyl((0, DECOR_BASE + 0.048, 0), 0.105, 0.01, 'GK_GlowTeal', r=0)
+    for i in range(10):
+        a = math.radians(i * 36 + 8)
+        ball((0.125 * math.cos(a), DECOR_BASE + 0.055, 0.125 * math.sin(a)), (0.035, 0.026, 0.03), 'GK_Rock' if i % 3 else 'GK_Pebble2', seg=14, rot=(0, -i * 36, 0))
+    dx, dz = 0.01, 0.01
+    y = DECOR_BASE + 0.07
+    ball((dx, y, dz), (0.045, 0.032, 0.058), 'GK_Yellow', seg=20)
+    ball((dx, y + 0.01, dz - 0.052), (0.02, 0.022, 0.02), 'GK_Yellow', seg=14)
+    ball((dx, y + 0.052, dz + 0.035), 0.03, 'GK_Yellow', seg=18)
+    ball((dx, y + 0.046, dz + 0.068), (0.02, 0.008, 0.018), 'GK_Coral', seg=14)
+    for sx in (-1, 1):
+        ball((dx + sx * 0.016, y + 0.062, dz + 0.056), 0.006, 'GK_Ink', seg=10)
+        ball((dx + sx * 0.04, y + 0.008, dz), (0.012, 0.016, 0.03), 'GK_Gold', seg=12)
+    for x, yy, z, r in ((-0.06, 0.12, -0.03, 0.03), (-0.04, 0.17, -0.05, 0.025), (0.07, 0.15, -0.06, 0.024), (-0.07, 0.21, -0.06, 0.017)):
+        ball((x, DECOR_BASE + yy, z), r, 'GK_Cloud', seg=14)
+    return join('DecorDuckSpa')
+
+
+def decor_lighthouse():
+    """Seaside: a lighthouse in coral and cream stripes on its rocks, its lamp room glowing under a coral cap."""
+    decor_base('GK_Sand')
+    for x, z, r, m in ((0.09, 0.06, 0.045, 'GK_Rock'), (-0.08, 0.08, 0.038, 'GK_Rock'), (0.06, -0.09, 0.035, 'GK_Pebble2'), (-0.1, -0.05, 0.03, 'GK_Rock')):
+        ball((x, DECOR_BASE + r * 0.55, z), (r, r * 0.75, r), m, seg=14)
+    y0, h, r0, r1 = DECOR_BASE + 0.02, 0.34, 0.068, 0.048
+    cyl((0, DECOR_BASE + 0.01, 0), 0.08, 0.025, 'GK_Rock', r=0.008)
+    cone((0, y0 + h / 2, 0), r0, r1, h, 'GK_Cream', verts=28)
+    for k in range(3):
+        yy = y0 + 0.045 + k * 0.11
+        rr = r0 - (r0 - r1) * (yy - y0) / h + 0.004
+        cyl((0, yy, 0), rr, 0.045, 'GK_Coral', r=0.006, verts=28)
+    box((0, y0 + 0.04, r0 - 0.004), (0.028, 0.05, 0.012), 'GK_Teal', r=0.006)
+    box((0, y0 + 0.2, r0 - 0.014), (0.02, 0.024, 0.01), 'GK_GlowWarm', r=0.004)
+    top = y0 + h
+    cyl((0, top + 0.006, 0), 0.068, 0.014, 'GK_Teal', r=0.005)
+    ring((0, top + 0.035, 0), 0.062, 0.004, 'GK_Teal')
+    for i in range(8):
+        a = math.radians(i * 45)
+        cyl((0.062 * math.cos(a), top + 0.022, 0.062 * math.sin(a)), 0.003, 0.03, 'GK_Teal', r=0, verts=8)
+    cyl((0, top + 0.045, 0), 0.04, 0.065, 'GK_GlowYellow', r=0.006)
+    cone((0, top + 0.1, 0), 0.052, 0.006, 0.045, 'GK_Coral', verts=24)
+    ball((0, top + 0.128, 0), 0.012, 'GK_Gold', seg=12)
+    return join('DecorLighthouse')
+
+
+def decor_chest():
+    """Seaside: a treasure chest thrown open, a heap of gold inside, pearls and coins spilling onto the sand."""
+    decor_base('GK_Sand')
+    cz = -0.015
+    box((0, DECOR_BASE + 0.05, cz), (0.2, 0.1, 0.13), 'GK_Wood', r=0.012)
+    for s in (-1, 1):
+        box((s * 0.07, DECOR_BASE + 0.05, cz), (0.018, 0.104, 0.134), 'GK_Gold', r=0.004)
+    box((0, DECOR_BASE + 0.07, cz + 0.066), (0.03, 0.035, 0.008), 'GK_Gold', r=0.004)
+    box((0, DECOR_BASE + 0.16, cz - 0.085), (0.2, 0.12, 0.024), 'GK_WoodMid', r=0.01, rot=(-18, 0, 0))
+    for s in (-1, 1):
+        box((s * 0.07, DECOR_BASE + 0.16, cz - 0.085), (0.018, 0.122, 0.028), 'GK_Gold', r=0.004, rot=(-18, 0, 0))
+    ball((0, DECOR_BASE + 0.1, cz), (0.088, 0.032, 0.055), 'GK_Gold', seg=20)
+    for x, y, z in ((-0.04, 0.125, -0.01), (0.03, 0.128, -0.02), (0.0, 0.132, 0.01), (0.055, 0.12, 0.015), (-0.06, 0.115, 0.02)):
+        ball((x, DECOR_BASE + y, cz + z), 0.016, 'GK_Paper', seg=12)
+    for x, z, a in ((0.06, 0.09, 12), (0.09, 0.07, -20), (-0.05, 0.095, 30), (0.02, 0.11, -8)):
+        cyl((x, DECOR_BASE + 0.006, z), 0.017, 0.005, 'GK_Gold', r=0, rot=(a, 0, 0), verts=16)
+    for x, z in ((-0.09, 0.08), (0.12, 0.03)):
+        ball((x, DECOR_BASE + 0.014, z), 0.014, 'GK_Paper', seg=12)
+    return join('DecorChest')
+
+
+def decor_coral_arch():
+    """Seaside: an arch of pink coral with branching corals beside it, a starfish and two shells on the sand."""
+    decor_base('GK_Sand')
+    pts = [(0.12 * math.cos(math.radians(t)), DECOR_BASE + 0.215 * math.sin(math.radians(t)), -0.02) for t in range(0, 181, 15)]
+    tube(pts, 0.03, 'GK_Pink')
+    for k, t in enumerate(range(10, 180, 28)):
+        ball((0.12 * math.cos(math.radians(t)), DECOR_BASE + 0.215 * math.sin(math.radians(t)) + 0.012, -0.0 + (k % 2) * -0.04), 0.017, 'GK_Coral', seg=12)
+    # Branching coral at the back left, a fan at the back right.
+    trunk = [(-0.08, DECOR_BASE, -0.1), (-0.085, DECOR_BASE + 0.12, -0.1)]
+    tube(trunk, 0.016, 'GK_Coral')
+    for dx, dy, dz in ((-0.05, 0.1, 0.0), (0.04, 0.12, 0.01), (0.0, 0.16, -0.02)):
+        tip = (-0.085 + dx, DECOR_BASE + 0.1 + dy, -0.1 + dz)
+        tube([(-0.085, DECOR_BASE + 0.09, -0.1), tip], 0.011, 'GK_Coral')
+        ball(tip, 0.016, 'GK_Pink', seg=12)
+    cyl((0.09, DECOR_BASE + 0.11, -0.1), 0.07, 0.008, 'GK_Lilac', r=0.002, rot=(90, 0, 0), rz=0.1)
+    # The starfish and the shells.
+    sx, sz = 0.06, 0.09
+    for i in range(5):
+        a = i * 72
+        ar = math.radians(a)
+        ball((sx + 0.025 * math.cos(ar), DECOR_BASE + 0.008, sz + 0.025 * math.sin(ar)), (0.028, 0.008, 0.011), 'GK_Yellow', seg=12, rot=(0, -a, 0))
+    ball((sx, DECOR_BASE + 0.01, sz), (0.016, 0.009, 0.016), 'GK_Yellow', seg=12)
+    ball((-0.07, DECOR_BASE + 0.012, 0.09), (0.03, 0.014, 0.024), 'GK_Pebble1', seg=14)
+    ball((-0.03, DECOR_BASE + 0.01, 0.12), (0.02, 0.01, 0.017), 'GK_Pebble3', seg=12)
+    return join('DecorCoralArch')
+
+
+WAVE_DECOR = [decor_reeds, decor_lily_lamp, decor_watermill, decor_volcano, decor_lantern, decor_duck_spa,
+              decor_lighthouse, decor_chest, decor_coral_arch]
+
+
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4  # later waves last, so earlier ones draw their random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

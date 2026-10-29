@@ -76,6 +76,8 @@ namespace EvolutionShop.Growth
         public int Level = 1;
         /// <summary>GR.5: the water the container keeps (fresh unless a water kit changed it, era 3).</summary>
         public Water Water = Water.Fresh;
+        /// <summary>GR-19: the piece of decor on its top (null for none; shop tanks only).</summary>
+        public string Decor;
         public readonly List<GrowthSpecimen> Occupants = new List<GrowthSpecimen>();
         public ContainerDef Def => GrowthContent.Container(Kind);
         public int Spaces => (int)Def.Levels[Level - 1].Stat("spaces");
@@ -143,7 +145,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated }
 
     public sealed class GrowthEvent
     {
@@ -339,11 +341,12 @@ namespace EvolutionShop.Growth
             c.Occupants.Select(s => s.Def.Temperament).Distinct().Count() == 1;
 
         /// <summary>A container's appeal: +1 for a lit Show tank, +1 for harmony. Visitors look at appealing containers first.</summary>
-        public int Appeal(GrowthContainer c) => (c.Kind == "show" ? 1 : 0) + (Harmony(c) ? 1 : 0);
+        public int Appeal(GrowthContainer c) => (c.Kind == "show" ? 1 : 0) + (Harmony(c) ? 1 : 0) + (c.Decor != null ? 1 : 0);
 
         /// <summary>How far over budget a visitor goes for a species in this container (GR.10.1: school +15%, appeal +10% a point, at most +40%).</summary>
         public float Tolerance(GrowthContainer c, string species) =>
-            1f + Math.Min(GrowthContent.ToleranceCap, (c.InSchool(species) ? GrowthContent.SchoolTolerance : 0f) + Appeal(c) * GrowthContent.AppealTolerance);
+            1f + Math.Min(GrowthContent.ToleranceCap, (c.InSchool(species) ? GrowthContent.SchoolTolerance : 0f) + Appeal(c) * GrowthContent.AppealTolerance +
+                (Themed(c, species) ? GrowthContent.ThemeTolerance : 0f));
 
         /// <summary>Credits paid for a container: its purchase and every level since; selling an empty one returns half.</summary>
         public static int Paid(GrowthContainer c) => c.Def.Levels.Take(c.Level).Sum(l => l.Credits);
@@ -711,7 +714,7 @@ namespace EvolutionShop.Growth
             int value = SellValue(c);
             Containers.Remove(c);
             Credits += value;
-            Raise(GrowthEventKind.Sold, c.Def.Name + " sold for " + value + " credits", amount: value);
+            Raise(GrowthEventKind.Sold, c.Def.Name + " sold for " + value + " credits" + (c.Decor != null ? "; its " + GrowthContent.DecorPiece(c.Decor).Name + " is back in the decor box" : ""), amount: value);
             return GrowthResult.Ok(value.ToString());
         }
 
@@ -908,8 +911,9 @@ namespace EvolutionShop.Growth
             var item = GrowthContent.CatalogItem(itemId);
             if (item == null) { why = "Not in the catalog"; return GrowthFailure.NotInCatalog; }
             if (Orders.Contains(itemId)) { why = "Ordered: it arrives when the shop opens"; return GrowthFailure.Ordered; }
-            if (Owns(item.Culture)) { why = item.Kind == CatalogKind.Vial ? "You grow " + Name(item.Culture) + " already" : "You have it"; return GrowthFailure.Owned; }
-            if (item.Kind != CatalogKind.Vial && Orders.Any(o => GrowthContent.CatalogItem(o).Culture == item.Culture && GrowthContent.CatalogItem(o).Kind != CatalogKind.Vial)) { why = "Already on order"; return GrowthFailure.Ordered; }
+            if (item.Kind == CatalogKind.Decor) { if (DecorOwned.Contains(item.Decor)) { why = "It is yours: in the decor box or on a tank"; return GrowthFailure.Owned; } }
+            else if (Owns(item.Culture)) { why = item.Kind == CatalogKind.Vial ? "You grow " + Name(item.Culture) + " already" : "You have it"; return GrowthFailure.Owned; }
+            if (item.Kind != CatalogKind.Vial && item.Kind != CatalogKind.Decor && Orders.Any(o => GrowthContent.CatalogItem(o).Culture == item.Culture && GrowthContent.CatalogItem(o).Kind != CatalogKind.Vial)) { why = "Already on order"; return GrowthFailure.Ordered; }
             if (item.Stars > Stars) { why = "Catalog page " + item.Stars + ": needs " + item.Stars + " stars"; return GrowthFailure.Locked; }
             if (item.Era > Era) { why = "Needs era " + item.Era; return GrowthFailure.Locked; }
             if (item.Rp > Rp) { why = "Needs " + item.Rp + " research points"; return GrowthFailure.Locked; }
@@ -950,12 +954,13 @@ namespace EvolutionShop.Growth
             {
                 var item = GrowthContent.CatalogItem(id);
                 Orders.Remove(id);
-                Raise(GrowthEventKind.Delivered, "Delivered: " + item.Name);
+                Raise(GrowthEventKind.Delivered, "Delivered: " + item.Name + (item.Kind == CatalogKind.Decor ? " (in the decor box: put it on a tank at night)" : ""));
                 switch (item.Kind)
                 {
                     case CatalogKind.Grower: AddCulture(item.Culture, "its grower is in the back room"); break;
                     case CatalogKind.Vat: AddCulture(item.Culture, "the conditioning vat is in the back room"); break;
                     case CatalogKind.Vial: Vials[item.Culture] = (Vials.TryGetValue(item.Culture, out int n) ? n : 0) + GrowthContent.VialDoses; break;
+                    case CatalogKind.Decor: if (!DecorOwned.Contains(item.Decor)) DecorOwned.Add(item.Decor); break;
                 }
             }
         }
@@ -1524,6 +1529,7 @@ namespace EvolutionShop.Growth
             SaveHelpers(save);
             SaveExhibition(save);
             SaveGuide(save);
+            SaveDecor(save);
             return save;
         }
 
@@ -1644,7 +1650,7 @@ namespace EvolutionShop.Growth
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -1658,7 +1664,8 @@ namespace EvolutionShop.Growth
     [Serializable]
     public sealed class GrowthSave
     {
-        /// <summary>11: GR-14 (the guided first night: on, done or skipped; older saves have none);
+        /// <summary>12: GR-19 (decor: the pieces owned, and the one on each shop tank);
+        /// 11: GR-14 (the guided first night: on, done or skipped; older saves have none);
         /// 10: GR-11 (the Grand Exhibition: prepared, under way or held, its six purchases, the crowns on display, its results);
         /// 9: GR-10 (shop unit C and the exhibition hall finish);
         /// 8: GR-09 (the helpers: their levels, duty and wages paid, the step each is on and what they carry; Moss's jobs);
@@ -1667,7 +1674,7 @@ namespace EvolutionShop.Growth
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 11;
+        public const int CurrentVersion = 12;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1730,6 +1737,8 @@ namespace EvolutionShop.Growth
         public string slapKey;
         /// <summary>GR-14: the guided first night ("" for none, "on", "done" or "skipped").</summary>
         public string guide;
+        /// <summary>GR-19: the decor delivered (each piece once; the one on a tank is its Box's decor).</summary>
+        public string[] decorOwned;
         public float sensitivity = 1;
 
         [Serializable] public sealed class Specimen
@@ -1753,7 +1762,7 @@ namespace EvolutionShop.Growth
 
         [Serializable] public sealed class Box
         {
-            public string id, kind, place, water;
+            public string id, kind, place, water, decor;
             public int level;
             public Specimen[] occupants;
         }

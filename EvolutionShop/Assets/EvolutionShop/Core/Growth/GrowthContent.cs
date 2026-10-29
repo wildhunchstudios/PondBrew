@@ -26,12 +26,14 @@ namespace EvolutionShop.Growth
         public int VialCredits;
     }
 
-    public enum CatalogKind { Grower, Vat, Vial }
+    public enum CatalogKind { Grower, Vat, Vial, Decor }
 
     /// <summary>GR.6's supplier catalog: an item, its page (stars), its gate and its price. Orders arrive at the next opening.</summary>
     public sealed class CatalogItemDef
     {
         public string Id, Name, Culture, Text;
+        /// <summary>GR-19: the piece of decor a Decor item is (Culture is null for it).</summary>
+        public string Decor;
         public CatalogKind Kind;
         public int Stars, Era, Credits, Rp;
     }
@@ -120,7 +122,7 @@ namespace EvolutionShop.Growth
         public int[] Weights, Budgets;
     }
 
-    public static class GrowthContent
+    public static partial class GrowthContent
     {
         public const int SpeciesCount = 72, ColourCount = 4, JournalEntries = SpeciesCount * ColourCount;
         public const float DaySeconds = 330f;
@@ -448,7 +450,11 @@ namespace EvolutionShop.Growth
                 if (c.VialCredits > 0)
                     items.Add(new CatalogItemDef { Id = "vial-" + c.Id, Name = c.Name + " starter vial", Culture = c.Id, Kind = CatalogKind.Vial, Stars = c.Stars, Era = c.Era, Credits = c.VialCredits,
                         Text = VialDoses + " doses of " + c.Name + ", to try it before owning its source" });
-            return items.OrderBy(i => i.Stars).ThenBy(i => i.Kind == CatalogKind.Vial ? 1 : 0).ToArray();
+            // GR-19: each piece of decor, once, on the page of its stars after the cultures' items.
+            foreach (var d in Decor)
+                items.Add(new CatalogItemDef { Id = "decor-" + d.Id, Name = d.Name, Decor = d.Id, Kind = CatalogKind.Decor, Stars = d.Stars, Era = d.Era, Credits = d.Credits,
+                    Text = d.Text + ". For a tank's top: " + d.Theme + ", " + ThemeSuits(d.Water) + " sell for more there" });
+            return items.OrderBy(i => i.Stars).ThenBy(i => i.Kind == CatalogKind.Decor ? 2 : i.Kind == CatalogKind.Vial ? 1 : 0).ToArray();
         }
 
         public static CatalogItemDef CatalogItem(string id) => Catalog.FirstOrDefault(i => i.Id == id);

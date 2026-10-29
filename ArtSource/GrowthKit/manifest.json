@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "6ab68b128f2cdf2549c3f7e4ab1cfe5f1c01e65a09937ab1ff2b7deec3b84f2d",
+  "source_script_sha256": "40ca6110302b83182573a0b2e5278e2f86de7e004a77f5f734c86deafa160f5c",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -2727,6 +2727,261 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/HallBoard.fbx",
       "sha256": "8a0fc5b19d14fa3138e1bc8d6a9de3084316a2df6fdcb2fcfef4b66a38e3d283",
       "bytes": 290796
+    },
+    {
+      "triangles": 3440,
+      "materials": [
+        "GK_Beam",
+        "GK_Glass",
+        "GK_GlowBlue",
+        "GK_GlowTeal",
+        "GK_Grass",
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Lime"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.456,
+          0.17
+        ]
+      },
+      "id": "DecorReeds",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorReeds.fbx",
+      "sha256": "d04028cb49b5dbe77c28cd4840d1bda9514f9f195135ceb0823835dd3ccfe2bd",
+      "bytes": 98876
+    },
+    {
+      "triangles": 7068,
+      "materials": [
+        "GK_Coral",
+        "GK_GlowWarm",
+        "GK_Grass",
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Ink",
+        "GK_Lime",
+        "GK_Pink"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.445,
+          0.17
+        ]
+      },
+      "id": "DecorLilyLamp",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorLilyLamp.fbx",
+      "sha256": "af28cc7cdabd7df43b4ab1c90b03ee28f46477643828eec4bf9f71c1d2521a4f",
+      "bytes": 183500
+    },
+    {
+      "triangles": 9600,
+      "materials": [
+        "GK_Coral",
+        "GK_GlowTeal",
+        "GK_GlowWarm",
+        "GK_Grass",
+        "GK_Wood",
+        "GK_WoodDark",
+        "GK_WoodLight",
+        "GK_WoodMid"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.289,
+          0.17
+        ]
+      },
+      "id": "DecorWatermill",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorWatermill.fbx",
+      "sha256": "e51d590fcd9a032cd4c55a7616de131db39d4e57bc2e5bf9fb2f16e444d87067",
+      "bytes": 223996
+    },
+    {
+      "triangles": 3104,
+      "materials": [
+        "GK_Cloud",
+        "GK_GlowCoral",
+        "GK_GlowYellow",
+        "GK_Lilac",
+        "GK_Pebble2",
+        "GK_Rock"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.176
+        ],
+        "max": [
+          0.17,
+          0.522,
+          0.17
+        ]
+      },
+      "id": "DecorVolcano",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorVolcano.fbx",
+      "sha256": "a13abb95567effa0beee5dbfc7b9a5617813848ccfa67f7374f179eeb226104d",
+      "bytes": 89068
+    },
+    {
+      "triangles": 4020,
+      "materials": [
+        "GK_Coral",
+        "GK_GlowWarm",
+        "GK_Gold",
+        "GK_Pebble2",
+        "GK_Rock",
+        "GK_Sand",
+        "GK_WoodDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.44,
+          0.17
+        ]
+      },
+      "id": "DecorLantern",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorLantern.fbx",
+      "sha256": "407226f94a536cec99092194d3bf019a713125522c4f7cfa1a3bb01c0d006189",
+      "bytes": 104236
+    },
+    {
+      "triangles": 5540,
+      "materials": [
+        "GK_Cloud",
+        "GK_Coral",
+        "GK_GlowTeal",
+        "GK_Gold",
+        "GK_Ink",
+        "GK_Pebble2",
+        "GK_Rock",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.262,
+          0.17
+        ]
+      },
+      "id": "DecorDuckSpa",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorDuckSpa.fbx",
+      "sha256": "5cf5514495329856f349ef53ebca97e1e334c1636280fa4ea8ee836fdb8804f4",
+      "bytes": 138332
+    },
+    {
+      "triangles": 6908,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_GlowWarm",
+        "GK_GlowYellow",
+        "GK_Gold",
+        "GK_Pebble2",
+        "GK_Rock",
+        "GK_Sand",
+        "GK_Teal"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.535,
+          0.17
+        ]
+      },
+      "id": "DecorLighthouse",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorLighthouse.fbx",
+      "sha256": "978616561b8e1f5aec10a7bfc49f15733833d47909377189fd8db1590a94ee82",
+      "bytes": 168940
+    },
+    {
+      "triangles": 4384,
+      "materials": [
+        "GK_Gold",
+        "GK_Paper",
+        "GK_Sand",
+        "GK_Wood",
+        "GK_WoodMid"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.256,
+          0.17
+        ]
+      },
+      "id": "DecorChest",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorChest.fbx",
+      "sha256": "4c3e97337b5a77b2203646fabdd6a52d26a180bbf999f05fd51f2f23b2be594b",
+      "bytes": 114044
+    },
+    {
+      "triangles": 4468,
+      "materials": [
+        "GK_Coral",
+        "GK_Lilac",
+        "GK_Pebble1",
+        "GK_Pebble3",
+        "GK_Pink",
+        "GK_Sand",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.311,
+          0.17
+        ]
+      },
+      "id": "DecorCoralArch",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorCoralArch.fbx",
+      "sha256": "c9d42b377d49a110d33a40409e943db199bef62f550c9b92805efdef7e5280f7",
+      "bytes": 116924
     }
   ]
 }

@@ -780,7 +780,8 @@ namespace EvolutionShop
             bool comfort = shop.Era >= GrowthContent.ComfortEra && !c.Def.Lab;
             string rules = c.Def.Lab ? "In the workshop, off the shop floor: visitors never see it. Holds " + Holds(c.Def) + "; carry creatures from here to the shop's tanks." :
                 "Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better." +
-                (comfort ? " Creatures that share a temperament and the tank's water are in harmony: +1 appeal." : "") + " Peek: look closely at the glass to read each creature; E takes the one under the reticle.";
+                (comfort ? " Creatures that share a temperament and the tank's water are in harmony: +1 appeal." : "") + " Peek: look closely at the glass to read each creature; E takes the one under the reticle." +
+                (c.Def.Lab ? "" : " A piece of decor on its top (the Decor tab) makes it more appealing, and visitors pay more for the creatures its theme suits.");
             var body = Head(c.Def.Name, c.Used + " of " + c.Spaces + " spaces", c.Def.Lab ? "Rack" : "Tank", rules, !c.Def.Lab);
             body.Add(SpaceGrid(c));
             // Each species with its count and price; a press takes one out.
@@ -823,7 +824,7 @@ namespace EvolutionShop
                 feel.Add(words);
                 int appeal = shop.Appeal(c);
                 if (appeal > 0)
-                    feel.Add(Chip("Appeal +" + appeal, false, string.Join(" and ", new[] { c.Kind == "show" ? "a lit Show tank" : null, harmony ? "harmony" : null }.Where(x => x != null)) +
+                    feel.Add(Chip("Appeal +" + appeal, false, string.Join(" and ", new[] { c.Kind == "show" ? "a lit Show tank" : null, harmony ? "harmony" : null, c.Decor != null ? "its decor" : null }.Where(x => x != null)) +
                         ": visitors look here first and stretch their budget " + (appeal * 10) + "%"));
                 body.Add(feel);
                 if (comfort)
@@ -856,7 +857,7 @@ namespace EvolutionShop
             var sell = shop.SellCheck(c.Id, out string sellWhy);
             if (sell == GrowthFailure.None && sellAsked)
             {
-                arrange.Add(L("Sell it for " + GrowthShop.SellValue(c) + " cr?", "gr-hint"));
+                arrange.Add(L("Sell it for " + GrowthShop.SellValue(c) + " cr?" + (c.Decor != null ? " Its decor goes back to the box." : ""), "gr-hint"));
                 var yes = Button("Sell", () => { sellAsked = false; if (s.Act(() => shop.SellContainer(c.Id)).Success) s.SetCard(GrowthCard.None); });
                 yes.RemoveFromClassList("es-button--secondary"); yes.AddToClassList("es-button--danger"); yes.style.marginLeft = 10;
                 arrange.Add(yes);
@@ -870,10 +871,55 @@ namespace EvolutionShop
             }
             body.Add(arrange);
             // Upgrade: the container's levels as every station's are.
+            // GR-19: decor on the tank's top, in a tab of its own (shop tanks only).
+            if (!c.Def.Lab) DecorTab(c);
             var upgrade = AddTab(UpgradeTab);
             var check = shop.ContainerUpgradeCheck(c.Id, out var next, out string upgradeWhy);
             upgrade.Add(UpgradeBlock(c.Def.Name + " · level " + c.Level + " of " + c.Def.Levels.Length, c.Def.Levels, c.Level, next, check, upgradeWhy, "Upgrade", () => s.Act(() => shop.UpgradeContainer(c.Id))));
             Footer(body, "peek and E takes one");
+        }
+
+        /// <summary>GR-19: a theme's colour: Riverbank green, Hot springs coral, Seaside blue.</summary>
+        static Color DecorColour(Water w) => w == Water.Fresh ? new Color(0.34f, 0.73f, 0.28f) : w == Water.Warm ? new Color(1f, 0.48f, 0.3f) : new Color(0.25f, 0.66f, 1f);
+
+        /// <summary>GR-19: a tank's Decor tab: the piece on its top (what its theme suits, and Take it off at night), and every
+        /// other piece the shop owns, in the box or on another tank, with Put it on (from the box, or moved here).</summary>
+        void DecorTab(GrowthContainer c)
+        {
+            var shop = s.Shop;
+            var tab = AddTab("Decor");
+            var on = GrowthShop.DecorOn(c);
+            if (on != null)
+            {
+                int suited = c.Occupants.Count(o => GrowthShop.Themed(c, o.Species));
+                var take = shop.TakeDecorCheck(c.Id, out string takeWhy);
+                var off = Button("Take it off", () => s.Act(() => shop.TakeDecor(c.Id)), false, take == GrowthFailure.None, take == GrowthFailure.None ? "Back to the decor box" : takeWhy);
+                tab.Add(Item(on.Name, on.Theme + ": " + GrowthContent.ThemeSuits(on.Water) + " sell for more here", off));
+                var chips = Box("gr-chips", "gr-section");
+                chips.Add(Chip("Appeal +1", false, "Visitors look here first and stretch their budget 10%"));
+                chips.Add(Chip(suited + (suited == 1 ? " creature themed" : " creatures themed"), suited == 0, "Visitors stretch their budget 25% more for each (with a school, up to 40%)"));
+                tab.Add(chips);
+            }
+            else tab.Add(L("No decor on it. A piece on its top makes it more appealing, and visitors pay more for the creatures its theme suits.", "gr-hint"));
+            var others = shop.DecorOwned.Where(d => d != c.Decor).ToList();
+            if (others.Count > 0)
+            {
+                tab.Add(Eyebrow(on == null ? "Your decor" : "Or put on instead"));
+                foreach (var id in others)
+                {
+                    var d = GrowthContent.DecorPiece(id);
+                    var holder = shop.DecorHolder(id);
+                    int fit = c.Occupants.Count(o => o.Def.Water == d.Water);
+                    var failure = shop.DecorCheck(id, c.Id, out string why);
+                    string pieceId = id;
+                    var put = Button("Put it on", () => s.Act(() => shop.PutDecor(pieceId, c.Id)), true, failure == GrowthFailure.None,
+                        failure == GrowthFailure.None ? (holder != null ? "Moves it here from the tank at " + holder.Place : "From the decor box") : why);
+                    put.name = "gr-decor-put-" + id;
+                    var row = Item(d.Name, d.Theme + " · " + (holder != null ? "on the tank at " + holder.Place : "in the box") + " · suits " + fit + (fit == 1 ? " creature here" : " creatures here"), put);
+                    tab.Add(row);
+                }
+            }
+            else if (on == null) tab.Add(L("Decor comes from the supplier catalog by the counter: Riverbank and Hot springs on its 2-star page, Seaside on its 4-star page.", "gr-hint"));
         }
 
         /// <summary>GR-13's empty place: each container that could stand here as a row with its spaces, size and price, and moving a tank here.</summary>
@@ -1124,7 +1170,7 @@ namespace EvolutionShop
                 {
                     var failure = shop.OrderCheck(item.Id, out string why);
                     string id = item.Id;
-                    var card = ShopItem(CultureColour(item.Culture), item.Name, item.Text, item.Credits + " credits" + (item.Rp > 0 ? " and " + item.Rp + " RP" : ""), locked);
+                    var card = ShopItem(item.Kind == CatalogKind.Decor ? DecorColour(GrowthContent.DecorPiece(item.Decor).Water) : CultureColour(item.Culture), item.Name, item.Text, item.Credits + " credits" + (item.Rp > 0 ? " and " + item.Rp + " RP" : ""), locked);
                     Button b;
                     if (failure == GrowthFailure.Ordered && shop.Orders.Contains(id))
                         b = Button("On order · take it back", () => s.Act(() => shop.CancelOrder(id)), false, shop.Phase == GrowthPhase.Night, "Orders are changed at night");
@@ -1132,6 +1178,7 @@ namespace EvolutionShop
                         b = Button("Yours", () => { }, false, false, why);
                     else
                         b = Button("Order for " + item.Credits + " cr" + (item.Rp > 0 ? " and " + item.Rp + " RP" : ""), () => s.Act(() => shop.Order(id)), item.Kind != CatalogKind.Vial, failure == GrowthFailure.None, why);
+                    b.name = "gr-order-" + id;
                     b.style.marginTop = 10; b.style.marginRight = 0;
                     card.Add(b);
                     items.Add(card);
