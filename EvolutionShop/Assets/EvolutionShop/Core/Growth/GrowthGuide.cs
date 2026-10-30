@@ -29,10 +29,11 @@ namespace EvolutionShop.Growth
         /// <summary>GR-14: the guided first night; Off unless a new game starts it.</summary>
         public GrowthGuideMode Guide;
 
-        /// <summary>GR-14: the guide's step now, or null when the guide isn't on. Targets: "grower:bloom", "incubator", "container:id", "counter".</summary>
+        /// <summary>GR-14: the guide's step now; after the first night, R09.4's lesson step now; null when neither runs. Targets:
+        /// "grower:bloom", "incubator", "container:id", "counter", and the lessons' "Kind" or "Kind:id" (a GrowthTargetKind).</summary>
         public GrowthGuideView GuideNow()
         {
-            if (Guide != GrowthGuideMode.On) return null;
+            if (Guide != GrowthGuideMode.On) return LessonStep();
             var step = GuideStep();
             if (step == null) return null;
             var view = new GrowthGuideView { Step = step.Value };

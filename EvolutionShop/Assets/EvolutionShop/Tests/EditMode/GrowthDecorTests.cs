@@ -132,7 +132,7 @@ namespace EvolutionShop.Tests
         public void DecorSavesAtVersionTwelveAndOlderSavesLoadWithoutIt()
         {
             var shop = GrowthStarts.DecorStart();
-            Assert.That(GrowthSave.CurrentVersion, Is.EqualTo(12));
+            Assert.That(GrowthSave.CurrentVersion, Is.GreaterThanOrEqualTo(12), "decor came with version 12 (R09.4's lessons made it 13)");
             string json = JsonUtility.ToJson(shop.Snapshot());
             var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(json), out string problem);
             Assert.That(problem, Is.Null);

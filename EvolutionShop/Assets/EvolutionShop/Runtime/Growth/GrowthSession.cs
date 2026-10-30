@@ -22,16 +22,16 @@ namespace EvolutionShop
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
             GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", PeopleSmokeArgument = "-evolutionGrowthPeopleSmoke",
-            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke";
+            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : null;
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -107,7 +107,12 @@ namespace EvolutionShop
         public GrowthPipe PipePlan { get; private set; }
         public string PipeWhy { get; private set; }
         public bool PipeReady { get; private set; }
-        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results;
+        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results || Card == GrowthCard.Lesson;
+        /// <summary>R09.4: lessons in a validation run, off unless a route turns them on (as the effects and the music are), so
+        /// every other route's cards and captures stay as they were.</summary>
+        public bool LessonsOnInValidation;
+        /// <summary>R09.4: how long the shop has been free of cards (a lesson waits a moment after another card closes).</summary>
+        float freeFor;
         float peekBlend, saveClock, visualClock;
         bool initialized;
 
@@ -448,6 +453,9 @@ namespace EvolutionShop
             if (card != GrowthCard.Settings) Rebinding = null;
             Card = card;
             CardTarget = target;
+            // R09.4: the lessons read what has been opened: the pinboard and the journal.
+            if (Shop != null && card == GrowthCard.Board) Shop.Note("board");
+            if (Shop != null && card == GrowthCard.Journal) Shop.Note("journal");
             bool free = card == GrowthCard.None;
             Cursor.lockState = free && !ValidationMode ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !free;
@@ -621,6 +629,7 @@ namespace EvolutionShop
             UpdatePeek(dt);
             bool held = !rebinding && UseHeld();
             HoldActions(held, dt);
+            OpenLessonWhenDue(held, dt);
             if (!rebinding && Card == GrowthCard.None && GrowthControls.Pressed(GrowthAction.Interact) && (!ValidationMode || AllowValidationInput))
             {
                 if (PipeFrom != null) LayAimedPipe();
@@ -632,6 +641,26 @@ namespace EvolutionShop
             }
             Ui.Tick(dt);
         }
+
+        /// <summary>
+        /// R09.4: a lesson's card opens when its system has appeared and the player is free: no card open, nothing held, no pipe
+        /// being laid, a moment after the last card closed; at night, or for a lesson about the day (a wish) while no one waits
+        /// at the counter. Opening it meets the lesson; its steps then show on the next-step line until it is learned.
+        /// </summary>
+        void OpenLessonWhenDue(bool held, float dt)
+        {
+            Shop.LessonsOff = settings.lessonsOff || ValidationMode && !LessonsOnInValidation;
+            freeFor = Card == GrowthCard.None && !held && PipeFrom == null ? freeFor + Time.unscaledDeltaTime : 0;
+            if (freeFor < LessonPause) return;
+            var lesson = Shop.LessonDue();
+            if (lesson == null || !(Shop.Phase == GrowthPhase.Night || lesson.AnyTime && !Shop.Queue.Any())) return;
+            Shop.MeetLesson(lesson.Id);
+            SetCard(GrowthCard.Lesson, lesson.Id);
+            SaveNow();
+        }
+
+        /// <summary>R09.4: seconds free of cards before a lesson's card may open.</summary>
+        public const float LessonPause = 1.5f;
 
         /// <summary>Advances the shop and turns its events into the UI's notes; the day's end opens the receipt.</summary>
         public void Advance(float seconds)

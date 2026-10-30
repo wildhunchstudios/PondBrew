@@ -1481,6 +1481,169 @@
     border-color: rgba(0, 0, 0, 0);
 }
 
+/* ---------------------------------------------------------------- R09.4's lessons and GR-26's collection */
+
+.gr-lesson {
+    padding: 10px 16px 12px 16px;
+    margin-bottom: 10px;
+    background-color: #FFFFFF;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-color: var(--es-paper-deep);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.gr-lesson--locked {
+    background-color: var(--es-paper-deep);
+}
+
+.gr-lesson__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 22px;
+    color: var(--es-ink);
+    margin: 0 0 2px 0;
+    padding: 0;
+}
+
+.gr-lesson--locked .gr-lesson__title {
+    color: var(--es-muted);
+}
+
+.gr-lesson__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 0 0 6px 0;
+    padding: 0;
+    white-space: normal;
+}
+
+.gr-collection__sum {
+    flex-direction: row;
+    margin-bottom: 4px;
+}
+
+.gr-collection__sum .gr-stat {
+    margin-right: 48px;
+    margin-bottom: 6px;
+}
+
+.gr-collection__sum .gr-stat__number {
+    font-size: 30px;
+}
+
+.gr-crow {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.gr-crow--locked {
+    opacity: 0.6;
+}
+
+.gr-crow__head {
+    width: 180px;
+    flex-shrink: 0;
+}
+
+.gr-crow__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+}
+
+.gr-crow__count {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-ct {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+    height: 46px;
+    margin-right: 6px;
+    padding: 2px 6px 2px 4px;
+    overflow: hidden;
+    background-color: #FFFFFF;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: var(--es-paper-deep);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.gr-ct--unknown {
+    background-color: var(--es-paper-deep);
+}
+
+.gr-ct--crown {
+    border-color: var(--es-honey);
+}
+
+.gr-ct__glyph {
+    width: 38px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.gr-ct__words {
+    margin-left: 4px;
+    flex-shrink: 1;
+    overflow: hidden;
+}
+
+.gr-ct__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 15px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.gr-ct__hint {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 12px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-forecast {
+    margin-top: 12px;
+    padding: 10px 14px 12px 14px;
+    background-color: #FFFFFF;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: var(--es-paper-deep);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
 .gr-pager {
     justify-content: center;
     margin-top: 4px;

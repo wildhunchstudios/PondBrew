@@ -366,14 +366,14 @@ namespace EvolutionShop
             if (!Ready) return;
             // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
             string key = which + "|" + target;
-            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; }
+            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; }
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null;
             tabList.Clear(); tabRow = null; footer = null; rings.Clear(); notebook = false;
             tip.style.display = DisplayStyle.None; tipAnchor = null;
             if (which == GrowthCard.None) return;
             // GR-13: the planning views (the pinboard, the catalog, the journal, the receipt, the results) and the welcome and
             // pause screens are notebooks over the dimmed shop; which of them pause the game is the session's, unchanged.
-            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Settings || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog;
+            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Settings || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog || which == GrowthCard.Lesson;
             card = screen ? ScreenCard(which) : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding || which == GrowthCard.Helper ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer || which == GrowthCard.Staff ? 540 : which == GrowthCard.PowerBoard || which == GrowthCard.Sorter ? 600 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
@@ -446,7 +446,12 @@ namespace EvolutionShop
             if (on.tab != null && on.tab.text != CurrentTab) { ShowTabNamed(on.tab.text); pendingScroll = startsWith; return true; }
             // On a page not shown (the journal's families), that page first.
             for (var v = (VisualElement)label; v != null && v != card; v = v.parent)
-                if (v.ClassListContains("gr-page") && v.style.display.value == DisplayStyle.None) { pageShown = v.parent.IndexOf(v); pendingScroll = startsWith; RefreshCard(); return true; }
+                if (v.ClassListContains("gr-page") && v.style.display.value == DisplayStyle.None)
+                {
+                    // R09.4: the Guide's pages have a pager of their own.
+                    if (v.ClassListContains("gr-page--guide")) guidePage = v.parent.IndexOf(v); else pageShown = v.parent.IndexOf(v);
+                    pendingScroll = startsWith; RefreshCard(); return true;
+                }
             float y = label.worldBound.y - scroll.contentContainer.worldBound.y;
             keepScroll = null; keepIn = null;
             scroll.scrollOffset = new Vector2(0, Mathf.Max(0, y - 8));
@@ -590,6 +595,7 @@ namespace EvolutionShop
                 case GrowthCard.Hall: FillHall(); break;
                 case GrowthCard.Helper: FillHelper(target); break;
                 case GrowthCard.Results: FillResults(); break;
+                case GrowthCard.Lesson: FillLesson(target); break;
             }
         }
 
@@ -1185,6 +1191,8 @@ namespace EvolutionShop
                 items.Add(item);
             }
             research.Add(items);
+            // R10.3: at night, tomorrow's first visitors and their wishes.
+            if (shop.Phase == GrowthPhase.Night) ForecastSection(AddTab("Tomorrow"));
             NotebookFooter("Back", null, null, shop.Rp + " research points");
         }
 
@@ -1468,15 +1476,16 @@ namespace EvolutionShop
         void FillJournal()
         {
             var shop = s.Shop;
-            var body = Notebook("Journal", "Discovered " + shop.Discovered.Count + " of " + GrowthContent.SpeciesCount + " species · journal " + shop.Journal.Count + "/" + GrowthContent.JournalEntries, "Goals");
+            int found = shop.Discovered.Count(d => GrowthContent.Get(d) != null);
+            var body = Notebook("Journal", "Found " + found + " of " + GrowthContent.SpeciesCount + " creatures · " + (GrowthContent.SpeciesCount - found) + " left · colours " + shop.Journal.Count + "/" + GrowthContent.JournalEntries, "Goals");
             // GR-11: the objective board (GR.12), mirrored from the pinboard.
             BoardSections(body);
-            // Creatures: a family shows once you have the cultures for one of its founders or have found one of it.
+            // Creatures: GR-26's whole collection first, all 72 found and left; then each family's shelf, every family shown (one not
+            // reached yet as silhouettes) so the journal shows what is left as well as what is found.
             var creatures = AddTab("Creatures");
             bool Reachable(SpeciesDef sp) => sp.Recipe != null && Enumerable.Range(0, sp.Recipe.Length).All(i => sp.Recipe[i] == 0 || shop.Owns(GrowthContent.Cultures[i].Id) || shop.Vials.ContainsKey(GrowthContent.Cultures[i].Id));
-            var shelves = GrowthContent.Families.Where(family => family.Id == "brookkin" || GrowthContent.Species.Any(m => m.Family == family.Id && (shop.Discovered.Contains(m.Id) || m.Kind == SpeciesKind.Founder && Reachable(m))))
-                .Select(f => FamilyShelf(f, Reachable)).ToList();
-            var pages = new List<VisualElement>();
+            var shelves = GrowthContent.Families.Select(f => FamilyShelf(f, Reachable)).ToList();
+            var pages = new List<VisualElement> { CollectionPage(Reachable) };
             // Two families a page, so a page fits the sheet at 1280×720 without scrolling.
             for (int i = 0; i < shelves.Count; i += 2)
             {
@@ -1484,7 +1493,9 @@ namespace EvolutionShop
                 foreach (var shelf in shelves.Skip(i).Take(2)) page.Add(shelf);
                 pages.Add(page);
             }
-            Pager(creatures, pages, "Families " + shelves.Count + " of " + GrowthContent.Families.Length);
+            Pager(creatures, pages, "The collection and its " + shelves.Count + " families");
+            // R09.4: every lesson, to read again.
+            GuideTab(AddTab("Guide"));
             // Cultures: all seven from the start, owned ones with their source and level, the rest greyed with where to get them (GR.6).
             var cultures = AddTab("Cultures");
             var tiles = Box("gr-items");
@@ -1568,6 +1579,8 @@ namespace EvolutionShop
                 stats.Add(rep);
                 body.Add(stats);
                 ExhibitionReceipt(body, d);
+                // R10.3: tomorrow's first visitors and their wishes, the night's goal.
+                ForecastSection(body);
             }
             var goal = L("Goal: " + shop.EraGoal, "gr-hint"); goal.style.marginTop = 12;
             body.Add(goal);
@@ -1605,7 +1618,7 @@ namespace EvolutionShop
             if (guided)
             {
                 var guide = Box("gr-callout"); guide.style.marginTop = 10;
-                guide.Add(L("Your first night is guided: a marker shows the next thing to use, and the line at the bottom says what to do. Skip it any time from the pause menu (Esc).", "gr-strong"));
+                guide.Add(L("Your first night is guided: a marker shows the next thing to use, and the line at the bottom says what to do. After it, each new part of the shop is explained as it appears. Skip any time from the pause menu (Esc).", "gr-strong"));
                 var skip = Link("Play without guidance", () => { s.Shop.SkipGuide(); s.SaveNow(); s.SetCard(GrowthCard.None); });
                 skip.style.alignSelf = Align.FlexStart; skip.style.marginLeft = 0; skip.style.marginTop = 8;
                 guide.Add(skip);
@@ -1634,6 +1647,7 @@ namespace EvolutionShop
                 guide.Add(skipGuide);
                 body.Add(guide);
             }
+            PauseLessonRow(body);
             var danger = Box("gr-row"); danger.style.marginTop = 14;
             var over = Button("Start over (a new shop)", () => s.StartOver()); over.RemoveFromClassList("es-button--secondary"); over.AddToClassList("es-button--danger");
             danger.Add(over);

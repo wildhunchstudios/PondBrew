@@ -149,7 +149,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated, WishGranted }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated, WishGranted, Lesson }
 
     public sealed class GrowthEvent
     {
@@ -939,6 +939,7 @@ namespace EvolutionShop.Growth
             Credits -= item.Credits;
             Rp -= item.Rp;
             Orders.Add(itemId);
+            Note("order");
             Raise(GrowthEventKind.Ordered, "Ordered: " + item.Name + " (arrives when the shop opens)", amount: item.Credits);
             return GrowthResult.Ok();
         }
@@ -1010,7 +1011,7 @@ namespace EvolutionShop.Growth
             }
             if (left == 0) { Vials.Remove(culture); VialProgress = 0; } else Vials[culture] = left;
             if (Held.Count >= SiphonCapacity) VialProgress = 0;
-            if (collected > 0) Raise(GrowthEventKind.Collected, collected + " " + Name(culture), amount: collected);
+            if (collected > 0) { Raise(GrowthEventKind.Collected, collected + " " + Name(culture), amount: collected); Note("vial"); }
             return GrowthResult.Ok(collected.ToString());
         }
 
@@ -1182,6 +1183,7 @@ namespace EvolutionShop.Growth
             foreach (var v in Visitors) if (v.State == GrowthVisitorState.Leaving) v.Clock += Phase == GrowthPhase.Day ? 0 : seconds;
             Visitors.RemoveAll(v => v.State == GrowthVisitorState.Leaving && v.Clock >= LeaveSeconds);
             TickGuide();
+            TickLessons();
         }
 
         void TickDay(float seconds)
@@ -1205,17 +1207,25 @@ namespace EvolutionShop.Growth
             if (DaySecondsLeft <= 0) CloseShop();
         }
 
+        /// <summary>The type of a day's nth visitor, by GrowthContent's weights at the shop's stars: fixed by the day and n (the
+        /// arrivals and R10.3's forecast both use it).</summary>
+        VisitorTypeDef VisitorTypeOn(int day, int n)
+        {
+            int star = Stars - 1;
+            var types = GrowthContent.Visitors.Where(t => t.Weights[star] > 0).ToList();
+            int total = types.Sum(t => t.Weights[star]);
+            int roll = (int)(Hash(day * 7919 + n * 104729) % (uint)total);
+            foreach (var t in types) { if (roll < t.Weights[star]) return t; roll -= t.Weights[star]; }
+            return types[0];
+        }
+
         /// <summary>Visitors by GrowthContent's weights at today's stars, in a fixed sequence (no luck in what the player is owed).</summary>
         void Arrive()
         {
             // An empty shop window draws nobody in: passers-by walk on, and no reputation is lost for it.
             if (!Stock.Any()) { if (Today != null) Today.WalkedPast++; return; }
             int star = Stars - 1;
-            var types = GrowthContent.Visitors.Where(t => t.Weights[star] > 0).ToList();
-            int total = types.Sum(t => t.Weights[star]);
-            int roll = (int)(Hash(Day * 7919 + visitorsToday * 104729) % (uint)total);
-            var type = types[0];
-            foreach (var t in types) { if (roll < t.Weights[star]) { type = t; break; } roll -= t.Weights[star]; }
+            var type = VisitorTypeOn(Day, visitorsToday);
             var v = new GrowthVisitor { Id = nextId++, Type = type.Id, Budget = type.Budgets[star], State = GrowthVisitorState.Browsing };
             // GR-20: what they wish for, fixed by the day and their place in it.
             v.Wish = WishFor(v.Type, v.Budget, visitorsToday);
@@ -1551,6 +1561,7 @@ namespace EvolutionShop.Growth
             SaveExhibition(save);
             SaveGuide(save);
             SaveDecor(save);
+            SaveLessons(save);
             return save;
         }
 
@@ -1671,7 +1682,7 @@ namespace EvolutionShop.Growth
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s) ?? RestoreLessons(shop, s);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -1694,8 +1705,8 @@ namespace EvolutionShop.Growth
         /// 6: GR-07 (the lab annex, buffers, pipes, the power board's order and the auto-doser);
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
-        /// 2: GR-03 (container water). Older saves load.</summary>
-        public const int CurrentVersion = 12;
+        /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now). Older saves load.</summary>
+        public const int CurrentVersion = 13;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1760,6 +1771,11 @@ namespace EvolutionShop.Growth
         public string guide;
         /// <summary>GR-19: the decor delivered (each piece once; the one on a tank is its Box's decor).</summary>
         public string[] decorOwned;
+        /// <summary>R09.4: whether the lessons were kept (version 13; an older save learns what it has used), the lessons met and
+        /// learned, what the shop has noted, and the lesson whose steps run ("" for none).</summary>
+        public bool lessonsKept;
+        public string[] lessonsMet, lessonsLearned, noted;
+        public string lessonNow;
         public float sensitivity = 1;
 
         [Serializable] public sealed class Specimen

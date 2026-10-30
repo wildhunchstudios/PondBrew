@@ -187,7 +187,7 @@ namespace EvolutionShop
             // The journal: each family's chart of eight with its colours, and the pair log.
             s.SetCard(GrowthCard.Journal); yield return new WaitForSeconds(0.25f);
             string journal = s.Ui.CardText();
-            Check(journal.Contains("Discovered 6 of 72 species · journal 7/288") && journal.Contains("Brookkin · small · 6/8 · colours 7/32"), "The journal counts species and colours: 6 of 72, 7 of 288 entries");
+            Check(journal.Contains("Found 6 of 72 creatures · 66 left · colours 7/288") && journal.Contains("Brookkin · small · 6/8 · colours 7/32"), "The journal counts creatures found and left, and colours: 6 of 72, 66 left, 7 of 288 entries (GR-26)");
             Check(journal.Contains("Puddlepup · hybrid · bred from Bubblebelly × Pondlet") && journal.Contains("Brook Monarch · crown · bred from Puddlepup × Reedwhisker"), "Known hybrids and the crown say which pair made them");
             Check(journal.Contains("Pair log · 4 pairs tried") && journal.Contains("Pondlet × Pondlet → Pondlet") && journal.Contains("Bubblebelly × Pondlet → Puddlepup ×2"), "The pair log lists every pair tried");
             Check(s.Ui.ShowTabNamed("Creatures"), "The journal's Creatures tab: the family chart");

@@ -75,6 +75,8 @@ namespace EvolutionShop.Growth
         /// <summary>The silly moments: 0 every one, 1 fewer and shorter, 2 none but the player's slap (<see cref="GrowthGagLevel"/>).</summary>
         public int gags;
         public bool captionsOff;
+        /// <summary>R09.4: the lessons that explain each part of the game as it appears (on unless switched off).</summary>
+        public bool lessonsOff;
 
         /// <summary>Where these settings first came from: "" new, or the save they were carried over from once.</summary>
         public string carriedFrom = "";

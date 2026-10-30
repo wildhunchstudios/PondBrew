@@ -152,6 +152,26 @@ namespace EvolutionShop.Growth
             return options[0].make(pick);
         }
 
+        /// <summary>R10.3: how many of tomorrow's visitors the night's forecast shows.</summary>
+        public const int ForecastVisitors = 8;
+
+        /// <summary>
+        /// R10.3 (AD-E's forecast, GR.17): tomorrow's first visitors through the door, as the shop stands now, each one's type and
+        /// wish, made as the arrivals make them (fixed by the day and their place in it). Only at night, when Day is tomorrow's;
+        /// what the player discovers or colours tonight can change the wishes, so it is read again whenever it is shown.
+        /// </summary>
+        public List<(VisitorTypeDef type, GrowthWish wish)> Forecast(int count = ForecastVisitors)
+        {
+            var list = new List<(VisitorTypeDef, GrowthWish)>();
+            if (Phase != GrowthPhase.Night) return list;
+            for (int n = 0; n < count; n++)
+            {
+                var type = VisitorTypeOn(Day, n);
+                list.Add((type, WishFor(type.Id, type.Budgets[Stars - 1], n)));
+            }
+            return list;
+        }
+
         /// <summary>
         /// What would grant a visitor's wish in one container, within their budget as that container stretches it (GR.10.1): the
         /// species wished for; the dearest creature in the colour or size; the dearest matching pair or school (reserved together,
@@ -215,6 +235,7 @@ namespace EvolutionShop.Growth
             if (v.Type == GuestType || v.Wish == null || !v.Wish.Matches(bought)) { MissWish(v); return 0; }
             int tip = GrowthWishes.Tip(price);
             v.WishGranted = true;
+            Note("wish");
             Credits += tip;
             Reputation = Math.Min(GrowthContent.ReputationMax, Reputation + GrowthContent.RepPerWish);
             if (Today != null) { Today.WishesGranted++; Today.Tips += tip; Today.Revenue += tip; Today.ReputationGained += GrowthContent.RepPerWish; }

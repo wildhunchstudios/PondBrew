@@ -124,7 +124,8 @@ namespace EvolutionShop
             body.Add(Setting("Peek", "look closely at a tank's glass to read each creature", Switch("peek", !g.peekOff, v => g.peekOff = !v)));
             body.Add(Setting("Silly moments", "how many there are: every one, fewer and shorter, or none but your own slap", Choices("gags", GrowthSettings.GagNames, g.gags, i => g.gags = i)));
             body.Add(Setting("Captions", "the silly moments' words on screen, with who says them", Switch("captions", !g.captionsOff, v => g.captionsOff = !v)));
-            body.Add(Defaults(() => { var d = new GrowthSettings(); g.reducedMotion = d.reducedMotion; g.peekOff = d.peekOff; g.gags = d.gags; g.captionsOff = d.captionsOff; }));
+            body.Add(Setting("Lessons", "a card and a guided step when each part of the game first appears (the journal's Guide keeps them)", Switch("lessons", !g.lessonsOff, v => g.lessonsOff = !v)));
+            body.Add(Defaults(() => { var d = new GrowthSettings(); g.reducedMotion = d.reducedMotion; g.peekOff = d.peekOff; g.gags = d.gags; g.captionsOff = d.captionsOff; g.lessonsOff = d.lessonsOff; }));
         }
 
         // ---------------------------------------------------------------- the rows

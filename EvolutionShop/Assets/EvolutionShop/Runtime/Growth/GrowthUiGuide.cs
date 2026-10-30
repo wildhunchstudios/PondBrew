@@ -24,6 +24,8 @@ namespace EvolutionShop
         public bool GuideAtEdge { get; private set; }
         public Vector2 GuidePoint { get; private set; }
         public string GuideLabel => guideLabel == null ? "" : guideLabel.text;
+        /// <summary>Validation: where a guide or lesson target stands in the world (the marker's point), null when it is not built.</summary>
+        public Vector3? GuidePointOf(string target) => GuideWorld(target);
 
         void BuildGuide()
         {
@@ -54,8 +56,10 @@ namespace EvolutionShop
                 string id = target.Substring(10);
                 foreach (var c in s.Shop.Containers)
                     if (c.Id == id && GrowthWorld.Places.TryGetValue(c.Place, out var place)) return place.Position + new Vector3(0, 1.45f, 0);
+                return null;
             }
-            return null;
+            // R09.4: a lesson's target, a GrowthTargetKind's name and maybe an id ("Place:a2", "Board").
+            return LessonTargetWorld(target);
         }
 
         void TickGuideMarker(GrowthGuideView guide, bool free)

@@ -108,17 +108,19 @@ namespace EvolutionShop
         /// Pages a list instead of scrolling it (the journal's families): each page built, one shown, with ◀ page n of m ▶
         /// under them.
         /// </summary>
-        void Pager(VisualElement body, IList<VisualElement> pages, string what)
+        void Pager(VisualElement body, IList<VisualElement> pages, string what, Func<int> get = null, Action<int> set = null)
         {
-            int at = pageShown = Mathf.Clamp(pageShown, 0, Mathf.Max(0, pages.Count - 1));
+            // A pager of its own (R09.4's Guide) keeps its own page; the rest share the card's.
+            get = get ?? (() => pageShown); set = set ?? (v => pageShown = v);
+            int at = Mathf.Clamp(get(), 0, Mathf.Max(0, pages.Count - 1)); set(at);
             var holder = Box("gr-pages");
             for (int i = 0; i < pages.Count; i++) { pages[i].AddToClassList("gr-page"); pages[i].style.display = i == at ? DisplayStyle.Flex : DisplayStyle.None; holder.Add(pages[i]); }
             body.Add(holder);
             if (pages.Count < 2) return;
             var nav = Box("gr-row", "gr-pager");
-            nav.Add(PlusMinus("◀", () => pageShown = at - 1, at > 0, "The first page"));
+            nav.Add(PlusMinus("◀", () => set(at - 1), at > 0, "The first page"));
             nav.Add(L(what + " · page " + (at + 1) + " of " + pages.Count, "gr-pager__words"));
-            nav.Add(PlusMinus("▶", () => pageShown = at + 1, at < pages.Count - 1, "The last page"));
+            nav.Add(PlusMinus("▶", () => set(at + 1), at < pages.Count - 1, "The last page"));
             body.Add(nav);
         }
 
