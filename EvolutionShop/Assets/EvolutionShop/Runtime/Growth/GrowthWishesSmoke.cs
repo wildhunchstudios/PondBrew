@@ -118,6 +118,14 @@ namespace EvolutionShop
                   (d1.Tips == 0 || card.Contains(d1.Tips + " credits in tips")) && (d1.WishesMissed.Count == 0 || card.Contains("Wished for and not granted: ")),
                 "The receipt counts the day's wishes: " + d1.WishesGranted + " of " + d1.Wishes + " granted, " + d1.Tips + " credits in tips, every other one listed as wished for and not granted");
             yield return Shot("603-receipt-day-one");
+            // GR-20 run 2: an open card refreshes as the shop changes; it keeps where it was scrolled to.
+            s.SetCard(GrowthCard.Journal);
+            yield return null; yield return null; yield return null;
+            float went = s.Ui.ScrollCardBy(160);
+            yield return null; yield return null;
+            s.Ui.RefreshCard();
+            yield return null; yield return null; yield return null;
+            Check(went > 50 && Mathf.Abs(s.Ui.CardScroll - went) < 1, "A refresh keeps the journal where it was scrolled to (" + went.ToString("0") + " px, then " + s.Ui.CardScroll.ToString("0") + ")");
             s.SetCard(GrowthCard.None);
             yield return new WaitForSeconds(GrowthShop.LeaveSeconds + 0.5f);
 

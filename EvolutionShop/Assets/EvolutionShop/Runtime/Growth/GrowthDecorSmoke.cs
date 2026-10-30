@@ -39,6 +39,15 @@ namespace EvolutionShop
             // A card rebuilt while the pointer moved (it is rebuilt as the shop changes) has the same control in the same place.
             if (element.panel == null) element = s.Ui.CardElement == null ? null : UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(s.Ui.CardElement).ToList().FirstOrDefault(which);
             if (element == null) { Check(false, what + " (gone from the card before the press)"); yield break; }
+            // GR-20 run 2: and where it is now, since a rebuild may have moved it; the press goes there.
+            r = element.worldBound; panel = s.Ui.Root.layout.size;
+            var now = new Vector2(r.center.x * Screen.width / panel.x, Screen.height - r.center.y * Screen.height / panel.y);
+            if (Vector2.Distance(now, at) > 2f)
+            {
+                at = now;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = at });
+                yield return null; yield return null;
+            }
             InputSystem.QueueStateEvent(mouse, new MouseState { position = at, buttons = 1 });
             yield return null; yield return null;
             // The press must stay on the control it landed on: a card rebuilt while the button is held loses the click.

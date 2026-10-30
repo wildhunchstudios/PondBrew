@@ -289,6 +289,7 @@ namespace EvolutionShop
             if (liveLabel != null) liveLabel.text = LiveText();
             TickRings();
             ApplyPendingScroll();
+            KeepScroll();
             UpdateTip();
         }
 
@@ -375,9 +376,57 @@ namespace EvolutionShop
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
             Fill(which, target);
+            shownPage = pageShown; shownTab = tabChosen;
         }
 
-        public void RefreshCard() { if (card != null) ShowCard(s.Card, s.CardTarget); }
+        /// <summary>
+        /// Rebuilds the open card as it is now (its tab, its page, its open lists). GR-20 run 2: it keeps the card where it was
+        /// scrolled to. The open card refreshes whenever the shop changes (at night as the growers fill, and after each of its
+        /// buttons), and each refresh sent a scrolled card back to its top, moving its buttons from under the pointer; a new
+        /// tab or page still starts at the top, and a scroll the card asks for itself (ScrollTo) wins.
+        /// </summary>
+        public void RefreshCard()
+        {
+            if (card == null) return;
+            var scroll = card.Q<ScrollView>();
+            var offset = scroll != null ? scroll.scrollOffset : Vector2.zero;
+            bool same = s.Card + "|" + s.CardTarget == tabCard && pageShown == shownPage && tabChosen == shownTab;
+            ShowCard(s.Card, s.CardTarget);
+            keepScroll = null; keepIn = null;
+            var now = same && offset.y > 0.5f && card != null ? card.Q<ScrollView>() : null;
+            if (now == null) return;
+            keepScroll = offset; keepIn = now; keepFrames = 10;
+            // Restored once the new body is laid out (the scroll view clamps an offset its content cannot reach yet).
+            EventCallback<GeometryChangedEvent> restore = null;
+            restore = e => { now.contentContainer.UnregisterCallback(restore); KeepScroll(); };
+            now.contentContainer.RegisterCallback(restore);
+        }
+
+        Vector2? keepScroll;
+        ScrollView keepIn;
+        int keepFrames, shownPage = -1;
+        string shownTab;
+
+        /// <summary>Puts a refreshed card back where it was scrolled to, as soon as its content reaches there (within ten frames).</summary>
+        void KeepScroll()
+        {
+            if (keepScroll == null) return;
+            if (keepIn == null || keepIn.panel == null || keepFrames-- <= 0) { keepScroll = null; keepIn = null; return; }
+            keepIn.scrollOffset = keepScroll.Value;
+            if (Mathf.Abs(keepIn.scrollOffset.y - keepScroll.Value.y) < 0.5f) { keepScroll = null; keepIn = null; }
+        }
+
+        /// <summary>Validation (GR-20): the open card's body's scroll now (0 for none).</summary>
+        public float CardScroll => card?.Q<ScrollView>()?.scrollOffset.y ?? 0;
+
+        /// <summary>Validation (GR-20): scrolls the open card's body down by an amount (as a mouse wheel does), and how far it went.</summary>
+        public float ScrollCardBy(float pixels)
+        {
+            var scroll = card?.Q<ScrollView>();
+            if (scroll == null) return 0;
+            scroll.scrollOffset = new Vector2(0, scroll.scrollOffset.y + pixels);
+            return scroll.scrollOffset.y;
+        }
 
         static bool MouseHeld() => UnityEngine.InputSystem.Mouse.current != null && UnityEngine.InputSystem.Mouse.current.leftButton.isPressed;
 
@@ -397,6 +446,7 @@ namespace EvolutionShop
             for (var v = (VisualElement)label; v != null && v != card; v = v.parent)
                 if (v.ClassListContains("gr-page") && v.style.display.value == DisplayStyle.None) { pageShown = v.parent.IndexOf(v); pendingScroll = startsWith; RefreshCard(); return true; }
             float y = label.worldBound.y - scroll.contentContainer.worldBound.y;
+            keepScroll = null; keepIn = null;
             scroll.scrollOffset = new Vector2(0, Mathf.Max(0, y - 8));
             return true;
         }
