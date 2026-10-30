@@ -1747,3 +1747,168 @@
 .gr-guide--over .es-arrow__label {
     margin: 0 0 6px 0;
 }
+
+/* ---------------------------------------------------------------- GR-27: the main menu */
+
+.gr-menu {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: row;
+}
+
+.gr-menu__fade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #0B1A18;
+    opacity: 0;
+}
+
+.gr-menu__panel {
+    width: 640px;
+    height: 100%;
+    padding: 40px 56px 28px 56px;
+    background-color: rgba(255, 246, 223, 0.96);
+    border-right-width: 6px;
+    border-right-color: var(--es-kraft-lip);
+    justify-content: center;
+}
+
+.gr-menu__signbox {
+    position: relative;
+    height: 340px;
+    margin-bottom: 2px;
+}
+
+.gr-menu__sign {
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    top: 84px;
+    height: 172px;
+    background-color: var(--es-teal);
+    border-left-width: 6px;
+    border-right-width: 6px;
+    border-top-width: 6px;
+    border-bottom-width: 6px;
+    border-left-color: var(--es-paper);
+    border-right-color: var(--es-paper);
+    border-top-color: var(--es-paper);
+    border-bottom-color: var(--es-paper);
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    border-bottom-left-radius: 28px;
+    border-bottom-right-radius: 28px;
+    align-items: center;
+    justify-content: center;
+    rotate: -2deg;
+}
+
+.gr-menu__title {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 78px;
+    color: var(--es-paper);
+    -unity-text-align: middle-center;
+    margin: 0;
+    padding: 0;
+    height: 86px;
+}
+
+.gr-menu__title--second {
+    font-size: 58px;
+    color: var(--es-honey);
+    height: 62px;
+    margin-top: -12px;
+}
+
+.gr-menu__creature {
+    position: absolute;
+    width: 116px;
+    height: 116px;
+    background-color: var(--es-paper-deep);
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-top-width: 5px;
+    border-bottom-width: 5px;
+    border-left-color: var(--es-paper);
+    border-right-color: var(--es-paper);
+    border-top-color: var(--es-paper);
+    border-bottom-color: var(--es-paper);
+    border-top-left-radius: 58px;
+    border-top-right-radius: 58px;
+    border-bottom-left-radius: 58px;
+    border-bottom-right-radius: 58px;
+    overflow: hidden;
+}
+
+.gr-menu__portrait {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.gr-menu__tagline {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 22px;
+    color: var(--es-muted);
+    -unity-text-align: middle-center;
+    margin: 0 0 24px 0;
+    white-space: normal;
+}
+
+.gr-menu__save {
+    padding: 14px 20px 14px 20px;
+    margin-bottom: 18px;
+    background-color: var(--es-paper-deep);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.gr-menu__summary {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+    white-space: normal;
+    margin: 0;
+}
+
+.gr-menu__buttons {
+    flex-direction: column;
+}
+
+.gr-menu__button {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 28px;
+    height: 66px;
+    margin: 0 0 12px 0;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+}
+
+.gr-menu__buttons .gr-row .gr-menu__button {
+    flex-grow: 1;
+    margin-right: 10px;
+    font-size: 22px;
+    height: 54px;
+}
+
+.gr-menu__foot {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-SemiBold.ttf");
+    font-size: 15px;
+    color: var(--es-muted);
+    -unity-text-align: middle-center;
+    margin-top: 18px;
+    white-space: normal;
+}

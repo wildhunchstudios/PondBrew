@@ -26,7 +26,7 @@ namespace EvolutionShop
             FillSound(AddTab(SettingsTabs[2]), g);
             FillControls(AddTab(SettingsTabs[3]), g);
             FillAccessibility(AddTab(SettingsTabs[4]), g);
-            NotebookFooter("Back to the pause screen", () => s.CloseSettings(), "Done");
+            NotebookFooter(s.SettingsFrom == GrowthCard.Menu ? "Back to the menu" : "Back to the pause screen", () => s.CloseSettings(), "Done");
         }
 
         // ---------------------------------------------------------------- the tabs

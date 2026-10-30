@@ -22,16 +22,16 @@ namespace EvolutionShop
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
             GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", PeopleSmokeArgument = "-evolutionGrowthPeopleSmoke",
-            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke";
+            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), "menu" (GR-27), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : null;
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -107,7 +107,14 @@ namespace EvolutionShop
         public GrowthPipe PipePlan { get; private set; }
         public string PipeWhy { get; private set; }
         public bool PipeReady { get; private set; }
-        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results || Card == GrowthCard.Lesson;
+        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results || Card == GrowthCard.Lesson || Card == GrowthCard.Menu;
+        /// <summary>GR-27: the main menu's view of the live shop (the player's camera lent to it while the menu shows).</summary>
+        public GrowthMenuCamera MenuCamera { get; private set; }
+        /// <summary>GR-27: whether there is a shop to continue (a save, or a start point); New game asks before replacing it.</summary>
+        public bool HasGame { get; private set; }
+        /// <summary>GR-23/GR-27: where Settings goes back to: the pause screen or the main menu.</summary>
+        GrowthCard settingsFrom = GrowthCard.Pause;
+        public GrowthCard SettingsFrom => settingsFrom;
         /// <summary>R09.4: lessons in a validation run, off unless a route turns them on (as the effects and the music are), so
         /// every other route's cards and captures stay as they were.</summary>
         public bool LessonsOnInValidation;
@@ -165,6 +172,8 @@ namespace EvolutionShop
             World.Build(this);
             Player.Teleport(GrowthWorld.Spawn, Quaternion.Euler(0, -90, 0));
             if (GrowthWorld.LookOn) Hands = GrowthHands.Build(this);
+            MenuCamera = new GrowthMenuCamera(this);
+            HasGame = !fresh || StartPoint != null;
             Audio = gameObject.AddComponent<GrowthAudio>();
             Audio.Initialize(this);
             Music = gameObject.AddComponent<GrowthMusic>();
@@ -179,7 +188,8 @@ namespace EvolutionShop
             ApplySettings();
             if (!ValidationMode && settings.displayChosen) ApplyDisplay();
             initialized = true;
-            SetCard(ValidationMode ? GrowthCard.None : GrowthCard.Welcome);
+            // GR-27: the game opens on the main menu (a validation run on its route, which opens the menu itself when it wants it).
+            if (ValidationMode) SetCard(GrowthCard.None); else OpenMenu();
             Debug.Log("EVOLUTION_GROWTH_GREYBOX " + Application.dataPath + " save=" + SavePath);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (ValidationMode && GrowthGreybox.SmokeRoute != null) gameObject.AddComponent<GrowthSmoke>();
@@ -296,14 +306,63 @@ namespace EvolutionShop
         }
 
         /// <summary>Opens the Settings screen (from the pause screen), on the tab asked for.</summary>
-        public void OpenSettings(string tab = null) { SetCard(GrowthCard.Settings); if (tab != null) Ui?.ShowTabNamed(tab); }
+        public void OpenSettings(string tab = null)
+        {
+            settingsFrom = Card == GrowthCard.Menu ? GrowthCard.Menu : GrowthCard.Pause;
+            SetCard(GrowthCard.Settings); if (tab != null) Ui?.ShowTabNamed(tab);
+        }
 
-        /// <summary>Back to the pause screen; a display change not yet kept goes back, a rebinding waiting is called off.</summary>
+        /// <summary>Back to the pause screen or the main menu, whichever opened it; a display change not yet kept goes back, a
+        /// rebinding waiting is called off.</summary>
         public void CloseSettings()
         {
             if (DisplayPending) RevertDisplay();
             Rebinding = null;
-            SetCard(GrowthCard.Pause);
+            SetCard(settingsFrom);
+        }
+
+        // ---------------------------------------------------------------- GR-27: the main menu
+
+        /// <summary>The main menu over the live shop: the shop saved first (when there is one), a pipe being laid let go, the
+        /// camera lent to the menu's slow view.</summary>
+        public void OpenMenu()
+        {
+            if (PipeFrom != null) StopPipe();
+            if (HasGame) SaveNow();
+            MenuCamera.Begin();
+            SetCard(GrowthCard.Menu);
+        }
+
+        /// <summary>Back into the shop where the player was.</summary>
+        public void ContinueGame()
+        {
+            MenuCamera.End();
+            SetCard(GrowthCard.None);
+        }
+
+        /// <summary>A new shop (its guided first night and the welcome), replacing the saved one; the menu asks first.</summary>
+        public void NewGame()
+        {
+            MenuCamera.End();
+            StartOver();
+            HasGame = true;
+        }
+
+        /// <summary>Validation: as at a first launch: a fresh shop and nothing saved (the routes say when they use it).</summary>
+        public void ValidationFirstLaunch()
+        {
+            Shop = new GrowthShop();
+            HasGame = false;
+            Gags?.Clear();
+            World.ResetForNewShop();
+            World.Sync(Shop, 0);
+        }
+
+        /// <summary>Quits the game (the shop saved first, when there is one).</summary>
+        public void QuitGame()
+        {
+            if (HasGame) SaveNow();
+            Application.Quit();
         }
 
         // ---------------------------------------------------------------- GR-23: rebinding
@@ -602,6 +661,7 @@ namespace EvolutionShop
                 if (Card == GrowthCard.None && PipeFrom != null) { StopPipe(); Ui.Hint("Pipe stopped"); }
                 else if (Card == GrowthCard.None) SetCard(GrowthCard.Pause);
                 else if (Card == GrowthCard.Settings) CloseSettings();
+                else if (Card == GrowthCard.Menu) { } // GR-27: the main menu is where the game starts: Esc does not leave it
                 else SetCard(GrowthCard.None);
             }
             // GR-03 (development): F8 opens the crate of every species, for looking at sizes and families.
@@ -620,6 +680,9 @@ namespace EvolutionShop
                 if (saveClock >= 5) SaveNow();
             }
             visualClock += dt * (ReducedMotion ? 0.5f : 1f);
+            // GR-27: the menu's slow view (behind its Settings too); any other card gives the camera back.
+            if (Card == GrowthCard.Menu || Card == GrowthCard.Settings && settingsFrom == GrowthCard.Menu) MenuCamera.Step(Time.unscaledDeltaTime);
+            else if (MenuCamera.Active) MenuCamera.End();
             World.Sync(Shop, dt);
             // GR-18 wave 4: the silly moments, after the world followed the shop and before the people move.
             Gags.Step(dt);

@@ -232,7 +232,8 @@ namespace EvolutionShop
             if (GrowthControls.Keyed(next) != nextLabel.text || free && !nextShown) nextRemeasure = 30;
             else if (nextRemeasure > 0) { nextRemeasure--; nextLabel.text = ""; }
             nextLabel.text = GrowthControls.Keyed(next); nextShown = free;
-            hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Settings || s.Card == GrowthCard.Welcome ? DisplayStyle.None : DisplayStyle.Flex;
+            hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Settings || s.Card == GrowthCard.Welcome || s.Card == GrowthCard.Menu ? DisplayStyle.None : DisplayStyle.Flex;
+            TickMenu();
             nextBox.style.display = free ? DisplayStyle.Flex : DisplayStyle.None;
             siphonLabel.text = shop.Held.Count == 0 ? "" : "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity + ": " + string.Join(", ", shop.Held.GroupBy(c => c).Select(g => g.Count() + " " + GrowthShop.Name(g.Key)));
             carryLabel.text = shop.Carried.Count == 0 ? "" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(GrowthSession.Named));
@@ -366,11 +367,13 @@ namespace EvolutionShop
             if (!Ready) return;
             // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
             string key = which + "|" + target;
-            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; }
+            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; menuAskNew = false; }
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null;
             tabList.Clear(); tabRow = null; footer = null; rings.Clear(); notebook = false;
             tip.style.display = DisplayStyle.None; tipAnchor = null;
             if (which == GrowthCard.None) return;
+            // GR-27: the main menu is no card: a panel down the left over the live shop, with nothing dimmed.
+            if (which == GrowthCard.Menu) { card = MenuScreen(); screenLayer.Add(card); cardSignature = Signature(); return; }
             // GR-13: the planning views (the pinboard, the catalog, the journal, the receipt, the results) and the welcome and
             // pause screens are notebooks over the dimmed shop; which of them pause the game is the session's, unchanged.
             bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Settings || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog || which == GrowthCard.Lesson;
@@ -1651,6 +1654,8 @@ namespace EvolutionShop
             var danger = Box("gr-row"); danger.style.marginTop = 14;
             var over = Button("Start over (a new shop)", () => s.StartOver()); over.RemoveFromClassList("es-button--secondary"); over.AddToClassList("es-button--danger");
             danger.Add(over);
+            var menu = Button("Main menu", () => s.OpenMenu()); menu.name = "gr-pause-menu";
+            danger.Add(menu);
             danger.Add(Button("Save and quit", () => { s.SaveNow(); Application.Quit(); }));
             body.Add(danger);
             NotebookFooter("Resume", () => s.SetCard(GrowthCard.None), "Resume");
