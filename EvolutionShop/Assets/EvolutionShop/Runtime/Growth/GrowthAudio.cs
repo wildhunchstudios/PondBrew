@@ -23,11 +23,11 @@ namespace EvolutionShop
         public const int SampleRate = 22050;
         public const float LoopSeconds = 4f, ClickEvery = 0.12f, StrokeEvery = 0.45f, Fade = 0.4f, NearDistance = 2f, FarDistance = 16f;
         /// <summary>How loud each sound is at full (before the setting and the distance).</summary>
-        public const float HumGain = 0.5f, MotorGain = 0.35f, ClickGain = 0.45f, StrokeGain = 0.6f, PopGain = 0.7f, SwishGain = 0.55f;
+        public const float HumGain = 0.5f, MotorGain = 0.35f, ClickGain = 0.45f, StrokeGain = 0.6f, PopGain = 0.7f, SwishGain = 0.55f, ChimeGain = 0.5f;
 
         GrowthSession session;
         AudioSource hum, motor, crank, stroke, moment;
-        AudioClip humClip, motorClip, clickClip, strokeClip, popClip, swishClip;
+        AudioClip humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip;
         float clickClock, strokeClock;
         readonly GrowthMoments moments = new GrowthMoments();
 
@@ -36,6 +36,9 @@ namespace EvolutionShop
         public int Strokes { get; private set; }
         public int Pops { get; private set; }
         public int Swishes { get; private set; }
+        /// <summary>GR-20: wishes granted, each a chime by the visitor, and where the last one rang.</summary>
+        public int Chimes { get; private set; }
+        public Vector3 LastChime { get; private set; }
         public float LastMomentGain { get; private set; }
         public Vector3 LastPop { get; private set; }
         public Vector3 LastSwish { get; private set; }
@@ -46,7 +49,7 @@ namespace EvolutionShop
         public bool MotorPlaying => motor != null && motor.isPlaying;
         public float MotorVolume => motor != null ? motor.volume : 0;
         public Vector3 MotorPosition => motor != null ? motor.transform.position : Vector3.zero;
-        public IEnumerable<AudioClip> Clips => new[] { humClip, motorClip, clickClip, strokeClip, popClip, swishClip };
+        public IEnumerable<AudioClip> Clips => new[] { humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip };
         public IEnumerable<AudioSource> Voices => new[] { hum, motor, crank, stroke, moment };
 
         public void Initialize(GrowthSession owner)
@@ -58,6 +61,7 @@ namespace EvolutionShop
             strokeClip = Clip("hand pump stroke", MakeStroke());
             popClip = Clip("breeding pop", MakePop());
             swishClip = Clip("school swish", MakeSwish());
+            chimeClip = Clip("wish chime", MakeChime());
             hum = Voice("Sound / generator hum", true);
             motor = Voice("Sound / pump motor", true);
             crank = Voice("Sound / crank", false);
@@ -140,6 +144,13 @@ namespace EvolutionShop
                 Swishes++;
                 LastSwish = session.World.Tanks.TryGetValue(id, out var tank) ? tank.Root.position + new Vector3(0, 1.0f, 0) : Listener;
                 Play(moment, LastSwish, swishClip, sounds * SwishGain);
+            }
+            // GR-20: a wish granted, a chime by the visitor's bubble as it pops into a heart.
+            foreach (var id in moments.NoticeWishes(shop))
+            {
+                Chimes++;
+                LastChime = session.World.VisitorViews.TryGetValue(id, out var view) && view != null ? view.transform.position + new Vector3(0, 1.9f, 0) : Listener;
+                Play(moment, LastChime, chimeClip, sounds * ChimeGain);
             }
         }
 
@@ -277,6 +288,25 @@ namespace EvolutionShop
             return Ends(d);
         }
 
+        /// <summary>GR-20's chime for a wish granted: two soft bell notes rising (E6 then A6), each with a quieter octave.</summary>
+        public static float[] MakeChime()
+        {
+            var d = new float[(int)(0.7f * SampleRate)];
+            for (int i = 0; i < d.Length; i++)
+            {
+                float t = i / (float)SampleRate, v = 0;
+                foreach (var (start, f) in new[] { (0f, 1318.5f), (0.12f, 1760f) })
+                {
+                    float u = t - start;
+                    if (u < 0) continue;
+                    float env = Mathf.Min(1, u / 0.003f) * Mathf.Exp(-u * 7f);
+                    v += env * (Mathf.Sin(2 * Mathf.PI * f * u) * 0.32f + Mathf.Sin(2 * Mathf.PI * 2 * f * u) * 0.08f * Mathf.Exp(-u * 10f));
+                }
+                d[i] = v;
+            }
+            return Ends(d);
+        }
+
         /// <summary>Starts and ends a one-shot at silence (a short fade at each end), so it never clicks.</summary>
         static float[] Ends(float[] d)
         {
@@ -296,6 +326,18 @@ namespace EvolutionShop
         GrowthShop seen;
         readonly HashSet<int> offspring = new HashSet<int>();
         readonly Dictionary<string, HashSet<string>> schools = new Dictionary<string, HashSet<string>>();
+        GrowthShop seenWishes;
+        readonly HashSet<int> granted = new HashSet<int>();
+
+        /// <summary>GR-20: the visitors whose wish a sale granted since the last look (none on a new shop).</summary>
+        public List<int> NoticeWishes(GrowthShop shop)
+        {
+            bool fresh = shop != seenWishes;
+            if (fresh) { seenWishes = shop; granted.Clear(); }
+            var now = new List<int>();
+            foreach (var v in shop.Visitors) if (v.WishGranted && granted.Add(v.Id) && !fresh) now.Add(v.Id);
+            return now;
+        }
 
         public static IEnumerable<string> SchoolsIn(GrowthContainer c) => c.Occupants.Select(o => o.Species).Distinct().Where(c.InSchool);
 

@@ -29,8 +29,11 @@ namespace EvolutionShop
         [Serializable] public sealed class HandsData { public float forearm, band, pipe; public float[] bagCreature, tube; public string[] parts; }
         /// <summary>GR-18 wave 4 (§6.7): the silly moments' faces (on the head kit's head) and props (in metres), and the dizzy stars' ring.</summary>
         [Serializable] public sealed class GagsData { public float starsRing; public string[] parts; }
+        /// <summary>GR-20: the wish bubble's icons' distance in front of its cloud, the radius an icon fits in, the trail's last
+        /// puff (by the head), and the parts.</summary>
+        [Serializable] public sealed class WishData { public float front, iconRadius; public float[] trail; public string[] parts; }
         [Serializable] public sealed class SlotData { public string name, kind, colour; }
-        [Serializable] public sealed class KitData { public KindData[] kinds; public HeadData head; public HeldData held; public HandsData hands; public GagsData gags; public SlotData[] materials; }
+        [Serializable] public sealed class KitData { public KindData[] kinds; public HeadData head; public HeldData held; public HandsData hands; public GagsData gags; public WishData wish; public SlotData[] materials; }
 
         static KitData data;
         static readonly Dictionary<string, GameObject> assets = new Dictionary<string, GameObject>();

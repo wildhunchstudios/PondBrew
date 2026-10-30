@@ -34,6 +34,8 @@ namespace EvolutionShop
         /// <summary>How far a slap reaches (metres from the eye), how near the reticle must pass a visitor's middle, how far from
         /// the player the room's moments may be (so they are seen), and the neighbour who smells a fart.</summary>
         public const float SlapReach = 2.1f, SlapAim = 0.34f, NearPlayer = 7f, Neighbour = 4f;
+        /// <summary>GR-20: how far away the reticle reads a visitor's wish.</summary>
+        public const float WishReach = 9f;
         /// <summary>The burp waits for the hatchling to show (1.2 s) and is dropped if it cannot play within 8 s; a helper's dance
         /// waits for them to have nothing to do for 0.4 s.</summary>
         public const float BelchDelay = 1.2f, BelchExpiry = 8f, DanceAfter = 0.4f;
@@ -63,6 +65,8 @@ namespace EvolutionShop
 
         /// <summary>The visitor a slap would land on now (under the reticle, within reach, in the day), or null.</summary>
         public GrowthVisitorView SlapTarget { get; private set; }
+        /// <summary>GR-20: the visitor under the reticle, within WishReach (their wish shows under it), or null.</summary>
+        public GrowthVisitorView LookedAt { get; private set; }
         /// <summary>When the last slap landed, on the comedy's clock (-1 none): the hands swing then.</summary>
         public float LastSlap { get; private set; } = -1;
         /// <summary>The caption showing (who says it and what), or null.</summary>
@@ -129,13 +133,14 @@ namespace EvolutionShop
             if (session.Paused)
             {
                 if (voice.isPlaying) voice.Pause();
-                SlapTarget = null;
+                SlapTarget = null; LookedAt = null;
                 return;
             }
             voice.UnPause();
             Policy.Tick(dt);
             bool free = session.Card == GrowthCard.None;
             SlapTarget = free ? FindSlapTarget() : null;
+            LookedAt = free ? FindVisitor(WishReach) : null;
             var keyboard = Keyboard.current;
             bool input = !session.ValidationMode || session.AllowValidationInput;
             if (free && input && keyboard != null)
@@ -175,7 +180,10 @@ namespace EvolutionShop
 
         /// <summary>The visitor nearest the eye whose middle (from the hips to the top of the head) the reticle passes within
         /// SlapAim of, within reach, not behind anything solid; never an exhibition guest or someone leaving, never at night.</summary>
-        GrowthVisitorView FindSlapTarget()
+        GrowthVisitorView FindSlapTarget() => FindVisitor(SlapReach);
+
+        /// <summary>The visitor nearest the eye under the reticle within a reach (as a slap aims); see FindSlapTarget.</summary>
+        GrowthVisitorView FindVisitor(float reach)
         {
             var shop = session.Shop;
             if (shop.Phase != GrowthPhase.Day || session.PipeFrom != null || session.Player == null) return null;
@@ -188,7 +196,7 @@ namespace EvolutionShop
                 var v = shop.Visitors.FirstOrDefault(x => x.Id == view.VisitorId);
                 if (v == null || v.State == GrowthVisitorState.Leaving || v.Type == GrowthShop.GuestType) continue;
                 float t = RayToSegment(o, d, view.transform.position + Vector3.up * 0.85f, view.transform.position + Vector3.up * 1.75f, out float miss);
-                if (t <= 0.2f || t > SlapReach || miss > SlapAim || t >= bestT) continue;
+                if (t <= 0.2f || t > reach || miss > SlapAim || t >= bestT) continue;
                 if (Physics.Raycast(o, d, out var hit, t - 0.25f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) continue;
                 best = view; bestT = t;
             }

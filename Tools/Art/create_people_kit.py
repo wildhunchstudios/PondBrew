@@ -22,6 +22,9 @@ What it makes (Resources/Art/PeopleKit; its record in ArtSource/PeopleKit/manife
   the TIE role), the siphon's bulb, tube, a fill band one metre long (DOSE) and the vacuum's canister, and a length of pipe.
 - PK_Gags.fbx (wave 4, §6.7's comedy): faces' parts on the head kit's head (a wobbly grimace, eyes squeezed shut, a
   slap's hand mark on the left cheek) and props in metres (a ring of dizzy stars, a puff of a cloud, a burp's bubble, a note).
+- PK_Wish.fbx (GR-20, visitors' wishes): a thought bubble (a cream cloud with an ink rim and a trail of two puffs to the head,
+  its front facing the viewer) and what shows in it, in metres: a fish token in plain teal and in each colour (Sunny, Deep,
+  Shimmer), the colours' signs (a sun, a drop, a sparkle), a size pip, and the heart a granted wish pops into.
 - people.json (beside them, a TextAsset): each kind's joints (rest positions in Unity space), its head height, and each part's
   name, so the game assembles a person from these parts and turns their joints.
 
@@ -48,7 +51,7 @@ from mathutils import Vector
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 ap = argparse.ArgumentParser()
 ap.add_argument('--repo', required=True)
-ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held, Hands, Gags); the rest are left as they are.')
+ap.add_argument('--only', default='', help='Comma-separated assets to build (Body_<kind>, Head, Held, Hands, Gags, Wish); the rest are left as they are.')
 args = ap.parse_args(argv)
 REPO = Path(args.repo).resolve()
 assert (REPO / 'EvolutionShop/ProjectSettings/ProjectVersion.txt').is_file()
@@ -529,6 +532,90 @@ def build_gags():
     return {'starsRing': STARS_RING}, rec
 
 
+# ---------------------------------------------------------------------------------------------------- the wishes (GR-20)
+# GR-20: a visitor's wish bubble and what shows in it, an asset of its own so the earlier parts stay as they were. Built facing
+# -Y like the people (Unity +Z, the side the game turns to the camera); the trail runs to Blender -x (Unity +X, the viewer's
+# left) and down, towards the head the bubble floats beside.
+WISH_FRONT = 0.062           # how far in front of the cloud's centre its icons stand (Unity +Z)
+WISH_ICON = 0.075            # the radius an icon fits in
+WISH_TRAIL = (-0.17, 0.0, -0.185)   # the trail's last puff (Blender)
+WISH_COLOURS = {'plain': ('#22BFB0', '#15867F'), 'sunny': ('#FFC23C', '#F08A24'), 'deep': ('#3D6BD9', '#233E96'),
+                'shimmer': ('#C9A8FF', '#9A78F2')}
+
+
+def outline(name, pts2, depth, m, y=0.0):
+    """A flat, puffy shape from an outline in the x-z plane (a heart, a drop, a star), thickened along y."""
+    return G['tri'](b, name, [Vector((x, y, z)) for x, z in pts2], depth, m)
+
+
+def build_wish():
+    meshes = []
+
+    def add(name, objs):
+        m = bake([o for o in objs if o.type != 'EMPTY'], name)
+        if m: meshes.append(m)
+
+    cream, rim = slot('plastic', '#FFFBF2'), slot('plastic', G['INK'])
+    # The cloud: a soft middle and eight puffs on an ellipse, flattened front to back; behind it the same, a little larger,
+    # in ink, which shows as the bubble's rim; and the trail of two puffs to the head.
+    puffs = [((0, 0, 0), (0.13, 0.047, 0.096))]
+    for i in range(8):
+        a = 2 * math.pi * i / 8 + math.pi / 8
+        r = 0.056 if i % 2 else 0.05
+        puffs.append(((0.122 * math.cos(a), 0, 0.088 * math.sin(a)), (r, 0.03, r)))
+    trail = [((-0.128, 0, -0.132), 0.027), (WISH_TRAIL, 0.017)]
+    parts = [b.ball('Wish cloud', c, s, cream, seg=40, shadow=False) for c, s in puffs]
+    parts += [b.ball('Wish rim', (c[0], c[1] + 0.012, c[2]), (s[0] + 0.009, s[1], s[2] + 0.009), rim, seg=32, shadow=False) for c, s in puffs]
+    for c, r in trail:
+        parts.append(b.ball('Wish trail', c, (r, 0.02, r), cream, seg=16, shadow=False))
+        parts.append(b.ball('Wish trail rim', (c[0], c[1] + 0.008, c[2]), (r + 0.006, 0.018, r + 0.006), rim, seg=16, shadow=False))
+    add('wish__bubble', parts)
+
+    y = -WISH_FRONT
+    ink, white = slot('eye', G['INK']), slot('eye', '#FFFFFF')
+    # A fish token, side on, facing the viewer's left: a round body, a V tail, a top fin and a big eye; in plain teal and
+    # in each colour a wish can ask for.
+    for key, (body, fin) in WISH_COLOURS.items():
+        mb, mf = slot('gloss', body), slot('gloss', fin)
+        token = [b.ball('Token body', (0, y, 0), (0.05, 0.022, 0.036), mb, seg=24, shadow=False),
+                 outline('Token tail', [(0.038, 0), (0.075, 0.032), (0.066, 0), (0.075, -0.032)], 0.014, mf, y),
+                 outline('Token fin', [(-0.012, 0.03), (0.016, 0.052), (0.026, 0.026)], 0.01, mf, y),
+                 b.ball('Token eye', (-0.024, y - 0.018, 0.008), (0.011, 0.006, 0.011), white, seg=14, shadow=False),
+                 b.ball('Token pupil', (-0.026, y - 0.023, 0.008), (0.0055, 0.003, 0.0055), ink, seg=10, shadow=False)]
+        if key == 'shimmer':
+            token += [b.ball('Token glint', (x, y - 0.019, z), (0.0045, 0.003, 0.0045), white, seg=8, shadow=False) for x, z in ((0.004, 0.018), (0.02, -0.01), (-0.01, -0.016))]
+        add('wish__fish-' + key, token)
+    # The colours' signs: a sun (Sunny), a drop (Deep), a four-pointed sparkle (Shimmer).
+    sun = slot('gloss', '#FFC93C')
+    add('wish__sun', [b.ball('Sun', (0, y, 0), (0.017, 0.009, 0.017), sun, seg=18, shadow=False)] +
+        [b.ball('Sun ray', (0.028 * math.cos(a), y, 0.028 * math.sin(a)), (0.006, 0.006, 0.006), sun, seg=10, shadow=False)
+         for a in (2 * math.pi * i / 8 for i in range(8))])
+    # The drop: its point up, its round end down (an arc from upper right, round the bottom, to upper left).
+    drop = [(0, 0.03)] + [(0.017 * math.cos(math.radians(60 - 300 * i / 15)), 0.017 * math.sin(math.radians(60 - 300 * i / 15)) - 0.006) for i in range(16)]
+    add('wish__drop', [outline('Drop', drop, 0.014, slot('gloss', '#3D6BD9'), y)])
+    star4 = [((0.03 if i % 2 == 0 else 0.009) * math.cos(math.pi / 2 + i * math.pi / 4), (0.03 if i % 2 == 0 else 0.009) * math.sin(math.pi / 2 + i * math.pi / 4)) for i in range(8)]
+    add('wish__sparkle', [outline('Sparkle', star4, 0.01, slot('gloss', '#C9A8FF'), y), b.ball('Sparkle eye', (0, y - 0.007, 0), (0.006, 0.004, 0.006), white, seg=10, shadow=False)])
+    # A size pip (the game sets one, two or four under the token, as a creature takes spaces in a tank).
+    add('wish__pip', [b.ball('Pip', (0, y, 0), (0.0095, 0.007, 0.0095), slot('gloss', G['C']['coral']), seg=12, shadow=False)])
+    # The heart a granted wish pops into.
+    heart = [(0.0042 * 16 * math.sin(t) ** 3, 0.0042 * (13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)))
+             for t in (2 * math.pi * i / 28 for i in range(28))]
+    add('wish__heart', [outline('Heart', heart, 0.026, slot('gloss', '#FF6F91'), 0.0)])
+    # The outlines (a heart, a drop, a sparkle) are not convex: split every face into triangles here, by ear clipping, so
+    # the game draws the shapes made rather than its own guess at them.
+    import bmesh
+    for m in meshes:
+        bm = bmesh.new(); bm.from_mesh(m.data)
+        bmesh.ops.triangulate(bm, faces=bm.faces[:], quad_method='BEAUTY', ngon_method='EAR_CLIP')
+        bm.to_mesh(m.data); bm.free()
+    keep = set(meshes)
+    for o in list(bpy.data.objects):
+        if o not in keep: bpy.data.objects.remove(o, do_unlink=True)
+    rec = export('PK_Wish', meshes)
+    clear()
+    return {'front': WISH_FRONT, 'iconRadius': WISH_ICON, 'trail': unity(WISH_TRAIL)}, rec
+
+
 # ---------------------------------------------------------------------------------------------------- build, export, record
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.context.scene.unit_settings.system = 'METRIC'
@@ -537,7 +624,7 @@ if (SOURCE / 'manifest.json').is_file():
     old = json.loads((SOURCE / 'manifest.json').read_text(encoding='utf-8'))
 kinds = dict(old.get('kinds', {}))
 records = {r['id']: r for r in old.get('assets', [])}
-head_info, held_info, hands_info, gags_info = old.get('head'), old.get('held'), old.get('hands'), old.get('gags')
+head_info, held_info, hands_info, gags_info, wish_info = old.get('head'), old.get('held'), old.get('hands'), old.get('gags'), old.get('wish')
 for kind in KINDS:
     if ONLY and 'Body_' + kind not in ONLY: continue
     info, rec = build_body(kind)
@@ -550,6 +637,8 @@ if not ONLY or 'Hands' in ONLY:
     hands_info, rec = build_hands(); records[rec['id']] = rec
 if not ONLY or 'Gags' in ONLY:
     gags_info, rec = build_gags(); records[rec['id']] = rec
+if not ONLY or 'Wish' in ONLY:
+    wish_info, rec = build_wish(); records[rec['id']] = rec
 slots = dict(old.get('materials', {})); slots.update(SLOTS)
 manifest = {
     'schema': 1, 'title': 'Evolution Shop people kit (GR-18): the new game\'s visitors, guests, helpers and the player\'s hands',
@@ -559,7 +648,7 @@ manifest = {
     'source_script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'builder_script': 'Tools/Art/gr18_characters.py', 'builder_script_sha256': hashlib.sha256(LIB.read_bytes()).hexdigest(),
     'axis_mapping': 'Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z',
-    'kinds': kinds, 'head': head_info, 'held': held_info, 'hands': hands_info, 'gags': gags_info,
+    'kinds': kinds, 'head': head_info, 'held': held_info, 'hands': hands_info, 'gags': gags_info, 'wish': wish_info,
     'materials': dict(sorted(slots.items())),
     'assets': [records[k] for k in sorted(records)],
 }
@@ -574,6 +663,7 @@ game = {'kinds': [dict(id=k, height=v['height'], hh=v['hh'], build=v['build'], g
         'hands': dict(forearm=hands_info['forearm'], bagCreature=hands_info['bagCreature'], tube=hands_info['tube'], band=hands_info['band'],
                       pipe=hands_info['pipe'], parts=sorted(records['PK_Hands']['parts'])),
         'gags': dict(starsRing=gags_info['starsRing'], parts=sorted(records['PK_Gags']['parts'])),
+        'wish': dict(front=wish_info['front'], iconRadius=wish_info['iconRadius'], trail=wish_info['trail'], parts=sorted(records['PK_Wish']['parts'])),
         'materials': [dict(name=n, kind=v['kind'], colour=v['colour']) for n, v in sorted(slots.items())]}
 (EXPORT / 'people.json').write_text(json.dumps(game, indent=1) + '\n', encoding='utf-8')
 print('PEOPLE_KIT_COMPLETE', len(records))

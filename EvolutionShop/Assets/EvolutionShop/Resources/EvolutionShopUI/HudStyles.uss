@@ -325,6 +325,11 @@
     background-color: rgba(138, 46, 26, 0.92);
 }
 
+/* GR-20: the wish of the visitor under the reticle. */
+.es-prompt--wish {
+    background-color: rgba(21, 110, 106, 0.92);
+}
+
 .es-prompt .es-keycap {
     margin-right: 6px;
 }

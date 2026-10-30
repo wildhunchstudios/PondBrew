@@ -1573,6 +1573,27 @@
    "head__mouth-wobble"
   ]
  },
+ "wish": {
+  "front": 0.062,
+  "iconRadius": 0.075,
+  "trail": [
+   0.17,
+   -0.185,
+   -0.0
+  ],
+  "parts": [
+   "wish__bubble",
+   "wish__drop",
+   "wish__fish-deep",
+   "wish__fish-plain",
+   "wish__fish-shimmer",
+   "wish__fish-sunny",
+   "wish__heart",
+   "wish__pip",
+   "wish__sparkle",
+   "wish__sun"
+  ]
+ },
  "materials": [
   {
    "name": "PK_cloth_15867F",
@@ -1815,6 +1836,11 @@
    "colour": "#22BFB0"
   },
   {
+   "name": "PK_gloss_233E96",
+   "kind": "gloss",
+   "colour": "#233E96"
+  },
+  {
    "name": "PK_gloss_2B3A55",
    "kind": "gloss",
    "colour": "#2B3A55"
@@ -1823,6 +1849,11 @@
    "name": "PK_gloss_3A2418",
    "kind": "gloss",
    "colour": "#3A2418"
+  },
+  {
+   "name": "PK_gloss_3D6BD9",
+   "kind": "gloss",
+   "colour": "#3D6BD9"
   },
   {
    "name": "PK_gloss_5C3A24",
@@ -1845,6 +1876,11 @@
    "colour": "#8A5A3B"
   },
   {
+   "name": "PK_gloss_9A78F2",
+   "kind": "gloss",
+   "colour": "#9A78F2"
+  },
+  {
    "name": "PK_gloss_9BDB4D",
    "kind": "gloss",
    "colour": "#9BDB4D"
@@ -1865,6 +1901,11 @@
    "colour": "BAND"
   },
   {
+   "name": "PK_gloss_C9A8FF",
+   "kind": "gloss",
+   "colour": "#C9A8FF"
+  },
+  {
    "name": "PK_gloss_E39A5A",
    "kind": "gloss",
    "colour": "#E39A5A"
@@ -1880,9 +1921,19 @@
    "colour": "#E8B53A"
   },
   {
+   "name": "PK_gloss_F08A24",
+   "kind": "gloss",
+   "colour": "#F08A24"
+  },
+  {
    "name": "PK_gloss_F4C04E",
    "kind": "gloss",
    "colour": "#F4C04E"
+  },
+  {
+   "name": "PK_gloss_FF6F91",
+   "kind": "gloss",
+   "colour": "#FF6F91"
   },
   {
    "name": "PK_gloss_FF7A7A",
@@ -1893,6 +1944,11 @@
    "name": "PK_gloss_FF9EC4",
    "kind": "gloss",
    "colour": "#FF9EC4"
+  },
+  {
+   "name": "PK_gloss_FFC23C",
+   "kind": "gloss",
+   "colour": "#FFC23C"
   },
   {
    "name": "PK_gloss_FFC93C",
@@ -1970,6 +2026,11 @@
    "colour": "#22BFB0"
   },
   {
+   "name": "PK_plastic_2B3A55",
+   "kind": "plastic",
+   "colour": "#2B3A55"
+  },
+  {
    "name": "PK_plastic_CFE6B4",
    "kind": "plastic",
    "colour": "#CFE6B4"
@@ -1983,6 +2044,11 @@
    "name": "PK_plastic_FFC93C",
    "kind": "plastic",
    "colour": "#FFC93C"
+  },
+  {
+   "name": "PK_plastic_FFFBF2",
+   "kind": "plastic",
+   "colour": "#FFFBF2"
   },
   {
    "name": "PK_skin_4A2A1C",

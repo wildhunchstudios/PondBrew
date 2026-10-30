@@ -39,6 +39,12 @@ namespace EvolutionShop
         float impatience;
         GrowthSpecimen bought;
         GrowthCreatureView bagged;
+        // GR-20: the visitor's wish, its bubble, and whether a sale granted it.
+        GrowthWish wish;
+        GrowthWishBubble bubble;
+        bool wishGranted;
+        /// <summary>Validation: the wish's bubble (null for a visitor without a wish).</summary>
+        public GrowthWishBubble Bubble => bubble;
         readonly GrowthPersonPose target = new GrowthPersonPose(), pose = new GrowthPersonPose();
         bool posed;
         /// <summary>The person drawn for this visitor (null in the greybox look).</summary>
@@ -123,6 +129,9 @@ namespace EvolutionShop
         public void Follow(GrowthVisitor v, GrowthShop shop, int index)
         {
             outcome = v.Outcome;
+            wish = v.Wish; wishGranted = v.WishGranted;
+            if (wish != null && bubble == null)
+                bubble = GrowthWishBubble.Create(transform, wish, person != null ? HeadTop() : 1.72f, v.Id);
             float patience = v.Type == GrowthShop.GuestType ? GrowthShop.GuestPatience : GrowthShop.QueuePatience;
             impatience = v.State == GrowthVisitorState.Queued ? Mathf.Clamp01(1 - v.Patience / patience) : 0;
             if (v.SpecimenId != 0 && (bought == null || bought.Id != v.SpecimenId))
@@ -180,6 +189,15 @@ namespace EvolutionShop
             Walked += moved;
             clock += dt;
             if (person != null) Animate(dt, moved, reduced);
+            // GR-20: the wish shows while they browse and queue; as they leave, a heart if a sale granted it.
+            if (bubble != null) bubble.Tick(dt, State == GrowthVisitorState.Browsing || State == GrowthVisitorState.Queued, wishGranted && State == GrowthVisitorState.Leaving, reduced, clock);
+        }
+
+        /// <summary>The top of the person's head above their feet (the head joint's height and its head above it).</summary>
+        float HeadTop()
+        {
+            var head = person.Joint("head");
+            return head != null ? head.position.y - transform.position.y + person.HeadHeight * 0.95f : 1.72f;
         }
 
         /// <summary>The person's pose for what the visitor is doing, blended in.</summary>

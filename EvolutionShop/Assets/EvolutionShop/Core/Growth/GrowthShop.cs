@@ -112,6 +112,10 @@ namespace EvolutionShop.Growth
         public int Order = -1;
         /// <summary>GR-18 wave 4: how many times the player slapped this visitor (§6.7; a casual visitor laughs off the first).</summary>
         public int Slaps;
+        /// <summary>GR-20: what an ordinary visitor wishes for (null for none, and for exhibition guests), and whether it was
+        /// granted by a sale or missed (the visit ended without it).</summary>
+        public GrowthWish Wish;
+        public bool WishGranted, WishMissed;
     }
 
     public sealed class GrowthMixEntry
@@ -145,7 +149,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated, WishGranted }
 
     public sealed class GrowthEvent
     {
@@ -168,6 +172,10 @@ namespace EvolutionShop.Growth
         /// <summary>GR-22: the player closed the shop before its time, with this much of the day left.</summary>
         public bool ClosedEarly;
         public float SecondsLeft;
+        /// <summary>GR-20: visitors who came in with a wish, those granted, the tips (counted in Revenue too), and what was
+        /// wished for and not granted, with how many wished for it.</summary>
+        public int Wishes, WishesGranted, Tips;
+        public readonly Dictionary<string, int> WishesMissed = new Dictionary<string, int>();
     }
 
     public sealed partial class GrowthShop
@@ -1209,10 +1217,15 @@ namespace EvolutionShop.Growth
             var type = types[0];
             foreach (var t in types) { if (roll < t.Weights[star]) { type = t; break; } roll -= t.Weights[star]; }
             var v = new GrowthVisitor { Id = nextId++, Type = type.Id, Budget = type.Budgets[star], State = GrowthVisitorState.Browsing };
+            // GR-20: what they wish for, fixed by the day and their place in it.
+            v.Wish = WishFor(v.Type, v.Budget, visitorsToday);
+            if (v.Wish != null && Today != null) Today.Wishes++;
             // GR-03: the visitor looks into the stocked containers one at a time, the most appealing first, then in an
             // order of their own; at most three. GR-11: a tank holding only creatures on exhibition display is passed by.
+            // GR-20: the tanks holding their wish first (they spot it through the glass).
             v.Plan.AddRange(ShopContainers.Where(c => c.Occupants.Any(s => !IsOnDisplay(s)))
-                .OrderByDescending(Appeal).ThenBy(c => Hash(v.Id * 977 + StableHash(c.Id))).Take(MostBrowsed).Select(c => c.Id));
+                .OrderByDescending(c => v.Wish != null && WishIn(v, c) != null ? 1 : 0)
+                .ThenByDescending(Appeal).ThenBy(c => Hash(v.Id * 977 + StableHash(c.Id))).Take(MostBrowsed).Select(c => c.Id));
             v.ContainerId = v.Plan.Count > 0 ? v.Plan[0] : null;
             // GR-10: the look counts from the door, so a visitor bound for a far tank has the time to walk there.
             if (v.ContainerId != null) v.BrowseFor = GrowthSpaces.FirstLook(Container(v.ContainerId).Place);
@@ -1263,6 +1276,9 @@ namespace EvolutionShop.Growth
                 var wanted = free.Where(s => s.Species == v.Wants && Price(s.Species) <= v.Budget).OrderBy(s => s.Id).FirstOrDefault();
                 return wanted == null ? null : new List<GrowthSpecimen> { wanted };
             }
+            // GR-20: what grants their wish, when this container holds it within their budget.
+            var wish = WishIn(v, c);
+            if (wish != null) return wish;
             if (v.Type == "collector" && Stars >= 3)
             {
                 var pair = free.GroupBy(s => s.Species).Where(g => g.Count() >= 2 && 2 * Price(g.Key) <= v.Budget * Tolerance(c, g.Key))
@@ -1303,6 +1319,7 @@ namespace EvolutionShop.Growth
                 if (s != null && s.ReservedBy == v.Id) s.ReservedBy = 0;
             }
             if (outcome != GrowthVisitOutcome.Bought) v.SpecimenIds.Clear();
+            if (outcome != GrowthVisitOutcome.Bought) MissWish(v);
             v.State = GrowthVisitorState.Leaving;
             v.Outcome = outcome;
             v.Clock = 0;
@@ -1363,7 +1380,11 @@ namespace EvolutionShop.Growth
             v.Outcome = GrowthVisitOutcome.Bought;
             v.Clock = 0;
             var first = bought[0];
-            Raise(GrowthEventKind.Sale, verb + (bought.Count > 1 ? "a pair of " + first.Def.Name + "s" : first.Def.Name) + " for " + price + " credits", first.Species, price);
+            // GR-20: a granted wish's tip and reputation point.
+            int tip = GrantWish(v, bought, price);
+            Raise(GrowthEventKind.Sale, verb + (bought.Count > 2 ? "a school of three " + Plural(first.Def.Name) : bought.Count > 1 ? "a pair of " + Plural(first.Def.Name) : first.Def.Name) + " for " + price + " credits" +
+                (tip > 0 ? ", a wish granted: a tip of " + tip : ""), first.Species, price);
+            if (tip > 0) Raise(GrowthEventKind.WishGranted, "A wish granted: " + v.Wish.Text + ", with a tip of " + tip + (tip == 1 ? " credit" : " credits"), first.Species, tip);
             if (v.Type == GuestType) GuestBuys(v);
             if (Stars > starsBefore) Raise(GrowthEventKind.StarUp, "The shop has " + Stars + " stars!", amount: Stars);
             CheckEra();

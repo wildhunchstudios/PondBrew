@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_people_kit.py",
-  "source_script_sha256": "1c17226d9593be370b308b1d7b272e2e36ce439df00aeedde18efc1613409d09",
+  "source_script_sha256": "54a132484717fc07dd6043a2eb4e8ce768d5a09f5d7c0095a51485d12bcdd85b",
   "builder_script": "Tools/Art/gr18_characters.py",
   "builder_script_sha256": "d52edffe3caf9e3a4f341791c29ee96ea0caf63e9dc45f81dcbb5f147d2f2ac7",
   "axis_mapping": "Blender (x, y, z) -> Unity (-x, z, -y); people face Unity +Z",
@@ -1187,6 +1187,15 @@
   "gags": {
     "starsRing": 0.15
   },
+  "wish": {
+    "front": 0.062,
+    "iconRadius": 0.075,
+    "trail": [
+      0.17,
+      -0.185,
+      -0.0
+    ]
+  },
   "materials": {
     "PK_cloth_15867F": {
       "kind": "cloth",
@@ -1380,6 +1389,10 @@
       "kind": "gloss",
       "colour": "#22BFB0"
     },
+    "PK_gloss_233E96": {
+      "kind": "gloss",
+      "colour": "#233E96"
+    },
     "PK_gloss_2B3A55": {
       "kind": "gloss",
       "colour": "#2B3A55"
@@ -1387,6 +1400,10 @@
     "PK_gloss_3A2418": {
       "kind": "gloss",
       "colour": "#3A2418"
+    },
+    "PK_gloss_3D6BD9": {
+      "kind": "gloss",
+      "colour": "#3D6BD9"
     },
     "PK_gloss_5C3A24": {
       "kind": "gloss",
@@ -1404,6 +1421,10 @@
       "kind": "gloss",
       "colour": "#8A5A3B"
     },
+    "PK_gloss_9A78F2": {
+      "kind": "gloss",
+      "colour": "#9A78F2"
+    },
     "PK_gloss_9BDB4D": {
       "kind": "gloss",
       "colour": "#9BDB4D"
@@ -1420,6 +1441,10 @@
       "kind": "gloss",
       "colour": "BAND"
     },
+    "PK_gloss_C9A8FF": {
+      "kind": "gloss",
+      "colour": "#C9A8FF"
+    },
     "PK_gloss_E39A5A": {
       "kind": "gloss",
       "colour": "#E39A5A"
@@ -1432,9 +1457,17 @@
       "kind": "gloss",
       "colour": "#E8B53A"
     },
+    "PK_gloss_F08A24": {
+      "kind": "gloss",
+      "colour": "#F08A24"
+    },
     "PK_gloss_F4C04E": {
       "kind": "gloss",
       "colour": "#F4C04E"
+    },
+    "PK_gloss_FF6F91": {
+      "kind": "gloss",
+      "colour": "#FF6F91"
     },
     "PK_gloss_FF7A7A": {
       "kind": "gloss",
@@ -1443,6 +1476,10 @@
     "PK_gloss_FF9EC4": {
       "kind": "gloss",
       "colour": "#FF9EC4"
+    },
+    "PK_gloss_FFC23C": {
+      "kind": "gloss",
+      "colour": "#FFC23C"
     },
     "PK_gloss_FFC93C": {
       "kind": "gloss",
@@ -1504,6 +1541,10 @@
       "kind": "plastic",
       "colour": "#22BFB0"
     },
+    "PK_plastic_2B3A55": {
+      "kind": "plastic",
+      "colour": "#2B3A55"
+    },
     "PK_plastic_CFE6B4": {
       "kind": "plastic",
       "colour": "#CFE6B4"
@@ -1515,6 +1556,10 @@
     "PK_plastic_FFC93C": {
       "kind": "plastic",
       "colour": "#FFC93C"
+    },
+    "PK_plastic_FFFBF2": {
+      "kind": "plastic",
+      "colour": "#FFFBF2"
     },
     "PK_skin_4A2A1C": {
       "kind": "skin",
@@ -1899,6 +1944,25 @@
         "pipette__R": 544,
         "program__L": 216,
         "program__R": 216
+      }
+    },
+    {
+      "id": "PK_Wish",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/PeopleKit/PK_Wish.fbx",
+      "sha256": "827a40b8c9c53bd20964aae96e154b6d4214e73ca063f3bfe39223cc49ba782d",
+      "bytes": 292300,
+      "triangles": 11394,
+      "parts": {
+        "wish__bubble": 6422,
+        "wish__drop": 300,
+        "wish__fish-deep": 618,
+        "wish__fish-plain": 618,
+        "wish__fish-shimmer": 858,
+        "wish__fish-sunny": 618,
+        "wish__heart": 700,
+        "wish__pip": 80,
+        "wish__sparkle": 460,
+        "wish__sun": 720
       }
     }
   ]

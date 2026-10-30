@@ -22,11 +22,11 @@ namespace EvolutionShop
         UIDocument document;
         PanelSettings settings;
         ShopUiTheme theme;
-        VisualElement root, hud, cardLayer, screenLayer, promptBox, promptProgress, card, dayIcon, nextBox, carryBox, toastBox, eventBox, modeBox, modeLay, slapBox, captionBox;
+        VisualElement root, hud, cardLayer, screenLayer, promptBox, promptProgress, card, dayIcon, nextBox, carryBox, toastBox, eventBox, modeBox, modeLay, slapBox, captionBox, wishBox;
         readonly List<VisualElement> stars = new List<VisualElement>();
         bool nextShown;
         int nextRemeasure;
-        Label dayLabel, clockLabel, creditsLabel, rpLabel, nextLabel, promptName, promptStatus, siphonLabel, carryLabel, hintLabel, toastLabel, eventLabel, modeTitle, modeDetail, slapKey, slapName, slapWho, captionWho, captionText;
+        Label dayLabel, clockLabel, creditsLabel, rpLabel, nextLabel, promptName, promptStatus, siphonLabel, carryLabel, hintLabel, toastLabel, eventLabel, modeTitle, modeDetail, slapKey, slapName, slapWho, captionWho, captionText, wishName, wishWho;
         TextElement liveLabel;
         Texture2D dayTexture;
         float hintUntil, toastUntil, eventUntil, refreshClock;
@@ -157,6 +157,12 @@ namespace EvolutionShop
             slapBox.Add(slapKey); slapBox.Add(slapName); slapBox.Add(slapWho);
             slapBox.style.display = DisplayStyle.None;
             prompts.Add(slapBox);
+            // GR-20: the wish of the visitor under the reticle.
+            wishBox = Box("es-prompt", "es-prompt--wish");
+            wishName = L("", "es-prompt__name"); wishWho = L("", "es-prompt__status");
+            wishBox.Add(wishName); wishBox.Add(wishWho);
+            wishBox.style.display = DisplayStyle.None;
+            prompts.Add(wishBox);
             hintLabel = Text(""); hintLabel.style.color = new Color(1f, 0.92f, 0.75f); hintLabel.style.fontSize = 18; hintLabel.style.marginLeft = 8;
             prompts.Add(hintLabel);
             // GR-13: pipe and chute placement as a mode bar at the bottom: what is being laid, its length and price, and the keys.
@@ -265,6 +271,15 @@ namespace EvolutionShop
                 slapKey.text = GrowthGags.KeyName(s.SlapKey);
                 slapWho.text = "the " + GrowthShop.TypeName(shop.Visitors.FirstOrDefault(v => v.Id == slapAt.VisitorId)?.Type).ToLowerInvariant();
             }
+            // GR-20: the wish of the visitor under the reticle, while they browse or queue.
+            var lookedAt = free && !piping && s.Gags != null && s.Gags.LookedAt != null ? shop.Visitors.FirstOrDefault(v => v.Id == s.Gags.LookedAt.VisitorId) : null;
+            bool wishing = lookedAt?.Wish != null && lookedAt.State != GrowthVisitorState.Leaving;
+            wishBox.style.display = wishing ? DisplayStyle.Flex : DisplayStyle.None;
+            if (wishing)
+            {
+                wishName.text = "Wishes for " + lookedAt.Wish.Text;
+                wishWho.text = GrowthShop.TypeName(lookedAt.Type) + (shop.WouldGrant(lookedAt) ? " · has found it: a tip of " + GrowthWishes.Tip(shop.ReservedPrice(lookedAt)) : "");
+            }
             if (Time.unscaledTime > hintUntil) hintLabel.text = "";
             if (Time.unscaledTime > eventUntil) eventBox.style.display = DisplayStyle.None;
             if (Time.unscaledTime > toastUntil) toastBox.style.display = DisplayStyle.None;
@@ -300,6 +315,8 @@ namespace EvolutionShop
         public string CaptionShown => Ready && captionBox.style.display == DisplayStyle.Flex ? (captionWho.text.Length > 0 ? captionWho.text + ": " : "") + captionText.text : null;
         /// <summary>Validation: whether the slap's prompt shows, and its key.</summary>
         public bool SlapPromptShown => Ready && slapBox.style.display == DisplayStyle.Flex;
+        /// <summary>Validation (GR-20): the wish line under the reticle ("Wishes for a Pondlet · Casual visitor"), or null.</summary>
+        public string WishShown => Ready && wishBox.style.display == DisplayStyle.Flex ? wishName.text + " · " + wishWho.text : null;
         public string SlapPromptKey => Ready ? slapKey.text : null;
 
         /// <summary>A note: one at a time at the top, the newest replacing the last (every note stays in <see cref="Log"/>).</summary>
@@ -320,6 +337,8 @@ namespace EvolutionShop
                 case GrowthEventKind.Collected:
                 case GrowthEventKind.Pumped:
                 case GrowthEventKind.Sorted: return;
+                // GR-20: the sale's own note says the wish was granted; this one is for the log.
+                case GrowthEventKind.WishGranted: Log.Add(e.Text); return;
                 case GrowthEventKind.Discovery:
                 case GrowthEventKind.EraUp:
                 case GrowthEventKind.StarUp:
@@ -1007,10 +1026,11 @@ namespace EvolutionShop
                 body.Add(Eyebrow("Waiting · " + shop.Queue.Count()));
                 foreach (var v in shop.Queue.OrderByDescending(x => x.Clock).ThenBy(x => x.Id))
                 {
-                    var spec = shop.Stock.FirstOrDefault(x => x.Id == v.SpecimenId);
                     var patience = Bar(v.Patience / (v.Type == GrowthShop.GuestType ? GrowthShop.GuestPatience : GrowthShop.QueuePatience), new Color(0.98f, 0.78f, 0.37f));
                     patience.style.width = 120; patience.tooltip = "Patience: " + Mathf.CeilToInt(v.Patience) + " s";
-                    body.Add(Item(Visitor(v.Type), "wants a " + (spec?.Def.Name ?? "?") + " · " + (spec == null ? 0 : shop.Price(spec.Species)) + " cr", patience));
+                    // GR-20: their wish, granted by this sale (with its tip) or not.
+                    string wish = v.Wish == null ? "" : shop.WouldGrant(v) ? " · their wish: a tip of " + GrowthWishes.Tip(shop.ReservedPrice(v)) : " · wished for " + v.Wish.Text;
+                    body.Add(Item(Visitor(v.Type), "wants " + shop.ReservedText(v) + " · " + shop.ReservedPrice(v) + " cr" + wish, patience));
                 }
                 if (!shop.Queue.Any()) body.Add(L("No one is waiting.", "gr-hint"));
                 CloseEarlySection(body);
@@ -1474,9 +1494,20 @@ namespace EvolutionShop
                 if (d.Slapped > 0) chips.Add(Chip(d.Slapped + " left after a slap", true));
                 if (d.LaughedOff > 0) chips.Add(Chip(d.LaughedOff + " laughed off a slap"));
                 if (d.ClosedEarly) chips.Add(Chip("Closed with " + GrowthShop.ClockText(d.SecondsLeft) + " to go"));
+                if (d.Wishes > 0) chips.Add(Chip(d.WishesGranted + " of " + d.Wishes + (d.Wishes == 1 ? " wish" : " wishes") + " granted"));
+                if (d.Tips > 0) chips.Add(Chip(d.Tips + " credits in tips"));
                 stats.Add(chips);
                 stats.Add(L(d.Visitors + " visitors came in and " + d.Sales + " bought, for " + d.Revenue + " credits.", "gr-hint"));
                 if (d.WalkedPast > 0) stats.Add(L("More creatures, more sales: " + d.WalkedPast + " more looked in while your tanks were empty.", "gr-hint"));
+                // GR-20: what visitors wished for and did not get, the most wished first, to stock tonight.
+                if (d.WishesMissed.Count > 0)
+                {
+                    var missed = d.WishesMissed.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, System.StringComparer.Ordinal).Take(4)
+                        .Select(kv => kv.Key + (kv.Value > 1 ? " (" + kv.Value + ")" : ""));
+                    var line = L("Wished for and not granted: " + string.Join(", ", missed) + ". A granted wish tips a quarter more and earns a reputation point.", "gr-hint");
+                    line.name = "gr-receipt-wishes";
+                    stats.Add(line);
+                }
                 var rep = L("Reputation " + (d.ReputationGained >= 0 ? "+" : "") + d.ReputationGained + " · " + StarsText(d.StarsAfter) + (d.StarsAfter > d.StarsBefore ? " — a new star!" : ""), "gr-strong");
                 rep.style.marginTop = 10;
                 stats.Add(rep);

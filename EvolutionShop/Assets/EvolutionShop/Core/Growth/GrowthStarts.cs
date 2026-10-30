@@ -12,9 +12,9 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look", Decor = "decor";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look", Decor = "decor", Wishes = "wishes";
 
-        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : id == Decor ? DecorStart() : null;
+        public static GrowthShop Make(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : id == Decor ? DecorStart() : id == Wishes ? WishesStart() : null;
 
         /// <summary>GR-12's families (waves 1 to 4: all nine), shown in the AD look.</summary>
         public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale", "gloamer", "cometail" };
@@ -91,6 +91,23 @@ namespace EvolutionShop.Growth
                 shop.DecorOwned.AddRange(GrowthContent.Decor.Select(d => d.Id));
                 shop.ContainerAt("a1").Decor = "reeds"; shop.ContainerAt("b1").Decor = "volcano"; b2.Decor = "lighthouse";
             }
+            shop.TakeEvents();
+            return shop;
+        }
+
+        /// <summary>GR-20's look at visitors' wishes (Docs/Evidence/gr-20/LOOK.md): the decor start, furnished (4 stars, so every
+        /// kind of visitor comes and pairs and schools are wished for; the Brookkin, Sparkline and Cinderling discovered, small
+        /// and medium), with colours made and on show: a Sunny Pondlet in a1's school, a Shimmer Ribbonfin beside a2's, and the
+        /// Deep Bubblebelly in the journal; an Emberpuff (medium) in a3 with the Brookkin hybrids; and 6,000 credits.</summary>
+        public static GrowthShop WishesStart()
+        {
+            var shop = DecorStart();
+            foreach (var (species, colour) in new[] { ("pondlet", Colour.Sunny), ("bubblebelly", Colour.Deep), ("ribbonfin", Colour.Shimmer) })
+                if (!shop.Journal.Contains(GrowthShop.JournalKey(species, colour))) shop.Journal.Add(GrowthShop.JournalKey(species, colour));
+            shop.ContainerAt("a1").Occupants.First(o => o.Species == "pondlet").Colour = Colour.Sunny;
+            Stock(shop, "a2", "ribbonfin", Colour.Shimmer);
+            Stock(shop, "a3", "emberpuff", Colour.Classic);
+            shop.Credits = 6000;
             shop.TakeEvents();
             return shop;
         }
