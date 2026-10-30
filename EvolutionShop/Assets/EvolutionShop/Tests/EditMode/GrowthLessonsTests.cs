@@ -104,17 +104,36 @@ namespace EvolutionShop.Tests
         [Test]
         public void ASystemAlreadyUsedIsNeverTaught()
         {
-            // Used before the shop's tick noticed it (a card could open just after): its lesson is passed by. The pinboard's
-            // lesson stays there to be met after it is used, so only this rule passes it by.
+            // Used before the shop's tick noticed it (a card could open just after): its lesson is passed by. Décor's lesson stays
+            // there to be met after a piece is put on a tank, so only this rule passes it by.
             var shop = Fresh();
-            shop.LessonsLearned.UnionWith(new[] { "upgrades", "tanks" });
-            shop.Note("board");
-            Assert.That(shop.LessonsLearned, Does.Not.Contain("goals"), "not yet noticed");
-            Assert.That(GrowthLessons.Get("goals").Appears(shop), Is.True, "its system is still there");
-            Assert.That(shop.LessonDue()?.Id, Is.EqualTo("journal"), "the pinboard's lesson passed by: it has been opened");
+            shop.Era = 2; shop.Reputation = GrowthContent.StarThresholds[1] + 5;
+            shop.LessonsLearned.UnionWith(GrowthLessons.All.TakeWhile(l => l.Id != "decor").Select(l => l.Id));
+            shop.ShopContainers.First().Decor = "reeds";
+            Assert.That(shop.LessonsLearned, Does.Not.Contain("decor"), "not yet noticed");
+            Assert.That(GrowthLessons.Get("decor").Appears(shop), Is.True, "its system is still there");
+            Assert.That(shop.LessonDue(), Is.Null, "décor's lesson passed by: a piece is on a tank (and nothing else is due)");
             shop.Tick(0.05f);
-            Assert.That(shop.LessonsLearned, Does.Contain("goals"), "the tick learns it, with no note (it was never met)");
+            Assert.That(shop.LessonsLearned, Does.Contain("decor"), "the tick learns it, with no note (it was never met)");
             Assert.That(shop.TakeEvents().Any(e => e.Kind == GrowthEventKind.Lesson), Is.False);
+        }
+
+        [Test]
+        public void ANoteLearnsItsLessonAtOnce()
+        {
+            // The journal pauses the shop: opening it learns its lesson then, so a save made as it closes has it.
+            var shop = Fresh();
+            shop.LessonsLearned.UnionWith(new[] { "upgrades", "tanks", "goals" });
+            shop.MeetLesson("journal");
+            shop.Note("journal");
+            Assert.That(shop.LessonsLearned, Does.Contain("journal"), "learned as it is opened");
+            Assert.That(shop.LessonNow, Is.Null);
+            Assert.That(shop.TakeEvents().Any(e => e.Kind == GrowthEventKind.Lesson && e.Text.Contains("Your journal")), Is.True, "with its note");
+            var again = GrowthShop.Restore(shop.Snapshot(), out string problem);
+            Assert.That(problem, Is.Null);
+            var learned = again.LessonsLearned.ToList();
+            again.Tick(0.05f);
+            Assert.That(again.LessonsLearned, Is.EqualTo(learned), "reloaded, its first tick changes nothing of the lessons");
         }
 
         [Test]

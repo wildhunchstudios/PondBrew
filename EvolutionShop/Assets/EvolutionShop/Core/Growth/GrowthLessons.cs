@@ -551,8 +551,13 @@ namespace EvolutionShop.Growth
         /// <summary>R09.4: lessons off (the setting; the session keeps it from the settings).</summary>
         public bool LessonsOff;
 
-        /// <summary>R09.4: marks something done that the lessons read (opening the pinboard or the journal, an order, a vial, a wish).</summary>
-        public void Note(string what) => Noted.Add(what);
+        /// <summary>R09.4: marks something done that the lessons read (opening the pinboard or the journal, an order, a vial, a wish),
+        /// and learns its lesson at once: the pinboard and the journal pause the shop, so its tick would come only after them
+        /// (and a save made as one closes would miss it).</summary>
+        public void Note(string what)
+        {
+            if (Noted.Add(what)) TickLessons();
+        }
 
         /// <summary>R09.4: lessons run once the guided first night is over (or there was none), and while the setting allows.</summary>
         bool LessonsRun => Guide != GrowthGuideMode.On && !LessonsOff;
