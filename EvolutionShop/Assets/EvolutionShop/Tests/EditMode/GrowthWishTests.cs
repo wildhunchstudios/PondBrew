@@ -197,6 +197,14 @@ namespace EvolutionShop.Tests
             Assert.That((shop.Credits, shop.Reputation), Is.EqualTo((credits + GrowthContent.Get("ribbonfin").Price, rep + GrowthContent.RepPerSale)));
             Assert.That(settled.WishMissed && !settled.WishGranted, Is.True);
             Assert.That(shop.TakeEvents().Any(e => e.Kind == GrowthEventKind.WishGranted), Is.False);
+            // A visit that ends unsold (tired of waiting): the wish missed, and the day says what was wished for.
+            var tired = Visitor("casual", 30, new GrowthWish { Kind = WishKind.Species, Species = "pondlet" });
+            tired.State = GrowthVisitorState.Queued; tired.Patience = 0.05f;
+            Assert.That(shop.ReserveAll(tired, new List<GrowthSpecimen> { Stock(shop, tank, "pondlet") }), Is.True);
+            shop.Visitors.Add(tired);
+            shop.Tick(0.1f);
+            Assert.That(tired.Outcome == GrowthVisitOutcome.TiredOfWaiting && tired.WishMissed && !tired.WishGranted, Is.True, "tired of waiting: the wish missed");
+            Assert.That(shop.Today.WishesMissed.TryGetValue("a Pondlet", out int missedPondlets) && missedPondlets >= 1, Is.True, "the day lists it");
             // Pip's sale grants it too.
             var pipShop = new GrowthShop { Era = 4, Reputation = GrowthContent.StarThresholds[3] + 10, Credits = 50000, Rp = 500, SalesTotal = GrowthContent.PipSalesGate };
             pipShop.Discovered.Add("pondlet");
