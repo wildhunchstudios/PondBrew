@@ -159,6 +159,14 @@ namespace EvolutionShop
                 yield return Shot(shot++ + "-bubble-" + content.Replace(':', '-').ToLowerInvariant());
             }
 
+            // ---- the frame budget with the bubbles in view (uncapped, as the other routes measure)
+            int previousRate = Application.targetFrameRate, previousVSync = QualitySettings.vSyncCount;
+            Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
+            yield return Measure("614-wishes-bubbles", new Vector3(1.25f, 0, -1.9f), new Vector3(0.6f, 1.8f, 1.9f), 6);
+            Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
+            int inView = staged.Count(v => ViewOf(v).Bubble.BubbleTransform.GetComponentsInChildren<Renderer>().Any(r => r.isVisible));
+            Check(inView >= 3, "The measure's view has " + inView + " of the five bubbles in it");
+
             // ---- the size and pair wishes decided (the counter's queue holds two) and served: tips, points, notes, a heart, a chime
             foreach (var v in new[] { size, pair }) { v.BrowseFor = v.Clock + 0.05f; s.Advance(0.1f); yield return null; }
             Check(new[] { size, pair }.All(v => v.State == GrowthVisitorState.Queued && shop.WouldGrant(v)) && shop.Reserved(size).Single().Species == "pebblejaw" &&
@@ -187,7 +195,9 @@ namespace EvolutionShop
                 "The sale's note says the wish was granted, with its tip");
             Check(ViewOf(first).Bubble.Content == "heart" && ViewOf(first).Bubble.HeartShown, "The bubble pops into a heart");
             Check(s.Audio.Chimes == chimes + 1, "A chime by the visitor (" + s.Audio.Chimes + ")");
-            LookAt(GrowthWorld.CounterPosition + new Vector3(0.2f, 0, -0.95f), ViewOf(first).transform.position + Vector3.up * 2.5f);
+            LookAt(new Vector3(1.25f, 0, -1.9f), ViewOf(first).transform.position + Vector3.up * 1.7f);
+            yield return new WaitForSeconds(0.2f);
+            Check(ViewOf(first).Bubble.HeartShown, "The heart still rising as the view turns to it");
             yield return Shot("610-wish-granted-heart");
             for (int i = 0; i < 200 && !(pair.WishGranted && size.WishGranted); i++) { s.Advance(0.1f); if (shop.FrontOfQueue != null) shop.Serve(0.5f); if (i % 5 == 0) yield return null; }
             Check(size.WishGranted && pair.WishGranted, "Both served, each wish granted");

@@ -22,6 +22,8 @@ namespace EvolutionShop
         public const float Above = 0.27f, Aside = 0.16f;
         /// <summary>Seconds to pop in, to shrink away, and for a granted wish's heart.</summary>
         public const float PopIn = 0.25f, ShrinkAway = 0.35f, HeartSeconds = 1.0f;
+        /// <summary>The heart's size against the kit's (about half the cloud's width at its fullest).</summary>
+        public const float HeartSize = 1.8f;
 
         GrowthWish wish;
         Transform bubble, content, heart;
@@ -168,7 +170,7 @@ namespace EvolutionShop
                 scale = Mathf.MoveTowards(scale, 0, dt / 0.2f);
                 heart.gameObject.SetActive(k < 1);
                 float pop = k < 0.2f ? Mathf.Lerp(0.2f, 1.25f, k / 0.2f) : Mathf.Lerp(1.25f, 0.9f, Mathf.Clamp01((k - 0.2f) / 0.3f));
-                heart.localScale = Vector3.one * (k > 0.75f ? pop * (1 - (k - 0.75f) / 0.25f) : pop);
+                heart.localScale = Vector3.one * HeartSize * (k > 0.75f ? pop * (1 - (k - 0.75f) / 0.25f) : pop);
                 if (k < 1) Content = "heart";
             }
             else scale = Mathf.MoveTowards(scale, wanted ? 1 : 0, dt / (wanted ? PopIn : ShrinkAway));
