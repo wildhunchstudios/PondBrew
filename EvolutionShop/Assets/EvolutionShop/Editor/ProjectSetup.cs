@@ -177,12 +177,14 @@ namespace EvolutionShop.Editor
                 buildDirectory += "-" + revision;
             }
             Directory.CreateDirectory(buildDirectory);
+            // GR-28: -evolutionRelease builds a non-development player (no validation routes, no F8 crate) for testers.
+            bool release = ShopSession.Arg("-evolutionRelease") != null;
             var options = new BuildPlayerOptions
             {
                 scenes = new[] {ScenePath},
                 locationPathName = Path.Combine(buildDirectory, "EvolutionShop.exe"),
                 target = BuildTarget.StandaloneWindows64,
-                options = BuildOptions.Development
+                options = release ? BuildOptions.None : BuildOptions.Development
             };
             var report = BuildPipeline.BuildPlayer(options);
             Directory.CreateDirectory("../Docs/Evidence");

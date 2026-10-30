@@ -664,9 +664,12 @@ namespace EvolutionShop
                 else if (Card == GrowthCard.Menu) { } // GR-27: the main menu is where the game starts: Esc does not leave it
                 else SetCard(GrowthCard.None);
             }
-            // GR-03 (development): F8 opens the crate of every species, for looking at sizes and families.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // GR-03 (development): F8 opens the crate of every species, for looking at sizes and families. GR-28: development
+            // builds only, so a tester's (non-development) player never has it.
             else if (keyboard != null && keyboard.f8Key.wasPressedThisFrame && (Card == GrowthCard.None || Card == GrowthCard.Crate))
                 SetCard(Card == GrowthCard.Crate ? GrowthCard.None : GrowthCard.Crate);
+#endif
             else if (GrowthControls.Pressed(GrowthAction.Journal) && (Card == GrowthCard.None || Card == GrowthCard.Journal))
                 SetCard(Card == GrowthCard.Journal ? GrowthCard.None : GrowthCard.Journal);
             Player.Sensitivity = Sensitivity;
