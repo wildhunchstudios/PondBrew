@@ -35,17 +35,18 @@ namespace EvolutionShop.Tests
         public void CrownsFirstThenTheNewestOneOfEachFamilyFirst()
         {
             var shop = new GrowthShop();
-            // Found in this order: three Brookkin, then a Sparkline, then the Brookkin crown.
+            // Found in this order: the Brookkin crown (the oldest find), a Sparkline, then three more Brookkin. The crown still
+            // comes first, and the Sparkline before the newer Brookkin: one of each family before a second of any.
             var brook = GrowthContent.Species.Where(x => x.Family == "brookkin").ToList();
             var crown = brook.First(x => x.Kind == SpeciesKind.Crown);
             var others = brook.Where(x => x.Kind != SpeciesKind.Crown).Take(3).ToList();
             var spark = GrowthContent.Species.First(x => x.Family != "brookkin");
-            foreach (var x in others) shop.Discovered.Add(x.Id);
-            shop.Discovered.Add(spark.Id);
             shop.Discovered.Add(crown.Id);
+            shop.Discovered.Add(spark.Id);
+            foreach (var x in others) shop.Discovered.Add(x.Id);
             var showcase = GrowthMenu.Showcase(shop).Select(x => x.species).ToList();
-            Assert.That(showcase[0], Is.EqualTo(crown.Id), "the crown first");
-            Assert.That(showcase[1], Is.EqualTo(spark.Id), "then the newest of another family, before a second Brookkin");
+            Assert.That(showcase[0], Is.EqualTo(crown.Id), "the crown first, though the oldest find");
+            Assert.That(showcase[1], Is.EqualTo(spark.Id), "then another family, before a second Brookkin though they are newer");
             Assert.That(showcase.Skip(2), Is.EqualTo(others.Select(x => x.Id).Reverse()), "then the rest, newest first");
             Assert.That(showcase.Count, Is.EqualTo(5), "only what is found");
         }
