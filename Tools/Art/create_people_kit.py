@@ -149,7 +149,38 @@ def bake(objs, name):
     if len(sel) > 1: bpy.ops.object.join()
     m = bpy.context.view_layer.objects.active
     m.name = name; m.data.name = name
+    outward(m)
     return m
+
+
+def outward(m):
+    """GR-24: turns each closed piece (every edge between two faces) whose faces point inward the right way out (the wish's
+    heart, drop and sparkle, the dizzy stars and the rosette's ribbon tails were inside out, so lit from the wrong side)."""
+    import bmesh
+    bm = bmesh.new(); bm.from_mesh(m.data)
+    seen, flip = set(), []
+    for f0 in bm.faces:
+        if f0.index in seen: continue
+        stack, faces = [f0], []
+        seen.add(f0.index)
+        while stack:
+            f = stack.pop(); faces.append(f)
+            for e in f.edges:
+                for h in e.link_faces:
+                    if h.index not in seen: seen.add(h.index); stack.append(h)
+        if any(len(e.link_faces) != 2 for f in faces for e in f.edges): continue
+        c = sum((v.co for f in faces for v in f.verts), Vector()) / sum(len(f.verts) for f in faces)
+        vol = 0.0
+        for f in faces:
+            a = f.verts[0].co - c
+            for j in range(1, len(f.verts) - 1):
+                vol += a.dot((f.verts[j].co - c).cross(f.verts[j + 1].co - c)) / 6
+        if vol < -1e-12: flip += faces
+    if flip:
+        bmesh.ops.reverse_faces(bm, faces=flip)
+        bm.to_mesh(m.data)
+        print('PK_TURNED_OUT', m.name, len(flip))
+    bm.free()
 
 
 def clear():
@@ -596,7 +627,8 @@ def build_wish():
     star4 = [((0.03 if i % 2 == 0 else 0.009) * math.cos(math.pi / 2 + i * math.pi / 4), (0.03 if i % 2 == 0 else 0.009) * math.sin(math.pi / 2 + i * math.pi / 4)) for i in range(8)]
     add('wish__sparkle', [outline('Sparkle', star4, 0.01, slot('gloss', '#C9A8FF'), y), b.ball('Sparkle eye', (0, y - 0.007, 0), (0.006, 0.004, 0.006), white, seg=10, shadow=False)])
     # A size pip (the game sets one, two or four under the token, as a creature takes spaces in a tank).
-    add('wish__pip', [b.ball('Pip', (0, y, 0), (0.0095, 0.007, 0.0095), slot('gloss', G['C']['coral']), seg=12, shadow=False)])
+    # GR-24: a little gold diamond (two red dots under the fish read as its nostrils).
+    add('wish__pip', [b.box('Pip', (0, y, 0), (0.013, 0.006, 0.013), slot('gloss', '#F4C04E'), r=0.002, rot=(0, 45, 0))])
     # The heart a granted wish pops into.
     heart = [(0.0042 * 16 * math.sin(t) ** 3, 0.0042 * (13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)))
              for t in (2 * math.pi * i / 28 for i in range(28))]

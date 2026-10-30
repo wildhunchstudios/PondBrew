@@ -1871,6 +1871,11 @@
    "colour": "#7A4A2E"
   },
   {
+   "name": "PK_gloss_7FE3D6",
+   "kind": "gloss",
+   "colour": "#7FE3D6"
+  },
+  {
    "name": "PK_gloss_8A5A3B",
    "kind": "gloss",
    "colour": "#8A5A3B"
@@ -1924,6 +1929,11 @@
    "name": "PK_gloss_F08A24",
    "kind": "gloss",
    "colour": "#F08A24"
+  },
+  {
+   "name": "PK_gloss_F2F5F2",
+   "kind": "gloss",
+   "colour": "#F2F5F2"
   },
   {
    "name": "PK_gloss_F4C04E",

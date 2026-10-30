@@ -39,6 +39,30 @@ namespace EvolutionShop
         public int BuiltBuffers => bufferViews.Count;
         public bool PumpStanding(string culture) => pumps.ContainsKey(culture);
         public int GeneratorLookLevel => generatorLevel;
+
+        /// <summary>GR-25: where the generator's effects come from, in the world: the foot of each glass column of a turbine, just
+        /// over its collar (none for the hand crank), its lamp on the housing's front, and the top of the tide engine's drum
+        /// (level 4 only). Its columns are the kit's: 0.5 apart, their glass from 0.84 to 1.76 high.</summary>
+        public IEnumerable<Vector3> GeneratorColumnFeet()
+        {
+            if (generatorRoot == null || generatorLevel < 2) yield break;
+            int columns = generatorLevel >= 4 ? 3 : generatorLevel == 3 ? 2 : 1;
+            for (int k = 0; k < columns; k++) yield return generatorRoot.TransformPoint(new Vector3((k - (columns - 1) * 0.5f) * 0.5f, 0.9f, 0));
+        }
+        public Vector3 GeneratorLamp => generatorRoot != null && generatorLevel >= 2
+            ? generatorRoot.TransformPoint(new Vector3(0.28f + 0.22f * ((generatorLevel >= 4 ? 3 : generatorLevel == 3 ? 2 : 1) - 1), 0.72f, 0.34f)) : GeneratorPlace;
+        public bool GeneratorDrum(out Vector3 at)
+        {
+            at = generatorRoot != null ? generatorRoot.TransformPoint(new Vector3(0, 0.83f, -0.32f)) : default;
+            return generatorRoot != null && generatorLevel >= 4;
+        }
+
+        /// <summary>GR-25: each electric pump's motor, in the world, with the culture it pumps (hand pumps have none).</summary>
+        public IEnumerable<(string culture, Vector3 motor)> PumpMotors()
+        {
+            foreach (var kv in pumps)
+                if (kv.Value.root != null && kv.Value.wheel == null) yield return (kv.Key, kv.Value.root.TransformPoint(new Vector3(0, 0.04f, 0.14f)));
+        }
         /// <summary>GR-16 wave 5: where the generator stands now (the annex, or the workshop from level 3), for its hum.</summary>
         public Vector3 GeneratorPlace => generatorRoot != null ? generatorRoot.position : GeneratorPosition;
         public bool GhostShowing => ghostRoot != null && ghostRoot.childCount > 0;

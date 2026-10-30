@@ -198,6 +198,7 @@ def person(b, spec, name):
     rig.tz = (top + bot) / 2 + 0.03 * hh
     rig.trz = torso_h / 2 + 0.06 * hh
     rig.tt, rig.tb = 0.74, 1.06
+    rig.d['hem'] = rig.tz - rig.trz + 0.05 * hh
     sh_z = top - 0.15 * hh
     sh_x = side_x(rig, sh_z) * 0.98
     rig.d.update(sh_x=sh_x, sh_z=sh_z)
@@ -283,6 +284,38 @@ def panel(b, rig, name, z0, z1, span, grow, m, thick, rad=None, rows=10, cols=14
     return o
 
 
+def tuck(rig, o, grow=0.93):
+    """GR-24: pulls whatever of a lower-body piece (the pelvis, a thigh's top) lies above the top's hem band inside the
+    torso's oval, easing in through the band, so trousers never come out through the top (the casual visitor's waistband
+    showed through the hoodie in jagged patches). A curve is made a mesh first. Returns the piece."""
+    hh = rig.d['hh']; hem = rig.d.get('hem')
+    if hem is None: return o
+    bpy.context.view_layer.update()
+    if o.type == 'CURVE':
+        dg = bpy.context.evaluated_depsgraph_get()
+        me = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+        m2 = bpy.data.objects.new(o.name, me); bpy.context.scene.collection.objects.link(m2)
+        m2.parent = o.parent; m2.location = o.location.copy()
+        for p in me.polygons: p.use_smooth = True
+        bpy.data.objects.remove(o, do_unlink=True)
+        o = m2
+        bpy.context.view_layer.update()
+    if o.type != 'MESH': return o
+    mw = o.matrix_world.copy(); inv = mw.inverted()
+    for v in o.data.vertices:
+        p = mw @ v.co
+        w = smoothstep(hem - 0.035 * hh, hem + 0.01 * hh, p.z)
+        if w <= 0: continue
+        sx, fy = side_x(rig, p.z) * grow, -front_y(rig, p.z) * grow
+        if sx <= 1e-6 or fy <= 1e-6: continue
+        r = math.sqrt((p.x / sx) ** 2 + (p.y / fy) ** 2)
+        if r <= 1.0: continue
+        k = 1.0 + (1.0 / r - 1.0) * w
+        v.co = inv @ Vector((p.x * k, p.y * k, p.z))
+    o.data.update()
+    return o
+
+
 def torso(b, rig, spec):
     d = rig.d; hh = d['hh']; top = spec['top']; kind = top['kind']
     tm = M(b, 'cloth', top['color'])
@@ -290,13 +323,18 @@ def torso(b, rig, spec):
     rig.put(blob(b, 'Torso', (0, 0, rig.tz), (d['trx'], d['try_'], rig.trz), tm, top=rig.tt, bottom=rig.tb, front=belly * 0.28), 'spine')
     bottom = spec['bottom']
     bm = M(b, 'cloth', bottom['color'])
-    rig.put(blob(b, 'Pelvis', (0, 0, d['hip_z'] - 0.01 * hh), (0.37 * hh * d['bw'], 0.29 * hh * d['bw'], 0.19 * hh), bm, top=0.95, bottom=0.92), 'hips')
+    tuck(rig, rig.put(blob(b, 'Pelvis', (0, 0, d['hip_z'] - 0.01 * hh), (0.37 * hh * d['bw'], 0.29 * hh * d['bw'], 0.19 * hh), bm, top=0.95, bottom=0.92), 'hips'))
     rig.put(b.cyl('Neck', (0, 0, d['top'] + d['neck'] * 0.4), 0.13 * hh, d['neck'] + 0.16 * hh, rig.skin, r=0.01), 'head')
     acc = M(b, 'cloth', top.get('accent', top['color']))
     hem_z = rig.tz - rig.trz + 0.05 * hh
     if kind == 'hoodie':
         rig.put(b.box('Pocket', (0, front_y(rig, d['bot'] + 0.16 * hh) - 0.008, d['bot'] + 0.16 * hh), (0.38 * hh, 0.03 * hh, 0.17 * hh), acc, r=0.03), 'spine')
-        rig.put(blob(b, 'Hood', (0, 0.17 * hh * d['bw'], d['top'] + 0.01 * hh), (0.27 * hh, 0.13 * hh, 0.12 * hh), acc), 'spine')
+        # GR-24: the hood lying on the upper back, its opening's lining showing at the top (it was a flat ring round the neck).
+        zh = d['top'] - 0.1 * hh
+        yb = -front_y(rig, zh) + 0.03 * hh
+        rig.put(blob(b, 'Hood', (0, yb, zh), (0.24 * hh, 0.07 * hh, 0.2 * hh), tm, top=0.85, bottom=0.7), 'spine')
+        rig.put(blob(b, 'Hood lining', (0, yb - 0.025 * hh, zh + 0.12 * hh), (0.18 * hh, 0.05 * hh, 0.06 * hh), acc), 'spine')
+        rig.put(b.box('Chest patch', (-0.14 * hh, front_y(rig, d['top'] - 0.25 * hh) - 0.008, d['top'] - 0.25 * hh), (0.1 * hh, 0.02 * hh, 0.1 * hh), M(b, 'cloth', top.get('trim', C['cream'])), r=0.02), 'spine')
         rig.put(b.torus('Collar', (0, -0.01 * hh, d['top'] + 0.005 * hh), 0.14 * hh, 0.05 * hh, acc), 'spine')
         trim = M(b, 'cloth', top.get('trim', C['cream']))
         for s in (-1, 1):
@@ -342,8 +380,11 @@ def torso(b, rig, spec):
             # The skirt of the coat, from the waist to the knees, open so the legs swing inside it.
             z0 = d['bot'] + 0.1 * hh; z1 = d['hip_z'] - (d['hip_z'] - d['ankle_z']) * (0.55 if kind == 'labcoat' or top.get('long') else 0.42)
             r0, q0 = side_x(rig, z0) * 1.03, -front_y(rig, z0) * 1.05
-            tails = lambda z: (r0 + 0.32 * (z0 - z), q0 + 0.36 * (z0 - z))
-            gap = 0.42
+            flare = 0.4 if kind == 'labcoat' else 0.32
+            tails = lambda z: (r0 + flare * (z0 - z), q0 + (flare + 0.06) * (z0 - z))
+            # GR-24: the lab coat flares and opens wider (the legs came through it walking); a long coat's tails hang behind the
+            # legs (the guest's hung in front of one like a strap).
+            gap = 0.55 if kind == 'labcoat' else 1.25 if top.get('long') else 0.42
             rig.put(panel(b, rig, 'Coat tails', z0, z1, lambda u: (gap + 0.1 * u, 2 * math.pi - gap - 0.1 * u), 1.0, tm, 0.014 * hh, rad=tails, rows=8, cols=30), 'hips')
             lap = M(b, 'cloth', top.get('accent', top['color']))
             for s in (-1, 1):
@@ -374,7 +415,7 @@ def legs(b, rig, side, spec):
     r0, r1, r2 = 0.17 * hh * bw, 0.145 * hh * min(bw, 1.1), 0.125 * hh * min(bw, 1.1)
     if bottom['kind'] == 'shorts':
         mid = hp + (kn - hp) * 0.62
-        rig.put(curve(b, 'Shorts leg', [hp + Vector((0, 0, 0.05 * hh)), mid], [r0, r0 * 1.06], bm, poly=True), 'hip.' + side)
+        tuck(rig, rig.put(curve(b, 'Shorts leg', [hp + Vector((0, 0, 0.05 * hh)), mid], [r0, r0 * 1.06], bm, poly=True), 'hip.' + side))
         rig.put(b.torus('Shorts hem', mid, r0 * 1.05, 0.02 * hh, M(b, 'cloth', bottom.get('accent', bottom['color']))), 'hip.' + side)
         rig.put(curve(b, 'Thigh', [mid + Vector((0, 0, 0.02 * hh)), kn], [r1 * 0.95, r1 * 0.88], rig.skin, poly=True), 'hip.' + side)
         rig.put(b.ball('Knee', kn, r1 * 0.88, rig.skin, seg=24), 'knee.' + side)
@@ -387,7 +428,7 @@ def legs(b, rig, side, spec):
                 for k in range(2):
                     rig.put(b.torus('Sock stripe', an + Vector((0, 0, (0.24 - k * 0.06) * hh)), r2 * 0.92, 0.012 * hh, M(b, 'cloth', spec['sock_stripe'])), 'knee.' + side)
     else:
-        rig.put(curve(b, 'Thigh', [hp + Vector((0, 0, 0.06 * hh)), kn], [r0, r1], bm, poly=True), 'hip.' + side)
+        tuck(rig, rig.put(curve(b, 'Thigh', [hp + Vector((0, 0, 0.06 * hh)), kn], [r0, r1], bm, poly=True), 'hip.' + side))
         rig.put(b.ball('Knee', kn, r1, bm, seg=24), 'knee.' + side)
         rig.put(curve(b, 'Shin', [kn, an + Vector((0, 0, 0.04 * hh))], [r1, r2], bm, poly=True), 'knee.' + side)
         if spec['shoes']['kind'] != 'boot':
@@ -402,11 +443,15 @@ def shoes(b, rig, side, spec):
     fy = an.y - 0.08 * hh
     hh = hh * 1.2
     if kind == 'boot':
-        rig.put(curve(b, 'Boot leg', [Vector((an.x, an.y, 0.08 * hh)), Vector((an.x, an.y, 0.5 * hh))], [0.125 * hh, 0.135 * hh], up, poly=True), 'ankle.' + side)
-        rig.put(b.torus('Boot rim', Vector((an.x, an.y, 0.5 * hh)), 0.135 * hh, 0.022 * hh, up), 'ankle.' + side)
+        # GR-24: wider, so the trousers never come through the top in steps.
+        rig.put(curve(b, 'Boot leg', [Vector((an.x, an.y, 0.08 * hh)), Vector((an.x, an.y, 0.5 * hh))], [0.135 * hh, 0.152 * hh], up, poly=True), 'ankle.' + side)
+        rig.put(b.torus('Boot rim', Vector((an.x, an.y, 0.5 * hh)), 0.152 * hh, 0.024 * hh, up), 'ankle.' + side)
     length = 0.22 * hh * (1.12 if kind == 'dress' else 1.0)
     rig.put(blob(b, 'Shoe', (an.x, fy, 0.085 * hh), (0.105 * hh, length, 0.09 * hh), up if kind != 'sandal' else rig.skin, top=0.82, bottom=1.0), 'ankle.' + side)
-    rig.put(b.box('Sole', (an.x, fy - 0.005 * hh, 0.022 * hh), (0.215 * hh, 2 * length + 0.01 * hh, 0.045 * hh), so, r=0.012), 'ankle.' + side)
+    # GR-24: a sole the shoe's own shape, a little proud of it (it was a flat plate jutting past the toe and the heel).
+    rig.put(blob(b, 'Sole', (an.x, fy - 0.004 * hh, 0.022 * hh), (0.11 * hh, length * 1.03, 0.026 * hh), so), 'ankle.' + side)
+    if kind == 'dress':
+        rig.put(b.box('Heel', (an.x, fy + length * 0.66, 0.03 * hh), (0.12 * hh, 0.1 * hh, 0.05 * hh), so, r=0.012), 'ankle.' + side)
     if kind == 'sneaker':
         ac = M(b, 'gloss', sh.get('accent', C['teal']))
         for k in range(3):
@@ -415,8 +460,13 @@ def shoes(b, rig, side, spec):
         rig.put(blob(b, 'Shoe stripe', (an.x + s * 0.1 * hh, fy, 0.08 * hh), (0.012 * hh, 0.12 * hh, 0.03 * hh), ac), 'ankle.' + side)
         rig.put(blob(b, 'Toe cap', (an.x, fy - length * 0.82, 0.06 * hh), (0.085 * hh, 0.05 * hh, 0.05 * hh), so), 'ankle.' + side)
     elif kind == 'sandal':
+        # GR-24: each strap an arch over the foot from sole to sole (they were boxes poking out of its sides like pegs).
         for k in range(2):
-            rig.put(b.box('Sandal strap', (an.x, fy - (0.02 + k * 0.1) * hh, (0.12 - k * 0.03) * hh), (0.23 * hh, 0.05 * hh, 0.04 * hh), up, r=0.01, rot=(-20, 0, 0)), 'ankle.' + side)
+            yy = fy - (0.02 + k * 0.11) * hh
+            top = (0.165 - k * 0.035) * hh
+            rig.put(curve(b, 'Sandal strap', [Vector((an.x - 0.1 * hh, yy, 0.03 * hh)), Vector((an.x - 0.075 * hh, yy, top * 0.8)),
+                                              Vector((an.x, yy, top)), Vector((an.x + 0.075 * hh, yy, top * 0.8)), Vector((an.x + 0.1 * hh, yy, 0.03 * hh))],
+                          0.018 * hh, up), 'ankle.' + side)
 
 
 def arms(b, rig, side, spec):
@@ -585,7 +635,7 @@ def head(b, rig, spec):
         mm = M(b, 'hair', face['mustache'])
         for s in (-1, 1):
             p, n = surf(s * 0.11, -1, -0.27, 0.03 * hh)
-            put(orient(blob(b, 'Mustache', p, (0.11 * hh, 0.04 * hh, 0.05 * hh), mm, top=0.8, bottom=1.0, seg=28), n, roll=s * -14))
+            put(orient(blob(b, 'Mustache', p, (0.09 * hh, 0.04 * hh, 0.05 * hh), mm, top=0.8, bottom=1.0, seg=28), n, roll=s * -14))  # GR-24: narrower
     if face.get('blush', True):
         for s in (-1, 1):
             p, n = surf(s * 0.58, -1, -0.24, -0.003 * hh)
@@ -607,19 +657,55 @@ def head(b, rig, spec):
     if eye_kind == 'sun': sunglasses(b, rig)
 
 
-def shell(b, rig, name, m, front=0.35, side=-0.15, back=-0.55, bulk=0.07, flare=0.0, inner=0.95, seg=72):
-    """A cap over the head (hair, a bandana, a beanie, a cap's crown), its edge a line from the brow round to the nape."""
+def shell(b, rig, name, m, front=0.35, side=-0.15, back=-0.55, bulk=0.07, flare=0.0, inner=0.95, seg=72, lip=1.012):
+    """A cap over the head (hair, a bandana, a beanie, a cap's crown), its edge a line from the brow round to the nape.
+    GR-24: built from the crown down to that line and no further, its last band rolled in like a quarter round to lie just
+    outside the skin (lip), so it never cuts through the skull: the old shell dipped inside below its line (inner), and
+    the shallow crossing showed as jagged skin round every hairline. inner is kept for the callers and unused."""
     hc, (rx, ry, rz), jaw = rig.hc, rig.hr, rig.jaw
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=seg, ring_count=seg // 2, radius=1, location=hc)
-    o = bpy.context.object; o.name = name
-    for v in o.data.vertices:
-        x, y, z = v.co
-        t = abs(math.atan2(x, -y)) / math.pi
-        line = front + (side - front) * smooth(t / 0.5) if t < 0.5 else side + (back - side) * smooth((t - 0.5) / 0.5)
-        k = smoothstep(line - 0.07, line + 0.07, z)
+    cols = max(64, seg + 24)
+    main_rows, lip_rows, roll = max(20, seg // 2), (8 if seg < 60 else 12), 0.16
+
+    def line_at(theta):
+        t = abs(theta) / math.pi
+        return front + (side - front) * smooth(t / 0.5) if t < 0.5 else side + (back - side) * smooth((t - 0.5) / 0.5)
+
+    def point(theta, phi, f):
+        z = math.cos(phi); rho = math.sin(phi)
+        x, y = math.sin(theta) * rho, -math.cos(theta) * rho
         s = 1 - jaw * z * z if z < 0 else 1.0
-        f = inner + (1.0 + bulk + flare * max(0.0, -z) - inner) * k
-        v.co = (x * s * rx * f, y * s * ry * f, z * rz * f)
+        return (x * s * rx * f, y * s * ry * f, z * rz * f)
+
+    verts = [point(0.0, 0.0, 1.0 + bulk)]
+    for i in range(1, main_rows + lip_rows + 1):
+        for j in range(cols):
+            theta = -math.pi + 2 * math.pi * j / cols
+            edge = math.acos(max(-0.97, min(0.97, line_at(theta))))
+            start = max(0.05, edge - roll)
+            if i <= main_rows:
+                phi = start * i / main_rows; w = 0.0
+            else:
+                w = (i - main_rows) / lip_rows
+                phi = start + (edge - start) * w
+            outer = 1.0 + bulk + flare * max(0.0, -math.cos(phi))
+            f = lip + (outer - lip) * math.sqrt(max(0.0, 1.0 - w * w))
+            verts.append(point(theta, phi, f))
+    faces = []
+    for j in range(cols):
+        faces.append((0, 1 + j, 1 + (j + 1) % cols))
+    for i in range(main_rows + lip_rows - 1):
+        a, c = 1 + i * cols, 1 + (i + 1) * cols
+        for j in range(cols):
+            k = (j + 1) % cols
+            faces.append((a + j, c + j, c + k, a + k))
+    # Outward faces: the first triangle's normal must point away from the head's middle.
+    p0, p1, p2 = (Vector(verts[q]) for q in faces[1])
+    if (p1 - p0).cross(p2 - p0).dot((p0 + p1 + p2) / 3) < 0:
+        faces = [tuple(reversed(f)) for f in faces]
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces); me.update()
+    o = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(o)
+    o.location = hc
     b._finish(o, m, normals=False)
     return rig.put(o, 'head')
 
@@ -713,17 +799,28 @@ def glasses(b, rig, g):
 
 
 def sunglasses(b, rig):
+    """GR-24: two shades, each in its own gold rim, joined by a bridge over the nose, with temples back to the ears (the old
+    single brow bar ran straight past both cheeks and across a lens)."""
     hh = rig.d['hh']; lens = M(b, 'eye', '#2A2448'); fm = b.mat('metal', '#F4C04E', rough=0.2)
-    pts = []
+    inner = []
+    outer = []
     for s in (-1, 1):
         p, n = rig.surf(s * 0.36, -1, 0.05, 0.03 * hh)
-        rig.put(orient(blob(b, 'Shade', p, (0.15 * hh, 0.03 * hh, 0.1 * hh), lens, top=1.15, bottom=0.8, seg=28), n, roll=s * 4), 'head')
+        rig.put(orient(blob(b, 'Shade', p, (0.14 * hh, 0.03 * hh, 0.095 * hh), lens, top=1.15, bottom=0.8, seg=28), n, roll=s * 4), 'head')
         g, _ = rig.surf(s * 0.3, -1, 0.1, 0.06 * hh)
         rig.put(b.ball('Shade glint', g, (0.03 * hh, 0.008 * hh, 0.015 * hh), M(b, 'eye', '#FFFFFF'), seg=12, shadow=False), 'head')
-        pts.append(rig.surf(s * 0.6, -1, 0.15, 0.04 * hh)[0])
-    rig.put(curve(b, 'Shade bar', [pts[0], rig.surf(0, -1, 0.15, 0.06 * hh)[0], pts[1]], 0.012 * hh, fm), 'head')
-    for s in (-1, 1):
-        rig.put(curve(b, 'Temple', [rig.surf(s * 0.62, -1, 0.12, 0.04 * hh)[0], rig.surf(s * 0.98, 0.1, 0.08, 0.02 * hh)[0]], 0.01 * hh, fm, poly=True), 'head')
+        q = Vector(n).to_track_quat('-Y', 'Z')
+        rim = []
+        for k in range(29):
+            a = 2 * math.pi * k / 28
+            rim.append(p + q @ Vector((math.cos(a) * 0.15 * hh, -0.012 * hh, math.sin(a) * (0.1 if math.sin(a) < 0 else 0.112) * hh)))
+        rig.put(curve(b, 'Shade rim', rim, 0.011 * hh, fm, poly=True), 'head')
+        inner.append(p + q @ Vector((-s * 0.14 * hh, -0.014 * hh, 0.05 * hh)))
+        outer.append(p + q @ Vector((s * 0.15 * hh, -0.012 * hh, 0.03 * hh)))
+    mid = rig.surf(0, -1, 0.12, 0.05 * hh)[0]
+    rig.put(curve(b, 'Shade bridge', [inner[0], mid, inner[1]], 0.012 * hh, fm), 'head')
+    for s, o in zip((-1, 1), outer):
+        rig.put(curve(b, 'Temple', [o, rig.surf(s * 0.98, 0.1, 0.08, 0.02 * hh)[0]], 0.01 * hh, fm, poly=True), 'head')
 
 
 def hat(b, rig, h):
@@ -754,7 +851,7 @@ def hat(b, rig, h):
         put(blob(b, 'Beret', top + Vector((0.05 * hh, 0.02 * hh, -0.02 * hh)), (0.52 * hh, 0.48 * hh, 0.14 * hh), hm, rot=(0, -14, 0)))
         put(b.cyl('Beret nub', top + Vector((0.03 * hh, 0.02 * hh, 0.12 * hh)), 0.025 * hh, 0.06 * hh, hm, r=0.01))
     elif kind == 'beanie':
-        shell(b, rig, 'Beanie', hm, front=0.4, side=-0.05, back=-0.35, bulk=0.13, inner=0.9)
+        shell(b, rig, 'Beanie', hm, front=0.4, side=-0.05, back=-0.35, bulk=0.13, flare=0.22, inner=0.9)
         put(b.torus('Beanie cuff', hc + Vector((0, 0.04 * ry, 0.28 * rz)), 0.96 * rx, 0.06 * hh, M(b, 'cloth', h.get('band', C['cream'])), rot=(-9, 0, 0)))
         put(b.ball('Pompom', top + Vector((0, 0, 0.12 * hh)), 0.1 * hh, M(b, 'cloth', h.get('band', C['cream'])), seg=24))
     elif kind == 'tophat':
@@ -810,6 +907,10 @@ def ex_beltbag(b, rig, spec, color=C['coral']):
     rig.put(blob(b, 'Belt bag', (x, y - 0.03 * hh, z), (0.15 * hh, 0.07 * hh, 0.1 * hh), bm, top=0.9, rot=(0, 0, -38)), 'spine')
     rig.put(b.box('Belt bag zip', (x * 1.02, y - 0.09 * hh, z + 0.035 * hh), (0.22 * hh, 0.012 * hh, 0.012 * hh), b.mat('metal', '#F4C04E'), r=0.004, rot=(0, 0, -38)), 'spine')
     ring(b, rig, 'spine', 'Belt strap', z + 0.02 * hh, M(b, 'cloth', INK), 0.016 * hh, 1.03)
+    # GR-24: a clip from the bag's top up over the belt (it hung in the air), and a coin peeping from the zip.
+    top = Vector((x, y - 0.03 * hh, z + 0.09 * hh))
+    rig.put(curve(b, 'Belt bag clip', [top, top + Vector((0, 0.03 * hh, 0.05 * hh)), Vector((x * 0.98, y * 0.98, z + 0.05 * hh))], 0.012 * hh, M(b, 'cloth', INK)), 'spine')
+    rig.put(b.cyl('Belt bag coin', (x * 1.02, y - 0.095 * hh, z + 0.06 * hh), 0.025 * hh, 0.008 * hh, b.mat('metal', '#F4C04E'), r=0.002, rot=(80, 0, -38)), 'spine')
 
 
 def ex_satchel(b, rig, spec, color=C['wood_dark']):
@@ -817,7 +918,9 @@ def ex_satchel(b, rig, spec, color=C['wood_dark']):
     bm = M(b, 'gloss', color)
     z = d['hip_z'] + 0.02 * hh; x = side_x(rig, z) + 0.06 * hh
     rig.put(b.box('Satchel', (x, -0.02 * hh, z), (0.1 * hh, 0.42 * hh, 0.34 * hh), bm, r=0.04), 'spine')
-    rig.put(b.box('Satchel flap', (x + 0.055 * hh, -0.02 * hh, z + 0.06 * hh), (0.02 * hh, 0.43 * hh, 0.24 * hh), bm, r=0.02), 'spine')
+    # GR-24: the flap lying on the bag and folded over its top (it stood off it), and two pin badges on the strap.
+    rig.put(b.box('Satchel flap', (x + 0.05 * hh, -0.02 * hh, z + 0.05 * hh), (0.02 * hh, 0.43 * hh, 0.22 * hh), bm, r=0.008), 'spine')
+    rig.put(b.box('Satchel fold', (x + 0.02 * hh, -0.02 * hh, z + 0.165 * hh), (0.08 * hh, 0.43 * hh, 0.02 * hh), bm, r=0.008), 'spine')
     rig.put(b.box('Buckle', (x + 0.07 * hh, -0.02 * hh, z - 0.02 * hh), (0.02 * hh, 0.07 * hh, 0.06 * hh), b.mat('metal', '#F4C04E'), r=0.006), 'spine')
     shR = rig.w['shoulder.R']
     zt = d['top'] - 0.02 * hh
@@ -828,6 +931,9 @@ def ex_satchel(b, rig, spec, color=C['wood_dark']):
         xx = shR.x * 0.6 + (x - 0.02 * hh - shR.x * 0.6) * t
         pts.append(Vector((xx, front_y(rig, zz) - 0.012, zz)))
     rig.put(curve(b, 'Satchel strap', pts, 0.02 * hh, bm), 'spine')
+    for k, (pc, f) in enumerate(((C['teal'], 0.3), (C['yellow'], 0.55))):
+        p = pts[1].lerp(pts[3], f)
+        rig.put(b.cyl('Pin badge', (p.x, p.y - 0.012 * hh, p.z), 0.028 * hh, 0.01 * hh, M(b, 'gloss', pc), r=0.003, rot=(90, 0, 0)), 'spine')
     rig.put(curve(b, 'Satchel strap back', [pts[0], Vector((pts[0].x, 0.22 * hh, zt)), Vector((x - 0.02 * hh, 0.15 * hh, z + 0.17 * hh))], 0.02 * hh, bm), 'spine')
 
 
@@ -865,11 +971,34 @@ def ex_chain(b, rig, spec):
 
 
 def ex_sash(b, rig, spec, color=C['cream']):
+    """GR-24: a flat band lying on the torso, over the right shoulder between the neck and the arm and down across the
+    chest to the left hip, and round the back (it was a rigid tilted ring that stood off the chest and ran through the arm)."""
     d = rig.d; hh = d['hh']; sm = M(b, 'cloth', color)
-    o = b.torus('Sash', (0, 0, (d['top'] + d['bot']) / 2 + 0.06 * hh), d['trx'] * 1.07, 0.035 * hh, sm, rot=(0, 38, 0))
-    o.scale = (1.0, d['try_'] / d['trx'] * 1.1, 1.0)
+    zmax, zmin = d['top'] - 0.03 * hh, d['bot'] + 0.12 * hh
+    zmid, amp = (zmax + zmin) / 2, (zmax - zmin) / 2
+    a0 = math.radians(-80)
+    width, grow, n = 0.09 * hh, 1.04, 72
+    pts, nrms = [], []
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        z = zmid + amp * math.cos(a - a0)
+        rx, ry = side_x(rig, z) * grow, -front_y(rig, z) * grow
+        pts.append(Vector((rx * math.sin(a), -ry * math.cos(a), z)))
+        nrms.append(Vector((math.sin(a) / max(rx, 1e-6), -math.cos(a) / max(ry, 1e-6), 0)).normalized())
+    verts, faces = [], []
+    for k in range(n):
+        tg = (pts[(k + 1) % n] - pts[k - 1]).normalized()
+        bn = nrms[k].cross(tg).normalized()
+        verts += [tuple(pts[k] + bn * width / 2), tuple(pts[k] - bn * width / 2)]
+    for k in range(n):
+        i, j = 2 * k, 2 * ((k + 1) % n)
+        faces.append((i, j, j + 1, i + 1))
+    me = bpy.data.meshes.new('Sash'); me.from_pydata(verts, [], faces); me.update()
+    o = bpy.data.objects.new('Sash', me); bpy.context.scene.collection.objects.link(o)
+    o.data.materials.append(sm)
+    so = o.modifiers.new('Thick', 'SOLIDIFY'); so.thickness = 0.016 * hh; so.offset = 0.0; so.use_even_offset = True
+    for f in o.data.polygons: f.use_smooth = True
     rig.put(o, 'spine')
-
 
 def ex_rosette(b, rig, spec, at=0.25):
     d = rig.d; hh = d['hh']; z = d['top'] - at * hh
@@ -883,6 +1012,64 @@ def ex_rosette(b, rig, spec, at=0.25):
     for s in (-1, 1):
         rig.put(tri(b, 'Ribbon', [(x + s * 0.01 * hh, y + 0.005, z - 0.06 * hh), (x + s * 0.07 * hh, y + 0.005, z - 0.06 * hh), (x + s * 0.07 * hh, y + 0.005, z - 0.26 * hh),
                                   (x + s * 0.04 * hh, y + 0.005, z - 0.21 * hh), (x + s * 0.01 * hh, y + 0.005, z - 0.26 * hh)], 0.01 * hh, M(b, 'gloss', '#E8B53A' if s < 0 else C['cream'])), 'spine')
+
+
+def ex_toolbelt(b, rig, spec):
+    """GR-24: Nori's tool belt (a tape roll and a box cutter on it) and reflective bands on the rolled sleeves."""
+    d = rig.d; hh = d['hh']
+    z = d['bot'] + 0.08 * hh
+    for k, (x, m) in enumerate(((0.2, C['yellow']), (-0.22, C['coral']))):
+        a = math.asin(max(-0.95, min(0.95, x / max(side_x(rig, z), 1e-4))))
+        px, py = side_x(rig, z) * 1.04 * math.sin(a), front_y(rig, z) * 1.04 * math.cos(a)
+        if k == 0:
+            rig.put(orient(b.cyl('Tape roll', (px, py - 0.03 * hh, z - 0.03 * hh), 0.05 * hh, 0.03 * hh, M(b, 'gloss', m), r=0.006), Vector((math.sin(a), -math.cos(a), 0))), 'spine')
+        else:
+            rig.put(b.box('Box cutter', (px, py - 0.02 * hh, z - 0.04 * hh), (0.04 * hh, 0.03 * hh, 0.12 * hh), M(b, 'gloss', m), r=0.008), 'spine')
+    for side in ('L', 'R'):
+        el = rig.w['elbow.' + side]
+        rig.put(b.torus('Reflective band', el + Vector((0, 0, 0.09 * hh)), 0.13 * hh, 0.014 * hh, M(b, 'gloss', '#F2F5F2')), 'shoulder.' + side)
+
+
+def ex_badge(b, rig, spec, color=C['teal']):
+    """GR-24: an ID badge clipped to the coat's chest."""
+    d = rig.d; hh = d['hh']
+    z = d['top'] - 0.3 * hh
+    y = front_y(rig, z) - 0.03 * hh
+    rig.put(b.box('ID badge', (-0.17 * hh, y, z), (0.1 * hh, 0.012 * hh, 0.13 * hh), M(b, 'gloss', '#FFFFFF'), r=0.01), 'spine')
+    rig.put(b.box('ID badge band', (-0.17 * hh, y - 0.004, z + 0.04 * hh), (0.1 * hh, 0.006 * hh, 0.03 * hh), M(b, 'gloss', color), r=0.004), 'spine')
+    rig.put(b.ball('ID photo', (-0.17 * hh, y - 0.006, z - 0.01 * hh), (0.025 * hh, 0.006 * hh, 0.03 * hh), M(b, 'gloss', C['teal_light']), seg=10), 'spine')
+
+
+def ex_flower(b, rig, spec, color=C['coral'], x=-0.12):
+    """GR-24: a flower in the buttonhole (the guest), or a pocket square (the big spender)."""
+    d = rig.d; hh = d['hh']
+    z = d['top'] - 0.18 * hh
+    x = x * hh
+    y = front_y(rig, z) - 0.035 * hh
+    for k in range(5):
+        a = k * 2 * math.pi / 5
+        rig.put(b.ball('Petal', (x + 0.03 * hh * math.cos(a), y, z + 0.03 * hh * math.sin(a)), (0.022 * hh, 0.01 * hh, 0.022 * hh), M(b, 'gloss', color), seg=10), 'spine')
+    rig.put(b.ball('Flower heart', (x, y - 0.006, z), 0.016 * hh, M(b, 'gloss', C['yellow']), seg=10), 'spine')
+
+
+def ex_pocket_square(b, rig, spec, color=C['pink']):
+    d = rig.d; hh = d['hh']
+    z = d['top'] - 0.26 * hh
+    x = -0.18 * hh
+    y = front_y(rig, z) - 0.03 * hh
+    for k in (-1, 0, 1):
+        rig.put(b.box('Pocket square', (x + k * 0.025 * hh, y, z + 0.02 * hh - abs(k) * 0.012 * hh), (0.03 * hh, 0.01 * hh, 0.06 * hh), M(b, 'cloth', color), r=0.004, rot=(0, k * 20, 0)), 'spine')
+
+
+def ex_coupons(b, rig, spec):
+    """GR-24: a shirt pocket stuffed with coupons (the bargain hunter)."""
+    d = rig.d; hh = d['hh']
+    z = d['top'] - 0.28 * hh
+    x = -0.16 * hh
+    y = front_y(rig, z) - 0.02 * hh
+    rig.put(b.box('Coupon pocket', (x, y, z), (0.14 * hh, 0.016 * hh, 0.12 * hh), M(b, 'cloth', C['cream']), r=0.01), 'spine')
+    for k, m in enumerate((C['coral'], C['teal'], C['yellow'])):
+        rig.put(b.box('Coupon', (x - 0.03 * hh + k * 0.03 * hh, y + 0.004 * hh, z + 0.07 * hh + (k % 2) * 0.02 * hh), (0.05 * hh, 0.006 * hh, 0.07 * hh), M(b, 'gloss', m), r=0.003, rot=(0, (k - 1) * 12, 0)), 'spine')
 
 
 def ex_mark(b, rig, spec, at=None, x=0.0, fish=C['teal'], grow=1.0):
@@ -982,6 +1169,9 @@ def held(b, rig, item='notebook', side='L', color=None):
         bc = g + V((0, 0, -0.26 * hh))
         for k in range(5):
             o.append(b.torus('Net', bc + V((0, 0, (k - 2) * 0.06 * hh)), (0.15 - abs(k - 2) * 0.03) * hh, 0.009 * hh, nm))
+        for j in range(7):  # GR-24: strands down the bag, so the rings read as a net (alone they read as a spring)
+            a = j * 2 * math.pi / 7
+            o.append(curve(b, 'Net strand', [bc + V((math.cos(a) * (0.15 - abs(k - 2) * 0.03) * hh, math.sin(a) * (0.15 - abs(k - 2) * 0.03) * hh, (k - 2) * 0.06 * hh)) for k in range(5)], 0.007 * hh, nm))
         for k, col in enumerate((C['coral'], C['yellow'], C['lime'])):
             o.append(b.ball('Grocery', bc + V(((k - 1) * 0.06 * hh, (k % 2) * 0.04 * hh, (k - 1) * 0.04 * hh)), 0.07 * hh, M(b, 'gloss', col), seg=16))
         o.append(curve(b, 'Net handle', [bc + V((0, -0.08 * hh, 0.12 * hh)), g + V((0, 0, 0.02 * hh)), bc + V((0, 0.08 * hh, 0.12 * hh))], 0.01 * hh, nm))
@@ -1020,7 +1210,8 @@ def bag_(b, top, hh, rig=None, key=None, color=None, species='Pondlet'):
 
 
 EXTRAS = dict(tote=ex_tote, beltbag=ex_beltbag, satchel=ex_satchel, bowtie=ex_bowtie, loupe=ex_loupe, chain=ex_chain, sash=ex_sash,
-              rosette=ex_rosette, apron=ex_apron, mark=ex_mark)
+              rosette=ex_rosette, apron=ex_apron, mark=ex_mark, toolbelt=ex_toolbelt, badge=ex_badge, flower=ex_flower,
+              pocket_square=ex_pocket_square, coupons=ex_coupons)
 
 
 # ---------------------------------------------------------------------------------------------------- the cast
@@ -1040,7 +1231,7 @@ def cast():
                      bottom=dict(kind='shorts', color='#C9A46A', accent='#B08A52'), socks='#FFFFFF', sock_stripe=C['coral'],
                      shoes=dict(kind='sandal', color='#8A5A3B', sole='#5C3A24'),
                      hands=dict(R='grip', L='grip'),
-                     extras=[('beltbag', dict(color=C['coral'])), ('held', dict(item='coupons', side='R')), ('held', dict(item='netbag', side='L'))]),
+                     extras=[('beltbag', dict(color=C['coral'])), ('coupons', {}), ('held', dict(item='coupons', side='R')), ('held', dict(item='netbag', side='L'))]),
         collector=dict(height=1.76, build=0.86, skin=SKIN[5], hair=dict(style='bun', color=HAIR['black'], band=C['teal']),
                        face=dict(eyes='lidded', iris=IRIS[0], nose='long', mouth='small', brows=0.8, tall=1.04),
                        glasses=dict(kind='square', color=C['coral']),
@@ -1055,7 +1246,7 @@ def cast():
                      bottom=dict(kind='trousers', color='#3D2E6B', accent='#2E2252'),
                      shoes=dict(kind='dress', color='#FFFFFF', sole='#F4C04E'),
                      hands=dict(R='grip', L='grip'),
-                     extras=[('chain', {}), ('held', dict(item='bags', side='R', color=C['lilac'])), ('held', dict(item='bags', side='L', color=C['pink']))]),
+                     extras=[('chain', {}), ('pocket_square', {}), ('held', dict(item='bags', side='R', color=C['lilac'])), ('held', dict(item='bags', side='L', color=C['pink']))]),
         guest=dict(height=1.68, build=0.95, skin=SKIN[6], hair=dict(style='bun', color=HAIR['black'], band='#E8B53A'),
                    face=dict(eyes='lidded', iris=IRIS[1], nose='button', mouth='smile', lashes=True, mole=True),
                    hat=dict(kind='tophat', color='#2B3A55'),
@@ -1063,7 +1254,7 @@ def cast():
                    bottom=dict(kind='trousers', color='#2B3A55', accent='#1F2A40'),
                    shoes=dict(kind='dress', color='#2B3A55', sole='#F4C04E'),
                    hands=dict(L='grip'),
-                   extras=[('sash', dict(color=C['cream'])), ('rosette', dict(at=0.3)), ('held', dict(item='program', side='L'))]),
+                   extras=[('sash', dict(color=C['cream'])), ('rosette', dict(at=0.3)), ('flower', dict(color=C['coral'])), ('held', dict(item='program', side='L'))]),
         pip=dict(height=1.52, build=0.95, skin=SKIN[0], hair=dict(style='pigtails', color=HAIR['auburn'], band=C['yellow']), hands=dict(R='open'),
                  face=dict(iris=IRIS[3], nose='button', mouth='grin', freckles=True, eye_size=1.08),
                  hat=dict(kind='cap', color=C['pink'], logo=True),
@@ -1077,14 +1268,14 @@ def cast():
                   top=dict(kind='coverall', color=C['green'], accent=C['green_dark'], sleeves='rolled'),
                   bottom=dict(kind='trousers', color=C['green'], accent=C['green_dark']),
                   shoes=dict(kind='boot', color=C['yellow'], sole='#E8A21E'),
-                  hands=dict(R='grip', L='grip'), extras=[('mark', dict(x=-0.14, fish=C['teal'])), ('held', dict(item='jar', side='R'))]),
+                  hands=dict(R='grip', L='grip'), extras=[('mark', dict(x=-0.14, fish=C['teal'])), ('toolbelt', {}), ('held', dict(item='jar', side='R'))]),
         moss=dict(height=1.6, build=0.9, skin=SKIN[3], hair=dict(style='curly', color=HAIR['moss']), gloves=C['lilac'],
                   face=dict(iris=IRIS[2], nose='long', mouth='o', brows=0.9, eye_size=1.05),
                   hat=dict(kind='goggles', color=C['teal_dark'], lens=C['teal_light']),
                   top=dict(kind='labcoat', color='#FBFDFF', accent='#E3F4EE', under=C['teal_light'], buttons=C['teal']),
                   bottom=dict(kind='trousers', color='#4A4F6E', accent='#3B3F5A'),
                   shoes=dict(kind='sneaker', color=C['lilac'], sole=C['white'], accent=C['yellow']),
-                  hands=dict(R='grip', L='grip'), extras=[('held', dict(item='pipette', side='R')), ('held', dict(item='clipboard', side='L'))]),
+                  hands=dict(R='grip', L='grip'), extras=[('badge', {}), ('held', dict(item='pipette', side='R')), ('held', dict(item='clipboard', side='L'))]),
     )
 
 

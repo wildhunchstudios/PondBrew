@@ -205,6 +205,14 @@ namespace EvolutionShop
                     foreach (var r in child.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
         }
 
+        /// <summary>GR-25: where each lamp that is lit now hangs (the shop's, the rooms' once opened, the back room's and the lab's light strips), for
+        /// the motes drifting under them at night.</summary>
+        public IEnumerable<Vector3> LitLamps()
+        {
+            foreach (var l in shopLamps.Concat(roomLamps).Concat(labLamps).Append(labLamp))
+                if (l != null && l.enabled && l.gameObject.activeInHierarchy && l.intensity > 0.2f) yield return l.transform.position;
+        }
+
         /// <summary>The rooms' dressing: floors, panelling, beams, frames, lamps, sign and shelf, and the street outside.</summary>
         void DressRooms()
         {

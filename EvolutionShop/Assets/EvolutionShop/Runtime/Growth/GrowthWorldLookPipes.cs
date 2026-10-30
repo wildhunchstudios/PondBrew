@@ -82,7 +82,11 @@ namespace EvolutionShop
                 if (Mathf.Abs(a.y - b.y) < 0.01f && a.y > 2.5f && Vector3.Distance(a, b) > 0.6f)
                 {
                     var m = (a + b) * 0.5f;
-                    Segment(root, "Hanger", m + Vector3.up * radius, new Vector3(m.x, LabCeiling, m.z), 0.012f, hanger);
+                    // GR-24: down to the pipe's middle, through a clamp round it (it stopped at the clear glass's top, so it
+                    // looked to end short of the pipe).
+                    var along = (b - a).normalized;
+                    Segment(root, "Hanger", m, new Vector3(m.x, LabCeiling, m.z), 0.012f, hanger);
+                    Segment(root, "Clamp", m - along * 0.03f, m + along * 0.03f, radius * 1.2f, hanger);
                 }
             }
             for (int i = endJoints ? 0 : 1; i < (endJoints ? points.Count : points.Count - 1); i++)

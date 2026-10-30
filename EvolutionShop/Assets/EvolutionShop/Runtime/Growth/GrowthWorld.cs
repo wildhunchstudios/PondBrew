@@ -878,6 +878,23 @@ namespace EvolutionShop
 
         public bool HasSource(string culture) => sources.ContainsKey(culture);
 
+        /// <summary>GR-25: a grower's culture in its glass, in the world: the bottom of the liquid, how high it stands and the
+        /// glass's radius (false when the grower isn't built).</summary>
+        public bool GrowerLiquid(string culture, out Vector3 bottom, out float height, out float radius)
+        {
+            bottom = default; height = radius = 0;
+            if (!sources.TryGetValue(culture, out var s) || s.Root == null || s.Fill == null) return false;
+            bottom = s.Root.TransformPoint(new Vector3(0, s.BaseY, 0));
+            height = s.Fill.localScale.y * 2f * s.Root.lossyScale.y;
+            radius = s.Width * 0.5f * s.Root.lossyScale.x;
+            return true;
+        }
+
+        /// <summary>GR-25: the shop's door (visitors come and go there) and where the sun comes in by day (unit A's window, unit
+        /// B's bay window).</summary>
+        public static Vector3 DoorPoint => Door;
+        public static readonly Vector3[] Sunbeams = { new Vector3(-2.6f, 0.3f, -3.3f), new Vector3(8f, 0.3f, -3.3f) };
+
         /// <summary>GR-06: the owned sources within reach of a point on the floor (the vacuum's range), nearest first.</summary>
         public List<string> SourcesNear(Vector3 point, float range)
         {

@@ -235,7 +235,9 @@ namespace EvolutionShop.Tests
             foreach (var name in new[] { "PumpHand", "PumpMotor" })
             {
                 var b = MeshBounds(Piece(name));
-                Assert.That(b.max.x <= 0.15f && -b.min.z <= 0.07f + 0.001f, Is.True, name + " on the grower's front, not into it");
+                // GR-24: its bracket reaches back to the cabinet's front (the pump stands at 0.44, the cabinet's front at 0.35;
+                // it stood 2 cm off it), never into it.
+                Assert.That(b.max.x <= 0.15f && -b.min.z <= 0.09f + 0.001f, Is.True, name + " on the grower's front, not into it");
             }
             Assert.That(MeshBounds(Piece("PowerBoard")).max.z, Is.LessThanOrEqualTo(0.031f), "the power board on its wall (its back where the greybox board's is)");
             var buffer = MeshBounds(Piece("Buffer"));

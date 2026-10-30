@@ -23,7 +23,8 @@ import sys
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Euler, Vector
+from mathutils import Euler, Matrix, Vector
+from mathutils.bvhtree import BVHTree
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--repo', required=True)
@@ -979,7 +980,8 @@ def lantern_on_stalk(root, sid, base, rise, reach, bulb, stalk=.02, bend=100, ki
                 a = math.tau * k / 5
                 d = Vector((math.sin(a), math.cos(a), 0))
                 cone(lantern, tuple(head + d * bulb * .7), tuple(head + d * bulb * 1.8), bulb * .38, S('Accent'), 10, 4, .1)
-    ellipsoid(lantern, tuple(head + Vector((-bulb * .3, bulb * .45, -bulb * .7))), (bulb * .27, bulb * .25, bulb * .17), 'DK_Glint', (0, 0, 0), 10, 6)
+    g = bulb * (.62 if kind == 'fizz' else 1.0)  # GR-24: on the fizz's middle bulb, not where one big bulb's skin would be
+    ellipsoid(lantern, tuple(head + Vector((-g * .3, g * .45, -g * .7))), (g * .27, g * .25, g * .17), 'DK_Glint', (0, 0, 0), 10, 6)
     return lantern
 
 def simple_part(root, name, pivot, build):
@@ -1098,8 +1100,8 @@ def reedwhisker():
              .012, S('Fin'), normal=(1, 0, 0))  # its little adipose fin
     for side in (1, -1):
         # Its two long barbels from the corners of its mouth, curving back, and two short ones under its chin.
-        base = body.at(.03, 10 if side > 0 else 170, .95)
-        pts = [base, base + Vector((side * .08, .02, .02)), base + Vector((side * .16, -.02, .1)), base + Vector((side * .2, -.08, .22))]
+        base = body.at(.03, -6 if side > 0 else 186, .95)
+        pts = [base, base + Vector((side * .08, -.02, .02)), base + Vector((side * .16, -.06, .1)), base + Vector((side * .2, -.12, .22))]
         taper_tube(B, [tuple(q) for q in pts], .011, .004, S('Fin'), 8)
         for k in (0, 1):
             base = body.at(.06, -70 - 20 * k if side > 0 else -110 + 20 * k, .95)
@@ -1356,8 +1358,8 @@ def buzzgill():
         return None
     bp_loft(B, body, S('Body'), rings=56, seg=36, belly=bands, ring_paint=True)
     for side in (1, -1):  # its long feelers and its short ones
-        b0 = body.at(.14, 30 if side > 0 else 150, .9)
-        taper_tube(B, [tuple(b0), tuple(b0 + Vector((side * .06, .08, -.08))), tuple(b0 + Vector((side * .14, .14, .02))), tuple(b0 + Vector((side * .2, .12, .16)))],
+        b0 = body.at(.07, 14 if side > 0 else 166, .9)
+        taper_tube(B, [tuple(b0), tuple(b0 + Vector((side * .08, .02, -.06))), tuple(b0 + Vector((side * .16, .08, .0))), tuple(b0 + Vector((side * .22, .1, .16)))],
                    .007, .003, S('Body'), 6)
         taper_tube(B, [tuple(b0), tuple(b0 + Vector((side * .03, .03, -.08))), tuple(b0 + Vector((side * .05, .02, -.13)))], .007, .004, S('Body'), 6)
     for t in (.62, .7, .78):  # its swimmerets
@@ -1757,7 +1759,9 @@ def zephyray():
     def crown(part):
         top = body.at(.3, 90, 1.0)
         gold_crown(part, (0, top.y + .004, top.z), .075, 5, .07, 'DK_Gold', -6)
-        bp_plate(part, bp_outline([(0, top.y, top.z + .3), (0, top.y + .06, top.z + .36), (0, top.y + .05, top.z + .4), (0, top.y, top.z + .38)], 14),
+        # The small dorsal fin near the tail, standing on the back there (GR-24: it was drawn at the crown's height, 22 mm above it).
+        pa, pb = body.at(.8, 90, .95), body.at(.95, 90, .9)
+        bp_plate(part, bp_outline([(0, pa.y, pa.z), (0, pa.y + .06, pa.z + .06), (0, pa.y + .05, pa.z + .1), (0, pb.y, pb.z)], 14),
                  .014, S('Fin'), normal=(1, 0, 0))
     simple_part(root, 'Crest pivot', tuple(body.at(.3, 90, 1.0)), crown)
     return root
@@ -1781,8 +1785,9 @@ def ember_spines(part, sid, spines, slot='Fin'):
         base = Vector(base)
         tip = base + rot((0, height, 0), (lean, 0, 0))
         cone(part, tuple(base), tuple(tip), radius, S(slot), 12, 6, .15)
-        ember = base + (tip - base) * .38
-        cone(part, tuple(ember), tuple(tip + (tip - base) * .03), radius * .68, S('Accent'), 12, 5, .15)
+        # GR-24: the ember a sleeve clearly wider than the spine all the way up (at .68 its sides lay on the spine's and flickered).
+        ember = base + (tip - base) * .4
+        cone(part, tuple(ember), tuple(tip + (tip - base) * .03), radius * .82, S('Accent'), 12, 5, .15)
 
 def dew_beads(part, sid, beads, slot='Accent'):
     """The Dewling's dew beads: shiny pearls, each with a glint. beads: [(centre, radius)]."""
@@ -2175,12 +2180,17 @@ def fogfin():
         phi0, turns, R1 = -.4, 2.0, .14
         b = math.log(1 / .18) / (turns * math.tau)
         cs, ups, rx, ry = [], [], [], []
-        for i in range(61):
-            phi = phi0 + turns * math.tau * i / 60
+        def at(phi, k):
             R = R1 * math.exp(-b * (phi - phi0))
             d = Vector((0, math.sin(phi), math.cos(phi)))
-            cs.append(tuple(C + d * R)); ups.append(tuple(d)); rx.append(R * .42); ry.append(R * .45)
+            return tuple(C + d * R), tuple(d), R * .42 * k, R * .45 * k
+        # GR-24: its opening flares into a rounded lip (the coil ended in a flat cut), with a dark hollow in it.
+        for phi, k in [(phi0 - .1, .95), (phi0 - .085, 1.17), (phi0 - .05, 1.15)] + [(phi0 + turns * math.tau * i / 60, 1.0) for i in range(61)]:
+            c, u, a, bb = at(phi, k)
+            cs.append(c); ups.append(u); rx.append(a); ry.append(bb)
         bp_tube(part, cs, ups, rx, ry, S('Belly'), 18)
+        hollow = [at(phi0 - .108, .8), at(phi0 - .1, .8)]  # a dark disc just proud of the opening, framed by the lip
+        bp_tube(part, [h[0] for h in hollow], [h[1] for h in hollow], [h[2] for h in hollow], [h[3] for h in hollow], 'DK_Mouth', 18)
     simple_part(root, 'Tail pivot', tuple(C), tail)
     def beads(part):
         dew_beads(part, sid, [(tuple(C + Vector((0, .16, .02))), .03), (tuple(C + Vector((-.04, .13, -.05))), .022), (tuple(C + Vector((.04, .13, -.05))), .022)])
@@ -2527,11 +2537,11 @@ def coralhorn():
         bp_plate(part, bp_outline([(0, .05, .26), (0, .1, .34), (0, .06, .4), (0, -.03, .41), (0, -.09, .36), (0, -.05, .27)], 22), .02, S('Fin'))
     simple_part(root, 'Tail pivot', (0, .01, .27), tail)
     def horns(part):
-        for side in (1, -1):  # its coral horns, branching over its eyes
-            h0 = body.at(.1, 72 if side > 0 else 108, .95)
-            tipp = h0 + Vector((side * .03, .06, -.12))
+        for side in (1, -1):  # its coral horns, branching up from the top of its head behind its eyes
+            h0 = body.at(.26, 80 if side > 0 else 100, .95)
+            tipp = h0 + Vector((side * .05, .12, -.03))
             cone(part, tuple(h0), tuple(tipp), .026, S('Accent'), 12, 5, .15)
-            for f, d in ((.55, (side * .04, .05, .0)), (.75, (-side * .01, .05, -.02))):
+            for f, d in ((.55, (side * .045, .035, .01)), (.75, (-side * .01, .045, .03))):
                 q = h0 + (tipp - h0) * f
                 taper_tube(part, [tuple(q), tuple(q + Vector(d))], .012, .009, S('Accent'), 8)
         reef(part, sid, None, corals=[(body.at(.5, 90, .97), .08, -6, 0, 3), (body.at(.62, 70, .97), .06, 10, 30, 2)],
@@ -2551,7 +2561,7 @@ def clamjaw():
     bp_spots(B, body, sid, [(t, a, .011) for t in (.18, .26, .34, .42, .5, .58, .66, .74) for a in (-10, 20, 50, 80)], 'Belly')
     bp_puffed(make_object(B, root), B, body, .14)
     bp_face(root, sid, tuple(body.at(.15, 34, .85)), (.07, .08, .06), 40,
-            mouth_gape((0, -.06, -.405), .13, .045, S('Accent'), sid, tilt=14, rim_r=.032, depth=.012), eye_pitch=2)
+            mouth_gape((0, -.06, -.39), .13, .045, S('Accent'), sid, tilt=14, rim_r=.026, depth=.012), eye_pitch=2)
     def pec(part, m):
         bp_plate(part, [m(p) for p in bp_outline([(.2, -.06, -.12), (.3, -.1, -.08), (.34, -.14, .0), (.27, -.13, .02), (.2, -.09, -.05)], 20)],
                  .022, S('Fin'))
@@ -2924,6 +2934,8 @@ def surfskipper():
         return None
     bp_loft(B, body, S('Fin'), rings=56, seg=40, belly=coat, ring_paint=True)
     bp_salt_stripe(B, body, sid, .22, .86, .06, -.04)
+    for side in (1, -1):  # webbed feet trailing behind (GR-24: from under its rear, where they float 36 mm off it on its tail)
+        bp_plate(B, bp_outline([(side * .04, -.06, .2), (side * .09, -.07, .3), (side * .07, -.07, .33), (side * .03, -.065, .3)], 16), .02, S('Body'), normal=(0, 1, 0))
     bp_puffed(make_object(B, root), B, body, .1)
     bp_face(root, sid, tuple(body.at(.14, 30, .86)), (.034, .04, .032), 58, mouth_grin(body, .03, .085, -2, .005), eye_pitch=4)
     def wing(part, m):
@@ -2932,8 +2944,6 @@ def surfskipper():
     bp_fins(root, (.1, .0, -.14), wing)
     def tail(part):
         cone(part, (0, .04, .33), (0, .05, .43), .035, S('Fin'), 10, 4, .1)  # its stiff little tail
-        for side in (1, -1):  # webbed feet trailing behind
-            bp_plate(part, bp_outline([(side * .04, -.06, .3), (side * .09, -.07, .4), (side * .07, -.07, .43), (side * .03, -.065, .4)], 16), .02, S('Body'), normal=(0, 1, 0))
     simple_part(root, 'Tail pivot', (0, .03, .33), tail)
     def crest(part):
         # A crest of salt-white plumes over its eyes.
@@ -3080,12 +3090,19 @@ def lure(root, sid, base, rise, reach, bulb, stalk=.02, bend=110, kind='round'):
 def swell_tube(part, points, radii, material, sides=14):
     """A tube along points with a radius at each (closed at both ends): a comet's wisp."""
     verts, n = [], len(points)
+    side = None
     for i, p in enumerate(points):
         c = Vector(p)
         tan = (Vector(points[min(i + 1, n - 1)]) - Vector(points[max(i - 1, 0)])).normalized()
-        side = tan.cross(Vector((0, 1, 0)))
-        if side.length < .01:
-            side = tan.cross(Vector((1, 0, 0)))
+        # GR-24: the first ring's side as before, then each next one carried from the last (it was worked out afresh at each
+        # ring and flipped where the tube turned upright, pinching Tidepip's tail at two kinks).
+        carried = side - tan * side.dot(tan) if side is not None else None
+        if carried is not None and carried.length > 1e-4:
+            side = carried
+        else:
+            side = tan.cross(Vector((0, 1, 0)))
+            if side.length < .01:
+                side = tan.cross(Vector((1, 0, 0)))
         side.normalize(); other = tan.cross(side).normalized()
         for k in range(sides):
             a = math.tau * k / sides
@@ -3368,8 +3385,9 @@ def bp_face(root, sid, eye_c, eye_r, eye_yaw, mouth, eye_pitch=0, pupil_k=.6, bl
             bc, br, by = blush
             ellipsoid(bl, (side * bc[0], bc[1], bc[2]), br, S('Blush'), (0, -side * by, 0), 16, 8)
     if not blush:
-        # The rig keeps a Blush part: a speck hidden inside the head, for animals that don't blush.
-        ellipsoid(bl, (0, eye_c[1], eye_c[2] + .05), (.004, .004, .004), S('Blush'), (0, 0, 0), 6, 4)
+        # The rig keeps a Blush part: a speck hidden inside the head, for animals that don't blush. GR-24: a fifth of a
+        # millimetre, so that on a flat head or eyes on stalks, where it lands outside, it never shows (it did on seven).
+        ellipsoid(bl, (0, eye_c[1] - .02, eye_c[2] + .05), (.0002, .0002, .0002), S('Blush'), (0, 0, 0), 6, 4)
     for p in (eyes, pupils, glints, bl):
         make_object(p, root)
     lids_obj = make_object(lids, root)
@@ -3747,10 +3765,10 @@ def moonmouth():
     bp_puffed(make_object(B, root), B, body, .14)
     eye = body.at(.13, 58, .84)
     bp_face(root, sid, tuple(eye), (.085, .1, .075), 30,
-            mouth_gape((0, -.09, -.405), .2, .115, S('Belly'), sid,
+            mouth_gape((0, -.09, -.388), .2, .115, S('Belly'), sid,
                        upper=[(-.7, .04, .014), (-.35, .05, .016), (0, .05, .016), (.35, .05, .016), (.7, .04, .014)],
                        lower=[(-.8, .045, .015), (-.5, .06, .018), (-.15, .065, .019), (.15, .065, .019), (.5, .06, .018), (.8, .045, .015)],
-                       tilt=16, rim_r=.032, depth=.016), eye_pitch=14)
+                       tilt=16, rim_r=.026, depth=.016), eye_pitch=14)
     def pec(part, m):
         bp_plate(part, [m(p) for p in bp_outline([(.27, -.04, .0), (.36, -.08, .05), (.42, -.12, .13), (.36, -.17, .15), (.29, -.13, .07)], 24)],
                  .03, S('Fin'))
@@ -3940,8 +3958,8 @@ def murkmaw():
     eye = body.at(.12, 38, .84)
     fang = (0, 1, -.5)
     bp_face(root, sid, tuple(eye), (.075, .086, .066), 38,
-            mouth_grin(body, .03, .17, -14, .013, teeth=[(.4, .17, .02, fang), (.6, .17, .02, fang), (.27, .05, .011, True),
-                                                         (.73, .05, .011, True), (.33, .045, .01, False), (.67, .045, .01, False)]))
+            mouth_grin(body, .03, .17, -14, .013, teeth=[(.32, .16, .02, fang), (.68, .16, .02, fang), (.2, .05, .011, True),
+                                                         (.8, .05, .011, True), (.42, .045, .01, False), (.58, .045, .01, False)]))
     def pec(part, m):
         bp_plate(part, [m(p) for p in bp_outline([(.15, -.08, -.18), (.22, -.1, -.13), (.25, -.14, -.05), (.2, -.15, -.06), (.15, -.12, -.12)], 20)],
                  .02, S('Fin'))
@@ -4462,6 +4480,305 @@ def variant_atlas():
     simg.save()
     return path, W, H, spath
 
+# ================================================================ GR-24: settling each creature before it is exported
+SETTLE_PARTS = ('Left fin pivot', 'Right fin pivot', 'Lips', 'Tail pivot', 'Crest pivot')
+SETTLE_SKIP = {'DioramaHaloling': ('Crest pivot',)}  # its halo floats over it by design
+SETTLE_TOUCH = .0015   # within this of another piece, a piece is on it
+SETTLE_REACH = .1      # pieces further than this off anything are left alone (made apart on purpose)
+SETTLE_LOG = []
+
+def islands(me):
+    """The mesh's connected pieces, as lists of vertex indices."""
+    parent = list(range(len(me.vertices)))
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]; i = parent[i]
+        return i
+    for e in me.edges:
+        a, b = find(e.vertices[0]), find(e.vertices[1])
+        if a != b: parent[a] = b
+    out = {}
+    for i in range(len(me.vertices)):
+        out.setdefault(find(i), []).append(i)
+    return list(out.values())
+
+class SettlePiece:
+    """A connected piece of a mesh in world space: its points, edges, a BVH of its faces and its box."""
+    def __init__(self, obj, idx, polys):
+        mw = obj.matrix_world
+        loc = {i: k for k, i in enumerate(idx)}
+        self.obj, self.idx = obj, idx
+        self.pts = [mw @ obj.data.vertices[i].co for i in idx]
+        self.edges = [(loc[e.vertices[0]], loc[e.vertices[1]]) for e in obj.data.edges if e.vertices[0] in loc]
+        faces = [[loc[v] for v in p] for p in polys]
+        self.faces = faces
+        self.tree = BVHTree.FromPolygons(self.pts, faces) if faces else None
+        uses = {}
+        for f in faces:
+            for j in range(len(f)):
+                e = (min(f[j], f[j - 1]), max(f[j], f[j - 1])); uses[e] = uses.get(e, 0) + 1
+        self.closed = bool(uses) and all(n == 2 for n in uses.values())  # only a closed piece's faces say what is inside it
+        self.lo = Vector((min(p.x for p in self.pts), min(p.y for p in self.pts), min(p.z for p in self.pts)))
+        self.hi = Vector((max(p.x for p in self.pts), max(p.y for p in self.pts), max(p.z for p in self.pts)))
+
+    def inside(self, p):
+        """Whether p is inside this closed piece: rays from it cross its skin an odd number of times (a nearest face's
+        normal can't say, near an edge of a thin fin). Three rays vote, so one that grazes a seam can't decide it alone
+        (Wavebreaker's mouth, 11 mm under its snout, was taken for inside its body)."""
+        votes = 0
+        for d in (Vector((.5773, .5774, .5772)), Vector((-.62, .21, .76)), Vector((.31, -.81, .5))):
+            d = d.normalized(); o, n = p.copy(), 0
+            for _ in range(64):
+                hit = self.tree.ray_cast(o, d)
+                if hit[0] is None: break
+                n += 1; o = hit[0] + d * 1e-5
+            votes += n % 2
+        return votes >= 2
+
+    def moved(self, d):
+        """Moved by d (world): its points, its faces' tree and its box follow, so later pieces are measured against where
+        it is now (Wavebreaker's mouth was left 11 mm off: it had touched its hammer where the hammer was before it moved)."""
+        self.pts = [q + d for q in self.pts]
+        self.tree = BVHTree.FromPolygons(self.pts, self.faces) if self.faces else None
+        self.lo, self.hi = self.lo + d, self.hi + d
+
+    def near_box(self, o, m):
+        return all(self.lo[c] <= o.hi[c] + m and self.hi[c] >= o.lo[c] - m for c in range(3))
+
+    def gap_to(self, o):
+        """(gap, my point, its point): 0 when I reach into it (my nearest point inside it, or an edge of mine crossing it)."""
+        if o.tree is None: return (1e9, None, None)
+        best = (1e9, None, None, None)
+        for p in self.pts:
+            hit = o.tree.find_nearest(p)
+            if hit[0] is not None and hit[3] < best[0]: best = (hit[3], p, hit[0], hit[1])
+        if best[1] is None: return (1e9, None, None)
+        if best[0] > SETTLE_TOUCH and o.closed and o.inside(best[1]): return (0.0, best[1], best[2])
+        if best[0] > SETTLE_TOUCH:
+            for a, b in self.edges:
+                d = self.pts[b] - self.pts[a]; L = d.length
+                if L > 1e-9 and o.tree.ray_cast(self.pts[a], d / L, L)[0] is not None: return (0.0, best[1], best[2])
+        return best[:3]
+
+def settle_pieces(obj):
+    by_vert = {}
+    idxs = islands(obj.data)
+    for k, idx in enumerate(idxs):
+        for i in idx: by_vert[i] = k
+    polys = [[] for _ in idxs]
+    for p in obj.data.polygons: polys[by_vert[p.vertices[0]]].append(list(p.vertices))
+    return [SettlePiece(obj, idx, ps) for idx, ps in zip(idxs, polys)]
+
+def settle(root, asset):
+    """GR-24 (the creature review): fins, mouths, tails, crests, feet, arms and loose bits drawn a few millimetres to a few
+    centimetres off the body (Pearlemperor's rear fins 93 mm, Surfskipper's feet 36 mm, mouths in front of snouts) are moved
+    just into what they belong on; and a closed piece whose faces point inward is turned the right way out (Haloling's rim
+    tentacles). Every connected piece of the body and of the parts the game turns (the fins, the mouth, the tail and the
+    crest) is one node: a piece counts as on the body when it touches or crosses anything that is (an ember on a spine on the
+    back), so only what is truly loose moves, each loose group as one, toward the nearest thing on the body: a whole part
+    with its pivot, else its loose vertices. Shape keys move with their vertices."""
+    body = next((o for o in root.children if o.type == 'MESH' and o.name == 'Body'), None)
+    if body is None: return
+    skip = SETTLE_SKIP.get(asset, ())
+    for obj in [o for o in root.children if o.type == 'MESH']:
+        settle_outward(obj, asset)  # first, so the inside tests below read every closed piece's faces the right way
+    parts = [body] + [o for o in root.children if o.type == 'MESH' and o.name in SETTLE_PARTS and o.name not in skip]
+    pieces = []
+    for o in parts: pieces += settle_pieces(o)
+    n = len(pieces)
+    main = max((k for k in range(n) if pieces[k].obj is body), key=lambda k: len(pieces[k].pts))
+    touch = [[] for _ in range(n)]
+    for a in range(n):
+        for b in range(a + 1, n):
+            A, B = pieces[a], pieces[b]
+            if not A.near_box(B, SETTLE_TOUCH): continue
+            if min(A.gap_to(B)[0], B.gap_to(A)[0]) <= SETTLE_TOUCH:
+                touch[a].append(b); touch[b].append(a)
+
+    def group_from(start, allowed):
+        seen, stack = {start}, [start]
+        while stack:
+            k = stack.pop()
+            for j in touch[k]:
+                if j in allowed and j not in seen: seen.add(j); stack.append(j)
+        return seen
+    on = group_from(main, set(range(n)))
+
+    def shift(obj, idx, d):
+        for i in idx: obj.data.vertices[i].co += d
+        if obj.data.shape_keys:
+            for kb in obj.data.shape_keys.key_blocks:
+                for i in idx: kb.data[i].co += d
+
+    # A mouth sunk out of sight in its head (Wavebreaker's lay 11 mm inside its snout, Sootsnap's inside its face) is lifted
+    # out along the skin's normal until its line sits on the face.
+    for k in range(n):
+        P = pieces[k]
+        if P.obj.name != 'Lips' or len(P.pts) < 60 or not pieces[main].closed: continue
+        sample = P.pts[::max(1, len(P.pts) // 40)]
+        depths, normals = [], Vector()
+        for q in sample:
+            if not pieces[main].inside(q): continue
+            hit = pieces[main].tree.find_nearest(q)
+            depths.append(hit[3]); normals += hit[1]
+        if len(depths) < len(sample) * .9 or normals.length < 1e-6: continue
+        d = normals.normalized() * (sum(depths) / len(depths) + .002)
+        o = P.obj
+        o.location += o.parent.matrix_world.inverted().to_3x3() @ d
+        for j in range(n):
+            if pieces[j].obj is o: pieces[j].moved(d)
+        SETTLE_LOG.append((asset, 'Lips', 'lifted', round(d.length * 1000, 1)))
+
+    loose = set(range(n)) - on
+    while loose:
+        grp = group_from(next(iter(loose)), loose)
+        loose -= grp
+        best = (1e9, None, None)
+        for k in grp:
+            for j in on:
+                if not pieces[k].near_box(pieces[j], SETTLE_REACH): continue
+                g = pieces[k].gap_to(pieces[j])
+                if g[0] < best[0]: best = g
+        if SETTLE_TOUCH < best[0] < SETTLE_REACH:
+            d = (best[2] - best[1]).normalized() * (best[0] + .003)
+            objs = {pieces[k].obj for k in grp}
+            o = next(iter(objs))
+            if len(objs) == 1 and o is not body and all(pieces[k] in [pieces[j] for j in grp] for k in range(n) if pieces[k].obj is o):
+                o.location += o.parent.matrix_world.inverted().to_3x3() @ d
+                for k in range(n):
+                    if pieces[k].obj is o: pieces[k].moved(d)
+                SETTLE_LOG.append((asset, o.name, 'whole', round(best[0] * 1000, 1)))
+            else:
+                for k in grp:
+                    shift(pieces[k].obj, pieces[k].idx, pieces[k].obj.matrix_world.inverted().to_3x3() @ d)
+                    pieces[k].moved(d)
+                SETTLE_LOG.append((asset, '+'.join(sorted({pieces[k].obj.name for k in grp})), len(grp), round(best[0] * 1000, 1)))
+        on |= grp
+
+def settle_outward(obj, asset):
+    """Turns each closed piece (every edge between two faces) whose enclosed volume is negative the right way out."""
+    bm = bmesh.new(); bm.from_mesh(obj.data)
+    seen, flip = set(), []
+    for f0 in bm.faces:
+        if f0.index in seen: continue
+        stack, faces = [f0], []
+        seen.add(f0.index)
+        while stack:
+            f = stack.pop(); faces.append(f)
+            for e in f.edges:
+                for h in e.link_faces:
+                    if h.index not in seen: seen.add(h.index); stack.append(h)
+        if any(len(e.link_faces) != 2 for f in faces for e in f.edges): continue
+        c = sum((v.co for f in faces for v in f.verts), Vector()) / sum(len(f.verts) for f in faces)
+        vol = 0.0
+        for f in faces:
+            a = f.verts[0].co - c
+            for j in range(1, len(f.verts) - 1):
+                vol += a.dot((f.verts[j].co - c).cross(f.verts[j + 1].co - c)) / 6
+        if vol < -1e-10: flip += faces
+    if flip:
+        bmesh.ops.reverse_faces(bm, faces=flip)
+        bm.to_mesh(obj.data)
+        SETTLE_LOG.append((asset, obj.name, 'turned out', len(flip)))
+    bm.free()
+
+# ================================================================ GR-24: a little more detail on each creature, in its family's way
+# Each family's marks, as (t along the body from the nose 0 to the tail 1, angle round it: 0 the side, 90 the top, -90 the
+# belly; mirrored on both sides unless on the top line), a radius as a fraction of the body's length, and a slot. Placed on the
+# body's own skin by rays, half sunk into it; their Puffed key follows the skin under them.
+ADORN = {
+    'Brookkin': dict(marks=[(.17, -18), (.2, -10), (.23, -20), (.19, -28)], size=.011, slot='Accent', flat=.45),            # freckles on the cheeks
+    'Sparkline': dict(marks=[(.32 + .09 * k, -38) for k in range(6)], size=.014, slot='Accent', flat=.6),                    # glowing photophores low on the flanks
+    'Airfin': dict(marks=[(.1, 70), (.13, 58), (.15, 74), (.12, 84)], size=.01, slot='Belly', flat=.45),                     # freckles on the snout
+    'Cinderling': dict(marks=[(.3 + .08 * k, 52 + 12 * (k % 2)) for k in range(7)], size=.011, slot='Accent', flat=.5),     # ember specks along the back
+    'Dewling': dict(marks=[(.32, 90), (.42, 82), (.52, 90), (.62, 82)], size=.016, slot='Accent', flat=1.0, glint=True),    # dew beads along the back
+    'Reefback': dict(marks=[(.45, 40), (.55, 58), (.62, 34), (.72, 52), (.5, 70)], size=.016, slot='Belly', flat=.55, ring=True),  # barnacles with open tops
+    'Saltscale': dict(marks=[(.3 + .07 * k, 4) for k in range(8)], size=.009, slot='Accent', flat=.6),                       # glitter studs on the salt stripe
+    'Gloamer': dict(marks=[(.3 + .08 * k, -48) for k in range(7)], size=.012, slot='Accent', flat=.6),                      # soft lights along the belly
+    'Cometail': dict(marks=[(.25, 62), (.33, 80), (.41, 55), (.5, 74), (.58, 60), (.66, 82)], size=.008, slot='Accent', flat=.5),  # star specks on the back
+}
+ADORN_LOG = []
+
+def adorn(root, asset, family):
+    """GR-24: the family's little marks on the body (see ADORN), so every creature has a touch more detail."""
+    spec = ADORN.get(family)
+    body = next((o for o in root.children if o.type == 'MESH' and o.name == 'Body'), None)
+    if spec is None or body is None: return
+    me = body.data
+    pieces = islands(me)
+    main = max(pieces, key=len)
+    main_set = set(main)
+    remap = {i: k for k, i in enumerate(main)}
+    vs = [me.vertices[i].co.copy() for i in main]
+    tree = BVHTree.FromPolygons(vs, [[remap[v] for v in p.vertices] for p in me.polygons if p.vertices[0] in main_set])
+    lo = Vector((min(v.x for v in vs), min(v.y for v in vs), min(v.z for v in vs)))
+    hi = Vector((max(v.x for v in vs), max(v.y for v in vs), max(v.z for v in vs)))
+    length = hi.y - lo.y  # Blender +Y is the creature's front (Unity -Z)
+    cx, cz = (lo.x + hi.x) / 2, (lo.z + hi.z) / 2
+    reach = max(hi.x - lo.x, hi.z - lo.z, length) + 1.0
+    hits = []
+    for t, a in spec['marks']:
+        y = hi.y - t * length
+        sides = (1,) if abs(a) >= 85 else (1, -1)
+        for s in sides:
+            ar = math.radians(a)
+            out = Vector((s * math.cos(ar), 0, math.sin(ar)))
+            hit = tree.ray_cast(Vector((cx, y, cz)) + out * reach, -out, reach * 2)
+            if hit[0] is not None and hit[1].dot(out) > 0.2:
+                hits.append((hit[0], hit[1].normalized()))
+    if not hits: return
+    # The materials the marks use.
+    def slot_index(name):
+        m = MAT[name]
+        for k, mm in enumerate(me.materials):
+            if mm == m: return k
+        me.materials.append(m)
+        return len(me.materials) - 1
+    mat = slot_index(slot_name(asset_sid(asset), spec['slot']))
+    glint = slot_index('DK_Glint') if spec.get('glint') else None
+    inner = slot_index(slot_name(asset_sid(asset), 'Accent')) if spec.get('ring') else None
+    keys = me.shape_keys.key_blocks if me.shape_keys else []
+    # Each original vertex's offset in each key, to carry onto the marks set on the skin near it.
+    from mathutils.kdtree import KDTree
+    kd = KDTree(len(me.vertices))
+    for v in me.vertices: kd.insert(v.co, v.index)
+    kd.balance()
+    deltas = {kb.name: [kb.data[i].co - me.vertices[i].co for i in range(len(me.vertices))] for kb in keys}
+    r0 = spec['size'] * length
+    bm = bmesh.new(); bm.from_mesh(me)
+    shape_layers = {kb.name: bm.verts.layers.shape.get(kb.name) for kb in keys}
+    added = 0
+
+    def dot(p, n, r, flat, mi):
+        nonlocal added
+        q = n.to_track_quat('Z', 'Y').to_matrix().to_4x4()
+        mtx = Matrix.Translation(p + n * (r * flat * .35)) @ q @ Matrix.Diagonal((r, r, r * flat, 1))
+        res = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=6, radius=1.0, matrix=mtx)
+        for f in {f for v in res['verts'] for f in v.link_faces}: f.material_index = mi; f.smooth = True
+        for v in res['verts']:
+            _, i, _ = kd.find(v.co)
+            for name, layer in shape_layers.items():
+                if layer is not None: v[layer] = v.co + deltas[name][i]
+        added += 1
+
+    for p, n in hits:
+        dot(p, n, r0, spec['flat'], mat)
+        if glint is not None:
+            side = n.cross(Vector((0, 0, 1)))
+            side = side.normalized() if side.length > 1e-4 else Vector((1, 0, 0))
+            dot(p + n * r0 * .55 + side * r0 * .35 + Vector((0, 0, r0 * .3)), n, r0 * .28, .6, glint)
+        if inner is not None:
+            dot(p + n * r0 * .5, n, r0 * .45, .5, inner)
+    bm.to_mesh(me); bm.free()
+    me.update()
+    ADORN_LOG.append((asset, family, added))
+
+ASSET_SID = {asset: sid for sid, asset, _, _ in SPECIES}
+ASSET_FAMILY = {asset: family for _, asset, family, _ in SPECIES}
+
+def asset_sid(asset):
+    return ASSET_SID[asset]
+
 # ================================================================ build, export, review renders, manifest
 assets = {}
 BUILDS = [(asset, CREATURE_BUILDERS[sid]) for sid, asset, _, _ in SPECIES]
@@ -4469,6 +4786,9 @@ for name, build in BUILDS:
     # Blender object names are global, so each asset is built and exported before the next one is made; its parts
     # are then renamed with its id, freeing the shared names (Eyes, Lids, Body...) for the next asset.
     root = assets[name] = build()
+    bpy.context.view_layer.update()
+    settle(root, name)
+    adorn(root, name, ASSET_FAMILY[name])
     bpy.ops.object.select_all(action='DESELECT')
     root.select_set(True)
     for child in root.children_recursive:
@@ -4596,4 +4916,6 @@ manifest = {
                           'In-game scale, fit inside containers and posing are verified by the GR-12 creatures route, not here.'],
 }
 (SOURCE / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+for e in SETTLE_LOG: print('SETTLED', *e)
+for e in ADORN_LOG: print('ADORNED', *e)
 print('DIORAMA_KIT_COMPLETE ' + json.dumps([{'id': r['id'], 'triangles': r['triangles'], 'size': r['bounds_unity_m']['size']} for r in RECORDS]))

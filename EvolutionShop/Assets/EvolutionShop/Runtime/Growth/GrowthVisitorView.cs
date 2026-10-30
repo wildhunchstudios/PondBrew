@@ -331,11 +331,13 @@ namespace EvolutionShop
         /// <summary>The dizzy stars circling over the head, spinning and bobbing.</summary>
         void Stars(bool on, float a)
         {
-            person.Gag("gag__stars", on, at: new Vector3(0, 1.16f, 0));
+            // GR-24: over a hat's crown, not sunk into it (a top hat is tall).
+            float over = person.Look.Hat == null ? 1.16f : person.Look.Hat == "tophat" ? 1.62f : 1.36f;
+            person.Gag("gag__stars", on, at: new Vector3(0, over, 0));
             var holder = person.GagHolder("gag__stars");
             if (!on || holder == null) return;
             holder.localRotation = Quaternion.Euler(8 * Mathf.Sin(a * 5), a * 320f, 0);
-            holder.localPosition = new Vector3(0, person.HeadKit * (1.16f + 0.03f * Mathf.Sin(a * 9)), 0);
+            holder.localPosition = new Vector3(0, person.HeadKit * (over + 0.03f * Mathf.Sin(a * 9)), 0);
         }
 
         /// <summary>The culprit's puff of a cloud behind them, swelling, rising and fading.</summary>
@@ -343,12 +345,13 @@ namespace EvolutionShop
         {
             const float last = 1.8f;
             bool on = a < last;
-            person.Gag("gag__cloud", on, joint: "hips", at: new Vector3(0, 0.05f, -0.22f));
+            // GR-24: behind the seat, rising a little (it sat flat on the middle of the back).
+            person.Gag("gag__cloud", on, joint: "hips", at: new Vector3(0, -0.08f, -0.3f));
             var holder = person.GagHolder("gag__cloud");
             if (!on || holder == null) return;
             float s = Mathf.Sin(Mathf.PI * Mathf.Clamp01(a / last));
             holder.localScale = Vector3.one * (0.4f + 0.9f * s);
-            holder.localPosition = new Vector3(0.04f * Mathf.Sin(a * 4), 0.05f + 0.35f * a / last, -0.22f - 0.1f * a / last);
+            holder.localPosition = new Vector3(0.04f * Mathf.Sin(a * 4), -0.08f + 0.2f * a / last, -0.3f - 0.12f * a / last);
         }
 
         void BlendArms(GrowthPersonPose from, float w)

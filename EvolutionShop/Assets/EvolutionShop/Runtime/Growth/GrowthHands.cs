@@ -414,12 +414,14 @@ namespace EvolutionShop
                 pipe.position = both ? Vector3.Lerp(fistL, fistR, 0.5f) : fistR;
                 var across = both ? fistR - fistL : view.transform.right;
                 pipe.rotation = Quaternion.FromToRotation(Vector3.right, across.normalized);
-                pipe.localScale = Vector3.one;
+                // GR-24: long enough to run on past both fists (its ends and their joints sat inside the gloves).
+                float kitLength = GrowthPeopleKit.Data.hands.pipe * Mathf.Max(1e-4f, right.Root.lossyScale.x);
+                pipe.localScale = new Vector3(both ? Mathf.Max(1f, across.magnitude * 1.7f / kitLength) : 1f, 1, 1);
             }
             // The bag at the counter: in the right fist while bagging, let go of when the sale is made.
             bool serving = r == "serve";
             serveBag.Root.gameObject.SetActive(serving);
-            if (serving) Hang(serveBag, right, new Vector3(-0.055f, -0.035f, 0.04f), s, dt);
+            if (serving) Hang(serveBag, right, new Vector3(-0.012f, -0.032f, 0.02f), s, dt);  // GR-24: from inside the fist
         }
 
         void Drive(Arm a, string doing, float t, in GrowthHandsState s, float dt, Vector3 sway, float k, float reach)
@@ -542,21 +544,23 @@ namespace EvolutionShop
                 var b = kept[i];
                 if (b.Pop < 1 && (reachTake < 0 || reachTake > 0.5f)) b.Pop = Mathf.Min(1, b.Pop + dt / PopSeconds);
                 float n = kept.Count;
-                var off = new Vector3((i - (n - 1) / 2) * 0.06f, -0.035f, 0.015f + 0.02f * (1 - Mathf.Abs(i - (n - 1) / 2)));
-                Hang(b, left, off, s, dt);
+                // GR-24: their knots together in the fist, the bags fanning out below it (the knots hung beside the fist).
+                float c = i - (n - 1) / 2;
+                var off = new Vector3(c * 0.016f, -0.03f, 0.012f + 0.008f * (1 - Mathf.Abs(c)));
+                Hang(b, left, off, s, dt, c * 16f);
                 b.Root.localScale = Vector3.one * Smooth(b.Pop);
                 if (b.View) b.View.Tick(clock, s.Reduced);
             }
             foreach (var b in bags.Where(b => b.Leaving >= 0))
             {
-                Hang(b, left, new Vector3(0.055f, -0.035f, 0.04f), s, dt);
+                Hang(b, left, new Vector3(0.012f, -0.032f, 0.02f), s, dt);
                 b.Root.localScale = Vector3.one * (1 - Smooth(Mathf.InverseLerp(0.3f, 0.5f, b.Leaving)));
             }
         }
 
         /// <summary>A bag from a fist: its knot just under the fist (an offset from it in the camera's space), hanging the way gravity
         /// pulls (but never more than 35 degrees from straight down on screen), swinging a little as the player moves and turns.</summary>
-        void Hang(Bag b, Arm a, Vector3 offset, in GrowthHandsState s, float dt)
+        void Hang(Bag b, Arm a, Vector3 offset, in GrowthHandsState s, float dt, float fan = 0)
         {
             var cam = view.transform;
             b.Root.localPosition = Fist + Quaternion.Inverse(a.Rot) * offset;
@@ -569,7 +573,7 @@ namespace EvolutionShop
                 b.Swing += b.SwingV * dt;
             }
             else { b.Swing = Vector2.zero; b.SwingV = Vector2.zero; }
-            var hang = Quaternion.Euler(b.Swing.y * 30, 0, b.Swing.x * 30) * Quaternion.FromToRotation(Vector3.down, down);
+            var hang = Quaternion.Euler(b.Swing.y * 30, 0, b.Swing.x * 30 + fan) * Quaternion.FromToRotation(Vector3.down, down);
             b.Root.rotation = cam.rotation * hang;
         }
     }
