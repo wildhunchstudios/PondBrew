@@ -647,6 +647,70 @@
     margin-top: 2px;
 }
 
+/* ---------------------------------------------------------------- GR-23: the Settings screen */
+
+.gr-chip--on,
+.gr-chip--on:hover {
+    color: #FFFFFF;
+    background-color: var(--es-teal);
+}
+
+.gr-set-row {
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.gr-set-row .gr-result__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 12px;
+}
+
+.gr-set-row .gr-chips {
+    margin-top: 0;
+}
+
+.gr-set-row .gr-chips .gr-chip--button {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.gr-set-row--active {
+    border-color: var(--es-teal);
+}
+
+.gr-set-slider {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.gr-set-track {
+    width: 220px;
+    height: 22px;
+    margin: 0 10px 0 10px;
+    background-color: #E4D8BA;
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-left-radius: 11px;
+    border-bottom-right-radius: 11px;
+    overflow: hidden;
+}
+
+.gr-set-fill {
+    height: 100%;
+    background-color: var(--es-teal);
+}
+
+.gr-set-value {
+    min-width: 70px;
+    margin-left: 6px;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    -unity-text-align: middle-right;
+}
+
 /* ---------------------------------------------------------------- containers */
 
 .gr-spaces {

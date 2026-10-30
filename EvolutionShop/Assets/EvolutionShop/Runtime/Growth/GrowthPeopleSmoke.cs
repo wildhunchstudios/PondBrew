@@ -594,18 +594,24 @@ namespace EvolutionShop
             Check(gags.Policy.Current == null && cv.Reaction == null && s.Ui.CaptionShown == null, "Closing time: the moment ends as the visitor leaves");
             Check(s.ReloadSaved() && gags.Policy.Current == null && s.Ui.CaptionShown == null, "A reload: nothing left playing");
 
-            // The slap's key from the pause menu: G, refused for E, kept with the save.
-            s.SetCard(GrowthCard.Pause);
-            yield return null;
+            // The slap's key from the Settings screen's Controls tab (GR-23, where every action is remappable): E swaps with
+            // Interact; back to the defaults; then G, kept with the whole game's settings.
+            s.OpenSettings("Controls");
+            yield return null; yield return null;
             gags.StartRebind();
+            yield return null;
             yield return Press(Key.E);
-            Check(gags.Rebinding && gags.RebindProblem != null && s.SlapKey == Key.F, "E already does something: refused (" + gags.RebindProblem + ")");
+            Check(!gags.Rebinding && s.SlapKey == Key.E && s.Settings.InputOf(GrowthAction.Interact) == "Key/F",
+                "E already does something: the two swap, Interact moving to F (\"" + gags.RebindProblem + "\")");
+            s.Settings.ResetBindings(); s.SaveSettings(); s.Ui.RefreshCard();
+            gags.StartRebind();
+            yield return null;
             yield return Press(Key.G);
-            Check(!gags.Rebinding && s.SlapKey == Key.G, "The slap's key is now G");
-            Check(File.ReadAllText(s.SavePath).Contains("\"slapKey\": \"G\""), "Kept with the save");
+            Check(!gags.Rebinding && s.SlapKey == Key.G && s.Settings.InputOf(GrowthAction.Interact) == "Key/E", "The slap's key is now G (Interact back on E)");
+            Check(File.ReadAllText(s.SettingsPath).Contains("\"input\": \"Key/G\""), "Kept with the whole game's settings (" + Path.GetFileName(s.SettingsPath) + ")");
             yield return Shot("578-the-pause-menus-comedy-row");
             s.SetCard(GrowthCard.None);
-            s.SlapKey = Key.F; s.SaveNow();
+            s.SlapKey = Key.F; s.SaveSettings();
             gags.RoomMoments = false;
         }
 

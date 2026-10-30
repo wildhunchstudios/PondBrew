@@ -28,6 +28,9 @@ namespace EvolutionShop
         /// <summary>GR-12: kit creatures show their full rig (face, blinks, tricks) within this distance and in view; further, their
         /// shared baked look (with its outline to FullDistance, without beyond). Peek is within 1.6 m of the glass.</summary>
         public const float KitDistance = 3.5f;
+        /// <summary>GR-23's Low detail (GR.15.1): full detail within 3 m, the kit's look within 2 m, frozen beyond 7 m.</summary>
+        public const float LowFullDistance = 3f, LowFreezeDistance = 7f, LowKitDistance = 2f;
+        public bool LowDetail { get; private set; }
 
         /// <summary>A container place: where the tank stands, which way its front faces, and where a visitor stands to browse it.</summary>
         public struct Place
@@ -994,8 +997,9 @@ namespace EvolutionShop
                     Vector3 centre = tank.Root.TransformPoint(new Vector3(0, tank.WaterY, 0));
                     float distance = Vector3.Distance(cam.transform.position, centre);
                     bool visible = GeometryUtility.TestPlanesAABB(frustum, new Bounds(centre, new Vector3(tank.Width, tank.Inner.y, tank.Width)));
-                    detail = distance >= FreezeDistance ? 2 : visible && distance < FullDistance ? 0 : 1;
-                    look = visible && distance < KitDistance ? 0 : detail == 0 ? 1 : 2;
+                    // GR-23: Low detail (GR.15.1) draws creatures simply nearer and freezes them sooner.
+                    detail = distance >= (LowDetail ? LowFreezeDistance : FreezeDistance) ? 2 : visible && distance < (LowDetail ? LowFullDistance : FullDistance) ? 0 : 1;
+                    look = visible && distance < (LowDetail ? LowKitDistance : KitDistance) ? 0 : detail == 0 ? 1 : 2;
                 }
                 tank.Detail = detail;
                 tank.ShowDetail(look);

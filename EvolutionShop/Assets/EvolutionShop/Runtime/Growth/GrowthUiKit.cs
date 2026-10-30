@@ -184,7 +184,8 @@ namespace EvolutionShop
 
         static Label L(string text, params string[] classes)
         {
-            var l = new Label(text);
+            // GR-23: a key named in the words (E, Tab, the mouse) is the one the player chose.
+            var l = new Label(GrowthControls.Keyed(text));
             foreach (var c in classes) l.AddToClassList(c);
             return l;
         }

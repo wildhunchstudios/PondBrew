@@ -5,6 +5,8 @@ using System.Linq;
 using EvolutionShop.Growth;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace EvolutionShop
 {
@@ -20,16 +22,16 @@ namespace EvolutionShop
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
             GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", PeopleSmokeArgument = "-evolutionGrowthPeopleSmoke",
-            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke";
+            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : null;
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -59,16 +61,34 @@ namespace EvolutionShop
         /// <summary>GR-07: a development-only start point for the playtest (-evolutionGrowthStart era3 or era4; GR-10's spaces; GR-11's exhibition; GR-12's creatures; GR-16's look), with its own save; null for the usual greybox.</summary>
         public string StartPoint { get; private set; }
         public string Notice { get; private set; }
-        public bool PeekOn = true, ReducedMotion;
-        public float Sensitivity = 1;
-        /// <summary>GR-16 wave 5: the sounds (the crank, the hand pump, the pop, the swish) and the machines' hum, each full, half or off.</summary>
-        public GrowthAudio.Level SoundLevel, HumLevel;
+        /// <summary>GR-23: the whole game's settings (one file for the game, the user's choice), where they are kept, and why
+        /// they were reset if they could not be read. The comfort settings below read and write them.</summary>
+        public GrowthSettings Settings => settings;
+        GrowthSettings settings = new GrowthSettings();
+        public string SettingsPath { get; private set; }
+        public string SettingsNotice { get; private set; }
+        public bool PeekOn { get => !settings.peekOff; set => settings.peekOff = !value; }
+        public bool ReducedMotion { get => settings.reducedMotion; set => settings.reducedMotion = value; }
+        public float Sensitivity { get => settings.sensitivity; set => settings.sensitivity = value; }
+        /// <summary>GR-16 wave 5: the sounds (the crank, the hand pump, the pop, the swish) and the machines' hum, 0 to 1 (GR-23's
+        /// volumes); as levels (full, half or off) for the routes that set them so.</summary>
+        public float SoundVolume => settings.sounds / 100f;
+        public float HumVolume => settings.hum / 100f;
+        public float HumourVolume => settings.humour / 100f;
+        /// <summary>GR-21: the music's own volume, 0 to 1.</summary>
+        public float MusicVolume => settings.music / 100f;
+        public GrowthAudio.Level SoundLevel { get => LevelOf(settings.sounds); set => settings.sounds = GrowthSettings.LevelVolume((int)value); }
+        public GrowthAudio.Level HumLevel { get => LevelOf(settings.hum); set => settings.hum = GrowthSettings.LevelVolume((int)value); }
         public GrowthAudio Audio { get; private set; }
-        /// <summary>GR-18 wave 4 (§6.7): the silly moments: their sounds (full, half or off), how many there are (every one,
-        /// fewer, or none but the player's slap), the slap's key (F unless changed), and what plays them.</summary>
-        public GrowthAudio.Level HumourLevel;
-        public GrowthGagLevel GagLevel;
-        public Key SlapKey = GrowthGags.DefaultSlapKey;
+        /// <summary>GR-21: the music.</summary>
+        public GrowthMusic Music { get; private set; }
+        /// <summary>GR-18 wave 4 (§6.7): the silly moments: their sounds, how many there are (every one, fewer, or none but the
+        /// player's slap), the slap's key (F unless changed: GR-23's Slap binding), and what plays them.</summary>
+        public GrowthAudio.Level HumourLevel { get => LevelOf(settings.humour); set => settings.humour = GrowthSettings.LevelVolume((int)value); }
+        public GrowthGagLevel GagLevel { get => (GrowthGagLevel)settings.gags; set => settings.gags = (int)value; }
+        public Key SlapKey { get => GrowthControls.KeyOf(GrowthAction.Slap); set => settings.Bind(GrowthAction.Slap, "Key/" + value); }
+        /// <summary>GR-23: the field of view the player chose (68 unless changed); peek eases from it to its own.</summary>
+        public float FieldOfView => settings.fieldOfView;
         public GrowthGags Gags { get; private set; }
         /// <summary>GR-18 wave 3: the player's hands in first person (in the look, with the people kit), or null.</summary>
         public GrowthHands Hands { get; private set; }
@@ -84,14 +104,29 @@ namespace EvolutionShop
         public GrowthPipe PipePlan { get; private set; }
         public string PipeWhy { get; private set; }
         public bool PipeReady { get; private set; }
-        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results;
+        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results;
         float peekBlend, saveClock, visualClock;
         bool initialized;
+
+        static GrowthAudio.Level LevelOf(int volume) => volume >= 75 ? GrowthAudio.Level.Full : volume >= 25 ? GrowthAudio.Level.Half : GrowthAudio.Level.Off;
 
         void Awake()
         {
             Application.targetFrameRate = 120;
             ValidationMode = ShopSession.Arg("-evolutionSmoke") != null;
+            // GR-23: the whole game's settings, beside the saves (a validation run's in its evidence folder, from the defaults:
+            // a route reads its file back itself). A first launch carries over once the settings the usual save kept.
+            SettingsPath = ValidationMode ? Path.Combine(ShopSession.Arg("-evolutionEvidence") ?? Application.temporaryCachePath, GrowthSettingsStore.FileName)
+                : Path.Combine(Application.persistentDataPath, GrowthSettingsStore.FileName);
+            if (ValidationMode) settings = new GrowthSettings().Sanitize();
+            else
+            {
+                bool had = File.Exists(SettingsPath);
+                settings = GrowthSettingsStore.Load(SettingsPath, Path.Combine(Application.persistentDataPath, SaveFileName), out string settingsNotice);
+                SettingsNotice = settingsNotice;
+                if (!had || settingsNotice != null) SaveSettings();
+            }
+            GrowthControls.Settings = settings;
             SavePath = ValidationMode ? Path.Combine(ShopSession.Arg("-evolutionEvidence") ?? Application.temporaryCachePath, SaveFileName)
                 : Path.Combine(Application.persistentDataPath, SaveFileName);
             string start = ValidationMode ? null : ShopSession.Arg("-evolutionGrowthStart");
@@ -103,15 +138,13 @@ namespace EvolutionShop
             }
             string notice = null;
             bool fresh = !File.Exists(SavePath);
-            // The comfort settings kept with the slot come back with it (GR-16 wave 5 found them saved but never read back).
-            if (!fresh) ApplySettings(ReadSettings(SavePath));
             Shop = StartPoint != null && fresh ? GrowthStarts.Make(StartPoint) : LoadOrNew(SavePath, out notice);
             // GR-14: a brand new game starts with the guided first night (never a start point, an old save or a route).
             if (fresh && StartPoint == null && !ValidationMode) Shop.Guide = GrowthGuideMode.On;
             Notice = notice;
             var camera = new GameObject("Player camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
-            camera.fieldOfView = NormalFov;
+            camera.fieldOfView = FieldOfView;
             camera.nearClipPlane = 0.02f;
             camera.farClipPlane = 60;
             camera.clearFlags = CameraClearFlags.SolidColor;
@@ -126,11 +159,15 @@ namespace EvolutionShop
             if (GrowthWorld.LookOn) Hands = GrowthHands.Build(this);
             Audio = gameObject.AddComponent<GrowthAudio>();
             Audio.Initialize(this);
+            Music = gameObject.AddComponent<GrowthMusic>();
+            Music.Initialize(this);
             Gags = gameObject.AddComponent<GrowthGags>();
             Gags.Initialize(this);
             Ui = gameObject.AddComponent<GrowthUi>();
             Ui.Initialize(this);
             World.Sync(Shop, 0);
+            ApplySettings();
+            if (!ValidationMode && settings.displayChosen) ApplyDisplay();
             initialized = true;
             SetCard(ValidationMode ? GrowthCard.None : GrowthCard.Welcome);
             Debug.Log("EVOLUTION_GROWTH_GREYBOX " + Application.dataPath + " save=" + SavePath);
@@ -148,16 +185,170 @@ namespace EvolutionShop
             catch (Exception) { return null; }
         }
 
-        /// <summary>Puts a save's comfort settings in play: peek, reduced motion, the mouse, the sounds and the hum.</summary>
-        public void ApplySettings(GrowthSave save)
+        // ---------------------------------------------------------------- GR-23: the settings in play
+
+        /// <summary>Keeps the whole game's settings in their file (a validation run's in its evidence folder).</summary>
+        public bool SaveSettings() => GrowthSettingsStore.Save(SettingsPath, settings);
+
+        /// <summary>Puts other settings in play (validation: the defaults, as a new game's, or a route's own).</summary>
+        public void ResetSettings(GrowthSettings to = null)
         {
-            if (save == null) return;
-            PeekOn = !save.peekOff; ReducedMotion = save.reducedMotion;
-            Sensitivity = save.sensitivity >= 0.5f && save.sensitivity <= 2f ? save.sensitivity : 1;
-            SoundLevel = (GrowthAudio.Level)Mathf.Clamp(save.soundLevel, 0, 2); HumLevel = (GrowthAudio.Level)Mathf.Clamp(save.humLevel, 0, 2);
-            HumourLevel = (GrowthAudio.Level)Mathf.Clamp(save.humourLevel, 0, 2); GagLevel = (GrowthGagLevel)Mathf.Clamp(save.gagLevel, 0, 2);
-            SlapKey = KeyFrom(save.slapKey);
+            settings = (to ?? new GrowthSettings()).Sanitize(GrowthControls.RealKey);
+            GrowthControls.Settings = settings;
+            ApplySettings();
         }
+
+        /// <summary>Puts the settings in play, all but the window (<see cref="ApplyDisplay"/>): the graphics, the sound and the
+        /// interface's size. Every change on the Settings screen calls it.</summary>
+        public void ApplySettings()
+        {
+            settings.Sanitize(GrowthControls.RealKey);
+            ApplyGraphics();
+            ApplySound();
+            Ui?.SetScale(settings.uiScale / 100f);
+        }
+
+        /// <summary>The graphics: the sun's shadows, bloom, reflections, brightness and creature detail (the world's), the
+        /// camera's anti-aliasing, and the render scale (a built game's: the editor's asset is left alone).</summary>
+        public void ApplyGraphics()
+        {
+            World?.ApplyGraphics(settings);
+            if (Player != null && Player.View != null)
+            {
+                var data = Player.View.GetUniversalAdditionalCameraData();
+                data.antialiasing = settings.antiAliasing == 2 ? AntialiasingMode.SubpixelMorphologicalAntiAliasing : settings.antiAliasing == 1 ? AntialiasingMode.FastApproximateAntialiasing : AntialiasingMode.None;
+                data.antialiasingQuality = AntialiasingQuality.High;
+            }
+            RenderScaleNow = settings.renderScale / 100f;
+            if (!Application.isEditor && GraphicsSettings.currentRenderPipeline is UniversalRenderPipelineAsset urp) urp.renderScale = RenderScaleNow;
+        }
+
+        /// <summary>Validation: the render scale last put in play.</summary>
+        public float RenderScaleNow { get; private set; } = 1;
+
+        bool focused = true;
+        void OnApplicationFocus(bool focus) { focused = focus; if (initialized) ApplySound(); }
+
+        /// <summary>The master volume, and silence while the game is in the background when the player asks for it (never in a
+        /// validation run, whose window is often behind another).</summary>
+        public void ApplySound() => AudioListener.volume = ListenerVolume(focused || ValidationMode);
+        public float ListenerVolume(bool inFront) => settings.master / 100f * (settings.muteInBackground && !inFront ? 0 : 1);
+
+        /// <summary>The frame rate the display settings ask for: the screen's with V-Sync (-1), else the limit (0: none, -1).</summary>
+        public int TargetFrameRate => settings.vSync || settings.frameLimit == 0 ? -1 : settings.frameLimit;
+
+        /// <summary>The window: its mode and size, V-Sync and the frame limit. A validation run records what it would do
+        /// (<see cref="DisplayAsked"/>) and leaves its window as it is.</summary>
+        public void ApplyDisplay()
+        {
+            var mode = settings.windowMode == 0 ? FullScreenMode.FullScreenWindow : settings.windowMode == 2 ? FullScreenMode.ExclusiveFullScreen : FullScreenMode.Windowed;
+            DisplayAsked = settings.width + "x" + settings.height + " " + mode + (settings.vSync ? " vsync" : " limit " + TargetFrameRate);
+            if (ValidationMode) return;
+            QualitySettings.vSyncCount = settings.vSync ? 1 : 0;
+            Application.targetFrameRate = TargetFrameRate;
+            if (settings.displayChosen) Screen.SetResolution(settings.width, settings.height, mode);
+        }
+
+        /// <summary>Validation: what the last display change asked for ("1920x1080 Windowed limit 120").</summary>
+        public string DisplayAsked { get; private set; }
+
+        /// <summary>A change of window (its mode or size) waiting to be kept: it goes back by itself unless kept within
+        /// <see cref="RevertSeconds"/>.</summary>
+        public const float RevertSeconds = 10f;
+        GrowthSettings displayBefore;
+        float revertAt;
+        public bool DisplayPending => displayBefore != null;
+        public float DisplaySecondsLeft => DisplayPending ? Mathf.Max(0, revertAt - Time.unscaledTime) : 0;
+
+        /// <summary>Changes the window (its mode or size) and asks to keep it: it goes back in ten seconds unless kept. V-Sync
+        /// and the frame limit change at once, with nothing to keep.</summary>
+        public void ChangeDisplay(Action<GrowthSettings> change)
+        {
+            if (displayBefore == null) displayBefore = settings.Copy();
+            change(settings);
+            settings.displayChosen = true;
+            settings.Sanitize(GrowthControls.RealKey);
+            ApplyDisplay();
+            revertAt = Time.unscaledTime + RevertSeconds;
+        }
+
+        public void KeepDisplay() { displayBefore = null; SaveSettings(); Ui?.RefreshCard(); }
+
+        public void RevertDisplay()
+        {
+            if (displayBefore == null) return;
+            settings.windowMode = displayBefore.windowMode; settings.width = displayBefore.width; settings.height = displayBefore.height;
+            settings.displayChosen = displayBefore.displayChosen;
+            displayBefore = null;
+            ApplyDisplay();
+            SaveSettings();
+            Ui?.RefreshCard();
+        }
+
+        /// <summary>Opens the Settings screen (from the pause screen), on the tab asked for.</summary>
+        public void OpenSettings(string tab = null) { SetCard(GrowthCard.Settings); if (tab != null) Ui?.ShowTabNamed(tab); }
+
+        /// <summary>Back to the pause screen; a display change not yet kept goes back, a rebinding waiting is called off.</summary>
+        public void CloseSettings()
+        {
+            if (DisplayPending) RevertDisplay();
+            Rebinding = null;
+            SetCard(GrowthCard.Pause);
+        }
+
+        // ---------------------------------------------------------------- GR-23: rebinding
+
+        /// <summary>The action waiting for its new key or mouse button (null when none), and what the last rebinding did.</summary>
+        public GrowthAction? Rebinding { get; private set; }
+        public string RebindNote { get; private set; }
+        bool rebindArmed;
+
+        /// <summary>Waits for the next key or mouse button for an action (Esc keeps it as it was). It listens once every key and
+        /// button is up, so the press that started it is never taken.</summary>
+        public void StartRebind(GrowthAction action) { Rebinding = action; RebindNote = null; rebindArmed = false; Ui?.RefreshCard(); }
+
+        /// <summary>Puts an action on an input as the Controls tab does (the note says what moved) and keeps it.</summary>
+        public (bool done, string note) Rebind(GrowthAction action, string input)
+        {
+            var r = settings.Bind(action, input);
+            RebindNote = r.note;
+            if (r.done) SaveSettings();
+            return r;
+        }
+
+        bool UpdateRebind()
+        {
+            if (Rebinding == null) return false;
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            {
+                RebindNote = GrowthSettings.ActionName(Rebinding.Value) + " stays on " + GrowthControls.NameOf(Rebinding.Value);
+                Rebinding = null; Ui?.RefreshCard(); return true;
+            }
+            if (!rebindArmed) { rebindArmed = !GrowthControls.AnyHeld(); return true; }
+            string input = GrowthControls.Listen();
+            if (input == null) return true;
+            var (done, note) = Rebind(Rebinding.Value, input);
+            if (done) Rebinding = null; else RebindNote = note + ": press another";
+            Ui?.RefreshCard();
+            return true;
+        }
+
+        /// <summary>GR-23: the use button held down, or (Toggle) pressed once to start and again to stop: it stops by itself
+        /// when the reticle leaves what it was used on or a card opens.</summary>
+        bool UseHeld()
+        {
+            bool input = Card == GrowthCard.None && (!ValidationMode || AllowValidationInput);
+            if (!settings.useToggle) { useToggled = false; return input && GrowthControls.Held(GrowthAction.Use); }
+            string on = Focused != null ? Focused.Kind + "/" + Focused.Id : null;
+            if (!input) useToggled = false;
+            else if (GrowthControls.Pressed(GrowthAction.Use)) { useToggled = !useToggled && on != null; useOn = on; }
+            else if (useToggled && on != useOn) useToggled = false;
+            return useToggled;
+        }
+        bool useToggled; string useOn;
+        /// <summary>Validation: whether the use button is toggled on.</summary>
+        public bool UseToggled => useToggled;
 
         /// <summary>GR-18 wave 4: the slap's key from a save ("" or anything unknown or already used: F).</summary>
         public static Key KeyFrom(string name) =>
@@ -190,10 +381,8 @@ namespace EvolutionShop
         public bool SaveNow()
         {
             if (Shop == null) return false;
+            // GR-23: the settings are the whole game's, in their own file; a save keeps only the shop.
             var save = Shop.Snapshot();
-            save.peekOff = !PeekOn; save.reducedMotion = ReducedMotion; save.sensitivity = Sensitivity;
-            save.soundLevel = (int)SoundLevel; save.humLevel = (int)HumLevel;
-            save.humourLevel = (int)HumourLevel; save.gagLevel = (int)GagLevel; save.slapKey = SlapKey == GrowthGags.DefaultSlapKey ? "" : SlapKey.ToString();
             string temp = SavePath + ".tmp";
             try
             {
@@ -250,6 +439,8 @@ namespace EvolutionShop
         public void SetCard(GrowthCard card, string target = null)
         {
             if (card == GrowthCard.None) { Shop.StopCollecting(); }
+            // GR-23: a rebinding waits only while the Settings screen is open (never for a key pressed in the shop).
+            if (card != GrowthCard.Settings) Rebinding = null;
             Card = card;
             CardTarget = target;
             bool free = card == GrowthCard.None;
@@ -387,18 +578,25 @@ namespace EvolutionShop
         {
             if (!initialized) return;
             var keyboard = Keyboard.current;
-            var mouse = Mouse.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            // GR-23: a display change not kept goes back by itself.
+            if (DisplayPending && Time.unscaledTime >= revertAt) RevertDisplay();
+            // GR-23: while an action waits for its new key, every key and button goes to it.
+            bool rebinding = UpdateRebind();
+            if (rebinding) { }
+            else if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (Card == GrowthCard.None && PipeFrom != null) { StopPipe(); Ui.Hint("Pipe stopped"); }
-                else if (Card == GrowthCard.None) SetCard(GrowthCard.Pause); else SetCard(GrowthCard.None);
+                else if (Card == GrowthCard.None) SetCard(GrowthCard.Pause);
+                else if (Card == GrowthCard.Settings) CloseSettings();
+                else SetCard(GrowthCard.None);
             }
             // GR-03 (development): F8 opens the crate of every species, for looking at sizes and families.
             else if (keyboard != null && keyboard.f8Key.wasPressedThisFrame && (Card == GrowthCard.None || Card == GrowthCard.Crate))
                 SetCard(Card == GrowthCard.Crate ? GrowthCard.None : GrowthCard.Crate);
-            else if (keyboard != null && keyboard.tabKey.wasPressedThisFrame && (Card == GrowthCard.None || Card == GrowthCard.Journal))
+            else if (GrowthControls.Pressed(GrowthAction.Journal) && (Card == GrowthCard.None || Card == GrowthCard.Journal))
                 SetCard(Card == GrowthCard.Journal ? GrowthCard.None : GrowthCard.Journal);
             Player.Sensitivity = Sensitivity;
+            Player.InvertY = settings.invertY;
             Player.InputEnabled = Card == GrowthCard.None && (!ValidationMode || AllowValidationInput);
             float dt = Time.deltaTime;
             if (!Paused)
@@ -415,9 +613,9 @@ namespace EvolutionShop
             FindFocus();
             UpdatePipe();
             UpdatePeek(dt);
-            bool held = Card == GrowthCard.None && mouse != null && mouse.leftButton.isPressed && (!ValidationMode || AllowValidationInput);
+            bool held = !rebinding && UseHeld();
             HoldActions(held, dt);
-            if (Card == GrowthCard.None && keyboard != null && keyboard.eKey.wasPressedThisFrame && (!ValidationMode || AllowValidationInput))
+            if (!rebinding && Card == GrowthCard.None && GrowthControls.Pressed(GrowthAction.Interact) && (!ValidationMode || AllowValidationInput))
             {
                 if (PipeFrom != null) LayAimedPipe();
                 else if (Peeking && PeekCreature != null) TakeFromTank(PeekCreature);
@@ -438,6 +636,7 @@ namespace EvolutionShop
             {
                 Ui?.Event(e);
                 Gags?.Event(e);
+                Music?.Event(e);
                 // GR-11: the Grand Exhibition held: confetti around the player.
                 if (e.Kind == GrowthEventKind.ExhibitionWon) World.Celebrate(Player != null ? Player.transform.position : new Vector3(-0.5f, 0, -1.6f), Player != null && Player.View != null ? Player.View.transform.forward : Vector3.forward);
                 if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter) SetCard(GrowthCard.Receipt); }
@@ -528,7 +727,7 @@ namespace EvolutionShop
                 World.DistanceToGlass(Focused.Id, Player.View.transform.position) <= PeekRange;
             float step = ReducedMotion ? 1 : dt / PeekEase;
             peekBlend = Mathf.MoveTowards(peekBlend, want ? 1 : 0, step);
-            Player.View.fieldOfView = Mathf.Lerp(NormalFov, PeekFov, Mathf.SmoothStep(0, 1, peekBlend));
+            Player.View.fieldOfView = Mathf.Lerp(FieldOfView, PeekFov, Mathf.SmoothStep(0, 1, peekBlend));
             // While peek eases out after the reticle left the tank there is nothing to read (GR-03 found this throwing).
             PeekCreature = Peeking && want ? World.CreatureNearCentre(Focused.Id, Player.View) : null;
             World.Highlight(PeekCreature);

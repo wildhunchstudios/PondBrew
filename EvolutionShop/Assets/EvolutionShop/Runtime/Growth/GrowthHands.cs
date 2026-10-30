@@ -360,9 +360,9 @@ namespace EvolutionShop
                 CardOpen = session.Card != GrowthCard.None,
                 Collecting = session.CollectingNow, Serving = session.ServingNow, Cranking = session.CrankingNow, Pumping = session.PumpingNow,
                 Piping = session.PipeFrom != null, Reduced = session.ReducedMotion,
-                Peek = Mathf.InverseLerp(GrowthSession.NormalFov, GrowthSession.PeekFov, view.fieldOfView),
+                Peek = Mathf.InverseLerp(session.FieldOfView, GrowthSession.PeekFov, view.fieldOfView),
                 HoldSeconds = shop.HoldSeconds, ServeFraction = shop.ServeSeconds > 0 ? shop.ServeProgress / shop.ServeSeconds : 0,
-                Speed = speed, YawRate = yawRate, PitchRate = pitchRate, Fov = view.fieldOfView, NormalFov = GrowthSession.NormalFov,
+                Speed = speed, YawRate = yawRate, PitchRate = pitchRate, Fov = view.fieldOfView, NormalFov = session.FieldOfView,
                 SiphonLevel = shop.Level("siphon"), SiphonCapacity = shop.SiphonCapacity, Sales = shop.SalesTotal,
                 Carried = shop.Carried, Held = shop.Held,
             };

@@ -463,7 +463,11 @@ namespace EvolutionShop
             yield return Wait(() => audio.HumPlaying, 3, "the hum back");
             s.SetCard(GrowthCard.Pause);
             yield return Wait(() => !audio.HumPlaying, 3, "the hum while paused");
-            Check(s.Ui.CardText().Contains("Sounds Full") && s.Ui.CardText().Contains("Hum Full"), "Paused: the hum fades out; the pause screen's Sound row has Sounds and Hum, each full, half or off");
+            // GR-23: the volumes moved from the pause screen to the Settings screen's Sound tab, each 0 to 100.
+            s.OpenSettings("Sound");
+            yield return null; yield return null;
+            Check(s.Ui.CurrentTab == "Sound" && s.Ui.CardText().Contains("Sounds") && s.Ui.CardText().Contains("Machine hum") && s.Ui.SettingValue("sounds") == "100" && s.Ui.SettingValue("hum") == "100",
+                "Paused: the hum fades out; the Settings screen's Sound tab has Sounds and Machine hum, each 0 to 100");
             yield return Shot("480-pause-sounds");
             s.SetCard(GrowthCard.None);
             yield return Wait(() => audio.HumPlaying, 3, "the hum after the pause");

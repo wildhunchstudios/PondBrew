@@ -86,8 +86,9 @@ namespace EvolutionShop
         /// The player's slap is never held back by it.</summary>
         public bool RoomMoments = true;
         /// <summary>Waiting for a new slap key (the pause menu's chip).</summary>
-        public bool Rebinding;
-        public string RebindProblem { get; private set; }
+        /// <summary>Whether the slap waits for its new key or button, and what the last rebinding said (GR-23: the session's).</summary>
+        public bool Rebinding => session != null && session.Rebinding == GrowthAction.Slap;
+        public string RebindProblem => session != null ? session.RebindNote : null;
 
         public void Initialize(GrowthSession owner)
         {
@@ -128,8 +129,6 @@ namespace EvolutionShop
             var shop = session.Shop;
             if (shop != seenShop) { Clear(); seenShop = shop; }
             Policy.Level = RoomMoments ? session.GagLevel : GrowthGagLevel.Off;
-            // The pause menu's chip waits for the next key (the game is paused while it does).
-            if (Rebinding) { Rebind(Keyboard.current); return; }
             if (session.Paused)
             {
                 if (voice.isPlaying) voice.Pause();
@@ -141,12 +140,12 @@ namespace EvolutionShop
             bool free = session.Card == GrowthCard.None;
             SlapTarget = free ? FindSlapTarget() : null;
             LookedAt = free ? FindVisitor(WishReach) : null;
-            var keyboard = Keyboard.current;
             bool input = !session.ValidationMode || session.AllowValidationInput;
-            if (free && input && keyboard != null)
+            // GR-23: the slap and the skip on the keys (or buttons) the player chose, F and Backspace unless changed.
+            if (free && input && session.Rebinding == null)
             {
-                if (keyboard[session.SlapKey].wasPressedThisFrame && SlapTarget != null) TrySlap(SlapTarget);
-                if (keyboard.backspaceKey.wasPressedThisFrame) Skip();
+                if (GrowthControls.Pressed(GrowthAction.Slap) && SlapTarget != null) TrySlap(SlapTarget);
+                if (GrowthControls.Pressed(GrowthAction.Skip)) Skip();
             }
             Play();
             WatchHatch();
@@ -419,7 +418,7 @@ namespace EvolutionShop
         void Sound(string name, Vector3 at, float gain)
         {
             Asked[name] = Asked.TryGetValue(name, out int n) ? n + 1 : 1;
-            float g = GrowthAudio.Gain(session.HumourLevel) * gain;
+            float g = session.HumourVolume * gain;
             LastGain = g; LastSoundAt = at;
             if (g <= 0 || !Sounds.TryGetValue(name, out var clip) || !isActiveAndEnabled) return;
             voice.transform.position = at;
@@ -444,25 +443,9 @@ namespace EvolutionShop
 
         // ---------------------------------------------------------------- the slap's key (the pause menu)
 
-        /// <summary>Starts waiting for a new slap key (the pause menu's chip): the next key pressed, unless it already does something.</summary>
-        public void StartRebind() { Rebinding = true; RebindProblem = null; }
-
-        void Rebind(Keyboard keyboard)
-        {
-            if (keyboard == null) return;
-            if (keyboard.escapeKey.wasPressedThisFrame) { Rebinding = false; session.Ui?.RefreshCard(); return; }
-            foreach (var k in keyboard.allKeys)
-            {
-                if (k == null || !k.wasPressedThisFrame) continue;
-                var key = k.keyCode;
-                if (System.Array.IndexOf(Reserved, key) >= 0) { RebindProblem = key + " already does something"; session.Ui?.RefreshCard(); return; }
-                session.SlapKey = key;
-                Rebinding = false;
-                session.SaveNow();
-                session.Ui?.RefreshCard();
-                return;
-            }
-        }
+        /// <summary>Starts waiting for the slap's new key or button (GR-23: the Settings screen's Controls tab does it for every
+        /// action; see <see cref="GrowthSession.StartRebind"/>).</summary>
+        public void StartRebind() => session.StartRebind(GrowthAction.Slap);
 
         public static string KeyName(Key key) => key == Key.None ? "none" : key.ToString().Replace("Digit", "");
 

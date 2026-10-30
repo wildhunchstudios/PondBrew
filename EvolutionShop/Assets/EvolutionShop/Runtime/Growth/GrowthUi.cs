@@ -229,10 +229,10 @@ namespace EvolutionShop
             bool free = s.Card == GrowthCard.None;
             // A label measured while hidden, or before its font had drawn its glyphs, keeps that width: measure it again for the
             // frames after it changes or shows (setting its words anew makes it measure itself again).
-            if (next != nextLabel.text || free && !nextShown) nextRemeasure = 30;
+            if (GrowthControls.Keyed(next) != nextLabel.text || free && !nextShown) nextRemeasure = 30;
             else if (nextRemeasure > 0) { nextRemeasure--; nextLabel.text = ""; }
-            nextLabel.text = next; nextShown = free;
-            hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Welcome ? DisplayStyle.None : DisplayStyle.Flex;
+            nextLabel.text = GrowthControls.Keyed(next); nextShown = free;
+            hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Settings || s.Card == GrowthCard.Welcome ? DisplayStyle.None : DisplayStyle.Flex;
             nextBox.style.display = free ? DisplayStyle.Flex : DisplayStyle.None;
             siphonLabel.text = shop.Held.Count == 0 ? "" : "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity + ": " + string.Join(", ", shop.Held.GroupBy(c => c).Select(g => g.Count() + " " + GrowthShop.Name(g.Key)));
             carryLabel.text = shop.Carried.Count == 0 ? "" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(GrowthSession.Named));
@@ -247,6 +247,7 @@ namespace EvolutionShop
                 modeDetail.text = s.PipeTo == null ? "Aim at its other end" : s.PipePlan == null ? s.PipeWhy :
                     "to " + shop.EndName(s.PipeTo) + " · " + s.PipePlan.Length.ToString("0.#") + " m · " + s.PipePlan.Paid + " credits" + (s.PipeReady ? "" : " · " + s.PipeWhy);
                 modeLay.style.display = s.PipeReady ? DisplayStyle.Flex : DisplayStyle.None;
+                modeLay.Q<Label>(className: "es-keycap").text = GrowthControls.NameOf(GrowthAction.Interact);
                 nextBox.style.display = DisplayStyle.None;
             }
             TickGuideMarker(guide, free && !piping);
@@ -254,7 +255,7 @@ namespace EvolutionShop
             promptBox.style.display = name == null ? DisplayStyle.None : DisplayStyle.Flex;
             if (name != null)
             {
-                promptName.text = name; promptStatus.text = s.FocusName(out status) != null ? status : "";
+                promptName.text = name; promptStatus.text = s.FocusName(out status) != null ? GrowthControls.Keyed(status) : "";
                 float collect = s.Focused != null && s.Focused.Kind == GrowthTargetKind.Vial ? shop.VialProgress : s.Focused != null && s.Focused.Kind == GrowthTargetKind.Buffer ? shop.BufferProgress : shop.CollectProgress;
                 float progress = s.CollectingNow ? collect / Mathf.Max(0.01f, shop.HoldSeconds) : s.ServingNow ? shop.ServeProgress / Mathf.Max(0.01f, shop.ServeSeconds) :
                     s.PumpingNow ? shop.PumpProgress / Mathf.Max(0.01f, shop.PumpDoseSeconds) : 0;
@@ -268,7 +269,7 @@ namespace EvolutionShop
             slapBox.style.display = slapAt != null ? DisplayStyle.Flex : DisplayStyle.None;
             if (slapAt != null)
             {
-                slapKey.text = GrowthGags.KeyName(s.SlapKey);
+                slapKey.text = GrowthControls.NameOf(GrowthAction.Slap);
                 slapWho.text = "the " + GrowthShop.TypeName(shop.Visitors.FirstOrDefault(v => v.Id == slapAt.VisitorId)?.Type).ToLowerInvariant();
             }
             // GR-20: the wish of the visitor under the reticle, while they browse or queue.
@@ -295,13 +296,14 @@ namespace EvolutionShop
 
         static string ShopClock(float seconds) { int t = Mathf.Max(0, Mathf.CeilToInt(seconds)); return t / 60 + ":" + (t % 60).ToString("00"); }
 
-        public void Hint(string text) { hintLabel.text = text; hintUntil = Time.unscaledTime + 1.5f; }
+        public void Hint(string text) { hintLabel.text = GrowthControls.Keyed(text); hintUntil = Time.unscaledTime + 1.5f; }
 
         /// <summary>GR-18 wave 4 (§6.7): a silly moment's caption (who says it, and what) until it ends (every caption stays in <see cref="Log"/>).</summary>
         public void Caption(string who, string words)
         {
             Log.Add((who != null ? who + ": " : "") + words);
-            if (!Ready) return;
+            // GR-23: with Captions off nothing shows (every caption still goes to the log).
+            if (!Ready || s.Settings.captionsOff) return;
             captionWho.text = who ?? ""; captionText.text = words;
             captionWho.style.display = string.IsNullOrEmpty(who) ? DisplayStyle.None : DisplayStyle.Flex;
             captionBox.style.display = DisplayStyle.Flex;
@@ -371,7 +373,7 @@ namespace EvolutionShop
             if (which == GrowthCard.None) return;
             // GR-13: the planning views (the pinboard, the catalog, the journal, the receipt, the results) and the welcome and
             // pause screens are notebooks over the dimmed shop; which of them pause the game is the session's, unchanged.
-            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog;
+            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Settings || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog;
             card = screen ? ScreenCard(which) : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding || which == GrowthCard.Helper ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer || which == GrowthCard.Staff ? 540 : which == GrowthCard.PowerBoard || which == GrowthCard.Sorter ? 600 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
@@ -484,8 +486,9 @@ namespace EvolutionShop
         {
             var c = new VisualElement(); c.AddToClassList("gr-notebook");
             bool wide = which == GrowthCard.Journal || which == GrowthCard.Board || which == GrowthCard.Catalog || which == GrowthCard.Results;
-            c.style.width = wide ? 1620 : which == GrowthCard.Receipt ? 820 : 1000;
-            if (wide) c.style.height = 860;
+            c.style.width = wide ? 1620 : which == GrowthCard.Receipt ? 820 : which == GrowthCard.Settings ? 1180 : 1000;
+            // GR-23: the Settings screen keeps one size whichever tab shows.
+            if (wide || which == GrowthCard.Settings) c.style.height = 860;
             c.style.maxHeight = new Length(86, LengthUnit.Percent);
             c.pickingMode = PickingMode.Position;
             return c;
@@ -534,6 +537,7 @@ namespace EvolutionShop
                 case GrowthCard.Incubator: return shop.Incubating ? "Incubating · " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : shop.Hatchlings.Count > 1 ? "A clutch of " + shop.Hatchlings.Count + " is ready" : shop.Hatchling != null ? "A hatchling is ready" : shop.Chamber.Count > 0 ? "Ready to mix" : "Idle";
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + ShopClock(shop.DaySecondsLeft) + " left." : "Closed for the night.";
                 case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacityOf(s.CardTarget) + " doses ready";
+                case GrowthCard.Settings: return SettingsLiveText();
                 case GrowthCard.Breeding: return !shop.HasBreedingTank ? "not bought" : shop.ActivePairs.Any(p => p.Offspring != null) ? "An offspring is waiting" : shop.ActivePairs.Any(p => p.Breeding) ? "Breeding · " + Mathf.CeilToInt(shop.ActivePairs.Where(p => p.Breeding).Min(p => p.Left)) + " s" : "Waiting for a pair";
                 default: return PowerLiveText() ?? LineLiveText() ?? HelperLiveText() ?? "";
             }
@@ -574,6 +578,7 @@ namespace EvolutionShop
                 case GrowthCard.Receipt: FillReceipt(); break;
                 case GrowthCard.Welcome: FillWelcome(); break;
                 case GrowthCard.Pause: FillPause(); break;
+                case GrowthCard.Settings: FillSettings(); break;
                 case GrowthCard.Annex: FillAnnex(); break;
                 case GrowthCard.Generator: FillGenerator(); break;
                 case GrowthCard.PowerBoard: FillPowerBoard(); break;
@@ -1615,20 +1620,11 @@ namespace EvolutionShop
         void FillPause()
         {
             var body = Notebook("Paused", "Day " + s.Shop.Day + " · " + s.Shop.Credits + " credits · " + StarsText(s.Shop.Stars) + " · saved to " + System.IO.Path.GetFileName(s.SavePath));
-            body.Add(L("Settings", "gr-label"));
-            body.Add(Item("Peek", "look closely at a tank's glass to read each creature", ChipButton(s.PeekOn ? "On" : "Off", () => { s.PeekOn = !s.PeekOn; s.SaveNow(); }, true)));
-            body.Add(Item("Reduced motion", "no creature tricks, gentler movement", ChipButton(s.ReducedMotion ? "On" : "Off", () => { s.ReducedMotion = !s.ReducedMotion; s.SaveNow(); }, true)));
-            // GR-16 wave 5: the sounds and the machines' hum, on one row (the card fits at 1280x720), each full, half or off.
-            body.Add(Item("Sound", "the stations' sounds, and the machines' hum",
-                ChipButton("Sounds " + GrowthAudio.Name(s.SoundLevel), () => { s.SoundLevel = GrowthAudio.Next(s.SoundLevel); s.SaveNow(); }, true),
-                ChipButton("Hum " + GrowthAudio.Name(s.HumLevel), () => { s.HumLevel = GrowthAudio.Next(s.HumLevel); s.SaveNow(); }, true)));
-            // GR-18 wave 4 (§6.7): the silly moments' sounds, how many there are, and the slap's key, on one row.
-            var gags = s.Gags;
-            body.Add(Item("Comedy", gags != null && gags.Rebinding ? (gags.RebindProblem ?? "press the slap's new key (Esc keeps it)") : "the silly moments and the slap's key",
-                ChipButton("Humour " + GrowthAudio.Name(s.HumourLevel), () => { s.HumourLevel = GrowthAudio.Next(s.HumourLevel); s.SaveNow(); }, true),
-                ChipButton("Gags " + GagName(s.GagLevel), () => { s.GagLevel = (GrowthGagLevel)(((int)s.GagLevel + 1) % 3); s.SaveNow(); }, true),
-                ChipButton(gags != null && gags.Rebinding ? "Slap key: press a key" : "Slap key " + GrowthGags.KeyName(s.SlapKey), () => gags?.StartRebind(), true)));
-            body.Add(Item("Mouse", "how far the view turns", ChipButton(s.Sensitivity.ToString("0.0") + "×", () => { s.Sensitivity = s.Sensitivity >= 2f ? 0.5f : s.Sensitivity + 0.25f; s.SaveNow(); }, true)));
+            // GR-23: the settings have a screen of their own (graphics, display, sound, controls, accessibility).
+            var g = s.Settings;
+            var open = Button("Settings", () => s.OpenSettings(), true); open.name = "gr-open-settings";
+            body.Add(Item("Settings", "graphics, display, sound, controls and accessibility · music " + g.music + ", sounds " + g.sounds +
+                " · " + GrowthSettings.PresetNames[g.MatchingPreset()] + " quality", open));
             if (s.Shop.Guide == GrowthGuideMode.On)
             {
                 // GR-16 wave 5: a line of its own rather than a settings row, so with the sound row the card still fits at 1280x720.

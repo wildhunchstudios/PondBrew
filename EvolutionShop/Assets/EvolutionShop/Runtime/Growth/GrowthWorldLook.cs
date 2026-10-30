@@ -495,6 +495,29 @@ namespace EvolutionShop
             }
         }
 
+        /// <summary>GR-23: brightness, as stops of exposure over the look's own (0 unless the player changed it).</summary>
+        public float ExposureOffset { get; private set; }
+        /// <summary>Validation: the graphics the world last put in play.</summary>
+        public bool BloomOn => lookProfile != null && lookProfile.TryGet<Bloom>(out var b) && b.active;
+        public LightShadows SunShadows => sun != null ? sun.shadows : LightShadows.None;
+        public bool ReflectionsOn => QualitySettings.realtimeReflectionProbes && lookProbes.TrueForAll(p => p == null || p.enabled);
+
+        /// <summary>GR-23: the graphics settings the world carries out: the sun's shadows, bloom, the rooms' reflections,
+        /// brightness and creature detail (in the plain greybox only brightness and detail).</summary>
+        public void ApplyGraphics(GrowthSettings g)
+        {
+            LowDetail = g.creatureDetail == 0;
+            ExposureOffset = g.brightness * 0.15f;
+            if (lookVolume == null || sun == null) return;
+            sun.shadows = g.shadows == 0 ? LightShadows.None : g.shadows == 1 ? LightShadows.Hard : LightShadows.Soft;
+            if (lookProfile.TryGet<Bloom>(out var bloom)) bloom.active = g.bloom;
+            bool wasOn = QualitySettings.realtimeReflectionProbes;
+            QualitySettings.realtimeReflectionProbes = g.reflections;
+            foreach (var p in lookProbes) if (p) p.enabled = g.reflections;
+            // Switched back on, the rooms' reflections are drawn again a moment later.
+            if (g.reflections && !wasOn && lookStarted) probeFrame = Time.frameCount + 2;
+        }
+
         void TickLook(GrowthShop shop, float dt)
         {
             if (lookVolume == null) return;
@@ -517,7 +540,7 @@ namespace EvolutionShop
             foreach (var l in labLamps) if (l) SetOpeningLamp(l, lookNow.Strip);
             var cam2 = Camera.main;
             if (cam2) cam2.backgroundColor = lookNow.Background;
-            if (lookProfile.TryGet<ColorAdjustments>(out var color)) color.postExposure.value = lookNow.Exposure;
+            if (lookProfile.TryGet<ColorAdjustments>(out var color)) color.postExposure.value = lookNow.Exposure + ExposureOffset;
             if (lookProfile.TryGet<WhiteBalance>(out var balance)) balance.temperature.value = lookNow.Temperature;
             if (lookProfile.TryGet<Bloom>(out var bloom)) bloom.intensity.value = lookNow.Bloom;
             // Reflections: once the rooms stand, and again a moment after night and day change over (the blend has settled).

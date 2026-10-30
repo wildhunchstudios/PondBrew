@@ -10,8 +10,8 @@ namespace EvolutionShop
     /// whirr and the generator's hum (the ambience), the breeding tank's "pop" when an offspring arrives and a swish when three
     /// of a kind in a tank become a school. Each is made here at start, original (no recorded or bought sound), and plays where
     /// it happens: nearer is louder, out of a room it fades. Two settings scale them (AD.7: comfort settings scale every new
-    /// moment): Sounds (the ratchet, the strokes, the pop, the swish) and Machine hum (the generator and the pumps), each full,
-    /// half or off. Nothing new plays while the game is paused, and the hums fade out until it resumes.
+    /// moment): Sounds (the ratchet, the strokes, the pop, the swish) and Machine hum (the generator and the pumps), each 0 to
+    /// 100 (GR-23; full, half or off before). Nothing new plays while the game is paused, and the hums fade out until it resumes.
     /// </summary>
     public sealed class GrowthAudio : MonoBehaviour
     {
@@ -94,7 +94,7 @@ namespace EvolutionShop
             var shop = session.Shop;
             float dt = Time.deltaTime;
             bool paused = session.Paused;
-            float sounds = Gain(session.SoundLevel), hums = Gain(session.HumLevel);
+            float sounds = session.SoundVolume, hums = session.HumVolume;
 
             // The generator's hum, from a turbine (level 2 and up) while it makes power: deeper and fuller as it grows.
             int level = shop.Level("generator");

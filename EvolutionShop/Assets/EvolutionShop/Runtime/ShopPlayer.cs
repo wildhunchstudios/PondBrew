@@ -1,4 +1,5 @@
 using System;
+using EvolutionShop.Growth;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,6 +10,8 @@ namespace EvolutionShop
     {
         public Camera View { get; private set; }
         public float Sensitivity { get; set; } = 1f;
+        /// <summary>GR-23: moving the mouse up looks down.</summary>
+        public bool InvertY { get; set; }
         public bool InputEnabled { get; set; }
         public event Action<bool, bool, bool> ControlledMotion;
         CharacterController body;
@@ -32,20 +35,17 @@ namespace EvolutionShop
             Vector3 before = transform.position;
             Quaternion beforeLook = View.transform.rotation;
             var mouse = Mouse.current;
-            var keyboard = Keyboard.current;
             if (mouse != null)
             {
                 Vector2 delta = mouse.delta.ReadValue() * (0.075f * Sensitivity);
                 transform.Rotate(0, delta.x, 0);
-                pitch = Mathf.Clamp(pitch - delta.y, -75, 75);
+                pitch = Mathf.Clamp(pitch + (InvertY ? delta.y : -delta.y), -75, 75);
                 View.transform.localRotation = Quaternion.Euler(pitch, 0, 0);
             }
             Vector2 move = Vector2.zero;
-            if (keyboard != null)
-            {
-                move.x = (keyboard.dKey.isPressed ? 1 : 0) - (keyboard.aKey.isPressed ? 1 : 0);
-                move.y = (keyboard.wKey.isPressed ? 1 : 0) - (keyboard.sKey.isPressed ? 1 : 0);
-            }
+            // GR-23: walking on the keys (or buttons) the player chose, W, A, S and D unless changed.
+            move.x = (GrowthControls.Held(GrowthAction.Right) ? 1 : 0) - (GrowthControls.Held(GrowthAction.Left) ? 1 : 0);
+            move.y = (GrowthControls.Held(GrowthAction.Forward) ? 1 : 0) - (GrowthControls.Held(GrowthAction.Back) ? 1 : 0);
             move = Vector2.ClampMagnitude(move, 1);
             Vector3 worldMove = transform.right * move.x + transform.forward * move.y;
             body.Move((worldMove * 3.2f + Vector3.down * 3f) * Time.deltaTime);
