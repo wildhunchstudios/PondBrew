@@ -49,7 +49,7 @@ namespace EvolutionShop
             yield return Press(Key.E);
             yield return null; yield return null;
             var open = CardButton("Open the research room");
-            Check(s.Card == GrowthCard.ResearchWall && open != null && !open.enabledSelf && open.tooltip.Contains("generator"), "Without the generator its button is off, and says why (" + open?.tooltip + ")");
+            Check(s.Card == GrowthCard.ResearchWall && open != null && !open.enabledSelf && s.Ui.CardText().Contains("Buy the generator first"), "Without the generator its button is off, and the card says why, in plain sight");
             yield return Shot("1302-needs-the-generator");
             shop.Levels["generator"] = 2;
             s.Ui.RefreshCard();
@@ -60,7 +60,8 @@ namespace EvolutionShop
             yield return ClickOn(e => e is Button b && b.text.StartsWith("Open the research room"), "Press Open the research room");
             yield return Wait(() => shop.ResearchRoom, 3, "the room to open");
             Check(shop.Credits == 9000 - GrowthShop.ResearchDef.Credits && shop.Level("research") == 1 && shop.PowerOrder.Contains(GrowthShop.ResearchPower), "It cost its price, and its tanks are on the power board");
-            yield return Wait(() => !s.World.ResearchWallStanding, 8, "the hoarding to come down");
+            yield return Wait(() => !s.World.ResearchWallStanding && !s.World.Revealing("research"), 8, "the hoarding to come down");
+            Check(!s.World.PartitionShowing("research"), "The hoarding is gone");
             s.SetCard(GrowthCard.None);
             yield return null;
             LookAt(new Vector3(-0.6f, 0, 15.35f), new Vector3(-6f, 1.3f, 15.35f));
@@ -75,6 +76,9 @@ namespace EvolutionShop
             Stand(new Vector3(-4.7f, 0, 15.35f), -100, 8);
             yield return null; yield return null;
             yield return Shot("1304-the-room");
+            LookAt(new Vector3(-7.4f, 0, 15.35f), new Vector3(-3f, 1.3f, 15.35f));
+            yield return null; yield return null;
+            yield return Shot("1304b-the-doorway-from-inside");
 
             // ---- F1: a click puts a creature in a jar; one of each; the take button takes it back
             shop.DevelopmentGive(founders[0]); shop.DevelopmentGive(founders[1]); shop.DevelopmentGive(founders[2]);

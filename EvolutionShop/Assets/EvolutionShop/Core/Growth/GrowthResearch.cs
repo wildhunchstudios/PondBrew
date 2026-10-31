@@ -70,7 +70,7 @@ namespace EvolutionShop.Growth
             why = null;
             if (ResearchRoom) { why = "Already open"; return GrowthFailure.MaxLevel; }
             if (!Annex) { why = "Open the power room first"; return GrowthFailure.Locked; }
-            if (!HasGenerator) { why = "Needs the generator: each research tank runs on its power"; return GrowthFailure.Locked; }
+            if (!HasGenerator) { why = "Buy the generator first"; return GrowthFailure.Locked; }
             if (Era < room.Era) { why = "Needs Era " + room.Era; return GrowthFailure.Locked; }
             if (Stars < room.Stars) { why = "Needs " + room.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }

@@ -2085,7 +2085,7 @@ def feature_tank():
     return join('FeatureTank')
 
 
-def hoarding(name, a0, a1, line, along_x, height, label):
+def hoarding(name, a0, a1, line, along_x, height, label, backed=False):
     """A room's partition as a painted hoarding, on its doorway's line from a0 to a1 (0.12 thick, the greybox's), its face to
     the open side (-Z or -X): upright planks in three pale tones, a coral oval painted COMING SOON, the room's name under
     it, and yellow and teal stripes along its foot."""
@@ -2093,6 +2093,9 @@ def hoarding(name, a0, a1, line, along_x, height, label):
     n = max(4, int(round(width / 0.22)))
     w = width / n
     tones = ('GK_Cream', 'GK_Sand', 'GK_WoodLight')
+    if backed:  # GR-30: a lit room behind it would show between the planks.
+        if along_x: box(((a0 + a1) / 2, height / 2, line), (width, height, 0.02), 'GK_WoodDark', r=0)
+        else: box((line, height / 2, (a0 + a1) / 2), (0.02, height, width), 'GK_WoodDark', r=0)
     for k in range(n):
         c = a0 + w * (k + 0.5)
         if along_x: box((c, height / 2, line), (w - 0.012, height, 0.12), tones[k % 3], r=0.012, seg=2)
@@ -2807,7 +2810,7 @@ def research_tray():
 
 
 WAVE_RESEARCH = [research_floor, research_dressing, research_tank, research_jars, research_desk, research_tray,
-                 lambda: hoarding('PartitionResearch', -16.05, -14.65, 4.0, False, 2.8, 'RESEARCH ROOM')]
+                 lambda: hoarding('PartitionResearch', -16.05, -14.65, 4.0, False, 2.8, 'RESEARCH ROOM', backed=True)]
 
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,

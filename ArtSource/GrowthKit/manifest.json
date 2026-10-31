@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "689db827f09abbfc2a90115a6c423669549c979a800fc4a0f56fc671be2cb48e",
+  "source_script_sha256": "0eae88e84ab5efeeaf0ece3513e924b0a5c85c9c76ad33e3467bdbd5e9f78a6e",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -3490,13 +3490,14 @@
       "bytes": 67916
     },
     {
-      "triangles": 15944,
+      "triangles": 15956,
       "materials": [
         "GK_Coral",
         "GK_Cream",
         "GK_Ink",
         "GK_Sand",
         "GK_Teal",
+        "GK_WoodDark",
         "GK_WoodLight",
         "GK_Yellow"
       ],
@@ -3504,7 +3505,7 @@
         "min": [
           3.921,
           0.0,
-          -16.044
+          -16.05
         ],
         "max": [
           4.06,
@@ -3514,8 +3515,8 @@
       },
       "id": "PartitionResearch",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionResearch.fbx",
-      "sha256": "ee5e2a645baf8593a304d723fc2ab6837d35c489783173842499ed450c50b6d5",
-      "bytes": 368908
+      "sha256": "09db064f7a388a51ac802ab8bd9282122952bba95f4fd35af79e57e8acdddd9b",
+      "bytes": 370300
     }
   ]
 }
