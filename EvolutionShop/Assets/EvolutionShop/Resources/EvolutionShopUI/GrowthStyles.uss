@@ -34,11 +34,14 @@
     padding: 0;
 }
 
-.gr-carry {
+/* GR-29: the item bar: the siphon as a bar of its doses' colours, and a slot for each creature in hand. */
+.gr-items {
     position: absolute;
     right: 34px;
     bottom: 40px;
-    padding: 10px 22px 10px 22px;
+    flex-direction: row;
+    align-items: flex-end;
+    padding: 10px 16px 10px 16px;
     background-color: var(--es-paper);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
@@ -48,13 +51,92 @@
     border-color: var(--es-paper-lip);
 }
 
-.gr-carry__line {
+.gr-items__siphon {
+    width: 210px;
+    margin-right: 18px;
+}
+
+.gr-items__hands {
+    align-items: flex-end;
+}
+
+.gr-items__label {
     -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
-    font-size: 20px;
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 0 0 4px 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-items__bar {
+    flex-direction: row;
+    height: 30px;
+}
+
+.gr-items__slots {
+    flex-direction: row;
+}
+
+.gr-dosebar {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-left: 1px;
+    margin-right: 1px;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.gr-dosebar--empty {
+    background-color: rgba(120, 104, 74, 0.2);
+}
+
+.gr-dosebar__letter {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
     color: var(--es-ink);
     margin: 0;
     padding: 0;
-    white-space: nowrap;
+}
+
+.gr-slot {
+    width: 66px;
+    height: 66px;
+    margin-left: 6px;
+    background-color: rgba(120, 104, 74, 0.14);
+    -unity-background-scale-mode: scale-to-fit;
+    border-width: 3px;
+    border-color: rgba(120, 104, 74, 0.28);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.gr-slot--chosen {
+    background-color: rgba(33, 94, 89, 0.2);
+    border-color: var(--es-teal);
+    border-width: 4px;
+}
+
+.gr-slot--empty {
+    border-color: rgba(120, 104, 74, 0.16);
+}
+
+.gr-slot__key {
+    position: absolute;
+    left: 4px;
+    top: 0;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    opacity: 0.6;
 }
 
 /* GR-18 wave 4 (the comedy): a silly moment's caption, above the next-step line: who says it, and what. */

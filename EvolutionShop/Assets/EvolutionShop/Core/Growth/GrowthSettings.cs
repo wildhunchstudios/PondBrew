@@ -5,7 +5,7 @@ using System.Linq;
 namespace EvolutionShop.Growth
 {
     /// <summary>GR-23: what the player can do with a key or a mouse button, each remappable.</summary>
-    public enum GrowthAction { Forward, Back, Left, Right, Interact, Use, Journal, Slap, Skip }
+    public enum GrowthAction { Forward, Back, Left, Right, Interact, Use, Journal, Slap, Skip, Take }
 
     /// <summary>GR-23: an action and the key or mouse button it is on: "Key/W" (an Input System key's name) or "Mouse/Left"
     /// (Left, Right, Middle, Back or Forward).</summary>
@@ -95,7 +95,7 @@ namespace EvolutionShop.Growth
         {
             [GrowthAction.Forward] = "Key/W", [GrowthAction.Back] = "Key/S", [GrowthAction.Left] = "Key/A", [GrowthAction.Right] = "Key/D",
             [GrowthAction.Interact] = "Key/E", [GrowthAction.Use] = "Mouse/Left", [GrowthAction.Journal] = "Key/Tab",
-            [GrowthAction.Slap] = "Key/F", [GrowthAction.Skip] = "Key/Backspace",
+            [GrowthAction.Slap] = "Key/F", [GrowthAction.Skip] = "Key/Backspace", [GrowthAction.Take] = "Mouse/Right",
         };
 
         /// <summary>Esc pauses and closes (and cancels a rebinding); F8 is the development crate: neither can be given to an action.</summary>
@@ -111,8 +111,9 @@ namespace EvolutionShop.Growth
                 case GrowthAction.Back: return "Walk back";
                 case GrowthAction.Left: return "Step left";
                 case GrowthAction.Right: return "Step right";
-                case GrowthAction.Interact: return "Interact";
-                case GrowthAction.Use: return "Use (collect, bag, pump, crank)";
+                case GrowthAction.Interact: return "Open a menu";
+                case GrowthAction.Use: return "Use (put in, fill, collect, bag, pump, crank)";
+                case GrowthAction.Take: return "Take a creature";
                 case GrowthAction.Journal: return "Journal";
                 case GrowthAction.Slap: return "Slap";
                 default: return "Skip a silly moment";

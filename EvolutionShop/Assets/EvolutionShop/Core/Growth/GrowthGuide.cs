@@ -45,16 +45,16 @@ namespace EvolutionShop.Growth
                     view.Target = "grower:" + next; view.TargetName = Name(next) + " grower";
                     break;
                 case GrowthGuideStep.Mix:
-                    view.Text = "Open the incubator (E): put two or three doses in, then Start";
+                    view.Text = Held.Count > 0 ? "Click the incubator to put your doses in, then open it (E) and press Start" : "Open the incubator (E) and press Start";
                     view.Target = "incubator"; view.TargetName = "Incubator";
                     break;
                 case GrowthGuideStep.Take:
-                    view.Text = Hatchlings.Count > 0 ? "It hatched: take your creature from the incubator (E)" : "Your creature is growing: take it from the incubator (E) when it hatches";
+                    view.Text = Hatchlings.Count > 0 ? "It hatched: click the incubator to take your creature" : "Your creature is growing: click the incubator to take it when it hatches";
                     view.Target = "incubator"; view.TargetName = Hatchlings.Count > 0 ? "Take it here" : "Incubator";
                     break;
                 case GrowthGuideStep.Stock:
                     var tank = ShopContainers.FirstOrDefault(c => c.Free > 0) ?? ShopContainers.FirstOrDefault();
-                    view.Text = "Carry it to the tank in the shop: E puts it in";
+                    view.Text = "Carry it to the tank in the shop and click to put it in";
                     view.Target = tank == null ? null : "container:" + tank.Id; view.TargetName = tank == null ? null : tank.Def.Name;
                     break;
                 case GrowthGuideStep.Open:

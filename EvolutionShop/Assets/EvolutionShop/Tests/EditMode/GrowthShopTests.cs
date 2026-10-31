@@ -131,10 +131,10 @@ namespace EvolutionShop.Tests
             // Now two Flow makes the known Bubblebelly, and says it was one dose from something new (Ribbonfin is Bloom 1 + Flow 2).
             Collect(shop, "flow", 2); shop.AddDose("flow"); shop.AddDose("flow");
             Assert.That(shop.StartIncubation().Detail, Is.EqualTo("bubblebelly"));
+            shop.Tick(12.1f); shop.TakeHatchling();
             Assert.That(shop.LastMix.Exact, Is.False);
             Assert.That(shop.LastMix.WasNew, Is.False);
             Assert.That(shop.LastMix.DistanceToNew, Is.EqualTo(1), "close to something new");
-            shop.Tick(12.1f); shop.TakeHatchling();
             // The exact recipe finds it.
             var ribbonfin = Make(shop, 1, 2);
             Assert.That(ribbonfin.Species, Is.EqualTo("ribbonfin"));

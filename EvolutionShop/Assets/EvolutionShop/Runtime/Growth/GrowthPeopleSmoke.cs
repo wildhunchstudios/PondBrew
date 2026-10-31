@@ -703,8 +703,8 @@ namespace EvolutionShop
                 float hunt = Time.realtimeSinceStartup + 12;
                 while (s.PeekCreature == null && Time.realtimeSinceStartup < hunt) yield return null;
                 Check(s.PeekCreature != null, "A creature under the reticle in peek (" + n + ")");
-                yield return Press(Key.E);
-                Check(shop.Carried.Count == n, "E takes it: " + n + " carried");
+                yield return Click(1);
+                Check(shop.Carried.Count == n, "The take button takes it: " + n + " carried");
                 for (float from = Time.realtimeSinceStartup; Time.realtimeSinceStartup < from + 0.7f;)
                 {
                     reached |= hands.RightDoing == "take"; farthest = Mathf.Max(farthest, hands.FarthestInView);
@@ -751,8 +751,8 @@ namespace EvolutionShop
             LookAt(a2.Browse + new Vector3(0, 0, -0.6f), a2.Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, other.Id, "The reticle focuses the a2 tank");
-            yield return Press(Key.E);
-            Check(shop.Carried.Count == 2 && other.Occupants.Count == 1, "E puts one in the a2 tank");
+            yield return Click();
+            Check(shop.Carried.Count == 2 && other.Occupants.Count == 1, "A click puts one in the a2 tank");
             bool put = false; shot = false;
             for (float from = Time.realtimeSinceStartup; Time.realtimeSinceStartup < from + 0.8f;)
             {

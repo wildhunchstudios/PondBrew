@@ -73,8 +73,14 @@ namespace EvolutionShop
                 text = KeyWords.Replace(text, m => GrowthSettings.InputName(m.Value == "E" ? e : tab));
             if (use != "Mouse/Left" && text.IndexOf("the mouse", StringComparison.Ordinal) >= 0)
                 text = text.Replace("the mouse", use.StartsWith("Mouse/", StringComparison.Ordinal) ? "the " + use.Substring(6).ToLowerInvariant() + " mouse button" : GrowthSettings.InputName(use));
+            // GR-29: "right-click" is the take button and "click" the use button, as the player bound them.
+            string take = Settings.InputOf(GrowthAction.Take);
+            if (take != "Mouse/Right") text = text.Replace("right-click", GrowthSettings.InputName(take));
+            if (use != "Mouse/Left") text = ClickWords.Replace(text, m => GrowthSettings.InputName(use));
             return text;
         }
+
+        static readonly Regex ClickWords = new Regex(@"(?<![A-Za-z0-9_'’-])[Cc]lick(?![A-Za-z0-9_'’-])");
 
         /// <summary>The key or mouse button pressed this frame, as a binding's input ("Key/G", "Mouse/Right"), or null.</summary>
         public static string Listen()

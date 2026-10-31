@@ -35,6 +35,18 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void TheClickWordsNameTheButtonsAsBound()
+        {
+            const string words = "Click the incubator · click take · right-click take · clicking stays";
+            GrowthControls.Settings = new GrowthSettings();
+            Assert.That(GrowthControls.Keyed(words), Is.EqualTo(words), "the usual buttons: as written");
+            var g = new GrowthSettings(); g.Bind(GrowthAction.Use, "Key/G"); GrowthControls.Settings = g;
+            Assert.That(GrowthControls.Keyed(words), Is.EqualTo("G the incubator · G take · right-click take · clicking stays"));
+            g = new GrowthSettings(); g.Bind(GrowthAction.Take, "Key/R"); GrowthControls.Settings = g;
+            Assert.That(GrowthControls.Keyed(words), Is.EqualTo("Click the incubator · click take · R take · clicking stays"));
+        }
+
+        [Test]
         public void OnlyTheInputSystemsKeysAreKeys()
         {
             Assert.That(GrowthControls.RealKey("Q") && GrowthControls.RealKey("Space") && GrowthControls.RealKey("Digit7") && GrowthControls.RealKey("LeftShift"), Is.True);

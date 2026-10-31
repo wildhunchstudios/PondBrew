@@ -31,6 +31,24 @@ namespace EvolutionShop
             get => highlighted;
             set { highlighted = value; transform.localScale = Vector3.one * (value ? peekScale : 1f); }
         }
+        /// <summary>GR-29 (F25): under the reticle: a thick, bright outline in place of its ink one, on every part it draws.</summary>
+        public bool Aimed
+        {
+            get => aimed;
+            set
+            {
+                if (aimed == value) return;
+                aimed = value;
+                aimBlock ??= new MaterialPropertyBlock();
+                if (value) { aimBlock.SetColor(OutlineColour, AimOutline); aimBlock.SetFloat(OutlineWidth, AimOutlineWidth); }
+                foreach (var part in GetComponentsInChildren<Renderer>(true)) part.SetPropertyBlock(value ? aimBlock : null);
+            }
+        }
+        bool aimed;
+        MaterialPropertyBlock aimBlock;
+        static readonly int OutlineColour = Shader.PropertyToID("_OutlineColor"), OutlineWidth = Shader.PropertyToID("_OutlineWidth");
+        public static readonly Color AimOutline = new Color(1f, 0.84f, 0.2f);
+        public const float AimOutlineWidth = 3.4f;
         public const float PeekGrowth = 1.35f;
         float peekScale = PeekGrowth;
         /// <summary>How far peek enlarges it in its tank (1 to PeekGrowth).</summary>

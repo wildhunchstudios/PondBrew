@@ -115,8 +115,8 @@ namespace EvolutionShop
 
         /// <summary>
         /// GR-13 (UX.4): three fixed elements, the day chip, money with the stars and one next-step line (the goal's full
-        /// list is on the pinboard and in the journal); what the siphon and the hands hold shows only while they hold
-        /// something; notes come one at a time at the top, a big moment above them, clear of the station cards.
+        /// list is on the pinboard and in the journal); the item bar (GR-29) with what the siphon and the hands hold; notes
+        /// come one at a time at the top, a big moment above them, clear of the station cards.
         /// </summary>
         void BuildHud()
         {
@@ -141,9 +141,7 @@ namespace EvolutionShop
             var leaf = Box("es-next__icon"); leaf.style.backgroundImage = new StyleBackground(Icon(ShopUiTheme.Symbol.Leaf));
             nextLabel = L("", "es-next__text");
             nextCard.Add(leaf); nextCard.Add(nextLabel); nextBox.Add(nextCard); hud.Add(nextBox);
-            carryBox = Box("gr-carry");
-            siphonLabel = L("", "gr-carry__line"); carryLabel = L("", "gr-carry__line");
-            carryBox.Add(siphonLabel); carryBox.Add(carryLabel); hud.Add(carryBox);
+            BuildItemBar();
             var prompts = Box("es-prompts"); hud.Add(prompts);
             promptBox = Box("es-prompt");
             promptName = L("", "es-prompt__name");
@@ -235,11 +233,7 @@ namespace EvolutionShop
             hud.style.display = s.Card == GrowthCard.Pause || s.Card == GrowthCard.Settings || s.Card == GrowthCard.Welcome || s.Card == GrowthCard.Menu ? DisplayStyle.None : DisplayStyle.Flex;
             TickMenu();
             nextBox.style.display = free ? DisplayStyle.Flex : DisplayStyle.None;
-            siphonLabel.text = shop.Held.Count == 0 ? "" : "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity + ": " + string.Join(", ", shop.Held.GroupBy(c => c).Select(g => g.Count() + " " + GrowthShop.Name(g.Key)));
-            carryLabel.text = shop.Carried.Count == 0 ? "" : "Carrying " + shop.Carried.Count + "/" + GrowthShop.CarryLimit + ": " + string.Join(", ", shop.Carried.Select(GrowthSession.Named));
-            siphonLabel.style.display = shop.Held.Count == 0 ? DisplayStyle.None : DisplayStyle.Flex;
-            carryLabel.style.display = shop.Carried.Count == 0 ? DisplayStyle.None : DisplayStyle.Flex;
-            carryBox.style.display = free && (shop.Held.Count > 0 || shop.Carried.Count > 0) ? DisplayStyle.Flex : DisplayStyle.None;
+            TickItemBar(free);
             bool piping = free && s.PipeFrom != null;
             modeBox.style.display = piping ? DisplayStyle.Flex : DisplayStyle.None;
             if (piping)
@@ -368,6 +362,7 @@ namespace EvolutionShop
             // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
             string key = which + "|" + target;
             if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; menuAskNew = false; }
+            heldCard = null; shownCard = null; keepScroll = null; keepIn = null;
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null;
             tabList.Clear(); tabRow = null; footer = null; rings.Clear(); notebook = false;
             tip.style.display = DisplayStyle.None; tipAnchor = null;
@@ -396,11 +391,18 @@ namespace EvolutionShop
             var scroll = card.Q<ScrollView>();
             var offset = scroll != null ? scroll.scrollOffset : Vector2.zero;
             bool same = s.Card + "|" + s.CardTarget == tabCard && pageShown == shownPage && tabChosen == shownTab;
+            var old = TopOf(card);
             ShowCard(s.Card, s.CardTarget);
             keepScroll = null; keepIn = null;
             var now = same && offset.y > 0.5f && card != null ? card.Q<ScrollView>() : null;
             if (now == null) return;
             keepScroll = offset; keepIn = now; keepFrames = 10;
+            // GR-29 (F15): the rebuilt card waits, hidden, under the old one until it is back where it was scrolled to: its first
+            // layout, at the top of its body, was showing for a frame or two, so every press in a scrolled card made it jump.
+            shownCard = TopOf(card);
+            shownCard.style.visibility = Visibility.Hidden;
+            shownCard.parent.Add(old);
+            heldCard = old;
             // Restored once the new body is laid out (the scroll view clamps an offset its content cannot reach yet).
             EventCallback<GeometryChangedEvent> restore = null;
             restore = e => { now.contentContainer.UnregisterCallback(restore); KeepScroll(); };
@@ -409,20 +411,39 @@ namespace EvolutionShop
 
         Vector2? keepScroll;
         ScrollView keepIn;
+        VisualElement heldCard, shownCard;
         int keepFrames, shownPage = -1;
+
+        /// <summary>A card with what dims the shop behind it (a notebook), as it stands in its layer.</summary>
+        VisualElement TopOf(VisualElement c) => c.parent == cardLayer || c.parent == screenLayer ? c : c.parent;
+
+        /// <summary>GR-29: the rebuilt card takes the old one's place.</summary>
+        void ShowRebuiltCard()
+        {
+            keepScroll = null; keepIn = null;
+            heldCard?.RemoveFromHierarchy(); heldCard = null;
+            if (shownCard != null) shownCard.style.visibility = StyleKeyword.Null;
+            shownCard = null;
+        }
         string shownTab;
 
         /// <summary>Puts a refreshed card back where it was scrolled to, as soon as its content reaches there (within ten frames).</summary>
         void KeepScroll()
         {
             if (keepScroll == null) return;
-            if (keepIn == null || keepIn.panel == null || keepFrames-- <= 0) { keepScroll = null; keepIn = null; return; }
+            if (keepIn == null || keepIn.panel == null || keepFrames-- <= 0) { ShowRebuiltCard(); return; }
+            // Laid out far enough to hold the offset, so nothing clamps it after the card shows.
+            float room = keepIn.contentContainer.layout.height - keepIn.contentViewport.layout.height;
+            if (float.IsNaN(room) || room < keepScroll.Value.y - 0.5f) return;
             keepIn.scrollOffset = keepScroll.Value;
-            if (Mathf.Abs(keepIn.scrollOffset.y - keepScroll.Value.y) < 0.5f) { keepScroll = null; keepIn = null; }
+            if (Mathf.Abs(keepIn.scrollOffset.y - keepScroll.Value.y) < 0.5f) ShowRebuiltCard();
         }
 
         /// <summary>Validation (GR-20): the open card's body's scroll now (0 for none).</summary>
         public float CardScroll => card?.Q<ScrollView>()?.scrollOffset.y ?? 0;
+
+        /// <summary>Validation (GR-29): the scroll of the card showing now: the old one while its rebuilt one waits.</summary>
+        public float ShownCardScroll => (heldCard ?? card)?.Q<ScrollView>()?.scrollOffset.y ?? 0;
 
         /// <summary>Validation (GR-20): scrolls the open card's body down by an amount (as a mouse wheel does), and how far it went.</summary>
         public float ScrollCardBy(float pixels)
@@ -534,7 +555,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place + c.Decor)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature() + "|" + ExhibitionSignature();
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + s.CarriedChoice + "|" + (s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature() + "|" + ExhibitionSignature();
         }
 
         string LiveText()
@@ -621,7 +642,10 @@ namespace EvolutionShop
             chips.Add(Chip("A hold collects " + (shop.PerHold > 1 ? shop.PerHold + " doses" : "a dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s"));
             fill.Add(chips);
             body.Add(fill);
-            body.Add(L("Your siphon: " + shop.Held.Count + " of " + shop.SiphonCapacity + " doses", "gr-hint"));
+            var siphon = Box("gr-row", "gr-row--spread");
+            siphon.Add(L("Your siphon: " + shop.Held.Count + " of " + shop.SiphonCapacity + " doses", "gr-hint"));
+            siphon.Add(Link("Pour out your siphon", () => s.Act(() => shop.PourOutSiphon()), shop.Held.Count > 0, "Your siphon is empty"));
+            body.Add(siphon);
             if (shop.Taps >= 1) TapSection(AddTab("Pipes"), culture);
             if (vat) UpgradeSection(body, "vat", "The vat");
             UpgradeSection(body, "grower", "Every grower");
@@ -638,7 +662,7 @@ namespace EvolutionShop
         void FillIncubator()
         {
             var shop = s.Shop;
-            var body = Head("Incubator", "", "Mix", "Every mix makes a creature, and an exact recipe finds a new one. + doses a culture from your siphon into the chamber, − takes it back. A recipe you have found doses itself in one press.");
+            var body = Head("Incubator", "", "Mix", "Click the incubator to put your siphon's doses in. Here, + adds a dose, − takes it back, and × pours your siphon's doses of it away. Every mix makes a creature, and an exact recipe finds a new one. A recipe you have found doses itself in one press.");
             LiveStatus();
             bool locked = shop.Incubating || shop.ChamberLock != null;
             if (shop.Hatchling != null)
@@ -686,13 +710,16 @@ namespace EvolutionShop
                 int inChamber = shop.Chamber.Count(x => x == c), held = shop.Held.Count(x => x == c);
                 var chip = Box("gr-dose"); chip.style.backgroundColor = CultureGround(c);
                 chip.Add(PlusMinus("−", () => s.Act(() => shop.ReturnDose(c)), !locked && inChamber > 0 && shop.Held.Count < shop.SiphonCapacity,
-                    locked ? "The incubator is busy" : inChamber == 0 ? "None of it in the chamber" : "Your siphon is full"));
+                    locked ? "The incubator is busy" : inChamber == 0 ? "None of it in the chamber" : "Your siphon is full: pour something out first"));
                 var words = Box("gr-dose__text");
                 words.Add(L(GrowthShop.Name(c) + " " + inChamber, "gr-dose__name"));
                 words.Add(L(held + " in siphon", "gr-dose__count"));
                 chip.Add(words);
                 chip.Add(PlusMinus("+", () => s.Act(() => shop.AddDose(c)), !locked && held > 0 && shop.Chamber.Count < shop.MaxDoses,
                     locked ? "The incubator is busy" : held == 0 ? "Collect " + GrowthShop.Name(c) + " at its grower" : "The chamber holds " + shop.MaxDoses));
+                var pour = PlusMinus("×", () => s.Act(() => shop.PourOutSiphon(c)), held > 0, "None of it in your siphon");
+                if (held > 0) pour.tooltip = "Pour out the " + held + " " + GrowthShop.Name(c) + " in your siphon";
+                chip.Add(pour);
                 doses.Add(chip);
             }
             if (shop.Held.Count == 0 && shop.Chamber.Count == 0) doses.Add(L("Your siphon is empty: hold the mouse on a grower to collect.", "gr-hint"));
@@ -721,10 +748,16 @@ namespace EvolutionShop
             body.Add(Wide(shop.Incubating ? "Incubating · " + Mathf.CeilToInt(shop.IncubationLeft) + " s" : "Start · " + shop.IncubationSeconds.ToString("0") + " s", () => s.Act(shop.StartIncubation), true,
                 !locked && shop.Hatchling == null && shop.Chamber.Count > 0,
                 shop.Incubating ? "It is incubating" : shop.ChamberLock ?? (shop.Hatchling != null ? "Take the hatchling first" : "Add a dose first")));
+            // GR-29 (F11): what holds Start back, in words, not only on hover: any mix can start, so it is never the mix.
+            if (!locked && shop.Hatchling != null)
+                body.Add(L(shop.Carried.Count < GrowthShop.CarryLimit ? "Start waits until you take the hatchling." : "Start waits for the hatchling, and your hands are full: put a creature in a tank first.", "gr-hint"));
             var links = Box("gr-row", "gr-row--spread");
-            var back = Link("Return doses", () => { foreach (var c in shop.Chamber.ToList()) shop.ReturnDose(c); s.SaveNow(); }, !locked && shop.Chamber.Count > 0, "Nothing in the chamber");
+            bool roomInSiphon = shop.Held.Count < shop.SiphonCapacity;
+            var back = Link("Return doses", () => { foreach (var c in shop.Chamber.ToList()) shop.ReturnDose(c); s.SaveNow(); }, !locked && shop.Chamber.Count > 0 && roomInSiphon, shop.Chamber.Count == 0 ? "Nothing in the chamber" : "Your siphon is full: pour something out first");
             back.style.marginLeft = 0;
             links.Add(back);
+            // GR-29 (F10): the way out when the doses cannot go back.
+            links.Add(Link("Pour out the chamber", () => s.Act(shop.PourOutChamber), !locked && shop.Chamber.Count > 0, "Nothing in the chamber"));
             links.Add(Link("Mix log · " + shop.MixLog.Count + " tried", () => OpenJournalAt("Mix log")));
             body.Add(links);
             // GR-06: the tint port (level 3) colours the next clutch, as the breeding tank's water does.
@@ -866,23 +899,29 @@ namespace EvolutionShop
             bool comfort = shop.Era >= GrowthContent.ComfortEra && !c.Def.Lab;
             string rules = c.Def.Lab ? "In the workshop, off the shop floor: visitors never see it. Holds " + Holds(c.Def) + "; carry creatures from here to the shop's tanks." :
                 "Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better." +
-                (comfort ? " Creatures that share a temperament and the tank's water are in harmony: +1 appeal." : "") + " Peek: look closely at the glass to read each creature; E takes the one under the reticle." +
+                (comfort ? " Creatures that share a temperament and the tank's water are in harmony: +1 appeal." : "") + " Click a tank to put in the creature you chose, or with empty hands to take the one you aim at; right-click takes it with others in hand. Look closely at the glass to peek." +
                 (c.Def.Lab ? "" : " A piece of decor on its top (the Decor tab) makes it more appealing, and visitors pay more for the creatures its theme suits.");
             var body = Head(c.Def.Name, c.Used + " of " + c.Spaces + " spaces", c.Def.Lab ? "Rack" : "Tank", rules, !c.Def.Lab);
             body.Add(SpaceGrid(c));
             // Each species with its count and price; a press takes one out.
             var kinds = Box("gr-row", "gr-section");
+            bool handsFull = shop.Carried.Count >= GrowthShop.CarryLimit;
+            // GR-29 (F12): with full hands a press swaps: the creature chosen in hand, or else another that fits in its place.
+            var swappers = shop.Carried.OrderByDescending(x => x == s.ChosenCarried).ToList();
+            if (handsFull && c.Occupants.Count > 0) body.Add(L("Your hands are full: press a creature to swap it for one you carry.", "gr-hint"));
             foreach (var g in c.Occupants.GroupBy(o => (o.Species, o.Colour)))
             {
                 var free = g.FirstOrDefault(o => o.ReservedBy == 0 && !GrowthShop.IsOnDisplay(o));
                 int sold = g.Count(o => o.ReservedBy != 0);
                 var def = g.First().Def;
-                bool can = free != null && shop.Carried.Count < GrowthShop.CarryLimit;
+                bool can = free != null && !handsFull;
+                var swap = free != null && handsFull ? swappers.FirstOrDefault(x => shop.SwapCheck(c.Id, free.Id, x.Id, out _) == GrowthFailure.None) : null;
                 var b = ChipButton(GrowthSession.Named(g.First()) + (g.Count() > 1 ? " ×" + g.Count() : "") + (sold > 0 ? " (" + sold + " sold)" : "") + " · " + shop.Price(def.Id) + " cr",
-                    () => s.Act(() => shop.TakeOut(c.Id, free.Id)), can, can ? "Take one out" : free == null ? "None free to take" : "Your hands are full", GrowthCreatureView.ColourOf(def, g.Key.Colour));
+                    () => s.Act(() => swap != null ? shop.Swap(c.Id, free.Id, swap.Id) : shop.TakeOut(c.Id, free.Id)), can || swap != null,
+                    can ? "Take one out" : swap != null ? "Swap it for your " + GrowthSession.Named(swap) : free == null ? "None free to take" : "Your hands are full, and nothing you carry fits in its place", GrowthCreatureView.ColourOf(def, g.Key.Colour));
                 kinds.Add(b);
             }
-            if (c.Occupants.Count == 0) kinds.Add(L("Empty: carry creatures here and press E.", "gr-hint"));
+            if (c.Occupants.Count == 0) kinds.Add(L("Empty: carry creatures here and click the tank.", "gr-hint"));
             body.Add(kinds);
             if (shop.Carried.Count > 0)
             {
@@ -962,7 +1001,7 @@ namespace EvolutionShop
             var upgrade = AddTab(UpgradeTab);
             var check = shop.ContainerUpgradeCheck(c.Id, out var next, out string upgradeWhy);
             upgrade.Add(UpgradeBlock(c.Def.Name + " · level " + c.Level + " of " + c.Def.Levels.Length, c.Def.Levels, c.Level, next, check, upgradeWhy, "Upgrade", () => s.Act(() => shop.UpgradeContainer(c.Id))));
-            Footer(body, "peek and E takes one");
+            Footer(body, "click puts in or takes · right-click takes");
         }
 
         /// <summary>GR-19: a theme's colour: Riverbank green, Hot springs coral, Seaside blue.</summary>
@@ -1046,7 +1085,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             var body = Head("Development crate", "not part of the game");
-            body.Add(Text("For looking at sizes and families before cultures and breeding arrive: press a species to take one in hand (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried), then E on a tank to put it in. It is not a discovery.", "es-text--muted"));
+            body.Add(Text("For looking at sizes and families before cultures and breeding arrive: press a species to take one in hand (" + shop.Carried.Count + "/" + GrowthShop.CarryLimit + " carried), then click a tank to put it in. It is not a discovery.", "es-text--muted"));
             foreach (var family in GrowthContent.Families)
             {
                 var title = Text(family.Name + " · " + family.Size.ToString().ToLowerInvariant()); title.style.unityFontStyleAndWeight = FontStyle.Bold; title.style.marginTop = 6;
@@ -1605,8 +1644,8 @@ namespace EvolutionShop
             var steps = new[]
             {
                 "Back room: hold the left mouse on the Bloom and Flow growers to fill your siphon (3 doses).",
-                "The incubator (E): put 2–3 doses in and start. Every mix makes a creature; an exact recipe finds a new one.",
-                "Carry hatchlings (E) to the tank in the shop (E puts one in). Look closely at the glass to peek.",
+                "Click the incubator to put your doses in, then open it (E) and start. Every mix makes a creature; an exact recipe finds a new one.",
+                "Click the incubator to take the hatchling, and click the tank in the shop to put it in. Look closely at the glass to peek.",
                 "The counter (E) opens the shop for a 5:30 day. Hold the mouse on it to bag each sale.",
                 "Tab: journal · Esc: pause · the pinboard has your goals; the HUD shows the next step.",
             };

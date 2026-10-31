@@ -103,8 +103,8 @@ namespace EvolutionShop
             Check(s.Ui.GuideTarget == g.Target && !s.Ui.GuideAtEdge, "The marker stands over the Starter tank");
             yield return Shot("304-guide-tank");
             Aimed(GrowthTargetKind.Tank, tank.Id, "The reticle focuses the Starter tank");
-            yield return Press(Key.E);
-            Check(tank.Occupants.Count == 1, "E puts it in the tank");
+            yield return Click();
+            Check(tank.Occupants.Count == 1, "A click puts it in the tank");
             Check(shop.GuideNow().Step == GrowthGuideStep.Open && shop.GuideNow().Target == "counter", "Step 5: open the shop at the counter");
             Ok(s.Act(() => shop.TakeOut(tank.Id, tank.Occupants[0].Id)), "Take it back out of the tank");
             Check(shop.GuideNow().Step == GrowthGuideStep.Stock, "A step undone is asked for again: put it in the tank");

@@ -137,10 +137,10 @@ namespace EvolutionShop
             Ok(s.Act(() => shop.Upgrade("breeding")), "Breeding tank level 3: two pairs at once (2,000 credits)");
             foreach (var sp in new[] { "pondlet", "bubblebelly", "pondlet" }) shop.DevelopmentGive(sp);
             yield return AtBreedingTank("The reticle focuses the breeding tank");
-            for (int i = 0; i < 3; i++) yield return Press(Key.E);
+            for (int i = 0; i < 3; i++) yield return Click();
             shop.DevelopmentGive("ribbonfin");
-            yield return Press(Key.E);
-            Check(shop.PairPlaces == 2 && shop.Pairs.All(p => p.Breeding) && shop.Carried.Count == 0, "E four times fills both pairs, and both breed");
+            yield return Click();
+            Check(shop.PairPlaces == 2 && shop.Pairs.All(p => p.Breeding) && shop.Carried.Count == 0, "Four clicks fill both pairs, and both breed");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Breeding && card.Contains("Pair 1 (2/2") && card.Contains("Pair 2 (2/2"), "The card shows both pairs");

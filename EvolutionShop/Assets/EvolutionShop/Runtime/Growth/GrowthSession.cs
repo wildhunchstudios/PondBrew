@@ -22,13 +22,13 @@ namespace EvolutionShop
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
             GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", PeopleSmokeArgument = "-evolutionGrowthPeopleSmoke",
-            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke";
+            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke", DeadEndsSmokeArgument = "-evolutionGrowthDeadEndsSmoke";
 
-        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), "menu" (GR-27), or null.</summary>
+        /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), "menu" (GR-27), "deadends" (GR-29), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : null;
     }
 
     public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu }
@@ -36,7 +36,7 @@ namespace EvolutionShop
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
     /// (GrowthWorld), the UI (GrowthUi) and its own save file, separate from the classic slot (GR.15: a fresh save line).
-    /// Controls: WASD and mouse, hold the left mouse on a grower to collect and on the counter to bag a sale, E to open a
+    /// Controls (GR-29: click acts, E opens): WASD and mouse, click to put in or take, hold the left mouse on a grower to collect and on the counter to bag a sale, E to open a
     /// station or take the creature under the reticle in peek, Tab for the journal, Esc to close or pause.
     /// </summary>
     public sealed class GrowthSession : MonoBehaviour
@@ -696,16 +696,98 @@ namespace EvolutionShop
             bool held = !rebinding && UseHeld();
             HoldActions(held, dt);
             OpenLessonWhenDue(held, dt);
-            if (!rebinding && Card == GrowthCard.None && GrowthControls.Pressed(GrowthAction.Interact) && (!ValidationMode || AllowValidationInput))
+            // GR-29 (F19, the user's choice): click acts on what is under the reticle, and E only ever opens its menu.
+            if (!rebinding && Card == GrowthCard.None && (!ValidationMode || AllowValidationInput))
             {
-                if (PipeFrom != null) LayAimedPipe();
-                else if (Peeking && PeekCreature != null) TakeFromTank(PeekCreature);
-                // Carrying creatures, E on a tank puts one in; otherwise E opens what is under the reticle.
-                else if (Focused != null && Focused.Kind == GrowthTargetKind.Tank && Shop.Carried.Count > 0) { string id = Focused.Id; Act(() => Shop.PutIn(id)); }
-                else if (Focused != null && Focused.Kind == GrowthTargetKind.Breeding && BreedingShortcut()) { }
-                else if (Focused != null) Interact(Focused);
+                UpdateCarriedChoice();
+                if (GrowthControls.Pressed(GrowthAction.Interact))
+                {
+                    if (PipeFrom != null) LayAimedPipe();
+                    else if (Focused != null) Interact(Focused);
+                }
+                else if (GrowthControls.Pressed(GrowthAction.Use)) ClickAct();
+                else if (GrowthControls.Pressed(GrowthAction.Take)) TakeAct();
             }
             Ui.Tick(dt);
+        }
+
+        /// <summary>GR-29 (F13, F21): the creature in hand a click puts in, by its place in the hands (the item bar shows it).</summary>
+        public int CarriedChoice { get; private set; }
+        public GrowthSpecimen ChosenCarried => Shop.Carried.Count == 0 ? null : Shop.Carried[Mathf.Clamp(CarriedChoice, 0, Shop.Carried.Count - 1)];
+        public void ChooseCarried(int index) => CarriedChoice = Mathf.Clamp(index, 0, Mathf.Max(0, Shop.Carried.Count - 1));
+
+        /// <summary>The mouse wheel, or 1, 2 and 3 where no action has them, choose among the creatures in hand.</summary>
+        void UpdateCarriedChoice()
+        {
+            int count = Shop.Carried.Count;
+            if (count == 0) { CarriedChoice = 0; return; }
+            if (CarriedChoice >= count) CarriedChoice = count - 1;
+            var mouse = Mouse.current;
+            float wheel = mouse != null ? mouse.scroll.ReadValue().y : 0;
+            if (wheel != 0) CarriedChoice = (CarriedChoice + (wheel < 0 ? 1 : count - 1)) % count;
+            var keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            var digits = new[] { keyboard.digit1Key, keyboard.digit2Key, keyboard.digit3Key };
+            for (int i = 0; i < digits.Length && i < count; i++)
+                if (digits[i].wasPressedThisFrame && !settings.bindings.Any(b => b.input == "Key/" + digits[i].keyCode)) CarriedChoice = i;
+        }
+
+        /// <summary>
+        /// GR-29 (F19): a click on what is under the reticle: a tank takes the chosen creature in hand, or with empty hands gives
+        /// up the one aimed at; the breeding tank takes a parent or gives its offspring; the incubator gives its hatchling, or
+        /// takes the siphon's doses. Everything held down (collecting, bagging, cranking) is HoldActions'.
+        /// </summary>
+        void ClickAct()
+        {
+            if (PipeFrom != null) { LayAimedPipe(); return; }
+            if (Focused == null) return;
+            switch (Focused.Kind)
+            {
+                case GrowthTargetKind.Tank:
+                    if (Shop.Carried.Count == 0) { TakeAct(); break; }
+                    string tank = Focused.Id; int chosen = ChosenCarried.Id;
+                    if (Act(() => Shop.PutIn(tank, chosen)).Failure == GrowthFailure.DoesNotFit) Ui?.Hint("Open it (E) to swap a creature");
+                    break;
+                case GrowthTargetKind.Breeding:
+                    ClickBreeding();
+                    break;
+                case GrowthTargetKind.Incubator:
+                    if (Shop.Hatchling != null) { Act(Shop.TakeHatchling); break; }
+                    if (Shop.Incubating) { Ui?.Hint(Mathf.CeilToInt(Shop.IncubationLeft) + " s left"); break; }
+                    if (Shop.Held.Count > 0 && Shop.Chamber.Count < Shop.MaxDoses) { Act(Shop.FillChamber); break; }
+                    Ui?.Hint(Shop.Chamber.Count > 0 ? "Open it (E) to mix and press Start" : "Your siphon is empty: hold the mouse on a grower to collect");
+                    break;
+            }
+        }
+
+        /// <summary>The take button: a creature from the tank aimed at (with others in hand too), the offspring, or the hatchling.</summary>
+        void TakeAct()
+        {
+            if (PipeFrom != null || Focused == null) return;
+            switch (Focused.Kind)
+            {
+                case GrowthTargetKind.Tank:
+                    if (AimedCreature != null) TakeFromTank(AimedCreature); else Ui?.Hint("Aim at a creature to take it");
+                    break;
+                case GrowthTargetKind.Breeding:
+                    if (Shop.HasBreedingTank && Shop.Offspring != null) Act(() => Shop.TakeOffspring());
+                    break;
+                case GrowthTargetKind.Incubator:
+                    if (Shop.Hatchling != null) Act(Shop.TakeHatchling);
+                    break;
+            }
+        }
+
+        /// <summary>GR-05's order: the chosen creature goes in while the pair has room, then the offspring comes out with a free hand.</summary>
+        void ClickBreeding()
+        {
+            if (!Shop.HasBreedingTank) { Ui?.Hint("Open it (E) to see what it needs"); return; }
+            bool room = Shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize);
+            var chosen = ChosenCarried;
+            if (room && chosen != null && Shop.ParentCheck(chosen, out _) == GrowthFailure.None) { int id = chosen.Id; Act(() => Shop.PutParent(id)); return; }
+            if (room && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None)) { Act(() => Shop.PutParent()); return; }
+            if (Shop.Offspring != null && Shop.Carried.Count < GrowthShop.CarryLimit) { Act(() => Shop.TakeOffspring()); return; }
+            Ui?.Hint(Shop.Offspring != null ? "Your hands are full" : chosen != null && room ? "Those can't breed here: open it (E)" : "Open it (E) for the pair");
         }
 
         /// <summary>
@@ -745,18 +827,6 @@ namespace EvolutionShop
                 if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.NewColour || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp || e.Kind == GrowthEventKind.CultureOwned) SaveNow();
             }
             if (phase != Shop.Phase) World.SetPhase(Shop.Phase);
-        }
-
-        /// <summary>
-        /// GR-05: E at the breeding tank puts a carried creature in while the pair has room, else takes a waiting offspring
-        /// with a free hand; otherwise (nothing to put in or take) it opens the card. False when the card should open.
-        /// </summary>
-        bool BreedingShortcut()
-        {
-            if (!Shop.HasBreedingTank) return false;
-            if (Shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize) && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None)) { Act(() => Shop.PutParent()); return true; }
-            if (Shop.Offspring != null && Shop.Carried.Count < GrowthShop.CarryLimit) { Act(() => Shop.TakeOffspring()); return true; }
-            return false;
         }
 
         /// <summary>A creature's name with its colour when it is not Classic ("Sunny Pondlet").</summary>
@@ -825,15 +895,21 @@ namespace EvolutionShop
         /// <summary>GR.5 peek: looking at a container from close by eases the view in, and the creature under the reticle can be read and picked.</summary>
         void UpdatePeek(float dt)
         {
-            bool want = PeekOn && Card == GrowthCard.None && Focused != null && Focused.Kind == GrowthTargetKind.Tank &&
-                World.DistanceToGlass(Focused.Id, Player.View.transform.position) <= PeekRange;
+            bool onTank = Card == GrowthCard.None && Focused != null && Focused.Kind == GrowthTargetKind.Tank;
+            bool want = PeekOn && onTank && World.DistanceToGlass(Focused.Id, Player.View.transform.position) <= PeekRange;
             float step = ReducedMotion ? 1 : dt / PeekEase;
             peekBlend = Mathf.MoveTowards(peekBlend, want ? 1 : 0, step);
             Player.View.fieldOfView = Mathf.Lerp(FieldOfView, PeekFov, Mathf.SmoothStep(0, 1, peekBlend));
+            // GR-29 (F25): the creature under the reticle, from anywhere a tank can be used, wears an outline; peek also enlarges it.
+            AimedCreature = onTank ? World.CreatureNearCentre(Focused.Id, Player.View) : null;
+            World.Aim(AimedCreature);
             // While peek eases out after the reticle left the tank there is nothing to read (GR-03 found this throwing).
-            PeekCreature = Peeking && want ? World.CreatureNearCentre(Focused.Id, Player.View) : null;
+            PeekCreature = Peeking && want ? AimedCreature : null;
             World.Highlight(PeekCreature);
         }
+
+        /// <summary>GR-29: the creature under the reticle in the tank in focus (a click or the take button takes it).</summary>
+        public GrowthCreatureView AimedCreature { get; private set; }
 
         public void TakeFromTank(GrowthCreatureView creature)
         {
@@ -906,23 +982,24 @@ namespace EvolutionShop
                     status = (Shop.Phase == GrowthPhase.Night ? "E order" : "E browse · orders at night") + (Shop.Orders.Count > 0 ? " · " + Shop.Orders.Count + " on order" : "");
                     return "Supplier catalog";
                 case GrowthTargetKind.Incubator:
-                    status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left" : Shop.Hatchlings.Count > 1 ? "A clutch of " + Shop.Hatchlings.Count + " is ready · E" : Shop.Hatchling != null ? "A hatchling is ready · E" : Shop.Chamber.Count + "/" + Shop.MaxDoses + " doses · E to mix";
+                    status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left · E open" : Shop.Hatchlings.Count > 1 ? "A clutch of " + Shop.Hatchlings.Count + " is ready · click take · E open" : Shop.Hatchling != null ? "A hatchling is ready · click take · E open" :
+                        Shop.Chamber.Count + "/" + Shop.MaxDoses + " doses" + (Shop.Held.Count > 0 && Shop.Chamber.Count < Shop.MaxDoses ? " · click put yours in" : "") + " · E mix";
                     return "Incubator";
                 case GrowthTargetKind.Tank:
                     var c = Shop.Container(Focused.Id);
                     if (c == null) return null;
-                    if (PeekCreature != null)
+                    if (AimedCreature != null)
                     {
-                        var s = c.Occupants.FirstOrDefault(o => o.Id == PeekCreature.SpecimenId);
+                        var s = c.Occupants.FirstOrDefault(o => o.Id == AimedCreature.SpecimenId);
                         if (s != null)
                         {
                             status = s.Def.Size.ToString().ToLowerInvariant() + " · " + s.Colour + " · " + Shop.Price(s.Species) + " cr" + (c.InSchool(s.Species) ? " · school" : "") + (GrowthShop.Themed(c, s.Species) ? " · themed" : "") +
                                 (Shop.Era >= GrowthContent.ComfortEra ? " · " + s.Def.Temperament.ToString().ToLowerInvariant() + ", " + s.Def.Water.ToString().ToLowerInvariant() : "") +
-                                (GrowthShop.IsOnDisplay(s) ? " · on display" : s.ReservedBy != 0 ? " · reserved" : " · E take");
+                                (GrowthShop.IsOnDisplay(s) ? " · on display" : s.ReservedBy != 0 ? " · reserved" : Shop.Carried.Count > 0 ? " · click put in · right-click take" : " · click take") + " · E open";
                             return s.Def.Name;
                         }
                     }
-                    status = c.Used + "/" + c.Spaces + " spaces" + (Shop.Harmony(c) ? " · in harmony" : "") + (c.Decor != null ? " · " + GrowthShop.DecorOn(c).Theme : "") + (Shop.Carried.Count > 0 ? " · E put in" : " · E open");
+                    status = c.Used + "/" + c.Spaces + " spaces" + (Shop.Harmony(c) ? " · in harmony" : "") + (c.Decor != null ? " · " + GrowthShop.DecorOn(c).Theme : "") + (Shop.Carried.Count > 0 ? " · click put in" : "") + " · E open";
                     return c.Def.Name;
                 case GrowthTargetKind.Place:
                     if (GrowthShop.LabPlace(Focused.Id) != null) { status = Shop.Phase == GrowthPhase.Night ? "E place a lab rack" : "Racks are placed at night"; return "Rack place " + Focused.Id.Substring(1); }
@@ -947,10 +1024,10 @@ namespace EvolutionShop
                         return "Breeding tank (not bought)";
                     }
                     bool canPut = Shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize) && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None);
-                    // What E does here first: put a creature in, then take an offspring, else open the card.
+                    // What a click does here first: put a creature in, then take an offspring.
                     var waiting = Shop.Pairs.FirstOrDefault(p => p.Offspring != null);
-                    status = canPut ? Shop.AllParents.Count() + "/" + GrowthShop.PairSize * Shop.PairPlaces + " parents · E put in" :
-                        waiting != null ? Named(waiting.Offspring) + " in the nursery · " + (Shop.Carried.Count < GrowthShop.CarryLimit ? "E take it" : "hands full") :
+                    status = canPut ? Shop.AllParents.Count() + "/" + GrowthShop.PairSize * Shop.PairPlaces + " parents · click put in · E open" :
+                        waiting != null ? Named(waiting.Offspring) + " in the nursery · " + (Shop.Carried.Count < GrowthShop.CarryLimit ? "click take it" : "hands full") + " · E open" :
                         Shop.Breeding ? Mathf.CeilToInt(Shop.BreedingLeft) + " s to the offspring · E details" :
                         Shop.AllParents.Count() + "/" + GrowthShop.PairSize * Shop.PairPlaces + " parents · E open";
                     return "Breeding tank";

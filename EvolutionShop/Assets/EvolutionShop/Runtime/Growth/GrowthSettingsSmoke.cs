@@ -199,10 +199,10 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(Mathf.Abs(g.sensitivity - 1.05f) < 0.001f && Mathf.Abs(s.Player.Sensitivity - 1.05f) < 0.001f, "Sensitivity 1.05×, on the player");
             yield return ClickNamed("gr-rebind-interact", "Click Change for Interact");
-            Check(s.Rebinding == GrowthAction.Interact && s.Ui.CardText().Contains("Press a key or a mouse button for Interact"), "Interact waits for its new key");
+            Check(s.Rebinding == GrowthAction.Interact && s.Ui.CardText().Contains("Press a key or a mouse button for Open a menu"), "Interact waits for its new key");
             yield return Shot("705-controls-waiting");
             yield return Press(Key.Q);
-            Check(s.Rebinding == null && g.InputOf(GrowthAction.Interact) == "Key/Q" && s.RebindNote == "Interact is now on Q" && File.ReadAllText(s.SettingsPath).Contains("\"input\": \"Key/Q\""), "Q pressed: Interact is on Q, kept (\"" + s.RebindNote + "\")");
+            Check(s.Rebinding == null && g.InputOf(GrowthAction.Interact) == "Key/Q" && s.RebindNote == "Open a menu is now on Q" && File.ReadAllText(s.SettingsPath).Contains("\"input\": \"Key/Q\""), "Q pressed: Interact is on Q, kept (\"" + s.RebindNote + "\")");
             yield return ClickNamed("gr-rebind-journal", "Click Change for Journal");
             yield return Press(Key.Q);
             Check(g.InputOf(GrowthAction.Journal) == "Key/Q" && g.InputOf(GrowthAction.Interact) == "Key/Tab", "Q for the journal: the two swap, Interact moving to Tab (\"" + s.RebindNote + "\")");

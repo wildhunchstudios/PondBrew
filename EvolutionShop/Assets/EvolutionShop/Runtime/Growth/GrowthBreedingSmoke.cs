@@ -58,13 +58,13 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             LookAt(new Vector3(0.7f, 0, 6.4f), GrowthWorld.BreedingPosition + new Vector3(0, 0.8f, 0)); yield return Shot("81-breeding-tank");
 
-            // A Bubblebelly and a Pondlet from the Starter tank, put in with E.
+            // A Bubblebelly and a Pondlet from the Starter tank, put in with clicks.
             Ok(s.Act(() => shop.TakeOut(starter.Id, bubble.Id)), "Take the Bubblebelly out of the Starter tank (as the tank card's button does)");
             Ok(s.Act(() => shop.TakeOut(starter.Id, pondletA.Id)), "Take a Pondlet out");
             yield return AtBreedingTank("The reticle focuses the breeding tank");
-            yield return Press(Key.E);
-            yield return Press(Key.E);
-            Check(shop.Parents.Select(p => p.Species).OrderBy(x => x).SequenceEqual(new[] { "bubblebelly", "pondlet" }) && shop.Carried.Count == 0, "E twice puts the pair in");
+            yield return Click();
+            yield return Click();
+            Check(shop.Parents.Select(p => p.Species).OrderBy(x => x).SequenceEqual(new[] { "bubblebelly", "pondlet" }) && shop.Carried.Count == 0, "Two clicks put the pair in");
             Check(shop.Breeding && shop.BreedingLeft > 55, "The pair breeds: 60 s to the offspring");
             Check(s.FocusName(out status) == "Breeding tank" && status.Contains("s to the offspring"), "The reticle's line counts down: " + status);
             yield return Press(Key.E);
@@ -83,8 +83,8 @@ namespace EvolutionShop
             LookAt(GrowthWorld.BreedingPosition + new Vector3(0.36f, 0, 0.95f), GrowthWorld.BreedingPosition + new Vector3(0.36f, GrowthWorld.BreedingWaterY, 0));
             yield return Shot("83-puddlepup");
             yield return AtBreedingTank("The reticle focuses the breeding tank");
-            yield return Press(Key.E);
-            Check(shop.Offspring == null && shop.Carried.Single().Species == "puddlepup" && shop.BreedingLeft > 55, "E takes the Puddlepup; the pair starts on the next one");
+            yield return Click();
+            Check(shop.Offspring == null && shop.Carried.Single().Species == "puddlepup" && shop.BreedingLeft > 55, "A click takes the Puddlepup; the pair starts on the next one");
             var puddle1 = shop.Carried.Single();
             Ok(s.Act(() => shop.PutIn(starter.Id, puddle1.Id)), "Put the Puddlepup in the Starter tank");
             s.Advance(shop.BreedingLeft + 0.05f);

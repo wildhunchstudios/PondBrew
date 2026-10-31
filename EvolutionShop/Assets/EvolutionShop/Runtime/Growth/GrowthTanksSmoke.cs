@@ -87,8 +87,8 @@ namespace EvolutionShop
             LookAt(new Vector3(-2.2f, 0, 2.0f), GrowthWorld.Places["a1"].Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, starter.Id, "The reticle focuses the Starter tank");
-            yield return Press(Key.E);
-            Check(shop.Carried.Count == 1 && starter.Occupants.Count == 3, "E on the Starter tank keeps the Shellback in hand");
+            yield return Click();
+            Check(shop.Carried.Count == 1 && starter.Occupants.Count == 3, "A click on the Starter tank keeps the Shellback in hand");
             Check(s.Ui.Log.Any(l => l.Contains("Too big for a Starter tank")), "It says the Shellback is too big for a Starter tank");
             Ok(s.Act(() => shop.DevelopmentGive("emberpuff")), "Crate: an Emberpuff (medium) in hand");
             Ok(s.Act(() => shop.DevelopmentGive("lanternfin")), "Crate: a Lanternfin (small) in hand");
@@ -96,9 +96,9 @@ namespace EvolutionShop
             LookAt(new Vector3(-0.4f, 0, -1.2f), a3.Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, large.Id, "The reticle focuses the Large tank");
-            for (int i = 0; i < 3; i++) yield return Press(Key.E);
+            for (int i = 0; i < 3; i++) yield return Click();
             Check(shop.Carried.Count == 0 && large.Used == 7 && large.Occupants.Select(o => o.Def.Size).Distinct().Count() == 3,
-                "E puts a large (4 spaces), a medium (2) and a small (1) creature into the Large tank: 7 of 8 spaces");
+                "Clicks put a large (4 spaces), a medium (2) and a small (1) creature into the Large tank: 7 of 8 spaces");
             Check(s.World.Tanks[large.Id].Creatures.Values.Select(v => v.Length).Distinct().Count() == 3, "The three swim at their size classes (7.5, 15 and 32 cm)");
             Stock(shop, large, "pondlet");
             Check(large.Free == 0 && shop.PutIn(large.Id).Failure == GrowthFailure.HandsEmpty, "A fourth, small, fills the Large tank");

@@ -985,6 +985,16 @@ namespace EvolutionShop
             return best;
         }
 
+        /// <summary>GR-29 (F25): the creature under the reticle wears an outline, so it is plain which one a click takes.</summary>
+        public void Aim(GrowthCreatureView creature)
+        {
+            if (aimed == creature) return;
+            if (aimed) aimed.Aimed = false;
+            aimed = creature;
+            if (aimed) aimed.Aimed = true;
+        }
+        GrowthCreatureView aimed;
+
         public void Highlight(GrowthCreatureView creature)
         {
             if (highlighted == creature) return;

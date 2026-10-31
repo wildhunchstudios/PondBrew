@@ -216,9 +216,9 @@ namespace EvolutionShop.Growth
                 Step = s =>
                 {
                     if (!s.HasBreedingTank) return V("At night, buy the breeding tank in the back room (E on it)", "Breeding", "Breeding tank");
-                    if (s.Offspring != null) return V("The offspring is ready: take it from the breeding tank (E)", "Breeding", "Breeding tank");
+                    if (s.Offspring != null) return V("The offspring is ready: click the breeding tank to take it", "Breeding", "Breeding tank");
                     if (s.Breeding) return V("Your pair is breeding: wait for the offspring", "Breeding", "Breeding tank");
-                    return V("Carry two creatures to the breeding tank: E puts each in", "Breeding", "Breeding tank");
+                    return V("Carry two creatures to the breeding tank and click to put each in", "Breeding", "Breeding tank");
                 },
             },
             new GrowthLessonDef

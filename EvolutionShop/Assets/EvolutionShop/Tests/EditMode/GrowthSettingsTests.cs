@@ -67,7 +67,7 @@ namespace EvolutionShop.Tests
         {
             var g = new GrowthSettings();
             var r = g.Bind(GrowthAction.Interact, "Key/Q");
-            Assert.That(r.done && g.InputOf(GrowthAction.Interact) == "Key/Q" && r.note == "Interact is now on Q", Is.True, r.note);
+            Assert.That(r.done && g.InputOf(GrowthAction.Interact) == "Key/Q" && r.note == "Open a menu is now on Q", Is.True, r.note);
             r = g.Bind(GrowthAction.Journal, "Key/Q");
             Assert.That(r.done && g.InputOf(GrowthAction.Journal) == "Key/Q" && g.InputOf(GrowthAction.Interact) == "Key/Tab", Is.True, "the two swap: " + r.note);
             Assert.That(r.note, Does.Contain("moved to Tab"));

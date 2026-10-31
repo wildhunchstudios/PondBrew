@@ -353,6 +353,18 @@ namespace EvolutionShop.Growth
 
         public void StopBuffer() => BufferProgress = 0;
 
+        /// <summary>GR-29 (F18): throws a buffer's doses away. A line still piped into it keeps it for that culture, and fills it again.</summary>
+        public GrowthResult PourOutBuffer(int place)
+        {
+            var b = BufferAt(place);
+            if (b == null || b.Culture == null || b.Units <= 0) return GrowthResult.Fail(GrowthFailure.GrowerEmpty, BufferName(place) + " is empty");
+            int poured = (int)Math.Floor(b.Units);
+            b.Units = 0;
+            BufferProgress = 0;
+            if (InletOf(place) == null) b.Culture = null;
+            return GrowthResult.Ok(poured.ToString());
+        }
+
         // ---------------------------------------------------------------- pipes
 
         /// <summary>Two picked ends as a pipe's upstream and downstream: a tap to a buffer, a buffer to the port, or the outlet to the sorter, either way round.</summary>

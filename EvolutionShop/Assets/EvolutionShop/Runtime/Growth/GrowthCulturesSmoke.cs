@@ -110,8 +110,8 @@ namespace EvolutionShop
             LookAt(GrowthWorld.Places["a1"].Browse + new Vector3(0, 0, -0.6f), GrowthWorld.Places["a1"].Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, starter.Id, "The reticle focuses the Starter tank");
-            yield return Press(Key.E);
-            Check(starter.Occupants.Any(o => o.Species == "emberpuff") && starter.Used == 4, "E puts the Emberpuff (2 spaces) beside the two Pondlets");
+            yield return Click();
+            Check(starter.Occupants.Any(o => o.Species == "emberpuff") && starter.Used == 4, "A click puts the Emberpuff (2 spaces) beside the two Pondlets");
 
             // The Spark vial, held: three doses, Spark not owned; with Flow they make a new Sparkline.
             var bottle = GrowthWorld.VialShelfPosition + new Vector3(-0.5f + 0.25f * 1, 1.1f, 0.06f);

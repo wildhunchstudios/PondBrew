@@ -479,19 +479,59 @@ namespace EvolutionShop.Growth
             var recipe = ChamberRecipe();
             var mix = GrowthRules.Mix(recipe, MixCultures(), Discovered);
             Pending = mix.Species.Id;
-            bool isNew = !Discovered.Contains(Pending);
-            var entry = MixLog.FirstOrDefault(e => e.Doses.SequenceEqual(recipe));
-            if (entry != null) { entry.Count++; entry.WasNew = false; }
-            else MixLog.Add(entry = new GrowthMixEntry { Doses = recipe, Species = Pending, Exact = mix.Exact, WasNew = isNew, DistanceToNew = mix.DistanceToNew });
-            LastMix = entry;
+            PendingMix = new GrowthMixEntry { Doses = recipe, Species = Pending, Exact = mix.Exact, WasNew = !Discovered.Contains(Pending), DistanceToNew = mix.DistanceToNew };
             Chamber.Clear();
             Incubating = true;
             IncubationLeft = IncubationSeconds;
             return GrowthResult.Ok(Pending);
         }
 
+        /// <summary>GR-29 (F9): the mix now in the incubator, logged once it hatches, so the log never tells what it makes before then.</summary>
+        public GrowthMixEntry PendingMix;
+
+        void LogPendingMix()
+        {
+            if (PendingMix == null) return;
+            var entry = MixLog.FirstOrDefault(e => e.Doses.SequenceEqual(PendingMix.Doses));
+            if (entry != null) { entry.Count++; entry.WasNew = false; }
+            else MixLog.Add(entry = PendingMix);
+            LastMix = entry;
+            PendingMix = null;
+        }
+
+        /// <summary>GR-29 (F19): a click on the incubator: as many doses from the siphon as the chamber takes, the rest staying in the siphon.</summary>
+        public GrowthResult FillChamber()
+        {
+            if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
+            if (ChamberLock != null) return GrowthResult.Fail(GrowthFailure.Busy, ChamberLock);
+            if (Chamber.Count >= MaxDoses) return GrowthResult.Fail(GrowthFailure.ChamberFull, "up to " + MaxDoses + " doses");
+            if (Held.Count == 0) return GrowthResult.Fail(GrowthFailure.NoDose, "a dose");
+            int moved = 0;
+            while (Held.Count > 0 && Chamber.Count < MaxDoses) { Chamber.Add(Held[0]); Held.RemoveAt(0); moved++; }
+            return GrowthResult.Ok(moved.ToString());
+        }
+
+        /// <summary>GR-29 (F10): throws the chamber's doses away, so a chamber whose doses cannot go back into a full siphon never stops the player.</summary>
+        public GrowthResult PourOutChamber()
+        {
+            if (Incubating) return GrowthResult.Fail(GrowthFailure.IncubatorBusy);
+            if (ChamberLock != null) return GrowthResult.Fail(GrowthFailure.Busy, ChamberLock);
+            if (Chamber.Count == 0) return GrowthResult.Fail(GrowthFailure.ChamberEmpty);
+            int poured = Chamber.Count;
+            Chamber.Clear();
+            return GrowthResult.Ok(poured.ToString());
+        }
+
+        /// <summary>GR-29 (F17): throws doses in the siphon away: one culture's, or with none named, every dose.</summary>
+        public GrowthResult PourOutSiphon(string culture = null)
+        {
+            int poured = Held.RemoveAll(c => culture == null || c == culture);
+            return poured == 0 ? GrowthResult.Fail(GrowthFailure.NoDose, culture == null ? "a dose" : Name(culture)) : GrowthResult.Ok(poured.ToString());
+        }
+
         void Hatch()
         {
+            LogPendingMix();
             Incubating = false;
             IncubationLeft = 0;
             // GR-06: a clutch of the same creature (incubator levels 3-4), in the tint's colour when the port has one (GR.7.2).
@@ -607,6 +647,38 @@ namespace EvolutionShop.Growth
             c.Occupants.Remove(s);
             Carried.Add(s);
             return GrowthResult.Ok(s.Species);
+        }
+
+        /// <summary>GR-29 (F12): why a creature in a tank cannot change places with one in hand (None when it can). The tank may be
+        /// full and the hands too: the swap needs no free space beyond the one the leaving creature gives up.</summary>
+        public GrowthFailure SwapCheck(string containerId, int takeId, int putId, out string why)
+        {
+            why = null;
+            var c = Container(containerId);
+            if (c == null) { why = containerId; return GrowthFailure.NoSuchContainer; }
+            var take = c.Occupants.FirstOrDefault(o => o.Id == takeId);
+            var put = Carried.FirstOrDefault(o => o.Id == putId);
+            if (take == null || put == null) { why = ""; return GrowthFailure.NoSuchSpecimen; }
+            if (IsOnDisplay(take)) { why = "on display for the Grand Exhibition"; return GrowthFailure.Reserved; }
+            if (take.ReservedBy != 0) { why = "a visitor is buying it"; return GrowthFailure.Reserved; }
+            if (!GrowthRules.Fits(c.Def, c.Level, c.Occupants.Where(o => o != take).Select(o => o.Species), put.Species))
+            {
+                why = (int)put.Def.Size > (int)c.Def.Largest ? "Too big for a " + c.Def.Name : "Not enough spaces";
+                return GrowthFailure.DoesNotFit;
+            }
+            return GrowthFailure.None;
+        }
+
+        public GrowthResult Swap(string containerId, int takeId, int putId)
+        {
+            var failure = SwapCheck(containerId, takeId, putId, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            var c = Container(containerId);
+            var take = c.Occupants.First(o => o.Id == takeId);
+            var put = Carried.First(o => o.Id == putId);
+            c.Occupants.Remove(take); Carried.Remove(put);
+            c.Occupants.Add(put); Carried.Add(take);
+            return GrowthResult.Ok(put.Species);
         }
 
         /// <summary>Buys a Starter tank for an empty place in an open unit (layout changes happen at night, §6.1).</summary>
@@ -1578,6 +1650,7 @@ namespace EvolutionShop.Growth
             discovered = Discovered.ToArray(),
             vialCultures = Vials.Keys.ToArray(), vialDoses = Vials.Values.ToArray(), orders = Orders.ToArray(),
             mixLog = MixLog.Select(m => new GrowthSave.Mix { doses = m.Doses, species = m.Species, exact = m.Exact, wasNew = m.WasNew, distanceToNew = m.DistanceToNew, count = m.Count }).ToArray(),
+            pendingMix = PendingMix == null ? new GrowthSave.Mix[0] : new[] { new GrowthSave.Mix { doses = PendingMix.Doses, species = PendingMix.Species, exact = PendingMix.Exact, wasNew = PendingMix.WasNew, distanceToNew = PendingMix.DistanceToNew, count = PendingMix.Count } },
             parents = Parents.Select(GrowthSave.Specimen.Of).ToArray(),
             offspring = Offspring == null ? new GrowthSave.Specimen[0] : new[] { GrowthSave.Specimen.Of(Offspring) },
             breedingLeft = BreedingLeft, tint = Tint ?? "", journal = Journal.ToArray(),
@@ -1681,6 +1754,12 @@ namespace EvolutionShop.Growth
                 shop.Orders.Add(o);
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
+            // GR-29: the mix in the incubator, logged when it hatches (version 13 and older logged it when it started).
+            if (s.incubating && s.pendingMix != null && s.pendingMix.Length > 0)
+            {
+                var pm = s.pendingMix[0];
+                shop.PendingMix = new GrowthMixEntry { Doses = pm.doses, Species = pm.species, Exact = pm.exact, WasNew = pm.wasNew, DistanceToNew = pm.distanceToNew, Count = Math.Max(1, pm.count) };
+            }
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
             problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s) ?? RestoreLessons(shop, s);
             if (problem != null) return null;
@@ -1706,7 +1785,7 @@ namespace EvolutionShop.Growth
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now). Older saves load.</summary>
-        public const int CurrentVersion = 13;
+        public const int CurrentVersion = 14;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1732,6 +1811,8 @@ namespace EvolutionShop.Growth
         public Box[] containers;
         public string[] discovered;
         public Mix[] mixLog;
+        /// <summary>GR-29: the mix in the incubator (none or one), logged when it hatches.</summary>
+        public Mix[] pendingMix;
         public string[] vialCultures, orders;
         public int[] vialDoses;
         public Specimen[] parents, offspring, secondParents, secondOffspring;

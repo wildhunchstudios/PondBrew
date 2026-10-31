@@ -103,6 +103,10 @@ namespace EvolutionShop
             chips.Add(Chip(b.Culture == null ? "Empty" : GrowthShop.Name(b.Culture)));
             chips.Add(Chip("Holds " + GrowthContent.BufferCapacity));
             fill.Add(chips);
+            // GR-29 (F18): emptied without making creatures nobody wants; a line piped into it fills it again.
+            var pourOut = Link("Pour this buffer out", () => s.Act(() => shop.PourOutBuffer(place)), b.Culture != null && b.Units > 0, "It is empty");
+            pourOut.style.marginLeft = 0; pourOut.style.alignSelf = Align.FlexStart;
+            fill.Add(pourOut);
             body.Add(fill);
             bool night = shop.Phase == GrowthPhase.Night;
             body.Add(Eyebrow("Pipes"));

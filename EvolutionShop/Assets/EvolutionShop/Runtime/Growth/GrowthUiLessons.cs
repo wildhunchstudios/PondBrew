@@ -74,7 +74,7 @@ namespace EvolutionShop
             var entries = new List<VisualElement>();
             var basics = Box("gr-lesson");
             basics.Add(L("The first night", "gr-lesson__title"));
-            basics.Add(L(GrowthControls.Keyed("Hold the left mouse on the Bloom and Flow growers to fill your siphon; open the incubator (E), put 2 or 3 doses in and start; carry the hatchling to a tank in the shop (E); open the shop at the counter (E) and hold the mouse on it to bag each sale."), "gr-lesson__text"));
+            basics.Add(L(GrowthControls.Keyed("Click puts in and takes; E opens a menu. Hold the left mouse on the Bloom and Flow growers to fill your siphon; click the incubator to put your doses in, open it (E) and start; click it again for the hatchling and click a tank in the shop to put it in; open the shop at the counter (E) and hold the mouse on it to bag each sale."), "gr-lesson__text"));
             entries.Add(basics);
             foreach (var l in GrowthLessons.All)
             {

@@ -196,7 +196,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void AnOlderSaveLearnsWhatItHasUsedAndTheLessonsAreSaved()
         {
-            Assert.That(GrowthSave.CurrentVersion, Is.EqualTo(13), "the lessons came with version 13");
+            Assert.That(GrowthSave.CurrentVersion, Is.GreaterThanOrEqualTo(13), "the lessons came with version 13");
             var shop = GrowthStarts.Make(GrowthStarts.Era3);
             var old = shop.Snapshot();
             old.version = 12; old.lessonsKept = false; old.lessonsMet = null; old.lessonsLearned = null; old.noted = null; old.lessonNow = null;

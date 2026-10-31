@@ -46,7 +46,7 @@ namespace EvolutionShop
             Application.logMessageReceived += Log;
             bool failed = false;
             string route = GrowthGreybox.SmokeRoute;
-            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : route == "cultures" ? CulturesScenario() : route == "breeding" ? BreedingScenario() : route == "stations" ? StationsScenario() : route == "power" ? PowerScenario() : route == "line" ? LineScenario() : route == "helpers" ? HelpersScenario() : route == "spaces" ? SpacesScenario() : route == "exhibition" ? ExhibitionScenario() : route == "creatures" ? CreaturesScenario() : route == "guide" ? GuideScenario() : route == "look" ? LookScenario() : route == "people" ? PeopleScenario() : route == "decor" ? DecorScenario() : route == "wishes" ? WishesScenario() : route == "settings" ? SettingsScenario() : route == "effects" ? EffectsScenario() : route == "lessons" ? LessonsScenario() : route == "menu" ? MenuScenario() : Scenario();
+            var steps = route == "tanks" ? TanksScenario() : route == "density" ? DensityScenario() : route == "cultures" ? CulturesScenario() : route == "breeding" ? BreedingScenario() : route == "stations" ? StationsScenario() : route == "power" ? PowerScenario() : route == "line" ? LineScenario() : route == "helpers" ? HelpersScenario() : route == "spaces" ? SpacesScenario() : route == "exhibition" ? ExhibitionScenario() : route == "creatures" ? CreaturesScenario() : route == "guide" ? GuideScenario() : route == "look" ? LookScenario() : route == "people" ? PeopleScenario() : route == "decor" ? DecorScenario() : route == "wishes" ? WishesScenario() : route == "settings" ? SettingsScenario() : route == "effects" ? EffectsScenario() : route == "lessons" ? LessonsScenario() : route == "menu" ? MenuScenario() : route == "deadends" ? DeadEndsScenario() : Scenario();
             // GR-12: nested steps (such as GR-03's Measure) are run here, not by Unity, so a check failing inside one stops the
             // route with its reason instead of leaving the route waiting until the runner's timeout.
             var stack = new Stack<IEnumerator>();
@@ -70,7 +70,7 @@ namespace EvolutionShop
             var report = new Report
             {
                 passed = passed,
-                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText : route == "cultures" ? CulturesScenarioText : route == "breeding" ? BreedingScenarioText : route == "stations" ? StationsScenarioText : route == "power" ? PowerScenarioText : route == "line" ? LineScenarioText : route == "helpers" ? HelpersScenarioText : route == "spaces" ? SpacesScenarioText : route == "exhibition" ? ExhibitionScenarioText : route == "creatures" ? CreaturesScenarioText : route == "guide" ? GuideScenarioText : route == "look" ? LookScenarioText : route == "people" ? PeopleScenarioText : route == "decor" ? DecorScenarioText : route == "wishes" ? WishesScenarioText : route == "settings" ? SettingsScenarioText : route == "effects" ? EffectsScenarioText : route == "lessons" ? LessonsScenarioText : route == "menu" ? MenuScenarioText :
+                scenario = route == "tanks" ? TanksScenarioText : route == "density" ? DensityScenarioText : route == "cultures" ? CulturesScenarioText : route == "breeding" ? BreedingScenarioText : route == "stations" ? StationsScenarioText : route == "power" ? PowerScenarioText : route == "line" ? LineScenarioText : route == "helpers" ? HelpersScenarioText : route == "spaces" ? SpacesScenarioText : route == "exhibition" ? ExhibitionScenarioText : route == "creatures" ? CreaturesScenarioText : route == "guide" ? GuideScenarioText : route == "look" ? LookScenarioText : route == "people" ? PeopleScenarioText : route == "decor" ? DecorScenarioText : route == "wishes" ? WishesScenarioText : route == "settings" ? SettingsScenarioText : route == "effects" ? EffectsScenarioText : route == "lessons" ? LessonsScenarioText : route == "menu" ? MenuScenarioText : route == "deadends" ? DeadEndsScenarioText :
                     "GR-02 greybox: fresh shop, grower collection by a held mouse, never-fail mixing and the mix log, hatch, carry, tank and school, peek, a day of visitors served at the counter, the receipt, a second tank, era 2 and unit B, an upgrade, save and reload, comfort",
                 context = Application.isEditor ? "Unity Editor Play mode (automated)" : "Windows standalone development player (automated)",
                 unityVersion = Application.unityVersion, graphics = SystemInfo.graphicsDeviceName, processor = SystemInfo.processorType, savePath = s.SavePath,
@@ -312,8 +312,8 @@ namespace EvolutionShop
             LookAt(a1.Browse + new Vector3(0, 0, -0.6f), a1.Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, tank.Id, "The reticle focuses the Starter tank");
-            yield return Press(Key.E);
-            Check(tank.Occupants.Count == 1 && tank.Occupants[0].Species == "pondlet" && shop.Carried.Count == 0, "E puts the carried Pondlet into the tank");
+            yield return Click();
+            Check(tank.Occupants.Count == 1 && tank.Occupants[0].Species == "pondlet" && shop.Carried.Count == 0, "A click puts the carried Pondlet into the tank");
             Check(s.World.Tanks[tank.Id].Creatures.Count == 1, "The Pondlet swims in the world's tank");
 
             // A school of three, a Bubblebelly beside it; peek reads a creature and E takes it.
