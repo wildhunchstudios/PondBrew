@@ -84,8 +84,8 @@ namespace EvolutionShop
             var cam = s.Player.View;
             Check(cam.GetUniversalAdditionalCameraData().renderPostProcessing, "The camera renders the look's grade (post-processing on)");
             Check(FindObjectsByType<Volume>(FindObjectsSortMode.None).Any(v => v.isGlobal && v.sharedProfile != null && v.sharedProfile.name == "GR look grade"), "The look's grade: bloom, neutral tonemapping, colour, white balance, vignette");
-            yield return Wait(() => FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None).Count(p => p.name.StartsWith("Look /") && p.realtimeTexture != null) == 6, 5, "the rooms' reflections");
-            Check(true, "The dressed rooms' reflection probes are rendered (unit A, the back room, the lab annex, the workshop, unit B, unit C)");
+            yield return Wait(() => FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None).Count(p => p.name.StartsWith("Look /") && p.realtimeTexture != null) == 7, 5, "the rooms' reflections");
+            Check(true, "The dressed rooms' reflection probes are rendered (unit A, the laboratory, the power room, the workshop, the research room, unit B, unit C)");
 
             // Still the same stations: the reticle focuses them through the kit.
             LookAt(GrowthWorld.GrowerFront("bloom"), GrowthWorld.GrowerPositions["bloom"] + new Vector3(0, 0.8f, 0)); yield return null; yield return null;
