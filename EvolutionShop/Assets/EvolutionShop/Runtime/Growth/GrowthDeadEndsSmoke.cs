@@ -215,7 +215,7 @@ namespace EvolutionShop
             yield return Shot("1108-buffer");
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "Pour this buffer out", "Press Pour this buffer out");
             yield return null;
-            Check(buffer.Units == 0, "The buffer's card pours it out, with no creature made");
+            Check(buffer.Units < 1, "The buffer's card pours it out, with no creature made (its pump starts filling it again: " + buffer.Units.ToString("0.0") + ")");
             s.SetCard(GrowthCard.None);
             s.AllowValidationInput = false;
         }

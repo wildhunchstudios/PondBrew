@@ -201,6 +201,12 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
 
             // ---- F34 and F35: Nori with no targets, and the targets as a table
+            // Helpers are hired at night: the day is ended here (its clock advanced: labelled).
+            s.Advance(shop.DaySecondsLeft + 1);
+            yield return Wait(() => shop.Phase == GrowthPhase.Night, 8, "the night");
+            yield return null;
+            s.SetCard(GrowthCard.None);
+            yield return null;
             shop.Reputation = GrowthContent.StarThresholds[3] + 10;
             Ok(shop.Hire("nori"), "Hire Nori (the staff card's button)");
             yield return null; yield return null;
