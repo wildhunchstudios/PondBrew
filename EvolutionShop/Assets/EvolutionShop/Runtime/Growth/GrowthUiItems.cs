@@ -99,7 +99,9 @@ namespace EvolutionShop
             if (cueAt.HasValue)
             {
                 cueText.text = GrowthControls.Keyed(s.ServingNow ? "Bagging..." : "Ready: hold the mouse to bag");
-                counterCue.style.left = cueAt.Value.x; counterCue.style.top = cueAt.Value.y;
+                // Aiming at the counter, its prompt stands at the reticle: the cue goes above it.
+                bool aiming = s.Focused != null && s.Focused.Kind == GrowthTargetKind.Counter;
+                counterCue.style.left = cueAt.Value.x; counterCue.style.top = aiming ? Mathf.Min(cueAt.Value.y, hud.layout.height * 0.5f - 50) : cueAt.Value.y;
                 cueProgress.style.width = new Length(s.ServingNow ? Mathf.Clamp01(shop.ServeProgress / Mathf.Max(0.01f, shop.ServeSeconds)) * 100 : 0, LengthUnit.Percent);
             }
             // F30: what each visitor picked, then bought, by their hand: their wish stays in the bubble over their head.

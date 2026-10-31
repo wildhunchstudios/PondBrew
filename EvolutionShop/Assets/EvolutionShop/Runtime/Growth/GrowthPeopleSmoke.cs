@@ -378,7 +378,7 @@ namespace EvolutionShop
             var w = s.World;
             var gags = s.Gags;
             var hands = s.Hands;
-            Check(gags != null && gags.Sounds.Count == 11 && GrowthPeopleKit.Data.gags.parts.Length == 7, "The silly moments are in the game: " + gags.Sounds.Count + " sounds made here, and the people kit's " + GrowthPeopleKit.Data.gags.parts.Length + " faces and props");
+            Check(gags != null && gags.Sounds.Count == 12 && GrowthPeopleKit.Data.gags.parts.Length == 7, "The silly moments are in the game: " + gags.Sounds.Count + " sounds made here, and the people kit's " + GrowthPeopleKit.Data.gags.parts.Length + " faces and props");
             Check(!gags.RoomMoments, "In a validation run the room's own moments wait for the route to ask for them");
             var fx = new GrowthShop { Era = 4, Reputation = GrowthContent.StarThresholds[3] + 30, Credits = 8000, Rp = 300, UnitB = true, SalesTotal = 160, Annex = true };
             fx.Discovered.AddRange(GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder).Take(12).Select(x => x.Id));

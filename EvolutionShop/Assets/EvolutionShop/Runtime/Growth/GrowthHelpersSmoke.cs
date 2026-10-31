@@ -129,7 +129,7 @@ namespace EvolutionShop
             // Moss's card: a known recipe, run by hand from the growers.
             s.SetCard(GrowthCard.Helper, "moss");
             card = s.Ui.CardText();
-            Check(card.Contains("Runs one known recipe.") && card.Contains("No recipe chosen yet.") && card.Contains("Pondlet") && card.Contains("1 Bloom, 1 Flow") && card.Contains("Run it") &&
+            Check(card.Contains("Runs one known recipe by hand, with no pipes.") && card.Contains("No recipe chosen yet.") && card.Contains("Pondlet") && card.Contains("1 Bloom, 1 Flow") && card.Contains("Run it") &&
                 card.Contains("At level 2, Moss keeps a pair you have bred breeding."), "Moss's card (the staff card's Open button): choose a known recipe; the pair comes with level 2");
             Ok(s.Act(() => shop.SetMossRecipe("pondlet")), "Moss runs the Pondlet (the card's Run it button)");
             s.SetCard(GrowthCard.None);
@@ -204,7 +204,7 @@ namespace EvolutionShop
             Ok(s.Act(() => shop.Upgrade("counter")), "The counter's second till (level 4, 1,500 credits): its card's button");
             Ok(s.Act(() => shop.Train("moss")), "Train Moss to level 2 (2,000 credits): his card's button");
             yield return null; yield return null;
-            Check(shop.SecondTill && moss.Level == 2 && s.Ui.Log.Any(l => l == "Moss trained to level 2: Runs a known recipe or keeps a known pair breeding"), "The second till is in, and Moss is at level 2");
+            Check(shop.SecondTill && moss.Level == 2 && s.Ui.Log.Any(l => l == "Moss trained to level 2: Runs a known recipe or keeps a known pair breeding, which no machine does"), "The second till is in, and Moss is at level 2");
             // The tanks are topped up for the second day (development stock, labelled).
             while (large.Free > 0) Ok(shop.DevelopmentStock(large.Id, "ribbonfin"), "Fixture Ribbonfin top-up");
             Ok(s.Act(() => shop.BuyContainer("starter", "a2")), "A Starter tank on a2 (the place card's button)");
