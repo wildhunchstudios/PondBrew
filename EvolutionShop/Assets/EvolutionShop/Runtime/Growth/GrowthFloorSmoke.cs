@@ -225,13 +225,15 @@ namespace EvolutionShop
             Check(shop.Stock.Any(o => o.Id == 9401), "With no targets at all, Nori carried the hatchling to a tank");
 
             // ---- F37: a tank's rule
-            yield return AimAt(a1.Browse + new Vector3(0, 0, -0.6f), a1.Position + new Vector3(0, 1.1f, 0), GrowthTargetKind.Tank, tank.Id, "The reticle focuses the Starter tank");
+            // (Nori has just put the hatchling in a1 and stands in front of it: this is the Large tank in the middle of the shop.)
+            var a3 = GrowthWorld.Places["a3"];
+            yield return AimAt(a3.Browse + new Vector3(0, 0, -0.6f), a3.Position + new Vector3(0, 1.1f, 0), GrowthTargetKind.Tank, large.Id, "The reticle focuses the Large tank");
             yield return Press(Key.E);
             yield return null; yield return null;
             Check(s.Ui.CardText().Contains("Nori and the sorter keep here") && s.Ui.CardText().Contains("Anything"), "The tank's card offers a rule");
             yield return ClickOn(e => e.name == "gr-rule-calm", "Press Calm");
             yield return null; yield return null;
-            Check(tank.Rule == "calm", "The tank's rule is Calm");
+            Check(large.Rule == "calm", "The tank's rule is Calm");
             yield return Shot("1209-tank-rule");
             s.SetCard(GrowthCard.None);
 
@@ -239,7 +241,7 @@ namespace EvolutionShop
             shop.AutoOpenAt = 6;
             s.SaveNow();
             var saved = GrowthShop.Restore(shop.Snapshot(), out string problem);
-            Check(problem == null && saved.AutoOpenAt == 6 && saved.Containers.First(c => c.Id == tank.Id).Rule == "calm", "The auto-open and the tank's rule keep in the save");
+            Check(problem == null && saved.AutoOpenAt == 6 && saved.Containers.First(c => c.Id == large.Id).Rule == "calm", "The auto-open and the tank's rule keep in the save");
         }
     }
 }
