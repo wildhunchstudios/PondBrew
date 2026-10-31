@@ -166,6 +166,8 @@ namespace EvolutionShop
             card = s.Ui.CardText();
             int counterLevel = shop.Level("counter");
             Check(s.Card == GrowthCard.Counter && !card.Contains("Visitors are waiting") && shop.UpgradeCheck("counter", out _, out _) == GrowthFailure.None, "With a visitor waiting, the counter's upgrade is still there");
+            s.Ui.ShowTabNamed("Upgrade");
+            yield return null; yield return null;
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Upgrade") && b.text != "Upgrade", "Press Upgrade");
             Check(shop.Level("counter") == counterLevel + 1 && first.State == GrowthVisitorState.Queued, "It upgrades with the shop open and the visitor still waiting");
             s.SetCard(GrowthCard.None);
@@ -192,6 +194,8 @@ namespace EvolutionShop
             yield return null; yield return null;
             int tankLevel = tank.Level;
             Check(s.Card == GrowthCard.Tank && !s.Ui.CardText().Contains("Fitted at night") && shop.ContainerUpgradeCheck(tank.Id, out _, out _) == GrowthFailure.None, "By day the tank's upgrade is on offer");
+            s.Ui.ShowTabNamed("Upgrade");
+            yield return null; yield return null;
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Upgrade") && b.text != "Upgrade", "Press Upgrade");
             Check(tank.Level == tankLevel + 1, "And it upgrades, the shop open");
             s.SetCard(GrowthCard.None);

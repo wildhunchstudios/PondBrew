@@ -196,7 +196,7 @@ namespace EvolutionShop
             float worst = 0;
             for (int i = 0; i < 15; i++) { worst = Mathf.Max(worst, Mathf.Abs(s.Ui.ShownCardScroll - scrolled)); yield return null; }
             Check(worst < 1 && Mathf.Abs(s.Ui.CardScroll - scrolled) < 1, "A press in the scrolled card does not move what shows (at most " + worst.ToString("0.0") + " px)");
-            Check(shop.Chamber.Count == 1 && s.Ui.CardText().Contains("In the chamber · 1 of"), "And the rebuilt card shows the change");
+            Check(shop.Chamber.Count == 1 && s.Ui.CardText().Contains("IN THE CHAMBER · 1 OF"), "And the rebuilt card shows the change");
             yield return Shot("1107-scrolled");
 
             // ---- F17, F18: the grower's card and a buffer's pour out
