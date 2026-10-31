@@ -94,7 +94,7 @@ namespace EvolutionShop
             }
             if (arrived && !cueWasOn && s.Audio != null) s.Audio.BellDue = true;
             cueWasOn = arrived;
-            var cueAt = arrived ? OnScreen(GrowthWorld.CounterPosition + new Vector3(0, 1.45f, 0), GrowthWorld.CounterPosition + new Vector3(0, 0.9f, 0), t => t.Kind == GrowthTargetKind.Counter) : null;
+            var cueAt = arrived ? OnScreen(GrowthWorld.CounterPosition + new Vector3(0, 1.12f, 0), GrowthWorld.CounterPosition + new Vector3(0, 0.9f, 0), t => t.Kind == GrowthTargetKind.Counter) : null;
             counterCue.style.display = cueAt.HasValue ? DisplayStyle.Flex : DisplayStyle.None;
             if (cueAt.HasValue)
             {

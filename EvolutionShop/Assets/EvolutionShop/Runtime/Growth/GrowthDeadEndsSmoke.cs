@@ -180,7 +180,14 @@ namespace EvolutionShop
             yield return null; yield return null;
             shop.Held.Clear(); shop.Chamber.Clear();
             shop.Held.AddRange(new[] { "bloom", "bloom", "flow" });
+            // With the quick recipes down to three the card is short: the list of every recipe found makes it long enough to scroll.
+            foreach (var f in GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder).Take(12))
+            {
+                if (!shop.Discovered.Contains(f.Id)) shop.Discovered.Add(f.Id);
+                shop.MixLog.Add(new GrowthMixEntry { Doses = (int[])f.Recipe.Clone(), Species = f.Id, Exact = true });
+            }
             s.SetCard(GrowthCard.Incubator);
+            yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Choose your"), "Open the list of recipes");
             yield return new WaitForSeconds(0.3f);
             float scrolled = s.Ui.ScrollCardBy(70);
             yield return null; yield return null;

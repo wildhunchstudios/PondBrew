@@ -142,6 +142,7 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
 
             // ---- F54: the same in the breeding tank
+            shop.Carried.Clear();
             Ok(shop.DevelopmentGive("pondlet"), "A Pondlet in hand");
             Ok(shop.DevelopmentGive("ribbonfin"), "A Ribbonfin in hand");
             foreach (var c in shop.Carried.ToList()) Ok(shop.PutParent(c.Id), "Put a parent in the breeding tank");
