@@ -69,6 +69,10 @@ namespace EvolutionShop
         /// glowing (g, its emission), metal (m), cartoon glass (x, its alpha) and the culture's own (c, a grower's culture).</summary>
         public static readonly IReadOnlyDictionary<string, (char kind, string hex, float value)> LookSlots = new Dictionary<string, (char, string, float)>
         {
+            ["GK_Stone"] = ('p', "#A9A49B", 0.45f),
+            ["GK_StoneDark"] = ('p', "#6F6A66", 0.45f),
+            ["GK_Terracotta"] = ('p', "#C8734A", 0.4f),
+            ["GK_Bleached"] = ('p', "#E3D8C3", 0.35f),
             ["GK_Cream"] = ('p', "#FFF3DF", 0.62f),
             ["GK_Teal"] = ('p', "#22BFB0", 0.62f),
             ["GK_TealDark"] = ('p', "#15867F", 0.62f),
@@ -353,8 +357,8 @@ namespace EvolutionShop
         {
             switch (c.Kind)
             {
-                case "starter": Kit(root, "TankStarter", default, null, "Stand", "Rim"); Kit(root, "TankBed", default, null, "Plant"); break;
-                case "large": Kit(root, "TankLarge", default, null, "Stand", "Rim"); Kit(root, "TankBedLarge", default, null, "Plant"); break;
+                case "starter": Kit(root, "TankStarter", default, null, "Stand", "Rim"); Kit(root, "TankBed", default, null, "Plant"); if (!GrowthSpaces.FreeStanding(c.Place)) Kit(root, "TankBackdrop"); break;
+                case "large": Kit(root, "TankLarge", default, null, "Stand", "Rim"); Kit(root, "TankBedLarge", default, null, "Plant"); if (!GrowthSpaces.FreeStanding(c.Place)) Kit(root, "TankBackdropLarge"); break;
                 case "show": Kit(root, "TankShow", default, null, "Stand", "Rim", "Light bar"); Kit(root, "TankBedShow", default, null, "Plant"); break;
                 case "rack": Kit(root, "TankRack", default, null, "Stand", "Rim", "Rack post", "Rack shelf", "Rack label"); break;
                 default: return;

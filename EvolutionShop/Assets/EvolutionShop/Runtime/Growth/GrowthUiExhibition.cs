@@ -143,7 +143,7 @@ namespace EvolutionShop
                 int inStock = shop.Stock.Count(x => x.Species == o.Species && x.ReservedBy == 0);
                 var row = Item(o.Def.Name, o.Bought ? "bought" : o.Missed.Length > 0 ? "the guest " + o.Missed : inStock + " in stock",
                     Pill(o.Bought ? "Bought" : o.Missed.Length > 0 ? "Missed" : inStock == 0 ? "None in stock" : "Ready", o.Bought || o.Missed.Length == 0 && inStock > 0 ? 0 : 2));
-                var g = new GrowthGlyph(GrowthCreatureView.ColourOf(o.Def)); g.AddToClassList("gr-result__glyph"); row.Insert(0, g);
+                row.Insert(0, CreatureIcon(o.Def, Colour.Classic, 48, "gr-result__glyph"));
                 guests.Add(row);
             }
             if (shop.ExhibitionOrders.Count > 0 && !shop.ExhibitionToday) guests.Add(L("Ordinary visitors buy them too: keep a few of each in stock.", "gr-hint"));

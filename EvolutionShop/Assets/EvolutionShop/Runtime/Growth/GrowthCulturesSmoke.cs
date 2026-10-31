@@ -53,7 +53,7 @@ namespace EvolutionShop
             s.Ui.ShowTabNamed("Cultures"); yield return null;
             yield return Shot("60-journal-cultures");
             s.SetCard(GrowthCard.None);
-            Check(GrowthWorld.GrowerPositions.Count == 7 && !s.World.HasSource("ember"), "The back room has a slot for each of the seven sources; Ember's is empty");
+            Check(GrowthWorld.GrowerPositions.Count == 7 && !s.World.HasSource("ember"), "The laboratory has a slot for each of the seven sources; Ember's is empty");
             LookAt(new Vector3(0.9f, 0, 6.6f), new Vector3(-2.4f, 0.6f, 7.4f)); yield return Shot("61-back-room-slots");
 
             // The supplier catalog by the counter: an Ember grower and a Spark vial ordered at night; the Spark vial taken back and ordered again.
@@ -134,15 +134,15 @@ namespace EvolutionShop
             // Research at the pinboard: Spark.
             LookAt(new Vector3(0.5f, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition);
             yield return null; yield return null;
-            Aimed(GrowthTargetKind.Board, null, "The reticle focuses the pinboard on the back room's east wall");
+            Aimed(GrowthTargetKind.Board, null, "The reticle focuses the pinboard on the laboratory's east wall");
             yield return Press(Key.E);
-            Check(s.Card == GrowthCard.Board && s.Ui.CardText().Contains("Research Spark · 10 RP") && s.Ui.CardText().Contains("Research Dusk · ") && s.Ui.CardText().Contains("Needs era 5"), "The pinboard offers Spark's research for 10 research points; Dusk waits for era 5");
+            Check(s.Card == GrowthCard.Board && s.Ui.CardText().Contains("Research Spark · 10 RP") && s.Ui.CardText().Contains("Research Dusk · ") && s.Ui.CardText().Contains("Needs Era 5"), "The pinboard offers Spark's research for 10 research points; Dusk waits for era 5");
             s.Ui.ShowTabNamed("Research"); yield return null;
             yield return Shot("67-research");
             int rp = shop.Rp;
             Ok(s.Act(() => shop.Research("spark")), "Research Spark");
             yield return null; yield return null;
-            Check(shop.Owns("spark") && shop.Rp == rp - 10 && s.World.HasSource("spark"), "Spark is owned and its grower stands in the back room");
+            Check(shop.Owns("spark") && shop.Rp == rp - 10 && s.World.HasSource("spark"), "Spark is owned and its grower stands in the laboratory");
             s.SetCard(GrowthCard.None);
             LookAt(new Vector3(-1.6f, 0, 6.6f), GrowthWorld.GrowerPositions["spark"] + new Vector3(0, 0.9f, 0)); yield return Shot("68-spark-grower");
             for (int i = 0; i < 2000 && shop.Phase == GrowthPhase.Day; i++)
@@ -168,7 +168,7 @@ namespace EvolutionShop
             Check(shop.Owns("dusk") && !shop.Owns("mist") && !shop.Owns("brine"), "Dusk is researched at once; the vat and the Brine grower wait for the opening");
             Ok(s.Act(shop.OpenShop), "Open the shop");
             yield return null; yield return null;
-            Check(GrowthContent.Cultures.All(c => shop.Owns(c.Id) && s.World.HasSource(c.Id)), "All seven cultures are owned, each with its source in the back room");
+            Check(GrowthContent.Cultures.All(c => shop.Owns(c.Id) && s.World.HasSource(c.Id)), "All seven cultures are owned, each with its source in the laboratory");
             LookAt(new Vector3(1.4f, 0, 4.6f), new Vector3(-2.0f, 0.8f, 7.6f)); yield return Shot("69-all-seven");
             LookAt(new Vector3(-1.75f, 0, 7.5f), GrowthWorld.GrowerPositions["mist"] + new Vector3(0, 0.8f, 0)); // beside the incubator, not in it
             yield return null; yield return null;

@@ -267,7 +267,7 @@ namespace EvolutionShop.Growth
             var annex = AnnexDef;
             why = null;
             if (Annex) { why = "Already open"; return GrowthFailure.MaxLevel; }
-            if (Era < annex.Era) { why = "Needs era " + annex.Era + ": 3 stars, a hybrid bred and a Large tank"; return GrowthFailure.Locked; }
+            if (Era < annex.Era) { why = "Needs Era " + annex.Era + ": 3 stars, a hybrid bred and a Large tank"; return GrowthFailure.Locked; }
             if (Stars < annex.Stars) { why = "Needs " + annex.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < annex.Credits) { why = "Needs " + annex.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -292,7 +292,7 @@ namespace EvolutionShop.Growth
         {
             why = null;
             if (place < 0 || place >= GrowthLab.BufferPlaces) { why = "Not a buffer place"; return GrowthFailure.NoSuchPlace; }
-            if (!Annex) { why = "Open the lab annex first"; return GrowthFailure.Locked; }
+            if (!Annex) { why = "Open the power room first"; return GrowthFailure.Locked; }
             if (!HasPumps) { why = "Buffers come with pumps and pipes (on the power board)"; return GrowthFailure.Locked; }
             if (BufferAt(place) != null) { why = "A buffer stands here"; return GrowthFailure.PlaceTaken; }
             if (Phase != GrowthPhase.Night) { why = "Buffers are placed at night"; return GrowthFailure.NotAtNight; }
@@ -383,7 +383,7 @@ namespace EvolutionShop.Growth
         public GrowthFailure PipeCheck(string a, string b, out GrowthPipe plan, out string why)
         {
             plan = null; why = null;
-            if (!Annex) { why = "Open the lab annex first"; return GrowthFailure.Locked; }
+            if (!Annex) { why = "Open the power room first"; return GrowthFailure.Locked; }
             if (!HasPumps) { why = "Buy pumps and pipes on the power board first"; return GrowthFailure.Locked; }
             if (!Orient(a, b, out string from, out string to)) { why = "A pipe runs from a grower's tap to a buffer, from a buffer to the incubator's port, or from the incubator's outlet to the sorter"; return GrowthFailure.NoSuchPlace; }
             int place = GrowthLab.IsBuffer(to) ? GrowthLab.BufferPlace(to) : GrowthLab.IsBuffer(from) ? GrowthLab.BufferPlace(from) : -1;
@@ -542,7 +542,7 @@ namespace EvolutionShop.Growth
         {
             string idle = LineIdle(p);
             if (idle != null) return idle;
-            if (HandPumps) return "Hold the pump's crank to pump";
+            if (HandPumps) return "Hold the mouse on the crank, on the front of the grower";
             return PowerStatus(PowerUse(p.PowerId), "Pumping");
         }
 
@@ -613,7 +613,7 @@ namespace EvolutionShop.Growth
             if (AutoBatch) { var next = AutoMissing().FirstOrDefault(); return next != null && PortUnits(next) < 1 ? "Waiting for 1 " + Name(next) + " in the port's buffers" : null; }
             if (MossBatch) return "Moss is dosing the incubator";
             if (Incubating) return "Incubating";
-            if (Hatchlings.Count > 0) return HasSorter && Chute != null ? "Waiting for the sorter to clear the tray" : "Waiting: take the clutch out of the incubator";
+            if (Hatchlings.Count > 0) return HasSorter && Chute != null ? "Waiting for the sorter to clear the tray" : "Waiting: take the hatchlings out of the incubator";
             if (Chamber.Count > 0) return "The chamber has doses: start them or take them back";
             string species = NextRecipe;
             if (species == null) return "Every stock target the port can make is met";
@@ -724,10 +724,10 @@ namespace EvolutionShop.Growth
         {
             shop.Annex = s.annex;
             shop.Workshop = s.workshop;
-            if ((shop.HasGenerator || shop.HasPumps) && !shop.Annex) return "Power without the lab annex";
+            if ((shop.HasGenerator || shop.HasPumps) && !shop.Annex) return "Power without the power room";
             foreach (var b in s.buffers ?? new GrowthSave.Buffer[0])
             {
-                if (!shop.Annex) return "A buffer without the lab annex";
+                if (!shop.Annex) return "A buffer without the power room";
                 if (b.place < 0 || b.place >= GrowthLab.BufferPlaces || shop.BufferAt(b.place) != null) return "Bad buffer place " + b.place;
                 string culture = string.IsNullOrEmpty(b.culture) ? null : b.culture;
                 if (culture != null && GrowthContent.CultureIndex(culture) < 0) return "Unknown culture in a buffer";

@@ -58,9 +58,9 @@ namespace EvolutionShop.Tests
         {
             var shop = new GrowthShop();
             var b = shop.Board();
-            Assert.That((b.NowTitle, b.Goal), Is.EqualTo(("Era 1 · Back room", "Discover 3 creatures and buy your second tank")));
+            Assert.That((b.NowTitle, b.Goal), Is.EqualTo(("Era 1 · Laboratory", "Discover 3 creatures and buy your second tank")));
             Assert.That(b.Now.Select(l => l.text), Has.Member("Discover 3 creatures (0/3)"));
-            Assert.That((b.NextTitle, b.NextGate, b.NextOpens), Is.EqualTo(("Next: era 2 · Real shop", "2 stars, 3 creatures discovered, 2 tanks", "Shop unit B can open")));
+            Assert.That((b.NextTitle, b.NextGate, b.NextOpens), Is.EqualTo(("Next: Era 2 · Real shop", "2 stars, 3 creatures discovered, 2 tanks", "Shop unit B can open")));
             Assert.That(b.LongGoal, Is.EqualTo("Discover creatures: 0 / 72 · Journal: 0 / 288 · Exhibition: 0 of 6 requirements"));
             Assert.That(b.Exhibition.Select(l => l.text), Is.EqualTo(new[]
             {
@@ -82,7 +82,7 @@ namespace EvolutionShop.Tests
                 var shop = new GrowthShop { Era = era, UnitB = era > 1 };
                 var b = shop.Board();
                 var next = GrowthContent.Eras[era];
-                Assert.That((b.NowTitle, b.NextTitle, b.NextGate, b.NextOpens), Is.EqualTo(("Era " + era + " · " + GrowthContent.Eras[era - 1].Name, "Next: era " + (era + 1) + " · " + next.Name, next.Gate, next.Opens)));
+                Assert.That((b.NowTitle, b.NextTitle, b.NextGate, b.NextOpens), Is.EqualTo(("Era " + era + " · " + GrowthContent.Eras[era - 1].Name, "Next: Era " + (era + 1) + " · " + next.Name, next.Gate, next.Opens)));
                 Assert.That(b.Now, Is.Not.Empty, "era " + era + " lists its goal's steps");
                 Assert.That(b.Now.Any(l => l.text.Contains("/") || l.text.Contains("credits")), Is.True, "with their progress");
                 Assert.That(next.Opens, Is.Not.Empty.And.Not.EndsWith("."));

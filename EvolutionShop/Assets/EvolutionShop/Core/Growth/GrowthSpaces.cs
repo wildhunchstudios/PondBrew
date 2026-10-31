@@ -71,13 +71,16 @@ namespace EvolutionShop.Growth
         /// look counts from the door, so one bound for a far tank has the time to walk there).</summary>
         public const float VisitorSpeed = 2f, LookSeconds = 1f;
 
+        /// <summary>GR-32 (F56): the places with no wall behind them, in the middle of a room: seen from every side, their tanks have no backdrop.</summary>
+        public static bool FreeStanding(string place) => place == "a3" || place == "b3";
+
         public static readonly Room[] Rooms =
         {
             new Room { Id = "unit-a", Name = "shop unit A", Expansion = "unit-a", Shop = true, Area = new Rect(-4, -4, 4, 4), Ceiling = ShopCeiling },
             new Room { Id = "unit-b", Name = "shop unit B", Expansion = "unit-b", Shop = true, Area = new Rect(4, -4, 12, 4), Ceiling = ShopCeiling },
             new Room { Id = "unit-c", Name = "shop unit C", Expansion = "unit-c", Shop = true, Area = new Rect(2, 4, 12, 9), Ceiling = ShopCeiling },
-            new Room { Id = "back", Name = "the back room", Expansion = "unit-a", Shop = false, Area = new Rect(-4, 4, 2, 9), Ceiling = LabCeiling },
-            new Room { Id = "annex", Name = "the lab annex", Expansion = "annex", Shop = false, Area = new Rect(-4, 9, 4, 17), Ceiling = LabCeiling },
+            new Room { Id = "back", Name = "the laboratory", Expansion = "unit-a", Shop = false, Area = new Rect(-4, 4, 2, 9), Ceiling = LabCeiling },
+            new Room { Id = "annex", Name = "the power room", Expansion = "annex", Shop = false, Area = new Rect(-4, 9, 4, 17), Ceiling = LabCeiling },
             new Room { Id = "workshop", Name = "the workshop", Expansion = "workshop", Shop = false, Area = new Rect(4, 9, 12, 15), Ceiling = LabCeiling },
         };
 
@@ -416,7 +419,7 @@ namespace EvolutionShop.Growth
             why = null;
             if (UnitC) { why = "Already open"; return GrowthFailure.MaxLevel; }
             if (!UnitB) { why = "Open unit B first: unit C is through its north wall"; return GrowthFailure.Locked; }
-            if (Era < unit.Era) { why = "Needs era " + unit.Era; return GrowthFailure.Locked; }
+            if (Era < unit.Era) { why = "Needs Era " + unit.Era; return GrowthFailure.Locked; }
             if (Stars < unit.Stars) { why = "Needs " + unit.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < unit.Credits) { why = "Needs " + unit.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -441,7 +444,7 @@ namespace EvolutionShop.Growth
             why = null;
             if (Hall) { why = "Already finished"; return GrowthFailure.MaxLevel; }
             if (!UnitC) { why = "Open unit C first"; return GrowthFailure.Locked; }
-            if (Era < hall.Era) { why = "Needs era " + hall.Era; return GrowthFailure.Locked; }
+            if (Era < hall.Era) { why = "Needs Era " + hall.Era; return GrowthFailure.Locked; }
             if (Stars < hall.Stars) { why = "Needs " + hall.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "The hall is finished at night"; return GrowthFailure.NotAtNight; }
             if (Credits < hall.Credits) { why = "Needs " + hall.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }

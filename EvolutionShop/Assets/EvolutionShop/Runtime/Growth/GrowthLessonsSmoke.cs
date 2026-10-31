@@ -100,7 +100,7 @@ namespace EvolutionShop
                 yield return null; yield return null;
                 string text = s.Ui.CardText();
                 Check(s.CardTarget == l.Id && shop.LessonsMet.Contains(l.Id) && text.Contains(l.Title) && l.Card.All(p => text.Contains(GrowthControls.Keyed(p))) &&
-                      text.Contains(l.CardOnly ? "Got it" : "Show me") && (l.CardOnly || text.Contains("Skip this lesson")) && text.Contains("journal's Guide"),
+                      text.Contains("Got it") && !text.Contains("Show me") && (l.CardOnly || text.Contains("Skip lesson")) && text.Contains("journal's Guide"),
                     (i + 1) + "/" + all.Length + " " + l.Title + ": its card opens by itself " + (l.AnyTime && shop.Phase == GrowthPhase.Day ? "in the day, no one waiting at the counter" : "at night") + ", saying what it is" + (l.CardOnly ? "" : ", with Show me and Skip this lesson"));
                 yield return Shot(lessonShot++ + "-lesson-" + l.Id);
 
@@ -125,7 +125,7 @@ namespace EvolutionShop
                     continue;
                 }
 
-                yield return ClickOn(e => ButtonText(e, "Show me"), "Click Show me on " + l.Title);
+                yield return ClickOn(e => ButtonText(e, "Got it"), "Click Got it on " + l.Title);
                 yield return Wait(() => s.Card == GrowthCard.None, 3, "the card to close");
                 var step = shop.GuideNow();
                 Check(step != null && shop.LessonNow == l.Id && step.Text == l.Step(shop).Text, l.Title + ": its step runs (" + step?.Text + ")");
@@ -241,13 +241,13 @@ namespace EvolutionShop
             Check(collection != null && rows.Count == GrowthContent.Families.Length && tiles == GrowthContent.SpeciesCount && text.Contains(found + " of " + GrowthContent.SpeciesCount + " | creatures found") &&
                   text.Contains((GrowthContent.SpeciesCount - found) + " | left to find"),
                 "The Collection page: all " + GrowthContent.SpeciesCount + " creatures in their " + GrowthContent.Families.Length + " families, " + found + " found and " + (GrowthContent.SpeciesCount - found) + " left");
-            if (early) Check(locked > 0 && text.Contains("comes in era"), "Families not reached yet are locked, each saying the era it comes in (" + locked + ")");
+            if (early) Check(locked > 0 && text.Contains("comes in Era"), "Families not reached yet are locked, each saying the era it comes in (" + locked + ")");
             else Check(locked == 0, "In era 5 no family is locked");
             yield return Shot(lessonShot++ + "-journal-collection" + (early ? "" : "-end"));
             yield return Tab("Guide");
             text = s.Ui.CardText();
             Check(text.Contains("Guide · " + shop.LessonsMet.Count + " of " + GrowthLessons.All.Length + " lessons") && text.Contains("The first night") &&
-                  shop.LessonsMet.Where(id => GrowthLessons.Get(id).Era == 1).All(id => text.Contains(GrowthLessons.Get(id).Title)) && (early ? text.Contains("comes in era") : true),
+                  shop.LessonsMet.Where(id => GrowthLessons.Get(id).Era == 1).All(id => text.Contains(GrowthLessons.Get(id).Title)) && (early ? text.Contains("comes in Era") : true),
                 "The journal's Guide: " + shop.LessonsMet.Count + " of " + GrowthLessons.All.Length + " lessons met, each to read again" + (early ? ", the rest locked with their era" : ""));
             yield return Shot(lessonShot++ + "-journal-guide" + (early ? "" : "-end"));
             if (!early)

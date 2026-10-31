@@ -17,7 +17,7 @@ namespace EvolutionShop.Tests
             Assert.That(GrowthMenu.Summary(shop), Is.EqualTo("Day " + shop.Day + " · Era 3 · " + shop.Stars + " stars · " + found + " of 72 creatures found"));
             var fresh = new GrowthShop();
             Assert.That(GrowthMenu.Summary(fresh), Is.EqualTo("Day 1 · Era 1 · 1 star · 0 of 72 creatures found"), "one star, not stars");
-            Assert.That(GrowthMenu.ReplaceQuestion(shop), Does.Contain("day " + shop.Day + ", era 3, " + found + " creatures found").And.Contain("cannot be undone"));
+            Assert.That(GrowthMenu.ReplaceQuestion(shop), Does.Contain("day " + shop.Day + ", Era 3, " + found + " creatures found").And.Contain("cannot be undone"));
             fresh.Discovered.Add("pondlet");
             Assert.That(GrowthMenu.ReplaceQuestion(fresh), Does.Contain("1 creature found"));
         }

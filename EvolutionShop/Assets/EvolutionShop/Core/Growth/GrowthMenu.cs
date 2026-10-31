@@ -23,7 +23,7 @@ namespace EvolutionShop.Growth
 
         /// <summary>What New game asks first, when it would replace a shop.</summary>
         public static string ReplaceQuestion(GrowthShop s) =>
-            "Start a new shop? It replaces yours: day " + s.Day + ", era " + s.Era + ", " + Found(s) + (Found(s) == 1 ? " creature" : " creatures") + " found. This cannot be undone.";
+            "Start a new shop? It replaces yours: day " + s.Day + ", Era " + s.Era + ", " + Found(s) + (Found(s) == 1 ? " creature" : " creatures") + " found. This cannot be undone.";
 
         /// <summary>The rarest colour of a species in the journal (Classic when none is).</summary>
         public static Colour RarestColour(GrowthShop s, string species)

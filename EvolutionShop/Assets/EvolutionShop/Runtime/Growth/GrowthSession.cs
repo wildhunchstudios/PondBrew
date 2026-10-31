@@ -22,13 +22,13 @@ namespace EvolutionShop
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
             GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", PeopleSmokeArgument = "-evolutionGrowthPeopleSmoke",
-            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke", DeadEndsSmokeArgument = "-evolutionGrowthDeadEndsSmoke", FloorSmokeArgument = "-evolutionGrowthFloorSmoke";
+            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke", DeadEndsSmokeArgument = "-evolutionGrowthDeadEndsSmoke", FloorSmokeArgument = "-evolutionGrowthFloorSmoke", WordsSmokeArgument = "-evolutionGrowthWordsSmoke";
 
         /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), "menu" (GR-27), "deadends" (GR-29), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : ShopSession.Arg(FloorSmokeArgument) != null ? "floor" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : ShopSession.Arg(FloorSmokeArgument) != null ? "floor" : ShopSession.Arg(WordsSmokeArgument) != null ? "words" : null;
     }
 
     public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu }
@@ -107,7 +107,7 @@ namespace EvolutionShop
         public GrowthPipe PipePlan { get; private set; }
         public string PipeWhy { get; private set; }
         public bool PipeReady { get; private set; }
-        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Journal || Card == GrowthCard.Results || Card == GrowthCard.Lesson || Card == GrowthCard.Menu;
+        public bool Paused => Card == GrowthCard.Pause || Card == GrowthCard.Settings || Card == GrowthCard.Welcome || Card == GrowthCard.Receipt || Card == GrowthCard.Results || Card == GrowthCard.Lesson || Card == GrowthCard.Menu;
         /// <summary>GR-27: the main menu's view of the live shop (the player's camera lent to it while the menu shows).</summary>
         public GrowthMenuCamera MenuCamera { get; private set; }
         /// <summary>GR-27: whether there is a shop to continue (a save, or a start point); New game asks before replacing it.</summary>
@@ -628,7 +628,7 @@ namespace EvolutionShop
         {
             switch (r.Failure)
             {
-                case GrowthFailure.SiphonFull: return "The siphon is full.";
+                case GrowthFailure.SiphonFull: return "The siphon is full. A bigger one is at the research bench.";
                 case GrowthFailure.GrowerEmpty: return "This grower is empty; it refills by itself.";
                 case GrowthFailure.ChamberFull: return "The incubator takes " + r.Detail + ".";
                 case GrowthFailure.ChamberEmpty: return "Put at least one dose in first.";
@@ -819,11 +819,13 @@ namespace EvolutionShop
             {
                 Ui?.Event(e);
                 Gags?.Event(e);
+                Audio?.Event(e);
                 Music?.Event(e);
                 Effects?.Event(e);
                 // GR-11: the Grand Exhibition held: confetti around the player.
                 if (e.Kind == GrowthEventKind.ExhibitionWon) World.Celebrate(Player != null ? Player.transform.position : new Vector3(-0.5f, 0, -1.6f), Player != null && Player.View != null ? Player.View.transform.forward : Vector3.forward);
-                if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter) SetCard(GrowthCard.Receipt); }
+                // GR-32 (F50): the journal no longer pauses the shop, so a day can end while it is open.
+                if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter || Card == GrowthCard.Journal) SetCard(GrowthCard.Receipt); }
                 if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.NewColour || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp || e.Kind == GrowthEventKind.CultureOwned) SaveNow();
             }
             if (phase != Shop.Phase) World.SetPhase(Shop.Phase);
@@ -939,7 +941,7 @@ namespace EvolutionShop
             if (Focused == null) return null;
             switch (Focused.Kind)
             {
-                case GrowthTargetKind.AnnexWall: status = Shop.Annex ? "Open" : "E see what it needs"; return "Lab annex";
+                case GrowthTargetKind.AnnexWall: status = Shop.Annex ? "Open" : "E see what it needs"; return "Power room";
                 case GrowthTargetKind.WorkshopWall: status = Shop.Workshop ? "Open" : "E see what it needs"; return "Workshop";
                 case GrowthTargetKind.UnitCWall: status = Shop.UnitC ? "Open" : "E see what it needs"; return "Shop unit C";
                 case GrowthTargetKind.HallBoard:
@@ -957,11 +959,11 @@ namespace EvolutionShop
                     status = helper.Status + " · E card";
                     return helper.Def.Name + ", " + helper.Def.Job + " (level " + helper.Level + ")";
                 case GrowthTargetKind.Sorter:
-                    if (!Shop.HasSorter) { var s1 = GrowthContent.Station("sorter").Levels[0]; status = "era " + s1.Era + " · " + s1.Credits + " credits · E see what it needs"; return "Sorter (not bought)"; }
+                    if (!Shop.HasSorter) { var s1 = GrowthContent.Station("sorter").Levels[0]; status = "Era " + s1.Era + " · " + s1.Credits + " credits · E see what it needs"; return "Sorter (not bought)"; }
                     status = Shop.SorterStatus + " · E stock targets";
                     return "Sorter";
                 case GrowthTargetKind.Generator:
-                    if (!Shop.HasGenerator) { var g1 = GrowthContent.Station("generator").Levels[0]; status = "era " + g1.Era + " · " + g1.Credits + " credits and " + g1.Rp + " RP · E see what it needs"; return "Generator (not bought)"; }
+                    if (!Shop.HasGenerator) { var g1 = GrowthContent.Station("generator").Levels[0]; status = "Era " + g1.Era + " · " + g1.Credits + " credits and " + g1.Rp + " RP · E see what it needs"; return "Generator (not bought)"; }
                     status = Shop.HandCrank ? (CrankingNow ? "cranking: " + Shop.GeneratorUnits.ToString("0") + " unit" : "hold mouse to crank · E details") : Shop.GeneratorUnits.ToString("0") + " units · E details";
                     return "Generator";
                 case GrowthTargetKind.PowerBoard:
@@ -987,7 +989,7 @@ namespace EvolutionShop
                     status = (Shop.Phase == GrowthPhase.Night ? "E order" : "E browse · orders at night") + (Shop.Orders.Count > 0 ? " · " + Shop.Orders.Count + " on order" : "");
                     return "Supplier catalog";
                 case GrowthTargetKind.Incubator:
-                    status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left · E open" : Shop.Hatchlings.Count > 1 ? "A clutch of " + Shop.Hatchlings.Count + " is ready · click take · E open" : Shop.Hatchling != null ? "A hatchling is ready · click take · E open" :
+                    status = Shop.Incubating ? Mathf.CeilToInt(Shop.IncubationLeft) + " s left · E open" : Shop.Hatchlings.Count > 1 ? Shop.Hatchlings.Count + " hatchlings are ready · click take · E open" : Shop.Hatchling != null ? "A hatchling is ready · click take · E open" :
                         Shop.Chamber.Count + "/" + Shop.MaxDoses + " doses" + (Shop.Held.Count > 0 && Shop.Chamber.Count < Shop.MaxDoses ? " · click put yours in" : "") + " · E mix";
                     return "Incubator";
                 case GrowthTargetKind.Tank:
@@ -1018,14 +1020,14 @@ namespace EvolutionShop
                     status = pip && !Shop.SecondTill ? "Pip is at the till (" + Shop.Queue.Count() + " waiting) · E details" :
                         (v == null ? "No one waiting" : "Hold mouse to bag a sale" + (pip ? " beside Pip" : "") + " (" + Shop.Queue.Count() + " waiting)") + " · E details";
                     return "Counter";
-                case GrowthTargetKind.Workbench: status = "level " + Shop.Level("bench") + " · E the siphon and the bench"; return "Research bench";
+                case GrowthTargetKind.Workbench: status = "level " + Shop.Level("bench") + " · E upgrade your siphon or the bench"; return "Research bench";
                 case GrowthTargetKind.UnitBWall: status = Shop.UnitB ? "Open" : "E see what it needs"; return "Shop unit B";
                 case GrowthTargetKind.Board: status = "E goals"; return "Pinboard";
                 case GrowthTargetKind.Breeding:
                     if (!Shop.HasBreedingTank)
                     {
                         var first = GrowthContent.Station("breeding").Levels[0];
-                        status = "era " + first.Era + " · " + first.Credits + " credits and " + first.Rp + " RP · E see what it needs";
+                        status = "Era " + first.Era + " · " + first.Credits + " credits and " + first.Rp + " RP · E see what it needs";
                         return "Breeding tank (not bought)";
                     }
                     bool canPut = Shop.ActivePairs.Any(p => p.Parents.Count < GrowthShop.PairSize) && Shop.Carried.Any(c => Shop.ParentCheck(c, out _) == GrowthFailure.None);

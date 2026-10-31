@@ -68,7 +68,7 @@ namespace EvolutionShop
                 save.Add(Eyebrow(s.StartPoint != null ? "Start point: " + s.StartPoint : "Your shop"));
                 save.Add(L(GrowthMenu.Summary(shop), "gr-menu__summary"));
             }
-            else save.Add(L("A tiny shop and a back room are waiting.", "gr-menu__summary"));
+            else save.Add(L("A tiny shop and a laboratory are waiting.", "gr-menu__summary"));
             panel.Add(save);
 
             var buttons = Box("gr-menu__buttons");

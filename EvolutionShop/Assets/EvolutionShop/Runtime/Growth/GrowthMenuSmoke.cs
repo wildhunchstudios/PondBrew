@@ -17,7 +17,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string MenuScenarioText = "GR-27 the main menu: at a first launch, the menu over the live shop with New game first and the first family's founders around the title, New game into the welcome; over an established shop, Continue with the shop in a line, the creatures found as portraits around the title, the slow view's shots past the tanks, the counter and the back room with a fade between, New game asking first, Settings and back, Continue with the camera given back, the pause screen's Main menu saving first, Esc staying on the menu, reduced motion holding the view still";
+        const string MenuScenarioText = "GR-27 the main menu: at a first launch, the menu over the live shop with New game first and the first family's founders around the title, New game into the welcome; over an established shop, Continue with the shop in a line, the creatures found as portraits around the title, the slow view's shots past the tanks, the counter and the laboratory with a fade between, New game asking first, Settings and back, Continue with the camera given back, the pause screen's Main menu saving first, Esc staying on the menu, reduced motion holding the view still";
 
         IEnumerator MenuScenario()
         {

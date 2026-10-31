@@ -21,11 +21,11 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
-        public void NinePiecesInThreeThemesOfThreeEachWithItsKitPiece()
+        public void FifteenPiecesInThreeThemesOfFiveEachWithItsKitPiece()
         {
             var decor = GrowthContent.Decor;
-            Assert.That(decor.Select(d => d.Id).Distinct().Count(), Is.EqualTo(9));
-            foreach (Water w in System.Enum.GetValues(typeof(Water))) Assert.That(decor.Count(d => d.Water == w), Is.EqualTo(3), w.ToString());
+            Assert.That(decor.Select(d => d.Id).Distinct().Count(), Is.EqualTo(15));
+            foreach (Water w in System.Enum.GetValues(typeof(Water))) Assert.That(decor.Count(d => d.Water == w), Is.EqualTo(5), w.ToString());
             Assert.That(decor.Where(d => d.Water != Water.Brine).All(d => d.Stars == 2 && d.Era == 2), Is.True, "Riverbank and Hot springs on the 2-star page");
             Assert.That(decor.Where(d => d.Water == Water.Brine).All(d => d.Stars == 4 && d.Era == 4), Is.True, "Seaside on the 4-star page, with Brine");
             Assert.That(decor.All(d => d.Asset.StartsWith("Decor") && d.Credits > 0 && d.Text.Length > 0), Is.True);
@@ -138,7 +138,7 @@ namespace EvolutionShop.Tests
             Assert.That(problem, Is.Null);
             Assert.That(back.DecorOwned, Is.EquivalentTo(GrowthContent.Decor.Select(d => d.Id)));
             Assert.That(back.Containers.Where(c => c.Decor != null).Select(c => c.Place + ":" + c.Decor), Is.EquivalentTo(new[] { "a1:reeds", "b1:volcano", "b2:lighthouse" }));
-            Assert.That(back.DecorBox.Count(), Is.EqualTo(6));
+            Assert.That(back.DecorBox.Count(), Is.EqualTo(GrowthContent.Decor.Length - 3));
             // An older save has no decor.
             var old = JsonUtility.FromJson<GrowthSave>(json);
             old.version = 11; old.decorOwned = null; foreach (var b in old.containers) b.decor = null;

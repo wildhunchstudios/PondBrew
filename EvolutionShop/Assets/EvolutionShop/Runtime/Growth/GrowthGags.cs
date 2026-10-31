@@ -39,6 +39,10 @@ namespace EvolutionShop
         /// <summary>The burp waits for the hatchling to show (1.2 s) and is dropped if it cannot play within 8 s; a helper's dance
         /// waits for them to have nothing to do for 0.4 s.</summary>
         public const float BelchDelay = 1.2f, BelchExpiry = 8f, DanceAfter = 0.4f;
+        /// <summary>GR-32: one hatch in this many ends in a burp.</summary>
+        public const int BelchEvery = 8;
+        /// <summary>Hatches since the last burp (a route sets it to hear one).</summary>
+        public int HatchesSinceBurp;
         public const float SampleRate = GrowthAudio.SampleRate;
         public const Key DefaultSlapKey = Key.F;
         /// <summary>Keys that already do something (moving, E, Esc, Tab, Backspace's skip, F8): never the slap's.</summary>
@@ -321,7 +325,12 @@ namespace EvolutionShop
         /// <summary>A hatch (the session passes the shop's events on): the burp waits for the hatchling to show.</summary>
         public void Event(GrowthEvent e)
         {
-            if (e.Kind == GrowthEventKind.Hatched) { belchWaiting = true; belchAt = Policy.Clock + BelchDelay; }
+            if (e.Kind != GrowthEventKind.Hatched) return;
+            // GR-32 (F55): testers found a burp at every hatch unpleasant: the finish is the audio's two notes, and a burp a rare treat.
+            HatchesSinceBurp++;
+            if (HatchesSinceBurp < BelchEvery) return;
+            HatchesSinceBurp = 0;
+            belchWaiting = true; belchAt = Policy.Clock + BelchDelay;
         }
 
         void WatchHatch()
@@ -489,12 +498,12 @@ namespace EvolutionShop
         /// <summary>GR-31: a boop: a short rubbery squeak rising in pitch.</summary>
         public static float[] MakeBoop()
         {
-            var d = new float[(int)(0.16f * 44100)];
+            var d = new float[(int)(0.16f * SampleRate)];
             float phase = 0;
             for (int i = 0; i < d.Length; i++)
             {
-                float t = i / 44100f, u = t / 0.16f;
-                phase += 2 * Mathf.PI * Mathf.Lerp(520f, 1180f, u) / 44100f;
+                float t = i / SampleRate, u = t / 0.16f;
+                phase += 2 * Mathf.PI * Mathf.Lerp(520f, 1180f, u) / SampleRate;
                 d[i] = Mathf.Min(1, t / 0.006f) * (1 - u) * (1 - u) * 0.5f * (Mathf.Sin(phase) + 0.25f * Mathf.Sin(2 * phase));
             }
             return d;

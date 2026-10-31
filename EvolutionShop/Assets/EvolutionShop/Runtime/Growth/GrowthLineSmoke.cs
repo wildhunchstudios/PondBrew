@@ -24,7 +24,7 @@ namespace EvolutionShop
 
         IEnumerator LineScenario()
         {
-            limitations.Add("GR-08 line route: the fixture is labelled: an era 4, five-star shop (reputation 1710) with 20,000 credits and 400 research points, unit B open, 12 founders and a Shellback known, Ember owned, growers at level 3, the bubble turbine, electric pumps, the incubator at level 4, the breeding tank at level 2, the lab annex open with buffers 1 and 2 piped from the Bloom and Flow growers and to the incubator's port (laid by the shop's actions), and the workshop closed. Buying, racks, targets, the auto-doser's mode and switch call the shop's actions as the card buttons do (UI Toolkit buttons are not clicked); the chute's pipe mode starts as the sorter card's button starts it, and the route aims at the incubator and presses E; the line runs on the shop's own clock (accelerated); the day is run on the shop's clock with the counter served as holding it does. Placeholder art: plain shapes for the workshop, the sorter, the chute and the racks.");
+            limitations.Add("GR-08 line route: the fixture is labelled: an era 4, five-star shop (reputation 1710) with 20,000 credits and 400 research points, unit B open, 12 founders and a Shellback known, Ember owned, growers at level 3, the bubble turbine, electric pumps, the incubator at level 4, the breeding tank at level 2, the power room open with buffers 1 and 2 piped from the Bloom and Flow growers and to the incubator's port (laid by the shop's actions), and the workshop closed. Buying, racks, targets, the auto-doser's mode and switch call the shop's actions as the card buttons do (UI Toolkit buttons are not clicked); the chute's pipe mode starts as the sorter card's button starts it, and the route aims at the incubator and presses E; the line runs on the shop's own clock (accelerated); the day is run on the shop's clock with the counter served as holding it does. Placeholder art: plain shapes for the workshop, the sorter, the chute and the racks.");
             yield return Opening();
             TakeInput();
 
@@ -44,7 +44,7 @@ namespace EvolutionShop
             var shop = s.Shop;
             yield return null; yield return null;
             Check(shop.Era == 4 && shop.Stars == 5 && shop.Annex && !shop.Workshop && shop.Pipes.Count == 4 && shop.AutoDoser && s.World.WorkshopWallStanding,
-                "Fixture: an era 4, five-star shop with the lab annex piped to the incubator's port, and the workshop closed");
+                "Fixture: an era 4, five-star shop with the power room piped to the incubator's port, and the workshop closed");
 
             // The workshop: its partition in the annex's east doorway, opened at night.
             yield return AimAt(new Vector3(2.4f, 0, 10.3f), new Vector3(4f, 1.4f, 10.3f), GrowthTargetKind.WorkshopWall, "workshop", "The reticle focuses the workshop's partition");
@@ -105,7 +105,7 @@ namespace EvolutionShop
             yield return Press(Key.E);
             yield return null; yield return null;
             Check(shop.Chute != null && shop.Credits == credits - cost && s.PipeFrom == null && s.World.ChuteBuilt && shop.Objectives().Any(o => o.text.StartsWith("Buy the sorter") && o.done),
-                "E lays it: the chute runs from the incubator's outlet over the annex to the sorter, and the goal is ticked");
+                "E lays it: the chute runs from the incubator's outlet over the power room to the sorter, and the goal is ticked");
             LookAt(new Vector3(3.4f, 0, 9.5f), new Vector3(1.4f, 3.0f, 13.4f)); yield return Shot("112-chute-overhead");
 
             // Stock targets on the sorter's card, and the auto-doser by targets.
@@ -134,7 +134,7 @@ namespace EvolutionShop
             Check(beadShot, "The sorting was seen");
             Check(shop.Shown("pondlet") == 2 && shop.Shown("ribbonfin") == 2 && tank.Occupants.All(o => o.FromLine) && shop.Racks.Sum(r => r.Occupants.Count) == 2 && shop.Racks.All(r => r.Occupants.All(o => !o.FromLine)),
                 "Two clutches: the shop's tank stocked to its targets by the line, the rest in the racks");
-            Check(shop.AutoStatus == "Every stock target the port can make is met" && shop.SorterStatus == "Waiting for a clutch", "Both wait with their targets met, saying so");
+            Check(shop.AutoStatus == "Every stock target the port can make is met" && shop.SorterStatus == "Waiting for hatchlings", "Both wait with their targets met, saying so");
             yield return null; yield return null;
             Check(s.World.Tanks.Values.Where(t => t.Place == "r1" || t.Place == "r2").Sum(t => t.Creatures.Count) == 2, "The racks show their creatures");
             LookAt(new Vector3(8.0f, 0, 11.8f), new Vector3(7.9f, 0.8f, 9.6f)); yield return Shot("114-racks");
@@ -148,7 +148,7 @@ namespace EvolutionShop
             yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(card.Contains("Sorter · draws 1 · Waiting for a clutch") && card.Contains("Auto-doser · draws 1"), "The power board lists the sorter with what it draws and does");
+            Check(card.Contains("Sorter · draws 1 · Waiting for hatchlings") && card.Contains("Auto-doser · draws 1"), "The power board lists the sorter with what it draws and does");
             s.SetCard(GrowthCard.None);
 
             // The analyzer: the research bench's level 3 names one new thing within reach a day.

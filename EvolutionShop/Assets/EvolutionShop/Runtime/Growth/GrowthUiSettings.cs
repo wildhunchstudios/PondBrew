@@ -64,12 +64,7 @@ namespace EvolutionShop
             body.Add(Setting("Window", "full screen without borders, a window, or the screen to itself",
                 Choices("window", GrowthSettings.WindowModeNames, g.windowMode, i => s.ChangeDisplay(x => x.windowMode = i), display: true)));
             var sizes = Resolutions(g);
-            int at = Mathf.Max(0, sizes.FindIndex(r => r.x == g.width && r.y == g.height));
-            var pick = Box("gr-row", "gr-set-slider"); pick.name = "gr-resolution";
-            pick.Add(PlusMinus("◀", () => { var r = sizes[at - 1]; s.ChangeDisplay(x => { x.width = r.x; x.height = r.y; }); }, at > 0, "The smallest"));
-            var words = Raw(g.width + " × " + g.height, "gr-set-value"); words.style.minWidth = 150; words.style.unityTextAlign = TextAnchor.MiddleCenter; pick.Add(words);
-            pick.Add(PlusMinus("▶", () => { var r = sizes[at + 1]; s.ChangeDisplay(x => { x.width = r.x; x.height = r.y; }); }, at < sizes.Count - 1, "The largest"));
-            body.Add(Setting("Resolution", "the window's size (full screen: the picture's)", pick));
+            body.Add(Setting("Resolution", "the window's size (full screen: the picture's)", ResolutionList(g, sizes)));
             body.Add(Setting("V-Sync", "waits for the screen, so frames never tear", Switch("vsync", g.vSync, v => { g.vSync = v; s.ApplyDisplay(); })));
             body.Add(Setting("Frame limit", g.vSync ? "V-Sync sets the frame rate (the screen's)" : "frames a second at most",
                 Choices("frames", GrowthSettings.FrameLimits.Select(f => f == 0 ? "None" : f.ToString()).ToArray(), Array.IndexOf(GrowthSettings.FrameLimits, g.frameLimit),
@@ -218,6 +213,31 @@ namespace EvolutionShop
 
         /// <summary>The window sizes to choose from: the screen's own modes (at least 1024 wide, each size once) and the one in
         /// use, smallest first.</summary>
+        bool resolutionOpen;
+
+        /// <summary>GR-32 (F53): the resolution as a list: what it is now, which opens every size to choose from.</summary>
+        VisualElement ResolutionList(GrowthSettings g, List<Vector2Int> sizes)
+        {
+            var pick = Box("gr-dropdown"); pick.name = "gr-resolution";
+            var head = new Button(() => { resolutionOpen = !resolutionOpen; RefreshCard(); }) { text = g.width + " × " + g.height, name = "gr-resolution-open" };
+            head.AddToClassList("gr-dropdown__head");
+            head.Add(L(resolutionOpen ? "▲" : "▼", "gr-dropdown__arrow"));
+            pick.Add(head);
+            if (!resolutionOpen) return pick;
+            var list = new ScrollView(ScrollViewMode.Vertical) { name = "gr-resolution-list" };
+            list.AddToClassList("gr-dropdown__list");
+            foreach (var size in sizes)
+            {
+                var r = size;
+                var item = new Button(() => { resolutionOpen = false; s.ChangeDisplay(x => { x.width = r.x; x.height = r.y; }); RefreshCard(); }) { text = r.x + " × " + r.y };
+                item.AddToClassList("gr-dropdown__item");
+                if (r.x == g.width && r.y == g.height) item.AddToClassList("gr-dropdown__item--on");
+                list.Add(item);
+            }
+            pick.Add(list);
+            return pick;
+        }
+
         static List<Vector2Int> Resolutions(GrowthSettings g)
         {
             var list = Screen.resolutions.Select(r => new Vector2Int(r.width, r.height)).Where(r => r.x >= 1024 && r.y >= 576).ToList();

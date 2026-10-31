@@ -18,7 +18,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string BreedingScenarioText = "GR-05 breeding: the breeding tank bought, a pair put in with E, hybrids and a crown in the nursery, the same pair again, research points, era 3, level 2 with a tinted Sunny offspring, the journal's family chart and pair log, save and reload";
+        const string BreedingScenarioText = "GR-05 breeding: the breeding tank bought, a pair put in with E, hybrids and a crown in the nursery, the same pair again, research points, Era 3, level 2 with a tinted Sunny offspring, the journal's family chart and pair log, save and reload";
 
         IEnumerator AtBreedingTank(string label)
         {
@@ -47,7 +47,7 @@ namespace EvolutionShop
             Check(shop.Era == 2 && shop.Stars == 2 && shop.Rp == 15 && shop.Credits == 700 && !shop.HasBreedingTank, "Fixture: an era 2, two-star shop with 700 credits, 15 research points and no breeding tank");
 
             // The breeding tank's slot in the back room, and its card.
-            yield return AtBreedingTank("The reticle focuses the breeding tank's slot by the back room's south wall");
+            yield return AtBreedingTank("The reticle focuses the breeding tank's slot by the laboratory's south wall");
             Check(s.FocusName(out string status) == "Breeding tank (not bought)" && status.Contains("60 credits and 5 RP"), "The slot says what the breeding tank costs: " + status);
             yield return Press(Key.E);
             Check(s.Card == GrowthCard.Breeding && s.Ui.CardText().Contains("Buy the breeding tank for 60 cr and 5 RP"), "E opens its card: buy it for 60 credits and 5 research points");

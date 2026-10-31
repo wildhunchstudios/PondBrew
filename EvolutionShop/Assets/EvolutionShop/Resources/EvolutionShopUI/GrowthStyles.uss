@@ -35,7 +35,7 @@
 }
 
 /* GR-29: the item bar: the siphon as a bar of its doses' colours, and a slot for each creature in hand. */
-.gr-items {
+.gr-itembar {
     position: absolute;
     right: 34px;
     bottom: 40px;
@@ -51,16 +51,16 @@
     border-color: var(--es-paper-lip);
 }
 
-.gr-items__siphon {
+.gr-itembar__siphon {
     width: 210px;
     margin-right: 18px;
 }
 
-.gr-items__hands {
+.gr-itembar__hands {
     align-items: flex-end;
 }
 
-.gr-items__label {
+.gr-itembar__label {
     -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
     font-size: 18px;
     color: var(--es-ink);
@@ -69,12 +69,12 @@
     white-space: nowrap;
 }
 
-.gr-items__bar {
+.gr-itembar__bar {
     flex-direction: row;
     height: 30px;
 }
 
-.gr-items__slots {
+.gr-itembar__slots {
     flex-direction: row;
 }
 
@@ -2150,4 +2150,146 @@
     color: var(--es-ink);
     -unity-text-align: middle-center;
     margin: 0;
+}
+
+/* GR-32 (F52): every scrollbar in the shop's own colours, thin and round, with no arrows. */
+.unity-scroller--vertical {
+    width: 12px;
+    min-width: 12px;
+    margin-left: 6px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.unity-scroller--vertical .unity-scroller__low-button,
+.unity-scroller--vertical .unity-scroller__high-button {
+    display: none;
+}
+
+.unity-scroller--vertical .unity-scroller__slider {
+    margin: 0;
+    flex-grow: 1;
+    width: 12px;
+    min-width: 12px;
+}
+
+.unity-scroller--vertical .unity-base-slider__input,
+.unity-scroller--vertical .unity-base-slider__drag-container {
+    width: 12px;
+    min-width: 12px;
+    margin: 0;
+    padding: 0;
+}
+
+.unity-scroller--vertical .unity-base-slider__tracker {
+    left: 3px;
+    right: 3px;
+    width: 6px;
+    margin: 0;
+    border-width: 0;
+    background-color: rgba(120, 104, 74, 0.18);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger {
+    left: 1px;
+    width: 10px;
+    margin: 0;
+    border-width: 0;
+    background-color: var(--es-teal);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger:hover {
+    background-color: var(--es-teal-hover);
+}
+
+.unity-scroller--vertical .unity-base-slider__dragger-border {
+    display: none;
+}
+
+/* GR-32 (F53): a list to choose from. */
+.gr-dropdown {
+    width: 240px;
+}
+
+.gr-dropdown__head {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 44px;
+    margin: 0;
+    padding: 0 14px 0 14px;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    -unity-text-align: middle-left;
+    color: var(--es-ink);
+    background-color: var(--es-paper);
+    border-width: 2px;
+    border-color: var(--es-paper-lip);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.gr-dropdown__head:hover {
+    background-color: var(--es-paper-deep);
+}
+
+.gr-dropdown__arrow {
+    font-size: 14px;
+    color: var(--es-muted);
+    margin: 0;
+    padding: 0;
+}
+
+.gr-dropdown__list {
+    max-height: 240px;
+    margin-top: 4px;
+    background-color: var(--es-paper);
+    border-width: 2px;
+    border-color: var(--es-paper-lip);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.gr-dropdown__item {
+    height: 38px;
+    margin: 0;
+    padding: 0 12px 0 12px;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    -unity-text-align: middle-left;
+    color: var(--es-ink);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 0;
+}
+
+.gr-dropdown__item:hover {
+    background-color: var(--es-paper-deep);
+}
+
+.gr-dropdown__item--on {
+    color: var(--es-paper);
+    background-color: var(--es-teal);
+}
+
+.gr-dropdown__item--on:hover {
+    background-color: var(--es-teal-hover);
+}
+
+/* GR-32 (F54): a creature's own picture. */
+.gr-portrait {
+    -unity-background-scale-mode: scale-to-fit;
+    flex-shrink: 0;
 }

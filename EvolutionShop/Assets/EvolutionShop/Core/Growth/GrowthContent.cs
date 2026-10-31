@@ -355,8 +355,8 @@ namespace EvolutionShop.Growth
             {
                 L(1, 0, "One creature in 12 s; mixes of 2-3 doses", 1, 1, 0, ("seconds", 12), ("maxDoses", 3), ("clutch", 1)),
                 L(2, 25, "8 s; mixes up to 4; the mix log screen", 1, 1, 0, ("seconds", 8), ("maxDoses", 4), ("clutch", 1)),
-                L(3, 250, "Clutch of 2; mixes up to 6; a tint port", 2, 2, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 2), ("tint", 1)),
-                L(4, 3000, "Clutch of 3; the auto-doser port (needs power)", 4, 4, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 3), ("tint", 1), ("autoDoser", 1)),
+                L(3, 250, "Hatches 2 at a time; mixes up to 6; a tint port", 2, 2, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 2), ("tint", 1)),
+                L(4, 3000, "Hatches 3 at a time; the auto-doser port (needs power)", 4, 4, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 3), ("tint", 1), ("autoDoser", 1)),
             }},
             new StationDef { Id = "breeding", Name = "Breeding tank", Levels = new[]
             {
@@ -393,7 +393,7 @@ namespace EvolutionShop.Growth
             }},
             new StationDef { Id = "pump", Name = "Pumps and pipes", Levels = new[]
             {
-                L(1, 150, "Hand pump and pipes: crank to fill a buffer in bulk", 3, 3, 0, ("collectFactor", .5f), ("units", 0), ("doseSeconds", .3f)),
+                L(1, 150, "Hand pump and pipes: a crank on the front of each grower fills a buffer in bulk", 3, 3, 0, ("collectFactor", .5f), ("units", 0), ("doseSeconds", .3f)),
                 L(2, 400, "Electric pumps: growers feed buffers by themselves", 3, 3, 0, ("collectFactor", 0), ("units", 1), ("doseSeconds", 1.5f)),
                 L(3, 1500, "Fast pumps: twice as fast, 2 units each", 4, 4, 0, ("collectFactor", 0), ("units", 2), ("fast", 1), ("doseSeconds", .75f)),
             }},
@@ -496,9 +496,9 @@ namespace EvolutionShop.Growth
 
         public static readonly ExpansionDef[] Expansions =
         {
-            new ExpansionDef { Id = "unit-a", Name = "Shop unit A and back room", Room = "shop", Credits = 0, Stars = 1, Era = 1, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 2, ExtraWalkSeconds = 0 },
+            new ExpansionDef { Id = "unit-a", Name = "Shop unit A and laboratory", Room = "shop", Credits = 0, Stars = 1, Era = 1, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 2, ExtraWalkSeconds = 0 },
             new ExpansionDef { Id = "unit-b", Name = "Shop unit B (east)", Room = "shop", Credits = 400, Stars = 2, Era = 2, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
-            new ExpansionDef { Id = "annex", Name = "Lab annex", Room = "lab", Credits = 1000, Stars = 3, Era = 3, Width = 8, Depth = 8, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 2 },
+            new ExpansionDef { Id = "annex", Name = "Power room", Room = "lab", Credits = 1000, Stars = 3, Era = 3, Width = 8, Depth = 8, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 2 },
             new ExpansionDef { Id = "unit-c", Name = "Shop unit C (north-east)", Room = "shop", Credits = 4000, Stars = 4, Era = 4, Width = 10, Depth = 5, ContainerPlaces = 6, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
             new ExpansionDef { Id = "workshop", Name = "Workshop", Room = "lab", Credits = 5000, Stars = 4, Era = 4, Width = 8, Depth = 6, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 1 },
             new ExpansionDef { Id = "exhibition-hall", Name = "Exhibition hall finish", Room = "shop", Credits = 6000, Stars = 5, Era = 5, Width = 0, Depth = 0, ContainerPlaces = 2, VisitorsAtOnce = 1, ExtraWalkSeconds = 0 },
@@ -532,7 +532,7 @@ namespace EvolutionShop.Growth
 
         public static readonly EraDef[] Eras =
         {
-            new EraDef { Number = 1, Name = "Back room", Stars = 1, Gate = "Start", Goal = "Discover 3 creatures and buy your second tank", Opens = "The back room, the incubator and unit A", TargetFrom = 0, TargetTo = 0 },
+            new EraDef { Number = 1, Name = "Laboratory", Stars = 1, Gate = "Start", Goal = "Discover 3 creatures and buy your second tank", Opens = "The laboratory, the incubator and unit A", TargetFrom = 0, TargetTo = 0 },
             new EraDef { Number = 2, Name = "Real shop", Stars = 2, Gate = "2 stars, 3 creatures discovered, 2 tanks", Goal = "Breed your first hybrid; reach 3 stars", Opens = "Shop unit B can open", TargetFrom = 20, TargetTo = 40 },
             new EraDef { Number = 3, Name = "Plumbing", Stars = 3, Gate = "3 stars, a hybrid bred, a Large tank", Goal = "Power the lab; fill a Large tank", Opens = "Water kits and catalog page 3 open", TargetFrom = 60, TargetTo = 90 },
             new EraDef { Number = 4, Name = "Machines", Stars = 4, Gate = "4 stars, powered pumps running, 12 species", Goal = "Run a full day on the line; discover a large creature", Opens = "The incubator's auto-doser, fast pumps and the workshop open", TargetFrom = 120, TargetTo = 160 },

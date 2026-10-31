@@ -23,7 +23,7 @@ namespace EvolutionShop
             {
                 case "pip": return "Serves at the counter: bags each visitor's order while you do other work. With Pip at the till, you serve at the counter's second till (its level 4).";
                 case "nori": return "Keeps the shop's tanks at your stock targets: carries hatchlings from the incubator's tray, offspring from the nursery and creatures from the racks to the tanks below their target, and the rest to the racks.";
-                default: return "Works by hand where no machine reaches: fetches a recipe's doses from the growers, with no pipes, and starts it, clutch after clutch. From level 2, keeps a pair you have bred breeding, which only Moss does. With the auto-doser on, set Moss to the pair.";
+                default: return "Works by hand where no machine reaches: fetches a recipe's doses from the growers, with no pipes, and starts it, batch after batch. From level 2, keeps a pair you have bred breeding, which only Moss does. With the auto-doser on, set Moss to the pair.";
             }
         }
 

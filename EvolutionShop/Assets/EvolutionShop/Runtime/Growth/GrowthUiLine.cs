@@ -20,10 +20,10 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             var w = GrowthShop.WorkshopDef;
-            var body = Head("Workshop", shop.Workshop ? "open" : w.Credits + " credits", null, "Through the lab annex's east wall. Era 4 comes with 4 stars, powered pumps running and 12 species. Walls open at night.");
+            var body = Head("Workshop", shop.Workshop ? "open" : w.Credits + " credits", null, "Through the power room's east wall. Era 4 comes with 4 stars, powered pumps running and 12 species. Walls open at night.");
             if (shop.Workshop) { body.Add(L("Open: the sorter and its chute, four rack places, and the generator's twin turbine and tide engine.", "gr-hint")); Footer(body); return; }
             var failure = shop.WorkshopCheck(out string why);
-            BuyPanel(body, "The lab annex's east wall", "The workshop", "The sorter and its hatchling chute, four rack places for lab racks, and the generator's twin turbine and tide engine.",
+            BuyPanel(body, "The power room's east wall", "The workshop", "The sorter and its hatchling chute, four rack places for lab racks, and the generator's twin turbine and tide engine.",
                 Gates(w.Era, w.Stars, w.Credits, 0, true), failure, why, "Open the workshop for " + w.Credits + " cr", shop.BuyWorkshop);
             Footer(body);
         }
@@ -35,7 +35,7 @@ namespace EvolutionShop
         void FillSorter()
         {
             var shop = s.Shop;
-            const string rules = "The incubator's clutches slide down a chute to the sorter, which puts each one in a shop tank while its species is below the stock target you set, and the rest in the workshop's racks. Nothing it cannot place is lost: it waits on the tray and says why.";
+            const string rules = "The incubator's hatchlings slide down a chute to the sorter, which puts each one in a shop tank while its species is below the stock target you set, and the rest in the workshop's racks. Nothing it cannot place is lost: it waits on the tray and says why.";
             if (!shop.HasSorter)
             {
                 var intro = Head("Hatchling chute and sorter", "not bought", null, rules);
@@ -83,7 +83,7 @@ namespace EvolutionShop
             if (!shop.HasSorter) return;
             var section = Box("gr-section");
             section.Add(L("Hatchling chute", "gr-label"));
-            section.Add(L(shop.Chute == null ? "Laid, the chute takes each clutch to the sorter in the workshop." : "Each clutch slides to the sorter: " + shop.SorterStatus.Substring(0, 1).ToLowerInvariant() + shop.SorterStatus.Substring(1) + ".", "gr-hint"));
+            section.Add(L(shop.Chute == null ? "Laid, the chute takes the hatchlings to the sorter in the workshop." : "Hatchlings slide to the sorter: " + shop.SorterStatus.Substring(0, 1).ToLowerInvariant() + shop.SorterStatus.Substring(1) + ".", "gr-hint"));
             ChuteRow(section);
             body.Add(section);
         }
@@ -130,7 +130,8 @@ namespace EvolutionShop
             var child = shop.PlannerPredicts(planA, planB);
             body.Add(Eyebrow("They'd make"));
             var result = Box("gr-result");
-            var g = new GrowthGlyph(child != null ? GrowthCreatureView.ColourOf(child) : new Color(0.72f, 0.67f, 0.57f)); g.AddToClassList("gr-result__glyph"); result.Add(g);
+            if (child != null) result.Add(CreatureIcon(child, Colour.Classic, 56, "gr-result__glyph"));
+            else { var g = new GrowthGlyph(new Color(0.72f, 0.67f, 0.57f)); g.AddToClassList("gr-result__glyph"); result.Add(g); }
             var words = Box("gr-result__text");
             var name = Box("gr-row");
             name.Add(L(child == null ? "?" : child.Name, "gr-strong"));

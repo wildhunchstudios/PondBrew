@@ -103,7 +103,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.BuyContainer("show", "b4").Failure, Is.EqualTo(GrowthFailure.NoSuchPlace), "unit B is still walled");
             var grown = Grown(stars: 3, era: 3);
             Assert.That(grown.BuyCheck("show", "b4", out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 4"));
+            Assert.That(why, Is.EqualTo("Needs Era 4"));
             grown.Era = 4;
             Assert.That(grown.BuyCheck("show", "b4", out why), Is.EqualTo(GrowthFailure.Locked));
             Assert.That(why, Is.EqualTo("Needs 4 stars"));
@@ -125,7 +125,7 @@ namespace EvolutionShop.Tests
             Assert.That(tank.Occupants, Has.Count.EqualTo(2), "an upgrade keeps every creature");
             Assert.That(shop.ContainerUpgradeCheck(tank.Id, out var next, out string why), Is.EqualTo(GrowthFailure.Locked));
             Assert.That(next.Level, Is.EqualTo(3));
-            Assert.That(why, Is.EqualTo("Needs era 2"));
+            Assert.That(why, Is.EqualTo("Needs Era 2"));
             shop.Era = 2; shop.Reputation = GrowthContent.StarThresholds[1];
             Assert.That(shop.UpgradeContainer(tank.Id).Success, Is.True);
             Assert.That(tank.Spaces, Is.EqualTo(8));
@@ -134,7 +134,7 @@ namespace EvolutionShop.Tests
             shop.BuyContainer("large", "a3");
             var large = shop.ContainerAt("a3");
             Assert.That(shop.ContainerUpgradeCheck(large.Id, out next, out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 3"));
+            Assert.That(why, Is.EqualTo("Needs Era 3"));
             shop.OpenShop();
             shop.Era = 3; shop.Reputation = GrowthContent.StarThresholds[2];
             Assert.That(shop.UpgradeContainer(large.Id).Success, Is.True, "a tank upgrades while the shop is open too (GR-31, F33)");

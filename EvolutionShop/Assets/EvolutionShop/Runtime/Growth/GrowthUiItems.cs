@@ -19,15 +19,15 @@ namespace EvolutionShop
 
         void BuildItemBar()
         {
-            carryBox = Box("gr-items");
-            var siphon = Box("gr-items__siphon");
-            siphonLabel = L("", "gr-items__label");
-            siphonBar = Box("gr-items__bar");
+            carryBox = Box("gr-itembar");
+            var siphon = Box("gr-itembar__siphon");
+            siphonLabel = L("", "gr-itembar__label");
+            siphonBar = Box("gr-itembar__bar");
             siphon.Add(siphonLabel); siphon.Add(siphonBar);
             carryBox.Add(siphon);
-            var hands = Box("gr-items__hands");
-            carryLabel = L("", "gr-items__label");
-            var slots = Box("gr-items__slots");
+            var hands = Box("gr-itembar__hands");
+            carryLabel = L("", "gr-itembar__label");
+            var slots = Box("gr-itembar__slots");
             for (int i = 0; i < GrowthShop.CarryLimit; i++)
             {
                 var slot = Box("gr-slot");

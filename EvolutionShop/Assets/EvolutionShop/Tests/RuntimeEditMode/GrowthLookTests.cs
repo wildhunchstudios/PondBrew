@@ -20,6 +20,7 @@ namespace EvolutionShop.Tests
         static readonly string[] Pieces =
         {
             "Grower", "GrowerRing", "GrowerTap", "GrowerLid", "Incubator", "IncubatorScreen", "IncubatorPort", "IncubatorDoser",
+            "TankBackdrop", "TankBackdropLarge", "DecorStones", "DecorFern", "DecorRocks", "DecorBamboo", "DecorShells", "DecorDriftwood",
             "TankStarter", "TankBed", "TankFilter", "TankLid", "Counter", "CounterBags", "CounterReader", "CounterTill",
             "UnitAFloor", "UnitADressing", "Street", "BackRoomFloor", "BackRoomDressing",
             "Vat", "VatBatch", "VatStirrer", "BreedingTank", "BreedingPort", "BreedingPair", "Bench", "BenchMicroscope", "BenchAnalyzer",

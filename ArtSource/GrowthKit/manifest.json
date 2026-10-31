@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "67b52083a3a86f27660e362b3f82c8bb201c16608c86b555f4f05f789cbb2cc5",
+  "source_script_sha256": "51f73fcbcdc1217367219d89f6585101ff4ec63f205e47a4f895f33db3775d03",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -159,6 +159,18 @@
     },
     "GK_Cloud": {
       "srgb_hex": "#FFFFFF"
+    },
+    "GK_Stone": {
+      "srgb_hex": "#A9A49B"
+    },
+    "GK_StoneDark": {
+      "srgb_hex": "#6F6A66"
+    },
+    "GK_Terracotta": {
+      "srgb_hex": "#C8734A"
+    },
+    "GK_Bleached": {
+      "srgb_hex": "#E3D8C3"
     }
   },
   "assets": [
@@ -380,16 +392,13 @@
       "bytes": 111100
     },
     {
-      "triangles": 7144,
+      "triangles": 5956,
       "materials": [
         "GK_Cream",
         "GK_GlowWhite",
-        "GK_Green",
-        "GK_GreenDark",
         "GK_Ink",
         "GK_Teal",
         "GK_TealDark",
-        "GK_TealLight",
         "GK_Yellow"
       ],
       "bounds_unity_m": {
@@ -406,8 +415,8 @@
       },
       "id": "TankStarter",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankStarter.fbx",
-      "sha256": "25e21f1ae8d1b3f4b7becf4619abdb1537ba69983488901e83ca0b6d44493abf",
-      "bytes": 169468
+      "sha256": "6119a1dd21e78b950ac2bab9f906537aabd4ee2c11ec7e27a56444ed31f4e460",
+      "bytes": 140492
     },
     {
       "triangles": 15284,
@@ -1292,16 +1301,13 @@
       "bytes": 202812
     },
     {
-      "triangles": 5636,
+      "triangles": 4448,
       "materials": [
         "GK_Cream",
         "GK_GlowWhite",
-        "GK_Green",
-        "GK_GreenDark",
         "GK_Ink",
         "GK_Teal",
         "GK_TealDark",
-        "GK_TealLight",
         "GK_Yellow"
       ],
       "bounds_unity_m": {
@@ -1318,8 +1324,8 @@
       },
       "id": "TankLarge",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankLarge.fbx",
-      "sha256": "973929c9add89089801ad5910ec837ee2e20d0312749828242d147991888db0f",
-      "bytes": 141580
+      "sha256": "00f1e1ba595af55a7d83dc6c5093a726547945d72dd7da1455c177789e9e0565",
+      "bytes": 112876
     },
     {
       "triangles": 24920,
@@ -3099,6 +3105,211 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorCoralArch.fbx",
       "sha256": "4369995a239cde7ad8ae552d52c18f6e4a6c201055a3843c09db15ef677602d0",
       "bytes": 162188
+    },
+    {
+      "triangles": 1188,
+      "materials": [
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_TealLight"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.72,
+          0.94,
+          -0.491
+        ],
+        "max": [
+          0.72,
+          1.52,
+          -0.479
+        ]
+      },
+      "id": "TankBackdrop",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankBackdrop.fbx",
+      "sha256": "eb48dde676a2a20881f870fb2e7a6c68c46aa27e99f6134a1f13d476f361bc4b",
+      "bytes": 41628
+    },
+    {
+      "triangles": 1188,
+      "materials": [
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_TealLight"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -1.22,
+          0.84,
+          -0.491
+        ],
+        "max": [
+          1.22,
+          1.55,
+          -0.479
+        ]
+      },
+      "id": "TankBackdropLarge",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/TankBackdropLarge.fbx",
+      "sha256": "e10a99bb402ec7b39da9bf0e9258f5a45a91c8467aab15f37614c482cb3c4ea4",
+      "bytes": 41580
+    },
+    {
+      "triangles": 3208,
+      "materials": [
+        "GK_Grass",
+        "GK_GreenDark",
+        "GK_Pavement",
+        "GK_Stone"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.235,
+          0.17
+        ]
+      },
+      "id": "DecorStones",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorStones.fbx",
+      "sha256": "6d3bdb8e4edad094e750b3762b0f3f97cd19f0c1f02d8623ffc5fe28be29f7b7",
+      "bytes": 86268
+    },
+    {
+      "triangles": 9852,
+      "materials": [
+        "GK_Grass",
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Soil",
+        "GK_Terracotta"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.41,
+          0.17
+        ]
+      },
+      "id": "DecorFern",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorFern.fbx",
+      "sha256": "3b882f467b7cf3451cbd040d7be1fbb75f6e12e60cf9702dd477c70bf47e46c0",
+      "bytes": 239884
+    },
+    {
+      "triangles": 1558,
+      "materials": [
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Stone",
+        "GK_StoneDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.241,
+          0.17
+        ]
+      },
+      "id": "DecorRocks",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorRocks.fbx",
+      "sha256": "ccbea802872271569cc25e0326c272122cc01e1c01eb4f36541d52c404b3ca9b",
+      "bytes": 56076
+    },
+    {
+      "triangles": 2736,
+      "materials": [
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Lime",
+        "GK_Soil",
+        "GK_Stone",
+        "GK_StoneDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.524,
+          0.17
+        ]
+      },
+      "id": "DecorBamboo",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorBamboo.fbx",
+      "sha256": "9099ce38960ab3e6e0717ae6c8b3bd4142975fbab5d48b1eb66bf59a83d4d063",
+      "bytes": 83148
+    },
+    {
+      "triangles": 3864,
+      "materials": [
+        "GK_Bleached",
+        "GK_Pavement",
+        "GK_Pebble1",
+        "GK_Pebble3",
+        "GK_Sand",
+        "GK_Stone"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.077,
+          0.17
+        ]
+      },
+      "id": "DecorShells",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorShells.fbx",
+      "sha256": "1339cc629e5a84527d45d209e8c7060cbf0d75644e6e194f7547460fe85cb623",
+      "bytes": 103580
+    },
+    {
+      "triangles": 1092,
+      "materials": [
+        "GK_Bleached",
+        "GK_Green",
+        "GK_Lime",
+        "GK_Sand",
+        "GK_Stone",
+        "GK_WoodLight"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.17,
+          0.0,
+          -0.17
+        ],
+        "max": [
+          0.17,
+          0.205,
+          0.17
+        ]
+      },
+      "id": "DecorDriftwood",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorDriftwood.fbx",
+      "sha256": "a5802aac7fb94681a8f4eaa7f27694ed95627fe35f8b0a201394ba20543c743a",
+      "bytes": 47692
     }
   ]
 }

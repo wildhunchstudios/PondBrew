@@ -265,7 +265,7 @@ namespace EvolutionShop.Tests
             Assert.That((shop.Incubating, shop.Pending, shop.MossBatches, shop.MossBatch), Is.EqualTo((true, "pondlet", 1, false)), "two doses fetched one by one, then incubated");
             Assert.That(shop.TakeEvents().Any(e => e.Text == "Moss started a Pondlet"), Is.True);
             Run(shop, shop.IncubationSeconds + 1f);
-            Assert.That(moss.Status, Is.EqualTo("Waiting for the clutch to be taken off the tray"));
+            Assert.That(moss.Status, Is.EqualTo("Waiting for the hatchlings to be taken off the tray"));
             // Home mid-batch: the doses already in stay in the chamber for the player.
             shop.Hatchlings.Clear();
             Run(shop, 0.2f);

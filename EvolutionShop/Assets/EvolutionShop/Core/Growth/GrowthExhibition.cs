@@ -288,7 +288,7 @@ namespace EvolutionShop.Growth
             if (Era < GrowthContent.Eras.Length)
             {
                 var next = GrowthContent.Eras[Era];
-                board.NextTitle = "Next: era " + next.Number + " · " + next.Name;
+                board.NextTitle = "Next: Era " + next.Number + " · " + next.Name;
                 board.NextGate = next.Gate;
                 board.NextOpens = next.Opens;
             }

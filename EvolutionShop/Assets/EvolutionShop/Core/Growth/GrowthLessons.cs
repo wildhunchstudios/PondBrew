@@ -67,8 +67,8 @@ namespace EvolutionShop.Growth
                 Id = "upgrades", Title = "Upgrading stations", Era = 1,
                 Card = new[]
                 {
-                    "Every station has levels: the counter, the siphon, the growers, the incubator and the research bench. Open one (E) and press Upgrade.",
-                    "A level makes it faster or bigger: a bag dispenser bags sales quicker, a bigger bulb holds more doses, a grower refills sooner. Upgrades are bought at night.",
+                    "Every station has levels: the counter, the growers, the incubator and the research bench. Open one (E) and press Upgrade. Your siphon is upgraded at the research bench.",
+                    "A level makes it faster or bigger: a bag dispenser bags sales quicker, a bigger bulb holds more doses, a grower refills sooner. Upgrades can be bought at any time.",
                 },
                 Appears = s => s.Day >= 2 && CanUpgrade(s, "counter"),
                 Done = s => GrowthShop.GreyboxStations.Any(st => s.Level(st) > 1),
@@ -96,12 +96,12 @@ namespace EvolutionShop.Growth
                 Id = "goals", Title = "Goals, stars and research points", Era = 1,
                 Card = new[]
                 {
-                    "The pinboard in the back room holds your goals: what to do now, what opens next and the long goal. The line at the bottom of the screen always shows the next one.",
-                    "Happy visitors raise your reputation, and reputation earns stars: each star brings more visitors and opens the next era with one more goal. New discoveries earn research points (RP), spent at the pinboard.",
+                    "The pinboard in the laboratory holds your goals: what to do now, what opens next and the long goal. The line at the bottom of the screen always shows the next one.",
+                    "Happy visitors raise your reputation, and reputation earns stars: each star brings more visitors and opens the next Era with one more goal. New discoveries earn research points (RP), spent at the pinboard.",
                 },
                 Appears = s => s.Day >= 2,
                 Done = s => s.Noted.Contains("board"),
-                Step = s => V("Open the pinboard in the back room (E): your goals and what is coming", "Board", "Pinboard"),
+                Step = s => V("Open the pinboard in the laboratory (E): your goals and what is coming", "Board", "Pinboard"),
             },
             new GrowthLessonDef
             {
@@ -132,7 +132,7 @@ namespace EvolutionShop.Growth
                 Id = "days", Title = "Days and nights", Era = 1, AnyTime = true,
                 Card = new[]
                 {
-                    "The night is yours: make creatures, stock tanks, buy and upgrade at your own pace. The day starts when you open the shop at the counter and lasts 5:30.",
+                    "The night is yours: make creatures, stock tanks, buy and upgrade at your own pace. The day starts when you open the shop at the counter and lasts " + GrowthShop.DayLengthWords + ".",
                     "If the day is going nowhere, the counter can close the shop early: the visitors still inside are served first. The night's receipt sums the day up.",
                 },
                 Appears = s => s.Day >= 2 && s.Phase == GrowthPhase.Day,
@@ -156,8 +156,9 @@ namespace EvolutionShop.Growth
                 Id = "catalog", Title = "The supplier catalog", Era = 2,
                 Card = new[]
                 {
-                    "The catalog by the counter sells growers for new cultures, starter vials, tanks' décor and machines. Its pages open with your stars.",
-                    "What you order arrives the next night.",
+                    "The supplier catalog, on the stand by the counter, is where you order things for your shop. Its pages open as you earn stars.",
+                    "A grower gives you a new culture for good. A starter vial is a few doses of one, to try it first. A decoration goes on top of a tank, and the creatures that suit its theme can sell for more.",
+                    "Order at night. What you order arrives when you next open the shop.",
                 },
                 Appears = s => s.Era >= 2,
                 Done = s => s.Noted.Contains("order") || s.Owns("ember") || s.Level("vat") > 0 || s.DecorOwned.Count > 0,
@@ -168,7 +169,7 @@ namespace EvolutionShop.Growth
                 Id = "vials", Title = "Starter vials", Era = 2,
                 Card = new[]
                 {
-                    "A starter vial holds a few doses of a culture you have no grower for yet. Vials stand on the shelf in the back room.",
+                    "A starter vial holds a few doses of a culture you have no grower for yet. Vials stand on the shelf in the laboratory.",
                     "Hold the mouse on a vial to fill your siphon from it, as at a grower.",
                 },
                 Appears = s => s.Vials.Values.Any(d => d > 0),
@@ -185,7 +186,7 @@ namespace EvolutionShop.Growth
                 Card = new[]
                 {
                     "Some cultures are researched rather than bought: Spark, and later Dusk. Spend research points (RP) on them at the pinboard.",
-                    "A researched culture gets its own grower in the back room, and new founders to find with it.",
+                    "A researched culture gets its own grower in the laboratory, and new founders to find with it.",
                 },
                 Appears = s => s.Era >= 2 && s.Rp > 0,
                 Done = s => GrowthContent.Cultures.Any(c => c.Source == CultureSource.Research && s.Owns(c.Id)),
@@ -196,7 +197,7 @@ namespace EvolutionShop.Growth
                 Id = "bench", Title = "The research bench", Era = 2,
                 Card = new[]
                 {
-                    "The bench in the back room helps you find new creatures. Its notes show, in the journal, which cultures an undiscovered founder uses.",
+                    "The bench in the laboratory helps you find new creatures. Its notes show, in the journal, which cultures an undiscovered founder uses.",
                     "Its microscope (level 2) tells you after every mix how many doses you are from something new; later the analyzer gives a hint a day and the planner predicts what any two creatures breed.",
                 },
                 Appears = s => s.Discovered.Count >= 2 && CanUpgrade(s, "bench"),
@@ -215,7 +216,7 @@ namespace EvolutionShop.Growth
                 Done = s => s.PairLog.Count > 0,
                 Step = s =>
                 {
-                    if (!s.HasBreedingTank) return V("At night, buy the breeding tank in the back room (E on it)", "Breeding", "Breeding tank");
+                    if (!s.HasBreedingTank) return V("At night, buy the breeding tank in the laboratory (E on it)", "Breeding", "Breeding tank");
                     if (s.Offspring != null) return V("The offspring is ready: click the breeding tank to take it", "Breeding", "Breeding tank");
                     if (s.Breeding) return V("Your pair is breeding: wait for the offspring", "Breeding", "Breeding tank");
                     return V("Carry two creatures to the breeding tank and click to put each in", "Breeding", "Breeding tank");
@@ -277,8 +278,9 @@ namespace EvolutionShop.Growth
                 Id = "colours", Title = "Colours", Era = 2,
                 Card = new[]
                 {
-                    "Every creature comes in four colours: Classic, Sunny, Deep and Shimmer. A culture in a tint port colours what is made next.",
-                    "The journal shows each creature's colours found; visitors may wish for a colour you have made.",
+                    "Every creature comes in four colours: Classic, its usual look, then Sunny, Deep and Shimmer. It is the same creature in a new coat.",
+                    "To make one, put a dose in a tint port, on the incubator or the breeding tank. Bloom makes what comes next Sunny, Flow makes it Deep, and Mist makes it Shimmer. With no tint, a bred creature takes the rarer colour of its parents.",
+                    "The journal shows which colours you have found of each creature, and visitors may wish for one.",
                 },
                 Appears = s => s.TintPort || s.IncubatorTintPort,
                 Done = s => s.Journal.Any(j => !j.EndsWith("/" + Colour.Classic, StringComparison.Ordinal)),
@@ -301,15 +303,15 @@ namespace EvolutionShop.Growth
             // ---------------------------------------------------------------- era 3: plumbing
             new GrowthLessonDef
             {
-                Id = "annex", Title = "The lab annex", Era = 3,
+                Id = "annex", Title = "The power room", Era = 3,
                 Card = new[]
                 {
-                    "Behind the back room is the lab annex: room for the generator, the power board and the buffers that keep cultures ready.",
-                    "Aim at the back room's wall at night (E) to see what it needs.",
+                    "Behind the laboratory is the power room: room for the generator, the power board and the buffers that keep cultures ready.",
+                    "Aim at the laboratory's wall at night (E) to see what it needs.",
                 },
                 Appears = s => s.Era >= 3 && Ready(s.AnnexCheck(out _)),
                 Done = s => s.Annex,
-                Step = s => V("At night, open the lab annex: aim at the back room's wall and press E", "AnnexWall", "Lab annex"),
+                Step = s => V("At night, open the power room: aim at the laboratory's wall and press E", "AnnexWall", "Power room"),
             },
             new GrowthLessonDef
             {
@@ -321,14 +323,14 @@ namespace EvolutionShop.Growth
                 },
                 Appears = s => s.Annex && CanUpgrade(s, "generator"),
                 Done = s => s.HasGenerator,
-                Step = s => V("At night, buy the generator in the annex (E on it)", "Generator", "Generator"),
+                Step = s => V("At night, buy the generator in the power room (E on it)", "Generator", "Generator"),
             },
             new GrowthLessonDef
             {
                 Id = "vat", Title = "The conditioning vat", Era = 3,
                 Card = new[]
                 {
-                    "Mist is not grown but conditioned: the vat, ordered from the supplier catalog, makes it in the back room.",
+                    "Mist is not grown but conditioned: the vat, ordered from the supplier catalog, makes it in the laboratory.",
                     "Mist opens the Airfin and Dewling founders.",
                 },
                 Appears = s => s.Era >= 3,
@@ -340,16 +342,17 @@ namespace EvolutionShop.Growth
                 Id = "pipes", Title = "Pumps, pipes and buffers", Era = 3,
                 Card = new[]
                 {
-                    "A pipe carries a grower's culture to a buffer in the annex, where it waits in bulk: fill your siphon there in one go.",
-                    "Growers at level 3 have a tap. Buy pumps and pipes on the power board, a buffer in the annex, then aim at a tap (E) and at the buffer (E) to lay the pipe.",
+                    "A pipe carries a grower's culture to a buffer in the power room, where it waits in bulk: fill your siphon there in one go.",
+                    "Growers at level 3 have a tap. Buy pumps and pipes on the power board, a buffer in the power room, then aim at a tap (E) and at the buffer (E) to lay the pipe.",
+                    "A hand pump is worked from the front of the grower: aim at its crank there and hold the mouse.",
                 },
                 Appears = s => s.HasGenerator,
                 Done = s => s.Lines.Any(),
                 Step = s =>
                 {
-                    if (!s.HasPumps) return V("At night, buy pumps and pipes on the power board in the annex (E)", "PowerBoard", "Power board");
+                    if (!s.HasPumps) return V("At night, buy pumps and pipes on the power board in the power room (E)", "PowerBoard", "Power board");
                     if (s.Level("grower") < 3) return V("Upgrade the growers to level 3 (E on a grower): a tap for a pipe", "Grower:" + s.Cultures.First(), "Upgrade the growers");
-                    if (!s.Buffers.Any()) return V("Buy a buffer in the annex: aim at an empty buffer place (E)", "Buffer:0", "A buffer place");
+                    if (!s.Buffers.Any()) return V("Buy a buffer in the power room: aim at an empty buffer place (E)", "Buffer:0", "A buffer place");
                     return V("Aim at a grower's tap (E), then at the buffer (E): that lays the pipe", "Grower:" + s.Cultures.First(), "Start the pipe here");
                 },
             },
@@ -371,7 +374,7 @@ namespace EvolutionShop.Growth
                 Id = "nori", Title = "Nori the stocker", Era = 3,
                 Card = new[]
                 {
-                    "Nori carries creatures from the back room to the shop's tanks for you. Until you set any stock target, Nori fills the tanks with whatever is waiting; set one, and Nori keeps that many of each species on show.",
+                    "Nori carries creatures from the laboratory to the shop's tanks for you. Until you set any stock target, Nori fills the tanks with whatever is waiting; set one, and Nori keeps that many of each species on show.",
                 },
                 Appears = s => CanHire(s, "nori"),
                 Done = s => s.Staff.ContainsKey("nori"),
@@ -401,11 +404,11 @@ namespace EvolutionShop.Growth
                 Id = "workshop", Title = "The workshop", Era = 4,
                 Card = new[]
                 {
-                    "East of the annex is the workshop: room for the bigger turbines, the hatchling sorter and the lab racks the line fills.",
+                    "East of the power room is the workshop: room for the bigger turbines, the hatchling sorter and the lab racks the line fills.",
                 },
                 Appears = s => s.Era >= 4 && Ready(s.WorkshopCheck(out _)),
                 Done = s => s.Workshop,
-                Step = s => V("At night, open the workshop: aim at the annex's east wall and press E", "WorkshopWall", "Workshop"),
+                Step = s => V("At night, open the workshop: aim at the power room's east wall and press E", "WorkshopWall", "Workshop"),
             },
             new GrowthLessonDef
             {
@@ -468,7 +471,7 @@ namespace EvolutionShop.Growth
                 Id = "line-day", Title = "A day on the line", Era = 4,
                 Card = new[]
                 {
-                    "Keep the auto-doser and the sorter running from opening to close, and sell what they stock: that is a day on the line, and part of era 4's goal.",
+                    "Keep the auto-doser and the sorter running from opening to close, and sell what they stock: that is a day on the line, and part of Era 4's goal.",
                 },
                 Appears = s => s.HasSorter && s.Chute != null && s.AutoDoser,
                 Done = s => s.LineDays > 0,

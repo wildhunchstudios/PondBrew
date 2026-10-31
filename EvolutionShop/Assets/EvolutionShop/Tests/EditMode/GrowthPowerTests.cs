@@ -51,22 +51,22 @@ namespace EvolutionShop.Tests
         public void TheLabAnnexOpensAtNightWithThreeStarsInEraThree()
         {
             Assert.That(At(2, 3).AnnexCheck(out string why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Does.StartWith("Needs era 3"));
+            Assert.That(why, Does.StartWith("Needs Era 3"));
             At(3, 2).AnnexCheck(out why); Assert.That(why, Is.EqualTo("Needs 3 stars"));
             var day = At(3, 3); day.OpenShop();
             Assert.That(day.AnnexCheck(out why), Is.EqualTo(GrowthFailure.NotAtNight));
             Assert.That(At(3, 3, credits: GrowthShop.AnnexDef.Credits - 1).AnnexCheck(out why), Is.EqualTo(GrowthFailure.NotEnoughCredits));
             var shop = At(3, 3, credits: 1500);
-            Assert.That(shop.Objectives().Any(o => o.text.StartsWith("Open the lab annex") && !o.done), Is.True, "era 3's goal names the annex");
+            Assert.That(shop.Objectives().Any(o => o.text.StartsWith("Open the power room") && !o.done), Is.True, "era 3's goal names the power room");
             Assert.That(shop.BuyAnnex().Success, Is.True);
             Assert.That((shop.Annex, shop.Credits), Is.EqualTo((true, 500)));
             Assert.That(shop.BuyAnnex().Failure, Is.EqualTo(GrowthFailure.MaxLevel));
-            Assert.That(shop.Objectives().Any(o => o.text.StartsWith("Open the lab annex") && o.done), Is.True);
+            Assert.That(shop.Objectives().Any(o => o.text.StartsWith("Open the power room") && o.done), Is.True);
             // Before the annex, the generator, pumps, buffers and pipes say why not.
             var closed = At(3, 3);
-            closed.UpgradeCheck("generator", out _, out why); Assert.That(why, Is.EqualTo("Open the lab annex first"));
-            closed.BufferCheck(0, out why); Assert.That(why, Is.EqualTo("Open the lab annex first"));
-            closed.PipeCheck(GrowthLab.Tap("bloom"), GrowthLab.Buffer(0), out _, out why); Assert.That(why, Is.EqualTo("Open the lab annex first"));
+            closed.UpgradeCheck("generator", out _, out why); Assert.That(why, Is.EqualTo("Open the power room first"));
+            closed.BufferCheck(0, out why); Assert.That(why, Is.EqualTo("Open the power room first"));
+            closed.PipeCheck(GrowthLab.Tap("bloom"), GrowthLab.Buffer(0), out _, out why); Assert.That(why, Is.EqualTo("Open the power room first"));
         }
 
         [Test]
@@ -89,9 +89,9 @@ namespace EvolutionShop.Tests
             Assert.That((shop.HandCrank, shop.GeneratorUnits, shop.SupplyNow), Is.EqualTo((false, 3f, 3f)), "the bubble turbine runs by itself");
             Assert.That(shop.CrankGenerator().Failure, Is.EqualTo(GrowthFailure.Busy));
             Assert.That(shop.UpgradeCheck("generator", out _, out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 4"), "the twin turbine in era 4 (GR-08: in the workshop)");
+            Assert.That(why, Is.EqualTo("Needs Era 4"), "the twin turbine in era 4 (GR-08: in the workshop)");
             Assert.That(shop.UpgradeCheck("pump", out _, out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 4"), "fast pumps in era 4");
+            Assert.That(why, Is.EqualTo("Needs Era 4"), "fast pumps in era 4");
             // Buffers come with pumps and are placed at night.
             var bare = At(3, 3); bare.BuyAnnex();
             bare.BufferCheck(0, out why); Assert.That(why, Is.EqualTo("Buffers come with pumps and pipes (on the power board)"));
@@ -185,13 +185,13 @@ namespace EvolutionShop.Tests
             Assert.That(GrowthLab.CanJoin(new IList<(int c, int r)>[] { vertical }, new List<(int c, int r)> { (3, 1), (3, 2), (2, 2), (1, 2) }), Is.True, "a right-angle crossing");
             Assert.That(GrowthLab.Route((2, 7), (2, 0), _ => true, taken).Skip(1).Take(5).Any(c => c.c == 2 && c.r < 6), Is.False, "never along another pipe");
             Assert.That(GrowthLab.Route((0, 5), (2, 6), c => c.r != 6, taken), Is.Null, "not even turning out of a crossing into an end it shares, when that is the only way in");
-            Assert.That(GrowthLab.InLab((13, 5), annex: true), Is.False, "the back room is narrower than the annex");
+            Assert.That(GrowthLab.InLab((13, 5), annex: true), Is.False, "the laboratory is narrower than the power room");
             Assert.That((GrowthLab.InLab((13, 12), annex: true), GrowthLab.InLab((13, 12), annex: false)), Is.EqualTo((true, false)));
             // Every end sits in its own cell inside the lab.
             var cells = GrowthLab.AllEnds.Select(GrowthLab.EndCell).ToList();
             Assert.That(cells.Distinct().Count(), Is.EqualTo(cells.Count));
             Assert.That(cells.All(c => GrowthLab.InLab(c, true, true)), Is.True);
-            Assert.That(GrowthLab.AllEnds.Where(GrowthLab.IsBuffer).All(e => GrowthLab.EndCell(e).r >= GrowthLab.AnnexFirstRow), Is.True, "buffers stand in the annex");
+            Assert.That(GrowthLab.AllEnds.Where(GrowthLab.IsBuffer).All(e => GrowthLab.EndCell(e).r >= GrowthLab.AnnexFirstRow), Is.True, "buffers stand in the power room");
         }
 
         [Test]
@@ -200,7 +200,7 @@ namespace EvolutionShop.Tests
             var shop = Lab();
             Assert.That(shop.CrankPump("bloom", 1).Failure, Is.EqualTo(GrowthFailure.NoSuchPlace), "no line yet");
             Lay(shop, GrowthLab.Tap("bloom"), GrowthLab.Buffer(0));
-            Assert.That(shop.LineStatus(shop.Pipes[0]), Is.EqualTo("Hold the pump's crank to pump"));
+            Assert.That(shop.LineStatus(shop.Pipes[0]), Is.EqualTo("Hold the mouse on the crank, on the front of the grower"));
             shop.GrowerUnits["bloom"] = 10;
             var r = shop.CrankPump("bloom", 1.0f);
             Assert.That(r.Detail, Is.EqualTo("3"), "a dose every 0.3 s while cranked");
@@ -307,7 +307,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.AutoStatus, Is.EqualTo("Incubating"));
             shop.Tick(shop.IncubationSeconds + 0.1f);
             Assert.That(shop.Hatchlings.Count, Is.EqualTo(3), "a clutch of three Pondlets");
-            Assert.That(shop.AutoStatus, Is.EqualTo("Waiting: take the clutch out of the incubator"), "GR.15.1: a full output waits");
+            Assert.That(shop.AutoStatus, Is.EqualTo("Waiting: take the hatchlings out of the incubator"), "GR.15.1: a full output waits");
             shop.Tick(5);
             Assert.That(shop.AutoBatches, Is.EqualTo(1));
             while (shop.Hatchlings.Count > 0) { shop.TakeHatchling(); shop.Carried.Clear(); }
@@ -355,7 +355,7 @@ namespace EvolutionShop.Tests
             Assert.That((three.Era, three.Stars, three.Annex, three.Credits, three.Rp, three.UnitB), Is.EqualTo((3, 3, false, 1200, 45, true)));
             Assert.That(three.Discovered.Count, Is.GreaterThanOrEqualTo(12));
             Assert.That(three.Stock.Count(), Is.GreaterThan(8), "tanks with stock to sell");
-            Assert.That(three.AnnexCheck(out _), Is.EqualTo(GrowthFailure.None), "the lab annex is the next thing to buy");
+            Assert.That(three.AnnexCheck(out _), Is.EqualTo(GrowthFailure.None), "the power room is the next thing to buy");
             var four = GrowthStarts.Era4Start();
             Assert.That((four.Era, four.Stars, four.Annex, four.PoweredPumps, four.Lines.Count(), four.Credits), Is.EqualTo((4, 4, true, true, 2, 6000)));
             Assert.That(four.UpgradeCheck("incubator", out _, out _), Is.EqualTo(GrowthFailure.None), "the incubator's level 4 is next");
@@ -405,7 +405,7 @@ namespace EvolutionShop.Tests
                 Assert.That(GrowthShop.Restore(bad, out string why), Is.Null, expected);
                 Assert.That(why, Is.EqualTo(expected));
             }
-            Refused(b => b.annex = false, "Power without the lab annex");
+            Refused(b => b.annex = false, "Power without the power room");
             Refused(b => b.buffers[1].culture = "bloom", "A buffer holding another culture than its line");
             Refused(b => b.buffers[0].units = GrowthContent.BufferCapacity + 1, "A buffer holds more than it can");
             Refused(b => b.pipes[0].cells = b.pipes[0].cells.Take(2).Concat(b.pipes[0].cells.Skip(4)).ToArray(), "A broken pipe");

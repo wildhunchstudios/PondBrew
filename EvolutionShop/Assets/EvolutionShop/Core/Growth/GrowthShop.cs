@@ -644,7 +644,7 @@ namespace EvolutionShop.Growth
             if (!isNew)
             {
                 string name = (colour == Colour.Classic ? "" : colour + " ") + GrowthContent.Get(Pending).Name;
-                Raise(GrowthEventKind.Hatched, Clutch > 1 ? "A clutch of " + Clutch + " " + Plural(name) + " hatched" : name + " hatched", Pending);
+                Raise(GrowthEventKind.Hatched, Clutch > 1 ? Clutch + " " + Plural(name) + " hatched" : name + " hatched", Pending);
             }
             Pending = null;
         }
@@ -792,7 +792,7 @@ namespace EvolutionShop.Growth
             if (spot == null || !OwnedPlaces.Contains(place)) { why = "Not an open place"; return GrowthFailure.NoSuchPlace; }
             if (ContainerAt(place) != null) { why = "The place is taken"; return GrowthFailure.PlaceTaken; }
             if (!spot.Takes(def)) { why = def.Name + " is " + Footprint(def) + "; this place takes " + spot.Width.ToString("0.#") + " × " + spot.Depth.ToString("0.#") + " m"; return GrowthFailure.TooBigForPlace; }
-            if (level.Era > Era) { why = "Needs era " + level.Era; return GrowthFailure.Locked; }
+            if (level.Era > Era) { why = "Needs Era " + level.Era; return GrowthFailure.Locked; }
             if (level.Stars > Stars) { why = "Needs " + level.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Containers are placed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < level.Credits) { why = "Needs " + level.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -823,7 +823,7 @@ namespace EvolutionShop.Growth
             if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
             if (c.Level >= c.Def.Levels.Length) { why = "Highest level"; return GrowthFailure.MaxLevel; }
             next = c.Def.Levels[c.Level];
-            if (next.Era > Era) { why = "Needs era " + next.Era; return GrowthFailure.Locked; }
+            if (next.Era > Era) { why = "Needs Era " + next.Era; return GrowthFailure.Locked; }
             if (next.Stars > Stars) { why = "Needs " + next.Stars + " stars"; return GrowthFailure.Locked; }
             if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
@@ -901,7 +901,7 @@ namespace EvolutionShop.Growth
             var c = Container(containerId);
             if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
             if (c.Water == water) { why = "Already " + water.ToString().ToLowerInvariant(); return GrowthFailure.SameWater; }
-            if (Era < GrowthContent.ComfortEra) { why = "Needs era " + GrowthContent.ComfortEra; return GrowthFailure.Locked; }
+            if (Era < GrowthContent.ComfortEra) { why = "Needs Era " + GrowthContent.ComfortEra; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Water is changed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < GrowthContent.WaterKitCredits) { why = "Needs " + GrowthContent.WaterKitCredits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
@@ -1091,7 +1091,7 @@ namespace EvolutionShop.Growth
             else if (Owns(item.Culture)) { why = item.Kind == CatalogKind.Vial ? "You grow " + Name(item.Culture) + " already" : "You have it"; return GrowthFailure.Owned; }
             if (item.Kind != CatalogKind.Vial && item.Kind != CatalogKind.Decor && Orders.Any(o => GrowthContent.CatalogItem(o).Culture == item.Culture && GrowthContent.CatalogItem(o).Kind != CatalogKind.Vial)) { why = "Already on order"; return GrowthFailure.Ordered; }
             if (item.Stars > Stars) { why = "Catalog page " + item.Stars + ": needs " + item.Stars + " stars"; return GrowthFailure.Locked; }
-            if (item.Era > Era) { why = "Needs era " + item.Era; return GrowthFailure.Locked; }
+            if (item.Era > Era) { why = "Needs Era " + item.Era; return GrowthFailure.Locked; }
             if (item.Rp > Rp) { why = "Needs " + item.Rp + " research points"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Orders are placed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < item.Credits) { why = "Needs " + item.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -1134,8 +1134,8 @@ namespace EvolutionShop.Growth
                 Raise(GrowthEventKind.Delivered, "Delivered: " + item.Name + (item.Kind == CatalogKind.Decor ? " (in the decor box: put it on a tank at night)" : ""));
                 switch (item.Kind)
                 {
-                    case CatalogKind.Grower: AddCulture(item.Culture, "its grower is in the back room"); break;
-                    case CatalogKind.Vat: AddCulture(item.Culture, "the conditioning vat is in the back room"); break;
+                    case CatalogKind.Grower: AddCulture(item.Culture, "its grower is in the laboratory"); break;
+                    case CatalogKind.Vat: AddCulture(item.Culture, "the conditioning vat is in the laboratory"); break;
                     case CatalogKind.Vial: Vials[item.Culture] = (Vials.TryGetValue(item.Culture, out int n) ? n : 0) + GrowthContent.VialDoses; break;
                     case CatalogKind.Decor: if (!DecorOwned.Contains(item.Decor)) DecorOwned.Add(item.Decor); break;
                 }
@@ -1149,7 +1149,7 @@ namespace EvolutionShop.Growth
             var c = GrowthContent.Culture(culture);
             if (c == null || c.Source != CultureSource.Research) { why = "Not a research culture"; return GrowthFailure.NotInCatalog; }
             if (Owns(culture)) { why = "Researched"; return GrowthFailure.Owned; }
-            if (c.Era > Era) { why = "Needs era " + c.Era; return GrowthFailure.Locked; }
+            if (c.Era > Era) { why = "Needs Era " + c.Era; return GrowthFailure.Locked; }
             if (c.Stars > Stars) { why = "Needs " + c.Stars + " stars"; return GrowthFailure.Locked; }
             if (c.Rp > Rp) { why = "Needs " + c.Rp + " research points (you have " + Rp + ")"; return GrowthFailure.Locked; }
             return GrowthFailure.None;
@@ -1161,7 +1161,7 @@ namespace EvolutionShop.Growth
             var failure = ResearchCheck(culture, out string why);
             if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
             Rp -= GrowthContent.Culture(culture).Rp;
-            AddCulture(culture, "researched; its grower is in the back room");
+            AddCulture(culture, "researched; its grower is in the laboratory");
             return GrowthResult.Ok();
         }
 
@@ -1224,11 +1224,11 @@ namespace EvolutionShop.Growth
             if (station == "vat" && lv == 0) { why = "Order the conditioning vat from the supplier catalog"; return GrowthFailure.Locked; }
             string later = WaitsFor(station, next.Level);
             if (later != null) { why = later; return GrowthFailure.Locked; }
-            if (next.Era > Era) { why = "Needs era " + next.Era; return GrowthFailure.Locked; }
+            if (next.Era > Era) { why = "Needs Era " + next.Era; return GrowthFailure.Locked; }
             if (next.Stars > Stars) { why = "Needs " + next.Stars + " stars"; return GrowthFailure.Locked; }
             if (next.Rp > Rp) { why = "Needs " + next.Rp + " research points"; return GrowthFailure.Locked; }
             // GR-07: the generator and pumps stand in the lab annex; electric pumps need a generator.
-            if ((station == "generator" || station == "pump") && !Annex) { why = "Open the lab annex first"; return GrowthFailure.Locked; }
+            if ((station == "generator" || station == "pump") && !Annex) { why = "Open the power room first"; return GrowthFailure.Locked; }
             if (station == "pump" && next.Level == 2 && !HasGenerator) { why = "Electric pumps need the generator"; return GrowthFailure.Locked; }
             // GR-08: the sorter and the generator's twin turbine and tide engine stand in the workshop.
             if (station == "sorter" && !Workshop) { why = "Open the workshop first"; return GrowthFailure.Locked; }
@@ -1265,7 +1265,7 @@ namespace EvolutionShop.Growth
             var unit = UnitBDef;
             why = null;
             if (UnitB) { why = "Already open"; return GrowthFailure.MaxLevel; }
-            if (Era < unit.Era) { why = "Needs era " + unit.Era + ": 2 stars, 3 creatures discovered and 2 tanks"; return GrowthFailure.Locked; }
+            if (Era < unit.Era) { why = "Needs Era " + unit.Era + ": 2 stars, 3 creatures discovered and 2 tanks"; return GrowthFailure.Locked; }
             if (Stars < unit.Stars) { why = "Needs " + unit.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < unit.Credits) { why = "Needs " + unit.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -1609,6 +1609,17 @@ namespace EvolutionShop.Growth
             return GrowthResult.Ok();
         }
 
+        /// <summary>GR-32 (F44): how long a day lasts, with its units.</summary>
+        public static string DayLengthWords => DurationWords(GrowthContent.DaySeconds);
+
+        /// <summary>GR-32 (F44): a length of time in words: 5 minutes 30 seconds; 1 minute; 45 seconds.</summary>
+        public static string DurationWords(float seconds)
+        {
+            int t = Math.Max(0, (int)Math.Ceiling(seconds)), m = t / 60, sec = t % 60;
+            string minutes = m + (m == 1 ? " minute" : " minutes"), rest = sec + (sec == 1 ? " second" : " seconds");
+            return m == 0 ? rest : sec == 0 ? minutes : minutes + " " + rest;
+        }
+
         /// <summary>Minutes and seconds, as the day's clock shows them (5:30).</summary>
         public static string ClockText(float seconds) { int s = Math.Max(0, (int)Math.Ceiling(seconds)); return s / 60 + ":" + (s % 60).ToString("00"); }
 
@@ -1653,7 +1664,7 @@ namespace EvolutionShop.Growth
                 {
                     // GR-05: era 2's goal, breed your first hybrid and reach 3 stars; with a Large tank they open era 3.
                     var breeding = GrowthContent.Station("breeding").Levels[0];
-                    list.Add(("Buy the breeding tank in the back room (" + breeding.Credits + " credits and " + breeding.Rp + " RP)", HasBreedingTank));
+                    list.Add(("Buy the breeding tank in the laboratory (" + breeding.Credits + " credits and " + breeding.Rp + " RP)", HasBreedingTank));
                     list.Add(("Breed your first hybrid", HasHybrid));
                     list.Add(("Buy a Large tank for a long place (" + GrowthContent.Container("large").Levels[0].Credits + " credits, at night)", ShopContainers.Any(c => c.Kind == "large")));
                     list.Add(("Reach 3 stars (reputation " + Reputation + "/" + GrowthContent.StarThresholds[2] + ")", Stars >= 3));
@@ -1665,9 +1676,9 @@ namespace EvolutionShop.Growth
                     // GR-07: era 3's goal, power the lab; with 4 stars and 12 species, powered pumps open era 4.
                     var large = ShopContainers.Where(c => c.Kind == "large").OrderBy(c => c.Free).FirstOrDefault();
                     list.Add(("Fill a Large tank (" + (large == null ? "buy one first" : large.Used + "/" + large.Spaces + " spaces") + ")", large != null && large.Free == 0));
-                    list.Add(("Open the lab annex behind the back room (" + AnnexDef.Credits + " credits, at night)", Annex));
+                    list.Add(("Open the power room behind the laboratory (" + AnnexDef.Credits + " credits, at night)", Annex));
                     var generator = GrowthContent.Station("generator").Levels[0];
-                    list.Add(("Buy the generator in the annex (" + generator.Credits + " credits and " + generator.Rp + " RP)", HasGenerator));
+                    list.Add(("Buy the generator in the power room (" + generator.Credits + " credits and " + generator.Rp + " RP)", HasGenerator));
                     list.Add(("Pipe a grower's tap to a buffer (pumps and pipes on the power board)", Lines.Any()));
                     list.Add(("Power the pumps: electric pumps and the bubble turbine", PoweredPumps));
                     list.Add(("Discover 12 creatures (" + Math.Min(12, Discovered.Count) + "/12)", Discovered.Count >= 12));
@@ -1677,7 +1688,7 @@ namespace EvolutionShop.Growth
                 {
                     // GR-08: era 4's goal, a full day on the line and a large creature; with 5 stars they open era 5.
                     list.Add(("Let the incubator dose a recipe by itself: its level 4 and a buffer piped to its port", AutoBatches > 0));
-                    list.Add(("Open the workshop east of the lab annex (" + WorkshopDef.Credits + " credits, at night)", Workshop));
+                    list.Add(("Open the workshop east of the power room (" + WorkshopDef.Credits + " credits, at night)", Workshop));
                     list.Add(("Open shop unit C behind unit B (" + UnitCDef.Credits + " credits, at night)", UnitC));
                     var sorter = GrowthContent.Station("sorter").Levels[0];
                     list.Add(("Buy the sorter in the workshop (" + sorter.Credits + " credits) and lay its chute from the incubator", HasSorter && Chute != null));

@@ -17,7 +17,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string PowerScenarioText = "GR-07 power and pipes: the lab annex, the generator's hand crank and bubble turbine, the power board's order, buffers, pipes connected end to end with their preview, the hand pump, electric and fast pumps over budget, era 4, the auto-doser, a pipe taken down, save and reload mid-batch";
+        const string PowerScenarioText = "GR-07 power and pipes: the power room, the generator's hand crank and bubble turbine, the power board's order, buffers, pipes connected end to end with their preview, the hand pump, electric and fast pumps over budget, Era 4, the auto-doser, a pipe taken down, save and reload mid-batch";
 
         IEnumerator AimAt(Vector3 feet, Vector3 target, GrowthTargetKind kind, string id, string label)
         {
@@ -43,7 +43,7 @@ namespace EvolutionShop
 
         IEnumerator PowerScenario()
         {
-            limitations.Add("GR-07 power route: the fixture is labelled: an era 3, four-star shop (reputation 860) with 10,000 credits and 40 research points, unit B open, 12 founders known, growers at level 3 (one tap each) holding 10 doses of Bloom, Flow and Ember. Buying, placing buffers, taking pipes down, the power board's order, the auto-doser's recipe and switch, and the incubator's levels call the shop's actions as the card buttons do (UI Toolkit buttons are not clicked); pipe mode starts as the cards' buttons start it, and the route aims at each pipe's other end and presses E; the hand pump, the generator's crank and the siphon at a buffer are held with the route's mouse; electric pumping, incubation and dosing run on the shop's own clock (accelerated). Placeholder art: plain shapes for the annex, the generator, the power board, buffers, pumps and pipes.");
+            limitations.Add("GR-07 power route: the fixture is labelled: an era 3, four-star shop (reputation 860) with 10,000 credits and 40 research points, unit B open, 12 founders known, growers at level 3 (one tap each) holding 10 doses of Bloom, Flow and Ember. Buying, placing buffers, taking pipes down, the power board's order, the auto-doser's recipe and switch, and the incubator's levels call the shop's actions as the card buttons do (UI Toolkit buttons are not clicked); pipe mode starts as the cards' buttons start it, and the route aims at each pipe's other end and presses E; the hand pump, the generator's crank and the siphon at a buffer are held with the route's mouse; electric pumping, incubation and dosing run on the shop's own clock (accelerated). Placeholder art: plain shapes for the power room, the generator, the power board, buffers, pumps and pipes.");
             yield return Opening();
             TakeInput();
 
@@ -60,19 +60,19 @@ namespace EvolutionShop
             var shop = s.Shop;
             yield return null; yield return null;
             Check(shop.Era == 3 && shop.Stars == 4 && shop.Discovered.Count == 12 && shop.Taps == 1 && !shop.Annex && s.World.AnnexWallStanding,
-                "Fixture: an era 3, four-star shop with 12 species, growers at level 3 and the lab annex closed");
+                "Fixture: an era 3, four-star shop with 12 species, growers at level 3 and the power room closed");
 
             // The lab annex: its partition in the back room's north doorway, opened at night.
-            yield return AimAt(new Vector3(0.5f, 0, 6.6f), new Vector3(1.15f, 1.4f, 9f), GrowthTargetKind.AnnexWall, "annex", "The reticle focuses the lab annex's partition");
-            Check(s.FocusName(out string status) == "Lab annex" && status == "E see what it needs", "It is the lab annex");
+            yield return AimAt(new Vector3(0.5f, 0, 6.6f), new Vector3(1.15f, 1.4f, 9f), GrowthTargetKind.AnnexWall, "annex", "The reticle focuses the power room's partition");
+            Check(s.FocusName(out string status) == "Power room" && status == "E see what it needs", "It is the power room");
             yield return Shot("100-annex-closed");
             yield return Press(Key.E);
             string card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Annex && card.Contains("Open the lab annex for 1000 cr"), "E opens its card: open it for 1,000 credits at night");
-            Ok(s.Act(shop.BuyAnnex), "Open the lab annex");
+            Check(s.Card == GrowthCard.Annex && card.Contains("Open the power room for 1000 cr"), "E opens its card: open it for 1,000 credits at night");
+            Ok(s.Act(shop.BuyAnnex), "Open the power room");
             s.SetCard(GrowthCard.None);
             yield return null; yield return null;
-            Check(shop.Annex && !s.World.AnnexWallStanding && shop.Objectives().Any(o => o.text.StartsWith("Open the lab annex") && o.done), "The partition is gone and the goal ticked");
+            Check(shop.Annex && !s.World.AnnexWallStanding && shop.Objectives().Any(o => o.text.StartsWith("Open the power room") && o.done), "The partition is gone and the goal ticked");
 
             // The generator (its hand crank) and the power board with pumps and pipes.
             var crank = GrowthWorld.GeneratorPosition + new Vector3(0, 0.9f, -0.3f);
@@ -80,12 +80,12 @@ namespace EvolutionShop
             Check(s.FocusName(out status) == "Generator (not bought)" && status.Contains("200 credits and 30 RP"), "Not bought yet: 200 credits and 30 RP");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Generator && card.Contains("The generator · level 0 of 4") && card.Contains("Buy · 200 cr and 30 RP") && card.Contains("3. Twin turbine: 6 units · 3000 cr, era 4"),
+            Check(s.Card == GrowthCard.Generator && card.Contains("The generator · level 0 of 4") && card.Contains("Buy · 200 cr and 30 RP") && card.Contains("3. Twin turbine: 6 units · 3000 cr, Era 4"),
                 "Its card: the hand crank for 200 credits and 30 RP; the twin turbine in era 4 (GR-08: in the workshop)");
             Ok(s.Act(() => shop.Upgrade("generator")), "Buy the generator's hand crank");
             s.SetCard(GrowthCard.None);
             yield return null; yield return null;
-            Check(shop.HandCrank && s.World.GeneratorLookLevel == 1, "The hand crank stands in the annex's corner");
+            Check(shop.HandCrank && s.World.GeneratorLookLevel == 1, "The hand crank stands in the power room's corner");
             yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
@@ -172,7 +172,7 @@ namespace EvolutionShop
             s.Advance(3f);
             Check(shop.BufferAt(1).Units >= f1 + 1.9f && shop.Lines.All(p => shop.LineStatus(p) == "Pumping" || shop.LineStatus(p).Contains("empty") || shop.LineStatus(p).Contains("full")), "The pumps run by themselves on the turbine's 3 units");
             // Fast pumps, 2 units each: three lines over budget.
-            Ok(s.Act(() => shop.Upgrade("pump")), "Fast pumps (era 4): 2 units each");
+            Ok(s.Act(() => shop.Upgrade("pump")), "Fast pumps (Era 4): 2 units each");
             foreach (var c in new[] { "bloom", "flow", "ember" }) shop.GrowerUnits[c] = 10;
             foreach (var b in shop.Buffers) b.Units = Mathf.Min(b.Units, 4);
             s.Advance(0.3f);
@@ -208,7 +208,7 @@ namespace EvolutionShop
             yield return Shot("106-auto-doser");
             s.SetCard(GrowthCard.None);
             s.Advance(shop.IncubationSeconds + 0.1f);
-            Check(shop.Hatchlings.Count == 3 && shop.AutoStatus == "Waiting: take the clutch out of the incubator", "A clutch of three Pondlets; the auto-doser waits for the clutch to be taken (a full output waits)");
+            Check(shop.Hatchlings.Count == 3 && shop.AutoStatus == "Waiting: take the hatchlings out of the incubator", "A clutch of three Pondlets; the auto-doser waits for the clutch to be taken (a full output waits)");
             // A pipe taken down at night: half its cost back; the auto-doser says what it needs.
             var flowPort = shop.OutletOf(1);
             credits = shop.Credits;

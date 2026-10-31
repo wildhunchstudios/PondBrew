@@ -29,7 +29,7 @@ namespace EvolutionShop.Growth
         public static string ThemeSuits(Water water) => water == Water.Fresh ? "fresh-water creatures" : water == Water.Warm ? "warm-water creatures" : "brine creatures";
 
         static DecorDef[] decor;
-        /// <summary>The nine pieces (Riverbank and Hot springs on the catalog's 2-star page, Seaside on its 4-star page, with Brine).</summary>
+        /// <summary>The fifteen pieces, five in each theme (Riverbank and Hot springs on the catalog's 2-star page, Seaside on its 4-star page, with Brine); GR-32 (F57): two plain ones each, the cheapest.</summary>
         public static DecorDef[] Decor => decor ?? (decor = BuildDecor());
 
         static DecorDef[] BuildDecor()
@@ -38,12 +38,18 @@ namespace EvolutionShop.Growth
                 new DecorDef { Id = id, Name = name, Asset = asset, Water = water, Stars = stars, Era = era, Credits = credits, Text = text };
             return new[]
             {
+                D("stones", "River stones", "DecorStones", Water.Fresh, 2, 2, 60, "A little cairn of smooth stones, moss at its foot"),
+                D("fern", "Potted fern", "DecorFern", Water.Fresh, 2, 2, 90, "A green fern in a terracotta pot"),
                 D("reeds", "Reeds and a dragonfly", "DecorReeds", Water.Fresh, 2, 2, 120, "A clump of reeds with cattails, a dragonfly resting on one"),
                 D("lily-lamp", "Lily-pad lamp", "DecorLilyLamp", Water.Fresh, 2, 2, 160, "A water lily glowing on its stem, a frog on the pad"),
                 D("watermill", "Little watermill", "DecorWatermill", Water.Fresh, 2, 2, 200, "A wooden mill with a lit window, its wheel in a stream"),
+                D("rocks", "Warm rocks", "DecorRocks", Water.Warm, 2, 2, 60, "A heap of dark rocks, a sprig of green between them"),
+                D("bamboo", "Bamboo in a pot", "DecorBamboo", Water.Warm, 2, 2, 90, "Three canes of bamboo in a stone pot"),
                 D("volcano", "Little volcano", "DecorVolcano", Water.Warm, 2, 2, 120, "Lava glowing in its crater, a puff of steam above"),
                 D("lantern", "Stone lantern", "DecorLantern", Water.Warm, 2, 2, 160, "Warm light behind its paper windows"),
                 D("duck-spa", "Rubber-duck hot pool", "DecorDuckSpa", Water.Warm, 2, 2, 200, "A steaming rock pool with a rubber duck afloat"),
+                D("shells", "Shells on the sand", "DecorShells", Water.Brine, 4, 4, 300, "A few shells and pebbles the tide left"),
+                D("driftwood", "Driftwood", "DecorDriftwood", Water.Brine, 4, 4, 450, "A bleached branch washed ashore"),
                 D("lighthouse", "Lighthouse", "DecorLighthouse", Water.Brine, 4, 4, 800, "Coral and cream stripes, its lamp glowing"),
                 D("chest", "Treasure chest", "DecorChest", Water.Brine, 4, 4, 1000, "Thrown open, gold and pearls spilling out"),
                 D("coral-arch", "Coral arch", "DecorCoralArch", Water.Brine, 4, 4, 1200, "Pink coral, a starfish and shells on the sand"),

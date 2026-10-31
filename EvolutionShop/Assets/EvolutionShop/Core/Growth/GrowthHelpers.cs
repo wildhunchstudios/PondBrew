@@ -545,7 +545,7 @@ namespace EvolutionShop.Growth
             if (AutoDoser && AutoOn) return "The auto-doser runs the incubator";
             if (AutoBatch) return "The auto-doser is dosing";
             if (Incubating) return "Waiting: the incubator is incubating";
-            if (Hatchlings.Count > 0) return "Waiting for the clutch to be taken off the tray";
+            if (Hatchlings.Count > 0) return "Waiting for the hatchlings to be taken off the tray";
             if (Chamber.Count > 0) return "The chamber has doses: start them or take them back";
             var s = GrowthContent.Get(MossRecipe);
             if (s.Doses > MaxDoses) return "The recipe needs more doses than the incubator takes";

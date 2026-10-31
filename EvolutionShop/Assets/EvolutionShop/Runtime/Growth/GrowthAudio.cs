@@ -23,11 +23,11 @@ namespace EvolutionShop
         public const int SampleRate = 22050;
         public const float LoopSeconds = 4f, ClickEvery = 0.12f, StrokeEvery = 0.45f, Fade = 0.4f, NearDistance = 2f, FarDistance = 16f;
         /// <summary>How loud each sound is at full (before the setting and the distance).</summary>
-        public const float HumGain = 0.5f, MotorGain = 0.35f, ClickGain = 0.45f, StrokeGain = 0.6f, PopGain = 0.7f, SwishGain = 0.55f, ChimeGain = 0.5f;
+        public const float HumGain = 0.5f, MotorGain = 0.35f, ClickGain = 0.45f, StrokeGain = 0.6f, PopGain = 0.7f, SwishGain = 0.55f, ChimeGain = 0.5f, BrewGain = 0.4f, DrawGain = 0.3f, ReadyGain = 0.6f;
 
         GrowthSession session;
-        AudioSource hum, motor, crank, stroke, moment;
-        AudioClip humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip, bellClip;
+        AudioSource hum, motor, crank, stroke, moment, brew, draw;
+        AudioClip humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip, bellClip, brewClip, drawClip, readyClip;
         float clickClock, strokeClock;
         readonly GrowthMoments moments = new GrowthMoments();
 
@@ -49,8 +49,8 @@ namespace EvolutionShop
         public bool MotorPlaying => motor != null && motor.isPlaying;
         public float MotorVolume => motor != null ? motor.volume : 0;
         public Vector3 MotorPosition => motor != null ? motor.transform.position : Vector3.zero;
-        public IEnumerable<AudioClip> Clips => new[] { humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip, bellClip };
-        public IEnumerable<AudioSource> Voices => new[] { hum, motor, crank, stroke, moment };
+        public IEnumerable<AudioClip> Clips => new[] { humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip, bellClip, brewClip, drawClip, readyClip };
+        public IEnumerable<AudioSource> Voices => new[] { hum, motor, crank, stroke, moment, brew, draw };
 
         public void Initialize(GrowthSession owner)
         {
@@ -63,11 +63,16 @@ namespace EvolutionShop
             swishClip = Clip("school swish", MakeSwish());
             chimeClip = Clip("wish chime", MakeChime());
             bellClip = Clip("counter bell", MakeBell());
+            brewClip = Clip("incubator at work (four second loop)", MakeBrew());
+            drawClip = Clip("siphon drawing (two second loop)", MakeDraw());
+            readyClip = Clip("incubator ready", MakeReady());
             hum = Voice("Sound / generator hum", true);
             motor = Voice("Sound / pump motor", true);
             crank = Voice("Sound / crank", false);
             stroke = Voice("Sound / hand pump", false);
             moment = Voice("Sound / moments", false);
+            brew = Voice("Sound / incubator", true);
+            draw = Voice("Sound / siphon", true);
         }
 
         AudioSource Voice(string name, bool loop)
@@ -118,6 +123,14 @@ namespace EvolutionShop
             if (pump.HasValue) motor.transform.position = pump.Value;
             Loop(motor, motorClip, pump.HasValue ? hums * MotorGain : 0, dt);
 
+            // GR-32 (F55): the incubator bubbling while it works, and the siphon drawing while the mouse is held on a grower, a buffer or a vial.
+            bool brewing = !paused && shop.Incubating;
+            if (brewing) brew.transform.position = GrowthWorld.IncubatorPosition + new Vector3(0, 1.1f, 0);
+            Loop(brew, brewClip, brewing ? sounds * BrewGain : 0, dt);
+            bool drawing = !paused && session.CollectingNow;
+            if (drawing) draw.transform.position = Listener;
+            Loop(draw, drawClip, drawing ? sounds * DrawGain : 0, dt);
+
             // The hand crank's ratchet and the hand pump's strokes, in time while they are worked.
             if (!paused && session.CrankingNow)
             {
@@ -146,6 +159,8 @@ namespace EvolutionShop
                 LastSwish = session.World.Tanks.TryGetValue(id, out var tank) ? tank.Root.position + new Vector3(0, 1.0f, 0) : Listener;
                 Play(moment, LastSwish, swishClip, sounds * SwishGain);
             }
+            // GR-32 (F55): the incubator says it is done with a soft two notes.
+            if (readyDue) { readyDue = false; Readies++; Play(moment, GrowthWorld.IncubatorPosition + new Vector3(0, 1.2f, 0), readyClip, sounds * ReadyGain); }
             // GR-31 (F29): the counter's bell as a visitor reaches it, so there is no waiting for a prompt to know.
             if (BellDue) { BellDue = false; Bells++; Play(moment, GrowthWorld.CounterPosition + new Vector3(0, 1.1f, 0), bellClip, sounds * ChimeGain); }
             // GR-20: a wish granted, a chime by the visitor's bubble as it pops into a heart.
@@ -292,6 +307,14 @@ namespace EvolutionShop
         }
 
         /// <summary>GR-20's chime for a wish granted: two soft bell notes rising (E6 then A6), each with a quieter octave.</summary>
+        /// <summary>The shop's events: a hatch says it is done.</summary>
+        public void Event(GrowthEvent e) { if (e.Kind == GrowthEventKind.Hatched) readyDue = true; }
+        bool readyDue;
+        /// <summary>Validation: how many times the incubator has said it is done; whether its bubbling and the siphon's draw play.</summary>
+        public int Readies { get; private set; }
+        public bool BrewPlaying => brew != null && brew.isPlaying;
+        public bool DrawPlaying => draw != null && draw.isPlaying;
+
         /// <summary>GR-31 (F29): rings the counter's bell on the next frame; how many times it has rung (validation).</summary>
         public bool BellDue;
         public int Bells { get; private set; }
@@ -303,8 +326,78 @@ namespace EvolutionShop
             for (int i = 0; i < d.Length; i++)
             {
                 float t = i / (float)SampleRate;
-                d[i] = Mathf.Min(1, t / 0.002f) * Mathf.Exp(-t * 9f) * (Mathf.Sin(2 * Mathf.PI * 1975f * t) * 0.3f + Mathf.Sin(2 * Mathf.PI * 3951f * t) * 0.1f);
+                d[i] = Mathf.Min(1, t / 0.002f) * Mathf.Min(1, (0.5f - t) / 0.05f) * Mathf.Exp(-t * 9f) * (Mathf.Sin(2 * Mathf.PI * 1975f * t) * 0.3f + Mathf.Sin(2 * Mathf.PI * 3951f * t) * 0.1f);
             }
+            return d;
+        }
+
+        /// <summary>GR-32 (F55): the incubator at work: a soft low thrum and small bubbles. Every partial makes whole cycles in
+        /// the four seconds and every bubble ends inside them, so it loops seamlessly.</summary>
+        public static float[] MakeBrew()
+        {
+            var d = new float[(int)(SampleRate * LoopSeconds)];
+            for (int i = 0; i < d.Length; i++)
+            {
+                double p = 2 * System.Math.PI * i / d.Length;
+                d[i] = (float)((System.Math.Sin(p * 330) * 0.07 + System.Math.Sin(p * 660) * 0.025) * (0.8 + 0.2 * System.Math.Cos(p * 2)));
+            }
+            var rng = new System.Random(11);
+            for (int k = 0; k < 26; k++)
+            {
+                int length = (int)(SampleRate * (0.05 + rng.NextDouble() * 0.07));
+                int start = rng.Next(d.Length - length);
+                double from = 260 + rng.NextDouble() * 260, phase = 0;
+                float gain = 0.05f + (float)rng.NextDouble() * 0.07f;
+                for (int i = 0; i < length; i++)
+                {
+                    double u = (double)i / length;
+                    phase += 2 * System.Math.PI * (from * (1 + u * 0.9)) / SampleRate;
+                    d[start + i] += gain * (float)(System.Math.Sin(System.Math.PI * u) * System.Math.Sin(phase));
+                }
+            }
+            return d;
+        }
+
+        /// <summary>GR-32 (F55): the siphon drawing: a soft airy suck, noise smoothed round the loop's ends so it loops seamlessly.</summary>
+        public static float[] MakeDraw()
+        {
+            int n = SampleRate * 2;
+            var noise = new float[n];
+            var rng = new System.Random(23);
+            for (int i = 0; i < n; i++) noise[i] = (float)(rng.NextDouble() * 2 - 1);
+            var d = new float[n];
+            const int span = 12;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    float sum = 0;
+                    for (int k = 0; k < span; k++) sum += noise[(i + k) % n];
+                    d[i] = sum / span;
+                }
+                System.Array.Copy(d, noise, n);
+            }
+            float peak = d.Max(x => Mathf.Abs(x));
+            for (int i = 0; i < n; i++)
+            {
+                double p = 2 * System.Math.PI * i / n;
+                d[i] = d[i] / peak * 0.34f * (float)(0.78 + 0.22 * System.Math.Cos(p * 3));
+            }
+            return d;
+        }
+
+        /// <summary>GR-32 (F55): the incubator is done: two soft rising notes, like a kitchen timer's friendlier cousin.</summary>
+        public static float[] MakeReady()
+        {
+            const float length = 0.75f;
+            var d = new float[(int)(length * SampleRate)];
+            foreach (var (at, pitch) in new[] { (0f, 659.25f), (0.13f, 987.77f) })
+                for (int i = (int)(at * SampleRate); i < d.Length; i++)
+                {
+                    float t = i / (float)SampleRate - at;
+                    d[i] += Mathf.Min(1, t / 0.004f) * Mathf.Exp(-t * 7f) * (Mathf.Sin(2 * Mathf.PI * pitch * t) * 0.24f + Mathf.Sin(2 * Mathf.PI * pitch * 2 * t) * 0.06f);
+                }
+            for (int i = 0; i < d.Length; i++) d[i] *= Mathf.Min(1, (d.Length - 1 - i) / (0.08f * SampleRate));
             return d;
         }
 

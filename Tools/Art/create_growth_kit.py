@@ -79,6 +79,8 @@ PALETTE = {
     # Takes the culture's colour at run time (a grower's label and gauge arc).
     'GK_Culture': '#FF5E7E',
     'GK_Cloud': '#FFFFFF',
+    # GR-32 (F57): the plain pieces' stone, pot and old wood.
+    'GK_Stone': '#A9A49B', 'GK_StoneDark': '#6F6A66', 'GK_Terracotta': '#C8734A', 'GK_Bleached': '#E3D8C3',
 }
 MAT = {}
 
@@ -394,8 +396,8 @@ TANK_W, TANK_D, TANK_STAND, TANK_GLASS = 1.5, 1.0, 0.9, 0.62
 
 def tank_starter():
     """GrowthWorld.BuildTank for a Starter tank (1.5 x 1.0; stand 0.9, glass 0.62, front +Z): a cream cabinet with turquoise
-    doors and a kick, the frame's rails and posts round the glass, and a light bar on top. GR-24: a soft backdrop inside the
-    back glass (pale water and the shapes of weed), the doors' hinges, and on the back its plug and cord."""
+    doors and a kick, the frame's rails and posts round the glass, and a light bar on top. GR-24: the doors' hinges, and on
+    the back its plug and cord. GR-32: its backdrop is a piece of its own (tank_backdrop)."""
     W, D, S, G = TANK_W, TANK_D, TANK_STAND, TANK_GLASS
     top = S + G
     box((0, 0.05, 0), (W - 0.04, 0.1, D - 0.04), 'GK_TealDark', r=0.03)
@@ -412,11 +414,6 @@ def tank_starter():
             cyl((sx * (W / 2 + 0.005), S + G / 2, sz * (D / 2 + 0.005)), 0.03, G, 'GK_Teal', r=0.01, verts=16)
     box((0, top + 0.075, -D * 0.15), (W * 0.8, 0.05, 0.14), 'GK_Cream', r=0.02)
     box((0, top + 0.05, -D * 0.15), (W * 0.74, 0.006, 0.09), 'GK_GlowWhite', r=0)
-    # The backdrop, inside the back glass: pale water and a few weed shapes in two greens.
-    box((0, S + G / 2 + 0.02, -D / 2 + 0.012), (W - 0.06, G - 0.04, 0.006), 'GK_TealLight', r=0)
-    for k, (x, h, w, m) in enumerate(((-0.55, 0.36, 0.1, 'GK_GreenDark'), (-0.38, 0.24, 0.08, 'GK_Green'), (-0.1, 0.18, 0.12, 'GK_GreenDark'),
-                                       (0.24, 0.3, 0.09, 'GK_Green'), (0.42, 0.42, 0.11, 'GK_GreenDark'), (0.6, 0.22, 0.08, 'GK_Green'))):
-        ball((x, S + 0.05 + h / 2, -D / 2 + 0.017), (w / 2, h / 2, 0.004), m, seg=14)
     # The back of the cabinet: its plug, a cord looping down to the floor.
     box((W / 2 - 0.2, S * 0.6, -D / 2 - 0.006), (0.08, 0.06, 0.012), 'GK_Cream', r=0.01)
     tube([(W / 2 - 0.2, S * 0.6, -D / 2 - 0.02), (W / 2 - 0.16, S * 0.35, -D / 2 - 0.05), (W / 2 - 0.1, 0.02, -D / 2 - 0.06)], 0.009, 'GK_Ink')
@@ -1002,11 +999,7 @@ def tank_large():
     """GrowthWorld.BuildTank for a Large tank (2.5 x 1.0; stand 0.8, glass 0.75): the Starter tank's cabinet and frame, longer,
     with three doors."""
     tank_cabinet(*LARGE, 3)
-    W, D, S, G = LARGE  # GR-24: the backdrop inside its back glass (pale water and weed), and its plug and cord
-    box((0, S + G / 2 + 0.02, -D / 2 + 0.012), (W - 0.06, G - 0.04, 0.006), 'GK_TealLight', r=0)
-    for k, (x, h, w, m) in enumerate(((-1.0, 0.42, 0.11, 'GK_GreenDark'), (-0.75, 0.3, 0.09, 'GK_Green'), (-0.3, 0.22, 0.12, 'GK_GreenDark'),
-                                       (0.2, 0.36, 0.1, 'GK_Green'), (0.62, 0.5, 0.12, 'GK_GreenDark'), (0.95, 0.28, 0.09, 'GK_Green'))):
-        ball((x, S + 0.05 + h / 2, -D / 2 + 0.017), (w / 2, h / 2, 0.004), m, seg=14)
+    W, D, S, G = LARGE  # GR-24: its plug and cord
     box((W / 2 - 0.2, S * 0.6, -D / 2 - 0.006), (0.08, 0.06, 0.012), 'GK_Cream', r=0.01)
     tube([(W / 2 - 0.2, S * 0.6, -D / 2 - 0.02), (W / 2 - 0.16, S * 0.35, -D / 2 - 0.05), (W / 2 - 0.1, 0.02, -D / 2 - 0.06)], 0.009, 'GK_Ink')
     return join('TankLarge')
@@ -2583,9 +2576,135 @@ WAVE_DECOR = [decor_reeds, decor_lily_lamp, decor_watermill, decor_volcano, deco
               decor_lighthouse, decor_chest, decor_coral_arch]
 
 
+def tank_backdrop():
+    """GR-32 (F56): the soft backdrop inside a Starter tank's back glass (pale water and the shapes of weed), a piece of its
+    own: a tank against a wall has it, a tank in the middle of a room is see-through on every side."""
+    W, D, S, G = TANK_W, TANK_D, TANK_STAND, TANK_GLASS
+    box((0, S + G / 2 + 0.02, -D / 2 + 0.012), (W - 0.06, G - 0.04, 0.006), 'GK_TealLight', r=0)
+    for k, (x, h, w, m) in enumerate(((-0.55, 0.36, 0.1, 'GK_GreenDark'), (-0.38, 0.24, 0.08, 'GK_Green'), (-0.1, 0.18, 0.12, 'GK_GreenDark'),
+                                       (0.24, 0.3, 0.09, 'GK_Green'), (0.42, 0.42, 0.11, 'GK_GreenDark'), (0.6, 0.22, 0.08, 'GK_Green'))):
+        ball((x, S + 0.05 + h / 2, -D / 2 + 0.017), (w / 2, h / 2, 0.004), m, seg=14)
+    return join('TankBackdrop')
+
+
+def tank_backdrop_large():
+    """GR-32 (F56): the same for a Large tank."""
+    W, D, S, G = LARGE
+    box((0, S + G / 2 + 0.02, -D / 2 + 0.012), (W - 0.06, G - 0.04, 0.006), 'GK_TealLight', r=0)
+    for k, (x, h, w, m) in enumerate(((-1.0, 0.42, 0.11, 'GK_GreenDark'), (-0.75, 0.3, 0.09, 'GK_Green'), (-0.3, 0.22, 0.12, 'GK_GreenDark'),
+                                       (0.2, 0.36, 0.1, 'GK_Green'), (0.62, 0.5, 0.12, 'GK_GreenDark'), (0.95, 0.28, 0.09, 'GK_Green'))):
+        ball((x, S + 0.05 + h / 2, -D / 2 + 0.017), (w / 2, h / 2, 0.004), m, seg=14)
+    return join('TankBackdropLarge')
+
+
+def plain_pot(mat, height=0.1, top=0.074, foot=0.054):
+    """A plain flowerpot on a piece's base: a tapered body, a rim and soil. Returns the height of the soil."""
+    cone((0, DECOR_BASE + height / 2, 0), foot, top, height, mat, verts=24)
+    cyl((0, DECOR_BASE + height + 0.008, 0), top + 0.007, 0.022, mat, r=0.006, verts=24)
+    cyl((0, DECOR_BASE + height + 0.018, 0), top - 0.006, 0.004, 'GK_Soil', r=0, verts=20)
+    return DECOR_BASE + height + 0.02
+
+
+def decor_stones():
+    """Riverbank, plain (GR-32, F57): a little cairn of smooth river stones on the grass, a few more at its foot, moss between."""
+    decor_base('GK_Grass')
+    y = DECOR_BASE
+    for x, z, rx, ry, rz, m in ((0.0, 0.0, 0.088, 0.038, 0.072, 'GK_Stone'), (0.012, -0.006, 0.066, 0.031, 0.056, 'GK_Pavement'),
+                                (-0.006, 0.004, 0.048, 0.025, 0.04, 'GK_Stone'), (0.004, 0.0, 0.032, 0.02, 0.028, 'GK_Pavement')):
+        ball((x, y + ry * 0.9, z), (rx, ry, rz), m, seg=20)
+        y += ry * 1.72
+    for x, z, r, m in ((0.118, 0.05, 0.03, 'GK_Pavement'), (-0.108, 0.07, 0.026, 'GK_Stone'), (0.07, -0.108, 0.022, 'GK_Stone')):
+        ball((x, DECOR_BASE + 0.012, z), (r, 0.017, r * 0.85), m, seg=14)
+    for x, z in ((-0.085, -0.06), (-0.05, -0.105), (0.105, -0.03), (0.02, 0.11)):
+        ball((x, DECOR_BASE + 0.006, z), (0.03, 0.01, 0.024), 'GK_GreenDark', seg=12)
+    return join('DecorStones')
+
+
+def decor_fern():
+    """Riverbank, plain (GR-32, F57): a green fern in a terracotta pot."""
+    decor_base('GK_Grass')
+    soil = plain_pot('GK_Terracotta')
+    for k in range(9):
+        a = math.radians(k * 40 + 12)
+        reach = 0.125 + 0.028 * (k % 3) * 0.5
+        rise = 0.15 + 0.05 * ((k + 1) % 3)
+        dx, dz = math.cos(a), math.sin(a)
+        m = 'GK_Green' if k % 2 else 'GK_GreenDark'
+        pts = [(0.012 * dx, soil - 0.004, 0.012 * dz), (reach * 0.45 * dx, soil + rise * 0.8, reach * 0.45 * dz), (reach * 0.85 * dx, soil + rise, reach * 0.85 * dz), (reach * dx, soil + rise * 0.72, reach * dz)]
+        tube(pts, 0.0055, m, sides=8)
+        for n, u in enumerate((0.34, 0.5, 0.66, 0.82)):
+            px = reach * u * dx
+            pz = reach * u * dz
+            py = soil + rise * (1.05 - (u - 0.55) ** 2 * 3.2) * min(1, u * 1.9)
+            w = 0.034 - n * 0.005
+            for sd in (-1, 1):
+                ball((px - sd * dz * w * 0.7, py - 0.002, pz + sd * dx * w * 0.7), (w * 0.72, 0.004, w * 0.34), m, seg=8, rot=(0, -math.degrees(a) + sd * 90, 0))
+    return join('DecorFern')
+
+
+def decor_rocks():
+    """Hot springs, plain (GR-32, F57): a heap of dark rocks on the ground, a sprig of green between them."""
+    decor_base('GK_StoneDark')
+    for x, y, z, rx, ry, rz, m, turn in ((-0.05, 0.05, -0.02, 0.085, 0.06, 0.07, 'GK_StoneDark', 20), (0.065, 0.04, 0.03, 0.07, 0.046, 0.06, 'GK_Stone', -30),
+                                         (0.0, 0.11, 0.0, 0.056, 0.044, 0.05, 'GK_Stone', 55), (-0.09, 0.024, 0.09, 0.046, 0.026, 0.04, 'GK_StoneDark', 10),
+                                         (0.11, 0.022, -0.075, 0.042, 0.024, 0.036, 'GK_StoneDark', 70)):
+        ball((x, DECOR_BASE + y, z), (rx, ry, rz), m, seg=9, rot=(0, turn, 8))
+    for k, (dx, h) in enumerate(((-0.024, 0.1), (0.0, 0.13), (0.026, 0.09))):
+        tube([(0.062 + dx * 0.2, DECOR_BASE + 0.05, -0.05), (0.062 + dx, DECOR_BASE + 0.05 + h, -0.055 - abs(dx))], 0.006, 'GK_Green' if k % 2 else 'GK_GreenDark', sides=8)
+        ball((0.062 + dx, DECOR_BASE + 0.052 + h, -0.055 - abs(dx)), (0.012, 0.024, 0.012), 'GK_Green', seg=8)
+    return join('DecorRocks')
+
+
+def decor_bamboo():
+    """Hot springs, plain (GR-32, F57): three canes of bamboo in a stone pot."""
+    decor_base('GK_StoneDark')
+    soil = plain_pot('GK_Stone', height=0.09, top=0.078, foot=0.062)
+    for x, z, h, lean, m in ((-0.026, 0.008, 0.36, -3, 'GK_Lime'), (0.024, -0.018, 0.31, 3, 'GK_Green'), (0.004, 0.03, 0.25, 1, 'GK_Lime')):
+        tip = (x + math.sin(math.radians(lean)) * h, soil + h, z)
+        tube([(x, soil - 0.004, z), tip], 0.0105, m, sides=10)
+        for u in (0.25, 0.5, 0.75):
+            cyl((x + (tip[0] - x) * u, soil + h * u, z), 0.0125, 0.007, 'GK_GreenDark', r=0, verts=12)
+        for k, (a, up, length) in enumerate(((35, 0.98, 0.075), (155, 0.86, 0.085), (270, 0.72, 0.07))):
+            ra = math.radians(a + x * 900)
+            ball((tip[0] * up + x * (1 - up) + math.cos(ra) * length * 0.55, soil + h * up + 0.012, z + math.sin(ra) * length * 0.55),
+                 (length * 0.62, 0.003, 0.011), 'GK_GreenDark' if k % 2 else 'GK_Green', seg=8, rot=(0, -math.degrees(ra), 18))
+    return join('DecorBamboo')
+
+
+def decor_shells():
+    """Seaside, plain (GR-32, F57): a few shells and pebbles the tide left on the sand."""
+    decor_base('GK_Sand')
+    for cx, cz, size, turn, m in ((-0.055, -0.03, 0.062, 200, 'GK_Pebble1'), (0.07, 0.03, 0.05, -35, 'GK_Bleached'), (-0.02, 0.085, 0.04, 70, 'GK_Pebble3')):
+        for k in range(5):
+            a = math.radians(turn + (k - 2) * 26)
+            ball((cx + math.cos(a) * size * 0.55, DECOR_BASE + 0.012 + (2 - abs(k - 2)) * size * 0.05, cz + math.sin(a) * size * 0.55),
+                 (size * 0.56, size * 0.17, size * 0.2), m, seg=10, rot=(0, -math.degrees(a), 0))
+        ball((cx - math.cos(math.radians(turn)) * size * 0.02, DECOR_BASE + 0.008, cz - math.sin(math.radians(turn)) * size * 0.02), (size * 0.2, size * 0.13, size * 0.2), m, seg=10)
+    cone((0.05, DECOR_BASE + 0.024, -0.082), 0.026, 0.004, 0.07, 'GK_Bleached', rot=(0, 30, 80), verts=14)
+    for x, z, r, m in ((0.118, -0.03, 0.017, 'GK_Pavement'), (-0.12, 0.05, 0.015, 'GK_Stone'), (0.0, -0.11, 0.013, 'GK_Pavement'), (0.09, 0.1, 0.012, 'GK_Stone')):
+        ball((x, DECOR_BASE + 0.008, z), (r, r * 0.6, r * 0.85), m, seg=12)
+    return join('DecorShells')
+
+
+def decor_driftwood():
+    """Seaside, plain (GR-32, F57): a bleached branch washed ashore, lying on the sand, a tuft of dune grass behind it."""
+    decor_base('GK_Sand')
+    tube([(-0.138, DECOR_BASE + 0.016, 0.052), (-0.06, DECOR_BASE + 0.034, 0.03), (0.03, DECOR_BASE + 0.03, -0.01), (0.122, DECOR_BASE + 0.06, -0.056)], 0.021, 'GK_Bleached')
+    tube([(-0.03, DECOR_BASE + 0.036, 0.02), (-0.015, DECOR_BASE + 0.1, -0.03), (0.02, DECOR_BASE + 0.15, -0.058)], 0.0115, 'GK_Bleached', sides=10)
+    tube([(0.05, DECOR_BASE + 0.038, -0.02), (0.095, DECOR_BASE + 0.082, 0.03), (0.12, DECOR_BASE + 0.1, 0.066)], 0.009, 'GK_Bleached', sides=10)
+    ball((-0.138, DECOR_BASE + 0.016, 0.052), (0.022, 0.021, 0.021), 'GK_WoodLight', seg=10)
+    for k, (x, z, h, lean) in enumerate(((-0.075, -0.09, 0.14, 8), (-0.055, -0.1, 0.17, -5), (-0.035, -0.09, 0.12, -12), (-0.09, -0.07, 0.1, 14))):
+        tube([(x, DECOR_BASE - 0.004, z), (x + math.sin(math.radians(lean)) * h, DECOR_BASE + h, z)], 0.0045, 'GK_Lime' if k % 2 else 'GK_Green', sides=6)
+    ball((0.1, DECOR_BASE + 0.009, 0.1), (0.018, 0.011, 0.015), 'GK_Stone', seg=12)
+    return join('DecorDriftwood')
+
+
+# GR-32: tester round 1's pieces, last so the rest draw their random numbers as before.
+WAVE_ROUND1 = [tank_backdrop, tank_backdrop_large, decor_stones, decor_fern, decor_rocks, decor_bamboo, decor_shells, decor_driftwood]
+
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR  # later waves last, so earlier ones draw their random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

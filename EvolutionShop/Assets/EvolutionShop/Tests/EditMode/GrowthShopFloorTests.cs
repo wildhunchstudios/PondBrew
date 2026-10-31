@@ -202,6 +202,43 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void ADayLengthReadsWithItsUnits()
+        {
+            Assert.That(GrowthShop.DayLengthWords, Is.EqualTo("5 minutes 30 seconds"));
+            Assert.That(GrowthShop.DurationWords(60), Is.EqualTo("1 minute"));
+            Assert.That(GrowthShop.DurationWords(61), Is.EqualTo("1 minute 1 second"));
+            Assert.That(GrowthShop.DurationWords(45), Is.EqualTo("45 seconds"));
+            Assert.That(GrowthShop.DurationWords(0.4f), Is.EqualTo("1 second"), "rounded up, as the day's clock is");
+        }
+
+        [Test]
+        public void NoWordsLeftOfTheOldRoomsOrAClutch()
+        {
+            var words = GrowthLessons.All.SelectMany(l => l.Card.Concat(new[] { l.Title })).Concat(GrowthContent.Eras.SelectMany(e => new[] { e.Name, e.Opens, e.Goal }))
+                .Concat(GrowthContent.Stations.SelectMany(st => st.Levels.Select(l => l.Change))).ToList();
+            Assert.That(words.Where(w => w != null && (w.Contains("ack room") || w.Contains("annex") || w.Contains("lutch") || w.Contains("Show me") || w.Contains("5:30"))), Is.Empty);
+            Assert.That(GrowthShop.AnnexDef.Name, Is.EqualTo("Power room"));
+            Assert.That(GrowthContent.Eras[0].Name, Is.EqualTo("Laboratory"));
+        }
+
+        [Test]
+        public void OnlyTheTanksInTheMiddleOfARoomStandFree()
+        {
+            var free = GrowthShop.Places.Select(p => p.Id).Where(GrowthSpaces.FreeStanding).ToList();
+            Assert.That(free, Is.EquivalentTo(new[] { "a3", "b3" }));
+        }
+
+        [Test]
+        public void ThePlainDecorationsAreTheCheapestOfEachTheme()
+        {
+            foreach (Water w in System.Enum.GetValues(typeof(Water)))
+            {
+                var theme = GrowthContent.Decor.Where(d => d.Water == w).OrderBy(d => d.Credits).ToList();
+                Assert.That(theme.Take(2).All(d => new[] { "stones", "fern", "rocks", "bamboo", "shells", "driftwood" }.Contains(d.Id)), Is.True, w + "'s two plain pieces cost the least");
+            }
+        }
+
+        [Test]
         public void TheNewKeysAreAllFree()
         {
             var settings = new GrowthSettings();

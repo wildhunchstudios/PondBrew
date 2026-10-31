@@ -30,18 +30,18 @@ namespace EvolutionShop
             s.LoadFixture(new GrowthShop());
             var shop = s.Shop;
             yield return null; yield return null;
-            yield return AimAt(new Vector3(0.4f, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition, GrowthTargetKind.Board, null, "The reticle focuses the pinboard in the back room");
+            yield return AimAt(new Vector3(0.4f, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition, GrowthTargetKind.Board, null, "The reticle focuses the pinboard in the laboratory");
             yield return Press(Key.E);
             string card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Board && card.Contains("Now · Era 1 · Back room") && card.Contains("Next: era 2 · Real shop") && card.Contains("Gate: 2 stars, 3 creatures discovered, 2 tanks") &&
+            Check(s.Card == GrowthCard.Board && card.Contains("Now · Era 1 · Laboratory") && card.Contains("Next: Era 2 · Real shop") && card.Contains("Gate: 2 stars, 3 creatures discovered, 2 tanks") &&
                 card.Contains("Discover creatures: 0 / 72 · Journal: 0 / 288 · Exhibition: 0 of 6 requirements") && card.Contains("Discover 48 of the 72 creatures (0/48)") && card.Contains("Discover 5 of the 9 crowns (0/5)"),
-                "E opens the pinboard: now (era 1's goal and steps), next (era 2 and its gate) and the long goal with the Grand Exhibition's requirements, from the first night");
+                "E opens the pinboard: now (Era 1's goal and steps), next (Era 2 and its gate) and the long goal with the Grand Exhibition's requirements, from the first night");
             yield return Shot("150-board-first-night");
             s.SetCard(GrowthCard.None);
             yield return null;
             yield return Press(Key.Tab);
             card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Journal && card.Contains("Goals") && card.Contains("Discover creatures: 0 / 72 · Journal: 0 / 288") && card.Contains("Next: era 2 · Real shop"), "Tab: the journal opens on the same goals");
+            Check(s.Card == GrowthCard.Journal && card.Contains("Goals") && card.Contains("Discover creatures: 0 / 72 · Journal: 0 / 288") && card.Contains("Next: Era 2 · Real shop"), "Tab: the journal opens on the same goals");
             yield return Shot("151-journal-goals");
             s.SetCard(GrowthCard.None);
 

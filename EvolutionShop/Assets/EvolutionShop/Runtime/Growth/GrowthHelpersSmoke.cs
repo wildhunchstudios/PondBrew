@@ -42,7 +42,7 @@ namespace EvolutionShop
 
         IEnumerator HelpersScenario()
         {
-            limitations.Add("GR-09 helpers route: the fixture is labelled: an era 4, four-star shop (reputation 860) with 8,000 credits, 300 research points and 160 sales so far, unit B open, 12 founders known, a Pondlet and Ribbonfin pair in the pair log, growers at level 2, the lab annex with the bubble turbine and electric pumps, the incubator at level 3, the breeding tank, and the counter at level 3. The Large tank is bought with the shop's action, then stocked with six Ribbonfins (development stock); on the second night it is filled again and a Starter tank bought on a2 is stocked with Bubblebellies (development stock), and Moss goes back to his recipe once his pair is in, so the second day has stock for two visitors to wait at once. Hiring, training, duty, stock targets, Moss's settings and upgrades call the shop's actions as the card buttons do (UI Toolkit buttons are not clicked); the days run on the shop's own clock (accelerated); before the second day closes, the shop's credits are set to 20 (labelled) to show helpers staying home. Placeholder figures: plain shapes for the helpers and the staff board.");
+            limitations.Add("GR-09 helpers route: the fixture is labelled: an era 4, four-star shop (reputation 860) with 8,000 credits, 300 research points and 160 sales so far, unit B open, 12 founders known, a Pondlet and Ribbonfin pair in the pair log, growers at level 2, the power room with the bubble turbine and electric pumps, the incubator at level 3, the breeding tank, and the counter at level 3. The Large tank is bought with the shop's action, then stocked with six Ribbonfins (development stock); on the second night it is filled again and a Starter tank bought on a2 is stocked with Bubblebellies (development stock), and Moss goes back to his recipe once his pair is in, so the second day has stock for two visitors to wait at once. Hiring, training, duty, stock targets, Moss's settings and upgrades call the shop's actions as the card buttons do (UI Toolkit buttons are not clicked); the days run on the shop's own clock (accelerated); before the second day closes, the shop's credits are set to 20 (labelled) to show helpers staying home. Placeholder figures: plain shapes for the helpers and the staff board.");
             yield return Opening();
             TakeInput();
 
@@ -82,10 +82,10 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(s.World.FigureShowing("pip") && s.World.FigureShowing("nori") && s.World.FigureShowing("moss") &&
                 (Flat(s.World.FigurePosition("pip")) - Flat(GrowthWalk.Counter)).magnitude < 0.05f && (Flat(s.World.FigurePosition("nori")) - Flat(GrowthWalk.NoriHome)).magnitude < 0.05f &&
-                (Flat(s.World.FigurePosition("moss")) - Flat(GrowthWalk.MossHome)).magnitude < 0.05f, "Their figures stand at work: Pip behind the counter, Nori and Moss in the back room");
+                (Flat(s.World.FigurePosition("moss")) - Flat(GrowthWalk.MossHome)).magnitude < 0.05f, "Their figures stand at work: Pip behind the counter, Nori and Moss in the laboratory");
 
             // Nori's card: the stock targets (Nori's from era 3; the sorter shares them).
-            yield return AimAt(new Vector3(0.8f, 0, 2.2f), new Vector3(0.6f, 1.1f, 5.4f), GrowthTargetKind.Helper, "nori", "The reticle focuses Nori through the back room's door");
+            yield return AimAt(new Vector3(0.8f, 0, 2.2f), new Vector3(0.6f, 1.1f, 5.4f), GrowthTargetKind.Helper, "nori", "The reticle focuses Nori through the laboratory's door");
             Check(s.FocusName(out status) == "Nori, stocker (level 1)" && status == "Nothing waiting to move · E card", "It is Nori, saying there is nothing waiting to move");
             yield return Press(Key.E);
             card = s.Ui.CardText();
@@ -122,7 +122,7 @@ namespace EvolutionShop
                     carried = true;
                 }
             }
-            Check(carried && followed, "Nori's figure walked the step's path through the back room's door, as the rules timed it");
+            Check(carried && followed, "Nori's figure walked the step's path through the laboratory's door, as the rules timed it");
             Check(shop.Shown("pondlet") == 2 && shop.Hatchlings.Count == 0 && shop.ContainerAt("a1").Occupants.Count(o => o.Species == "pondlet") == 2,
                 "The clutch is in the shop's tank: two Pondlets, the target met");
 
@@ -153,12 +153,12 @@ namespace EvolutionShop
                 "Moss fetched the recipe's two doses one by one and started a Pondlet");
             for (int i = 0; i < 400 && shop.Hatchlings.Count == 0; i++) { s.Advance(0.1f); if (i % 10 == 0) yield return null; }
             for (int i = 0; i < 40; i++) { s.Advance(0.1f); if (i % 10 == 0) yield return null; }
-            Check(shop.Hatchlings.Count == 2 && nori.Status == "No room for what is waiting: the tanks are at their targets or full, and no rack has room" && moss.Status == "Waiting for the clutch to be taken off the tray",
+            Check(shop.Hatchlings.Count == 2 && nori.Status == "No room for what is waiting: the tanks are at their targets or full, and no rack has room" && moss.Status == "Waiting for the hatchlings to be taken off the tray",
                 "With the target met the clutch waits on the tray, and both say why: Nori has no room for it, Moss waits for the tray");
             yield return AimAt(new Vector3(-0.45f, 0, 2.0f), GrowthWorld.StaffBoardPosition, GrowthTargetKind.StaffBoard, "staff", "The reticle focuses the staff board again");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(card.Contains("No room for what is waiting") && card.Contains("Waiting for the clutch to be taken off the tray") && card.Contains("Wages: 93 credits a night and day."),
+            Check(card.Contains("No room for what is waiting") && card.Contains("Waiting for the hatchlings to be taken off the tray") && card.Contains("Wages: 93 credits a night and day."),
                 "The staff card says what each helper is doing, and the wage bill");
             yield return Shot("125-helpers-waiting");
             s.SetCard(GrowthCard.None);

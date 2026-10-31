@@ -52,8 +52,8 @@ namespace EvolutionShop.Tests
             Assert.That(shop.HasBreedingTank, Is.False);
             Assert.That(shop.Level("breeding"), Is.Zero, "not bought at the start");
             Assert.That(shop.UpgradeCheck("breeding", out var first, out string why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 2"));
-            Assert.That((first.Credits, first.Rp, first.Era, first.Stars), Is.EqualTo((60, 5, 2, 2)), "60 credits and 5 RP, era 2, two stars");
+            Assert.That(why, Is.EqualTo("Needs Era 2"));
+            Assert.That((first.Credits, first.Rp, first.Era, first.Stars), Is.EqualTo((60, 5, 2, 2)), "60 credits and 5 RP, Era 2, two stars");
             shop = At(era: 2, stars: 2, credits: 500, rp: 4);
             Assert.That(shop.UpgradeCheck("breeding", out _, out why), Is.EqualTo(GrowthFailure.Locked));
             Assert.That(why, Is.EqualTo("Needs 5 research points"));
@@ -66,7 +66,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Upgrade("breeding").Success, Is.True, "level 2 for 200 credits");
             Assert.That((shop.Level("breeding"), shop.Credits, shop.BreedSeconds, shop.LargeParents, shop.TintPort), Is.EqualTo((2, 240, 40f, true, true)));
             Assert.That(shop.UpgradeCheck("breeding", out _, out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 4"), "GR-06: its second pair (level 3) comes in era 4");
+            Assert.That(why, Is.EqualTo("Needs Era 4"), "GR-06: its second pair (level 3) comes in Era 4");
             Assert.That(GrowthShop.GreyboxStations, Does.Not.Contain("breeding"), "the stations a shop starts with are unchanged");
         }
 
@@ -263,7 +263,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.EraUp).Text, Is.EqualTo("Era 3: Plumbing. Water kits and catalog page 3 open."));
             Assert.That(shop.EraGoal, Is.EqualTo(GrowthContent.Eras[2].Goal));
             Assert.That(shop.Objectives().First().text, Is.EqualTo("Fill a Large tank (0/8 spaces)"));
-            Assert.That(shop.Objectives().Select(o => o.text), Has.Some.StartsWith("Open the lab annex"), "GR-07: era 3's goal goes on to the lab annex and power");
+            Assert.That(shop.Objectives().Select(o => o.text), Has.Some.StartsWith("Open the power room"), "GR-07: era 3's goal goes on to the power room and power");
             // Two stars are not enough, whatever else is done.
             var early = At(era: 2, stars: 2, credits: 1000, breeding: 1);
             Assert.That(early.BuyContainer("large", "a3").Success, Is.True);

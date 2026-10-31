@@ -115,14 +115,14 @@ namespace EvolutionShop.Tests
             shop.Rp = 12;
             Assert.That(shop.Research("spark").Success, Is.True);
             Assert.That(shop.Rp, Is.EqualTo(2));
-            Assert.That(shop.Owns("spark") && shop.GrowerUnits["spark"] == shop.GrowerCapacity, Is.True, "its grower stands in the back room, full");
+            Assert.That(shop.Owns("spark") && shop.GrowerUnits["spark"] == shop.GrowerCapacity, Is.True, "its grower stands in the laboratory, full");
             Assert.That(shop.Research("spark").Failure, Is.EqualTo(GrowthFailure.Owned));
             Assert.That(shop.ResearchCheck("dusk", out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 5"));
+            Assert.That(why, Is.EqualTo("Needs Era 5"));
             Assert.That(shop.Research("ember").Failure, Is.EqualTo(GrowthFailure.NotInCatalog), "Ember comes from the supplier");
             var early = At(era: 1, stars: 1, rp: 50);
             Assert.That(early.ResearchCheck("spark", out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 2"));
+            Assert.That(why, Is.EqualTo("Needs Era 2"));
             var late = At(era: 5, stars: 5, rp: 150);
             Assert.That(late.Research("dusk").Success && late.Rp == 0 && late.Owns("dusk"), Is.True);
         }

@@ -362,7 +362,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Upgrade("incubator").Success, Is.True);
             Assert.That(shop.MaxDoses, Is.EqualTo(4));
             Assert.That(shop.IncubationSeconds, Is.EqualTo(8));
-            Assert.That(shop.Upgrade("generator").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-07: the generator waits for era 3 and the lab annex");
+            Assert.That(shop.Upgrade("generator").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-07: the generator waits for era 3 and the power room");
             Assert.That(shop.Upgrade("bench").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-06: the microscope waits for era 2");
             Assert.That(shop.Upgrade("breeding").Failure, Is.EqualTo(GrowthFailure.Locked), "GR-05: the breeding tank waits for era 2");
         }
@@ -427,7 +427,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Objectives().First().done, Is.False);
             shop.Era = 3;
             // GR-07: era 3's goal, the lab annex and powered pumps. GR-08: era 4's, the workshop and a full day on the line. GR-11: era 5's, the Grand Exhibition.
-            Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Open the lab annex"));
+            Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Open the power room"));
             shop.Era = 4;
             Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Open the workshop"));
             Assert.That(shop.Objectives().Select(l => l.text), Has.Some.StartsWith("Run a full day on the line"));

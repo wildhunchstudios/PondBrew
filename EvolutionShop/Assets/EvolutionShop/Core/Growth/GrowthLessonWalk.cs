@@ -142,7 +142,7 @@ namespace EvolutionShop.Growth
                 case "decor": return Do(s.PutDecor("reeds", TargetId(s, id)), "put the reeds beside a tank");
                 case "colours": s.Journal.Add(GrowthShop.JournalKey("pondlet", Colour.Sunny)); return null;
                 case "pip": return Do(s.Hire("pip"), "hire Pip");
-                case "annex": return Do(s.BuyAnnex(), "open the annex");
+                case "annex": return Do(s.BuyAnnex(), "open the power room");
                 case "generator": return Do(s.Upgrade("generator"), "buy the generator");
                 case "vat": return Do(s.Order("vat"), "order the vat");
                 case "pipes":

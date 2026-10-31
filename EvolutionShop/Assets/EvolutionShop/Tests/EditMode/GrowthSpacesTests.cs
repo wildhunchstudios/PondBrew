@@ -90,7 +90,7 @@ namespace EvolutionShop.Tests
             shop.UnitB = false;
             Assert.That(shop.UnitCCheck(out string why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Does.StartWith("Open unit B first"));
             shop.UnitB = true;
-            Assert.That(At(3, 4).UnitCCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs era 4"));
+            Assert.That(At(3, 4).UnitCCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs Era 4"));
             Assert.That(At(4, 3).UnitCCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs 4 stars"));
             Assert.That(At(4, 4, credits: 3999).UnitCCheck(out why), Is.EqualTo(GrowthFailure.NotEnoughCredits));
             var day = At(4, 4); day.OpenShop();
@@ -111,7 +111,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.UnitCCheck(out why), Is.EqualTo(GrowthFailure.MaxLevel));
             // The other rooms' openings are named for the banner too.
             var annex = At(3, 3); Assert.That(annex.BuyAnnex().Success, Is.True);
-            Assert.That(annex.TakeEvents().Single(e => e.Kind == GrowthEventKind.Opened).Text, Is.EqualTo("Lab annex opened"));
+            Assert.That(annex.TakeEvents().Single(e => e.Kind == GrowthEventKind.Opened).Text, Is.EqualTo("Power room opened"));
             var b = At(2, 2); b.UnitB = false; Assert.That(b.BuyUnitB().Success, Is.True);
             Assert.That(b.TakeEvents().Any(e => e.Kind == GrowthEventKind.Opened && e.Text == "Shop unit B opened"), Is.True);
         }
@@ -124,7 +124,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.Objectives().Select(o => o.text), Has.Some.StartsWith("Open shop unit C"));
             Assert.That(shop.BuyUnitC().Success, Is.True);
             var four = At(4, 5); four.UnitC = true;
-            Assert.That(four.HallCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs era 5"));
+            Assert.That(four.HallCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs Era 5"));
             var low = At(5, 4); low.UnitC = true;
             Assert.That(low.HallCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs 5 stars"));
             Assert.That(shop.Objectives().Single(o => o.text.StartsWith("Finish the exhibition hall")).done, Is.False);
@@ -144,9 +144,9 @@ namespace EvolutionShop.Tests
         {
             var browse = GrowthSpaces.SpotOf("c4").Browse;
             Assert.That(GrowthWalk.RoomOf(browse), Is.EqualTo(GrowthWalk.Room.C));
-            Assert.That(GrowthWalk.RoomOf(GrowthWalk.NoriHome), Is.EqualTo(GrowthWalk.Room.Back), "the back room stays the back room");
+            Assert.That(GrowthWalk.RoomOf(GrowthWalk.NoriHome), Is.EqualTo(GrowthWalk.Room.Back), "the laboratory stays the laboratory");
             var path = GrowthWalk.Path(GrowthWalk.Tray, browse);
-            Assert.That(path, Has.Member((0.8f, 3.5f)).And.Member(GrowthSpaces.Points["ArchC"]).And.Member(GrowthSpaces.Points["UnitCAisle"]), "through the back room's door, unit A, unit B and unit C's arch");
+            Assert.That(path, Has.Member((0.8f, 3.5f)).And.Member(GrowthSpaces.Points["ArchC"]).And.Member(GrowthSpaces.Points["UnitCAisle"]), "through the laboratory's door, unit A, unit B and unit C's arch");
             Assert.That(GrowthWalk.Path(browse, GrowthWalk.NoriHome).Last(), Is.EqualTo(GrowthWalk.NoriHome));
             Assert.That(GrowthWalk.Path(GrowthWalk.Counter, GrowthWalk.Counter), Is.EqualTo(new[] { GrowthWalk.Counter, GrowthWalk.Counter }), "standing still is no walk");
             // Nori stocks a tank in unit C: the shop's only tank with room for the target's species.

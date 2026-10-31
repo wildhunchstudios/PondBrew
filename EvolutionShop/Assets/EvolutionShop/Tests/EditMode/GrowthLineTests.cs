@@ -67,10 +67,10 @@ namespace EvolutionShop.Tests
         {
             var shop = At(4, 4);
             Assert.That(shop.WorkshopCheck(out string why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Open the lab annex first: the workshop is through its east wall"));
+            Assert.That(why, Is.EqualTo("Open the power room first: the workshop is through its east wall"));
             shop.BuyAnnex();
             var early = At(3, 4); early.BuyAnnex();
-            early.WorkshopCheck(out why); Assert.That(why, Is.EqualTo("Needs era 4: 4 stars, powered pumps running and 12 species"));
+            early.WorkshopCheck(out why); Assert.That(why, Is.EqualTo("Needs Era 4: 4 stars, powered pumps running and 12 species"));
             var low = At(4, 3); low.BuyAnnex();
             low.WorkshopCheck(out why); Assert.That(why, Is.EqualTo("Needs 4 stars"));
             var poor = At(4, 4, credits: 5999); poor.BuyAnnex();
@@ -90,7 +90,7 @@ namespace EvolutionShop.Tests
             UpgradeTo(shop, "generator", 3);
             Assert.That(shop.GeneratorUnits, Is.EqualTo(6f), "the twin turbine: 6 units");
             Assert.That(shop.UpgradeCheck("generator", out _, out why), Is.EqualTo(GrowthFailure.Locked));
-            Assert.That(why, Is.EqualTo("Needs era 5"), "the tide engine in era 5");
+            Assert.That(why, Is.EqualTo("Needs Era 5"), "the tide engine in era 5");
             UpgradeTo(shop, "sorter", 1);
             Assert.That((shop.HasSorter, shop.SorterUnits, shop.PowerOrder.Last()), Is.EqualTo((true, 1f, GrowthShop.SorterPower)), "the sorter joins the power board");
             Assert.That(shop.PowerName(GrowthShop.SorterPower), Is.EqualTo("Sorter"));
@@ -129,7 +129,7 @@ namespace EvolutionShop.Tests
         {
             Assert.That(GrowthLab.InLab((20, 19), annex: true), Is.False, "the workshop's cells wait for it");
             Assert.That((GrowthLab.InLab((20, 19), true, true), GrowthLab.InLab((16, 5), true, true), GrowthLab.InLab((16, 22), true, true)), Is.EqualTo((true, false, false)),
-                "the workshop lies east of the annex, as deep as its first 6 m");
+                "the workshop lies east of the power room, as deep as its first 6 m");
             var shop = Line(chute: false);
             var bare = At(4, 4); bare.BuyAnnex(); UpgradeTo(bare, "generator", 2); UpgradeTo(bare, "pump", 2);
             Assert.That(bare.PipeCheck(GrowthLab.Out, GrowthLab.Sorter, out _, out string why), Is.EqualTo(GrowthFailure.Locked));
@@ -153,7 +153,7 @@ namespace EvolutionShop.Tests
                 Assert.That(GrowthLab.InLab(chute.Cells[i], true, true), Is.True);
                 if (i > 0) Assert.That(GrowthLab.Adjacent(chute.Cells[i - 1], chute.Cells[i]), Is.True);
             }
-            Assert.That(chute.Cells.Any(c => c.r >= GrowthLab.AnnexFirstRow && c.c < GrowthLab.AnnexColumns) && chute.Cells.Any(c => c.c >= GrowthLab.AnnexColumns), Is.True, "over the annex into the workshop");
+            Assert.That(chute.Cells.Any(c => c.r >= GrowthLab.AnnexFirstRow && c.c < GrowthLab.AnnexColumns) && chute.Cells.Any(c => c.c >= GrowthLab.AnnexColumns), Is.True, "over the power room into the workshop");
             Assert.That(chute.Length, Is.EqualTo((chute.Cells.Count - 1) * 0.5f + (GrowthLab.PipeHeight - 0.95f) + (GrowthLab.PipeHeight - 1.6f)).Within(0.001f));
             Assert.That(shop.PowerOrder.Contains(chute.PowerId), Is.False, "the chute needs no pump: clutches slide");
             Assert.That(shop.PipeCheck(GrowthLab.Out, GrowthLab.Sorter, out _, out why), Is.EqualTo(GrowthFailure.Busy));
@@ -177,7 +177,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.SetTarget("pondlet", GrowthShop.MostTarget + 1).Success, Is.False);
             Assert.That(shop.SetTarget("pondlet", 2).Success, Is.True);
             Assert.That(shop.Target("pondlet"), Is.EqualTo(2));
-            Assert.That(shop.SorterStatus, Is.EqualTo("Waiting for a clutch"));
+            Assert.That(shop.SorterStatus, Is.EqualTo("Waiting for hatchlings"));
             for (int i = 0; i < 3; i++) Hatch(shop, "pondlet");
             Assert.That(shop.SorterStatus, Is.EqualTo("Sorting a Pondlet"), "the first two have their tank");
             shop.Tick(1.01f);
@@ -261,7 +261,7 @@ namespace EvolutionShop.Tests
             Assert.That((shop.Incubating, shop.Pending, shop.AutoRecipe), Is.EqualTo((true, "ribbonfin", "ribbonfin")));
             shop.Tick(shop.IncubationSeconds + 0.1f);
             Assert.That(shop.Hatchlings.Count, Is.EqualTo(3));
-            Assert.That(shop.AutoStatus, Is.EqualTo("Waiting: take the clutch out of the incubator"), "no chute: the clutch waits for hands");
+            Assert.That(shop.AutoStatus, Is.EqualTo("Waiting: take the hatchlings out of the incubator"), "no chute: the clutch waits for hands");
             Assert.That(shop.TargetRecipe(), Is.EqualTo("pondlet"), "the clutch on the tray counts: Ribbonfins 2 short, Pondlets 2 short, the first in the catalog first");
             // With the chute and sorter, the tray clears and the next batch follows.
             Lay(shop, GrowthLab.Out, GrowthLab.Sorter);
@@ -418,7 +418,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.PlannerPredicts("pondlet", "bubblebelly"), Is.Null, "the planner is the bench's level 4");
             var four = At(4, 4); UpgradeTo(four, "bench", 3);
             four.UpgradeCheck("bench", out _, out string why);
-            Assert.That(why, Is.EqualTo("Needs era 5"));
+            Assert.That(why, Is.EqualTo("Needs Era 5"));
             UpgradeTo(shop, "bench", 4);
             Assert.That(shop.Planner, Is.True);
             Assert.That(shop.PlannerPredicts("pondlet", "bubblebelly").Id, Is.EqualTo("puddlepup"));

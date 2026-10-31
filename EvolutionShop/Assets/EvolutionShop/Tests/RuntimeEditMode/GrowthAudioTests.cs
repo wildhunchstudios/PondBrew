@@ -17,7 +17,8 @@ namespace EvolutionShop.Tests
         [Test] public void EachSoundIsMadeHereAndNeverClips()
         {
             foreach (var (name, d) in new[] { ("hum", GrowthAudio.MakeHum()), ("motor", GrowthAudio.MakeMotor()), ("click", GrowthAudio.MakeClick()),
-                                             ("stroke", GrowthAudio.MakeStroke()), ("pop", GrowthAudio.MakePop()), ("swish", GrowthAudio.MakeSwish()) })
+                                             ("stroke", GrowthAudio.MakeStroke()), ("pop", GrowthAudio.MakePop()), ("swish", GrowthAudio.MakeSwish()),
+                                             ("brew", GrowthAudio.MakeBrew()), ("draw", GrowthAudio.MakeDraw()), ("ready", GrowthAudio.MakeReady()), ("bell", GrowthAudio.MakeBell()) })
             {
                 Assert.That(d.Length, Is.GreaterThan(GrowthAudio.SampleRate / 50), name + " has length");
                 Assert.That(d.All(x => !float.IsNaN(x) && !float.IsInfinity(x)), Is.True, name + " is finite");
@@ -27,7 +28,7 @@ namespace EvolutionShop.Tests
 
         [Test] public void AOneShotStartsAndEndsAtSilence()
         {
-            foreach (var (name, d) in new[] { ("click", GrowthAudio.MakeClick()), ("stroke", GrowthAudio.MakeStroke()), ("pop", GrowthAudio.MakePop()), ("swish", GrowthAudio.MakeSwish()) })
+            foreach (var (name, d) in new[] { ("click", GrowthAudio.MakeClick()), ("stroke", GrowthAudio.MakeStroke()), ("pop", GrowthAudio.MakePop()), ("swish", GrowthAudio.MakeSwish()), ("ready", GrowthAudio.MakeReady()), ("bell", GrowthAudio.MakeBell()) })
             {
                 Assert.That(Mathf.Abs(d[0]), Is.LessThan(1e-3f), name + " starts at silence");
                 Assert.That(Mathf.Abs(d[d.Length - 1]), Is.LessThan(1e-3f), name + " ends at silence");

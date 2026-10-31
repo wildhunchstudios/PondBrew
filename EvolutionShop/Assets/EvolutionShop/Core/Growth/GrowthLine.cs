@@ -81,8 +81,8 @@ namespace EvolutionShop.Growth
             var w = WorkshopDef;
             why = null;
             if (Workshop) { why = "Already open"; return GrowthFailure.MaxLevel; }
-            if (!Annex) { why = "Open the lab annex first: the workshop is through its east wall"; return GrowthFailure.Locked; }
-            if (Era < w.Era) { why = "Needs era " + w.Era + ": 4 stars, powered pumps running and 12 species"; return GrowthFailure.Locked; }
+            if (!Annex) { why = "Open the power room first: the workshop is through its east wall"; return GrowthFailure.Locked; }
+            if (Era < w.Era) { why = "Needs Era " + w.Era + ": 4 stars, powered pumps running and 12 species"; return GrowthFailure.Locked; }
             if (Stars < w.Stars) { why = "Needs " + w.Stars + " stars"; return GrowthFailure.Locked; }
             if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < w.Credits) { why = "Needs " + w.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
@@ -154,7 +154,7 @@ namespace EvolutionShop.Growth
         {
             if (!HasSorter) return "Not bought";
             if (Chute == null) return "Lay the chute from the incubator";
-            if (Hatchlings.Count == 0) return "Waiting for a clutch";
+            if (Hatchlings.Count == 0) return "Waiting for hatchlings";
             if (SortDestination(Hatchlings[0]) == null) return "No room for a " + GrowthContent.Get(Hatchlings[0].Species).Name + ": its tanks are at their target or full, and no rack has room";
             return null;
         }
@@ -292,7 +292,7 @@ namespace EvolutionShop.Growth
 
         static string RestoreLine(GrowthShop shop, GrowthSave s)
         {
-            if (shop.Workshop && !shop.Annex) return "A workshop without the lab annex";
+            if (shop.Workshop && !shop.Annex) return "A workshop without the power room";
             if (shop.HasSorter && !shop.Workshop) return "A sorter without the workshop";
             if (shop.Level("generator") >= 3 && !shop.Workshop) return "A turbine without the workshop it stands in";
             foreach (var c in shop.Racks) if (!shop.Workshop || LabPlace(c.Place) == null) return "A rack outside the workshop's rack places";

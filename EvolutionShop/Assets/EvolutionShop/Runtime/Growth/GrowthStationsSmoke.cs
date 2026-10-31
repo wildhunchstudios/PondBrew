@@ -48,7 +48,7 @@ namespace EvolutionShop
             string card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Workbench && card.Contains("The siphon · level 1 of 4") && card.Contains("The research bench · level 1 of 4") && card.Contains("Upgrade · 15 cr"),
                 "E opens its card: the siphon's ladder (level 1 of 4) and the bench's");
-            Check(card.Contains("3. Analyzer: one undiscovered reachable mix or pair a day · 1500 cr and 120 RP, era 4") && card.Contains("4. Planner: predicts the offspring of any two known species · 4000 cr and 200 RP, era 5"),
+            Check(card.Contains("3. Analyzer: one undiscovered reachable mix or pair a day · 1500 cr and 120 RP, Era 4") && card.Contains("4. Planner: predicts the offspring of any two known species · 4000 cr and 200 RP, Era 5"),
                 "The bench's levels 3 and 4: the analyzer and the planner (GR-08), with their costs and gates");
             yield return Shot("90-research-bench");
             for (int lv = 2; lv <= 3; lv++) Ok(s.Act(() => shop.Upgrade("siphon")), "Siphon level " + lv);

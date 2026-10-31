@@ -124,7 +124,7 @@ namespace EvolutionShop
             // The tank card: the space grid, the species and the next level.
             s.SetCard(GrowthCard.Tank, large.Id); yield return new WaitForSeconds(0.2f);
             string text = s.Ui.CardText();
-            Check(text.Contains("Large tank · level 1") && text.Contains("8 of 8 spaces") && text.Contains("Needs era 3"), "The Large tank's card: level 1, 8 of 8 spaces, level 2 needs era 3");
+            Check(text.Contains("Large tank · level 1") && text.Contains("8 of 8 spaces") && text.Contains("Needs Era 3"), "The Large tank's card: level 1, 8 of 8 spaces, level 2 needs era 3");
             yield return Shot("36-large-tank-card");
             // GR-13: Sell says why on hover; the Upgrade tab has the container's level track and its next level's gates.
             yield return HoverOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Sell"), "Take its creatures out first", "Sell, with creatures in the tank, says why when pointed at", "36a-sell-why");

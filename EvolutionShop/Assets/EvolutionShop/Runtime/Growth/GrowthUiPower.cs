@@ -17,11 +17,11 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             var annex = GrowthShop.AnnexDef;
-            var body = Head("Lab annex", shop.Annex ? "open" : annex.Credits + " credits", null, "Behind the back room's north wall. Era 3 comes with 3 stars, a hybrid bred and a Large tank. Walls open at night.");
+            var body = Head("Power room", shop.Annex ? "open" : annex.Credits + " credits", null, "Behind the laboratory's north wall. Era 3 comes with 3 stars, a hybrid bred and a Large tank. Walls open at night.");
             if (shop.Annex) { body.Add(L("Open: the generator, the power board and culture buffers, where pipes bring culture from the growers.", "gr-hint")); Footer(body); return; }
             var failure = shop.AnnexCheck(out string why);
-            BuyPanel(body, "The back room's north wall", "The lab annex", "Room for the generator, the power board and culture buffers, where pipes bring culture from the growers.",
-                Gates(annex.Era, annex.Stars, annex.Credits, 0, true), failure, why, "Open the lab annex for " + annex.Credits + " cr", shop.BuyAnnex);
+            BuyPanel(body, "The laboratory's north wall", "The power room", "Room for the generator, the power board and culture buffers, where pipes bring culture from the growers.",
+                Gates(annex.Era, annex.Stars, annex.Credits, 0, true), failure, why, "Open the power room for " + annex.Credits + " cr", shop.BuyAnnex);
             Footer(body);
         }
 
@@ -152,7 +152,7 @@ namespace EvolutionShop
                 "Its electric pump runs by itself on the generator's power: a dose every " + shop.PumpDoseSeconds.ToString("0.0#") + " s, drawing " + shop.PumpUnits + " unit" + (shop.PumpUnits == 1 ? "" : "s") + ".", "gr-hint"));
             if (lines.Count < shop.Taps)
             {
-                string why = !shop.Annex ? "Open the lab annex first" : !shop.HasPumps ? "Buy pumps and pipes on the power board first" : !night ? "Pipes are laid at night" : null;
+                string why = !shop.Annex ? "Open the power room first" : !shop.HasPumps ? "Buy pumps and pipes on the power board first" : !night ? "Pipes are laid at night" : null;
                 var pipe = Wide("Pipe its tap to a buffer", () => s.StartPipe(GrowthLab.Tap(culture)), true, why == null, why);
                 pipe.style.marginTop = 10;
                 body.Add(pipe);

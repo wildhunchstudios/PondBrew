@@ -55,7 +55,7 @@ namespace EvolutionShop.Tests
                         Assert.That(waits, Is.EqualTo(later));
                         continue;
                     }
-                    if (def.Era > 1) { var early = Ready(At(era: def.Era - 1, stars: 5), station, lv); early.Levels[station] = lv - 1; early.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs era " + def.Era), station + " " + lv); }
+                    if (def.Era > 1) { var early = Ready(At(era: def.Era - 1, stars: 5), station, lv); early.Levels[station] = lv - 1; early.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs Era " + def.Era), station + " " + lv); }
                     if (def.Stars > 1) { var low = Ready(At(era: 5, stars: def.Stars - 1), station, lv); low.Levels[station] = lv - 1; low.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs " + def.Stars + " stars"), station + " " + lv); }
                     if (def.Rp > 0) { var poor = Ready(At(era: 5, stars: 5, rp: def.Rp - 1), station, lv); poor.Levels[station] = lv - 1; poor.UpgradeCheck(station, out _, out string why); Assert.That(why, Is.EqualTo("Needs " + def.Rp + " research points"), station + " " + lv); }
                     var broke = Ready(At(era: 5, stars: 5, credits: def.Credits - 1), station, lv); broke.Levels[station] = lv - 1;
@@ -162,7 +162,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.NewColour).Text, Is.EqualTo("New colour: Sunny Pondlet!"));
             shop.Hatchlings.Clear();
             Mix(shop, "bloom", "flow");
-            Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.Hatched).Text, Is.EqualTo("A clutch of 2 Pondlets hatched"));
+            Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.Hatched).Text, Is.EqualTo("2 Pondlets hatched"));
             shop.Hatchlings.Clear();
             UpgradeTo(shop, "incubator", 4);
             Mix(shop, "bloom", "flow");

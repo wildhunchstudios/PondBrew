@@ -17,13 +17,13 @@ namespace EvolutionShop
     {
         // ---------------------------------------------------------------- the lesson's card
 
-        /// <summary>R09.4: a lesson's card: its title, what the system is, and Show me (its steps then guide) or Got it (a card
-        /// only); Skip this lesson ends it, never asked again.</summary>
+        /// <summary>R09.4: a lesson's card: its title, what the system is, and Got it (its steps then guide, if it has any); GR-32
+        /// (F48): Skip lesson ends it, never asked again.</summary>
         void FillLesson(string id)
         {
             var lesson = GrowthLessons.Get(id);
             if (lesson == null) { s.SetCard(GrowthCard.None); return; }
-            var body = Notebook(lesson.Title, "A new part of your shop · era " + lesson.Era);
+            var body = Notebook(lesson.Title, "A new part of your shop · Era " + lesson.Era);
             foreach (var paragraph in lesson.Card)
             {
                 var p = L(GrowthControls.Keyed(paragraph), "gr-lesson__text");
@@ -32,8 +32,8 @@ namespace EvolutionShop
             if (!lesson.CardOnly)
             {
                 var call = Box("gr-callout"); call.style.marginTop = 14;
-                call.Add(L("Show me: the marker points at what to use, and the line at the bottom says what to do, until you have done it once.", "gr-strong"));
-                var skip = Link("Skip this lesson", () => { s.Shop.SkipLesson(); s.SaveNow(); s.SetCard(GrowthCard.None); });
+                call.Add(L("The marker points at what to use, and the line at the bottom says what to do, until you have done it once.", "gr-strong"));
+                var skip = Link("Skip lesson", () => { s.Shop.SkipLesson(); s.SaveNow(); s.SetCard(GrowthCard.None); });
                 skip.name = "gr-lesson-skip";
                 skip.style.alignSelf = Align.FlexStart; skip.style.marginLeft = 0; skip.style.marginTop = 8;
                 call.Add(skip);
@@ -42,7 +42,7 @@ namespace EvolutionShop
             var note = L("Every lesson stays in your journal's Guide (" + GrowthControls.NameOf(GrowthAction.Journal) + "). Lessons can be turned off in Settings › Accessibility.", "gr-hint");
             note.style.marginTop = 12;
             body.Add(note);
-            NotebookFooter(lesson.CardOnly ? "Got it" : "Show me", () => s.SetCard(GrowthCard.None), lesson.CardOnly ? "Got it" : "Show me");
+            NotebookFooter("Got it", () => s.SetCard(GrowthCard.None), "Got it");
         }
 
         /// <summary>R09.4: the pause screen's line for the lesson whose steps run, with its Skip.</summary>
@@ -82,7 +82,7 @@ namespace EvolutionShop
                 var e = Box("gr-lesson");
                 e.name = "gr-guide-" + l.Id;
                 if (!open) e.AddToClassList("gr-lesson--locked");
-                e.Add(L(open ? l.Title : l.Title + " · comes in era " + l.Era, "gr-lesson__title"));
+                e.Add(L(open ? l.Title : l.Title + " · comes in Era " + l.Era, "gr-lesson__title"));
                 if (open) e.Add(L(GrowthControls.Keyed(string.Join(" ", l.Card)), "gr-lesson__text"));
                 else e.Add(L(shop.Era >= l.Era ? "Its lesson comes when it first appears in your shop." : "Era " + l.Era + ": " + GrowthContent.Eras[l.Era - 1].Name + ".", "gr-hint"));
                 entries.Add(e);
@@ -132,7 +132,7 @@ namespace EvolutionShop
                 if (locked) row.AddToClassList("gr-crow--locked");
                 var head = Box("gr-crow__head");
                 head.Add(L(family.Name, "gr-crow__name"));
-                head.Add(L(locked ? "comes in era " + era : got + " of " + members.Count + " · " + (members.Count - got) + " left", "gr-crow__count"));
+                head.Add(L(locked ? "comes in Era " + era : got + " of " + members.Count + " · " + (members.Count - got) + " left", "gr-crow__count"));
                 row.Add(head);
                 foreach (var sp in members)
                 {
@@ -140,9 +140,8 @@ namespace EvolutionShop
                     var tile = Box("gr-ct");
                     if (!known) tile.AddToClassList("gr-ct--unknown");
                     if (sp.Kind == SpeciesKind.Crown) tile.AddToClassList("gr-ct--crown");
-                    var g = new GrowthGlyph(known ? GrowthCreatureView.ColourOf(sp) : new Color(0.72f, 0.67f, 0.57f, locked ? 0.3f : 0.55f));
-                    g.AddToClassList("gr-ct__glyph");
-                    tile.Add(g);
+                    if (known) tile.Add(CreatureIcon(sp, ColourFound(shop, sp), 40, "gr-ct__glyph"));
+                    else { var g = new GrowthGlyph(new Color(0.72f, 0.67f, 0.57f, locked ? 0.3f : 0.55f)); g.AddToClassList("gr-ct__glyph"); tile.Add(g); }
                     var words = Box("gr-ct__words");
                     words.Add(L(known ? sp.Name : "?", "gr-ct__name"));
                     int colours = shop.Journal.Count(j => j.StartsWith(sp.Id + "/", StringComparison.Ordinal));

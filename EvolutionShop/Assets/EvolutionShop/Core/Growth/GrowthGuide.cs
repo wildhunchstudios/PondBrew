@@ -58,7 +58,7 @@ namespace EvolutionShop.Growth
                     view.Target = tank == null ? null : "container:" + tank.Id; view.TargetName = tank == null ? null : tank.Def.Name;
                     break;
                 case GrowthGuideStep.Open:
-                    view.Text = "Open the shop at the counter (E): a day lasts 5:30";
+                    view.Text = "Open the shop at the counter (E): a day lasts " + GrowthShop.DayLengthWords;
                     view.Target = "counter"; view.TargetName = "Counter";
                     break;
                 case GrowthGuideStep.Sell:

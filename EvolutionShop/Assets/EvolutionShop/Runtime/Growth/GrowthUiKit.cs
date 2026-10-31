@@ -100,6 +100,34 @@ namespace EvolutionShop
             card.Add(row);
         }
 
+        /// <summary>GR-32 (F54): a creature's own picture, square, in place of the generic fish (which stays for what is not known yet, and if there is no picture).</summary>
+        VisualElement CreatureIcon(SpeciesDef def, Colour colour, int size, string style)
+        {
+            var picture = GrowthPortraits.Get(def.Id, colour);
+            VisualElement icon;
+            if (picture == null) icon = new GrowthGlyph(GrowthCreatureView.ColourOf(def, colour));
+            else
+            {
+                icon = new VisualElement { pickingMode = PickingMode.Ignore };
+                icon.AddToClassList("gr-portrait");
+                icon.style.backgroundImage = new StyleBackground(picture);
+                PortraitsShown++;
+            }
+            icon.AddToClassList(style);
+            icon.style.width = size; icon.style.height = size;
+            return icon;
+        }
+
+        /// <summary>Validation: how many creature pictures the interface has shown.</summary>
+        public int PortraitsShown { get; private set; }
+
+        /// <summary>The first of a creature's colours the journal has (Classic if none).</summary>
+        static Colour ColourFound(GrowthShop shop, SpeciesDef def)
+        {
+            foreach (Colour c in System.Enum.GetValues(typeof(Colour))) if (shop.Journal.Contains(GrowthShop.JournalKey(def.Id, c))) return c;
+            return Colour.Classic;
+        }
+
         bool notebook;
         /// <summary>The page shown of the open view's pager (the journal's families), kept while it stays open.</summary>
         int pageShown;
@@ -279,7 +307,7 @@ namespace EvolutionShop
         static string Cost(LevelDef l) => l.Credits + " cr" + (l.Rp > 0 ? " and " + l.Rp + " RP" : "");
 
         static string LevelLine(LevelDef l, int now) =>
-            l.Level + ". " + l.Change + (l.Level <= now ? " · done" : " · " + Cost(l) + ", era " + l.Era + (l.Stars > 0 ? ", " + Stars(l.Stars) : ""));
+            l.Level + ". " + l.Change + (l.Level <= now ? " · done" : " · " + Cost(l) + ", Era " + l.Era + (l.Stars > 0 ? ", " + Stars(l.Stars) : ""));
 
         VisualElement UpgradeBlock(string head, LevelDef[] levels, int now, LevelDef next, GrowthFailure failure, string why, string verb, Action buy)
         {
@@ -422,7 +450,7 @@ namespace EvolutionShop
             pick.Add(PlusMinus("◀", () => set(ids[(at + ids.Count - 1) % ids.Count]), ids.Count > 1, "Only one to choose"));
             var words = Box("gr-picker__words");
             var def = GrowthContent.Get(now);
-            var g = new GrowthGlyph(GrowthCreatureView.ColourOf(def)); g.AddToClassList("gr-tile__glyph"); words.Add(g);
+            words.Add(CreatureIcon(def, Colour.Classic, 48, "gr-tile__glyph"));
             words.Add(L(def.Name, "gr-tile__name"));
             if (line != null) words.Add(L(line(now), "gr-dose__count"));
             pick.Add(words);
