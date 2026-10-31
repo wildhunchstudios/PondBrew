@@ -1851,6 +1851,9 @@ namespace EvolutionShop.Growth
             foreach (var p in s.pairLog ?? new GrowthSave.Pair[0])
             {
                 if (!Known(p.a) || !Known(p.b) || !Known(p.species)) { problem = "Unknown species in the pair log"; return null; }
+                // GR-30 (F8): a pair of different species no longer makes a founder, so a save from before forgets what it says such a
+                // pair made: the desk would refuse the pair as tried, naming the wrong creature, and what it does make could not be found.
+                if (s.version < 15 && GrowthRules.Breed(p.a, p.b).Id != p.species) continue;
                 shop.PairLog.Add(new GrowthPairEntry { A = p.a, B = p.b, Species = p.species, WasNew = p.wasNew, Count = Math.Max(1, p.count) });
             }
             var vialCultures = s.vialCultures ?? new string[0];

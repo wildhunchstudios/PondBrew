@@ -618,6 +618,27 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void F8_ASaveFromBefore_ForgetsWhatAPairNoLongerMakes_AndThePairCanBeTriedAgain()
+        {
+            var shop = Ready();
+            var (a, b, child) = APair();
+            string c = Founders[2], d = Founders[3];
+            InJars(shop, c, d);
+            shop.PairLog.Add(new GrowthPairEntry { A = string.CompareOrdinal(a, b) <= 0 ? a : b, B = string.CompareOrdinal(a, b) <= 0 ? b : a, Species = child });
+            shop.PairLog.Add(new GrowthPairEntry { A = string.CompareOrdinal(c, d) <= 0 ? c : d, B = string.CompareOrdinal(c, d) <= 0 ? d : c, Species = Founders[0] });
+            var save = UnityEngine.JsonUtility.FromJson<GrowthSave>(UnityEngine.JsonUtility.ToJson(shop.Snapshot()));
+            save.version = 14;
+            var back = GrowthShop.Restore(save, out string problem);
+            Assert.That(problem, Is.Null.Or.Empty);
+            Assert.That(back.PairEntry(a, b).Species, Is.EqualTo(child), "what is still true stays");
+            Assert.That(back.PairEntry(c, d), Is.Null, "a founder from a pair is forgotten");
+            Assert.That(back.QueuePair(c, d).Success, Is.True, "and the pair can be tried");
+
+            save = UnityEngine.JsonUtility.FromJson<GrowthSave>(UnityEngine.JsonUtility.ToJson(shop.Snapshot()));
+            Assert.That(GrowthShop.Restore(save, out problem).PairEntry(c, d), Is.Not.Null, "this version's save keeps its log as it is");
+        }
+
+        [Test]
         public void F1_ASaveFromBeforeTheRoomLoadsWithoutIt()
         {
             var shop = new GrowthShop();
