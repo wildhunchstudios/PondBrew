@@ -76,7 +76,7 @@ namespace EvolutionShop
             yield return null;
             Check(shop.Chamber.Count == 0 && shop.Held.Count == shop.SiphonCapacity, "The chamber pours out, and the siphon keeps its doses");
             Check(s.Ui.CardText().Contains("Pour out the " + shop.SiphonCapacity + " Flow in your siphon"), "The × says what it pours out");
-            yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "×" && b.enabledSelf, "Press × on Flow");
+            yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "×" && b.enabledSelf && b.tooltip != null && b.tooltip.StartsWith("Pour out"), "Press × on Flow");
             yield return null;
             Check(shop.Held.Count == 0, "The × pours the siphon's Flow away");
 

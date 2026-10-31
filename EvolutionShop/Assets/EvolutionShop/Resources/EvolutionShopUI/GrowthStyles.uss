@@ -40,7 +40,7 @@
     right: 34px;
     bottom: 40px;
     flex-direction: row;
-    align-items: flex-end;
+    align-items: flex-start;
     padding: 10px 16px 10px 16px;
     background-color: var(--es-paper);
     border-top-left-radius: 20px;
@@ -1809,12 +1809,12 @@
 }
 
 /* The next step is one line: a wrapping label measured a hair narrower than it draws at some scales, so its last word fell under the card. */
+/* GR-32: a long goal wraps, clear of the item bar at the bottom right, rather than running under it. */
 .gr-next .es-next__text {
-    white-space: nowrap;
-    flex-shrink: 0;
-    max-width: 900px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    flex-shrink: 1;
+    max-width: 780px;
+    -unity-text-align: middle-center;
 }
 
 /* GR-14: the guided first night's marker (HudStyles' es-arrow): above the thing to use, its label on top of the disc. */

@@ -76,6 +76,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             yield return WalkKeys(3, () => s.Player.transform.position.x > 3.2f, Key.W);
             Check(s.Player.transform.position.x > 3.2f, "Walking east, the body gets behind the counter (x " + s.Player.transform.position.x.ToString("0.00") + ")");
+            LookAt(s.Player.transform.position, GrowthWorld.CounterPosition + new Vector3(0, 0.9f, 0));
             yield return Shot("1200-behind-the-counter");
 
             // ---- F23: no zooming into a tank in passing
@@ -93,7 +94,7 @@ namespace EvolutionShop
             yield return Press(Key.E);
             yield return null; yield return null;
             string card = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Incubator && card.Contains("Quick recipes") && card.Contains("Choose your 3 (5 found)") && shop.QuickRecipes().Count == 3, "The incubator's card has three quick recipes and offers the rest (5 found)");
+            Check(s.Card == GrowthCard.Incubator && card.Contains("QUICK RECIPES") && card.Contains("Choose your 3 (5 found)") && shop.QuickRecipes().Count == 3, "The incubator's card has three quick recipes and offers the rest (5 found)");
             yield return Shot("1201-quick-recipes");
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Choose your 3"), "Press Choose your 3");
             yield return null;

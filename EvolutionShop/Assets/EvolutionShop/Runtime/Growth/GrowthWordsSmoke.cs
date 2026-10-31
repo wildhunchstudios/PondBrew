@@ -97,7 +97,7 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.Catalog);
             yield return null; yield return null;
             string card = s.Ui.CardText();
-            Check(card.Contains("Decoration") && card.Contains("Starter vial") && card.Contains("River stones") && card.Contains("Order tonight: it arrives when you open the shop"), "The catalog names each kind of thing, and when it arrives");
+            Check(card.Contains("DECORATION") && card.Contains("STARTER VIAL") && card.Contains("River stones") && card.Contains("Order tonight: it arrives when you open the shop"), "The catalog names each kind of thing, and when it arrives");
             yield return Shot("1302-catalog-page-2");
             s.SetCard(GrowthCard.None);
             yield return null;

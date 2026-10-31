@@ -2272,7 +2272,7 @@ WAVE4 = [unit_b_floor, unit_b_dressing, street_east, bay_window, window_display,
          feature_tank,
          lambda: hoarding('PartitionB', -1.6, 1.6, 4.0, False, 2.4, 'UNIT B'),
          lambda: hoarding('PartitionC', 9.9, 11.85, 4.0, True, 2.4, 'UNIT C'),
-         lambda: hoarding('PartitionAnnex', 0.45, 1.85, 9.0, True, 2.8, 'LAB ANNEX'),
+         lambda: hoarding('PartitionAnnex', 0.45, 1.85, 9.0, True, 2.8, 'POWER ROOM'),
          lambda: hoarding('PartitionWorkshop', 9.6, 11.0, 4.0, False, 2.8, 'WORKSHOP'),
          lambda: banner('BannerCoral', 'GK_Coral', 'GK_Yellow'), lambda: banner('BannerYellow', 'GK_Yellow', 'GK_Teal'),
          lambda: banner('BannerBlue', 'GK_Sky', 'GK_Coral'), hall_spot, exhibition_sign, award, display_tag, staff_board, hall_board]

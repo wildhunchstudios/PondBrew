@@ -646,6 +646,7 @@ namespace EvolutionShop
             float units = shop.GrowerUnits[culture];
             int capacity = shop.GrowerCapacityOf(culture);
             var fill = Box("gr-section");
+            fill.Add(L(GrowthShop.Name(culture) + " is a culture: a gene your creatures are made from.", "gr-hint"));
             fill.Add(Bar(units / Mathf.Max(1, capacity), CultureColour(culture)));
             var chips = Box("gr-chips");
             chips.Add(Chip("It holds " + capacity));
@@ -731,6 +732,7 @@ namespace EvolutionShop
             // The chamber: a chip for each culture in the siphon or the chamber, − and + on either side.
             var chamber = Box("gr-section");
             chamber.Add(Eyebrow("In the chamber · " + shop.Chamber.Count + " of " + shop.MaxDoses));
+            chamber.Add(L("Each dose is a gene. The genes you mix decide the creature.", "gr-hint"));
             var doses = Box("gr-row");
             foreach (var culture in GrowthContent.Cultures.Select(c => c.Id).Where(c => shop.Held.Contains(c) || shop.Chamber.Contains(c)))
             {
@@ -1255,6 +1257,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             body.Add(Stat(shop.SiphonCapacity.ToString(), "doses your siphon holds"));
+            body.Add(L("Your siphon is upgraded here: see the Upgrade tab.", "gr-strong"));
             var chips = Box("gr-chips", "gr-section");
             chips.Add(Chip((shop.PerHold > 1 ? shop.PerHold + " doses" : "A dose") + " every " + shop.HoldSeconds.ToString("0.0") + " s"));
             if (shop.Vacuum) chips.Add(Chip("Vacuum", false, "It keeps pulling from the next grower in reach when the one you aim at runs dry"));

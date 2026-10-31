@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "51f73fcbcdc1217367219d89f6585101ff4ec63f205e47a4f895f33db3775d03",
+  "source_script_sha256": "8a4f253113e6cf7a9bf88df7664916c1ee099cfe9e3fb0d8034e9d05e81b4c51",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -2540,7 +2540,7 @@
       "bytes": 316636
     },
     {
-      "triangles": 12856,
+      "triangles": 15128,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2564,8 +2564,8 @@
       },
       "id": "PartitionAnnex",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionAnnex.fbx",
-      "sha256": "ee2ac093e42ba1cd979449d4cd6eeb2c21169d7853db224b40a1eddff96d1cdf",
-      "bytes": 305548
+      "sha256": "1a7c113e52b51679f4c8ec1feee1a5fd7ba19b862010925d8f949425e89b2092",
+      "bytes": 353340
     },
     {
       "triangles": 14296,
