@@ -14,7 +14,7 @@ namespace EvolutionShop
     public sealed partial class GrowthUi
     {
         /// <summary>The species the stock targets' picker shows (the sorter's and Nori's cards), and the planner's two picks (the cards' own state).</summary>
-        string targetPick, planA, planB;
+        string planA, planB;
 
         void FillWorkshop()
         {
@@ -146,7 +146,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             return shop.Workshop + "|" + string.Join(",", shop.StockTargets.Select(t => t.Key + t.Value)) + "|" + shop.AutoByTargets + "|" + shop.LineDays + shop.LineToday + shop.LineSalesToday +
-                "|" + (shop.Hint?.Species ?? "") + shop.Discovered.Count + "|" + shop.SorterStatus + "|" + targetPick + planA + planB;
+                "|" + (shop.Hint?.Species ?? "") + shop.Discovered.Count + "|" + shop.SorterStatus + "|" + planA + planB;
         }
 
         string LineLiveText()

@@ -307,6 +307,27 @@ namespace EvolutionShop.Growth
 
         // ---------------------------------------------------------------- stations (GR.9)
 
+        /// <summary>GR-31 (F28): what a level's numbers are called and how they read, for an upgrade shown as before and after.</summary>
+        static readonly Dictionary<string, (string label, string unit)> StatWords = new Dictionary<string, (string, string)>
+        {
+            ["capacity"] = ("Holds", " doses"), ["holdSeconds"] = ("Each collect takes", " s"), ["perHold"] = ("Doses per collect", ""), ["refillSeconds"] = ("Refills a dose every", " s"),
+            ["seconds"] = ("Takes", " s"), ["maxDoses"] = ("Doses in a mix", ""), ["clutch"] = ("Creatures from a mix", ""), ["pairs"] = ("Pairs at once", ""),
+            ["serveSeconds"] = ("Bagging a sale takes", " s"), ["queue"] = ("Queue at the counter", ""), ["tills"] = ("Tills", ""), ["units"] = ("Power", " units"), ["doseSeconds"] = ("A dose moves in", " s"), ["spaces"] = ("Spaces", ""),
+        };
+
+        /// <summary>GR-31 (F28): the numbers an upgrade changes: what each is called, and its value now and after. A first purchase has none: nothing to compare with.</summary>
+        public static List<(string label, string from, string to)> LevelChanges(LevelDef now, LevelDef next)
+        {
+            var changes = new List<(string, string, string)>();
+            if (now == null || next == null) return changes;
+            foreach (var kv in StatWords)
+            {
+                if (!next.Stats.TryGetValue(kv.Key, out float after) || !now.Stats.TryGetValue(kv.Key, out float before) || after == before) continue;
+                changes.Add((kv.Value.label, before.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + kv.Value.unit, after.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + kv.Value.unit));
+            }
+            return changes;
+        }
+
         static LevelDef L(int level, int credits, string change, int era = 1, int stars = 1, int rp = 0, params (string, float)[] stats)
         {
             var l = new LevelDef { Level = level, Credits = credits, Rp = rp, Era = era, Stars = stars, Change = change };

@@ -371,7 +371,7 @@ namespace EvolutionShop.Growth
                 Id = "nori", Title = "Nori the stocker", Era = 3,
                 Card = new[]
                 {
-                    "Nori carries creatures from the back room to the shop's tanks for you. You set how many of each species the shop should show: Nori keeps them stocked.",
+                    "Nori carries creatures from the back room to the shop's tanks for you. Until you set any stock target, Nori fills the tanks with whatever is waiting; set one, and Nori keeps that many of each species on show.",
                 },
                 Appears = s => CanHire(s, "nori"),
                 Done = s => s.Staff.ContainsKey("nori"),
@@ -479,7 +479,7 @@ namespace EvolutionShop.Growth
                 Id = "moss", Title = "Moss the technician", Era = 4,
                 Card = new[]
                 {
-                    "Moss works the lab for you: dosing recipes and putting pairs in the breeding tank, by the tasks you set on Moss's card.",
+                    "Moss works by hand where no machine reaches: a recipe with no pipes laid, and the job only Moss does, keeping a pair in the breeding tank. You set the tasks on Moss's card.",
                 },
                 Appears = s => CanHire(s, "moss"),
                 Done = s => s.Staff.ContainsKey("moss"),

@@ -137,7 +137,7 @@ namespace EvolutionShop.Tests
             Assert.That(why, Is.EqualTo("Needs era 3"));
             shop.OpenShop();
             shop.Era = 3; shop.Reputation = GrowthContent.StarThresholds[2];
-            Assert.That(shop.UpgradeContainer(large.Id).Failure, Is.EqualTo(GrowthFailure.NotAtNight), "fittings go in at night");
+            Assert.That(shop.UpgradeContainer(large.Id).Success, Is.True, "a tank upgrades while the shop is open too (GR-31, F33)");
         }
 
         [Test]

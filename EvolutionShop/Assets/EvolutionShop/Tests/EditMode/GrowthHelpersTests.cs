@@ -174,10 +174,8 @@ namespace EvolutionShop.Tests
             var large = Large(shop);
             Hire(shop, "nori");
             shop.Discovered.Add("pondlet");
-            for (int i = 0; i < 3; i++) shop.Hatchlings.Add(Make("pondlet"));
-            shop.Tick(0.1f);
-            Assert.That(shop.Helper("nori").Status, Is.EqualTo("Nothing to move: set stock targets on my card"));
             shop.SetTarget("pondlet", 2);
+            for (int i = 0; i < 3; i++) shop.Hatchlings.Add(Make("pondlet"));
             shop.Tick(0.1f);
             var nori = shop.Helper("nori");
             Assert.That((nori.Step, nori.Status), Is.EqualTo(("fetch", "Fetching a Pondlet from the incubator's tray")));

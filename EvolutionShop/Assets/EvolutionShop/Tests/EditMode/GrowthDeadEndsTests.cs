@@ -205,6 +205,78 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void AnUpgradeReadsAsNumbersBeforeAndAfter()
+        {
+            var levels = GrowthContent.Station("incubator").Levels;
+            var changes = GrowthContent.LevelChanges(levels[0], levels[1]);
+            Assert.That(changes, Does.Contain(("Takes", "12 s", "8 s")));
+            Assert.That(changes, Does.Contain(("Doses in a mix", "3", "4")));
+            Assert.That(changes.Any(c => c.label == "Creatures from a mix"), Is.False, "what does not change is not listed");
+            Assert.That(GrowthContent.LevelChanges(levels[1], levels[2]), Does.Contain(("Creatures from a mix", "1", "2")));
+            Assert.That(GrowthContent.LevelChanges(null, levels[0]), Is.Empty, "a first purchase has nothing to compare with");
+            Assert.That(GrowthContent.LevelChanges(GrowthContent.Station("siphon").Levels[0], GrowthContent.Station("siphon").Levels[1]), Does.Contain(("Each collect takes", "0.8 s", "0.6 s")));
+        }
+
+        static void Found(GrowthShop shop, string species)
+        {
+            var def = GrowthContent.Get(species);
+            shop.MixLog.Add(new GrowthMixEntry { Doses = (int[])def.Recipe.Clone(), Species = species, Exact = true });
+            shop.Discovered.Add(species);
+        }
+
+        [Test]
+        public void QuickRecipesArePinnedThenFitTheSiphon()
+        {
+            var shop = new GrowthShop();
+            var founders = GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder && x.Doses <= shop.MaxDoses && x.Family == GrowthContent.Families[0].Id).Take(3).Select(x => x.Id).ToList();
+            Assert.That(founders.Count, Is.EqualTo(3), "three first founders");
+            foreach (var f in founders) Found(shop, f);
+            Found(shop, "emberpuff");
+            Assert.That(shop.QuickRecipes().Count, Is.EqualTo(GrowthShop.QuickRecipeSlots), "three at hand");
+            Assert.That(shop.QuickRecipes()[0], Is.EqualTo("emberpuff"), "with an empty siphon, the newest first");
+            // What the siphon can dose comes first.
+            var fits = founders[0];
+            var def = GrowthContent.Get(fits);
+            for (int i = 0; i < def.Recipe.Length; i++) for (int n = 0; n < def.Recipe[i]; n++) shop.Held.Add(GrowthContent.Cultures[i].Id);
+            Assert.That(shop.CanDose(fits), Is.True);
+            Assert.That(shop.QuickRecipes()[0], Is.EqualTo(fits), "the siphon's fits first");
+            // A pin comes first of all, and stays when the siphon cannot dose it.
+            Assert.That(shop.PinRecipe("emberpuff").Detail, Is.EqualTo("on"));
+            Assert.That(shop.QuickRecipes()[0], Is.EqualTo("emberpuff"));
+            Assert.That(shop.PinRecipe("wavebreaker").Failure, Is.EqualTo(GrowthFailure.NotDiscovered));
+            foreach (var f in founders.Take(2)) shop.PinRecipe(f);
+            Assert.That(shop.PinRecipe(founders[2]).Failure, Is.EqualTo(GrowthFailure.Busy), "three pins at most");
+            Assert.That(shop.PinRecipe("emberpuff").Detail, Is.EqualTo("off"));
+            shop.PinRecipe("emberpuff");
+            var loaded = GrowthShop.Restore(UnityEngine.JsonUtility.FromJson<GrowthSave>(UnityEngine.JsonUtility.ToJson(shop.Snapshot())), out string problem);
+            Assert.That(problem, Is.Null);
+            Assert.That(loaded.PinnedRecipes, Is.EquivalentTo(shop.PinnedRecipes), "pins are saved");
+        }
+
+        [Test]
+        public void ThereIsAWayBehindTheCounter()
+        {
+            var counter = GrowthSpaces.Fixtures.First(f => f.id == "counter").area;
+            var catalog = GrowthSpaces.Fixtures.First(f => f.id == "catalog").area;
+            const float body = 0.6f, frontWall = -4;
+            Assert.That(counter.X0 - catalog.X1, Is.GreaterThanOrEqualTo(body), "between the catalog and the counter");
+            Assert.That(counter.Z0 - frontWall, Is.GreaterThanOrEqualTo(body), "behind the counter");
+            Assert.That(GrowthSpaces.Problems(), Is.Empty, "and the layout's own checks still pass");
+        }
+
+        [Test]
+        public void TheCounterUpgradesWithVisitorsWaiting()
+        {
+            var shop = new GrowthShop { Credits = 1000 };
+            var tank = shop.Containers[0];
+            shop.DevelopmentStock(tank.Id, "pondlet");
+            Assert.That(shop.OpenShop().Success, Is.True);
+            for (int i = 0; i < 200 && !shop.Queue.Any(); i++) shop.Tick(0.5f);
+            Assert.That(shop.Queue.Any(), Is.True, "a visitor waits");
+            Assert.That(shop.Upgrade("counter").Success, Is.True);
+        }
+
+        [Test]
         public void TheTakeButtonHasItsOwnUsualInput()
         {
             var settings = new GrowthSettings();

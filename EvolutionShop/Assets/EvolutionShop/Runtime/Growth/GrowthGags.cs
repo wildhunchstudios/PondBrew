@@ -95,6 +95,7 @@ namespace EvolutionShop
             session = owner;
             RoomMoments = !owner.ValidationMode;
             Sounds["slap"] = Clip("cartoon slap", MakeSlap());
+            Sounds["boop"] = Clip("boop squeak", MakeBoop());
             Sounds["boing"] = Clip("dizzy boing", MakeBoing());
             Sounds["grumble"] = Clip("grumbled gibberish", MakeGibberish(7, 150f, 0.85f, 21));
             Sounds["laugh"] = Clip("ha ha ha", MakeLaugh());
@@ -145,6 +146,7 @@ namespace EvolutionShop
             if (free && input && session.Rebinding == null)
             {
                 if (GrowthControls.Pressed(GrowthAction.Slap) && SlapTarget != null) TrySlap(SlapTarget);
+                else if (GrowthControls.Pressed(GrowthAction.Boop) && SlapTarget != null) TryBoop(SlapTarget);
                 if (GrowthControls.Pressed(GrowthAction.Skip)) Skip();
             }
             Play();
@@ -234,6 +236,28 @@ namespace EvolutionShop
             Sound("slap", target.transform.position + Vector3.up * 1.5f, 1f);
             return r;
         }
+
+        /// <summary>GR-31 (F31): a boop on the nose: the visitor giggles, with a boop's squeak. The hand is the slap's, gentler in spirit.</summary>
+        public GrowthResult TryBoop(GrowthVisitorView target)
+        {
+            var r = session.Shop.Boop(target.VisitorId);
+            if (!r.Success) { session.Ui?.Hint(GrowthSession.Explain(r)); return r; }
+            EndShow();
+            Policy.Start(GrowthGag.Boop, target.VisitorId);
+            session.Hands?.Slap();
+            subject = target;
+            subjectReaction = "laugh";
+            about = session.Player.View.transform.position;
+            speaker = GrowthShop.TypeName(session.Shop.Visitors.FirstOrDefault(x => x.Id == target.VisitorId)?.Type);
+            line = Policy.Variant(GrowthGag.Boop, GrowthComedy.Giggles.Length);
+            staggered = false;
+            Boops++;
+            Sound("boop", target.transform.position + Vector3.up * 1.5f, 1f);
+            return r;
+        }
+
+        /// <summary>Validation: boops so far.</summary>
+        public int Boops { get; private set; }
 
         // ---------------------------------------------------------------- the room's moments
 
@@ -350,6 +374,11 @@ namespace EvolutionShop
                     Beat("say", 0.45f, subjectReaction == "laugh" ? "laugh" : "grumble", subject.transform.position + Vector3.up * 1.5f, 0.9f,
                         subjectReaction == "laugh" ? GrowthComedy.Line(GrowthComedy.Laughs, line) : GrowthComedy.Line(GrowthComedy.Grumbles, line));
                     break;
+                case GrowthGag.Boop:
+                    if (subject == null) { Policy.Cancel(); EndShow(); return; }
+                    subject.React("laugh", a, about);
+                    Beat("say", 0.25f, "laugh", subject.transform.position + Vector3.up * 1.5f, 0.9f, GrowthComedy.Line(GrowthComedy.Giggles, line));
+                    break;
                 case GrowthGag.Fart:
                 case GrowthGag.Complaint:
                 case GrowthGag.Mimic:
@@ -457,6 +486,20 @@ namespace EvolutionShop
         // ---------------------------------------------------------------- the sounds, made here (original; nothing recorded)
 
         /// <summary>The cartoon slap: a sharp crack of noise with a meaty thump under it, over in a quarter of a second.</summary>
+        /// <summary>GR-31: a boop: a short rubbery squeak rising in pitch.</summary>
+        public static float[] MakeBoop()
+        {
+            var d = new float[(int)(0.16f * 44100)];
+            float phase = 0;
+            for (int i = 0; i < d.Length; i++)
+            {
+                float t = i / 44100f, u = t / 0.16f;
+                phase += 2 * Mathf.PI * Mathf.Lerp(520f, 1180f, u) / 44100f;
+                d[i] = Mathf.Min(1, t / 0.006f) * (1 - u) * (1 - u) * 0.5f * (Mathf.Sin(phase) + 0.25f * Mathf.Sin(2 * phase));
+            }
+            return d;
+        }
+
         public static float[] MakeSlap()
         {
             var d = new float[(int)(0.25f * SampleRate)];

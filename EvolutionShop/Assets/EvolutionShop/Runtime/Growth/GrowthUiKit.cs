@@ -291,6 +291,16 @@ namespace EvolutionShop
             var chips = Gates(next.Era, next.Stars, next.Credits, next.Rp, false);
             LockChip(chips, failure, why);
             block.Add(Benefit("Level " + next.Level, next.Change, null, chips));
+            // GR-31 (F28): what changes, as numbers with an arrow.
+            foreach (var (label, from, to) in GrowthContent.LevelChanges(levels.FirstOrDefault(l => l.Level == now), next))
+            {
+                var change = Box("gr-delta");
+                change.Add(L(label, "gr-delta__label"));
+                change.Add(L(from, "gr-delta__from"));
+                change.Add(L("→", "gr-delta__arrow"));
+                change.Add(L(to, "gr-delta__to"));
+                block.Add(change);
+            }
             string reason = failure == GrowthFailure.NotEnoughCredits ? next.Credits - shop.Credits + " more credits" : why;
             block.Add(Wide(verb + " · " + Cost(next), buy, true, failure == GrowthFailure.None, reason));
             var after = levels.FirstOrDefault(l => l.Level == next.Level + 1);

@@ -896,7 +896,9 @@ namespace EvolutionShop
         void UpdatePeek(float dt)
         {
             bool onTank = Card == GrowthCard.None && Focused != null && Focused.Kind == GrowthTargetKind.Tank;
-            bool want = PeekOn && onTank && World.DistanceToGlass(Focused.Id, Player.View.transform.position) <= PeekRange;
+            // GR-31 (F23): only once standing still: the view narrowing while walking up to a tank felt like suddenly speeding up.
+            stillFor = Player.Walking ? 0 : stillFor + dt;
+            bool want = PeekOn && onTank && stillFor >= PeekSettle && World.DistanceToGlass(Focused.Id, Player.View.transform.position) <= PeekRange;
             float step = ReducedMotion ? 1 : dt / PeekEase;
             peekBlend = Mathf.MoveTowards(peekBlend, want ? 1 : 0, step);
             Player.View.fieldOfView = Mathf.Lerp(FieldOfView, PeekFov, Mathf.SmoothStep(0, 1, peekBlend));
@@ -910,6 +912,9 @@ namespace EvolutionShop
 
         /// <summary>GR-29: the creature under the reticle in the tank in focus (a click or the take button takes it).</summary>
         public GrowthCreatureView AimedCreature { get; private set; }
+        float stillFor = PeekSettle;
+        /// <summary>GR-31: seconds standing still before peek eases in.</summary>
+        public const float PeekSettle = 0.2f;
 
         public void TakeFromTank(GrowthCreatureView creature)
         {

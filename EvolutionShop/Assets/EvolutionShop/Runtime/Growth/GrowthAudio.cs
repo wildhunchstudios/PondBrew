@@ -27,7 +27,7 @@ namespace EvolutionShop
 
         GrowthSession session;
         AudioSource hum, motor, crank, stroke, moment;
-        AudioClip humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip;
+        AudioClip humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip, bellClip;
         float clickClock, strokeClock;
         readonly GrowthMoments moments = new GrowthMoments();
 
@@ -49,7 +49,7 @@ namespace EvolutionShop
         public bool MotorPlaying => motor != null && motor.isPlaying;
         public float MotorVolume => motor != null ? motor.volume : 0;
         public Vector3 MotorPosition => motor != null ? motor.transform.position : Vector3.zero;
-        public IEnumerable<AudioClip> Clips => new[] { humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip };
+        public IEnumerable<AudioClip> Clips => new[] { humClip, motorClip, clickClip, strokeClip, popClip, swishClip, chimeClip, bellClip };
         public IEnumerable<AudioSource> Voices => new[] { hum, motor, crank, stroke, moment };
 
         public void Initialize(GrowthSession owner)
@@ -62,6 +62,7 @@ namespace EvolutionShop
             popClip = Clip("breeding pop", MakePop());
             swishClip = Clip("school swish", MakeSwish());
             chimeClip = Clip("wish chime", MakeChime());
+            bellClip = Clip("counter bell", MakeBell());
             hum = Voice("Sound / generator hum", true);
             motor = Voice("Sound / pump motor", true);
             crank = Voice("Sound / crank", false);
@@ -145,6 +146,8 @@ namespace EvolutionShop
                 LastSwish = session.World.Tanks.TryGetValue(id, out var tank) ? tank.Root.position + new Vector3(0, 1.0f, 0) : Listener;
                 Play(moment, LastSwish, swishClip, sounds * SwishGain);
             }
+            // GR-31 (F29): the counter's bell as a visitor reaches it, so there is no waiting for a prompt to know.
+            if (BellDue) { BellDue = false; Bells++; Play(moment, GrowthWorld.CounterPosition + new Vector3(0, 1.1f, 0), bellClip, sounds * ChimeGain); }
             // GR-20: a wish granted, a chime by the visitor's bubble as it pops into a heart.
             foreach (var id in moments.NoticeWishes(shop))
             {
@@ -289,6 +292,22 @@ namespace EvolutionShop
         }
 
         /// <summary>GR-20's chime for a wish granted: two soft bell notes rising (E6 then A6), each with a quieter octave.</summary>
+        /// <summary>GR-31 (F29): rings the counter's bell on the next frame; how many times it has rung (validation).</summary>
+        public bool BellDue;
+        public int Bells { get; private set; }
+
+        /// <summary>One ding of a small shop bell: over in half a second.</summary>
+        public static float[] MakeBell()
+        {
+            var d = new float[(int)(0.5f * SampleRate)];
+            for (int i = 0; i < d.Length; i++)
+            {
+                float t = i / (float)SampleRate;
+                d[i] = Mathf.Min(1, t / 0.002f) * Mathf.Exp(-t * 9f) * (Mathf.Sin(2 * Mathf.PI * 1975f * t) * 0.3f + Mathf.Sin(2 * Mathf.PI * 3951f * t) * 0.1f);
+            }
+            return d;
+        }
+
         public static float[] MakeChime()
         {
             var d = new float[(int)(0.7f * SampleRate)];

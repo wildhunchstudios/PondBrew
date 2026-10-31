@@ -1994,3 +1994,160 @@
     margin-top: 18px;
     white-space: normal;
 }
+
+/* GR-31 (F28): an upgrade's numbers, before and after. */
+.gr-delta {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.gr-delta__label {
+    flex-grow: 1;
+    font-size: 18px;
+    color: var(--es-ink);
+}
+
+.gr-delta__from {
+    font-size: 18px;
+    color: var(--es-ink);
+    opacity: 0.6;
+}
+
+.gr-delta__arrow {
+    font-size: 20px;
+    color: var(--es-teal);
+    margin-left: 8px;
+    margin-right: 8px;
+    -unity-font-style: bold;
+}
+
+.gr-delta__to {
+    font-size: 18px;
+    color: var(--es-teal);
+    -unity-font-style: bold;
+}
+
+/* GR-31 (F29): over the counter, once a visitor stands at it. */
+.gr-cue {
+    position: absolute;
+    translate: -50% -100%;
+    padding: 6px 14px 8px 14px;
+    align-items: center;
+    background-color: var(--es-paper);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    border-bottom-width: 4px;
+    border-color: var(--es-paper-lip);
+}
+
+.gr-cue__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.gr-cue__track {
+    width: 100%;
+    height: 8px;
+    margin-top: 4px;
+    background-color: rgba(120, 104, 74, 0.22);
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.gr-cue__progress {
+    height: 100%;
+    background-color: var(--es-teal);
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+/* GR-31 (F30): what a visitor picked, then bought, by their hand. */
+.gr-picked {
+    position: absolute;
+    width: 62px;
+    height: 62px;
+    translate: -50% -50%;
+    background-color: var(--es-paper);
+    -unity-background-scale-mode: scale-to-fit;
+    border-width: 3px;
+    border-color: var(--es-teal);
+    border-top-left-radius: 31px;
+    border-top-right-radius: 31px;
+    border-bottom-left-radius: 31px;
+    border-bottom-right-radius: 31px;
+}
+
+.gr-picked__word {
+    position: absolute;
+    bottom: -22px;
+    left: -10px;
+    right: -10px;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 14px;
+    color: var(--es-paper);
+    -unity-text-align: middle-center;
+    margin: 0;
+    padding: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* GR-31 (F35): the stock targets as a table. */
+.gr-target {
+    flex-direction: row;
+    align-items: center;
+    padding: 3px 4px 3px 4px;
+    border-bottom-width: 1px;
+    border-color: rgba(120, 104, 74, 0.18);
+}
+
+.gr-target--head {
+    margin-top: 8px;
+    border-bottom-width: 2px;
+    -unity-font-style: bold;
+}
+
+.gr-target__name {
+    flex-grow: 1;
+    flex-basis: 0;
+    font-size: 18px;
+    color: var(--es-ink);
+    margin: 0;
+}
+
+.gr-target__num {
+    width: 74px;
+    font-size: 18px;
+    color: var(--es-ink);
+    -unity-text-align: middle-center;
+    margin: 0;
+}
+
+.gr-target__set {
+    width: 128px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--es-ink);
+    -unity-text-align: middle-center;
+    margin: 0;
+}
+
+.gr-target__value {
+    width: 40px;
+    font-size: 18px;
+    color: var(--es-ink);
+    -unity-text-align: middle-center;
+    margin: 0;
+}

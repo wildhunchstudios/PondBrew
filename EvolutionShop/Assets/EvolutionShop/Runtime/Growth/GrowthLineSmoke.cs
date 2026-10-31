@@ -141,7 +141,7 @@ namespace EvolutionShop
             yield return AimAt(SorterFront, SorterAim, GrowthTargetKind.Sorter, "sorter", "The reticle focuses the sorter again");
             yield return Press(Key.E);
             card = s.Ui.CardText();
-            Check(card.Contains("Targets: Pondlet 2/2, Ribbonfin 2/2") && card.Contains("Chute: from the incubator's outlet to the sorter") && card.Contains("Racks: rack 1 2/12, rack 2 0/4"),
+            Check(card.Contains("Pondlet | 2 |") && card.Contains("Ribbonfin | 2 |") && card.Contains("Chute: from the incubator's outlet to the sorter") && card.Contains("Racks: rack 1 2/12, rack 2 0/4"),
                 "The sorter's card: the targets met, the chute, the racks");
             yield return Shot("115-sorter-card");
             s.SetCard(GrowthCard.None);

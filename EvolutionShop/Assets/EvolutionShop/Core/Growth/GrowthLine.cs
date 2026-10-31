@@ -72,7 +72,7 @@ namespace EvolutionShop.Growth
         string NextRecipe => AutoByTargets ? TargetRecipe() : AutoRecipe;
         public bool Planner => Level("bench") >= 4;
 
-        static bool FitsIn(GrowthContainer c, string species) => GrowthRules.Fits(c.Def, c.Level, c.Occupants.Select(o => o.Species), species);
+        static bool FitsIn(GrowthContainer c, string species) => GrowthRules.Fits(c.Def, c.Level, c.Occupants.Select(o => o.Species), species) && RuleAllows(c, species);
 
         // ---------------------------------------------------------------- the workshop and its racks
 

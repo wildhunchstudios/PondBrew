@@ -78,6 +78,8 @@ namespace EvolutionShop.Growth
         public Water Water = Water.Fresh;
         /// <summary>GR-19: the piece of decor on its top (null for none; shop tanks only).</summary>
         public string Decor;
+        /// <summary>GR-31 (F37): what Nori and the sorter may put here: "" anything, a water ("fresh", "warm", "brine"), a temperament ("calm", "lively") or "one kind".</summary>
+        public string Rule = "";
         public readonly List<GrowthSpecimen> Occupants = new List<GrowthSpecimen>();
         public ContainerDef Def => GrowthContent.Container(Kind);
         public int Spaces => (int)Def.Levels[Level - 1].Stat("spaces");
@@ -112,6 +114,10 @@ namespace EvolutionShop.Growth
         public int Order = -1;
         /// <summary>GR-18 wave 4: how many times the player slapped this visitor (§6.7; a casual visitor laughs off the first).</summary>
         public int Slaps;
+        /// <summary>GR-31: how many times they were booped, and (F30) what they bought, for the icon over their bag.</summary>
+        public int Boops;
+        public string BoughtSpecies;
+        public Colour BoughtColour;
         /// <summary>GR-20: what an ordinary visitor wishes for (null for none, and for exhibition guests), and whether it was
         /// granted by a sale or missed (the visit ended without it).</summary>
         public GrowthWish Wish;
@@ -404,6 +410,61 @@ namespace EvolutionShop.Growth
 
         public void StopCollecting() => CollectProgress = 0;
 
+        // ---------------------------------------------------------------- GR-31: the auto-open (F32), what a visitor picked (F30), tank rules (F37)
+
+        /// <summary>F32: the shop opens by itself with this many creatures on show (0: only by hand).</summary>
+        public int AutoOpenAt;
+        /// <summary>F32: the night's first seconds, so a shop still stocked from yesterday does not open before the player has looked up.</summary>
+        public const float AutoOpenWait = 15f;
+        public static readonly int[] AutoOpenChoices = { 0, 3, 6, 10, 15, 20, 30 };
+        float nightClock;
+
+        void TickAutoOpen(float seconds)
+        {
+            if (Phase != GrowthPhase.Night) { nightClock = 0; return; }
+            nightClock += seconds;
+            if (AutoOpenAt <= 0 || nightClock < AutoOpenWait || Stock.Count() < AutoOpenAt) return;
+            if (OpenShop().Success) Raise(GrowthEventKind.Guide, "The shop opened by itself: " + AutoOpenAt + " or more creatures on show");
+        }
+
+        /// <summary>F30: what a queuing visitor picked, while it is still in its tank.</summary>
+        public GrowthSpecimen PickedBy(GrowthVisitor v)
+        {
+            foreach (var id in v.SpecimenIds)
+            {
+                var found = HolderOf(id)?.Occupants.FirstOrDefault(o => o.Id == id);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        /// <summary>F37: the rules a tank can have.</summary>
+        public static readonly string[] TankRules = { "", "fresh", "warm", "brine", "calm", "lively", "one kind" };
+
+        public static bool RuleAllows(GrowthContainer c, string species)
+        {
+            var def = GrowthContent.Get(species);
+            switch (c.Rule)
+            {
+                case "fresh": return def.Water == Water.Fresh;
+                case "warm": return def.Water == Water.Warm;
+                case "brine": return def.Water == Water.Brine;
+                case "calm": return def.Temperament == Temperament.Calm;
+                case "lively": return def.Temperament == Temperament.Lively;
+                case "one kind": return c.Occupants.All(o => o.Species == species);
+                default: return true;
+            }
+        }
+
+        public GrowthResult SetTankRule(string containerId, string rule)
+        {
+            var c = Container(containerId);
+            if (c == null) return GrowthResult.Fail(GrowthFailure.NoSuchContainer, containerId);
+            if (Array.IndexOf(TankRules, rule) < 0) return GrowthResult.Fail(GrowthFailure.Locked, "Unknown rule " + rule);
+            c.Rule = rule;
+            return GrowthResult.Ok(rule);
+        }
+
         // ---------------------------------------------------------------- the incubator
 
         /// <summary>Who owns the chamber's batch, when a machine or a helper does: the player's doses keep out of it.</summary>
@@ -497,6 +558,42 @@ namespace EvolutionShop.Growth
             else MixLog.Add(entry = PendingMix);
             LastMix = entry;
             PendingMix = null;
+        }
+
+        // ---------------------------------------------------------------- GR-31 (F26, F27): quick recipes
+
+        /// <summary>How many recipes the incubator's card keeps at hand.</summary>
+        public const int QuickRecipeSlots = 3;
+        /// <summary>The recipes the player chose to keep at hand.</summary>
+        public readonly List<string> PinnedRecipes = new List<string>();
+
+        /// <summary>Every recipe found, newest first.</summary>
+        public List<string> FoundRecipes() => MixLog.AsEnumerable().Reverse().Where(m => m.Exact && Discovered.Contains(m.Species)).Select(m => m.Species).Distinct().ToList();
+
+        /// <summary>Whether a recipe could be dosed now from the siphon and the chamber.</summary>
+        public bool CanDose(string species)
+        {
+            var def = GrowthContent.Get(species);
+            if (def == null || def.Doses > MaxDoses) return false;
+            var have = new List<string>(Held); have.AddRange(Chamber);
+            return Enumerable.Range(0, def.Recipe.Length).All(i => def.Recipe[i] == 0 || have.Count(c => c == GrowthContent.Cultures[i].Id) >= def.Recipe[i]);
+        }
+
+        /// <summary>The recipes at hand: those pinned, then those the siphon can dose now, then the newest.</summary>
+        public List<string> QuickRecipes()
+        {
+            var found = FoundRecipes();
+            return PinnedRecipes.Where(found.Contains).Concat(found.Where(r => !PinnedRecipes.Contains(r)).OrderByDescending(CanDose)).Take(QuickRecipeSlots).ToList();
+        }
+
+        /// <summary>Pins a found recipe to the incubator's card, or takes its pin off; three at most.</summary>
+        public GrowthResult PinRecipe(string species)
+        {
+            if (PinnedRecipes.Remove(species)) return GrowthResult.Ok("off");
+            if (!FoundRecipes().Contains(species)) return GrowthResult.Fail(GrowthFailure.NotDiscovered, species);
+            if (PinnedRecipes.Count >= QuickRecipeSlots) return GrowthResult.Fail(GrowthFailure.Busy, QuickRecipeSlots + " are pinned: take one off first");
+            PinnedRecipes.Add(species);
+            return GrowthResult.Ok("on");
         }
 
         /// <summary>GR-29 (F19): a click on the incubator: as many doses from the siphon as the chamber takes, the rest staying in the siphon.</summary>
@@ -728,7 +825,6 @@ namespace EvolutionShop.Growth
             next = c.Def.Levels[c.Level];
             if (next.Era > Era) { why = "Needs era " + next.Era; return GrowthFailure.Locked; }
             if (next.Stars > Stars) { why = "Needs " + next.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Fitted at night"; return GrowthFailure.NotAtNight; }
             if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -1141,7 +1237,6 @@ namespace EvolutionShop.Growth
             if (station == "incubator" && (Incubating || Hatchlings.Count > 0 || AutoBatch || MossBatch)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
             // GR-09: the counter's second till is a helper's.
             if (station == "counter" && next.Level == 4 && Helper("pip") == null) { why = "Hire Pip first: the second till is for a helper"; return GrowthFailure.Locked; }
-            if (station == "counter" && Queue.Any()) { why = "Visitors are waiting"; return GrowthFailure.Busy; }
             if (station == "breeding" && Pairs.Any(p => p.Breeding || p.Offspring != null)) { why = "Busy: take a parent or the offspring out first"; return GrowthFailure.Busy; }
             if (Credits < next.Credits) { why = "Needs " + next.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
@@ -1235,6 +1330,7 @@ namespace EvolutionShop.Growth
         {
             if (seconds <= 0) return;
             TickSlap(seconds);
+            TickAutoOpen(seconds);
             foreach (var c in Cultures)
                 GrowerUnits[c] = Math.Min(GrowerCapacityOf(c), GrowerUnits[c] + seconds / RefillSecondsOf(c));
             TickPower(seconds);
@@ -1462,6 +1558,7 @@ namespace EvolutionShop.Growth
             v.Outcome = GrowthVisitOutcome.Bought;
             v.Clock = 0;
             var first = bought[0];
+            v.BoughtSpecies = first.Species; v.BoughtColour = first.Colour;
             // GR-20: a granted wish's tip and reputation point.
             int tip = GrantWish(v, bought, price);
             Raise(GrowthEventKind.Sale, verb + (bought.Count > 2 ? "a school of three " + Plural(first.Def.Name) : bought.Count > 1 ? "a pair of " + Plural(first.Def.Name) : first.Def.Name) + " for " + price + " credits" +
@@ -1650,6 +1747,7 @@ namespace EvolutionShop.Growth
             discovered = Discovered.ToArray(),
             vialCultures = Vials.Keys.ToArray(), vialDoses = Vials.Values.ToArray(), orders = Orders.ToArray(),
             mixLog = MixLog.Select(m => new GrowthSave.Mix { doses = m.Doses, species = m.Species, exact = m.Exact, wasNew = m.WasNew, distanceToNew = m.DistanceToNew, count = m.Count }).ToArray(),
+            pinnedRecipes = PinnedRecipes.ToArray(), autoOpenAt = AutoOpenAt,
             pendingMix = PendingMix == null ? new GrowthSave.Mix[0] : new[] { new GrowthSave.Mix { doses = PendingMix.Doses, species = PendingMix.Species, exact = PendingMix.Exact, wasNew = PendingMix.WasNew, distanceToNew = PendingMix.DistanceToNew, count = PendingMix.Count } },
             parents = Parents.Select(GrowthSave.Specimen.Of).ToArray(),
             offspring = Offspring == null ? new GrowthSave.Specimen[0] : new[] { GrowthSave.Specimen.Of(Offspring) },
@@ -1754,6 +1852,9 @@ namespace EvolutionShop.Growth
                 shop.Orders.Add(o);
             }
             shop.MixLog.AddRange((s.mixLog ?? new GrowthSave.Mix[0]).Select(m => new GrowthMixEntry { Doses = m.doses, Species = m.species, Exact = m.exact, WasNew = m.wasNew, DistanceToNew = m.distanceToNew, Count = Math.Max(1, m.count) }));
+            shop.AutoOpenAt = Array.IndexOf(AutoOpenChoices, s.autoOpenAt) >= 0 ? s.autoOpenAt : 0;
+            foreach (var b in s.containers ?? new GrowthSave.Box[0]) { var c = shop.Container(b.id); if (c != null && Array.IndexOf(TankRules, b.rule ?? "") >= 0) c.Rule = b.rule ?? ""; }
+            if (s.pinnedRecipes != null) shop.PinnedRecipes.AddRange(s.pinnedRecipes.Where(r => GrowthContent.Get(r) != null));
             // GR-29: the mix in the incubator, logged when it hatches (version 13 and older logged it when it started).
             if (s.incubating && s.pendingMix != null && s.pendingMix.Length > 0)
             {
@@ -1813,6 +1914,10 @@ namespace EvolutionShop.Growth
         public Mix[] mixLog;
         /// <summary>GR-29: the mix in the incubator (none or one), logged when it hatches.</summary>
         public Mix[] pendingMix;
+        /// <summary>GR-31: the recipes pinned to the incubator's card.</summary>
+        public string[] pinnedRecipes;
+        /// <summary>GR-31: the stock the shop opens by itself at (0: off).</summary>
+        public int autoOpenAt;
         public string[] vialCultures, orders;
         public int[] vialDoses;
         public Specimen[] parents, offspring, secondParents, secondOffspring;
@@ -1880,7 +1985,7 @@ namespace EvolutionShop.Growth
 
         [Serializable] public sealed class Box
         {
-            public string id, kind, place, water, decor;
+            public string id, kind, place, water, decor, rule;
             public int level;
             public Specimen[] occupants;
         }

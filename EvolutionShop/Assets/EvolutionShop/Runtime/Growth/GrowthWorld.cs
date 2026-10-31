@@ -73,7 +73,7 @@ namespace EvolutionShop
         public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 6.9f), BoardPosition = new Vector3(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(4f, 0, 0);
         /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.
         /// GR-05 moved the shelf 0.2 m west to make room for the breeding tank.</summary>
-        public static readonly Vector3 VialShelfPosition = new Vector3(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(1.2f, 0, -3.3f);
+        public static readonly Vector3 VialShelfPosition = new Vector3(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(0.7f, 0, -3.3f);
         /// <summary>GR-05: the breeding tank against the back room's south wall, west of the door, facing the incubator (GR.7.2).
         /// Its glass is 1.06 m wide: the pair's compartment, and a nursery behind a divider at its east end.</summary>
         public static readonly Vector3 BreedingPosition = new Vector3(-0.5f, 0, 4.42f);

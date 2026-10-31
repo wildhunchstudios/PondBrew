@@ -23,7 +23,7 @@ namespace EvolutionShop
             {
                 case "pip": return "Serves at the counter: bags each visitor's order while you do other work. With Pip at the till, you serve at the counter's second till (its level 4).";
                 case "nori": return "Keeps the shop's tanks at your stock targets: carries hatchlings from the incubator's tray, offspring from the nursery and creatures from the racks to the tanks below their target, and the rest to the racks.";
-                default: return "Runs a recipe you have made at the incubator: fetches its doses from the growers and starts it, clutch after clutch. From level 2, keeps a pair you have bred breeding.";
+                default: return "Works by hand where no machine reaches: fetches a recipe's doses from the growers, with no pipes, and starts it, clutch after clutch. From level 2, keeps a pair you have bred breeding, which only Moss does. With the auto-doser on, set Moss to the pair.";
             }
         }
 
@@ -99,7 +99,7 @@ namespace EvolutionShop
             body.Add(duty);
             if (id == "pip")
                 body.Add(L("Pip takes the front of the queue. " + (shop.SecondTill ? "At the second till you serve beside Pip: while you hold the counter the front of the queue is yours, and Pip takes the visitor behind." : "You serve only at the counter's second till (its level 4) while Pip is at work."), "gr-hint"));
-            else if (id == "nori") { var targets = Box("gr-section"); targets.style.marginTop = 10; TargetsSection(targets, "No targets yet: Nori moves nothing to the shop's tanks until you set some."); body.Add(targets); }
+            else if (id == "nori") { var targets = Box("gr-section"); targets.style.marginTop = 10; TargetsSection(targets, "No targets yet: Nori fills the shop's tanks with whatever is waiting. Set a target to keep that many of a species on show."); body.Add(targets); }
             else MossSection(body, h);
             // Training: their levels on a track, the next one with its price.
             var train = AddTab("Training");
@@ -125,25 +125,28 @@ namespace EvolutionShop
             var shop = s.Shop;
             body.Add(L("Stock targets", "gr-label"));
             var known = GrowthContent.Species.Where(x => shop.Discovered.Contains(x.Id)).Select(x => x.Id).ToList();
-            var summary = L(shop.StockTargets.Count == 0 ? empty :
-                "Targets: " + string.Join(", ", known.Where(sp => shop.Target(sp) > 0).Select(sp => GrowthContent.Get(sp).Name + " " + shop.Shown(sp) + "/" + shop.Target(sp))) + ".", "gr-hint");
-            summary.tooltip = "Below its target, a species goes to the shop's tanks; the rest to the racks.";
+            var summary = L(shop.StockTargets.Count == 0 ? empty : "Below its target, a species goes to the shop's tanks; the rest to the racks.", "gr-hint");
             body.Add(summary);
             if (known.Count == 0) return;
-            if (targetPick == null || !known.Contains(targetPick)) targetPick = known.FirstOrDefault(sp => shop.Target(sp) > 0) ?? known[0];
-            string pick = targetPick;
-            int target = shop.Target(pick);
-            var row = Box("gr-pair"); row.style.marginTop = 10;
-            row.Add(Picker(known, pick, v => targetPick = v, sp => "in the shop " + shop.Shown(sp) + " · in racks " + shop.Racked(sp)));
-            var set = Box("gr-dose"); set.style.backgroundColor = new Color(0.914f, 0.949f, 0.941f); set.style.marginLeft = 10; set.style.marginBottom = 0;
-            set.Add(PlusMinus("−", () => s.Act(() => shop.SetTarget(pick, target - 1)), target > 0, "No target to lower"));
-            var words = Box("gr-dose__text");
-            words.Add(L("Target " + target, "gr-dose__name"));
-            words.Add(L(target == 0 ? "none set" : "kept in the shop", "gr-dose__count"));
-            set.Add(words);
-            set.Add(PlusMinus("+", () => s.Act(() => shop.SetTarget(pick, target + 1)), target < GrowthShop.MostTarget, "The most is " + GrowthShop.MostTarget));
-            row.Add(set);
-            body.Add(row);
+            // GR-31 (F35): a table of every creature found, those with a target first.
+            var head = Box("gr-target", "gr-target--head");
+            head.Add(L("Creature", "gr-target__name")); head.Add(L("In shop", "gr-target__num")); head.Add(L("In racks", "gr-target__num")); head.Add(L("Target", "gr-target__set"));
+            body.Add(head);
+            foreach (var sp in known.OrderByDescending(x => shop.Target(x) > 0))
+            {
+                string pick = sp;
+                int target = shop.Target(pick);
+                var row = Box("gr-target");
+                row.Add(L(GrowthContent.Get(pick).Name, "gr-target__name"));
+                row.Add(L(shop.Shown(pick).ToString(), "gr-target__num"));
+                row.Add(L(shop.Racked(pick).ToString(), "gr-target__num"));
+                var set = Box("gr-target__set");
+                set.Add(PlusMinus("−", () => s.Act(() => shop.SetTarget(pick, target - 1)), target > 0, "No target to lower"));
+                set.Add(L(target.ToString(), "gr-target__value"));
+                set.Add(PlusMinus("+", () => s.Act(() => shop.SetTarget(pick, target + 1)), target < GrowthShop.MostTarget, "The most is " + GrowthShop.MostTarget));
+                row.Add(set);
+                body.Add(row);
+            }
         }
 
         static string RecipeText(string species)

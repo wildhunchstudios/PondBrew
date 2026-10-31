@@ -414,7 +414,7 @@ namespace EvolutionShop.Growth
             }
             if (Phase != GrowthPhase.Night) { why = "Pipes are laid at night"; return GrowthFailure.NotAtNight; }
             var cells = RouteFor(from, to);
-            if (cells == null || !GrowthLab.CanJoin(Pipes.Select(p => p.Cells), cells)) { why = "No room for this pipe: other pipes are in the way"; return GrowthFailure.NoRoute; }
+            if (cells == null || !GrowthLab.CanJoin(Pipes.Select(p => p.Cells), cells)) { why = "No way through: other pipes are in the way. Try another buffer place, or take a pipe off at its buffer"; return GrowthFailure.NoRoute; }
             plan = new GrowthPipe { From = from, To = to, Length = GrowthLab.Length(cells, from, to) };
             plan.Cells.AddRange(cells);
             plan.Paid = (int)Math.Ceiling(plan.Length * GrowthContent.PipeCreditsPerMetre - 1e-4f);

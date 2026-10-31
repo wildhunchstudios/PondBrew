@@ -86,15 +86,15 @@ namespace EvolutionShop
 
             // Nori's card: the stock targets (Nori's from era 3; the sorter shares them).
             yield return AimAt(new Vector3(0.8f, 0, 2.2f), new Vector3(0.6f, 1.1f, 5.4f), GrowthTargetKind.Helper, "nori", "The reticle focuses Nori through the back room's door");
-            Check(s.FocusName(out status) == "Nori, stocker (level 1)" && status == "Nothing to move: set stock targets on my card · E card", "It is Nori, saying there is nothing to move without targets");
+            Check(s.FocusName(out status) == "Nori, stocker (level 1)" && status == "Nothing waiting to move · E card", "It is Nori, saying there is nothing waiting to move");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Helper && s.CardTarget == "nori" && card.Contains("Carries one creature at a time.") && card.Contains("Stock targets") &&
-                card.Contains("No targets yet: Nori moves nothing to the shop's tanks until you set some.") && card.Contains("Train to level 2 for 1000 cr") && card.Contains("Send home"),
+                card.Contains("No targets yet: Nori fills the shop's tanks with whatever is waiting.") && card.Contains("Train to level 2 for 1000 cr") && card.Contains("Send home"),
                 "E opens Nori's card: what Nori does at this level, the stock targets, duty and training");
             Ok(s.Act(() => shop.SetTarget("pondlet", 2)), "Target 2 Pondlets (the card's + button)");
             yield return null;
-            Check(s.Ui.CardText().Contains("Targets: Pondlet 0/2"), "Nori's card shows the target");
+            Check(s.Ui.CardText().Contains("Below its target, a species goes to the shop's tanks") && s.Ui.CardText().Contains("In shop") && s.Ui.CardText().Contains("Pondlet | 0 | 0 | − | 2 | +"), "Nori's card lists the creature with what is in the shop and racks, and its target");
             yield return Shot("122-nori-card");
             s.SetCard(GrowthCard.None);
 

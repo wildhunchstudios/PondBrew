@@ -257,7 +257,7 @@ namespace EvolutionShop.Growth
             {
                 case "pip": return level == 1 ? "Bags an order in 3 s" : level == 2 ? "Bags an order in 2 s" : "Bags an order in 1.2 s and calls the next visitor over (the queue holds one more)";
                 case "nori": return level == 1 ? "Carries one creature at a time" : level == 2 ? "Carries two at a time" : "Carries three of one species at a time, to their school";
-                default: return level == 1 ? "Runs one known recipe" : level == 2 ? "Runs a known recipe or keeps a known pair breeding" : "Does both jobs";
+                default: return level == 1 ? "Runs one known recipe by hand, with no pipes" : level == 2 ? "Runs a known recipe or keeps a known pair breeding, which no machine does" : "Does both jobs";
             }
         }
 
@@ -342,7 +342,7 @@ namespace EvolutionShop.Growth
         // ---------------------------------------------------------------- Pip
 
         /// <summary>The visitor the player bags an order for: the first queued, or with Pip at the till the first Pip is not serving.</summary>
-        GrowthVisitor PlayerVisitor => Queue.Where(v => v.Id != PipVisitor).OrderByDescending(v => v.Clock).ThenBy(v => v.Id).FirstOrDefault();
+        public GrowthVisitor PlayerVisitor => Queue.Where(v => v.Id != PipVisitor).OrderByDescending(v => v.Clock).ThenBy(v => v.Id).FirstOrDefault();
 
         void TickPip(GrowthHelper h, float seconds)
         {
@@ -374,9 +374,11 @@ namespace EvolutionShop.Growth
         {
             var with = alongside.ToList();
             bool Fits(GrowthContainer c) => GrowthRules.Fits(c.Def, c.Level, c.Occupants.Select(o => o.Species).Concat(with), species);
-            if (Shown(species) + with.Count(x => x == species) < Target(species))
+            // GR-31 (F34): with no targets set at all, whatever waits goes to any tank with room (Nori used to stand idle beside it).
+            if (StockTargets.Count == 0 || Shown(species) + with.Count(x => x == species) < Target(species))
             {
-                var tank = ShopContainers.Where(Fits).OrderByDescending(c => c.Occupants.Count(o => o.Species == species)).ThenBy(c => c.Place, StringComparer.Ordinal).FirstOrDefault();
+                // GR-31 (F37): a tank with a rule takes only what the rule allows, and is filled before those with none.
+                var tank = ShopContainers.Where(c => Fits(c) && RuleAllows(c, species)).OrderByDescending(c => c.Rule != "").ThenByDescending(c => c.Occupants.Count(o => o.Species == species)).ThenBy(c => c.Place, StringComparer.Ordinal).FirstOrDefault();
                 if (tank != null) return tank;
             }
             return rack ? Racks.Where(Fits).OrderBy(c => c.Place, StringComparer.Ordinal).FirstOrDefault() : null;
@@ -410,7 +412,7 @@ namespace EvolutionShop.Growth
                 var next = NoriSources().FirstOrDefault(x => NoriCanMove(x.place, x.s));
                 if (next.s == null)
                 {
-                    h.Status = StockTargets.Count == 0 ? "Nothing to move: set stock targets on my card" :
+                    h.Status = StockTargets.Count == 0 && Hatchlings.Count == 0 && !Pairs.Any(p => p.Offspring != null) && !Racks.Any(r => r.Occupants.Count > 0) ? "Nothing waiting to move" :
                         Hatchlings.Count > 0 && Chute == null || Pairs.Any(p => p.Offspring != null) ? "No room for what is waiting: the tanks are at their targets or full, and no rack has room" : "Nothing to move";
                     return;
                 }

@@ -129,7 +129,7 @@ namespace EvolutionShop.Growth
         void SaveDecor(GrowthSave s)
         {
             s.decorOwned = DecorOwned.ToArray();
-            foreach (var b in s.containers ?? new GrowthSave.Box[0]) b.decor = Container(b.id)?.Decor ?? "";
+            foreach (var b in s.containers ?? new GrowthSave.Box[0]) { b.decor = Container(b.id)?.Decor ?? ""; b.rule = Container(b.id)?.Rule ?? ""; }
         }
 
         /// <summary>Version 11 and older had no decor.</summary>

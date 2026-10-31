@@ -146,7 +146,7 @@ namespace EvolutionShop.Growth
         public static readonly (string id, Rect area)[] Fixtures =
         {
             ("counter", new Rect(1.75f, -2.975f, 3.85f, -2.225f)),
-            ("catalog", new Rect(0.975f, -3.475f, 1.425f, -3.125f)),
+            ("catalog", new Rect(0.475f, -3.475f, 0.925f, -3.125f)), // GR-31 (F24): moved 0.5 m west: a way behind the counter
             ("bay window bench", new Rect(7.1f, -3.9f, 8.9f, -3.45f)),
             ("feature tank", new Rect(5.35f, 8.6f, 6.6f, 8.9f)),
         };

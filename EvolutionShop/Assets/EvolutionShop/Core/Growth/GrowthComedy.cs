@@ -11,7 +11,7 @@ namespace EvolutionShop.Growth
     // see them. GrowthComedy is their shared timing: one at a time, a quiet time between them, each kind's own cooldown, fewer
     // and shorter with the Gags setting at Fewer, none but the player's slap at Off, and the captions they say.
 
-    public enum GrowthGag { Slap, Fart, Complaint, Belch, Dance, Mimic }
+    public enum GrowthGag { Slap, Fart, Complaint, Belch, Dance, Mimic, Boop }
 
     /// <summary>The Gags setting (§6.7's reduced-gags option): every silly moment, fewer and shorter ones, or none but the
     /// player's own slap (a deliberate action, never one of the room's).</summary>
@@ -70,14 +70,14 @@ namespace EvolutionShop.Growth
         readonly Dictionary<GrowthGag, float> last = new Dictionary<GrowthGag, float>();
         readonly Dictionary<GrowthGag, int> variants = new Dictionary<GrowthGag, int>();
 
-        public float LengthOf(GrowthGag g) => g == GrowthGag.Slap ? SlapLength : Level == GrowthGagLevel.Fewer ? FewerLength : Length;
+        public float LengthOf(GrowthGag g) => g == GrowthGag.Slap || g == GrowthGag.Boop ? SlapLength : Level == GrowthGagLevel.Fewer ? FewerLength : Length;
         float QuietTime => Level == GrowthGagLevel.Fewer ? FewerQuiet : Quiet;
         float CooldownOf(GrowthGag g) => Cooldown(g) * (Level == GrowthGagLevel.Fewer ? 2f : 1f);
 
         /// <summary>Why a moment may not start now ("off", "busy", "quiet", "cooldown"), or null when it may.</summary>
         public string WhyNot(GrowthGag g)
         {
-            if (g == GrowthGag.Slap) return null;
+            if (g == GrowthGag.Slap || g == GrowthGag.Boop) return null;
             if (Level == GrowthGagLevel.Off) return "off";
             if (Current != null) return "busy";
             if (Clock < quietUntil) return "quiet";
@@ -155,6 +155,8 @@ namespace EvolutionShop.Growth
         /// <summary>A slapped visitor's grumble on the way out.</summary>
         public static readonly string[] Grumbles = { "Hmph! Blorf-a-nurgle!", "Well I never! Fizzwhump!", "Snorkelgrump! The nerve!" };
         /// <summary>A casual visitor laughing off a first slap.</summary>
+        /// <summary>GR-31 (F31): what a booped visitor says.</summary>
+        public static readonly string[] Giggles = { "Hee hee! Stop it!", "Boop yourself!", "Oh, you!", "Do it again!" };
         public static readonly string[] Laughs = { "Ha! Good one!", "Hee hee! Do the fish next!", "Ow! Ha ha, fair enough." };
         /// <summary>A visitor blaming the fish for a smell ({0}: the creature's name).</summary>
         public static readonly string[] Blames = { "Was that... the {0}?", "Phew! Something in that tank is fishy.", "I think the {0} did it." };
@@ -220,6 +222,23 @@ namespace EvolutionShop.Growth
             Leave(v, GrowthVisitOutcome.Slapped);
             return GrowthResult.Ok("left");
         }
+
+        /// <summary>GR-31 (F31): the friendlier silly thing to do to a visitor: they giggle, and the first boop while they queue buys you a little patience. Exhibition guests are not for booping.</summary>
+        public GrowthResult Boop(int visitorId)
+        {
+            if (Phase != GrowthPhase.Day) return GrowthResult.Fail(GrowthFailure.NotDuringDay, "Visitors come by day");
+            var v = Visitors.FirstOrDefault(x => x.Id == visitorId);
+            if (v == null || v.State == GrowthVisitorState.Leaving) return GrowthResult.Fail(GrowthFailure.NoSuchVisitor, "They are on their way out");
+            if (v.Type == GuestType) return GrowthResult.Fail(GrowthFailure.Locked, "Exhibition guests are here on important business");
+            if (slapClock > 0) return GrowthResult.Fail(GrowthFailure.Busy, "One thing at a time");
+            slapClock = BoopCooldown;
+            v.Boops++;
+            if (v.Boops == 1 && v.State == GrowthVisitorState.Queued) v.Clock = Math.Max(0, v.Clock - BoopPatience);
+            return GrowthResult.Ok(v.Boops.ToString());
+        }
+
+        /// <summary>GR-31: seconds before the hand is ready again after a boop, and the seconds of patience a first boop buys.</summary>
+        public const float BoopCooldown = 1f, BoopPatience = 5f;
 
         /// <summary>A slapped visitor leaves in a huff: a reputation point for each of the day's first huffs (never below zero).</summary>
         void SlapLeave(GrowthVisitor v)

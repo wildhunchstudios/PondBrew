@@ -155,6 +155,12 @@ namespace EvolutionShop
             slapBox.Add(slapKey); slapBox.Add(slapName); slapBox.Add(slapWho);
             slapBox.style.display = DisplayStyle.None;
             prompts.Add(slapBox);
+            // GR-31 (F31): and the boop's.
+            boopBox = Box("es-prompt", "es-prompt--slap");
+            boopKey = L("C", "es-keycap");
+            boopBox.Add(boopKey); boopBox.Add(L("Boop", "es-prompt__name"));
+            boopBox.style.display = DisplayStyle.None;
+            prompts.Add(boopBox);
             // GR-20: the wish of the visitor under the reticle.
             wishBox = Box("es-prompt", "es-prompt--wish");
             wishName = L("", "es-prompt__name"); wishWho = L("", "es-prompt__status");
@@ -262,6 +268,8 @@ namespace EvolutionShop
             // GR-18 wave 4: the slap's prompt while a visitor is in reach under the reticle.
             var slapAt = free && !piping && s.Gags != null ? s.Gags.SlapTarget : null;
             slapBox.style.display = slapAt != null ? DisplayStyle.Flex : DisplayStyle.None;
+            boopBox.style.display = slapAt != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (slapAt != null) boopKey.text = GrowthControls.NameOf(GrowthAction.Boop);
             if (slapAt != null)
             {
                 slapKey.text = GrowthControls.NameOf(GrowthAction.Slap);
@@ -361,7 +369,7 @@ namespace EvolutionShop
             if (!Ready) return;
             // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
             string key = which + "|" + target;
-            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; menuAskNew = false; }
+            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; recipesOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; menuAskNew = false; }
             heldCard = null; shownCard = null; keepScroll = null; keepIn = null;
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null;
             tabList.Clear(); tabRow = null; footer = null; rings.Clear(); notebook = false;
@@ -680,10 +688,10 @@ namespace EvolutionShop
                 body.Add(call);
             }
             // The recipes found: one press doses each from the siphon (the doses already in go back first).
-            var recipes = shop.MixLog.AsEnumerable().Reverse().Where(m => m.Exact && shop.Discovered.Contains(m.Species)).Select(m => m.Species).Distinct().Take(5).ToList();
+            var recipes = shop.QuickRecipes();
             var close = shop.MixLog.AsEnumerable().Reverse().FirstOrDefault(m => m.DistanceToNew == 1 && !m.Exact);
             var found = Box("gr-section");
-            found.Add(Eyebrow("Recipes you've found"));
+            found.Add(Eyebrow("Quick recipes"));
             var tiles = Box("gr-row");
             foreach (var id in recipes) tiles.Add(RecipeTile(id, locked));
             if (close != null)
@@ -699,6 +707,23 @@ namespace EvolutionShop
             }
             if (recipes.Count == 0 && close == null) tiles.Add(L("None yet: every mix makes a creature. Try two or three doses.", "gr-hint"));
             found.Add(tiles);
+            // GR-31 (F26): which three stay at hand is the player's: every recipe found, each with its pin.
+            var everyRecipe = shop.FoundRecipes();
+            if (everyRecipe.Count > 0)
+            {
+                var choose = Link(recipesOpen ? "Close the list" : "Choose your " + GrowthShop.QuickRecipeSlots + " (" + everyRecipe.Count + " found)", () => recipesOpen = !recipesOpen);
+                choose.style.marginLeft = 0; choose.style.alignSelf = Align.FlexStart;
+                found.Add(choose);
+                if (recipesOpen)
+                    foreach (var id in everyRecipe)
+                    {
+                        var row = Box("gr-row", "gr-row--spread");
+                        row.Add(L(GrowthContent.Get(id).Name + " · " + GrowthReport.Recipe(GrowthContent.Get(id).Recipe), "gr-hint"));
+                        bool pinned = shop.PinnedRecipes.Contains(id);
+                        row.Add(ChipButton(pinned ? "Pinned" : "Pin", () => s.Act(() => shop.PinRecipe(id)), pinned || shop.PinnedRecipes.Count < GrowthShop.QuickRecipeSlots, pinned ? "Take its pin off" : "Keep it at hand"));
+                        found.Add(row);
+                    }
+            }
             body.Add(found);
             // The chamber: a chip for each culture in the siphon or the chamber, − and + on either side.
             var chamber = Box("gr-section");
@@ -847,7 +872,7 @@ namespace EvolutionShop
 
         // ---------------------------------------------------------------- containers (GR.13)
 
-        bool moveOpen, sellAsked;
+        bool moveOpen, recipesOpen, sellAsked;
 
         static string Holds(ContainerDef def) => def.Largest == SizeClass.Large ? "creatures of every size" : "small and medium creatures";
 
@@ -923,6 +948,23 @@ namespace EvolutionShop
             }
             if (c.Occupants.Count == 0) kinds.Add(L("Empty: carry creatures here and click the tank.", "gr-hint"));
             body.Add(kinds);
+            // GR-31 (F37): what Nori and the sorter may put here.
+            if (!c.Def.Lab && (shop.Helper("nori") != null || shop.HasSorter))
+            {
+                var rule = Box("gr-section");
+                rule.Add(L("Nori and the sorter keep here", "gr-label"));
+                var chips = Box("gr-chips");
+                foreach (var r in GrowthShop.TankRules)
+                {
+                    string choice = r;
+                    var b = ChipButton(r == "" ? "Anything" : char.ToUpperInvariant(r[0]) + r.Substring(1), () => s.Act(() => shop.SetTankRule(c.Id, choice)), true);
+                    b.name = "gr-rule-" + (r == "" ? "any" : r.Replace(' ', '-'));
+                    if (r == c.Rule) b.AddToClassList("gr-chip--on");
+                    chips.Add(b);
+                }
+                rule.Add(chips);
+                body.Add(rule);
+            }
             if (shop.Carried.Count > 0)
             {
                 var put = Box("gr-row", "gr-section");
@@ -1103,6 +1145,26 @@ namespace EvolutionShop
             Footer(body, "F8 closes it too");
         }
 
+        /// <summary>GR-31 (F32): opening by itself once enough creatures are on show.</summary>
+        void AutoOpenRow(VisualElement body)
+        {
+            var shop = s.Shop;
+            var auto = Box("gr-section");
+            auto.Add(L("Open by itself", "gr-label"));
+            auto.Add(L(shop.AutoOpenAt == 0 ? "Off: the shop opens when you open it here." : "With " + shop.AutoOpenAt + " or more on show, it opens " + GrowthShop.AutoOpenWait.ToString("0") + " s or more into the night.", "gr-hint"));
+            var chips = Box("gr-chips");
+            foreach (int at in GrowthShop.AutoOpenChoices)
+            {
+                int value = at;
+                var b = ChipButton(value == 0 ? "Off" : value.ToString(), () => { shop.AutoOpenAt = value; s.SaveNow(); RefreshCard(); }, true);
+                b.name = "gr-autoopen-" + value;
+                if (value == shop.AutoOpenAt) b.AddToClassList("gr-chip--on");
+                chips.Add(b);
+            }
+            auto.Add(chips);
+            body.Add(auto);
+        }
+
         void FillCounter()
         {
             var shop = s.Shop;
@@ -1116,6 +1178,7 @@ namespace EvolutionShop
                 if (stock == 0) body.Add(L("Your tanks are empty: nobody comes into an empty shop.", "gr-hint"));
                 var open = Wide("Open the shop", () => { if (s.Act(shop.OpenShop).Success) s.SetCard(GrowthCard.None); }, true, true);
                 open.style.marginTop = 14;
+                AutoOpenRow(body);
                 body.Add(open);
             }
             else

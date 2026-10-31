@@ -187,7 +187,7 @@ namespace EvolutionShop.Tests
             Run(c, GrowthComedy.Cooldown(GrowthGag.Fart));
             Assert.That(c.CanStart(GrowthGag.Fart), Is.True);
             foreach (GrowthGag g in System.Enum.GetValues(typeof(GrowthGag)))
-                if (g != GrowthGag.Slap) Assert.That(GrowthComedy.Cooldown(g), Is.GreaterThanOrEqualTo(GrowthComedy.Quiet), g + " never comes back sooner than the quiet");
+                if (g != GrowthGag.Slap && g != GrowthGag.Boop) Assert.That(GrowthComedy.Cooldown(g), Is.GreaterThanOrEqualTo(GrowthComedy.Quiet), g + " never comes back sooner than the quiet");
             // Paused, nothing moves on.
             c.Start(GrowthGag.Belch, 0);
             float age = c.Age;

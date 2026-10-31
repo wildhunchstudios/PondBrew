@@ -13,6 +13,10 @@ namespace EvolutionShop
         /// <summary>GR-23: moving the mouse up looks down.</summary>
         public bool InvertY { get; set; }
         public bool InputEnabled { get; set; }
+        /// <summary>GR-31: metres a second walking and with the run button held.</summary>
+        public const float WalkSpeed = 3.2f, RunSpeed = 5.2f;
+        /// <summary>GR-31: whether a walking key is held this frame.</summary>
+        public bool Walking { get; private set; }
         public event Action<bool, bool, bool> ControlledMotion;
         CharacterController body;
         float pitch;
@@ -31,6 +35,7 @@ namespace EvolutionShop
         }
         void Update()
         {
+            Walking = false;
             if (!InputEnabled || View == null) return;
             Vector3 before = transform.position;
             Quaternion beforeLook = View.transform.rotation;
@@ -48,7 +53,9 @@ namespace EvolutionShop
             move.y = (GrowthControls.Held(GrowthAction.Forward) ? 1 : 0) - (GrowthControls.Held(GrowthAction.Back) ? 1 : 0);
             move = Vector2.ClampMagnitude(move, 1);
             Vector3 worldMove = transform.right * move.x + transform.forward * move.y;
-            body.Move((worldMove * 3.2f + Vector3.down * 3f) * Time.deltaTime);
+            Walking = move.sqrMagnitude > 0;
+            // GR-31 (F22): the run button.
+            body.Move((worldMove * (GrowthControls.Held(GrowthAction.Run) ? RunSpeed : WalkSpeed) + Vector3.down * 3f) * Time.deltaTime);
             Vector3 travelled = transform.position - before; travelled.y = 0;
             bool moved = move.sqrMagnitude > 0 && travelled.sqrMagnitude > .00000001f;
             bool looked = Quaternion.Angle(beforeLook, View.transform.rotation) > .001f;
