@@ -494,6 +494,9 @@ namespace EvolutionShop
         /// Every label and button text on the open card or screen, every tab's included, and every hover text (why a
         /// control can't be used, the levels on the Upgrade tab's track, the rules on the "?"), for the validation route.
         /// </summary>
+        /// <summary>Validation: whether the boop's prompt shows.</summary>
+        public bool BoopPromptShown => boopBox.style.display == DisplayStyle.Flex;
+
         public string CardText() => card == null ? "" : string.Join(" | ", card.Query<VisualElement>().ToList().SelectMany(Texts));
 
         static IEnumerable<string> Texts(VisualElement v)

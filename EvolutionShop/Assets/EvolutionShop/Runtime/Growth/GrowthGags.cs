@@ -42,7 +42,7 @@ namespace EvolutionShop
         public const float SampleRate = GrowthAudio.SampleRate;
         public const Key DefaultSlapKey = Key.F;
         /// <summary>Keys that already do something (moving, E, Esc, Tab, Backspace's skip, F8): never the slap's.</summary>
-        public static readonly Key[] Reserved = { Key.W, Key.A, Key.S, Key.D, Key.E, Key.Escape, Key.Tab, Key.Backspace, Key.F8 };
+        public static readonly Key[] Reserved = { Key.W, Key.A, Key.S, Key.D, Key.E, Key.Escape, Key.Tab, Key.Backspace, Key.F8, Key.C, Key.LeftShift };
 
         GrowthSession session;
         public readonly GrowthComedy Policy = new GrowthComedy();
