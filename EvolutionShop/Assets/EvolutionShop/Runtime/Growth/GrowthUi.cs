@@ -439,6 +439,8 @@ namespace EvolutionShop
         void KeepScroll()
         {
             if (keepScroll == null) return;
+            // A press that landed on the old card finishes there: it goes once the button is up, or the click would be lost with it.
+            if (heldCard != null && MouseHeld()) return;
             if (keepIn == null || keepIn.panel == null || keepFrames-- <= 0) { ShowRebuiltCard(); return; }
             // Laid out far enough to hold the offset, so nothing clamps it after the card shows.
             float room = keepIn.contentContainer.layout.height - keepIn.contentViewport.layout.height;
