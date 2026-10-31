@@ -236,6 +236,9 @@ namespace EvolutionShop
                 if (device != keyboard && device != mouse && device.enabled && (device is Pointer || device is Keyboard)) { InputSystem.DisableDevice(device); isolated.Add(device); }
             limitations.Add("The route's synthetic mouse and keyboard are the only pointer and keyboard while it runs: " + isolated.Count + " other device(s) are switched off in this player's input system and switched back on at the end.");
             keyboard.MakeCurrent(); mouse.MakeCurrent();
+            // UI Toolkit drops pointer input on Windows while the window has no focus, so a route whose window loses focus to someone
+            // using the PC loses its clicks (GR-29's runs 1 and 3): this says so in the log, and the run tries that route again.
+            Application.focusChanged += focused => Debug.Log("SMOKE_FOCUS " + focused);
             s.AllowValidationInput = true;
         }
 
