@@ -147,7 +147,7 @@ namespace EvolutionShop
                     int colours = shop.Journal.Count(j => j.StartsWith(sp.Id + "/", StringComparison.Ordinal));
                     words.Add(L(known ? colours + "/" + GrowthContent.ColourCount + " colours" : sp.Kind == SpeciesKind.Crown ? "crown" : sp.Kind == SpeciesKind.Founder ? "founder" : "hybrid", "gr-ct__hint"));
                     tile.Add(words);
-                    tile.tooltip = known ? sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + sp.Price + " cr" :
+                    tile.tooltip = known ? sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + shop.HowToMake(sp) + " · " + sp.Price + " cr" :
                         sp.Kind == SpeciesKind.Founder ? "A founder: mixed in the incubator from its cultures" : sp.Kind == SpeciesKind.Crown ? "The family's crown: one special pair of its own" : "A hybrid: bred in the breeding tank";
                     row.Add(tile);
                 }

@@ -144,6 +144,17 @@ namespace EvolutionShop.Growth
                 case "pip": return Do(s.Hire("pip"), "hire Pip");
                 case "annex": return Do(s.BuyAnnex(), "open the power room");
                 case "generator": return Do(s.Upgrade("generator"), "buy the generator");
+                case "research-room":
+                    if (!s.ResearchRoom && (e = Do(s.BuyResearchRoom(), "open the research room")) != null) return e;
+                    foreach (var species in s.Discovered.Concat(GrowthContent.Species.Where(x => x.Kind == SpeciesKind.Founder).Select(x => x.Id)).Distinct().ToList())
+                    {
+                        if (s.PairsLeft().Count > 0) break;
+                        if (s.SpecimenOf(species) != null) continue;
+                        s.Carried.Clear();
+                        s.DevelopmentGive(species);
+                        if ((e = Do(s.PutSpecimen(), "put a " + species + " in a jar")) != null) return e;
+                    }
+                    return Do(s.QueueAllPairs(), "queue a pair");
                 case "vat": return Do(s.Order("vat"), "order the vat");
                 case "pipes":
                     if (!s.HasPumps && (e = Do(s.Upgrade("pump"), "buy pumps and pipes")) != null) return e;

@@ -391,6 +391,12 @@ namespace EvolutionShop.Growth
                 L(3, 3000, "Twin turbine: 6 units", 4, 4, 0, ("units", 6)),
                 L(4, 6000, "Tide engine: 12 units", 5, 5, 0, ("units", 12)),
             }},
+            new StationDef { Id = "research", Name = "Research room", Levels = new[]
+            {
+                L(1, 0, "Three research tanks: 20 s a job", 3, 3, 0, ("seconds", 20)),
+                L(2, 1500, "Quicker sampling: 14 s a job", 4, 4, 60, ("seconds", 14)),
+                L(3, 4000, "Automated study: 8 s a job", 5, 5, 120, ("seconds", 8)),
+            }},
             new StationDef { Id = "pump", Name = "Pumps and pipes", Levels = new[]
             {
                 L(1, 150, "Hand pump and pipes: a crank on the front of each grower fills a buffer in bulk", 3, 3, 0, ("collectFactor", .5f), ("units", 0), ("doseSeconds", .3f)),
@@ -499,6 +505,7 @@ namespace EvolutionShop.Growth
             new ExpansionDef { Id = "unit-a", Name = "Shop unit A and laboratory", Room = "shop", Credits = 0, Stars = 1, Era = 1, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 2, ExtraWalkSeconds = 0 },
             new ExpansionDef { Id = "unit-b", Name = "Shop unit B (east)", Room = "shop", Credits = 400, Stars = 2, Era = 2, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
             new ExpansionDef { Id = "annex", Name = "Power room", Room = "lab", Credits = 1000, Stars = 3, Era = 3, Width = 8, Depth = 8, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 2 },
+            new ExpansionDef { Id = "research", Name = "Research room", Room = "lab", Credits = 1500, Stars = 3, Era = 3, Width = 6, Depth = 6, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 0 },
             new ExpansionDef { Id = "unit-c", Name = "Shop unit C (north-east)", Room = "shop", Credits = 4000, Stars = 4, Era = 4, Width = 10, Depth = 5, ContainerPlaces = 6, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
             new ExpansionDef { Id = "workshop", Name = "Workshop", Room = "lab", Credits = 5000, Stars = 4, Era = 4, Width = 8, Depth = 6, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 1 },
             new ExpansionDef { Id = "exhibition-hall", Name = "Exhibition hall finish", Room = "shop", Credits = 6000, Stars = 5, Era = 5, Width = 0, Depth = 0, ContainerPlaces = 2, VisitorsAtOnce = 1, ExtraWalkSeconds = 0 },

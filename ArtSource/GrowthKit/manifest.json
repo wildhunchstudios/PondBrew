@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "8a4f253113e6cf7a9bf88df7664916c1ee099cfe9e3fb0d8034e9d05e81b4c51",
+  "source_script_sha256": "689db827f09abbfc2a90115a6c423669549c979a800fc4a0f56fc671be2cb48e",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -171,6 +171,18 @@
     },
     "GK_Bleached": {
       "srgb_hex": "#E3D8C3"
+    },
+    "GK_LilacPale": {
+      "srgb_hex": "#F2EDFF"
+    },
+    "GK_LilacSoft": {
+      "srgb_hex": "#E6DEFF"
+    },
+    "GK_LilacDeep": {
+      "srgb_hex": "#7D6BD0"
+    },
+    "GK_LilacPanel": {
+      "srgb_hex": "#C9BDF2"
     }
   },
   "assets": [
@@ -2082,7 +2094,7 @@
       "bytes": 386588
     },
     {
-      "triangles": 25300,
+      "triangles": 26200,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2118,8 +2130,8 @@
       },
       "id": "AnnexDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/AnnexDressing.fbx",
-      "sha256": "2d94e7d5f1fc9e022ad9555e22fb6768154e6f15436a85136cfbe9b1058d0661",
-      "bytes": 532044
+      "sha256": "7a7afdf5a26805f022a5640f277feb33cfcc3b28faea100ea2f3730d6e3691a6",
+      "bytes": 553452
     },
     {
       "triangles": 5196,
@@ -3310,6 +3322,200 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorDriftwood.fbx",
       "sha256": "a5802aac7fb94681a8f4eaa7f27694ed95627fe35f8b0a201394ba20543c743a",
       "bytes": 47692
+    },
+    {
+      "triangles": 6924,
+      "materials": [
+        "GK_LilacDeep",
+        "GK_LilacPale",
+        "GK_LilacSoft",
+        "GK_Pavement"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -10.0,
+          -0.044,
+          11.0
+        ],
+        "max": [
+          -4.0,
+          0.006,
+          17.0
+        ]
+      },
+      "id": "ResearchFloor",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchFloor.fbx",
+      "sha256": "35b50e9af3d5694d20d9c0d60eb7ebbbdbec6f94017e721a4674a1290fd81a85",
+      "bytes": 116300
+    },
+    {
+      "triangles": 14108,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_GlowWhite",
+        "GK_GlowYellow",
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_LilacPanel",
+        "GK_Lime",
+        "GK_Pink",
+        "GK_Soil",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -10.0,
+          0.0,
+          11.0
+        ],
+        "max": [
+          -4.0,
+          3.6,
+          17.0
+        ]
+      },
+      "id": "ResearchDressing",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchDressing.fbx",
+      "sha256": "42af173c56a318ccafb38827bf814401296aef031ed6d2cd674f4d265bf82018",
+      "bytes": 319084
+    },
+    {
+      "triangles": 3764,
+      "materials": [
+        "GK_Cream",
+        "GK_Green",
+        "GK_Ink",
+        "GK_Lime",
+        "GK_Sand",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.57,
+          0.0,
+          -0.28
+        ],
+        "max": [
+          0.57,
+          3.5,
+          0.312
+        ]
+      },
+      "id": "ResearchTank",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchTank.fbx",
+      "sha256": "854e2d14e78c460a1e216fcacfe9f0f8580e5c35eb7f0bba786ec23918b77265",
+      "bytes": 101196
+    },
+    {
+      "triangles": 7380,
+      "materials": [
+        "GK_Cream",
+        "GK_Glass",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -9.9,
+          0.67,
+          12.12
+        ],
+        "max": [
+          -9.56,
+          2.23,
+          15.08
+        ]
+      },
+      "id": "ResearchJars",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchJars.fbx",
+      "sha256": "2e88e387d19e2c316d566757c12b3c75409d22891f4b9044df8d8c8722cc531c",
+      "bytes": 146908
+    },
+    {
+      "triangles": 2512,
+      "materials": [
+        "GK_Cream",
+        "GK_Ink",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Wood",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.65,
+          0.03,
+          -0.45
+        ],
+        "max": [
+          0.65,
+          1.85,
+          0.47
+        ]
+      },
+      "id": "ResearchDesk",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchDesk.fbx",
+      "sha256": "50529789ff34de26f44e15e9aa1b52f41e742f94794a7f4d9feff4715b2e37c2",
+      "bytes": 74316
+    },
+    {
+      "triangles": 2412,
+      "materials": [
+        "GK_Cream",
+        "GK_Glass",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.63,
+          0.0,
+          -0.28
+        ],
+        "max": [
+          0.63,
+          1.065,
+          0.28
+        ]
+      },
+      "id": "ResearchTray",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchTray.fbx",
+      "sha256": "72c60ee2072c622e759813c361f3ea02a2392e3b200905b6ee15cc0f408b888e",
+      "bytes": 67916
+    },
+    {
+      "triangles": 15944,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_Ink",
+        "GK_Sand",
+        "GK_Teal",
+        "GK_WoodLight",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          3.921,
+          0.0,
+          -16.044
+        ],
+        "max": [
+          4.06,
+          2.8,
+          -14.648
+        ]
+      },
+      "id": "PartitionResearch",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionResearch.fbx",
+      "sha256": "ee5e2a645baf8593a304d723fc2ab6837d35c489783173842499ed450c50b6d5",
+      "bytes": 368908
     }
   ]
 }

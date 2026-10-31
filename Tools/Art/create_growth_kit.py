@@ -81,6 +81,8 @@ PALETTE = {
     'GK_Cloud': '#FFFFFF',
     # GR-32 (F57): the plain pieces' stone, pot and old wood.
     'GK_Stone': '#A9A49B', 'GK_StoneDark': '#6F6A66', 'GK_Terracotta': '#C8734A', 'GK_Bleached': '#E3D8C3',
+    # GR-30: the research room's lilac.
+    'GK_LilacPale': '#F2EDFF', 'GK_LilacSoft': '#E6DEFF', 'GK_LilacDeep': '#7D6BD0', 'GK_LilacPanel': '#C9BDF2',
 }
 MAT = {}
 
@@ -1437,7 +1439,7 @@ def workshop_dome():
     return join('WorkshopDome')
 
 
-def lab_panels(a, b, inner, gaps, h=0.95):
+def lab_panels(a, b, inner, gaps, h=0.95, mat='GK_Panel'):
     """The back room's rounded turquoise panels along a wall's inside face, leaving its gaps (distances along it from a)."""
     a, b = Vector(a), Vector(b)
     d = (b - a).normalized(); length = (b - a).length; n = Vector(inner)
@@ -1447,7 +1449,7 @@ def lab_panels(a, b, inner, gaps, h=0.95):
         if not any(g0 - 0.45 < c < g1 + 0.45 for g0, g1 in gaps):
             p = a + d * c + n * (0.1 + 0.025)
             size = (0.84, h, 0.05) if abs(d.x) > 0.5 else (0.05, h, 0.84)
-            box((p.x, 0.08 + h / 2, p.y), size, 'GK_Panel', r=0.05)
+            box((p.x, 0.08 + h / 2, p.y), size, mat, r=0.05)
         t += 0.9
 
 
@@ -1487,15 +1489,16 @@ def annex_floor():
 def annex_dressing():
     """The lab annex (x -4..4, z 9..17, a 3.6 m ceiling; GrowthWorldLab.AnnexRoom): the back room's panels, rail and skirting
     round its walls, clear of the doorway from the back room (x 0.45..1.85), the doorway into the workshop (z 9.6..11), the
-    pipe gallery (z 11.25..14.15 on the west wall) and, for the rail, the power board (z 11.9..13.1 on the east wall); frames
+    pipe gallery (z 11.25..14.15 on the west wall), GR-30's doorway into the research room (z 14.65..16.05 on it) and, for the rail, the power board (z 11.9..13.1 on the east wall); frames
     round both doorways; two light strips down the ceiling; a shelf of glowing jars; a plant."""
-    back, workshop, gallery, board = (4.45, 5.85), (0.6, 2.0), (2.25, 5.15), (2.9, 4.1)
+    back, workshop, gallery, board, research = (4.45, 5.85), (0.6, 2.0), (2.25, 5.15), (2.9, 4.1), (5.65, 7.05)
     lab_walls((((-4, 9), (4, 9), (0, 1), [back], [back]),
-               ((-4, 9), (-4, 17), (1, 0), [gallery], [gallery]),
+               ((-4, 9), (-4, 17), (1, 0), [gallery, research], [gallery, research]),
                ((-4, 17), (4, 17), (0, -1), [], []),
                ((4, 9), (4, 17), (-1, 0), [workshop], [workshop, board])))
     door_frame(-4 + (back[0] + back[1]) / 2, 9, True, back[1] - back[0], 2.8, 'GK_Teal', (0, 1))
     door_frame(4, 9 + (workshop[0] + workshop[1]) / 2, False, workshop[1] - workshop[0], 2.8, 'GK_Teal', (-1, 0))
+    door_frame(-4, 9 + (research[0] + research[1]) / 2, False, research[1] - research[0], 2.8, 'GK_Teal', (1, 0))
     for x in (-1.5, 1.5):
         box((x, 3.56, 13), (0.5, 0.08, 6.0), 'GK_Cream', r=0.03)
         box((x, 3.515, 13), (0.36, 0.01, 5.8), 'GK_GlowWhite', r=0)
@@ -2702,9 +2705,113 @@ def decor_driftwood():
 # GR-32: tester round 1's pieces, last so the rest draw their random numbers as before.
 WAVE_ROUND1 = [tank_backdrop, tank_backdrop_large, decor_stones, decor_fern, decor_rocks, decor_bamboo, decor_shells, decor_driftwood]
 
+# ---------------------------------------------------------------- GR-30: the research room (the user's preview, Docs/Evidence/gr-30/preview)
+
+def research_floor():
+    """The research room's floor (x -10..-4, z 11..17): pale lilac tiles with a deep one now and then."""
+    for i in range(8):
+        for j in range(8):
+            m = 'GK_LilacDeep' if (i + j) % 4 == 0 else ('GK_LilacPale' if (i + j) % 2 else 'GK_LilacSoft')
+            box((-10 + 0.375 + i * 0.75, 0.006 - 0.015, 11 + 0.375 + j * 0.75), (0.73, 0.03, 0.73), m, r=0.02, seg=2)
+    box((-7, -0.034, 14), (6, 0.02, 6), 'GK_Pavement', r=0)
+    return join('ResearchFloor')
+
+
+def research_dressing():
+    """The research room (x -10..-4, z 11..17, a 3.6 m ceiling; GrowthWorldResearch): lilac panels, a rail and skirting round its
+    walls, clear of the doorway from the power room (z 14.65..16.05 on its east wall) and, for the rail, the jars on the west wall;
+    a frame round the doorway; two light strips; a lit sign over the tanks; a plant in the south-east corner."""
+    door, jars = (3.65, 5.05), (1.1, 4.1)
+    for a, b, n, gaps, rail in (((-10, 11), (-4, 11), (0, 1), [], []),
+                                ((-10, 11), (-10, 17), (1, 0), [jars], [jars]),
+                                ((-10, 17), (-4, 17), (0, -1), [], []),
+                                ((-4, 11), (-4, 17), (-1, 0), [door], [door])):
+        lab_panels(a, b, n, gaps, mat='GK_LilacPanel')
+        wall_strip(a, b, n, 1.07, 0.07, 0.07, 'GK_Teal', rail)
+        wall_strip(a, b, n, 0.04, 0.08, 0.06, 'GK_TealDark', gaps, r=0.015)
+    door_frame(-4, 11 + (door[0] + door[1]) / 2, False, door[1] - door[0], 2.8, 'GK_Teal', (-1, 0))
+    for z in (12.6, 15.4):
+        box((-7, 3.56, z), (4.6, 0.08, 0.5), 'GK_Cream', r=0.03)
+        box((-7, 3.515, z), (4.4, 0.01, 0.36), 'GK_GlowWhite', r=0)
+    box((-7.3, 2.45, 17 - 0.1 - 0.03), (2.0, 0.42, 0.04), 'GK_TealDark', r=0.05)
+    box((-7.3, 2.45, 17 - 0.1 - 0.055), (1.76, 0.1, 0.01), 'GK_GlowYellow', r=0.004)
+    potted_plant(-4.6, 11.6, 0.85)
+    return join('ResearchDressing')
+
+
+def research_tank():
+    """One research tank (GrowthWorldResearch; its front -Z, against the north wall): a small tank for trying a pair, as the
+    breeding tank without its nursery, with a round timer's dark face on its cabinet (its ticks light at run time), and a yellow
+    power box and cable up the wall behind it: each tank draws a unit of the generator's power."""
+    w, d = 1.06, 0.44
+    box((0, 0.39, 0), (w + 0.04, 0.78, d + 0.06), 'GK_Cream', r=0.07)
+    box((0, 0.04, 0), (w, 0.08, d), 'GK_TealDark', r=0.03)
+    box((0, 0.81, 0), (w + 0.08, 0.06, d + 0.08), 'GK_Teal', r=0.03)
+    box((0, 1.3, 0), (w + 0.08, 0.06, d + 0.08), 'GK_Teal', r=0.03)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            cyl((sx * w / 2, 1.05, sz * d / 2), 0.03, 0.46, 'GK_Teal', r=0.01, verts=16)
+    box((0, 0.86, 0), (w - 0.06, 0.04, d - 0.06), 'GK_Sand', r=0.012)
+    ball((0.42, 1.0, 0.1), (0.04, 0.14, 0.03), 'GK_Green', seg=16)
+    ball((0.36, 0.95, 0.12), (0.032, 0.09, 0.024), 'GK_Lime', seg=14)
+    cyl((0, 0.45, -d / 2 - 0.045), 0.15, 0.03, 'GK_Ink', r=0.01, rot=(90, 0, 0))
+    box((0.4, 1.42, d / 2 + 0.06), (0.1, 0.14, 0.05), 'GK_Yellow', r=0.015)
+    cyl((0.4, 2.5, d / 2 + 0.08), 0.012, 2.0, 'GK_Ink', r=0, verts=8)
+    return join('ResearchTank')
+
+
+def research_jars():
+    """The specimen jars on the west wall (GrowthWorldResearch.JarPosition): three shelves of five lit jars with yellow lids,
+    each holding one creature at run time. Standing in the room's own coordinates."""
+    x = -10 + 0.1
+    box((x + 0.03, 1.42, 13.6), (0.06, 1.5, 2.9), 'GK_TealDark', r=0.03)
+    box((x + 0.17, 2.2, 13.6), (0.34, 0.06, 2.96), 'GK_Teal', r=0.025)
+    for row in range(3):
+        y = 0.92 + row * 0.46
+        box((x + 0.17, y - 0.14, 13.6), (0.34, 0.04, 2.9), 'GK_Cream', r=0.015)
+        for col in range(5):
+            z = 12.55 + col * 0.525
+            cyl((x + 0.18, y + 0.04, z), 0.14, 0.3, 'GK_Glass', r=0, verts=20)
+            cyl((x + 0.18, y + 0.205, z), 0.145, 0.03, 'GK_Yellow', r=0.01, verts=20)
+    return join('ResearchJars')
+
+
+def research_desk():
+    """The research desk (GrowthWorldResearch; against the south wall, its screen and drawers facing +Z): a cream top on a wooden
+    body with two drawers, a keyboard, and a big dark screen whose grid of pairs lights at run time."""
+    box((0, 0.85, 0), (1.3, 0.07, 0.9), 'GK_Cream', r=0.03)
+    box((0, 0.42, 0), (1.2, 0.78, 0.8), 'GK_Wood', r=0.04)
+    for k in range(2):
+        box((-0.3, 0.3 + k * 0.32, 0.41), (0.5, 0.26, 0.03), 'GK_Teal', r=0.02)
+        ball((-0.3, 0.3 + k * 0.32, 0.44), 0.03, 'GK_Yellow', seg=16)
+    box((0, 1.42, -0.2), (1.16, 0.86, 0.06), 'GK_TealDark', r=0.04)
+    box((0, 1.42, -0.165), (1.04, 0.74, 0.01), 'GK_Ink', r=0)
+    cyl((0, 0.95, -0.2), 0.05, 0.14, 'GK_TealDark', r=0.01, verts=16)
+    box((0, 0.9, 0.2), (0.5, 0.025, 0.2), 'GK_Teal', r=0.008)
+    return join('ResearchDesk')
+
+
+def research_tray():
+    """The tray beside the desk (GrowthWorldResearch.TrayPosition; its front +Z): a cream stand and a shallow glass trough where the
+    room's new creatures wait to be taken, a yellow plate along its front."""
+    box((0, 0.36, 0), (1.2, 0.72, 0.5), 'GK_Cream', r=0.06)
+    box((0, 0.04, 0), (1.16, 0.08, 0.46), 'GK_TealDark', r=0.03)
+    box((0, 0.74, 0), (1.26, 0.04, 0.56), 'GK_Teal', r=0.018)
+    box((0, 0.9, 0), (1.2, 0.28, 0.5), 'GK_Glass', r=0)
+    for sz in (-1, 1):
+        box((0, 1.05, sz * 0.26), (1.26, 0.03, 0.04), 'GK_Teal', r=0.012)
+    for sx in (-1, 1):
+        box((sx * 0.61, 1.05, 0), (0.04, 0.03, 0.56), 'GK_Teal', r=0.012)
+    box((0, 0.5, 0.255), (0.7, 0.14, 0.02), 'GK_Yellow', r=0.03)
+    return join('ResearchTray')
+
+
+WAVE_RESEARCH = [research_floor, research_dressing, research_tank, research_jars, research_desk, research_tray,
+                 lambda: hoarding('PartitionResearch', -16.05, -14.65, 4.0, False, 2.8, 'RESEARCH ROOM')]
+
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1  # later waves last, so earlier ones draw their random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1 + WAVE_RESEARCH  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

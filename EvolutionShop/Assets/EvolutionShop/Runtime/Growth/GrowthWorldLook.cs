@@ -73,6 +73,7 @@ namespace EvolutionShop
             ["GK_StoneDark"] = ('p', "#6F6A66", 0.45f),
             ["GK_Terracotta"] = ('p', "#C8734A", 0.4f),
             ["GK_Bleached"] = ('p', "#E3D8C3", 0.35f),
+            ["GK_LilacPale"] = ('p', "#F2EDFF", 0.72f), ["GK_LilacSoft"] = ('p', "#E6DEFF", 0.72f), ["GK_LilacDeep"] = ('p', "#7D6BD0", 0.72f), ["GK_LilacPanel"] = ('p', "#C9BDF2", 0.6f),
             ["GK_Cream"] = ('p', "#FFF3DF", 0.62f),
             ["GK_Teal"] = ('p', "#22BFB0", 0.62f),
             ["GK_TealDark"] = ('p', "#15867F", 0.62f),
@@ -245,6 +246,7 @@ namespace EvolutionShop
             if (annexLight) annexLight.transform.localPosition = new Vector3(0, 3.3f, 13);
             if (workshopLight) workshopLight.transform.localPosition = new Vector3(8, 3.1f, 12);
             labLamps = new[] { annexLight, workshopLight };
+            DressResearch(dressing);
             // Wave 4: unit B and unit C, and the street outside unit B's bay window; their lamps hang where the kit's pendants are,
             // a second one each, revealed with the room.
             Hide(rooms, "Unit B floor");
@@ -495,7 +497,7 @@ namespace EvolutionShop
             // A reflection probe in each dressed room, rendered once the room is built and again when night turns to day, so
             // the glossy plastic reflects the room rather than nothing.
             foreach (var (name, center, size) in new[] { ("unit A", new Vector3(0, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("back room", new Vector3(-1, 1.8f, 6.5f), new Vector3(6, 3.6f, 5)),
-                                                         ("lab annex", new Vector3(0, 1.8f, 13), new Vector3(8, 3.6f, 8)), ("workshop", new Vector3(8, 1.8f, 12), new Vector3(8, 3.6f, 6)),
+                                                         ("lab annex", new Vector3(0, 1.8f, 13), new Vector3(8, 3.6f, 8)), ("workshop", new Vector3(8, 1.8f, 12), new Vector3(8, 3.6f, 6)), ("research room", new Vector3(-7, 1.8f, 14), new Vector3(6, 3.6f, 6)),
                                                          ("unit B", new Vector3(8, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("unit C", new Vector3(7, 1.6f, 6.5f), new Vector3(10, 3.2f, 5)) })
             {
                 var probe = new GameObject("Look / reflections (" + name + ")").AddComponent<ReflectionProbe>();

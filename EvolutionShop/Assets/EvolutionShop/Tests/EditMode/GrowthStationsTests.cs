@@ -37,7 +37,7 @@ namespace EvolutionShop.Tests
         [Test]
         public void EveryStationHasItsLevelsAndTheLaterOnesSayWhatTheyWaitFor()
         {
-            Assert.That(GrowthShop.UpgradeableStations, Is.EquivalentTo(new[] { "siphon", "grower", "incubator", "counter", "bench", "breeding", "vat", "generator", "pump", "sorter" }));
+            Assert.That(GrowthShop.UpgradeableStations, Is.EquivalentTo(new[] { "siphon", "grower", "incubator", "counter", "bench", "breeding", "vat", "generator", "pump", "sorter", "research" }));
             Assert.That(new GrowthShop().Level("bench"), Is.EqualTo(1), "the research bench starts at level 1 (notes)");
             // Each level's era, stars, research points and credits gate it, in that order, as GrowthContent says.
             foreach (var station in new[] { "siphon", "grower", "incubator", "counter", "bench" })
@@ -68,7 +68,7 @@ namespace EvolutionShop.Tests
             var top = At(era: 5, stars: 5);
             foreach (var station in new[] { "siphon", "grower", "incubator", "counter", "bench", "breeding" })
                 while (top.UpgradeCheck(station, out _, out _) == GrowthFailure.None) top.Upgrade(station);
-            Assert.That(GrowthShop.UpgradeableStations.Where(s => s != "vat" && s != "generator" && s != "pump" && s != "sorter").Select(top.Level), Is.EqualTo(new[] { 4, 4, 4, 3, 4, 3 }),
+            Assert.That(GrowthShop.UpgradeableStations.Where(s => s != "vat" && s != "generator" && s != "pump" && s != "sorter" && s != "research").Select(top.Level), Is.EqualTo(new[] { 4, 4, 4, 3, 4, 3 }),
                 "siphon, growers, incubator and the bench to 4 (GR-08: the analyzer and planner), the counter to 3 (its next level waits), the breeding tank to 3");
             Assert.That(GrowthShop.WaitsFor("counter", 4), Is.Null, "GR-09: the second till came with the helpers");
             Assert.That(GrowthShop.WaitsFor("bench", 3), Is.Null);

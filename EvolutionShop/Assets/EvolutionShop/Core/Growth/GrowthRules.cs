@@ -63,8 +63,9 @@ namespace EvolutionShop.Growth
         }
 
         /// <summary>
-        /// GR.7.2: two creatures breed the species whose breeding value is nearest their average (rounded up), crowns
-        /// excluded; a special pair makes its crown; a same-species pair breeds true. Ties go to the lower value.
+        /// GR.7.2: two creatures of different species breed the hybrid whose breeding value is nearest their average (rounded
+        /// up): founders come only from mixes (tester round 1, F8) and crowns only from their special pair; a same-species
+        /// pair breeds true. Ties go to the lower value.
         /// </summary>
         public static SpeciesDef Breed(string a, string b)
         {
@@ -77,7 +78,7 @@ namespace EvolutionShop.Growth
             SpeciesDef best = null; int bestGap = int.MaxValue;
             foreach (var s in GrowthContent.Species)
             {
-                if (s.Kind == SpeciesKind.Crown) continue;
+                if (s.Kind != SpeciesKind.Hybrid) continue;
                 int gap = Math.Abs(s.BreedingValue - target);
                 if (gap < bestGap || gap == bestGap && s.BreedingValue < best.BreedingValue) { best = s; bestGap = gap; }
             }

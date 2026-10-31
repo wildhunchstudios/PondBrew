@@ -29,6 +29,7 @@ namespace EvolutionShop.Tests
             "GenCrank", "GenCrankWheel", "GenTurbine", "GenTwin", "GenTide", "PumpHand", "PumpHandWheel", "PumpMotor", "Buffer",
             "BufferTag1", "BufferTag2", "BufferTag3", "BufferTag4", "BufferTag5", "BufferTag6", "PowerBoard", "Sorter", "IncubatorOutlet",
             "PipeGallery", "WorkshopDome", "AnnexFloor", "AnnexDressing", "WorkshopFloor", "WorkshopDressing",
+            "ResearchFloor", "ResearchDressing", "ResearchTank", "ResearchJars", "ResearchDesk", "ResearchTray", "PartitionResearch",
             "UnitBFloor", "UnitBDressing", "StreetEast", "BayWindow", "WindowDisplay", "UnitCFloor", "UnitCDressing", "FeatureWall", "FeatureTank",
             "PartitionB", "PartitionC", "PartitionAnnex", "PartitionWorkshop", "BannerCoral", "BannerYellow", "BannerBlue", "HallSpot",
             "ExhibitionSign", "Award", "DisplayTag", "StaffBoard", "HallBoard",

@@ -308,7 +308,7 @@ namespace EvolutionShop
 
         /// <summary>GR-20's chime for a wish granted: two soft bell notes rising (E6 then A6), each with a quieter octave.</summary>
         /// <summary>The shop's events: a hatch says it is done.</summary>
-        public void Event(GrowthEvent e) { if (e.Kind == GrowthEventKind.Hatched) readyDue = true; }
+        public void Event(GrowthEvent e) { if (e.Kind == GrowthEventKind.Hatched || e.Kind == GrowthEventKind.Researched) readyDue = true; }
         bool readyDue;
         /// <summary>Validation: how many times the incubator has said it is done; whether its bubbling and the siphon's draw play.</summary>
         public int Readies { get; private set; }

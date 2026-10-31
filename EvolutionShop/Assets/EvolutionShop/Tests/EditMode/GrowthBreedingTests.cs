@@ -42,7 +42,7 @@ namespace EvolutionShop.Tests
             if (crown != null) return crown;
             if (a == b) return a;
             int target = (int)Math.Ceiling((a.BreedingValue + b.BreedingValue) / 2.0);
-            return GrowthContent.Species.Where(s => s.Kind != SpeciesKind.Crown).OrderBy(s => Math.Abs(s.BreedingValue - target)).ThenBy(s => s.BreedingValue).First();
+            return GrowthContent.Species.Where(s => s.Kind == SpeciesKind.Hybrid).OrderBy(s => Math.Abs(s.BreedingValue - target)).ThenBy(s => s.BreedingValue).First();
         }
 
         [Test]
@@ -188,37 +188,37 @@ namespace EvolutionShop.Tests
         public void ResearchPointsComeFromEveryFirstSpeciesAndColour()
         {
             var shop = At(era: 2, stars: 2, breeding: 2);
-            shop.Discovered.AddRange(new[] { "bubblebelly", "ribbonfin" });
+            shop.Discovered.AddRange(new[] { "bubblebelly", "ribbonfin", "pondlet" });
             shop.Journal.AddRange(shop.Discovered.Select(d => GrowthShop.JournalKey(d, Colour.Classic)));
             Pair(shop, "bubblebelly", "ribbonfin");
             BreedOnce(shop);
-            Assert.That((shop.Offspring.Species, shop.Rp), Is.EqualTo(("pondlet", GrowthContent.RpFounder)), "a pair can make a founder first: 5 RP");
-            Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.Discovery).Text, Is.EqualTo("New creature: Pondlet!"));
+            Assert.That((shop.Offspring.Species, shop.Rp), Is.EqualTo(("splashkit", GrowthContent.RpHybrid)), "a pair makes a hybrid first: 8 RP (F8: founders only from mixes)");
+            Assert.That(shop.TakeEvents().Single(e => e.Kind == GrowthEventKind.Discovery).Text, Is.EqualTo("New creature: Splashkit!"));
             Assert.That(shop.LastPair.WasNew, Is.True);
             Assert.That(shop.TakeOffspring().Success, Is.True);
             BreedOnce(shop);
-            Assert.That(shop.Rp, Is.EqualTo(GrowthContent.RpFounder), "a repeat brings nothing");
+            Assert.That(shop.Rp, Is.EqualTo(GrowthContent.RpHybrid), "a repeat brings nothing");
             Assert.That(shop.TakeEvents().Single().Kind, Is.EqualTo(GrowthEventKind.Bred));
             Assert.That((shop.LastPair.Count, shop.LastPair.WasNew, shop.PairLog.Count), Is.EqualTo((2, false, 1)));
             shop.Parents.Clear(); shop.Offspring = null; shop.Carried.Clear();
             Pair(shop, "pondlet", "bubblebelly");
             Assert.That(BreedOnce(shop).Species, Is.EqualTo("puddlepup"));
-            Assert.That(shop.Rp, Is.EqualTo(GrowthContent.RpFounder + GrowthContent.RpHybrid), "a hybrid: 8 RP");
+            Assert.That(shop.Rp, Is.EqualTo(2 * GrowthContent.RpHybrid), "another hybrid: 8 RP");
             shop.Parents.Clear(); shop.Offspring = null; shop.Carried.Clear();
             Pair(shop, "reedwhisker", "puddlepup");
             Assert.That(BreedOnce(shop).Species, Is.EqualTo("brookmonarch"), "the Brookkin special pair");
-            Assert.That(shop.Rp, Is.EqualTo(GrowthContent.RpFounder + GrowthContent.RpHybrid + GrowthContent.RpCrown), "a crown: 20 RP");
+            Assert.That(shop.Rp, Is.EqualTo(2 * GrowthContent.RpHybrid + GrowthContent.RpCrown), "a crown: 20 RP");
             shop.Parents.Clear(); shop.Offspring = null; shop.Carried.Clear();
             shop.TakeEvents();
             shop.Held.Add("mist");
             Assert.That(shop.TintWater("mist").Success, Is.True);
             Pair(shop, "pondlet", "pondlet");
             BreedOnce(shop);
-            Assert.That(shop.Rp, Is.EqualTo(GrowthContent.RpFounder + GrowthContent.RpHybrid + GrowthContent.RpCrown + GrowthContent.RpColour), "a new colour: 2 RP");
+            Assert.That(shop.Rp, Is.EqualTo(2 * GrowthContent.RpHybrid + GrowthContent.RpCrown + GrowthContent.RpColour), "a new colour: 2 RP");
             Assert.That(shop.TakeEvents().Single().Text, Is.EqualTo("New colour: Shimmer Pondlet!"));
-            Assert.That(shop.Journal, Is.EquivalentTo(new[] { "bubblebelly/Classic", "ribbonfin/Classic", "pondlet/Classic", "puddlepup/Classic", "brookmonarch/Classic", "pondlet/Shimmer" }));
+            Assert.That(shop.Journal, Is.EquivalentTo(new[] { "bubblebelly/Classic", "ribbonfin/Classic", "pondlet/Classic", "splashkit/Classic", "puddlepup/Classic", "brookmonarch/Classic", "pondlet/Shimmer" }));
             Assert.That(shop.PairLog.Select(p => p.A + " x " + p.B + " = " + p.Species),
-                Is.EqualTo(new[] { "bubblebelly x ribbonfin = pondlet", "bubblebelly x pondlet = puddlepup", "puddlepup x reedwhisker = brookmonarch", "pondlet x pondlet = pondlet" }));
+                Is.EqualTo(new[] { "bubblebelly x ribbonfin = splashkit", "bubblebelly x pondlet = puddlepup", "puddlepup x reedwhisker = brookmonarch", "pondlet x pondlet = pondlet" }));
         }
 
         [Test]

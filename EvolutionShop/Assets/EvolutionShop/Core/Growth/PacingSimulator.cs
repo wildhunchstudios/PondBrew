@@ -301,8 +301,10 @@ namespace EvolutionShop.Growth
         IEnumerable<Offer> Offers()
         {
             // Stations: the next level of each, when its era, stars and room allow.
+            // GR-30: the research room is left out: it finds things sooner and makes no stock, so no target rests on it.
             foreach (var s in GrowthContent.Stations)
             {
+                if (s.Id == "research") continue;
                 int next = level[s.Id] + 1;
                 if (next > s.Levels.Length) continue;
                 var l = s.Levels[next - 1];
@@ -346,6 +348,7 @@ namespace EvolutionShop.Growth
             // Spaces.
             foreach (var e in GrowthContent.Expansions)
             {
+                if (e.Id == "research") continue;
                 if (expansions.Contains(e.Id) || e.Era > era || e.Stars > Stars) continue;
                 string id = e.Id;
                 yield return new Offer { Name = e.Name, Credits = e.Credits, Priority = 0,

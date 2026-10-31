@@ -36,7 +36,7 @@ namespace EvolutionShop.Growth
         IncubatorBusy, HatchlingWaiting, NoHatchling, HandsFull, HandsEmpty, NoSuchContainer, DoesNotFit, Reserved, NoSuchSpecimen,
         NotEnoughCredits, MaxLevel, Locked, PlaceTaken, NoSuchPlace, NoVisitorWaiting, NotAFounder, NotDiscovered, Busy,
         TooBigForPlace, NotEmpty, LastContainer, SameWater, UnknownContainer, Owned, Ordered, NotInCatalog, NoOffspring, NotTinted,
-        NoRoute, NotEnough, NoSuchVisitor,
+        NoRoute, NotEnough, NoSuchVisitor, AlreadyTried,
     }
 
     public readonly struct GrowthResult
@@ -155,7 +155,7 @@ namespace EvolutionShop.Growth
         public bool Breeding => Parents.Count >= GrowthShop.PairSize && Offspring == null;
     }
 
-    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated, WishGranted, Lesson }
+    public enum GrowthEventKind { Collected, Hatched, Discovery, Sale, Refusal, Impatient, StarUp, EraUp, DayStarted, DayEnded, Bought, Upgraded, Moved, Sold, Ordered, Delivered, CultureOwned, Bred, NewColour, Pumped, Laid, AutoDosed, Sorted, LineDay, Hired, Wages, StaffHome, Opened, Exhibition, ExhibitionWon, ExhibitionFailed, Guide, Slapped, Decorated, WishGranted, Lesson, Researched }
 
     public sealed class GrowthEvent
     {
@@ -227,7 +227,7 @@ namespace EvolutionShop.Growth
         /// <summary>Every station the greybox upgrades: the breeding tank starts at level 0 and is bought as its level 1 (GR-05);
         /// the vat arrives at level 1 from the supplier (GR-04) and is upgraded on its card (GR-06); the generator and pumps
         /// are bought in the lab annex as their level 1 (GR-07); the sorter in the workshop (GR-08).</summary>
-        public static readonly string[] UpgradeableStations = GreyboxStations.Concat(new[] { "breeding", "vat", "generator", "pump", "sorter" }).ToArray();
+        public static readonly string[] UpgradeableStations = GreyboxStations.Concat(new[] { "breeding", "vat", "generator", "pump", "sorter", "research" }).ToArray();
         /// <summary>Parents in one of the breeding tank's pairs (GR.7.2); its level 3 has two pairs.</summary>
         public const int PairSize = 2;
 
@@ -1232,6 +1232,8 @@ namespace EvolutionShop.Growth
             if (station == "pump" && next.Level == 2 && !HasGenerator) { why = "Electric pumps need the generator"; return GrowthFailure.Locked; }
             // GR-08: the sorter and the generator's twin turbine and tide engine stand in the workshop.
             if (station == "sorter" && !Workshop) { why = "Open the workshop first"; return GrowthFailure.Locked; }
+            // GR-30: the research room comes at its level 1 with the room.
+            if (station == "research" && !ResearchRoom) { why = "Open the research room first"; return GrowthFailure.Locked; }
             if (station == "generator" && next.Level >= 3 && !Workshop) { why = "The " + next.Change.Split(':')[0].ToLowerInvariant() + " stands in the workshop: open it first"; return GrowthFailure.Locked; }
             // GR.15.1: an upgrade installs only when its station is idle.
             if (station == "incubator" && (Incubating || Hatchlings.Count > 0 || AutoBatch || MossBatch)) { why = "The incubator is busy"; return GrowthFailure.Busy; }
@@ -1742,6 +1744,7 @@ namespace EvolutionShop.Growth
             SaveGuide(save);
             SaveDecor(save);
             SaveLessons(save);
+            SaveResearch(save);
             return save;
         }
 
@@ -1778,7 +1781,7 @@ namespace EvolutionShop.Growth
             // Version 4 (GR-05) had one hatchling, one pair, no bench or vat level and no incubator tint.
             if (s.version < 1 || s.version > GrowthSave.CurrentVersion) { problem = "Unknown GR save version " + s.version; return null; }
             bool Known(string species) => GrowthContent.Get(species) != null;
-            var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0]))
+            var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat(s.specimens ?? new GrowthSave.Specimen[0]).Concat(s.researchTray ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0]))
                 .Concat(s.parents ?? new GrowthSave.Specimen[0]).Concat(s.offspring ?? new GrowthSave.Specimen[0])
                 .Concat(s.secondParents ?? new GrowthSave.Specimen[0]).Concat(s.secondOffspring ?? new GrowthSave.Specimen[0]).ToList();
             if (all.Any(x => !Known(x.species))) { problem = "Unknown species in the save"; return null; }
@@ -1873,7 +1876,7 @@ namespace EvolutionShop.Growth
                 shop.PendingMix = new GrowthMixEntry { Doses = pm.doses, Species = pm.species, Exact = pm.exact, WasNew = pm.wasNew, DistanceToNew = pm.distanceToNew, Count = Math.Max(1, pm.count) };
             }
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s) ?? RestoreLessons(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s) ?? RestoreLessons(shop, s) ?? RestoreResearch(shop, s);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -1897,12 +1900,17 @@ namespace EvolutionShop.Growth
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now). Older saves load.</summary>
-        public const int CurrentVersion = 14;
+        public const int CurrentVersion = 15;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
         public float daySecondsLeft;
         public bool unitB, unitC, hall;
+        /// <summary>15: GR-30 (the research room: its jars, tray and queue).</summary>
+        public bool researchRoom;
+        public int researchDone;
+        public Specimen[] specimens, researchTray;
+        public ResearchJob[] researchJobs;
         public bool exhibitionPrepared, exhibitionToday, exhibitionDone;
         public int exhibitionAttempts;
         public string exhibitionFailure;
@@ -1974,6 +1982,15 @@ namespace EvolutionShop.Growth
         public string[] lessonsMet, lessonsLearned, noted;
         public string lessonNow;
         public float sensitivity = 1;
+
+        [Serializable] public sealed class ResearchJob
+        {
+            public string a, b;
+            public bool mix;
+            public int[] doses;
+            public int tank;
+            public float left;
+        }
 
         [Serializable] public sealed class Specimen
         {

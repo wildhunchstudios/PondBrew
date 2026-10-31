@@ -379,7 +379,7 @@ namespace EvolutionShop
             if (which == GrowthCard.Menu) { card = MenuScreen(); screenLayer.Add(card); cardSignature = Signature(); return; }
             // GR-13: the planning views (the pinboard, the catalog, the journal, the receipt, the results) and the welcome and
             // pause screens are notebooks over the dimmed shop; which of them pause the game is the session's, unchanged.
-            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Settings || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog || which == GrowthCard.Lesson;
+            bool screen = which == GrowthCard.Journal || which == GrowthCard.Receipt || which == GrowthCard.Welcome || which == GrowthCard.Pause || which == GrowthCard.Settings || which == GrowthCard.Results || which == GrowthCard.Board || which == GrowthCard.Catalog || which == GrowthCard.Lesson || which == GrowthCard.Research;
             card = screen ? ScreenCard(which) : StationCard(which == GrowthCard.Incubator || which == GrowthCard.Tank || which == GrowthCard.Crate || which == GrowthCard.Catalog || which == GrowthCard.Breeding || which == GrowthCard.Helper ? 580 : which == GrowthCard.Place || which == GrowthCard.Board || which == GrowthCard.Workbench || which == GrowthCard.Counter || which == GrowthCard.Grower || which == GrowthCard.Buffer || which == GrowthCard.Staff ? 540 : which == GrowthCard.PowerBoard || which == GrowthCard.Sorter ? 600 : 470);
             (screen ? screenLayer : cardLayer).Add(screen ? Dim(card) : card);
             cardSignature = Signature();
@@ -568,7 +568,7 @@ namespace EvolutionShop
                 "|" + shop.Incubating + "|" + (shop.Hatchling?.Id ?? 0) + "|" + shop.Carried.Count + "|" + string.Join(",", shop.Containers.Select(c => c.Kind + c.Level + c.Water + c.Place + c.Decor)) + "|" + shop.Rp + "|" + string.Join(",", shop.Cultures) +
                 "|" + string.Join(",", shop.Vials.Select(v => v.Key + v.Value)) + "|" + string.Join(",", shop.Orders) + "|" + string.Join(",", shop.Containers.Select(c => c.Occupants.Count + ":" + c.Occupants.Count(o => o.ReservedBy != 0))) +
                 "|" + shop.Queue.Count() + "|" + shop.Stars + "|" + shop.Era + "|" + shop.UnitB + "|" + string.Join(",", GrowthShop.UpgradeableStations.Select(shop.Level)) +
-                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + s.CarriedChoice + "|" + (s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature() + "|" + ExhibitionSignature();
+                "|" + string.Join(",", shop.Parents.Select(p => p.Id)) + "|" + (shop.Offspring?.Id ?? 0) + "|" + string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id)) + (shop.Pairs[1].Offspring?.Id ?? 0) + "|" + shop.Hatchlings.Count + shop.IncubatorTint + "|" + shop.Tint + "|" + shop.PairLog.Count + "|" + shop.Journal.Count + "|" + string.Join(",", shop.Carried.Select(c => c.Id)) + "|" + s.CarriedChoice + "|" + (s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0) + "|" + PowerSignature() + "|" + LineSignature() + "|" + HelperSignature() + "|" + SpacesSignature() + "|" + ExhibitionSignature() + "|" + ResearchSignature();
         }
 
         string LiveText()
@@ -580,6 +580,7 @@ namespace EvolutionShop
                 case GrowthCard.Counter: return shop.Phase == GrowthPhase.Day ? "Open: " + GrowthShop.DurationWords(shop.DaySecondsLeft) + " left." : "Closed for the night.";
                 case GrowthCard.Grower: return s.CardTarget == null ? "" : Mathf.FloorToInt(shop.GrowerUnits[s.CardTarget]) + "/" + shop.GrowerCapacityOf(s.CardTarget) + " doses ready";
                 case GrowthCard.Settings: return SettingsLiveText();
+                case GrowthCard.Research: return ResearchLiveText();
                 case GrowthCard.Breeding: return !shop.HasBreedingTank ? "not bought" : shop.ActivePairs.Any(p => p.Offspring != null) ? "An offspring is waiting" : shop.ActivePairs.Any(p => p.Breeding) ? "Breeding · " + Mathf.CeilToInt(shop.ActivePairs.Where(p => p.Breeding).Min(p => p.Left)) + " s" : "Waiting for a pair";
                 default: return PowerLiveText() ?? LineLiveText() ?? HelperLiveText() ?? "";
             }
@@ -626,6 +627,8 @@ namespace EvolutionShop
                 case GrowthCard.PowerBoard: FillPowerBoard(); break;
                 case GrowthCard.Buffer: FillBuffer(target); break;
                 case GrowthCard.Workshop: FillWorkshop(); break;
+                case GrowthCard.ResearchWall: FillResearchWall(); break;
+                case GrowthCard.Research: FillResearch(); break;
                 case GrowthCard.Sorter: FillSorter(); break;
                 case GrowthCard.Staff: FillStaff(); break;
                 case GrowthCard.UnitC: FillUnitC(); break;
@@ -759,6 +762,9 @@ namespace EvolutionShop
             body.Add(chamber);
             if (shop.Chamber.Count > 0 && !shop.Incubating)
             {
+                // GR-30 (F7): a repeat says so, and what it makes.
+                var repeat = shop.MixEntry(shop.ChamberRecipe());
+                if (repeat != null) body.Add(L("Already tried: this makes " + GrowthContent.Get(repeat.Species).Name + ".", "gr-strong"));
                 var preview = shop.Preview();
                 // GR-06: the research bench's microscope measures every mix; without it, only a mix one dose away says so.
                 if (shop.Microscope)
@@ -792,6 +798,15 @@ namespace EvolutionShop
             links.Add(Link("Pour out the chamber", () => s.Act(shop.PourOutChamber), !locked && shop.Chamber.Count > 0, "Nothing in the chamber"));
             links.Add(Link("Mix log · " + shop.MixLog.Count + " tried", () => OpenJournalAt("Mix log")));
             body.Add(links);
+            // GR-30 (F6): the mixes tried lately, in plain sight.
+            if (shop.MixLog.Count > 0)
+            {
+                var lately = Box("gr-section");
+                lately.style.marginTop = 12;
+                lately.Add(Eyebrow("Tried lately"));
+                foreach (var m in shop.MixLog.AsEnumerable().Reverse().Take(3)) lately.Add(L(DoseWords(m.Doses) + " makes " + GrowthContent.Get(m.Species).Name, "gr-hint"));
+                body.Add(lately);
+            }
             // GR-06: the tint port (level 3) colours the next clutch, as the breeding tank's water does.
             if (shop.IncubatorTintPort) body.Add(TintRow(shop.IncubatorTint, "hatchlings", c => shop.IncubatorTintCheck(c, out string w) == GrowthFailure.None ? null : w,
                 c => s.Act(() => shop.TintIncubator(c)), () => s.Act(shop.ClearIncubatorTint), "Tinted with " + (shop.IncubatorTint == null ? "" : GrowthShop.Name(shop.IncubatorTint)) + ": what hatches next is " + (shop.IncubatorTint == null ? "" : GrowthRules.BreedColour(Colour.Classic, Colour.Classic, shop.IncubatorTint).ToString()) + "."));
@@ -1565,8 +1580,7 @@ namespace EvolutionShop
                 string clue = sp.Kind != SpeciesKind.Founder ? (sp.Kind == SpeciesKind.Crown ? "the family's crown: one special pair of its own, never an average" :
                     shop.HasBreedingTank ? "a hybrid: try pairs in the breeding tank" : "a hybrid, bred rather than mixed (the breeding tank, Era 2)") :
                     "uses " + string.Join(" and ", Enumerable.Range(0, sp.Recipe.Length).Where(i => sp.Recipe[i] > 0).Select(i => GrowthContent.Cultures[i].Name));
-                var bred = shop.PairLog.FirstOrDefault(p => p.Species == sp.Id);
-                string how = sp.Recipe != null ? GrowthReport.Recipe(sp.Recipe) : bred != null ? "bred from " + GrowthContent.Get(bred.A).Name + " × " + GrowthContent.Get(bred.B).Name : "bred";
+                string how = shop.HowToMake(sp);
                 tile.tooltip = known ? sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + how + " · " + sp.Price + " cr" : "??? · " + clue;
                 if (known) tile.Add(CreatureIcon(sp, ColourFound(shop, sp), 58, "gr-jt__glyph"));
                 else { var g = new GrowthGlyph(new Color(0.72f, 0.67f, 0.57f, 0.55f)); g.AddToClassList("gr-jt__glyph"); tile.Add(g); }

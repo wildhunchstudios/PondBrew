@@ -524,6 +524,7 @@ namespace EvolutionShop.Growth
         {
             if (id == DoserPower) return "Auto-doser";
             if (id == SorterPower) return "Sorter";
+            if (id == ResearchPower) return "Research room";
             var p = Pipe(int.Parse(id.Substring(5)));
             return p == null ? id : Name(p.Culture) + " pump to " + BufferName(GrowthLab.BufferPlace(p.To)).ToLowerInvariant();
         }
@@ -669,12 +670,14 @@ namespace EvolutionShop.Growth
             float supply = !HasGenerator ? 0 : HandCrank ? GeneratorUnits * Math.Min(1f, crankLeft / seconds) : GeneratorUnits;
             crankLeft = Math.Max(0, crankLeft - seconds);
             if (AutoDoser && AutoOn && !AutoBatch && AutoWaiting() == null) { AutoRecipe = NextRecipe; AutoBatch = true; AutoProgress = 0; }
+            TickResearchTanks();
             PowerUses.Clear();
             foreach (string id in PowerOrder)
             {
                 var use = new GrowthPowerUse { Id = id, Name = PowerName(id) };
                 if (id == DoserPower) use.Draw = AutoBatch && AutoWaiting() == null ? GrowthContent.AutoDoserUnits : 0;
                 else if (id == SorterPower) use.Draw = HasSorter && SorterIdle() == null ? SorterUnits : 0;
+                else if (id == ResearchPower) use.Draw = ResearchDraw;
                 else { var p = Pipe(int.Parse(id.Substring(5))); use.Draw = p != null && ElectricPumps && LineIdle(p) == null ? PumpUnits : 0; }
                 PowerUses.Add(use);
             }
@@ -697,6 +700,7 @@ namespace EvolutionShop.Growth
                     while (SortProgress >= SortSeconds && SorterIdle() == null) { SortProgress -= SortSeconds; SortOne(); }
                     continue;
                 }
+                if (use.Id == ResearchPower) { WorkResearch(seconds * share); continue; }
                 var p = Pipe(int.Parse(use.Id.Substring(5)));
                 var b = BufferAt(GrowthLab.BufferPlace(p.To));
                 float amount = Math.Min(seconds * share / PumpDoseSeconds, Math.Min(GrowerUnits[p.Culture], GrowthContent.BufferCapacity - b.Units));
@@ -704,7 +708,7 @@ namespace EvolutionShop.Growth
                 b.Units += amount;
             }
             if (!HasSorter || SorterIdle() != null) SortProgress = 0;
-            foreach (var use in PowerUses) use.Status = use.Id == DoserPower ? AutoStatus : use.Id == SorterPower ? SorterStatus : LineStatus(Pipe(int.Parse(use.Id.Substring(5))));
+            foreach (var use in PowerUses) use.Status = use.Id == DoserPower ? AutoStatus : use.Id == SorterPower ? SorterStatus : use.Id == ResearchPower ? ResearchStatus : LineStatus(Pipe(int.Parse(use.Id.Substring(5))));
             TickLineDay();
         }
 
@@ -724,6 +728,7 @@ namespace EvolutionShop.Growth
         {
             shop.Annex = s.annex;
             shop.Workshop = s.workshop;
+            shop.ResearchRoom = s.researchRoom;
             if ((shop.HasGenerator || shop.HasPumps) && !shop.Annex) return "Power without the power room";
             foreach (var b in s.buffers ?? new GrowthSave.Buffer[0])
             {
@@ -764,12 +769,13 @@ namespace EvolutionShop.Growth
             }
             foreach (var id in s.powerOrder ?? new string[0])
             {
-                bool known = id == DoserPower || id == SorterPower && shop.HasSorter || id.StartsWith("line:", StringComparison.Ordinal) && int.TryParse(id.Substring(5), out int pid) && shop.Pipe(pid) != null && shop.Pipe(pid).Line;
+                bool known = id == DoserPower || id == SorterPower && shop.HasSorter || id == ResearchPower && shop.ResearchRoom || id.StartsWith("line:", StringComparison.Ordinal) && int.TryParse(id.Substring(5), out int pid) && shop.Pipe(pid) != null && shop.Pipe(pid).Line;
                 if (!known || shop.PowerOrder.Contains(id)) return "Unknown power use " + id;
                 shop.PowerOrder.Add(id);
             }
             foreach (var line in shop.Lines) if (!shop.PowerOrder.Contains(line.PowerId)) shop.PowerOrder.Add(line.PowerId);
             if (shop.HasSorter && !shop.PowerOrder.Contains(SorterPower)) shop.PowerOrder.Add(SorterPower);
+            if (shop.ResearchRoom && !shop.PowerOrder.Contains(ResearchPower)) shop.PowerOrder.Add(ResearchPower);
             shop.AutoRecipe = string.IsNullOrEmpty(s.autoRecipe) ? null : s.autoRecipe;
             shop.AutoOn = s.autoOn; shop.AutoBatch = s.autoBatch; shop.AutoProgress = Math.Max(0, s.autoProgress); shop.AutoBatches = Math.Max(0, s.autoBatches);
             if (shop.AutoRecipe != null)

@@ -82,6 +82,7 @@ namespace EvolutionShop.Growth
             new Room { Id = "back", Name = "the laboratory", Expansion = "unit-a", Shop = false, Area = new Rect(-4, 4, 2, 9), Ceiling = LabCeiling },
             new Room { Id = "annex", Name = "the power room", Expansion = "annex", Shop = false, Area = new Rect(-4, 9, 4, 17), Ceiling = LabCeiling },
             new Room { Id = "workshop", Name = "the workshop", Expansion = "workshop", Shop = false, Area = new Rect(4, 9, 12, 15), Ceiling = LabCeiling },
+            new Room { Id = "research", Name = "the research room", Expansion = "research", Shop = false, Area = new Rect(-10, 11, -4, 17), Ceiling = LabCeiling },
         };
 
         /// <summary>The street outside the entrance (visitors arrive and leave there).</summary>
@@ -95,6 +96,7 @@ namespace EvolutionShop.Growth
             new Doorway { Id = "back-door", A = "unit-a", B = "back", From = (0.2f, 4), To = (1.4f, 4) },
             new Doorway { Id = "annex-door", A = "back", B = "annex", From = (0.45f, 9), To = (1.85f, 9) },
             new Doorway { Id = "workshop-door", A = "annex", B = "workshop", From = (4, 9.6f), To = (4, 11) },
+            new Doorway { Id = "research-door", A = "annex", B = "research", From = (-4, 14.65f), To = (-4, 16.05f) },
         };
 
         /// <summary>The walking network's waypoints: the visitors' (the street, the door, the hub inside it and the aisles),

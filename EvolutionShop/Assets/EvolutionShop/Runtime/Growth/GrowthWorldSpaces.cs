@@ -124,6 +124,7 @@ namespace EvolutionShop
             SyncOpening("unit-b", shop.UnitB);
             SyncOpening("annex", shop.Annex);
             SyncOpening("workshop", shop.Workshop);
+            SyncOpening("research", shop.ResearchRoom);
             SyncOpening("unit-c", shop.UnitC);
             SyncOpening("hall", shop.Hall);
             revealNow = false;

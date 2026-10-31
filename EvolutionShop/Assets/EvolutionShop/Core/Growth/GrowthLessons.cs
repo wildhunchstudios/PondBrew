@@ -358,6 +358,21 @@ namespace EvolutionShop.Growth
             },
             new GrowthLessonDef
             {
+                Id = "research-room", Title = "The research room", Era = 3,
+                Card = new[]
+                {
+                    "West of the power room is a room for trying things without waiting: three small tanks that run by themselves on the generator's power.",
+                    "Put one creature of each kind in a jar, where it stays. At the desk, press ? on a pair to queue it, or queue a mix. Something new comes out as one real creature, on the tray; a repeat only tells you what it makes.",
+                    "For stock, keep using the breeding tank and the incubator.",
+                },
+                Appears = s => s.Era >= 3 && Ready(s.ResearchCheck(out _)),
+                Done = s => s.ResearchRoom && (s.ResearchJobs.Count > 0 || s.ResearchDone > 0),
+                Step = s => !s.ResearchRoom ? V("At night, open the research room: the power room's west wall (E)", "ResearchWall", "Research room")
+                    : s.Specimens.Count < 2 ? V("Bring two different creatures to the research room and click the jars with each", "ResearchJar", "Specimen jars")
+                    : V("At the research desk (E), press ? on a pair", "ResearchDesk", "Research desk"),
+            },
+            new GrowthLessonDef
+            {
                 Id = "power", Title = "Powered pumps", Era = 3,
                 Card = new[]
                 {

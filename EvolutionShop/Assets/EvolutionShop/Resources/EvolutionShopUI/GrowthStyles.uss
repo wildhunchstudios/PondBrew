@@ -2293,3 +2293,100 @@
     -unity-background-scale-mode: scale-to-fit;
     flex-shrink: 0;
 }
+
+/* GR-30 (F1 to F4): the research desk's grid of pairs, each row the jars across, each cell a pair. */
+.gr-rs-grid {
+    margin-top: 10px;
+    flex-direction: column;
+    align-self: flex-start;
+}
+
+.gr-rs-row {
+    flex-direction: row;
+}
+
+.gr-rs-corner,
+.gr-rs-axis,
+.gr-rs-cell {
+    width: 44px;
+    height: 44px;
+    margin: 1px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.gr-rs-cell {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 20px;
+    color: var(--es-ink);
+}
+
+.gr-rs-cell--same {
+    background-color: #EDE7DA;
+}
+
+.gr-rs-cell--tried {
+    background-color: #E6F7F3;
+    border-left-color: #22BFB0;
+    border-right-color: #22BFB0;
+    border-top-color: #22BFB0;
+    border-bottom-color: #22BFB0;
+}
+
+.gr-rs-cell--open {
+    background-color: #FFFDF6;
+    border-left-color: #D8CDB7;
+    border-right-color: #D8CDB7;
+    border-top-color: #D8CDB7;
+    border-bottom-color: #D8CDB7;
+}
+
+.gr-rs-cell--open:hover {
+    background-color: #FFF1CC;
+}
+
+.gr-rs-cell--new {
+    background-color: #FFF1CC;
+    border-left-color: #FFC93C;
+    border-right-color: #FFC93C;
+    border-top-color: #FFC93C;
+    border-bottom-color: #FFC93C;
+}
+
+.gr-rs-cell--queued {
+    background-color: #FFE08A;
+}
+
+.gr-rs-cell--running {
+    background-color: #7FE3D6;
+}
+
+.gr-rs-icon {
+    flex-shrink: 0;
+}
+
+.gr-rs-jar {
+    width: 136px;
+    margin: 0 8px 8px 0;
+    padding: 6px;
+    align-items: center;
+    background-color: #FFFDF6;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
