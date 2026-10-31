@@ -1474,7 +1474,7 @@ namespace EvolutionShop
                         parent.AddToClassList("gr-parent");
                         parent.SetEnabled(can);
                         parent.tooltip = can ? "Take it out" : "Your hands are full";
-                        parent.Add(CreatureIcon(p.Def, p.Colour, 66, "gr-parent__glyph"));
+                        parent.Add(CreatureIcon(p.Def, p.Colour, 52, "gr-parent__glyph"));
                         parent.Add(L(p.Def.Name, "gr-tile__name"));
                         parent.Add(L(p.Colour.ToString(), "gr-dose__count"));
                         pair.Add(parent);

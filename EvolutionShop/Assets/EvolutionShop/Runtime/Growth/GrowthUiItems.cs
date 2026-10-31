@@ -117,9 +117,10 @@ namespace EvolutionShop
                         species = picked.Species; colour = picked.Colour; word = "picked";
                     }
                     if (!s.World.VisitorViews.TryGetValue(v.Id, out var view) || view == null) continue;
-                    var chest = view.transform.position + new Vector3(0, 1.0f, 0);
+                    // Drawn at the chest, seen when the head is: the counter hides the chest of whoever stands right at it.
+                    var chest = view.transform.position + new Vector3(0, 1.2f, 0);
                     if ((chest - s.Player.View.transform.position).sqrMagnitude > 64) continue;
-                    var p = OnScreen(chest, chest);
+                    var p = OnScreen(chest, view.transform.position + new Vector3(0, 1.5f, 0));
                     if (!p.HasValue) continue;
                     if (used == pickedIcons.Count)
                     {

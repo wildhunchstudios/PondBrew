@@ -91,6 +91,8 @@ namespace EvolutionShop
             yield return Wait(() => shop.Hatchling != null, 20, "the hatch");
             Check(shop.MixLog.Count == 1 && shop.MixLog[0].Species == shop.Hatchling.Species, "It hatched, and the mix is in the log: " + shop.Hatchling.Species);
             shop.Held.Add("bloom");
+            // The card shows a dose added this way when it next rebuilds.
+            yield return Wait(() => s.Ui.CardElement != null && UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Button>(s.Ui.CardElement).ToList().Any(b => b.text == "+" && b.enabledSelf), 3, "the card to offer +");
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "+" && b.enabledSelf, "Press + on Bloom");
             yield return null; yield return null;
             string card = s.Ui.CardText();
