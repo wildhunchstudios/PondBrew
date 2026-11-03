@@ -12,12 +12,12 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthStarts
     {
-        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look", Decor = "decor", Wishes = "wishes", Research = "research";
+        public const string Era3 = "era3", Era4 = "era4", Spaces = "spaces", Exhibition = "exhibition", Creatures = "creatures", Look = "look", Decor = "decor", Wishes = "wishes", Research = "research", SecondLab = "lab2";
 
         /// <summary>A start point: an established shop, so it learns the lessons for what it has (R09.4) and meets only the rest.</summary>
         public static GrowthShop Make(string id) { var shop = MakeShop(id); shop?.LearnWhatIsKnown(); return shop; }
 
-        static GrowthShop MakeShop(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : id == Decor ? DecorStart() : id == Wishes ? WishesStart() : id == Research ? ResearchStart() : null;
+        static GrowthShop MakeShop(string id) => id == Era3 ? Era3Start() : id == Era4 ? Era4Start() : id == Spaces ? SpacesStart() : id == Exhibition ? ExhibitionStart() : id == Creatures ? CreaturesStart() : id == Look ? LookStart() : id == Decor ? DecorStart() : id == Wishes ? WishesStart() : id == Research ? ResearchStart() : id == SecondLab ? SecondLabStart() : null;
 
         /// <summary>GR-12's families (waves 1 to 4: all nine), shown in the AD look.</summary>
         public static readonly string[] KitFamilies = { "brookkin", "sparkline", "airfin", "cinderling", "dewling", "reefback", "saltscale", "gloamer", "cometail" };
@@ -64,6 +64,14 @@ namespace EvolutionShop.Growth
             shop.Annex = true;
             shop.Levels["generator"] = 2;
             shop.Credits = 3000;
+            return shop;
+        }
+
+        /// <summary>GR-34 (F69): the era 4 start with 30,000 credits, to open the second lab and place its machines.</summary>
+        public static GrowthShop SecondLabStart()
+        {
+            var shop = Era4Start();
+            shop.Credits = 30000;
             return shop;
         }
 

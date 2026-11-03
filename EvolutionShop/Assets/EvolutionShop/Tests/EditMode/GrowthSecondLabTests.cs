@@ -243,5 +243,15 @@ namespace EvolutionShop.Tests
             GrowthShop.Restore(broken, out problem);
             Assert.That(problem, Is.EqualTo("Moss at a machine that is not there"));
         }
+
+        [Test]
+        public void F69_TheSecondLabStartPoint_CanOpenItAndPlaceMachines()
+        {
+            var shop = GrowthStarts.Make(GrowthStarts.SecondLab);
+            Assert.That(shop.Annex && !shop.SecondLab && shop.HasBreedingTank, Is.True);
+            Assert.That(shop.SecondLabCheck(out string why), Is.EqualTo(GrowthFailure.None), why);
+            Assert.That(shop.BuySecondLab().Success && shop.BuyLabIncubator().Success && shop.BuyLabBreeder().Success && shop.BuyLabIncubator().Success, Is.True);
+            Assert.That(shop.HireCheck("moss", out why), Is.Not.EqualTo(GrowthFailure.Locked), "Moss can be hired there: " + why);
+        }
     }
 }

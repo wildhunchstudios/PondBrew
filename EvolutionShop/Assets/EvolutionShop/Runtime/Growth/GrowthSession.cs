@@ -149,7 +149,7 @@ namespace EvolutionShop
             {
                 // GR-07: a start point keeps its own save, so the usual greybox shop is never touched.
                 StartPoint = start;
-                SavePath = Path.Combine(Application.persistentDataPath, (start == GrowthStarts.Research ? "growth-gr30-" : start == GrowthStarts.Wishes ? "growth-gr20-" : start == GrowthStarts.Look ? "growth-gr16-" : start == GrowthStarts.Creatures ? "growth-gr12-" : start == GrowthStarts.Exhibition ? "growth-gr11-" : start == GrowthStarts.Spaces ? "growth-gr10-" : "growth-gr07-") + start + ".json");
+                SavePath = Path.Combine(Application.persistentDataPath, (start == GrowthStarts.SecondLab ? "growth-gr34-" : start == GrowthStarts.Research ? "growth-gr30-" : start == GrowthStarts.Wishes ? "growth-gr20-" : start == GrowthStarts.Look ? "growth-gr16-" : start == GrowthStarts.Creatures ? "growth-gr12-" : start == GrowthStarts.Exhibition ? "growth-gr11-" : start == GrowthStarts.Spaces ? "growth-gr10-" : "growth-gr07-") + start + ".json");
             }
             string notice = null;
             bool fresh = !File.Exists(SavePath);
