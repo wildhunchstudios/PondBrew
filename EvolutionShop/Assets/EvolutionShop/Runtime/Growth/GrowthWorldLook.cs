@@ -74,6 +74,8 @@ namespace EvolutionShop
             ["GK_Terracotta"] = ('p', "#C8734A", 0.4f),
             ["GK_Bleached"] = ('p', "#E3D8C3", 0.35f),
             ["GK_LilacPale"] = ('p', "#F2EDFF", 0.72f), ["GK_LilacSoft"] = ('p', "#E6DEFF", 0.72f), ["GK_LilacDeep"] = ('p', "#7D6BD0", 0.72f), ["GK_LilacPanel"] = ('p', "#C9BDF2", 0.6f),
+            // GR-34 (F69): the second lab's mint.
+            ["GK_MintPale"] = ('p', "#E4F7EC", 0.72f), ["GK_MintSoft"] = ('p', "#CDEFDC", 0.72f), ["GK_MintDeep"] = ('p', "#2FA37A", 0.72f), ["GK_MintPanel"] = ('p', "#A6E2C4", 0.6f),
             ["GK_Cream"] = ('p', "#FFF3DF", 0.62f),
             ["GK_Teal"] = ('p', "#22BFB0", 0.62f),
             ["GK_TealDark"] = ('p', "#15867F", 0.62f),
@@ -247,6 +249,7 @@ namespace EvolutionShop
             if (workshopLight) workshopLight.transform.localPosition = At(8, 3.1f, 12);
             labLamps = new[] { annexLight, workshopLight };
             DressResearch(dressing);
+            DressSecondLab(dressing);
             // Wave 4: unit B and unit C, and the street outside unit B's bay window; their lamps hang where the kit's pendants are,
             // a second one each, revealed with the room.
             Hide(rooms, "Unit B floor");
@@ -384,7 +387,7 @@ namespace EvolutionShop
         void DressLevel(string key, Transform parts, int level)
         {
             void Replace() { foreach (var r in parts.GetComponentsInChildren<Renderer>(true)) r.enabled = false; }
-            if (key == "incubator")
+            if (key == "incubator" || key.StartsWith("lab-incubator:"))
             {
                 Replace();
                 if (level >= 2) Kit(parts, "IncubatorScreen");

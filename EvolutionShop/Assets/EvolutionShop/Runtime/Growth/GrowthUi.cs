@@ -654,7 +654,7 @@ namespace EvolutionShop
                 b.Append('|').Append(shop.Held.Count).Append(string.Join(",", shop.Held)).Append('|').Append(string.Join(",", shop.Chamber)).Append('|').Append(shop.Incubating).Append('|').Append(shop.Hatchling?.Id ?? 0)
                     .Append('|').Append(shop.Hatchlings.Count).Append(shop.IncubatorTint).Append('|').Append(shop.Tint).Append('|').Append(string.Join(",", shop.Carried.Select(c => c.Id))).Append('|').Append(s.CarriedChoice)
                     .Append('|').Append(string.Join(",", shop.Parents.Select(p => p.Id))).Append('|').Append(shop.Offspring?.Id ?? 0).Append('|').Append(string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id))).Append(shop.Pairs[1].Offspring?.Id ?? 0)
-                    .Append('|').Append(s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0).Append('|').Append(PowerSignature()).Append('|').Append(LineSignature()).Append('|').Append(ResearchSignature()).Append('|').Append(string.Join(",", shop.MakeQueue));
+                    .Append('|').Append(s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0).Append('|').Append(PowerSignature()).Append('|').Append(LineSignature()).Append('|').Append(ResearchSignature()).Append('|').Append(string.Join(",", shop.MakeQueue)).Append('|').Append(SecondLabSignature());
             return b.ToString();
         }
 
@@ -669,7 +669,7 @@ namespace EvolutionShop
                 case GrowthCard.Settings: return SettingsLiveText();
                 case GrowthCard.Research: return ResearchLiveText();
                 case GrowthCard.Breeding: return !shop.HasBreedingTank ? "not bought" : shop.ActivePairs.Any(p => p.Offspring != null) ? "An offspring is waiting" : shop.ActivePairs.Any(p => p.Breeding) ? "Breeding · " + Mathf.CeilToInt(shop.ActivePairs.Where(p => p.Breeding).Min(p => p.Left)) + " s" : "Waiting for a pair";
-                default: return PowerLiveText() ?? LineLiveText() ?? HelperLiveText() ?? "";
+                default: return SecondLabLiveText() ?? PowerLiveText() ?? LineLiveText() ?? HelperLiveText() ?? "";
             }
         }
 
@@ -716,6 +716,9 @@ namespace EvolutionShop
                 case GrowthCard.Buffer: FillBuffer(target); break;
                 case GrowthCard.Workshop: FillWorkshop(); break;
                 case GrowthCard.ResearchWall: FillResearchWall(); break;
+                case GrowthCard.SecondLab: FillSecondLabWall(); break;
+                case GrowthCard.LabIncubator: FillLabIncubator(target); break;
+                case GrowthCard.LabBreeder: FillLabBreeder(target); break;
                 case GrowthCard.Research: FillResearch(target); break;
                 case GrowthCard.Stock: FillStock(target); break;
                 case GrowthCard.Sorter: FillSorter(); break;

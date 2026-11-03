@@ -75,7 +75,7 @@ namespace EvolutionShop
             RoomBox(rooms, "Annex floor", new Vector3(0, -0.05f, 13), new Vector3(8, 0.1f, 8), floorTile, true);
             RoomBox(rooms, "Annex ceiling", new Vector3(0, 3.65f, 13), new Vector3(8, 0.1f, 8), wallLab);
             // GR-30: a doorway into the research room, closed by a partition until it opens (GrowthWorldResearch).
-            Wall("Annex west wall", new Vector2(-4, 9), new Vector2(-4, 17), 3.6f, wallLab, new Vector2(ResearchDoorFrom, ResearchDoorTo));
+            Wall("Annex west wall", new Vector2(-4, 9), new Vector2(-4, 17), 3.6f, wallLab, new Vector2(Lab2DoorFrom, Lab2DoorTo), new Vector2(ResearchDoorFrom, ResearchDoorTo));
             Wall("Annex north wall", new Vector2(-4, 17), new Vector2(4, 17), 3.6f, wallLab);
             // GR-08: a doorway into the workshop, closed by a partition until it opens (GrowthWorldLine).
             Wall("Annex east wall", new Vector2(4, 9), new Vector2(4, 17), 3.6f, wallLab, new Vector2(WorkshopDoorFrom, WorkshopDoorTo));

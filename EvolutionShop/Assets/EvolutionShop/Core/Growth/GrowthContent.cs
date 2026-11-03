@@ -508,6 +508,8 @@ namespace EvolutionShop.Growth
             new ExpansionDef { Id = "research", Name = "Research room", Room = "lab", Credits = 1500, Stars = 3, Era = 3, Width = 7.5f, Depth = 7.5f, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 0 },
             new ExpansionDef { Id = "unit-c", Name = "Shop unit C (north-east)", Room = "shop", Credits = 4000, Stars = 4, Era = 4, Width = 12.5f, Depth = 6.25f, ContainerPlaces = 6, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
             new ExpansionDef { Id = "workshop", Name = "Workshop", Room = "lab", Credits = 5000, Stars = 4, Era = 4, Width = 10, Depth = 7.5f, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 1 },
+            // GR-34 (F69): the second lab, its incubators and breeding tanks bought one at a time (GrowthSecondLab.cs).
+            new ExpansionDef { Id = "second-lab", Name = "Second lab", Room = "lab", Credits = 6000, Stars = 4, Era = 4, Width = 7.5f, Depth = 8.75f, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 0 },
             new ExpansionDef { Id = "exhibition-hall", Name = "Exhibition hall finish", Room = "shop", Credits = 6000, Stars = 5, Era = 5, Width = 0, Depth = 0, ContainerPlaces = 2, VisitorsAtOnce = 1, ExtraWalkSeconds = 0 },
         };
 

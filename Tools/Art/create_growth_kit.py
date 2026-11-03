@@ -83,6 +83,8 @@ PALETTE = {
     'GK_Stone': '#A9A49B', 'GK_StoneDark': '#6F6A66', 'GK_Terracotta': '#C8734A', 'GK_Bleached': '#E3D8C3',
     # GR-30: the research room's lilac.
     'GK_LilacPale': '#F2EDFF', 'GK_LilacSoft': '#E6DEFF', 'GK_LilacDeep': '#7D6BD0', 'GK_LilacPanel': '#C9BDF2',
+    # GR-34 (F69): the second lab's mint.
+    'GK_MintPale': '#E4F7EC', 'GK_MintSoft': '#CDEFDC', 'GK_MintDeep': '#2FA37A', 'GK_MintPanel': '#A6E2C4',
 }
 MAT = {}
 
@@ -1622,13 +1624,15 @@ def annex_dressing():
     pipe gallery (z 11.25..14.15 on the west wall), GR-30's doorway into the research room (z 14.65..16.05 on it) and, for the rail, the power board (z 11.9..13.1 on the east wall); frames
     round both doorways; two light strips down the ceiling; a shelf of glowing jars; a plant."""
     back, workshop, gallery, board, research = (4.45, 5.85), (0.6, 2.0), (2.25, 5.15), (2.9, 4.1), (5.65, 7.05)
+    lab2 = (0.44, 1.56)  # GR-34 (F69): the second lab's doorway
     lab_walls((((-4, 9), (4, 9), (0, 1), [back], [back]),
-               ((-4, 9), (-4, 17), (1, 0), [gallery, research], [gallery, research]),
+               ((-4, 9), (-4, 17), (1, 0), [lab2, gallery, research], [lab2, gallery, research]),
                ((-4, 17), (4, 17), (0, -1), [], []),
                ((4, 9), (4, 17), (-1, 0), [workshop], [workshop, board])))
     door_frame(-4 + (back[0] + back[1]) / 2, 9, True, back[1] - back[0], 2.8, 'GK_Teal', (0, 1))
     door_frame(4, 9 + (workshop[0] + workshop[1]) / 2, False, workshop[1] - workshop[0], 2.8, 'GK_Teal', (-1, 0))
     door_frame(-4, 9 + (research[0] + research[1]) / 2, False, research[1] - research[0], 2.8, 'GK_Teal', (1, 0))
+    door_frame(-4, 9 + (lab2[0] + lab2[1]) / 2, False, lab2[1] - lab2[0], 2.8, 'GK_Teal', (1, 0))
     for x in (-1.5, 1.5):
         box((x, 3.56, 13), (0.5, 0.08, 6.0), 'GK_Cream', r=0.03)
         box((x, 3.515, 13), (0.36, 0.01, 5.8), 'GK_GlowWhite', r=0)
@@ -2995,12 +2999,51 @@ def decor_duck():
 
 WAVE_ROUND2 = [siphon_bin, decor_duck, jar_wall_section, specimen_jar]
 
+# ---------------------------------------------------------------- GR-34 wave 2 (F69): the second lab, drawn on the new plan
+
+
+def second_lab_floor():
+    """The second lab's floor (x -12.5..-5, z 5..13.75 on the new plan; GrowthLab2.Area): pale mint tiles with a deep one now and then."""
+    for i in range(12):
+        for j in range(14):
+            m = 'GK_MintDeep' if (i + j) % 4 == 0 else ('GK_MintPale' if (i + j) % 2 else 'GK_MintSoft')
+            box((-12.5 + 0.3125 + i * 0.625, 0.006 - 0.015, 5 + 0.3125 + j * 0.625), (0.605, 0.03, 0.605), m, r=0.02, seg=2)
+    box((-8.75, -0.034, 9.375), (7.5, 0.02, 8.75), 'GK_Pavement', r=0)
+    return join('SecondLabFloor')
+
+
+def second_lab_dressing():
+    """The second lab (GrowthWorldSecondLab, on the new plan, a 3.6 m ceiling): mint panels, a rail and skirting round its walls,
+    clear of the doorway from the power room (z 11.8..13.2 on its east wall); a frame round the doorway; two light strips; a lit
+    sign over the incubators along the north wall; a plant in the south-east corner."""
+    door = (11.8 - 5, 13.2 - 5)
+    for a, b, n, gaps in (((-12.5, 5), (-5, 5), (0, 1), []),
+                          ((-12.5, 5), (-12.5, 13.75), (1, 0), []),
+                          ((-12.5, 13.75), (-5, 13.75), (0, -1), []),
+                          ((-5, 5), (-5, 13.75), (-1, 0), [door])):
+        lab_panels(a, b, n, gaps, mat='GK_MintPanel')
+        wall_strip(a, b, n, 1.07, 0.07, 0.07, 'GK_Teal', gaps)
+        wall_strip(a, b, n, 0.04, 0.08, 0.06, 'GK_TealDark', gaps, r=0.015)
+    door_frame(-5, 5 + (door[0] + door[1]) / 2, False, door[1] - door[0], 2.8, 'GK_Teal', (-1, 0))
+    for z in (7.2, 11.0):
+        box((-8.75, 3.56, z), (5.6, 0.08, 0.5), 'GK_Cream', r=0.03)
+        box((-8.75, 3.515, z), (5.4, 0.01, 0.36), 'GK_GlowWhite', r=0)
+    box((-8.75, 2.55, 13.75 - 0.1 - 0.03), (2.2, 0.42, 0.04), 'GK_TealDark', r=0.05)
+    box((-8.75, 2.55, 13.75 - 0.1 - 0.055), (1.96, 0.1, 0.01), 'GK_GlowLime', r=0.004)
+    text('SECOND LAB', (-8.75, 2.68, 13.75 - 0.1 - 0.06), 0.11, 'GK_Cream', extrude=0.005, res=3)
+    potted_plant(-5.6, 5.6, 0.85)
+    return join('SecondLabDressing')
+
+
+WAVE_LAB2 = [second_lab_floor, second_lab_dressing,
+             lambda: hoarding('PartitionLab2', -13.2, -11.8, 5.0, False, 2.8, 'SECOND LAB', backed=True)]
+
 # GR-34: the parts these make are a wall's: they stretch along it on the new plan.
 lab_panels, wall_boards, wall_strip, door_frame, arch_frame_east_corner = (plan_wall(f) for f in (lab_panels, wall_boards, wall_strip, door_frame, arch_frame_east_corner))
 
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1 + WAVE_RESEARCH + WAVE_ROUND2  # later waves last, so earlier ones draw their random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1 + WAVE_RESEARCH + WAVE_ROUND2 + WAVE_LAB2  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

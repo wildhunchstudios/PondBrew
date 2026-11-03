@@ -31,6 +31,11 @@ namespace EvolutionShop
             if (!shop.ResearchRoom) Ok(shop.BuyResearchRoom(), "Open the research room");
             while (shop.ResearchTanks < GrowthShop.ResearchTanksMost) Ok(shop.BuyResearchTank(), "Buy research tank " + (shop.ResearchTanks + 1));
             while (shop.Jars < GrowthShop.JarsMost) Ok(shop.BuyJars(), "Buy more jars");
+            // GR-34 wave 2 (F69): the second lab and its six machines.
+            shop.Levels["breeding"] = Mathf.Max(1, shop.Level("breeding"));
+            if (!shop.SecondLab) Ok(shop.BuySecondLab(), "Open the second lab");
+            while (shop.LabIncubators.Count < GrowthShop.Lab2Places) Ok(shop.BuyLabIncubator(), "Place incubator " + (shop.LabIncubators.Count + 2));
+            while (shop.LabBreeders.Count < GrowthShop.Lab2Places) Ok(shop.BuyLabBreeder(), "Place breeding tank " + (shop.LabBreeders.Count + 2));
             foreach (var r in new[] { "r1", "r2", "r3", "r4" }) if (shop.ContainerAt(r) == null) shop.BuyRack(r);
             for (int b = 0; b < GrowthLab.BufferPlaces; b++) if (shop.BufferAt(b) == null) shop.BuyBuffer(b);
             foreach (var place in shop.FreePlaces.ToList())

@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "2fd30ba4de603f049f0edd847e51f01a5d4ebcd3da646cb71afe72fcab77bb2e",
+  "source_script_sha256": "363bd9554c20706ed353fab155ed48bc60b6d0619844feca8d7f55ddc9561655",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -183,6 +183,18 @@
     },
     "GK_LilacPanel": {
       "srgb_hex": "#C9BDF2"
+    },
+    "GK_MintPale": {
+      "srgb_hex": "#E4F7EC"
+    },
+    "GK_MintSoft": {
+      "srgb_hex": "#CDEFDC"
+    },
+    "GK_MintDeep": {
+      "srgb_hex": "#2FA37A"
+    },
+    "GK_MintPanel": {
+      "srgb_hex": "#A6E2C4"
     }
   },
   "assets": [
@@ -2094,7 +2106,7 @@
       "bytes": 422476
     },
     {
-      "triangles": 26200,
+      "triangles": 27100,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2130,8 +2142,8 @@
       },
       "id": "AnnexDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/AnnexDressing.fbx",
-      "sha256": "90905410df463185be1f6a97e448a78599137e56264db4a2080c8c092b0c985a",
-      "bytes": 567836
+      "sha256": "7d0593e1be1b0099bb59fd057785dfb619582d66840bc9d7b317925db7e40be2",
+      "bytes": 586076
     },
     {
       "triangles": 5196,
@@ -3610,6 +3622,93 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SpecimenJar.fbx",
       "sha256": "4a094f20fd6c544c0735dda2844780248bed9d823e9331e5b2ad0ee09394cb25",
       "bytes": 24652
+    },
+    {
+      "triangles": 18156,
+      "materials": [
+        "GK_MintDeep",
+        "GK_MintPale",
+        "GK_MintSoft",
+        "GK_Pavement"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -12.5,
+          -0.044,
+          5.0
+        ],
+        "max": [
+          -5.0,
+          0.006,
+          13.75
+        ]
+      },
+      "id": "SecondLabFloor",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SecondLabFloor.fbx",
+      "sha256": "c6433082b5267dbf91a3ced698dcfe8c420581b00bf958b084bce7839141c026",
+      "bytes": 271532
+    },
+    {
+      "triangles": 22444,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_GlowLime",
+        "GK_GlowWhite",
+        "GK_Green",
+        "GK_GreenDark",
+        "GK_Lime",
+        "GK_MintPanel",
+        "GK_Pink",
+        "GK_Soil",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -12.5,
+          0.0,
+          5.0
+        ],
+        "max": [
+          -5.0,
+          3.6,
+          13.75
+        ]
+      },
+      "id": "SecondLabDressing",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SecondLabDressing.fbx",
+      "sha256": "f035f29fdf8f108da2904818314ac14807bb5f92924ae0fafe49b7faa253e59a",
+      "bytes": 494828
+    },
+    {
+      "triangles": 14296,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_Ink",
+        "GK_Sand",
+        "GK_Teal",
+        "GK_WoodDark",
+        "GK_WoodLight",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          4.92,
+          0.0,
+          -13.2
+        ],
+        "max": [
+          5.06,
+          2.8,
+          -11.798
+        ]
+      },
+      "id": "PartitionLab2",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionLab2.fbx",
+      "sha256": "ab339a74f034e6d16b5236c71a4fdc0952553e5efacce26fbf2f09668b98112c",
+      "bytes": 336476
     }
   ]
 }

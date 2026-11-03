@@ -348,7 +348,8 @@ namespace EvolutionShop.Growth
             // Spaces.
             foreach (var e in GrowthContent.Expansions)
             {
-                if (e.Id == "research") continue;
+                // GR-34 (F69): nor the second lab: more production, which the paced run's targets were set without.
+                if (e.Id == "research" || e.Id == "second-lab") continue;
                 if (expansions.Contains(e.Id) || e.Era > era || e.Stars > Stars) continue;
                 string id = e.Id;
                 yield return new Offer { Name = e.Name, Credits = e.Credits, Priority = 0,

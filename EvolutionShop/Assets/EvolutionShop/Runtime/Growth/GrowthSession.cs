@@ -22,16 +22,16 @@ namespace EvolutionShop
             LineSmokeArgument = "-evolutionGrowthLineSmoke", HelpersSmokeArgument = "-evolutionGrowthHelpersSmoke", SpacesSmokeArgument = "-evolutionGrowthSpacesSmoke",
             ExhibitionSmokeArgument = "-evolutionGrowthExhibitionSmoke", CreaturesSmokeArgument = "-evolutionGrowthCreaturesSmoke",
             GuideSmokeArgument = "-evolutionGrowthGuideSmoke", LookSmokeArgument = "-evolutionGrowthLookSmoke", PeopleSmokeArgument = "-evolutionGrowthPeopleSmoke",
-            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke", DeadEndsSmokeArgument = "-evolutionGrowthDeadEndsSmoke", FloorSmokeArgument = "-evolutionGrowthFloorSmoke", ResearchSmokeArgument = "-evolutionGrowthResearchSmoke", WordsSmokeArgument = "-evolutionGrowthWordsSmoke", PlansSmokeArgument = "-evolutionGrowthPlansSmoke";
+            DecorSmokeArgument = "-evolutionGrowthDecorSmoke", WishesSmokeArgument = "-evolutionGrowthWishesSmoke", SettingsSmokeArgument = "-evolutionGrowthSettingsSmoke", EffectsSmokeArgument = "-evolutionGrowthEffectsSmoke", LessonsSmokeArgument = "-evolutionGrowthLessonsSmoke", MenuSmokeArgument = "-evolutionGrowthMenuSmoke", DeadEndsSmokeArgument = "-evolutionGrowthDeadEndsSmoke", FloorSmokeArgument = "-evolutionGrowthFloorSmoke", ResearchSmokeArgument = "-evolutionGrowthResearchSmoke", WordsSmokeArgument = "-evolutionGrowthWordsSmoke", PlansSmokeArgument = "-evolutionGrowthPlansSmoke", SecondLabSmokeArgument = "-evolutionGrowthSecondLabSmoke";
 
         /// <summary>Which greybox route was asked for: "growth" (GR-02), "tanks" or "density" (GR-03), "cultures" (GR-04), "breeding" (GR-05), "stations" (GR-06), "power" (GR-07), "line" (GR-08), "helpers" (GR-09), "spaces" (GR-10), "exhibition" (GR-11), "creatures" (GR-12), "guide" (GR-14), "look" (GR-16), "people" (GR-18), "decor" (GR-19 and GR-22), "wishes" (GR-20), "settings" (GR-21 and GR-23), "effects" (GR-24 and GR-25), "lessons" (R09.4, R10.3 and GR-26), "menu" (GR-27), "deadends" (GR-29), or null.</summary>
         public static string SmokeRoute =>
             ShopSession.Arg(SmokeArgument) != null ? "growth" : ShopSession.Arg(TanksSmokeArgument) != null ? "tanks" : ShopSession.Arg(DensitySmokeArgument) != null ? "density" :
             ShopSession.Arg(CulturesSmokeArgument) != null ? "cultures" : ShopSession.Arg(BreedingSmokeArgument) != null ? "breeding" : ShopSession.Arg(StationsSmokeArgument) != null ? "stations" :
-            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : ShopSession.Arg(FloorSmokeArgument) != null ? "floor" : ShopSession.Arg(ResearchSmokeArgument) != null ? "research" : ShopSession.Arg(WordsSmokeArgument) != null ? "words" : ShopSession.Arg(PlansSmokeArgument) != null ? "plans" : null;
+            ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : ShopSession.Arg(FloorSmokeArgument) != null ? "floor" : ShopSession.Arg(ResearchSmokeArgument) != null ? "research" : ShopSession.Arg(WordsSmokeArgument) != null ? "words" : ShopSession.Arg(PlansSmokeArgument) != null ? "plans" : ShopSession.Arg(SecondLabSmokeArgument) != null ? "lab2" : null;
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu, ResearchWall, Research, Stock, Bin }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu, ResearchWall, Research, Stock, Bin, SecondLab, LabIncubator, LabBreeder }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -549,6 +549,9 @@ namespace EvolutionShop
                 case GrowthTargetKind.Catalog: SetCard(GrowthCard.Catalog); break;
                 case GrowthTargetKind.Bin: SetCard(GrowthCard.Bin); break;
                 case GrowthTargetKind.Breeding: SetCard(GrowthCard.Breeding); break;
+                case GrowthTargetKind.SecondLabWall: SetCard(GrowthCard.SecondLab); break;
+                case GrowthTargetKind.LabIncubator: SetCard(GrowthCard.LabIncubator, target.Id); break;
+                case GrowthTargetKind.LabBreeder: SetCard(GrowthCard.LabBreeder, target.Id); break;
                 case GrowthTargetKind.Vial: Ui.Hint("Hold the mouse on a vial to collect its doses"); break;
                 case GrowthTargetKind.AnnexWall: SetCard(GrowthCard.Annex); break;
                 case GrowthTargetKind.WorkshopWall: SetCard(GrowthCard.Workshop); break;
@@ -779,7 +782,34 @@ namespace EvolutionShop
                 case GrowthTargetKind.Bin:
                     Ui?.Hint(Shop.Held.Count > 0 ? "Open the bin (E) to pour out your siphon" : "Your siphon is empty");
                     break;
+                case GrowthTargetKind.LabIncubator:
+                    ClickLabIncubator(int.Parse(Focused.Id));
+                    break;
+                case GrowthTargetKind.LabBreeder:
+                    ClickLabBreeder(int.Parse(Focused.Id));
+                    break;
             }
+        }
+
+        /// <summary>GR-34 (F69): a second-lab incubator gives its hatchling; otherwise its card says what to do.</summary>
+        void ClickLabIncubator(int place)
+        {
+            var inc = Shop.LabIncubator(place);
+            if (inc == null) { Ui?.Hint("Open it (E) to place it"); return; }
+            if (inc.Tray.Count > 0) { Act(() => Shop.TakeLabHatchling(place)); return; }
+            Ui?.Hint(inc.Incubating ? Mathf.CeilToInt(inc.Left) + " s left" : "Open it (E) to queue a recipe");
+        }
+
+        /// <summary>GR-34 (F69): a second-lab breeding tank takes the chosen creature while a pair has room, then gives its offspring.</summary>
+        void ClickLabBreeder(int place)
+        {
+            var b = Shop.LabBreeder(place);
+            if (b == null) { Ui?.Hint("Open it (E) to place it"); return; }
+            var chosen = ChosenCarried;
+            if (chosen != null && Shop.LabParentCheck(place, chosen, out _) == GrowthFailure.None) { int id = chosen.Id; Act(() => Shop.PutLabParent(place, id)); return; }
+            if (Shop.Carried.Any(c => Shop.LabParentCheck(place, c, out _) == GrowthFailure.None)) { Act(() => Shop.PutLabParent(place)); return; }
+            if (b.Pairs.Any(p => p.Offspring != null) && Shop.Carried.Count < GrowthShop.CarryLimit) { Act(() => Shop.TakeLabOffspring(place)); return; }
+            Ui?.Hint(b.Pairs.Any(p => p.Offspring != null) ? "Your hands are full" : "Open it (E) for the pair");
         }
 
         /// <summary>The creature in a jar, or null while it is empty.</summary>
@@ -806,6 +836,12 @@ namespace EvolutionShop
                     break;
                 case GrowthTargetKind.ResearchTray:
                     if (Shop.ResearchTray.Count > 0) Act(() => Shop.TakeResearchResult());
+                    break;
+                case GrowthTargetKind.LabIncubator:
+                    if (Shop.LabIncubator(int.Parse(Focused.Id))?.Tray.Count > 0) Act(() => Shop.TakeLabHatchling(int.Parse(Focused.Id)));
+                    break;
+                case GrowthTargetKind.LabBreeder:
+                    if (Shop.LabBreeder(int.Parse(Focused.Id))?.Pairs.Any(p => p.Offspring != null) == true) Act(() => Shop.TakeLabOffspring(int.Parse(Focused.Id)));
                     break;
             }
         }
@@ -976,6 +1012,17 @@ namespace EvolutionShop
                 case GrowthTargetKind.AnnexWall: status = Shop.Annex ? "Open" : "E see what it needs"; return "Power room";
                 case GrowthTargetKind.WorkshopWall: status = Shop.Workshop ? "Open" : "E see what it needs"; return "Workshop";
                 case GrowthTargetKind.ResearchWall: status = Shop.ResearchRoom ? "Open" : "E see what it needs"; return "Research room";
+                case GrowthTargetKind.SecondLabWall: status = Shop.SecondLab ? "Open" : "E see what it needs"; return "Second lab";
+                case GrowthTargetKind.LabIncubator:
+                    int li = int.Parse(Focused.Id);
+                    var labInc = Shop.LabIncubator(li);
+                    status = Shop.LabIncubatorStatus(li) + (labInc != null && labInc.Tray.Count > 0 ? " · click take" : "") + (labInc == null ? " · E place it" : " · E open");
+                    return "Incubator " + (li + 2) + (labInc == null ? " (not placed)" : "");
+                case GrowthTargetKind.LabBreeder:
+                    int lb = int.Parse(Focused.Id);
+                    var labTank = Shop.LabBreeder(lb);
+                    status = Shop.LabBreederStatus(lb) + (labTank == null ? " · E place it" : " · E open");
+                    return "Breeding tank " + (lb + 2) + (labTank == null ? " (not placed)" : "");
                 case GrowthTargetKind.ResearchDesk:
                     status = "E queue pairs and mixes" + (Shop.ResearchJobs.Count > 0 ? " · " + Shop.ResearchJobs.Count + " in the queue" : "");
                     return "Research desk";

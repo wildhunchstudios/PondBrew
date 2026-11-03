@@ -24,10 +24,10 @@ namespace EvolutionShop.Growth
     {
         /// <summary>GR-34: 2 m/s on the plan before, scaled with the rooms, so each walk takes the time it took.</summary>
         public const float Speed = 2f * GrowthPlan.K, Handle = 0.6f;
-        public enum Room { A, B, C, Back, Annex, Workshop }
+        public enum Room { A, B, C, Back, Annex, Workshop, Lab2 }
 
         public static Room RoomOf((float x, float z) p) =>
-            p.z < S(4) ? (p.x < S(4) ? Room.A : Room.B) : p.z < S(9) ? (p.x < S(2) ? Room.Back : Room.C) : p.x < S(4) ? Room.Annex : Room.Workshop;
+            GrowthLab2.Contains(p) ? Room.Lab2 : p.z < S(4) ? (p.x < S(4) ? Room.A : Room.B) : p.z < S(9) ? (p.x < S(2) ? Room.Back : Room.C) : p.x < S(4) ? Room.Annex : Room.Workshop;
 
         static float S(float v) => GrowthPlan.S(v);
         static (float x, float z) At(float x, float z) => GrowthPlan.At(x, z);
@@ -42,6 +42,8 @@ namespace EvolutionShop.Growth
         {
             (Room.Back, Room.Annex, At(1.15f, 8.5f), At(1.15f, 9.5f)),
             (Room.Annex, Room.Workshop, At(3.5f, 10.3f), At(4.5f, 10.3f)),
+            // GR-34 (F69): the second lab's door in the power room's west wall (it was built on the plan since).
+            (Room.Annex, Room.Lab2, (-4.5f, 12.5f), (-5.5f, 12.5f)),
         };
 
         /// <summary>The counter's staff side, where Pip stands; each helper's home spot.</summary>
@@ -394,6 +396,11 @@ namespace EvolutionShop.Growth
         {
             if (Chute == null) foreach (var s in Hatchlings) yield return ("tray", s, GrowthWalk.Tray);
             for (int k = 0; k < Pairs.Length; k++) if (Pairs[k].Offspring != null) yield return ("nursery:" + k, Pairs[k].Offspring, GrowthWalk.Nursery);
+            // GR-34 (F69): the second lab's trays and nurseries.
+            for (int i = 0; i < LabIncubators.Count; i++) foreach (var s in LabIncubators[i].Tray) yield return ("lab-tray:" + i, s, GrowthLab2.Tray(i));
+            for (int i = 0; i < LabBreeders.Count; i++)
+                for (int k = 0; k < LabBreeders[i].Pairs.Length; k++)
+                    if (LabBreeders[i].Pairs[k].Offspring != null) yield return ("lab-nursery:" + i + ":" + k, LabBreeders[i].Pairs[k].Offspring, GrowthLab2.Nursery(i));
             foreach (var r in Racks.OrderBy(c => c.Place, StringComparer.Ordinal))
                 foreach (var s in r.Occupants) yield return ("c:" + r.Id, s, GrowthWalk.Places[r.Place]);
         }
@@ -405,7 +412,9 @@ namespace EvolutionShop.Growth
 
         string ContainerName(GrowthContainer c) => c.Def.Lab ? RackName(c.Place) : "the " + c.Def.Name.ToLowerInvariant() + " at " + c.Place;
 
-        static string SourceName(string place) => place == "tray" ? "the incubator's tray" : place.StartsWith("nursery", StringComparison.Ordinal) ? "the nursery" : "a rack";
+        static string SourceName(string place) => place == "tray" ? "the incubator's tray" : place.StartsWith("nursery", StringComparison.Ordinal) ? "the nursery" :
+            place.StartsWith("lab-tray:", StringComparison.Ordinal) ? LabIncubatorName(int.Parse(place.Substring(9))) + "'s tray" :
+            place.StartsWith("lab-nursery:", StringComparison.Ordinal) ? LabBreederName(int.Parse(place.Substring(12).Split(':')[0])) + "'s nursery" : "a rack";
 
         void TickNori(GrowthHelper h, float seconds)
         {
@@ -416,8 +425,8 @@ namespace EvolutionShop.Growth
                 var next = NoriSources().FirstOrDefault(x => NoriCanMove(x.place, x.s));
                 if (next.s == null)
                 {
-                    h.Status = StockTargets.Count == 0 && Hatchlings.Count == 0 && !Pairs.Any(p => p.Offspring != null) && !Racks.Any(r => r.Occupants.Count > 0) ? "Nothing waiting to move" :
-                        Hatchlings.Count > 0 && Chute == null || Pairs.Any(p => p.Offspring != null) ? "No room for what is waiting: the tanks are at their targets or full, and no rack has room" : "Nothing to move";
+                    h.Status = StockTargets.Count == 0 && Hatchlings.Count == 0 && !Pairs.Any(p => p.Offspring != null) && !LabCreaturesWaiting && !Racks.Any(r => r.Occupants.Count > 0) ? "Nothing waiting to move" :
+                        Hatchlings.Count > 0 && Chute == null || Pairs.Any(p => p.Offspring != null) || LabCreaturesWaiting ? "No room for what is waiting: the tanks are at their targets or full, and no rack has room" : "Nothing to move";
                     return;
                 }
                 StartStep(h, "fetch", next.at, next.place, next.s.Id);
@@ -457,6 +466,19 @@ namespace EvolutionShop.Growth
             {
                 var pair = Pairs[int.Parse(place.Substring(8))];
                 if (pair.Offspring == s) { pair.Offspring = null; RestartBreeding(pair); }
+                return;
+            }
+            if (place.StartsWith("lab-tray:", StringComparison.Ordinal))
+            {
+                int i = int.Parse(place.Substring(9));
+                if (LabIncubator(i)?.Tray.Remove(s) == true) TickLabIncubator(i);
+                return;
+            }
+            if (place.StartsWith("lab-nursery:", StringComparison.Ordinal))
+            {
+                var at = place.Substring(12).Split(':');
+                var pair = LabBreeder(int.Parse(at[0]))?.Pairs[int.Parse(at[1])];
+                if (pair != null && pair.Offspring == s) { pair.Offspring = null; RestartBreeding(pair); }
                 return;
             }
             Container(place.Substring(2))?.Occupants.Remove(s);
@@ -564,7 +586,7 @@ namespace EvolutionShop.Growth
         {
             if (!HasBreedingTank || MossPairA == null) return null;
             var want = new List<string> { MossPairA, MossPairB };
-            foreach (var p in ActivePairs)
+            foreach (var p in MossPairs)
             {
                 var left = new List<string>(want);
                 if (p.Parents.All(x => left.Remove(x.Species))) return p;
@@ -586,8 +608,9 @@ namespace EvolutionShop.Growth
             from = null; parent = null;
             if (MossPairA == null) return "Choose a known pair on my card";
             if (!HasBreedingTank) return "Needs the breeding tank";
+            if (MossBreeder > 0 && LabBreeder(MossBreeder - 1) == null) return "Breeding tank " + (MossBreeder + 1) + " is not placed";
             var place = MossPairPlace();
-            if (place == null) return "The breeding tank holds another pair";
+            if (place == null) return (MossBreeder == 0 ? "The breeding tank" : "Breeding tank " + (MossBreeder + 1)) + " holds another pair";
             string need = MossPairMissing(place);
             if (need == null) return place.Offspring != null ? "Breeding: an offspring waits in the nursery" : "Breeding a " + GrowthContent.Get(GrowthRules.Breed(MossPairA, MossPairB).Id).Name;
             if (GrowthContent.Get(need).Size == SizeClass.Large && !LargeParents) return "Large parents need the breeding tank's level 2";
@@ -621,6 +644,13 @@ namespace EvolutionShop.Growth
                 {
                     if (job == MossRecipeJob)
                     {
+                        // GR-34 (F69): in a second-lab incubator, Moss walks to it and starts his recipe there from its pipe.
+                        if (MossIncubator > 0 && !MossBatch)
+                        {
+                            if (MossRecipe == null) { reasons.Add("Choose a recipe on my card"); continue; }
+                            if (MossLabRecipe(h, reasons)) return;
+                            continue;
+                        }
                         string waiting = MossRecipeWaiting();
                         if (waiting != null) { reasons.Add(waiting); continue; }
                         var missing = MossMissing();
@@ -636,7 +666,7 @@ namespace EvolutionShop.Growth
                     string why = MossPairWaiting(out var from, out var parent);
                     if (why != null) { reasons.Add(why); continue; }
                     StartStep(h, "parent-fetch", PointOf(from), "c:" + from.Id, parent.Id);
-                    h.Status = "Fetching a " + parent.Def.Name + " for the breeding tank";
+                    h.Status = "Fetching a " + parent.Def.Name + " for " + MossBreederName;
                     h.NextJob = 0;
                     return;
                 }
@@ -653,6 +683,7 @@ namespace EvolutionShop.Growth
                     else h.Status = "Waiting for " + Name(c) + " at its grower";
                     return;
                 case "dose-back": MossDoseBack(h); return;
+                case "lab-start": MossLabStart(h); return;
                 case "parent-fetch":
                     var box = Container(h.Place.Substring(2));
                     var s = box?.Occupants.FirstOrDefault(o => o.Id == h.SpecimenId && o.ReservedBy == 0);
@@ -693,9 +724,9 @@ namespace EvolutionShop.Growth
             bool wanted = place != null && place.Parents.Count < PairSize && MossPairMissing(place) == s.Species && (s.Def.Size != SizeClass.Large || LargeParents);
             if (wanted)
             {
-                if (Near(h.Spot, GrowthWalk.Nursery)) { h.Hands.Clear(); place.Parents.Add(s); RestartBreeding(place); h.Status = "Put a " + s.Def.Name + " in the breeding tank"; return; }
-                StartStep(h, "parent-deliver", GrowthWalk.Nursery, "breeding");
-                h.Status = "Carrying a " + s.Def.Name + " to the breeding tank";
+                if (Near(h.Spot, MossNursery)) { h.Hands.Clear(); place.Parents.Add(s); RestartBreeding(place); h.Status = "Put a " + s.Def.Name + " in " + MossBreederName; return; }
+                StartStep(h, "parent-deliver", MossNursery, "breeding");
+                h.Status = "Carrying a " + s.Def.Name + " to " + MossBreederName;
                 return;
             }
             var back = Racks.OrderBy(c => c.Place, StringComparer.Ordinal).Concat(ShopContainers.OrderBy(c => c.Place, StringComparer.Ordinal))
@@ -721,7 +752,7 @@ namespace EvolutionShop.Growth
 
         static string RestoreHelpers(GrowthShop shop, GrowthSave s)
         {
-            var ids = new HashSet<int>(shop.Containers.SelectMany(c => c.Occupants).Concat(shop.Hatchlings).Concat(shop.Carried).Concat(shop.AllParents).Concat(shop.AllOffspring).Select(x => x.Id));
+            var ids = new HashSet<int>(shop.Containers.SelectMany(c => c.Occupants).Concat(shop.Hatchlings).Concat(shop.Carried).Concat(shop.AllParents).Concat(shop.AllOffspring).Concat(shop.SecondLabCreatures).Select(x => x.Id));
             foreach (var x in s.staff ?? new GrowthSave.Helper[0])
             {
                 var def = GrowthContent.Helper(x.id);

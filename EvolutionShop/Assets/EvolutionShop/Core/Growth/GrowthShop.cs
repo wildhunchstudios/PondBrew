@@ -1459,6 +1459,7 @@ namespace EvolutionShop.Growth
                 pair.Left -= seconds;
                 if (pair.Left <= 0) BreedOffspring(pair);
             }
+            TickSecondLab(seconds);
             if (Phase == GrowthPhase.Day) TickDay(seconds);
             TickHelpers(seconds);
             // Visitors who left are gone once they have walked out (the presentation walks them in that time).
@@ -1857,6 +1858,7 @@ namespace EvolutionShop.Growth
             SaveDecor(save);
             SaveLessons(save);
             SaveResearch(save);
+            SaveSecondLab(save);
             return save;
         }
 
@@ -1895,7 +1897,7 @@ namespace EvolutionShop.Growth
             bool Known(string species) => GrowthContent.Get(species) != null;
             var all = (s.hatchling ?? new GrowthSave.Specimen[0]).Concat(s.carried ?? new GrowthSave.Specimen[0]).Concat(s.specimens ?? new GrowthSave.Specimen[0]).Concat(s.researchTray ?? new GrowthSave.Specimen[0]).Concat((s.containers ?? new GrowthSave.Box[0]).SelectMany(b => b.occupants ?? new GrowthSave.Specimen[0]))
                 .Concat(s.parents ?? new GrowthSave.Specimen[0]).Concat(s.offspring ?? new GrowthSave.Specimen[0])
-                .Concat(s.secondParents ?? new GrowthSave.Specimen[0]).Concat(s.secondOffspring ?? new GrowthSave.Specimen[0]).ToList();
+                .Concat(s.secondParents ?? new GrowthSave.Specimen[0]).Concat(s.secondOffspring ?? new GrowthSave.Specimen[0]).Concat(SavedLabCreatures(s)).ToList();
             if (all.Any(x => !Known(x.species))) { problem = "Unknown species in the save"; return null; }
             if (all.Select(x => x.id).Distinct().Count() != all.Count) { problem = "A creature is saved twice"; return null; }
             if ((s.discovered ?? new string[0]).Any(d => !Known(d))) { problem = "Unknown discovery in the save"; return null; }
@@ -1996,7 +1998,7 @@ namespace EvolutionShop.Growth
                 shop.PendingMix = new GrowthMixEntry { Doses = pm.doses, Species = pm.species, Exact = pm.exact, WasNew = pm.wasNew, DistanceToNew = pm.distanceToNew, Count = Math.Max(1, pm.count) };
             }
             // Version 5 and older had no annex, power or pipes; version 6 and older no workshop, sorter, targets or analyzer.
-            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s) ?? RestoreLessons(shop, s) ?? RestoreResearch(shop, s);
+            problem = RestorePower(shop, s) ?? RestoreLine(shop, s) ?? RestoreSecondLab(shop, s) ?? RestoreHelpers(shop, s) ?? RestoreSpaces(shop) ?? RestoreExhibition(shop, s) ?? RestoreGuide(shop, s) ?? RestoreDecor(shop, s) ?? RestoreLessons(shop, s) ?? RestoreResearch(shop, s);
             if (problem != null) return null;
             shop.nextId = Math.Max(shop.nextId, Math.Max(Math.Max(s.nextId, all.Count == 0 ? 1 : all.Max(x => x.id) + 1), shop.Pipes.Count == 0 ? 1 : shop.Pipes.Max(p => p.Id) + 1));
             if (phase == GrowthPhase.Day) { shop.Today = new GrowthDaySummary { Day = shop.Day, StarsBefore = shop.Stars }; shop.arrivalClock = 0; }
@@ -2021,8 +2023,9 @@ namespace EvolutionShop.Growth
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now).
         /// 16: tester round 2 (what research jobs made lately, F72; the incubator's queue, F73). 17: the research room's jars and
-        /// tanks bought (F71). Older saves load.</summary>
-        public const int CurrentVersion = 17;
+        /// tanks bought (F71). 18: the second lab, its incubators and breeding tanks, and the machines Moss works at (F69).
+        /// Older saves load.</summary>
+        public const int CurrentVersion = 18;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -2037,6 +2040,11 @@ namespace EvolutionShop.Growth
         public ResearchJob[] researchResults;
         /// <summary>GR-35 (F71, version 17): the jars and research tanks bought (a save from before has 15 and 3).</summary>
         public int jars, researchTanks;
+        /// <summary>GR-34 (F69, version 18): the second lab, its machines in turn, and which incubator and breeding tank Moss works at (0 the laboratory's).</summary>
+        public bool secondLab;
+        public LabIncubator[] labIncubators;
+        public LabBreeder[] labBreeders;
+        public int mossIncubator, mossBreeder;
         public bool exhibitionPrepared, exhibitionToday, exhibitionDone;
         public int exhibitionAttempts;
         public string exhibitionFailure;
@@ -2121,6 +2129,26 @@ namespace EvolutionShop.Growth
             public bool mix;
             public int[] doses;
             public int tank;
+            public float left;
+        }
+
+        /// <summary>A second-lab incubator: its queue, its auto-doser's recipe, the batch in it and its tray.</summary>
+        [Serializable] public sealed class LabIncubator
+        {
+            public string[] queue;
+            public string auto, pending;
+            public bool incubating;
+            public float left;
+            public int[] pendingDoses;
+            public Specimen[] tray;
+            public int made;
+        }
+
+        /// <summary>A second-lab breeding tank: its pairs, each with its parents, its offspring (none or one) and its timer.</summary>
+        [Serializable] public sealed class LabBreeder { public LabPair[] pairs; }
+        [Serializable] public sealed class LabPair
+        {
+            public Specimen[] parents, offspring;
             public float left;
         }
 

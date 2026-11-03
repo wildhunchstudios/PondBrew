@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard, Award, ResearchWall, ResearchDesk, ResearchTank, ResearchJar, ResearchTray, Bin }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard, Award, ResearchWall, ResearchDesk, ResearchTank, ResearchJar, ResearchTray, Bin, SecondLabWall, LabIncubator, LabBreeder }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -201,6 +201,7 @@ namespace EvolutionShop
             WorkshopRoom();
             LineStations();
             ResearchRoom();
+            SecondLabRoom();
             StaffBoard();
             // GR-10: the rooms' openings (their partitions come down when bought), unit C, the set pieces and the hall finish.
             SpaceMaterials();
@@ -208,6 +209,7 @@ namespace EvolutionShop
             AddOpening("annex", annexWall, 2.85f, annexLight);
             AddOpening("workshop", workshopWall, 2.85f, workshopLight);
             AddOpening("research", researchWall, 2.85f, researchLight);
+            AddOpening("lab2", lab2Wall, 2.85f, lab2Light);
             UnitCRoom();
             SetPieces();
             HallFinish();
@@ -507,6 +509,7 @@ namespace EvolutionShop
             ResetHelpers();
             ResetSpaces();
             ResetExhibition();
+            ResetSecondLab();
         }
 
         public void SetPhase(GrowthPhase p) => phase = p;
@@ -619,6 +622,7 @@ namespace EvolutionShop
             SyncLab(shop);
             SyncLine(shop);
             SyncResearch(shop);
+            SyncSecondLab(shop);
             SyncVisitors(shop);
             SyncHelpers(shop);
             SyncSpaces(shop);
@@ -1073,7 +1077,7 @@ namespace EvolutionShop
             }
             for (int i = 0; i < hatchlingViews.Count; i++)
                 if (hatchlingViews[i]) { hatchlingViews[i].transform.localRotation = Quaternion.Euler(0, t * 40f + i * 120f, 0); hatchlingViews[i].Tick(t, session.ReducedMotion); }
-            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateResearch(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t, dt, session.ReducedMotion); }
+            if (session.Shop != null) { AnimateBreeding(t, session.Shop); AnimateResearch(t, session.Shop); AnimateSecondLab(t, session.Shop); AnimateLab(t, dt); AnimateLine(session.Shop); AnimateHelpers(t, dt, session.ReducedMotion); }
             AnimateOpenings(dt);
             AnimateConfetti(dt);
             foreach (var v in visitors.Values) v.Tick(dt, session != null && session.ReducedMotion);

@@ -85,6 +85,8 @@ namespace EvolutionShop.Growth
             new Room { Id = "annex", Name = "the power room", Expansion = "annex", Shop = false, Area = Scaled(-4, 9, 4, 17), Ceiling = LabCeiling },
             new Room { Id = "workshop", Name = "the workshop", Expansion = "workshop", Shop = false, Area = Scaled(4, 9, 12, 15), Ceiling = LabCeiling },
             new Room { Id = "research", Name = "the research room", Expansion = "research", Shop = false, Area = Scaled(-10, 11, -4, 17), Ceiling = LabCeiling },
+            // GR-34 (F69): west of the laboratory, below the research room (GrowthLab2.Area).
+            new Room { Id = "lab2", Name = "the second lab", Expansion = "second-lab", Shop = false, Area = new Rect(GrowthLab2.Area[0], GrowthLab2.Area[1], GrowthLab2.Area[2], GrowthLab2.Area[3]), Ceiling = LabCeiling },
         };
 
         /// <summary>The street outside the entrance (visitors arrive and leave there).</summary>
@@ -112,6 +114,7 @@ namespace EvolutionShop.Growth
             new Doorway { Id = "annex-door", A = "back", B = "annex", From = On((0.45f, 9)), To = On((1.85f, 9)) },
             new Doorway { Id = "workshop-door", A = "annex", B = "workshop", From = On((4, 9.6f)), To = On((4, 11)) },
             new Doorway { Id = "research-door", A = "annex", B = "research", From = On((-4, 14.65f)), To = On((-4, 16.05f)) },
+            new Doorway { Id = "lab2-door", A = "annex", B = "lab2", From = (-5f, 11.8f), To = (-5f, 13.2f) },
         };
 
         /// <summary>The walking network's waypoints: the visitors' (the street, the door, the hub inside it and the aisles),

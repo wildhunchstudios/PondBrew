@@ -232,7 +232,7 @@ namespace EvolutionShop
             }
             var pair = Box("gr-section"); body.Add(pair);
             pair.Add(L("Pair", "gr-label"));
-            if (h.Level < 2) { pair.Add(L("At level 2, Moss keeps a pair you have bred breeding.", "gr-hint")); return; }
+            if (h.Level < 2) { pair.Add(L("At level 2, Moss keeps a pair you have bred breeding.", "gr-hint")); MossMachines(body); return; }
             pair.Add(L(shop.MossPairA == null ? "No pair chosen yet." : "Keeping a " + GrowthContent.Get(shop.MossPairA).Name + " and a " + GrowthContent.Get(shop.MossPairB).Name + " breeding.", "gr-hint"));
             var log = shop.PairLog;
             if (log.Count == 0) pair.Add(L("No pair bred yet: Moss keeps only pairs you have bred.", "gr-hint"));
@@ -259,6 +259,7 @@ namespace EvolutionShop
                 row.Add(keep);
                 pair.Add(row);
             }
+            MossMachines(body);
             var job = Box("gr-section"); body.Add(job);
             job.Add(L("Job", "gr-label"));
             if (h.Level >= 3) { job.Add(L("At level 3 Moss does both, in turn.", "gr-hint")); return; }
@@ -273,7 +274,7 @@ namespace EvolutionShop
         string HelperSignature()
         {
             var shop = s.Shop;
-            return string.Join(",", shop.Staff.Values.Select(h => h.Id + h.Level + h.OnDuty + h.PaidPeriod)) + "|" + shop.MossRecipe + shop.MossPairA + shop.MossPairB + shop.MossTask + shop.MossBatches +
+            return string.Join(",", shop.Staff.Values.Select(h => h.Id + h.Level + h.OnDuty + h.PaidPeriod)) + "|" + shop.MossRecipe + shop.MossPairA + shop.MossPairB + shop.MossTask + shop.MossBatches + shop.MossIncubator + shop.MossBreeder + shop.LabIncubators.Count + shop.LabBreeders.Count +
                 "|" + (GrowthContent.Helpers.Select(d => shop.HireCheck(d.Id, out _).ToString()).Aggregate((a, b) => a + b)) + "|" + mossRecipePick + mossPairPick + (s.Card == GrowthCard.Staff ? shop.SalesTotal : 0);
         }
 
