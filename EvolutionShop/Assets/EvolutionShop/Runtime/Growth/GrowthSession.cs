@@ -31,7 +31,7 @@ namespace EvolutionShop
             ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : ShopSession.Arg(FloorSmokeArgument) != null ? "floor" : ShopSession.Arg(ResearchSmokeArgument) != null ? "research" : ShopSession.Arg(WordsSmokeArgument) != null ? "words" : null;
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu, ResearchWall, Research }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu, ResearchWall, Research, Stock }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -535,10 +535,11 @@ namespace EvolutionShop
                 case GrowthTargetKind.Grower: SetCard(GrowthCard.Grower, target.Id); break;
                 case GrowthTargetKind.Incubator: SetCard(GrowthCard.Incubator); break;
                 case GrowthTargetKind.ResearchWall: SetCard(GrowthCard.ResearchWall); break;
-                case GrowthTargetKind.ResearchDesk:
+                // GR-33 (F59): each device opens its own tab: the desk its pairs, a tank or the tray the tanks, a jar the jars.
+                case GrowthTargetKind.ResearchDesk: SetCard(GrowthCard.Research); break;
                 case GrowthTargetKind.ResearchTank:
-                case GrowthTargetKind.ResearchJar:
-                case GrowthTargetKind.ResearchTray: SetCard(GrowthCard.Research); break;
+                case GrowthTargetKind.ResearchTray: SetCard(GrowthCard.Research, GrowthUi.ResearchTanksTab); break;
+                case GrowthTargetKind.ResearchJar: SetCard(GrowthCard.Research, GrowthUi.ResearchJarsTab); break;
                 case GrowthTargetKind.Tank: SetCard(GrowthCard.Tank, target.Id); break;
                 case GrowthTargetKind.Place: SetCard(GrowthCard.Place, target.Id); break;
                 case GrowthTargetKind.Counter: SetCard(GrowthCard.Counter); break;
@@ -1012,7 +1013,7 @@ namespace EvolutionShop
                     return "Power board";
                 case GrowthTargetKind.Buffer:
                     var buffer = Shop.BufferAt(int.Parse(Focused.Id));
-                    if (buffer == null) { status = Shop.Phase == GrowthPhase.Night ? "E place a buffer (" + GrowthContent.BufferCredits + " credits)" : "Buffers are placed at night"; return "Buffer place " + (int.Parse(Focused.Id) + 1); }
+                    if (buffer == null) { status = "E place a buffer (" + GrowthContent.BufferCredits + " credits)"; return "Buffer place " + (int.Parse(Focused.Id) + 1); }
                     status = Mathf.FloorToInt(buffer.Units) + "/" + GrowthContent.BufferCapacity + (buffer.Culture == null ? " · empty" : " " + GrowthShop.Name(buffer.Culture)) + " · hold mouse to collect · E details";
                     return Shop.BufferName(buffer.Place);
                 case GrowthTargetKind.Pump:
@@ -1050,9 +1051,9 @@ namespace EvolutionShop
                     status = c.Used + "/" + c.Spaces + " spaces" + (Shop.Harmony(c) ? " · in harmony" : "") + (c.Decor != null ? " · " + GrowthShop.DecorOn(c).Theme : "") + (Shop.Carried.Count > 0 ? " · click put in" : "") + " · E open";
                     return c.Def.Name;
                 case GrowthTargetKind.Place:
-                    if (GrowthShop.LabPlace(Focused.Id) != null) { status = Shop.Phase == GrowthPhase.Night ? "E place a lab rack" : "Racks are placed at night"; return "Rack place " + Focused.Id.Substring(1); }
+                    if (GrowthShop.LabPlace(Focused.Id) != null) { status = "E place a lab rack"; return "Rack place " + Focused.Id.Substring(1); }
                     var spot = GrowthShop.Place(Focused.Id);
-                    status = Shop.Phase == GrowthPhase.Night ? "E buy or move a tank here" : "Tanks are placed at night";
+                    status = "E buy or move a tank here";
                     return "Empty " + (spot?.Size ?? "") + " place";
                 case GrowthTargetKind.Counter:
                     if (Shop.Phase == GrowthPhase.Night) { status = "E open the shop"; return "Counter"; }

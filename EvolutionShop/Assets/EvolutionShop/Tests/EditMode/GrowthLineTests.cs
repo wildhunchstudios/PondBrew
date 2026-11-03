@@ -76,7 +76,7 @@ namespace EvolutionShop.Tests
             var poor = At(4, 4, credits: 5999); poor.BuyAnnex();
             poor.WorkshopCheck(out why); Assert.That(why, Is.EqualTo("Needs 5000 credits"));
             var day = At(4, 4); day.BuyAnnex(); day.OpenShop();
-            Assert.That(day.WorkshopCheck(out _), Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(day.WorkshopCheck(out _), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: walls open by day too");
             // The sorter and the generator's twin turbine stand in the workshop.
             UpgradeTo(shop, "generator", 2);
             Assert.That(shop.UpgradeCheck("sorter", out _, out why), Is.EqualTo(GrowthFailure.Locked));
@@ -121,7 +121,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.UpgradeContainer(rack.Id).Success, Is.True, "racks go to their next level");
             Assert.That(rack.Spaces, Is.EqualTo(8));
             var day = At(4, 4); day.BuyAnnex(); day.BuyWorkshop(); day.OpenShop();
-            Assert.That(day.RackCheck("r2", out _), Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(day.RackCheck("r2", out _), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: racks are placed by day too");
         }
 
         [Test]

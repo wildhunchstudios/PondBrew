@@ -17,11 +17,11 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             var annex = GrowthShop.AnnexDef;
-            var body = Head("Power room", shop.Annex ? "open" : annex.Credits + " credits", null, "Behind the laboratory's north wall. Era 3 comes with 3 stars, a hybrid bred and a Large tank. Walls open at night.");
+            var body = Head("Power room", shop.Annex ? "open" : annex.Credits + " credits", null, "Behind the laboratory's north wall. Era 3 comes with 3 stars, a hybrid bred and a Large tank.");
             if (shop.Annex) { body.Add(L("Open: the generator, the power board and culture buffers, where pipes bring culture from the growers.", "gr-hint")); Footer(body); return; }
             var failure = shop.AnnexCheck(out string why);
             BuyPanel(body, "The laboratory's north wall", "The power room", "Room for the generator, the power board and culture buffers, where pipes bring culture from the growers.",
-                Gates(annex.Era, annex.Stars, annex.Credits, 0, true), failure, why, "Open the power room for " + annex.Credits + " cr", shop.BuyAnnex);
+                Gates(annex.Era, annex.Stars, annex.Credits, 0, false), failure, why, "Open the power room for " + annex.Credits + " cr", shop.BuyAnnex);
             Footer(body);
         }
 
@@ -90,7 +90,7 @@ namespace EvolutionShop
             {
                 var body0 = Head("Buffer place " + (place + 1), GrowthContent.BufferCredits + " credits", null, rules);
                 var failure = shop.BufferCheck(place, out string why);
-                BuyPanel(body0, "A culture buffer", "Holds " + GrowthContent.BufferCapacity + " doses of one culture", "Piped from a grower's tap; collected like a grower.", Gates(0, 0, GrowthContent.BufferCredits, 0, true), failure, why,
+                BuyPanel(body0, "A culture buffer", "Holds " + GrowthContent.BufferCapacity + " doses of one culture", "Piped from a grower's tap; collected like a grower.", Gates(0, 0, GrowthContent.BufferCredits, 0, false), failure, why,
                     "Place a buffer for " + GrowthContent.BufferCredits + " cr", () => shop.BuyBuffer(place), false);
                 Footer(body0);
                 return;
@@ -103,7 +103,8 @@ namespace EvolutionShop
             chips.Add(Chip(b.Culture == null ? "Empty" : GrowthShop.Name(b.Culture)));
             chips.Add(Chip("Holds " + GrowthContent.BufferCapacity));
             fill.Add(chips);
-            // GR-29 (F18): emptied without making creatures nobody wants; a line piped into it fills it again.
+            // GR-29 (F18): emptied without making creatures nobody wants; a line piped into it fills it again. GR-33 (F58): with no
+            // line in, an empty buffer takes any culture.
             var pourOut = Link("Pour this buffer out", () => s.Act(() => shop.PourOutBuffer(place)), b.Culture != null && b.Units > 0, "It is empty");
             pourOut.style.marginLeft = 0; pourOut.style.alignSelf = Align.FlexStart;
             fill.Add(pourOut);
@@ -112,19 +113,20 @@ namespace EvolutionShop
             body.Add(Eyebrow("Pipes"));
             var inlet = shop.InletOf(place);
             if (inlet != null) body.Add(PipeItem("In: from " + shop.EndName(inlet.From), inlet.Length.ToString("0.#") + " m · " + shop.LineStatus(inlet), inlet.Id));
-            else body.Add(Wide("Pipe a grower's tap to it", () => s.StartPipe(GrowthLab.Buffer(place)), true, night, "Pipes are laid at night"));
+            else body.Add(Wide("Pipe a grower's tap to it", () => s.StartPipe(GrowthLab.Buffer(place)), true, true));
             if (shop.AutoDoser)
             {
                 var outlet = shop.OutletOf(place);
                 if (outlet != null) body.Add(PipeItem("Out: to the incubator's port", outlet.Length.ToString("0.#") + " m", outlet.Id));
-                else body.Add(Wide("Pipe it to the incubator's port", () => s.StartPipe(GrowthLab.Buffer(place)), false, night && inlet != null, inlet == null ? "Pipe a grower into it first" : "Pipes are laid at night"));
+                else body.Add(Wide("Pipe it to the incubator's port", () => s.StartPipe(GrowthLab.Buffer(place)), false, inlet != null, "Pipe a grower into it first"));
             }
             else body.Add(L("The incubator's level 4 has a port: a buffer piped to it feeds the auto-doser.", "gr-hint"));
             var sell = shop.SellBufferCheck(place, out string sellWhy);
             if (sell == GrowthFailure.None && sellAsked)
             {
                 var ask = Box("gr-row");
-                ask.Add(L("Sell it for " + GrowthContent.BufferCredits / 2 + " cr?", "gr-hint"));
+                int poured = (int)b.Units;
+                ask.Add(L("Sell it for " + GrowthContent.BufferCredits / 2 + " cr?" + (poured > 0 ? " Its " + poured + " " + GrowthShop.Name(b.Culture) + " " + (poured == 1 ? "dose is" : "doses are") + " poured out." : ""), "gr-hint"));
                 var yes = Button("Sell", () => { sellAsked = false; if (s.Act(() => shop.SellBuffer(place)).Success) s.SetCard(GrowthCard.None); });
                 yes.RemoveFromClassList("es-button--secondary"); yes.AddToClassList("es-button--danger"); yes.style.marginLeft = 10;
                 ask.Add(yes);
@@ -152,7 +154,7 @@ namespace EvolutionShop
                 "Its electric pump runs by itself on the generator's power: a dose every " + shop.PumpDoseSeconds.ToString("0.0#") + " s, drawing " + shop.PumpUnits + " unit" + (shop.PumpUnits == 1 ? "" : "s") + ".", "gr-hint"));
             if (lines.Count < shop.Taps)
             {
-                string why = !shop.Annex ? "Open the power room first" : !shop.HasPumps ? "Buy pumps and pipes on the power board first" : !night ? "Pipes are laid at night" : null;
+                string why = !shop.Annex ? "Open the power room first" : !shop.HasPumps ? "Buy pumps and pipes on the power board first" : null;
                 var pipe = Wide("Pipe its tap to a buffer", () => s.StartPipe(GrowthLab.Tap(culture)), true, why == null, why);
                 pipe.style.marginTop = 10;
                 body.Add(pipe);
@@ -186,7 +188,7 @@ namespace EvolutionShop
             var actions = Box("gr-row");
             actions.Add(Button(shop.AutoOn ? "Switch it off" : "Switch it on", () => s.Act(() => shop.SwitchAutoDoser(!shop.AutoOn)), !shop.AutoOn, shop.AutoOn || shop.AutoRecipe != null || shop.AutoByTargets, "Choose a recipe first"));
             bool night = shop.Phase == GrowthPhase.Night;
-            actions.Add(Button("Pipe a buffer to the port", () => s.StartPipe(GrowthLab.Port), false, night, "Pipes are laid at night"));
+            actions.Add(Button("Pipe a buffer to the port", () => s.StartPipe(GrowthLab.Port), false, true));
             section.Add(actions);
             body.Add(section);
         }

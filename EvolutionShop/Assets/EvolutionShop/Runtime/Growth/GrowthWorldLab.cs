@@ -15,7 +15,7 @@ namespace EvolutionShop
     public sealed partial class GrowthWorld
     {
         public static readonly Vector3 GeneratorPosition = new Vector3(2.9f, 0, 15.9f), PowerBoardPosition = new Vector3(3.88f, 1.5f, 12.5f), AnnexDoorway = new Vector3(1.15f, 0, 9f);
-        public const float AnnexDoorFrom = 0.45f, AnnexDoorTo = 1.85f, PipeRadius = 0.045f, HopHeight = 0.18f;
+        public const float AnnexDoorFrom = 0.45f, AnnexDoorTo = 1.85f, PipeRadius = 0.045f, HopHeight = 0.18f, LaneSpacing = 0.1f;
         public static Vector3 BufferPosition(int place) { var p = GrowthLab.BufferPoint(place); return new Vector3(p.x, 0, p.z); }
         public static Vector3 PortPosition => new Vector3(GrowthLab.PortPoint.x, 0, GrowthLab.PortPoint.z);
         /// <summary>A pipe end's point in the world at its height (a tap's riser, a buffer's lid, the incubator's port).</summary>
@@ -277,18 +277,31 @@ namespace EvolutionShop
 
         /// <summary>
         /// A pipe's path in the world: up from its first end, along its cells' centres overhead, down to its last end; over a
-        /// cell where it crosses a pipe laid before it, it rises by HopHeight (a hop over the other).
+        /// cell where it crosses a pipe laid before it, it rises by HopHeight (a hop over the other). GR-33 (F64): a line into the
+        /// incubator's port runs in a lane of its own (1 and 2 either side of the middle, then further out), so lines sharing a run,
+        /// and a buffer's line out beside its line in, lie side by side.
         /// </summary>
-        public static List<Vector3> PipePath(GrowthPipe pipe, ICollection<(int c, int r)> crossings)
+        public static List<Vector3> PipePath(GrowthPipe pipe, ICollection<(int c, int r)> crossings, int lane = 0)
         {
             float h = GrowthLab.PipeHeight;
             var points = new List<Vector3>();
             var a = EndPoint(pipe.From);
             points.Add(a); points.Add(new Vector3(a.x, h, a.z));
-            for (int i = 0; i < pipe.Cells.Count; i++)
+            int n = pipe.Cells.Count;
+            float side = lane == 0 ? 0 : (lane % 2 == 1 ? 1 : -1) * ((lane + 1) / 2) * LaneSpacing;
+            for (int i = 0; i < n; i++)
             {
                 var c = GrowthLab.Centre(pipe.Cells[i]);
-                points.Add(new Vector3(c.x, crossings != null && crossings.Contains(pipe.Cells[i]) ? h + HopHeight : h, c.z));
+                var shift = Vector2.zero;
+                if (side != 0 && i > 0 && i < n - 1)
+                {
+                    // The left of its way in and of its way out: along a straight run the two agree; at a bend both, so the corner
+                    // meets both lanes.
+                    Vector2 Left((int c, int r) from, (int c, int r) to) => new Vector2(-(to.r - from.r), to.c - from.c);
+                    var into = Left(pipe.Cells[i - 1], pipe.Cells[i]); var outOf = Left(pipe.Cells[i], pipe.Cells[i + 1]);
+                    shift = (into == outOf ? into : into + outOf) * side;
+                }
+                points.Add(new Vector3(c.x + shift.x, crossings != null && crossings.Contains(pipe.Cells[i]) ? h + HopHeight : h, c.z + shift.y));
             }
             var b = EndPoint(pipe.To);
             points.Add(new Vector3(b.x, h, b.z)); points.Add(b);
@@ -307,11 +320,13 @@ namespace EvolutionShop
             KeepChutePath(new List<Vector3>());
             foreach (var pipe in shop.Pipes)
             {
-                var before = new HashSet<(int c, int r)>(laid.SelectMany(p => p.Cells));
+                // GR-33 (F64): lines into the port share their runs: each takes the next lane, and hops only over the others.
+                var before = new HashSet<(int c, int r)>(GrowthLab.Apart(laid, pipe.From, pipe.To).SelectMany(p => p.Cells));
                 var crossings = pipe.Cells.Skip(1).Take(Mathf.Max(0, pipe.Cells.Count - 2)).Where(before.Contains).ToList();
+                int lane = pipe.To == GrowthLab.Port ? 1 + laid.Count(p => p.To == pipe.To) : 0;
                 string c = PipeCulture(shop, pipe);
                 var root = new GameObject("Pipe " + pipe.Id + ": " + pipe.From + " to " + pipe.To).transform; root.SetParent(pipesRoot, false);
-                var path = PipePath(pipe, crossings);
+                var path = PipePath(pipe, crossings, lane);
                 // GR-08: the hatchling chute is a wider glass tube; its bead follows its path.
                 if (pipe.Chute) { if (LookOn) DrawLookChute(root, path); else DrawPath(root, path, chuteMat, ChuteRadius); KeepChutePath(path); }
                 else if (LookOn) DrawLookPipe(root, path, pipe, c);
@@ -340,8 +355,9 @@ namespace EvolutionShop
             HidePipeGhost();
             ghostSignature = signature;
             if (plan == null) return;
-            var before = new HashSet<(int c, int r)>(shop.Pipes.SelectMany(p => p.Cells));
-            DrawPath(ghostRoot, PipePath(plan, plan.Cells.Skip(1).Take(Mathf.Max(0, plan.Cells.Count - 2)).Where(before.Contains).ToList()), ok ? ghostOk : ghostBad, plan.Chute ? ChuteRadius : PipeRadius);
+            var before = new HashSet<(int c, int r)>(GrowthLab.Apart(shop.Pipes, plan.From, plan.To).SelectMany(p => p.Cells));
+            int lane = plan.To == GrowthLab.Port ? 1 + shop.Pipes.Count(p => p.To == plan.To) : 0;
+            DrawPath(ghostRoot, PipePath(plan, plan.Cells.Skip(1).Take(Mathf.Max(0, plan.Cells.Count - 2)).Where(before.Contains).ToList(), lane), ok ? ghostOk : ghostBad, plan.Chute ? ChuteRadius : PipeRadius);
         }
 
         public void HidePipeGhost()

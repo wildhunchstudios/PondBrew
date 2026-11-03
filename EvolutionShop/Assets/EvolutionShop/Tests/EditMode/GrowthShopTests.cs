@@ -261,7 +261,7 @@ namespace EvolutionShop.Tests
             shop.OpenShop();
             Assert.That(shop.DaySecondsLeft, Is.EqualTo(330));
             Assert.That(shop.OpenShop().Failure, Is.EqualTo(GrowthFailure.NotAtNight));
-            Assert.That(shop.BuyTank("a3").Failure, Is.EqualTo(GrowthFailure.NotAtNight), "layout changes happen at night");
+            Assert.That(shop.BuyTank("a3").Failure, Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: layout changes happen by day too");
             Run(shop, 329);
             Assert.That(shop.Phase, Is.EqualTo(GrowthPhase.Day));
             Run(shop, 1.5f);
@@ -327,7 +327,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.TakeEvents().Any(e => e.Kind == GrowthEventKind.EraUp), Is.True);
             Assert.That(shop.BuyTank("b1").Failure, Is.EqualTo(GrowthFailure.NoSuchPlace));
             shop.OpenShop();
-            Assert.That(shop.BuyUnitB().Failure, Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(shop.UnitBCheck(out string dayWhy), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: walls open by day too (" + dayWhy + ")");
             Run(shop, 331);
             int before = shop.Credits;
             shop.Credits = 399;

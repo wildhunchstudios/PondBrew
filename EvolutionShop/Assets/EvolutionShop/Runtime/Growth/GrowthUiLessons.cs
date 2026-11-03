@@ -29,20 +29,18 @@ namespace EvolutionShop
                 var p = L(GrowthControls.Keyed(paragraph), "gr-lesson__text");
                 body.Add(p);
             }
-            if (!lesson.CardOnly)
-            {
-                var call = Box("gr-callout"); call.style.marginTop = 14;
-                call.Add(L("The marker points at what to use, and the line at the bottom says what to do, until you have done it once.", "gr-strong"));
-                var skip = Link("Skip lesson", () => { s.Shop.SkipLesson(); s.SaveNow(); s.SetCard(GrowthCard.None); });
-                skip.name = "gr-lesson-skip";
-                skip.style.alignSelf = Align.FlexStart; skip.style.marginLeft = 0; skip.style.marginTop = 8;
-                call.Add(skip);
-                body.Add(call);
-            }
             var note = L("Every lesson stays in your journal's Guide (" + GrowthControls.NameOf(GrowthAction.Journal) + "). Lessons can be turned off in Settings › Accessibility.", "gr-hint");
             note.style.marginTop = 12;
             body.Add(note);
             NotebookFooter("Got it", () => s.SetCard(GrowthCard.None), "Got it");
+            // GR-33 (F86): the yellow note said the same on every lesson; Skip lesson now stands beside Got it.
+            if (!lesson.CardOnly)
+            {
+                var skip = Link("Skip lesson", () => { s.Shop.SkipLesson(); s.SaveNow(); s.SetCard(GrowthCard.None); });
+                skip.name = "gr-lesson-skip";
+                skip.style.marginTop = 0; skip.style.marginLeft = 16;
+                footer.Insert(footer.childCount - 1, skip);
+            }
         }
 
         /// <summary>R09.4: the pause screen's line for the lesson whose steps run, with its Skip.</summary>
@@ -140,15 +138,15 @@ namespace EvolutionShop
                     var tile = Box("gr-ct");
                     if (!known) tile.AddToClassList("gr-ct--unknown");
                     if (sp.Kind == SpeciesKind.Crown) tile.AddToClassList("gr-ct--crown");
-                    if (known) tile.Add(CreatureIcon(sp, ColourFound(shop, sp), 40, "gr-ct__glyph"));
+                    if (known) { tile.Add(CreatureIcon(sp, ColourFound(shop, sp), 40, "gr-ct__glyph")); Pickable(tile, sp, "gr-ct--pick"); }
                     else { var g = new GrowthGlyph(new Color(0.72f, 0.67f, 0.57f, locked ? 0.3f : 0.55f)); g.AddToClassList("gr-ct__glyph"); tile.Add(g); }
                     var words = Box("gr-ct__words");
                     words.Add(L(known ? sp.Name : "?", "gr-ct__name"));
                     int colours = shop.Journal.Count(j => j.StartsWith(sp.Id + "/", StringComparison.Ordinal));
                     words.Add(L(known ? colours + "/" + GrowthContent.ColourCount + " colours" : sp.Kind == SpeciesKind.Crown ? "crown" : sp.Kind == SpeciesKind.Founder ? "founder" : "hybrid", "gr-ct__hint"));
                     tile.Add(words);
-                    tile.tooltip = known ? sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + shop.HowToMake(sp) + " · " + sp.Price + " cr" :
-                        sp.Kind == SpeciesKind.Founder ? "A founder: mixed in the incubator from its cultures" : sp.Kind == SpeciesKind.Crown ? "The family's crown: one special pair of its own" : "A hybrid: bred in the breeding tank";
+                    if (known) RecipeTip(tile, sp.Name + " · " + sp.Kind.ToString().ToLowerInvariant() + " · " + shop.HowToMake(sp) + " · " + sp.Price + " cr", sp.Recipe);
+                    else tile.tooltip = sp.Kind == SpeciesKind.Founder ? "A founder: mixed in the incubator from its cultures" : sp.Kind == SpeciesKind.Crown ? "The family's crown: one special pair of its own" : "A hybrid: bred in the breeding tank";
                     row.Add(tile);
                 }
                 page.Add(row);

@@ -95,7 +95,7 @@ namespace EvolutionShop.Tests
             shop.Credits = 200;
             shop.Containers[0].Occupants.Add(new GrowthSpecimen { Id = 900, Species = Small });
             shop.OpenShop();
-            Assert.That(shop.BuyContainer("large", "a3").Failure, Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(shop.BuyCheck("large", "a3", out string dayWhy), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: tanks are bought by day too (" + dayWhy + ")");
             Run(shop, GrowthContent.DaySeconds + 1);
             int credits = shop.Credits;
             Assert.That(shop.BuyContainer("large", "a3").Success, Is.True);
@@ -168,9 +168,9 @@ namespace EvolutionShop.Tests
             var day = Grown();
             day.Containers[0].Occupants.Add(new GrowthSpecimen { Id = 900, Species = Small });
             day.OpenShop();
-            Assert.That(day.MoveContainer(day.Containers[0].Id, "a2").Failure, Is.EqualTo(GrowthFailure.NotAtNight));
-            Assert.That(day.MoveCheck(day.Containers[0].Id, "a4", out string why), Is.EqualTo(GrowthFailure.NotAtNight));
-            Assert.That(why, Is.EqualTo("Containers are moved at night"));
+            Assert.That(day.MoveCheck(day.Containers[0].Id, "a4", out string why), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: tanks are moved by day too (" + why + ")");
+            day.Containers[0].Occupants[0].ReservedBy = 1;
+            Assert.That(day.MoveCheck(day.Containers[0].Id, "a4", out why), Is.EqualTo(GrowthFailure.Reserved), "never while a visitor is buying from it");
         }
 
         [Test]

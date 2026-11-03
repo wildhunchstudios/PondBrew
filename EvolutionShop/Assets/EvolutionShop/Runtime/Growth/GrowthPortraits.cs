@@ -31,10 +31,30 @@ namespace EvolutionShop
             if (cache.TryGetValue(key, out var kept) && kept != null) return kept;
             if (GrowthContent.Get(species) == null) return null;
             Studio();
-            var view = GrowthCreatureView.Create(new GrowthSpecimen { Id = 990000 + Drawn, Species = species, Colour = colour }, studio);
             // Three quarters to the viewer, a little from above: the creature swims along its +Z, the camera looks along +Z.
+            var texture = Draw(species, colour, size, Quaternion.Euler(-6, 215, 0));
+            // GR-33 (F66): a flat or thin creature (a Hazewing, a Puffglider) seen so shows as a line: from above it shows its shape.
+            if (texture != null && Coverage(texture) < ThinCoverage)
+            {
+                var above = Draw(species, colour, size, Quaternion.AngleAxis(-AboveTilt, Vector3.right) * Quaternion.Euler(-6, 215, 0));
+                if (above != null && Coverage(above) > Coverage(texture)) { Object.Destroy(texture); texture = above; }
+                else if (above != null) Object.Destroy(above);
+            }
+            if (texture == null) return null;
+            texture.name = "GR-27 portrait " + key;
+            cache[key] = texture;
+            Drawn++;
+            return texture;
+        }
+
+        /// <summary>GR-33 (F66): below this share of its square, a portrait is drawn again from above, and the fuller one kept.</summary>
+        public const float ThinCoverage = 0.2f, AboveTilt = 55;
+
+        static Texture2D Draw(string species, Colour colour, int size, Quaternion rotation)
+        {
+            var view = GrowthCreatureView.Create(new GrowthSpecimen { Id = 990000 + Drawn, Species = species, Colour = colour }, studio);
             view.transform.localPosition = Vector3.zero;
-            view.transform.localRotation = Quaternion.Euler(-6, 215, 0);
+            view.transform.localRotation = rotation;
             foreach (var t in view.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = Layer;
             Bounds bounds = default; bool any = false;
             foreach (var r in view.GetComponentsInChildren<Renderer>())
@@ -71,10 +91,7 @@ namespace EvolutionShop
             view.gameObject.SetActive(false);
             Object.Destroy(view.gameObject);
             var texture = Crop(drawn, size);
-            texture.name = "GR-27 portrait " + key;
             Object.Destroy(drawn);
-            cache[key] = texture;
-            Drawn++;
             return texture;
         }
 

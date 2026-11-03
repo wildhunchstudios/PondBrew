@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using EvolutionShop.Growth;
 using UnityEngine;
@@ -99,7 +100,19 @@ namespace EvolutionShop
             body.Add(duty);
             if (id == "pip")
                 body.Add(L("Pip takes the front of the queue. " + (shop.SecondTill ? "At the second till you serve beside Pip: while you hold the counter the front of the queue is yours, and Pip takes the visitor behind." : "You serve only at the counter's second till (its level 4) while Pip is at work."), "gr-hint"));
-            else if (id == "nori") { var targets = Box("gr-section"); targets.style.marginTop = 10; TargetsSection(targets, "No targets yet: Nori fills the shop's tanks with whatever is waiting. Set a target to keep that many of a species on show."); body.Add(targets); }
+            else if (id == "nori")
+            {
+                // GR-33 (F84): the targets in a window of their own, each creature with its picture; here, what is set.
+                var targets = Box("gr-section"); targets.style.marginTop = 10;
+                targets.Add(L("Stock targets", "gr-label"));
+                var set = GrowthContent.Species.Where(x => shop.Target(x.Id) > 0).ToList();
+                targets.Add(L(set.Count == 0 ? "No targets yet: Nori fills the shop's tanks with whatever is waiting. Set a target to keep that many of a species on show." :
+                    "Keeping on show: " + string.Join(", ", set.Select(x => shop.Target(x.Id) + " " + (shop.Target(x.Id) == 1 ? x.Name : GrowthShop.Plural(x.Name)))) + ". The rest go to the racks.", "gr-hint"));
+                var manage = Wide("Manage stock", () => s.SetCard(GrowthCard.Stock, id), true, true);
+                manage.style.marginTop = 8;
+                targets.Add(manage);
+                body.Add(targets);
+            }
             else MossSection(body, h);
             // Training: their levels on a track, the next one with its price.
             var train = AddTab("Training");
@@ -138,8 +151,9 @@ namespace EvolutionShop
                 int target = shop.Target(pick);
                 var row = Box("gr-target");
                 row.Add(L(GrowthContent.Get(pick).Name, "gr-target__name"));
-                row.Add(L(shop.Shown(pick).ToString(), "gr-target__num"));
-                row.Add(L(shop.Racked(pick).ToString(), "gr-target__num"));
+                // GR-33 (F61): the counts change as Nori and the sorter work, in place, without rebuilding the card.
+                row.Add(LiveL(() => shop.Shown(pick).ToString(), "gr-target__num"));
+                row.Add(LiveL(() => shop.Racked(pick).ToString(), "gr-target__num"));
                 var set = Box("gr-target__set");
                 set.Add(PlusMinus("−", () => s.Act(() => shop.SetTarget(pick, target - 1)), target > 0, "No target to lower"));
                 set.Add(L(target.ToString(), "gr-target__value"));
@@ -147,6 +161,45 @@ namespace EvolutionShop
                 row.Add(set);
                 body.Add(row);
             }
+        }
+
+        /// <summary>
+        /// GR-33 (F84): the stock targets as a window of their own: every creature found, a family a page, each with its picture, how
+        /// many are in the shop and the racks (live) and its target, − and +.
+        /// </summary>
+        void FillStock(string from)
+        {
+            var shop = s.Shop;
+            var body = Notebook("Stock targets", "Below its target, a creature goes to the shop's tanks; the rest go to the racks. Nori " + (shop.HasSorter ? "and the sorter keep" : "keeps") + " them.");
+            var known = GrowthContent.Families.Select(f => (family: f, members: GrowthContent.Species.Where(x => x.Family == f.Id && shop.Discovered.Contains(x.Id)).ToList())).Where(x => x.members.Count > 0).ToList();
+            if (known.Count == 0) body.Add(L("No creature found yet.", "gr-hint"));
+            var pages = new List<VisualElement>();
+            foreach (var (family, members) in known)
+            {
+                var page = Box("gr-body");
+                page.Add(L(family.Name, "gr-shelf__head"));
+                var row = Box("gr-row");
+                foreach (var sp in members)
+                {
+                    string pick = sp.Id;
+                    int target = shop.Target(pick);
+                    var tile = Box("gr-rs-jar", "gr-stock");
+                    if (target > 0) tile.AddToClassList("gr-stock--set");
+                    tile.Add(CreatureIcon(sp, ColourFound(shop, sp), 48, "gr-rs-icon"));
+                    tile.Add(L(sp.Name, "gr-tile__name"));
+                    tile.Add(LiveL(() => "In shop " + shop.Shown(pick) + " · in racks " + shop.Racked(pick), "gr-hint"));
+                    var setRow = Box("gr-target__set");
+                    setRow.Add(PlusMinus("−", () => s.Act(() => shop.SetTarget(pick, target - 1)), target > 0, "No target to lower"));
+                    setRow.Add(L(target.ToString(), "gr-target__value"));
+                    setRow.Add(PlusMinus("+", () => s.Act(() => shop.SetTarget(pick, target + 1)), target < GrowthShop.MostTarget, "The most is " + GrowthShop.MostTarget));
+                    tile.Add(setRow);
+                    row.Add(tile);
+                }
+                page.Add(row);
+                pages.Add(page);
+            }
+            Pager(body, pages, "Families");
+            NotebookFooter(from == "sorter" ? "Back to the sorter" : "Back to Nori", () => s.SetCard(from == "sorter" ? GrowthCard.Sorter : GrowthCard.Helper, from == "sorter" ? null : "nori"), from == "sorter" ? "Back to the sorter" : "Back to Nori");
         }
 
         static string RecipeText(string species)
@@ -221,7 +274,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             return string.Join(",", shop.Staff.Values.Select(h => h.Id + h.Level + h.OnDuty + h.PaidPeriod)) + "|" + shop.MossRecipe + shop.MossPairA + shop.MossPairB + shop.MossTask + shop.MossBatches +
-                "|" + (GrowthContent.Helpers.Select(d => shop.HireCheck(d.Id, out _).ToString()).Aggregate((a, b) => a + b)) + "|" + mossRecipePick + mossPairPick + shop.SalesTotal;
+                "|" + (GrowthContent.Helpers.Select(d => shop.HireCheck(d.Id, out _).ToString()).Aggregate((a, b) => a + b)) + "|" + mossRecipePick + mossPairPick + (s.Card == GrowthCard.Staff ? shop.SalesTotal : 0);
         }
 
         string HelperLiveText()

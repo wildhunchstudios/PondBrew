@@ -80,12 +80,10 @@ namespace EvolutionShop.Tests
             Assert.That((a1.Decor, shop.DecorBox.Single()), Is.EqualTo(("volcano", "reeds")));
             Assert.That(shop.PutDecor("volcano", a2.Id).Success, Is.True);
             Assert.That((a1.Decor, a2.Decor), Is.EqualTo(((string)null, "volcano")), "moved from a1 to a2");
-            // By day it stays as it is.
+            // F81: by day too.
             Assert.That(shop.OpenShop().Success, Is.True);
-            Assert.That(shop.PutDecor("reeds", b1.Id).Failure, Is.EqualTo(GrowthFailure.NotAtNight));
-            Assert.That(shop.TakeDecor(a2.Id).Failure, Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(shop.TakeDecor(a2.Id).Success && a2.Decor == null && shop.DecorBox.Count() == 2, Is.True, "back in the box, by day");
             Assert.That(shop.CloseEarly().Success, Is.True);
-            Assert.That(shop.TakeDecor(a2.Id).Success && a2.Decor == null && shop.DecorBox.Count() == 2, Is.True, "back in the box at night");
             Assert.That(shop.TakeDecor(a2.Id).Failure, Is.EqualTo(GrowthFailure.NotOwned));
             // It moves with its tank, and goes back to the box when the tank is sold.
             Assert.That(shop.PutDecor("reeds", b1.Id).Success, Is.True);

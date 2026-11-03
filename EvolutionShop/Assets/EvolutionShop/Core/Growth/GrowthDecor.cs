@@ -88,7 +88,6 @@ namespace EvolutionShop.Growth
             if (c == null) { why = "No such tank"; return GrowthFailure.NoSuchContainer; }
             if (c.Def.Lab) { why = "Decor goes on the shop's tanks"; return GrowthFailure.DoesNotFit; }
             if (c.Decor == decor) { why = "It is on this tank"; return GrowthFailure.Owned; }
-            if (Phase != GrowthPhase.Night) { why = "Decor goes on at night"; return GrowthFailure.NotAtNight; }
             return GrowthFailure.None;
         }
 
@@ -116,7 +115,6 @@ namespace EvolutionShop.Growth
             var c = Container(containerId);
             if (c == null) { why = "No such tank"; return GrowthFailure.NoSuchContainer; }
             if (c.Decor == null) { why = "No decor on it"; return GrowthFailure.NotOwned; }
-            if (Phase != GrowthPhase.Night) { why = "Decor comes off at night"; return GrowthFailure.NotAtNight; }
             return GrowthFailure.None;
         }
 

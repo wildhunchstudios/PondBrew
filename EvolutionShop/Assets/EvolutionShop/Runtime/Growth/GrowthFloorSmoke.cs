@@ -96,9 +96,11 @@ namespace EvolutionShop
             string card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Incubator && card.Contains("QUICK RECIPES") && card.Contains("Choose your 3 (5 found)") && shop.QuickRecipes().Count == 3, "The incubator's card has three quick recipes and offers the rest (5 found)");
             yield return Shot("1201-quick-recipes");
+            yield return null; yield return null;
+            Check(!s.Ui.CardScrolls, "F76: the incubator's Mix tab fits without scrolling, in two columns");
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Choose your 3"), "Press Choose your 3");
             yield return null;
-            Check(s.Ui.CardText().Contains("Close the list") && s.Ui.CardText().Contains(founders[0].Name), "The list shows every recipe found, each with its pin");
+            Check(s.Ui.CurrentTab == "Recipes" && s.Ui.CardText().Contains(founders[0].Name), "F76: Choose your 3 opens the Recipes tab: every recipe found, each with its pin");
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "Pin", "Press Pin");
             yield return null;
             Check(shop.PinnedRecipes.Count == 1 && shop.QuickRecipes()[0] == shop.PinnedRecipes[0], "A pinned recipe comes first");
@@ -120,10 +122,10 @@ namespace EvolutionShop
             yield return AimAt(counterFront, counterAim, GrowthTargetKind.Counter, null, "From behind it, the reticle focuses the counter");
             yield return Press(Key.E);
             yield return null; yield return null;
-            Check(s.Card == GrowthCard.Counter && s.Ui.CardText().Contains("Open by itself") && s.Ui.CardText().Contains("Off: the shop opens when you open it here."), "The counter's card offers the auto-open, off");
+            Check(s.Card == GrowthCard.Counter && s.Ui.CardText().Contains("Open by itself, with this many on show") && s.Ui.CardText().Contains("Off: you open the shop yourself, here.") && s.Ui.CardText().Contains("visitors at once"), "The counter's card offers the auto-open, off");
             yield return ClickOn(e => e.name == "gr-autoopen-3", "Press 3");
             yield return null; yield return null;
-            Check(shop.AutoOpenAt == 3 && s.Ui.CardText().Contains("With 3 or more on show"), "Set to 3, the card says when it opens");
+            Check(shop.AutoOpenAt == 3 && s.Ui.CardText().Contains("Once 3 or more creatures are on show, the night ends and the shop opens by itself"), "Set to 3, the card says when it opens");
             yield return Shot("1203-auto-open");
             s.SetCard(GrowthCard.None);
             yield return Wait(() => shop.Phase == GrowthPhase.Day, GrowthShop.AutoOpenWait + 5, "the shop opening by itself");
@@ -215,7 +217,11 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.Helper, "nori");
             yield return null; yield return null;
             card = s.Ui.CardText();
-            Check(card.Contains("No targets yet: Nori fills the shop's tanks with whatever is waiting.") && card.Contains("In shop") && card.Contains("In racks"), "Nori's card has the targets as a table");
+            Check(card.Contains("No targets yet: Nori fills the shop's tanks with whatever is waiting.") && card.Contains("Manage stock"), "Nori's card says Nori fills the tanks with whatever waits, and offers Manage stock");
+            s.SetCard(GrowthCard.Stock, "nori");
+            yield return null; yield return null;
+            card = s.Ui.CardText();
+            Check(s.Card == GrowthCard.Stock && card.Contains("In shop") && card.Contains("in racks"), "GR-33 (F84): the stock window lists each creature found with what is in the shop and the racks");
             yield return Shot("1208-targets-table");
             s.SetCard(GrowthCard.None);
             foreach (var c in shop.ShopContainers) c.Occupants.RemoveAll(o => o.ReservedBy == 0);

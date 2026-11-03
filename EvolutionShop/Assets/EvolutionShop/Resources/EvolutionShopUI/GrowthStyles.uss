@@ -2390,3 +2390,156 @@
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
 }
+
+/* GR-33 (F60): the research desk's Tanks tab: a panel for each tank, its job, a bar and the time left. */
+.gr-rs-tanks {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.gr-rs-tank {
+    width: 260px;
+    margin: 0 10px 10px 0;
+    padding: 10px;
+    background-color: #FFFDF6;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: #E3D9C2;
+    border-right-color: #E3D9C2;
+    border-top-color: #E3D9C2;
+    border-bottom-color: #E3D9C2;
+}
+
+.gr-rs-tank > .gr-bar {
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+/* GR-33 (F63): a creature in your hands on the Jars tab, marked apart from the jars. */
+.gr-rs-jar--hand {
+    background-color: #F4EEFF;
+}
+/* GR-33 (F61): a card's live line beside its title never takes the title's room: it shortens with an ellipsis (its whole text
+   on hover), and the title keeps its words on one line where it can. */
+.gr-strip__top > .es-card__status {
+    flex-shrink: 1;
+    max-width: 52%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.gr-strip__top > .es-card__title {
+    min-width: 40%;
+}
+/* GR-33 (F62): the shop's notes, a short log down the left side, under the day's panel: the newest at its foot, each fading. */
+.gr-notelog {
+    position: absolute;
+    left: 24px;
+    top: 150px;
+    width: 400px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.gr-notelog__row {
+    margin-bottom: 6px;
+    padding: 6px 14px 6px 12px;
+    background-color: rgba(255, 250, 238, 0.92);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    border-left-width: 4px;
+    border-left-color: var(--es-teal);
+}
+
+.gr-notelog__row--warn {
+    border-left-color: #E07A5F;
+}
+
+.gr-notelog__text {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Nunito-ExtraBold.ttf");
+    font-size: 15px;
+    color: var(--es-ink);
+    white-space: normal;
+}
+/* GR-33 (F77): a recipe's doses as coloured dots: at the start of a hover tip, and before a mix in a list. */
+.gr-tip__dots {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+.gr-dosedots {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 8px;
+}
+
+/* GR-33 (F78): a log's filter chip, on. */
+.gr-filter--on {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: var(--es-ink);
+    border-right-color: var(--es-ink);
+    border-top-color: var(--es-ink);
+    border-bottom-color: var(--es-ink);
+}
+
+/* GR-33 (F79): what makes a creature, picked in the journal. */
+.gr-jdetail {
+    margin-bottom: 10px;
+}
+
+.gr-jt--pick, .gr-ct--pick {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: var(--es-teal);
+    border-right-color: var(--es-teal);
+    border-top-color: var(--es-teal);
+    border-bottom-color: var(--es-teal);
+}
+/* GR-33 (F76): the incubator's card in two columns, so it never scrolls. */
+.gr-cols {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.gr-col {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
+    margin-right: 18px;
+}
+
+/* GR-33 (F84): a creature in the stock window: its picture, counts and target; one with a target set is marked. */
+.gr-stock {
+    width: 150px;
+}
+
+.gr-stock--set {
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-color: var(--es-teal);
+    border-right-color: var(--es-teal);
+    border-top-color: var(--es-teal);
+    border-bottom-color: var(--es-teal);
+}

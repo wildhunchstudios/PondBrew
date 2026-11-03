@@ -73,7 +73,6 @@ namespace EvolutionShop.Growth
             if (!HasGenerator) { why = "Buy the generator first"; return GrowthFailure.Locked; }
             if (Era < room.Era) { why = "Needs Era " + room.Era; return GrowthFailure.Locked; }
             if (Stars < room.Stars) { why = "Needs " + room.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < room.Credits) { why = "Needs " + room.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -263,6 +262,7 @@ namespace EvolutionShop.Growth
                 {
                     int take = Math.Min(need, (int)Math.Floor(b.Units + 0.001f));
                     b.Units = Math.Max(0, b.Units - take);
+                    ForgetIfDry(b.Place);
                     need -= take;
                 }
                 if (need > 0) GrowerUnits[culture] = Math.Max(0, GrowerUnits[culture] - need);

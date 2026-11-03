@@ -32,7 +32,7 @@ namespace EvolutionShop.Tests
             return shop;
         }
 
-        static void Lay(GrowthShop shop, string a, string b) => Assert.That(shop.LayPipe(a, b).Success, Is.True, a + " to " + b);
+        static void Lay(GrowthShop shop, string a, string b) { var r = shop.LayPipe(a, b); Assert.That(r.Success, Is.True, a + " to " + b + ": " + r.Detail); }
 
         static void AssertRoute(GrowthPipe p, bool annex)
         {
@@ -54,7 +54,7 @@ namespace EvolutionShop.Tests
             Assert.That(why, Does.StartWith("Needs Era 3"));
             At(3, 2).AnnexCheck(out why); Assert.That(why, Is.EqualTo("Needs 3 stars"));
             var day = At(3, 3); day.OpenShop();
-            Assert.That(day.AnnexCheck(out why), Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(day.AnnexCheck(out why), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: walls open by day too");
             Assert.That(At(3, 3, credits: GrowthShop.AnnexDef.Credits - 1).AnnexCheck(out why), Is.EqualTo(GrowthFailure.NotEnoughCredits));
             var shop = At(3, 3, credits: 1500);
             Assert.That(shop.Objectives().Any(o => o.text.StartsWith("Open the power room") && !o.done), Is.True, "era 3's goal names the power room");
@@ -101,7 +101,7 @@ namespace EvolutionShop.Tests
             Assert.That(credits - shop.Credits, Is.EqualTo(GrowthContent.BufferCredits));
             Assert.That(shop.BuyBuffer(2).Failure, Is.EqualTo(GrowthFailure.PlaceTaken));
             shop.OpenShop();
-            shop.BufferCheck(3, out why); Assert.That(why, Is.EqualTo("Buffers are placed at night"));
+            Assert.That(shop.BufferCheck(3, out why), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: buffers are placed by day too");
         }
 
         [Test]
@@ -147,11 +147,11 @@ namespace EvolutionShop.Tests
             Lay(four, GrowthLab.Tap("bloom"), GrowthLab.Buffer(1));
             four.PipeCheck(GrowthLab.Tap("bloom"), GrowthLab.Buffer(1), out _, out why); Assert.That(why, Does.StartWith("Both of the Bloom grower's taps are in use").Or.EqualTo("Buffer 2 has its pipe from Bloom"));
             var day = Lab(); day.OpenShop();
-            day.PipeCheck(GrowthLab.Tap("bloom"), GrowthLab.Buffer(0), out _, out why); Assert.That(why, Is.EqualTo("Pipes are laid at night"));
+            Assert.That(day.PipeCheck(GrowthLab.Tap("bloom"), GrowthLab.Buffer(0), out _, out why), Is.EqualTo(GrowthFailure.None), "F81: pipes are laid by day too");
             // Laid and taken down at night; half the cost comes back, the culture stays where it is.
             shop.OpenShop();
             shop.PipeCheck(GrowthLab.Tap("bloom"), GrowthLab.Buffer(1), out _, out why); Assert.That(why, Is.Not.EqualTo(null));
-            Assert.That(shop.RemovePipe(flow.Id).Failure, Is.EqualTo(GrowthFailure.NotAtNight));
+            // F81: pipes come down by day too (below, as the night starts).
             shop.Tick(GrowthContent.DaySeconds + 1);
             credits = shop.Credits;
             Assert.That(shop.RemovePipe(flow.Id).Success, Is.True);
@@ -271,6 +271,35 @@ namespace EvolutionShop.Tests
             Assert.That(fast.BufferAt(1).Units, Is.EqualTo(0.5f).Within(0.01f));
             Assert.That(fast.LineStatus(fast.Pipes[1]), Is.EqualTo("Slowed: power for 1 of 2 units"));
             Assert.That(fast.PowerUses.Select(u => u.Name), Is.EqualTo(new[] { "Bloom pump to buffer 1", "Flow pump to buffer 2" }));
+        }
+
+        [Test]
+        public void F64_EveryBufferCanBePipedToTheIncubator_TheirLinesSharingTheirRuns()
+        {
+            var shop = Lab(4, 4, pumps: 1);
+            UpgradeTo(shop, "incubator", 4);
+            foreach (var c in GrowthContent.Cultures.Select(x => x.Id).Where(c => !shop.Owns(c))) { shop.Cultures.Add(c); shop.GrowerUnits[c] = 0; }
+            var cultures = shop.Cultures.Take(GrowthLab.BufferPlaces).ToList();
+            for (int i = 2; i < GrowthLab.BufferPlaces; i++) Assert.That(shop.BuyBuffer(i).Success, Is.True, "buffer " + i);
+            for (int i = 0; i < GrowthLab.BufferPlaces; i++) Lay(shop, GrowthLab.Tap(cultures[i]), GrowthLab.Buffer(i));
+            for (int i = 0; i < GrowthLab.BufferPlaces; i++) Lay(shop, GrowthLab.Buffer(i), GrowthLab.Port);
+            var port = shop.Pipes.Where(p => p.To == GrowthLab.Port).ToList();
+            Assert.That(port.Count, Is.EqualTo(GrowthLab.BufferPlaces), "a line from every buffer");
+            foreach (var p in port) AssertRoute(p, true);
+            Assert.That(port.Skip(1).Any(p => p.Cells.Skip(1).Take(p.Cells.Count - 2).Any(c => port[0].Cells.Contains(c))), Is.True, "they share their runs on the way in");
+            foreach (var p in port)
+                Assert.That(GrowthLab.CanJoin(GrowthLab.Apart(shop.Pipes.Where(x => x != p), p.From, p.To).Select(x => x.Cells), p.Cells), Is.True, p.From + ": it crosses other growers' lines only at right angles");
+            Assert.That(port.Any(p => p.Cells.Skip(1).Take(2).Any(c => shop.InletOf(GrowthLab.BufferPlace(p.From)).Cells.Contains(c))), Is.True,
+                "a buffer over a grower's tap leaves beside its own line in");
+            var back = GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(JsonUtility.ToJson(shop.Snapshot())), out string problem);
+            Assert.That(problem, Is.Null.Or.Empty);
+            Assert.That(back.Pipes.Count(p => p.To == GrowthLab.Port), Is.EqualTo(GrowthLab.BufferPlaces), "a save keeps them");
+            // A grower's line taken down while its buffer is empty: the buffer forgets its culture, its port line stays, and a save still loads.
+            shop.BufferAt(5).Units = 0;
+            Assert.That(shop.RemovePipe(shop.InletOf(5).Id).Success, Is.True);
+            Assert.That(shop.BufferAt(5).Culture, Is.Null);
+            GrowthShop.Restore(JsonUtility.FromJson<GrowthSave>(JsonUtility.ToJson(shop.Snapshot())), out problem);
+            Assert.That(problem, Is.Null.Or.Empty, "a port line from a buffer with no culture");
         }
 
         [Test]

@@ -94,7 +94,7 @@ namespace EvolutionShop.Tests
             Assert.That(At(4, 3).UnitCCheck(out why), Is.EqualTo(GrowthFailure.Locked)); Assert.That(why, Is.EqualTo("Needs 4 stars"));
             Assert.That(At(4, 4, credits: 3999).UnitCCheck(out why), Is.EqualTo(GrowthFailure.NotEnoughCredits));
             var day = At(4, 4); day.OpenShop();
-            Assert.That(day.UnitCCheck(out why), Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(day.UnitCCheck(out why), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F81: walls open by day too");
             Assert.That(shop.Objectives().Single(o => o.text.StartsWith("Open shop unit C")).done, Is.False, "era 4's goal lists unit C");
             int visitors = shop.VisitorsAtOnce;
             Assert.That(shop.FreePlaces.Any(p => p.StartsWith("c")), Is.False, "its places are closed");

@@ -75,9 +75,11 @@ namespace EvolutionShop.Growth
         /// The cheapest run from one cell to another: a cell costs 1, a bend 0.5 and a crossing 0.25, so pipes run straight
         /// where they can; ties go the same way every time. Open cells are under the lab's ceiling and no other end's; a cell
         /// another pipe runs straight through may be crossed at right angles (the new pipe hops over it), never run along or
-        /// turned in. Null when other pipes leave no way through.
+        /// turned in. Null when other pipes leave no way through. GR-33 (F64): the cells of the pipes it joins (Joins: lines into
+        /// the port, a buffer's line in and out) are open in any direction and cost less, so a new line runs along them.
         /// </summary>
-        public static List<(int c, int r)> Route((int c, int r) from, (int c, int r) to, Func<(int c, int r), bool> open, IReadOnlyDictionary<(int c, int r), char> pipes = null)
+        public static List<(int c, int r)> Route((int c, int r) from, (int c, int r) to, Func<(int c, int r), bool> open, IReadOnlyDictionary<(int c, int r), char> pipes = null,
+            ICollection<(int c, int r)> joined = null)
         {
             int[] dc = { 1, 0, -1, 0 }, dr = { 0, 1, 0, -1 };
             int Index((int c, int r) x, int d) => (x.c * Rows + x.r) * 5 + d;
@@ -114,7 +116,7 @@ namespace EvolutionShop.Growth
                         if (s != ' ' && !(s == 'V' && k % 2 == 0 || s == 'H' && k % 2 == 1)) continue;
                         if (s != ' ') extra = 0.25f;
                     }
-                    float step = g + 1 + extra + (d != 4 && d != k ? 0.5f : 0);
+                    float step = g + (joined != null && joined.Contains(next) ? JoinedCost : 1) + extra + (d != 4 && d != k ? 0.5f : 0);
                     int j = Index(next, k);
                     if (cost.TryGetValue(j, out float old) && step >= old - 1e-4f) continue;
                     cost[j] = step; back[j] = i;
@@ -123,6 +125,20 @@ namespace EvolutionShop.Growth
             }
             return null;
         }
+
+        /// <summary>What a cell another line into the same end costs a route: less than an empty one, so the lines bundle.</summary>
+        public const float JoinedCost = 0.6f;
+
+        /// <summary>
+        /// GR-33 (F64): whether a new pipe between two ends may share cells with a pipe already laid: the incubator's port takes
+        /// many lines (one from each buffer), which join on the way like a manifold; and a buffer's line in and line out may run
+        /// together near it (a buffer over a grower's tap has only one free side). Every other pipe keeps a run of its own.
+        /// </summary>
+        public static bool Joins(string from, string to, GrowthPipe other) =>
+            to == Port && other.To == Port || IsBuffer(from) && other.To == from || IsBuffer(to) && other.From == to;
+
+        /// <summary>The pipes a new pipe between two ends must keep clear of (crossing at right angles): all but those it joins.</summary>
+        public static IEnumerable<GrowthPipe> Apart(IEnumerable<GrowthPipe> pipes, string from, string to) => pipes.Where(p => !Joins(from, to, p));
 
         /// <summary>A pipe's shape at a cell: 'H' running east-west straight through, 'V' north-south, 'X' a bend or an end.</summary>
         public static char Shape(IList<(int c, int r)> cells, int i)
@@ -269,7 +285,6 @@ namespace EvolutionShop.Growth
             if (Annex) { why = "Already open"; return GrowthFailure.MaxLevel; }
             if (Era < annex.Era) { why = "Needs Era " + annex.Era + ": 3 stars, a hybrid bred and a Large tank"; return GrowthFailure.Locked; }
             if (Stars < annex.Stars) { why = "Needs " + annex.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < annex.Credits) { why = "Needs " + annex.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -295,7 +310,6 @@ namespace EvolutionShop.Growth
             if (!Annex) { why = "Open the power room first"; return GrowthFailure.Locked; }
             if (!HasPumps) { why = "Buffers come with pumps and pipes (on the power board)"; return GrowthFailure.Locked; }
             if (BufferAt(place) != null) { why = "A buffer stands here"; return GrowthFailure.PlaceTaken; }
-            if (Phase != GrowthPhase.Night) { why = "Buffers are placed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < GrowthContent.BufferCredits) { why = "Needs " + GrowthContent.BufferCredits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -317,8 +331,6 @@ namespace EvolutionShop.Growth
             var b = BufferAt(place);
             if (b == null) { why = "No buffer here"; return GrowthFailure.NoSuchPlace; }
             if (PipesAt(GrowthLab.Buffer(place)).Any()) { why = "Take its pipes down first"; return GrowthFailure.NotEmpty; }
-            if (b.Units >= 1) { why = "Siphon its " + (int)b.Units + " " + Name(b.Culture) + " out first"; return GrowthFailure.NotEmpty; }
-            if (Phase != GrowthPhase.Night) { why = "Buffers are moved at night"; return GrowthFailure.NotAtNight; }
             return GrowthFailure.None;
         }
 
@@ -326,6 +338,7 @@ namespace EvolutionShop.Growth
         {
             var failure = SellBufferCheck(place, out string why);
             if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            // GR-33 (F58): a buffer sells with its doses in it: they are poured out with it.
             Buffers.Remove(BufferAt(place));
             int value = GrowthContent.BufferCredits / 2;
             Credits += value;
@@ -348,6 +361,7 @@ namespace EvolutionShop.Growth
             }
             if (Held.Count >= SiphonCapacity || b.Units < 1) BufferProgress = 0;
             if (collected > 0) Raise(GrowthEventKind.Collected, collected + " " + Name(b.Culture) + " from " + BufferName(place).ToLowerInvariant(), amount: collected);
+            ForgetIfDry(place);
             return GrowthResult.Ok(collected.ToString());
         }
 
@@ -361,8 +375,20 @@ namespace EvolutionShop.Growth
             int poured = (int)Math.Floor(b.Units);
             b.Units = 0;
             BufferProgress = 0;
-            if (InletOf(place) == null) b.Culture = null;
+            ForgetIfDry(place);
             return GrowthResult.Ok(poured.ToString());
+        }
+
+        /// <summary>
+        /// GR-33 (F58): a buffer with less than a dose left and no grower's line into it forgets its culture, so it takes any
+        /// other: siphoned dry by hand, used up by a research mix, or poured out. A line still piped in keeps it for that culture.
+        /// </summary>
+        void ForgetIfDry(int place)
+        {
+            var b = BufferAt(place);
+            if (b == null || b.Units >= 1 || InletOf(place) != null) return;
+            b.Units = 0;
+            b.Culture = null;
         }
 
         // ---------------------------------------------------------------- pipes
@@ -412,9 +438,8 @@ namespace EvolutionShop.Growth
                 if (InletOf(place) == null) { why = "Pipe a grower into " + BufferName(place).ToLowerInvariant() + " first"; return GrowthFailure.Locked; }
                 if (OutletOf(place) != null) { why = BufferName(place) + " is piped to the port already"; return GrowthFailure.Busy; }
             }
-            if (Phase != GrowthPhase.Night) { why = "Pipes are laid at night"; return GrowthFailure.NotAtNight; }
             var cells = RouteFor(from, to);
-            if (cells == null || !GrowthLab.CanJoin(Pipes.Select(p => p.Cells), cells)) { why = "No way through: other pipes are in the way. Try another buffer place, or take a pipe off at its buffer"; return GrowthFailure.NoRoute; }
+            if (cells == null || !GrowthLab.CanJoin(GrowthLab.Apart(Pipes, from, to).Select(p => p.Cells), cells)) { why = to == GrowthLab.Port ? "No way through: other pipes are in the way. Take down a grower's line that blocks the way to the incubator" : "No way through: other pipes are in the way. Try another buffer place, or take a pipe off at its buffer"; return GrowthFailure.NoRoute; }
             plan = new GrowthPipe { From = from, To = to, Length = GrowthLab.Length(cells, from, to) };
             plan.Cells.AddRange(cells);
             plan.Paid = (int)Math.Ceiling(plan.Length * GrowthContent.PipeCreditsPerMetre - 1e-4f);
@@ -422,11 +447,12 @@ namespace EvolutionShop.Growth
             return GrowthFailure.None;
         }
 
-        /// <summary>The route between two ends through cells no other pipe or other end takes (an end's own cell is shared by its pipes).</summary>
+        /// <summary>The route between two ends through cells no other pipe or other end takes (an end's own cell is shared by its pipes; the port's lines share their runs).</summary>
         List<(int c, int r)> RouteFor(string from, string to)
         {
             var ends = new HashSet<(int c, int r)>(GrowthLab.AllEnds.Where(e => e != from && e != to).Select(GrowthLab.EndCell));
-            return GrowthLab.Route(GrowthLab.EndCell(from), GrowthLab.EndCell(to), c => GrowthLab.InLab(c, Annex, Workshop) && !ends.Contains(c), GrowthLab.Occupancy(Pipes.Select(p => p.Cells)));
+            var joined = new HashSet<(int c, int r)>(Pipes.Where(p => GrowthLab.Joins(from, to, p)).SelectMany(p => p.Cells));
+            return GrowthLab.Route(GrowthLab.EndCell(from), GrowthLab.EndCell(to), c => GrowthLab.InLab(c, Annex, Workshop) && !ends.Contains(c), GrowthLab.Occupancy(GrowthLab.Apart(Pipes, from, to).Select(p => p.Cells)), joined);
         }
 
         /// <summary>Lays a pipe at night between two ends: paid by its length; a tap's pipe gives its buffer the culture and joins the power board.</summary>
@@ -452,7 +478,6 @@ namespace EvolutionShop.Growth
         {
             var p = Pipe(id);
             if (p == null) return GrowthResult.Fail(GrowthFailure.NoSuchPlace, "No such pipe");
-            if (Phase != GrowthPhase.Night) return GrowthResult.Fail(GrowthFailure.NotAtNight, "Pipes are taken down at night");
             if (!p.Line && !p.Chute && AutoBatch) return GrowthResult.Fail(GrowthFailure.Busy, "The auto-doser is dosing from it");
             Pipes.Remove(p);
             PowerOrder.Remove(p.PowerId);
@@ -751,7 +776,7 @@ namespace EvolutionShop.Growth
                     if (!GrowthLab.InLab(cells[i], shop.Annex, shop.Workshop)) return "A pipe outside the lab";
                     if (i > 0 && !GrowthLab.Adjacent(cells[i - 1], cells[i])) return "A broken pipe";
                 }
-                if (!GrowthLab.CanJoin(shop.Pipes.Select(p => p.Cells), cells)) return "Two pipes in one place";
+                if (!GrowthLab.CanJoin(GrowthLab.Apart(shop.Pipes, from, to).Select(p => p.Cells), cells)) return "Two pipes in one place";
                 int place = GrowthLab.IsBuffer(to) ? GrowthLab.BufferPlace(to) : GrowthLab.IsBuffer(from) ? GrowthLab.BufferPlace(from) : -1;
                 var buffer = shop.BufferAt(place);
                 if (from == GrowthLab.Out) { if (!shop.Workshop || !shop.HasSorter || shop.Chute != null) return "A chute that cannot be"; }
@@ -762,7 +787,8 @@ namespace EvolutionShop.Growth
                     if (!shop.Owns(culture) || shop.Pipes.Count(p => p.From == from) >= shop.Taps || shop.InletOf(place) != null) return "A tap's pipe that cannot be";
                     if (buffer.Culture != culture) return "A buffer holding another culture than its line";
                 }
-                else if (!shop.AutoDoser || shop.OutletOf(place) != null || buffer.Culture == null) return "A port pipe that cannot be";
+                // GR-33: a port pipe's buffer may have no culture, when its line was taken down while it was empty.
+                else if (!shop.AutoDoser || shop.OutletOf(place) != null) return "A port pipe that cannot be";
                 var pipe = new GrowthPipe { Id = x.id, From = from, To = to, Length = x.length, Paid = Math.Max(0, x.paid) };
                 pipe.Cells.AddRange(cells);
                 shop.Pipes.Add(pipe);

@@ -105,7 +105,7 @@ namespace EvolutionShop
             yield return Shot("700-pause");
             yield return ClickNamed("gr-open-settings", "Click Settings on the pause screen");
             Check(s.Card == GrowthCard.Settings && s.Ui.CurrentTab == "Graphics" && GrowthUi.SettingsTabs.All(t => s.Ui.CardText().Contains(t)) && s.Paused,
-                "The Settings screen opens on Graphics, with its five tabs, the game paused");
+                "The Settings screen opens on Graphics, with its five tabs, the game paused (" + s.Card + ", " + s.Ui.CurrentTab + ", paused " + s.Paused + ")");
             Check(g.preset == 2 && w.SunShadows == LightShadows.Soft && w.BloomOn && w.ReflectionsOn && CameraAa == AntialiasingMode.SubpixelMorphologicalAntiAliasing && s.RenderScaleNow == 1f && !w.LowDetail,
                 "High unless changed: soft shadows, bloom, reflections, SMAA, the shop at full size, creatures in full detail");
             yield return Shot("701-settings-graphics");

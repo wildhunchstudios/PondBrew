@@ -126,6 +126,8 @@ namespace EvolutionShop
                 }
 
                 yield return ClickOn(e => ButtonText(e, "Got it"), "Click Got it on " + l.Title);
+                yield return null; yield return null;
+                if (s.Card != GrowthCard.None) Debug.Log("SMOKE_NOTE after Got it on " + l.Title + ": " + s.Card + " " + s.CardTarget + " | " + s.Ui.CardText().Substring(0, Mathf.Min(300, s.Ui.CardText().Length)));
                 yield return Wait(() => s.Card == GrowthCard.None, 3, "the card to close");
                 var step = shop.GuideNow();
                 Check(step != null && shop.LessonNow == l.Id && step.Text == l.Step(shop).Text, l.Title + ": its step runs (" + step?.Text + ")");

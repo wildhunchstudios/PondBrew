@@ -13,7 +13,7 @@ From the tester build of 2026-10-31 (GR-28's second package), with the user's ow
 - **F64 "No way through: other pipes are in the way"** when piping buffers to the incubator, with no word of a limit. Wanted: every buffer can feed the incubator (through upgrades if need be). Now: confirmed; the incubator's port is one cell of the lab grid and pipes may only cross at right angles, never run side by side, so only a few lines can reach it. There are six buffer places.
 - **F65 RP seems stuck** at 109, though each day's receipt seems to promise 50 more. Now: research points come only from discoveries; the receipt's "Reputation +50" is reputation, which makes stars. The HUD shows RP right under the stars, so the two read as one.
 - **F66 Thin creatures' icons are unreadable** (Hazewing, Puffglider, Driftwing): drawn side-on, they show as a line. Wanted: a view that shows their shape, from above if need be.
-- **F67 A decoration sits on the edge of its tank** (the duck on its stand, on the teal ledge) rather than in the water.
+- **F67 A decoration sits on the edge of its tank** (the duck on its stand, on the teal ledge) rather than in the water. Now: by design since GR-19, which the user approved in game: a tank's decor stands on its lid, at a back corner. Not a bug, so it moves to GR-36 with F85 (decorations that move), for the user's call.
 
 ## Space and production (the user's two notes)
 
@@ -54,3 +54,7 @@ From the tester build of 2026-10-31 (GR-28's second package), with the user's ow
 
 - Understanding that the research room's devices match the desk's tabs ("no problem with that").
 - Not getting a creature from a repeat, as long as the result can be read.
+
+## Status (2026-11-03)
+
+Technically complete (GR.75): F58 to F66 (GR-33); F75 to F79, F81 to F84, F86, F87. Open: F68 and F69 (GR-34, a preview first), F70 to F74 (GR-35), F80, F85 with F67 (GR-36).

@@ -289,7 +289,10 @@ namespace EvolutionShop
             yield return HoverOn(e => e is UnityEngine.UIElements.Button b && b.text.StartsWith("Start"), "Add a dose first", "Start, with nothing in the chamber, says why when pointed at", "05a-start-why");
             Check(s.Ui.HudNext == shop.Objectives().First(g => !g.done).text, "The HUD's one next step is the first goal still to do: " + s.Ui.HudNext);
             s.Ui.Toast("Validation note 1"); s.Ui.Toast("Validation note 2");
-            Check(s.Ui.HudNote == "Validation note 2", "Notes come one at a time, the newest showing");
+            Check(s.Ui.HudNote == "Validation note 2", "The player's own notes come one at a time at the top, the newest showing");
+            for (int i = 1; i <= GrowthUi.NoteLogLength + 2; i++) s.Ui.LogNote("Validation sale " + i);
+            Check(s.Ui.LogNotes.Count == GrowthUi.NoteLogLength && s.Ui.LogNotes.Last() == "Validation sale " + (GrowthUi.NoteLogLength + 2) && s.Ui.HudNote == "Validation note 2",
+                "F62: the shop's notes go to a log at the side, the last " + GrowthUi.NoteLogLength + ", the newest at its foot, and leave the top alone");
             Ok(s.Act(() => shop.AddDose("bloom")), "Add a Bloom dose");
             Ok(s.Act(() => shop.AddDose("flow")), "Add a Flow dose");
             yield return Shot("05-incubator-card");

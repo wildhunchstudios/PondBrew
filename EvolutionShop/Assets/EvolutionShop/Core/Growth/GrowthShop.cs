@@ -794,7 +794,6 @@ namespace EvolutionShop.Growth
             if (!spot.Takes(def)) { why = def.Name + " is " + Footprint(def) + "; this place takes " + spot.Width.ToString("0.#") + " × " + spot.Depth.ToString("0.#") + " m"; return GrowthFailure.TooBigForPlace; }
             if (level.Era > Era) { why = "Needs Era " + level.Era; return GrowthFailure.Locked; }
             if (level.Stars > Stars) { why = "Needs " + level.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Containers are placed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < level.Credits) { why = "Needs " + level.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -852,7 +851,6 @@ namespace EvolutionShop.Growth
             if (spot == null || !OwnedPlaces.Contains(place)) { why = "Not an open place"; return GrowthFailure.NoSuchPlace; }
             if (ContainerAt(place) != null) { why = "The place is taken"; return GrowthFailure.PlaceTaken; }
             if (!spot.Takes(c.Def)) { why = c.Def.Name + " is " + Footprint(c.Def) + "; this place takes " + spot.Width.ToString("0.#") + " × " + spot.Depth.ToString("0.#") + " m"; return GrowthFailure.TooBigForPlace; }
-            if (Phase != GrowthPhase.Night) { why = "Containers are moved at night"; return GrowthFailure.NotAtNight; }
             if (c.Occupants.Any(IsOnDisplay)) { why = "Its crowns are on display for the Grand Exhibition"; return GrowthFailure.Reserved; }
             if (c.Occupants.Any(s => s.ReservedBy != 0)) { why = "A visitor is buying from it"; return GrowthFailure.Reserved; }
             return GrowthFailure.None;
@@ -877,7 +875,6 @@ namespace EvolutionShop.Growth
             if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
             if (c.Occupants.Count > 0) { why = "Take its creatures out first"; return GrowthFailure.NotEmpty; }
             if (!c.Def.Lab && ShopContainers.Count() <= 1) { why = "The shop keeps at least one tank"; return GrowthFailure.LastContainer; }
-            if (Phase != GrowthPhase.Night) { why = "Containers are sold at night"; return GrowthFailure.NotAtNight; }
             return GrowthFailure.None;
         }
 
@@ -902,7 +899,6 @@ namespace EvolutionShop.Growth
             if (c == null) { why = "No such container"; return GrowthFailure.NoSuchContainer; }
             if (c.Water == water) { why = "Already " + water.ToString().ToLowerInvariant(); return GrowthFailure.SameWater; }
             if (Era < GrowthContent.ComfortEra) { why = "Needs Era " + GrowthContent.ComfortEra; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Water is changed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < GrowthContent.WaterKitCredits) { why = "Needs " + GrowthContent.WaterKitCredits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -1269,7 +1265,6 @@ namespace EvolutionShop.Growth
             if (UnitB) { why = "Already open"; return GrowthFailure.MaxLevel; }
             if (Era < unit.Era) { why = "Needs Era " + unit.Era + ": 2 stars, 3 creatures discovered and 2 tanks"; return GrowthFailure.Locked; }
             if (Stars < unit.Stars) { why = "Needs " + unit.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < unit.Credits) { why = "Needs " + unit.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }

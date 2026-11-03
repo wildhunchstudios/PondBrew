@@ -88,7 +88,8 @@ namespace EvolutionShop
                 if (s.HasGame) buttons.Add(MenuButton("Continue", () => s.ContinueGame(), "gr-menu-continue", true));
                 buttons.Add(MenuButton("New game", () => { if (s.HasGame) menuAskNew = true; else s.NewGame(); }, "gr-menu-new", !s.HasGame));
                 buttons.Add(MenuButton("Settings", () => s.OpenSettings(), "gr-menu-settings"));
-                buttons.Add(MenuButton("Quit", () => s.QuitGame(), "gr-menu-quit"));
+                // GR-33 (F87): it says that it saves, so no one fears losing their shop.
+                buttons.Add(MenuButton(s.HasGame ? "Save and quit" : "Quit", () => s.QuitGame(), "gr-menu-quit"));
             }
             panel.Add(buttons);
             if (s.Notice != null) { var notice = Box("gr-callout"); notice.style.marginTop = 12; notice.Add(L(s.Notice, "gr-hint")); panel.Add(notice); }

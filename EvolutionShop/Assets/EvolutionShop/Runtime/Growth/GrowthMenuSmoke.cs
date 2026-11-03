@@ -55,7 +55,7 @@ namespace EvolutionShop
             var saved = JsonUtility.FromJson<GrowthSave>(System.IO.File.ReadAllText(s.SavePath));
             Check(saved.credits == shop.Credits, "Main menu saves the shop first (" + saved.credits + " credits in the save)");
             text = s.Ui.CardText();
-            Check(s.Card == GrowthCard.Menu && text.Contains(GrowthMenu.Summary(shop)) && text.Contains("Continue") && text.Contains("New game"), "The pause screen's Main menu: Continue with the shop in a line (" + GrowthMenu.Summary(shop) + ")");
+            Check(s.Card == GrowthCard.Menu && text.Contains(GrowthMenu.Summary(shop)) && text.Contains("Continue") && text.Contains("New game") && text.Contains("Save and quit"), "The pause screen's Main menu: Continue with the shop in a line (" + GrowthMenu.Summary(shop) + ")");
             Check(s.Ui.MenuShowcase.Count == GrowthMenu.ShowcaseCount && s.Ui.MenuShowcase.All(shop.Discovered.Contains), "Around the title, " + GrowthMenu.ShowcaseCount + " creatures found: " + string.Join(", ", s.Ui.MenuShowcase));
             foreach (var species in s.Ui.MenuShowcase)
             {
@@ -64,6 +64,15 @@ namespace EvolutionShop
                 float covered = GrowthPortraits.Coverage(portrait);
                 Check(covered > 0.05f && covered < 0.9f, GrowthContent.Get(species).Name + "'s portrait is the creature on a clear background (" + (covered * 100).ToString("0") + "% of it)");
             }
+            // GR-33 (F66): every creature's portrait shows its shape; the thin ones are drawn from above rather than as a line.
+            var thinnest = GrowthContent.Species.Select(sp => (name: sp.Name, covered: GrowthPortraits.Coverage(GrowthPortraits.Get(sp.Id, Colour.Classic)))).OrderBy(x => x.covered).Take(4).ToList();
+            var named = new[] { "hazewing", "puffglider", "driftwing" };
+            foreach (var id in named.Concat(GrowthContent.Species.Where(sp => thinnest.Any(x => x.name == sp.Name)).Select(sp => sp.Id)))
+                if (GrowthContent.Get(id) != null) System.IO.File.WriteAllBytes(System.IO.Path.Combine(evidence, "1031-portrait-thin-" + id + ".png"), GrowthPortraits.Get(id, Colour.Classic).EncodeToPNG());
+            var testers = named.Where(id => GrowthContent.Get(id) != null).Select(id => (id, covered: GrowthPortraits.Coverage(GrowthPortraits.Get(id, Colour.Classic)))).ToList();
+            Check(testers.All(x => x.covered >= 0.15f) && thinnest[0].covered >= 0.1f,
+                "F66: the creatures the tester named show their shape (" + string.Join(", ", testers.Select(x => x.id + " " + (x.covered * 100).ToString("0") + "%")) + "), and none is a line: the thinnest are " +
+                string.Join(", ", thinnest.Select(x => x.name + " " + (x.covered * 100).ToString("0") + "%")));
             var shots = s.MenuCamera.Shots;
             Check(shots.Count >= 4 && shots.Count(x => x.Target.Kind == GrowthTargetKind.Tank) == GrowthMenuCamera.MostTanks && shots.Any(x => x.Target.Kind != GrowthTargetKind.Tank),
                 "The slow view has " + shots.Count + " shots, " + GrowthMenuCamera.MostTanks + " tanks and the rooms: " + string.Join(", ", shots.Select(x => x.Name)));

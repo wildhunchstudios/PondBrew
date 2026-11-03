@@ -94,8 +94,13 @@ namespace EvolutionShop
                 "E opens Nori's card: what Nori does at this level, the stock targets, duty and training");
             Ok(s.Act(() => shop.SetTarget("pondlet", 2)), "Target 2 Pondlets (the card's + button)");
             yield return null;
-            Check(s.Ui.CardText().Contains("Below its target, a species goes to the shop's tanks") && s.Ui.CardText().Contains("In shop") && s.Ui.CardText().Contains("Pondlet | 0 | 0 | − | 2 | +"), "Nori's card lists the creature with what is in the shop and racks, and its target");
+            Check(s.Ui.CardText().Contains("Keeping on show: 2 Pondlets"), "Nori's card says what is kept on show");
             yield return Shot("122-nori-card");
+            // GR-33 (F84): Manage stock opens the targets in a window of their own, each creature with its picture.
+            yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "Manage stock", "Press Manage stock");
+            yield return null;
+            Check(s.Card == GrowthCard.Stock && s.Ui.CardText().Contains("Pondlet | In shop 0 · in racks 0 | − | 2 | +"), "F84: the stock window lists the creature, with what is in the shop and racks, and its target (" + s.Card + ": " + s.Ui.CardText().Substring(0, Mathf.Min(400, s.Ui.CardText().Length)) + ")");
+            yield return Shot("122b-stock-window");
             s.SetCard(GrowthCard.None);
 
             // The player's clutch of two: Nori carries each from the tray to the shop's tank below its target.
@@ -125,6 +130,21 @@ namespace EvolutionShop
             Check(carried && followed, "Nori's figure walked the step's path through the laboratory's door, as the rules timed it");
             Check(shop.Shown("pondlet") == 2 && shop.Hatchlings.Count == 0 && shop.ContainerAt("a1").Occupants.Count(o => o.Species == "pondlet") == 2,
                 "The clutch is in the shop's tank: two Pondlets, the target met");
+
+            // GR-33 (F61): Nori's card stays open while the lab and Nori work: nothing in it is rebuilt, and its counts change in place.
+            Ok(shop.SetTarget("pondlet", 4), "Target 4 Pondlets");
+            PlayerClutch();
+            s.SetCard(GrowthCard.Stock, "nori");
+            yield return null; yield return null;
+            int builds = s.Ui.CardBuilds;
+            for (int i = 0; i < 2000 && shop.Shown("pondlet") < 4; i++) { s.Advance(0.05f); if (i % 4 == 0) yield return null; }
+            yield return new WaitForSeconds(0.3f);
+            string noriText = s.Ui.CardText();
+            string racked = "Pondlet | In shop " + shop.Shown("pondlet") + " · in racks " + shop.Racked("pondlet") + " |";
+            Check(shop.Shown("pondlet") == 4 && noriText.Contains(racked) && s.Ui.CardBuilds == builds,
+                "F61: a clutch hatched and Nori carried it to the shop while the stock window stayed open: its In shop count rose in place (" + racked + (noriText.Contains(racked) ? "" : ", not in the card") + "), the card never rebuilt (" + (s.Ui.CardBuilds - builds) + " rebuilds)");
+            s.SetCard(GrowthCard.None);
+            Ok(shop.SetTarget("pondlet", 2), "Target 2 Pondlets again");
 
             // Moss's card: a known recipe, run by hand from the growers.
             s.SetCard(GrowthCard.Helper, "moss");

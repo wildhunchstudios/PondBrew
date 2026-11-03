@@ -423,7 +423,6 @@ namespace EvolutionShop.Growth
             if (!UnitB) { why = "Open unit B first: unit C is through its north wall"; return GrowthFailure.Locked; }
             if (Era < unit.Era) { why = "Needs Era " + unit.Era; return GrowthFailure.Locked; }
             if (Stars < unit.Stars) { why = "Needs " + unit.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < unit.Credits) { why = "Needs " + unit.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -448,7 +447,6 @@ namespace EvolutionShop.Growth
             if (!UnitC) { why = "Open unit C first"; return GrowthFailure.Locked; }
             if (Era < hall.Era) { why = "Needs Era " + hall.Era; return GrowthFailure.Locked; }
             if (Stars < hall.Stars) { why = "Needs " + hall.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "The hall is finished at night"; return GrowthFailure.NotAtNight; }
             if (Credits < hall.Credits) { why = "Needs " + hall.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }

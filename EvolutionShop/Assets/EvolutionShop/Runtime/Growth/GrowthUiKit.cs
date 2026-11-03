@@ -159,6 +159,59 @@ namespace EvolutionShop
             return false;
         }
 
+        /// <summary>
+        /// GR-33 (F61): what changes on the open card from moment to moment (a timer, a bar, a count), updated in place each tick
+        /// instead of rebuilding the card. Cleared with the card.
+        /// </summary>
+        readonly List<Action> liveValues = new List<Action>();
+
+        /// <summary>A label whose words follow the shop each tick (F61).</summary>
+        Label LiveL(Func<string> text, string style = null)
+        {
+            var label = L(text(), style);
+            liveValues.Add(() => { var t = text(); if (label.text != t) label.text = t; });
+            return label;
+        }
+
+        /// <summary>A bar whose fill follows the shop each tick (F61).</summary>
+        VisualElement LiveBar(Func<float> fill, Color colour)
+        {
+            var bar = Bar(fill(), colour);
+            var inside = bar.Children().FirstOrDefault();
+            if (inside != null) liveValues.Add(() => inside.style.width = Length.Percent(Mathf.Clamp01(fill()) * 100));
+            return bar;
+        }
+
+        void TickLiveValues()
+        {
+            if (card == null) return;
+            for (int i = 0; i < liveValues.Count; i++) liveValues[i]();
+        }
+
+        VisualElement tipDots;
+        /// <summary>Validation (F77): how many dots the hover tip shows now.</summary>
+        public int TipDots => tipDots == null || tip.style.display != DisplayStyle.Flex ? 0 : tipDots.childCount;
+
+        /// <summary>GR-33 (F77): an element's hover tip with a recipe's doses as coloured dots before its words.</summary>
+        static void RecipeTip(VisualElement e, string text, int[] doses) { e.tooltip = text; e.userData = doses; }
+
+        void ShowTipDots(int[] doses)
+        {
+            tipDots.Clear();
+            if (doses != null)
+                for (int i = 0; i < doses.Length; i++)
+                    for (int n = 0; n < doses[i]; n++) tipDots.Add(Pip(CultureColour(GrowthContent.Cultures[i].Id)));
+            tip.style.paddingLeft = tipDots.childCount == 0 ? StyleKeyword.Null : new StyleLength(18 + tipDots.childCount * 15);
+        }
+
+        /// <summary>A mix's doses as a row of coloured dots, for a line in a list.</summary>
+        VisualElement DoseDots(int[] doses)
+        {
+            var row = Box("gr-dosedots");
+            for (int i = 0; i < doses.Length; i++) for (int n = 0; n < doses[i]; n++) row.Add(Pip(CultureColour(GrowthContent.Cultures[i].Id)));
+            return row;
+        }
+
         /// <summary>Adds a tab and its body (built now, shown when chosen; the footer stays last).</summary>
         VisualElement AddTab(string name)
         {
@@ -429,7 +482,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             bool night = shop.Phase == GrowthPhase.Night;
-            var take = Link("Take it down", () => s.Act(() => shop.RemovePipe(id)), night, "Pipes are taken down at night");
+            var take = Link("Take it down", () => s.Act(() => shop.RemovePipe(id)));
             return Item(title, status, take);
         }
 
@@ -463,6 +516,10 @@ namespace EvolutionShop
         void BuildTip()
         {
             tip = new Label { name = "gr-tip", pickingMode = PickingMode.Ignore };
+            // GR-33 (F77): a tip about a recipe starts with its doses as coloured dots.
+            tipDots = new VisualElement { pickingMode = PickingMode.Ignore };
+            tipDots.AddToClassList("gr-tip__dots");
+            tip.Add(tipDots);
             tip.AddToClassList("es-press-tip");
             tip.style.display = DisplayStyle.None;
             var layer = Layer("gr-tips");
@@ -484,7 +541,7 @@ namespace EvolutionShop
                     if (!string.IsNullOrEmpty(v.tooltip)) { over = v; break; }
             }
             if (over == null) { tip.style.display = DisplayStyle.None; tipAnchor = null; return; }
-            if (over != tipAnchor) { tip.text = over.tooltip; tipAnchor = over; }
+            if (over != tipAnchor) { tip.text = over.tooltip; tipAnchor = over; ShowTipDots(over.userData as int[]); }
             tip.style.display = DisplayStyle.Flex;
             Rect a = over.worldBound;
             float w = tip.layout.width, h = tip.layout.height;

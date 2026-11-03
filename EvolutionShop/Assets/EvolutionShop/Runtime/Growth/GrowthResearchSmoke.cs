@@ -142,6 +142,32 @@ namespace EvolutionShop
             yield return Wait(() => s.World.TankTicksLit(0) >= 4, 12, "the timer to fill");
             Check(shop.PowerUse(GrowthShop.ResearchPower).Draw == GrowthShop.ResearchTankUnits, "It draws a unit of power");
             yield return Shot("1308-tank-at-work");
+            // GR-33 (F59, F60): E on a tank opens the desk on its Tanks tab, with the job, a bar and the time left, live.
+            yield return Press(Key.E);
+            yield return null; yield return null;
+            Check(s.Card == GrowthCard.Research && s.Ui.CurrentTab == GrowthUi.ResearchTanksTab, "F59: E on a tank opens the desk on its Tanks tab (" + s.Ui.CurrentTab + ")");
+            string tanks = s.Ui.CardText();
+            Check(tanks.Contains("Tank 1") && tanks.Contains(" s left") && tanks.Contains(GrowthContent.Get(first.A).Name + " × " + GrowthContent.Get(first.B).Name), "F60: it shows the pair in tank 1 and the time left");
+            int builds = s.Ui.CardBuilds;
+            string Left(string text) { int at = text.IndexOf(" s left"); return at < 3 ? "" : text.Substring(at - 3, 7); }
+            string leftBefore = Left(tanks);
+            yield return new WaitForSeconds(2.2f);
+            string after = s.Ui.CardText();
+            Check(s.Ui.CardBuilds == builds && Left(after) != leftBefore && leftBefore != "", "F61: the time left counts down in place, without rebuilding the card");
+            yield return Shot("1308b-tanks-tab");
+            yield return Press(Key.Escape);
+            LookAt(new Vector3(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
+            yield return null; yield return null;
+            Aimed(GrowthTargetKind.ResearchJar, "0", "The reticle focuses the first jar again");
+            yield return Press(Key.E);
+            yield return null; yield return null;
+            string jarsText = s.Ui.CardText();
+            Check(s.Card == GrowthCard.Research && s.Ui.CurrentTab == GrowthUi.ResearchJarsTab && jarsText.Contains("IN YOUR HANDS") && jarsText.Contains("IN THE JARS · " + shop.Specimens.Count + " OF"),
+                "F59, F63: E on a jar opens the Jars tab: what you carry, then the jars, each under its heading (" + s.Card + ", " + s.Ui.CurrentTab + ", " + shop.Specimens.Count + " jars)");
+            yield return Shot("1308c-jars-tab");
+            yield return Press(Key.Escape);
+            LookAt(new Vector3(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
+            yield return null; yield return null;
 
             // ---- F4: every pair left, three at once
             Check(CardButton("Queue every pair left") == null, "Closed, the card is gone");
@@ -224,7 +250,7 @@ namespace EvolutionShop
             // ---- F3: what the microscope and the planner add
             Check(s.Ui.ShowTabNamed("Jars"), "The Jars tab");
             yield return null; yield return null;
-            Check(s.Ui.CardText().Contains("4 of " + GrowthShop.SpecimenJars + " jars") && CardButtons(b => b.text == "Take back").Count == 4, "It lists the jars, each with Take back");
+            Check(s.Ui.CardText().Contains("IN THE JARS · 4 OF " + GrowthShop.SpecimenJars) && CardButtons(b => b.text == "Take back").Count == 4, "It lists the jars, each with Take back");
             yield return Shot("1316-jars-tab");
             shop.DevelopmentGive(founders[4]);
             yield return new WaitForSeconds(0.25f); // the card shows what is in hand when it next rebuilds
@@ -269,6 +295,27 @@ namespace EvolutionShop
             var tips = UQueryExtensions.Query<VisualElement>(s.Ui.CardElement).ToList().Where(e => !string.IsNullOrEmpty(e.tooltip)).Select(e => e.tooltip).ToList();
             Check(tips.Any(t => t.Contains("bred from")), "F5: a hybrid's tile says the pair that made it");
             Check(tips.Any(t => t.Contains(GrowthContent.Get(founders[0]).Name) && t.Contains(GrowthReport.Recipe(GrowthContent.Get(founders[0]).Recipe))), "F5: a founder's says its recipe");
+            // GR-33 (F77): a founder's tip carries its recipe as coloured dots.
+            var founderTile = UQueryExtensions.Query<VisualElement>(s.Ui.CardElement).ToList().FirstOrDefault(e => e.userData is int[] && e.tooltip != null && e.tooltip.StartsWith(GrowthContent.Get(founders[0]).Name));
+            Check(founderTile != null && ((int[])founderTile.userData).Sum() == GrowthContent.Get(founders[0]).Doses, "F77: a founder's tile carries its recipe's doses, drawn as dots in its tip");
+            // GR-33 (F79): pressing a creature found shows what makes it.
+            s.Ui.PickCreature(founders[0]);
+            yield return null; yield return null;
+            string picked = s.Ui.CardText();
+            Check(s.Ui.CreaturePicked == founders[0] && picked.Contains("Best way:") && picked.Contains("MIXES YOU TRIED THAT MADE IT"), "F79: a creature pressed shows its best way and the mixes tried that made it");
+            yield return Shot("1320b-journal-picked");
+            s.Ui.PickCreature(null);
+            // GR-33 (F78): the mix log, filtered by a culture, as dots and pictures, a page at a time.
+            Check(s.Ui.ShowTabNamed("Mix log"), "The Mix log tab");
+            yield return null; yield return null;
+            string firstCulture = GrowthContent.Cultures.First(c => shop.MixLog.Any(m => m.Doses[GrowthContent.CultureIndex(c.Id)] > 0)).Name;
+            yield return ClickOn(e => e is Button b && b.text == firstCulture, "Press the " + firstCulture + " filter");
+            yield return null;
+            string log = s.Ui.CardText();
+            int withIt = shop.MixLog.Count(m => m.Doses[GrowthContent.CultureIndex(GrowthContent.Cultures.First(c => c.Name == firstCulture).Id)] > 0);
+            Check(log.Contains(withIt + (withIt == 1 ? " mix" : " mixes")), "F78: the filter keeps the " + withIt + " mixes with " + firstCulture);
+            yield return Shot("1320c-mix-log-filtered");
+            yield return ClickOn(e => e is Button b && b.text == firstCulture, "Press it again to take it off");
             s.SetCard(GrowthCard.None);
 
             // ---- The power board

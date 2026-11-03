@@ -20,11 +20,11 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             var w = GrowthShop.WorkshopDef;
-            var body = Head("Workshop", shop.Workshop ? "open" : w.Credits + " credits", null, "Through the power room's east wall. Era 4 comes with 4 stars, powered pumps running and 12 species. Walls open at night.");
+            var body = Head("Workshop", shop.Workshop ? "open" : w.Credits + " credits", null, "Through the power room's east wall. Era 4 comes with 4 stars, powered pumps running and 12 species.");
             if (shop.Workshop) { body.Add(L("Open: the sorter and its chute, four rack places, and the generator's twin turbine and tide engine.", "gr-hint")); Footer(body); return; }
             var failure = shop.WorkshopCheck(out string why);
             BuyPanel(body, "The power room's east wall", "The workshop", "The sorter and its hatchling chute, four rack places for lab racks, and the generator's twin turbine and tide engine.",
-                Gates(w.Era, w.Stars, w.Credits, 0, true), failure, why, "Open the workshop for " + w.Credits + " cr", shop.BuyWorkshop);
+                Gates(w.Era, w.Stars, w.Credits, 0, false), failure, why, "Open the workshop for " + w.Credits + " cr", shop.BuyWorkshop);
             Footer(body);
         }
 
@@ -73,7 +73,7 @@ namespace EvolutionShop
                 return;
             }
             string end = s.Card == GrowthCard.Incubator ? GrowthLab.Out : GrowthLab.Sorter;
-            body.Add(Wide(end == GrowthLab.Out ? "Lay the chute to the sorter" : "Lay the chute from the incubator", () => s.StartPipe(end), true, night, "Pipes are laid at night"));
+            body.Add(Wide(end == GrowthLab.Out ? "Lay the chute to the sorter" : "Lay the chute from the incubator", () => s.StartPipe(end), true, true));
         }
 
         /// <summary>The incubator's chute (GR-08), once the sorter is bought: where its clutches go.</summary>
@@ -94,7 +94,7 @@ namespace EvolutionShop
             var def = GrowthContent.Container("rack");
             var body = Head("Rack place " + place.Substring(1), "workshop", null, "A lab rack holds creatures off the shop floor: the sorter puts what the shop's tanks do not need here, and visitors never see it. Later levels hold more.");
             var failure = shop.RackCheck(place, out string why);
-            BuyPanel(body, "A lab rack", def.Levels[0].Change + ", creatures of every size", "Off the shop floor, never seen by visitors.", Gates(0, 0, def.Levels[0].Credits, 0, true), failure, why,
+            BuyPanel(body, "A lab rack", def.Levels[0].Change + ", creatures of every size", "Off the shop floor, never seen by visitors.", Gates(0, 0, def.Levels[0].Credits, 0, false), failure, why,
                 "Place a lab rack for " + def.Levels[0].Credits + " cr", () => shop.BuyRack(place));
             Footer(body);
         }

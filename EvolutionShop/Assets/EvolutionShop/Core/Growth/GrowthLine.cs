@@ -84,7 +84,6 @@ namespace EvolutionShop.Growth
             if (!Annex) { why = "Open the power room first: the workshop is through its east wall"; return GrowthFailure.Locked; }
             if (Era < w.Era) { why = "Needs Era " + w.Era + ": 4 stars, powered pumps running and 12 species"; return GrowthFailure.Locked; }
             if (Stars < w.Stars) { why = "Needs " + w.Stars + " stars"; return GrowthFailure.Locked; }
-            if (Phase != GrowthPhase.Night) { why = "Walls open at night"; return GrowthFailure.NotAtNight; }
             if (Credits < w.Credits) { why = "Needs " + w.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }
@@ -108,7 +107,6 @@ namespace EvolutionShop.Growth
             if (LabPlace(place) == null) { why = "Not a rack place"; return GrowthFailure.NoSuchPlace; }
             if (!Workshop) { why = "Open the workshop first"; return GrowthFailure.Locked; }
             if (ContainerAt(place) != null) { why = "The place is taken"; return GrowthFailure.PlaceTaken; }
-            if (Phase != GrowthPhase.Night) { why = "Racks are placed at night"; return GrowthFailure.NotAtNight; }
             if (Credits < level.Credits) { why = "Needs " + level.Credits + " credits"; return GrowthFailure.NotEnoughCredits; }
             return GrowthFailure.None;
         }

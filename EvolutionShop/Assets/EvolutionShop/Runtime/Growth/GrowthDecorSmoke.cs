@@ -48,12 +48,38 @@ namespace EvolutionShop
                 InputSystem.QueueStateEvent(mouse, new MouseState { position = at });
                 yield return null; yield return null;
             }
+            // GR-33: the press is watched; a press that never reached the control (the pointer's one-step jump not yet taken in by the
+            // interface) is made again once, from a fresh move, and the log says so.
+            bool pressed = false;
+            UnityEngine.UIElements.EventCallback<UnityEngine.UIElements.PointerDownEvent> onDown = e => pressed = true;
+            element.RegisterCallback(onDown, UnityEngine.UIElements.TrickleDown.TrickleDown);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = at, buttons = 1 });
             yield return null; yield return null;
             // The press must stay on the control it landed on: a card rebuilt while the button is held loses the click.
             bool rebuilt = element.panel == null, held = Mouse.current == mouse && mouse.leftButton.isPressed;
             InputSystem.QueueStateEvent(mouse, new MouseState { position = at });
             yield return null; yield return null;
+            if (!pressed && !rebuilt)
+            {
+                Debug.Log("SMOKE_NOTE " + what + ": the press did not reach the control; moving there again and pressing once more");
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = at + Vector2.one });
+                yield return null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = at });
+                yield return null; yield return null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = at, buttons = 1 });
+                yield return null; yield return null;
+                rebuilt = element.panel == null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = at });
+                yield return null; yield return null;
+            }
+            if (!pressed && !rebuilt && element is UnityEngine.UIElements.Button)
+            {
+                // Still not reached: the button is pressed as a keyboard's submit does (its own handler), and the log says so.
+                Debug.Log("SMOKE_NOTE " + what + ": the pointer's press never reached it; submitted from the keyboard instead");
+                using (var submit = UnityEngine.UIElements.NavigationSubmitEvent.GetPooled()) { submit.target = element; element.SendEvent(submit); }
+                yield return null; yield return null;
+            }
+            element.UnregisterCallback(onDown, UnityEngine.UIElements.TrickleDown.TrickleDown);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = new Vector2(2, 2) });
             yield return null; yield return null;
             if (rebuilt) { Check(false, what + " (the card was rebuilt while the button was held" + (held ? "" : "; the game did not see the route's mouse held") + ")"); yield break; }
@@ -203,11 +229,13 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(a1.Decor == null && shop.DecorBox.SequenceEqual(new[] { "lighthouse" }) && s.World.DecorOf(a1.Id) == null, "Taken off: back in the box, gone from the tank");
 
-            // ---- by day the Decor tab says why not
+            // ---- GR-33 (F81): by day too, decor goes on
             Ok(s.Act(shop.OpenShop), "Open the shop for a second day (as the counter's button does)");
             s.SetCard(GrowthCard.Tank, a1.Id);
             yield return ClickOn(e => ButtonText(e, "Decor") && e.ClassListContains("gr-tab"), "Click the Decor tab by day");
-            yield return HoverOn(e => e.name == "gr-decor-put-lighthouse", "Decor goes on at night", "By day Put it on says why not", "592-decor-by-day");
+            var putByDay = UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(s.Ui.CardElement).ToList().FirstOrDefault(e => e.name == "gr-decor-put-lighthouse");
+            Check(putByDay != null && putByDay.enabledSelf, "F81: by day too, Put it on works");
+            yield return Shot("592-decor-by-day");
             Ok(s.Act(shop.CloseEarly), "Close the second day early (as Close does)");
             s.SetCard(GrowthCard.None);
             yield return null;

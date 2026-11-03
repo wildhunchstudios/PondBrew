@@ -86,7 +86,7 @@ namespace EvolutionShop.Tests
             var day = Ready(room: false);
             day.DevelopmentStock(day.Containers[0].Id, "pondlet");
             Assert.That(day.OpenShop().Success, Is.True);
-            Assert.That(day.ResearchCheck(out _), Is.EqualTo(GrowthFailure.NotAtNight));
+            Assert.That(day.ResearchCheck(out _), Is.Not.EqualTo(GrowthFailure.NotAtNight), "F75: the room opens by day too");
         }
 
         [Test]

@@ -144,6 +144,28 @@ namespace EvolutionShop.Tests
             Assert.That(loose.Culture, Is.Null, "with no line, it is free for any culture");
         }
 
+        [Test]
+        public void F58_ABufferSiphonedDryForgetsItsCulture_AndSellsWithItsDoses()
+        {
+            var shop = GrowthStarts.Make(GrowthStarts.Era4);
+            shop.Held.Clear();
+            var piped = shop.Buffers.First(b => shop.InletOf(b.Place) != null);
+            piped.Units = 1;
+            string culture = piped.Culture;
+            Assert.That(shop.CollectBuffer(piped.Place, shop.HoldSeconds + 0.01f).Success, Is.True);
+            Assert.That(piped.Culture, Is.EqualTo(culture), "a line still piped in keeps it for its culture");
+            shop.Held.Clear();
+            int place = Enumerable.Range(0, GrowthLab.BufferPlaces).First(p => shop.BufferAt(p) == null);
+            var loose = new GrowthBuffer { Place = place, Culture = "bloom", Units = 2 };
+            shop.Buffers.Add(loose);
+            Assert.That(shop.CollectBuffer(place, shop.HoldSeconds * 4).Detail, Is.EqualTo("2"));
+            Assert.That((loose.Units, loose.Culture), Is.EqualTo((0f, (string)null)), "siphoned dry by hand, it takes any culture again");
+            loose.Culture = "flow"; loose.Units = 7;
+            Assert.That(shop.SellBufferCheck(place, out string why), Is.EqualTo(GrowthFailure.None), why);
+            Assert.That(shop.SellBuffer(place).Success, Is.True, "it sells with its doses, which are poured out");
+            Assert.That(shop.BufferAt(place), Is.Null);
+        }
+
         static GrowthShop FullTankFullHands(out GrowthContainer tank)
         {
             var shop = new GrowthShop();
