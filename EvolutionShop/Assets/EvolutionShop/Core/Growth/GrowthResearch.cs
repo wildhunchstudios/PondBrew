@@ -24,6 +24,9 @@ namespace EvolutionShop.Growth
         public float Left;
         public bool IsMix => Doses != null;
         public bool Running => Tank >= 0;
+        /// <summary>GR-33 (F72): once done, what it made, and whether that was new then.</summary>
+        public string Made;
+        public bool WasNew;
     }
 
     public sealed partial class GrowthShop
@@ -44,6 +47,15 @@ namespace EvolutionShop.Growth
         public readonly List<GrowthResearchJob> ResearchJobs = new List<GrowthResearchJob>();
         /// <summary>How many jobs the room has finished (a lesson is learned by it).</summary>
         public int ResearchDone;
+        /// <summary>GR-33 (F72): the jobs done lately, newest last, with what each made: a repeat leaves no creature, so this is where it shows.</summary>
+        public readonly List<GrowthResearchJob> ResearchResults = new List<GrowthResearchJob>();
+        public const int ResearchResultsKept = 20;
+
+        void KeepResult(GrowthResearchJob job, string made, bool wasNew)
+        {
+            ResearchResults.Add(new GrowthResearchJob { A = job.A, B = job.B, Doses = job.Doses, Made = made, WasNew = wasNew });
+            while (ResearchResults.Count > ResearchResultsKept) ResearchResults.RemoveAt(0);
+        }
 
         /// <summary>How long a job takes at the room's level.</summary>
         public float ResearchSeconds => Stat("research", "seconds");
@@ -322,6 +334,7 @@ namespace EvolutionShop.Growth
             if (entry != null) entry.Count++;
             else PairLog.Add(new GrowthPairEntry { A = job.A, B = job.B, Species = child.Id, WasNew = isNew });
             if (!isNew) Raise(GrowthEventKind.Researched, GrowthContent.Get(job.A).Name + " and " + GrowthContent.Get(job.B).Name + " make " + child.Name, child.Id);
+            KeepResult(job, child.Id, isNew);
             return true;
         }
 
@@ -335,6 +348,7 @@ namespace EvolutionShop.Growth
             if (entry != null) entry.Count++;
             else MixLog.Add(new GrowthMixEntry { Doses = job.Doses, Species = mix.Species.Id, Exact = mix.Exact, WasNew = isNew, DistanceToNew = mix.DistanceToNew });
             if (!isNew) Raise(GrowthEventKind.Researched, GrowthReport.Recipe(job.Doses) + " makes " + mix.Species.Name, mix.Species.Id);
+            KeepResult(job, mix.Species.Id, isNew);
             return true;
         }
 
@@ -362,7 +376,7 @@ namespace EvolutionShop.Growth
             return "Tank " + (tank + 1) + ": " + what + (job.Left > 0 ? " · " + Math.Max(1, (int)Math.Ceiling(job.Left)) + " s" : " · waiting for room on the tray");
         }
 
-        // ---------------------------------------------------------------- saving (version 15)
+        // ---------------------------------------------------------------- saving (version 15; the results from 16)
 
         void SaveResearch(GrowthSave s)
         {
@@ -371,6 +385,7 @@ namespace EvolutionShop.Growth
             s.specimens = Specimens.Select(GrowthSave.Specimen.Of).ToArray();
             s.researchTray = ResearchTray.Select(GrowthSave.Specimen.Of).ToArray();
             s.researchJobs = ResearchJobs.Select(j => new GrowthSave.ResearchJob { a = j.A ?? "", b = j.B ?? "", mix = j.IsMix, doses = j.Doses, tank = j.Tank, left = j.Left }).ToArray();
+            s.researchResults = ResearchResults.Select(j => new GrowthSave.ResearchJob { a = j.A ?? "", b = j.B ?? "", mix = j.IsMix, doses = j.Doses, tank = -1, made = j.Made, wasNew = j.WasNew }).ToArray();
         }
 
         /// <summary>Restores the room, its jars, tray and queue; a reason when they are not consistent. The room itself comes back with the power (its power use is on the board).</summary>
@@ -410,6 +425,13 @@ namespace EvolutionShop.Growth
                 }
             }
             if (shop.ResearchJobs.Count > ResearchQueueLimit) return "More jobs than the queue holds";
+            // GR-33 (F72): what the jobs made lately (none before version 16).
+            foreach (var r in (s.researchResults ?? new GrowthSave.ResearchJob[0]).Skip(Math.Max(0, (s.researchResults?.Length ?? 0) - ResearchResultsKept)))
+            {
+                if (GrowthContent.Get(r.made) == null) return "A research result that cannot be";
+                if (r.mix ? r.doses == null || r.doses.Length != GrowthContent.Cultures.Length : GrowthContent.Get(r.a) == null || GrowthContent.Get(r.b) == null) return "A research result that cannot be";
+                shop.ResearchResults.Add(new GrowthResearchJob { A = r.mix ? null : r.a, B = r.mix ? null : r.b, Doses = r.mix ? r.doses : null, Made = r.made, WasNew = r.wasNew });
+            }
             return null;
         }
     }

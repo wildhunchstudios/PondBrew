@@ -107,6 +107,28 @@ namespace EvolutionShop
                 body.Add(Eyebrow("On the tray · " + shop.ResearchTray.Count + " of " + GrowthShop.ResearchTrayPlaces));
                 body.Add(TrayCallout());
             }
+            // GR-33 (F72): what each job made, newest first: a repeat leaves no creature, so it shows here.
+            if (shop.ResearchResults.Count > 0)
+            {
+                body.Add(Eyebrow("Results · the last " + shop.ResearchResults.Count));
+                foreach (var r in shop.ResearchResults.AsEnumerable().Reverse().Take(8))
+                {
+                    var made = GrowthContent.Get(r.Made);
+                    var row = Box("gr-logrow");
+                    if (r.IsMix) row.Add(DoseDots(r.Doses));
+                    else
+                    {
+                        SpeciesDef a = GrowthContent.Get(r.A), b = GrowthContent.Get(r.B);
+                        row.Add(CreatureIcon(a, ColourFound(shop, a), 26, "gr-rs-icon"));
+                        row.Add(L("×", "gr-logrow__text"));
+                        row.Add(CreatureIcon(b, ColourFound(shop, b), 26, "gr-rs-icon"));
+                    }
+                    row.Add(L("→", "gr-logrow__text"));
+                    row.Add(CreatureIcon(made, ColourFound(shop, made), 26, "gr-rs-icon"));
+                    row.Add(L(made.Name + (r.WasNew ? " · new: on the tray" : " · a repeat"), "gr-logrow__text"));
+                    body.Add(row);
+                }
+            }
         }
 
         /// <summary>A job in words and pictures: the pair's two creatures, or the mix's doses as coloured dots.</summary>
@@ -302,11 +324,16 @@ namespace EvolutionShop
             {
                 var list = Box("gr-section");
                 list.Add(Eyebrow("Mixes tried · " + shop.MixLog.Count));
+                var found = shop.FoundRecipes();
                 foreach (var m in log)
                 {
-                    var line = Box("gr-row");
-                    line.Add(DoseDots(m.Doses));
-                    line.Add(L(DoseWords(m.Doses) + " makes " + GrowthContent.Get(m.Species).Name + (m.Exact ? "" : " (not exact)"), "gr-hint"));
+                    var line = Box("gr-row", "gr-row--spread");
+                    var what = Box("gr-row");
+                    what.Add(DoseDots(m.Doses));
+                    what.Add(L(DoseWords(m.Doses) + " makes " + GrowthContent.Get(m.Species).Name + (m.Exact ? "" : " (not exact)"), "gr-hint"));
+                    line.Add(what);
+                    // GR-35 (F73): a recipe found is made again in the incubator's queue.
+                    if (shop.HasMakeQueue && m.Exact && found.Contains(m.Species)) line.Add(MakeButton(m.Species));
                     list.Add(line);
                 }
                 body.Add(list);

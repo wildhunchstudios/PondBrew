@@ -15,7 +15,7 @@ namespace EvolutionShop.Growth
         /// <summary>What the walk does that is not the shop's own play, for the route's limitations.</summary>
         public const string Labelled =
             "R09.4 lessons walk (GrowthLessonWalk, development only): the route's fresh shop past its first night (day 2, the guide done, a1 stocked with Pondlets); each era begun with its stars and 100,000 credits; " +
-            "research points given where a lesson's purchase needs them; creatures added to the journal (discovered) for the bench, colours and water; " +
+            "research points given where a lesson's purchase needs them; creatures added to the journal (discovered) for the bench, colours and water; a Pondlet's recipe found for the incubator's queue, and its batch's hatchlings set aside; " +
             "a starter vial on the shelf, a decoration in the box and Pip's 150 sales, standing in for an order's delivery and days of sales; " +
             "a bred pair, a coloured offspring, an auto-doser batch, a day on the line and a Grand Exhibition attempt and win, standing in for the days each takes. " +
             "Every purchase, hire, order, pipe, water change and decoration is the shop's own action, as each lesson's step says.";
@@ -97,6 +97,12 @@ namespace EvolutionShop.Growth
                 case "decor": if (!s.DecorOwned.Contains("reeds")) s.DecorOwned.Add("reeds"); break;
                 case "colours": if (!s.TintPort) { var r = s.Upgrade("breeding"); if (!r.Success) return "the breeding tank's tint port: " + r; } break;
                 case "pip": s.SalesTotal = Math.Max(s.SalesTotal, GrowthContent.PipSalesGate); break;
+                case "queue":
+                {
+                    while (s.Level("incubator") < GrowthShop.MakeQueueLevel) { var r = s.Upgrade("incubator"); if (!r.Success) return "upgrade the incubator: " + r; }
+                    if (s.FoundRecipes().Count == 0) s.MixLog.Add(new GrowthMixEntry { Doses = (int[])GrowthContent.Get("pondlet").Recipe.Clone(), Species = "pondlet", Exact = true });
+                    break;
+                }
                 case "generator": AtLeastRp(s, 30); break;
                 case "vat": AtLeastRp(s, GrowthContent.CatalogItem("vat").Rp); break;
                 case "water": Discover(s, GrowthContent.Species.First(x => x.Kind == SpeciesKind.Founder && x.Water == Water.Warm).Id); break;
@@ -141,6 +147,14 @@ namespace EvolutionShop.Growth
                 case "tank-levels": return Do(s.UpgradeContainer(TargetId(s, id)), "upgrade a tank");
                 case "decor": return Do(s.PutDecor("reeds", TargetId(s, id)), "put the reeds beside a tank");
                 case "colours": s.Journal.Add(GrowthShop.JournalKey("pondlet", Colour.Sunny)); return null;
+                case "queue":
+                    if ((e = Do(s.QueueMake(s.FoundRecipes().First()), "make a recipe in the incubator's queue")) != null) return e;
+                    for (int i = 0; i < 400 && s.MadeFromQueue == 0; i++) advance(0.25f);
+                    if (s.MadeFromQueue == 0) return "the queue's batch did not start: " + s.MakeStatus;
+                    // Its hatchlings are set aside, so the incubator is free for the lessons after.
+                    for (int i = 0; i < 400 && s.Incubating; i++) advance(0.25f);
+                    while (s.Hatchlings.Count > 0 && s.TakeHatchling().Success) s.Carried.RemoveAt(s.Carried.Count - 1);
+                    return s.Incubating ? "the queue's batch did not hatch" : null;
                 case "pip": return Do(s.Hire("pip"), "hire Pip");
                 case "annex": return Do(s.BuyAnnex(), "open the power room");
                 case "generator": return Do(s.Upgrade("generator"), "buy the generator");

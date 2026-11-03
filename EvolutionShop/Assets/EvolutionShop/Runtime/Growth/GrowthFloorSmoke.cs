@@ -109,6 +109,40 @@ namespace EvolutionShop
             // ---- F28: an upgrade reads as numbers
             card = s.Ui.CardText();
             Check(card.Contains("→") && card.Contains("Takes") && card.Contains("Doses in a mix"), "The incubator's upgrade says what changes, as numbers");
+
+            // ---- F73: the incubator's queue (its level 3 set as a fixture): Make adds a batch, dosed from the growers, never the siphon
+            limitations.Add("F73 in the floor route: the incubator's level 3 is set as a fixture, and the batches' hatchlings set aside in code (labelled); Make is pressed with the route's mouse.");
+            yield return Wait(() => !shop.Incubating, 20, "the incubator to be free");
+            shop.Hatchlings.Clear(); shop.Chamber.Clear();
+            shop.Levels["incubator"] = GrowthShop.MakeQueueLevel;
+            string make = shop.FoundRecipes().First(r => { var d = GrowthContent.Get(r); return d.Doses <= shop.MaxDoses && Enumerable.Range(0, d.Recipe.Length).All(i => d.Recipe[i] == 0 || shop.MakeUnits(GrowthContent.Cultures[i].Id) >= d.Recipe[i] * 2); });
+            string makeName = GrowthContent.Get(make).Name;
+            s.Ui.RefreshCard();
+            s.Ui.ShowTabNamed("Recipes");
+            yield return null; yield return null;
+            int heldBefore = shop.Held.Count;
+            yield return ClickOn(e => e.name == "gr-make-" + make, "Press Make on the " + makeName);
+            yield return null;
+            Check(shop.MadeFromQueue == 1 && shop.Incubating && shop.Pending == make && shop.Held.Count == heldBefore, "F73: Make starts a " + makeName + " at once, dosed from the growers, the siphon untouched");
+            yield return ClickOn(e => e.name == "gr-make-" + make, "Press Make again");
+            yield return ClickOn(e => e.name == "gr-make-" + make, "And again");
+            Check(shop.MakeQueue.Count == 2, "Two more batches wait in the queue (" + shop.MakeQueue.Count + ")");
+            s.Ui.ShowTabNamed("Mix");
+            yield return null; yield return null;
+            card = s.Ui.CardText();
+            Check(card.Contains("QUEUE · 2 OF " + GrowthShop.MakeQueueLimit) && card.Contains(makeName + " ×2") && card.Contains("Incubating"), "The Mix tab shows the queue: " + makeName + " ×2 and what it waits for");
+            yield return Shot("1203-incubator-queue");
+            Check(!s.Ui.CardScrolls, "F76: at level 3, with the queue and the tint, the Mix tab still fits without scrolling");
+            yield return Wait(() => !shop.Incubating, 20, "the batch to hatch");
+            yield return null;
+            Check(shop.MakeQueue.Count == 2 && (shop.MakeWaiting() ?? "").Contains("hatchlings"), "The next waits for the hatchlings to be taken (" + shop.MakeWaiting() + ")");
+            shop.Hatchlings.Clear();
+            yield return Wait(() => shop.MadeFromQueue == 2, 5, "the next batch to start by itself");
+            Check(shop.MakeQueue.Count == 1 && shop.Incubating, "Once the tray is clear, the next starts by itself");
+            Ok(shop.ClearMakeQueue(), "Clear the queue");
+            yield return Wait(() => !shop.Incubating, 20, "the last batch to hatch");
+            shop.Hatchlings.Clear();
+            shop.Levels["incubator"] = 1;
             s.SetCard(GrowthCard.None);
             yield return null;
 

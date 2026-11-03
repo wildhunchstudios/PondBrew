@@ -289,6 +289,18 @@ namespace EvolutionShop.Growth
             },
             new GrowthLessonDef
             {
+                Id = "queue", Title = "The incubator's queue", Era = 2,
+                Card = new[]
+                {
+                    "At level 3 the incubator keeps a queue. Press Make on a recipe you have found, and it makes it by itself, batch after batch.",
+                    "Each batch takes its doses from your buffers and growers as it starts, never your siphon. The next starts once you take the hatchlings.",
+                },
+                Appears = s => s.HasMakeQueue && s.FoundRecipes().Count > 0,
+                Done = s => s.MadeFromQueue > 0,
+                Step = s => V("Open the incubator (E) and press Make on a recipe: it doses itself", "Incubator", "Incubator"),
+            },
+            new GrowthLessonDef
+            {
                 Id = "pip", Title = "Your first helper: Pip", Era = 2,
                 Card = new[]
                 {

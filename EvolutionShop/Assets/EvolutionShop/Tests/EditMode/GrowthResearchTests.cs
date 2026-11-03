@@ -180,6 +180,36 @@ namespace EvolutionShop.Tests
         }
 
         [Test]
+        public void F72_EachJobsResultIsKept_ARepeatToo_AndASaveKeepsThem()
+        {
+            var shop = Ready();
+            var (a, b, child) = APair();
+            InJars(shop, a, b);
+            Assert.That(shop.QueuePair(a, b).Success, Is.True);
+            Run(shop, shop.ResearchSeconds + 1);
+            Assert.That(shop.ResearchResults, Has.Count.EqualTo(1));
+            var first = shop.ResearchResults[0];
+            Assert.That(new[] { first.A, first.B }, Is.EquivalentTo(new[] { a, b }), "the pair");
+            Assert.That(first.Made, Is.EqualTo(child), "what it made");
+            shop.GrowerUnits["bloom"] = 5;
+            var doses = new int[GrowthContent.Cultures.Length]; doses[0] = 1;
+            Assert.That(shop.QueueMix(doses).Success, Is.True, "a mix of one Bloom");
+            Run(shop, shop.ResearchSeconds + 1);
+            Assert.That(shop.ResearchResults, Has.Count.EqualTo(2));
+            Assert.That(shop.ResearchResults[1].IsMix && shop.ResearchResults[1].Made != null, Is.True, "a mix's result too");
+            var save = UnityEngine.JsonUtility.FromJson<GrowthSave>(UnityEngine.JsonUtility.ToJson(shop.Snapshot()));
+            var back = GrowthShop.Restore(save, out string problem);
+            Assert.That(problem, Is.Null.Or.Empty);
+            Assert.That(back.ResearchResults.Select(r => r.Made), Is.EqualTo(shop.ResearchResults.Select(r => r.Made)), "a save keeps them");
+            save.researchResults = null; save.version = 15;
+            Assert.That(GrowthShop.Restore(save, out problem).ResearchResults, Is.Empty, "a save from before has none");
+            for (int i = 0; i < GrowthShop.ResearchResultsKept + 5; i++) { doses = new int[GrowthContent.Cultures.Length]; doses[0] = 1 + i % 2; doses[1] = i / 2; shop.ResearchResults.Add(new GrowthResearchJob { Doses = doses, Made = child }); }
+            Assert.That(shop.ResearchResults.Count, Is.GreaterThan(GrowthShop.ResearchResultsKept));
+            save = UnityEngine.JsonUtility.FromJson<GrowthSave>(UnityEngine.JsonUtility.ToJson(shop.Snapshot()));
+            Assert.That(GrowthShop.Restore(save, out problem).ResearchResults, Has.Count.EqualTo(GrowthShop.ResearchResultsKept), "the newest " + GrowthShop.ResearchResultsKept + " are kept");
+        }
+
+        [Test]
         public void F1_FullHandsCannotTakeFromAJarOrTheTray()
         {
             var shop = Ready();

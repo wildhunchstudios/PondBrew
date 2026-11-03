@@ -192,6 +192,15 @@ namespace EvolutionShop
             Check(s.World.TrayCreaturesShown == shop.ResearchTray.Count, "The tray shows them");
             Check(s.World.ScreenCellsTried == 12, "The desk's screen lights the pairs tried");
 
+            // ---- F72: what each job made, read on the Tanks tab, a repeat too
+            s.SetCard(GrowthCard.Research, GrowthUi.ResearchTanksTab);
+            yield return new WaitForSeconds(0.2f);
+            string results = s.Ui.CardText();
+            Check(shop.ResearchResults.Count == 6 && results.Contains("RESULTS · THE LAST 6") && shop.ResearchResults.All(r => results.Contains(GrowthContent.Get(r.Made).Name)),
+                "F72: the Tanks tab lists what each of the six jobs made (" + string.Join(", ", shop.ResearchResults.Select(r => GrowthContent.Get(r.Made).Name + (r.WasNew ? " new" : " repeat"))) + ")");
+            yield return Shot("1310-results");
+            s.SetCard(GrowthCard.None);
+
             // ---- F1: the tray
             int onTray = shop.ResearchTray.Count;
             LookAt(new Vector3(-8.8f, 0, 13.0f), GrowthWorld.ResearchTrayPosition + new Vector3(0, 0.9f, 0));

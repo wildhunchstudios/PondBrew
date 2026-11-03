@@ -139,7 +139,12 @@ namespace EvolutionShop
             box.Add(head);
             var ideal = Box("gr-row");
             ideal.Add(L("Best way:", "gr-hint"));
-            if (sp.Recipe != null) { ideal.Add(DoseDots(sp.Recipe)); ideal.Add(L(GrowthReport.Recipe(sp.Recipe) + ", in the incubator", "gr-hint")); }
+            if (sp.Recipe != null)
+            {
+                ideal.Add(DoseDots(sp.Recipe)); ideal.Add(L(GrowthReport.Recipe(sp.Recipe) + ", in the incubator", "gr-hint"));
+                // GR-35 (F73): a recipe found is made again in the incubator's queue.
+                if (shop.HasMakeQueue && shop.FoundRecipes().Contains(sp.Id)) ideal.Add(MakeButton(sp.Id));
+            }
             else ideal.Add(L(shop.HowToMake(sp) == "bred" ? "a pair in the breeding tank or the research room" : shop.HowToMake(sp), "gr-hint"));
             box.Add(ideal);
             var mixes = shop.MixLog.Where(m => m.Species == sp.Id).ToList();

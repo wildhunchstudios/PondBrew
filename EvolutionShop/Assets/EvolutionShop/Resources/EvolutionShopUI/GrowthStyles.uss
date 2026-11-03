@@ -2543,3 +2543,22 @@
     border-top-color: var(--es-teal);
     border-bottom-color: var(--es-teal);
 }
+
+/* GR-35 (F73): a recipe in the incubator's queue: its creature, its batches and − */
+.gr-qchip {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 8px 8px 0;
+    padding: 4px 6px 4px 6px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.55);
+}
+
+.gr-qchip__text {
+    margin: 0 6px 0 4px;
+    -unity-font-style: bold;
+    white-space: nowrap;
+}

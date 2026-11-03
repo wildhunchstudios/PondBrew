@@ -638,6 +638,7 @@ namespace EvolutionShop.Growth
             if (!AutoOn) return "Off";
             if (AutoBatch) { var next = AutoMissing().FirstOrDefault(); return next != null && PortUnits(next) < 1 ? "Waiting for 1 " + Name(next) + " in the port's buffers" : null; }
             if (MossBatch) return "Moss is dosing the incubator";
+            if (MakeQueue.Count > 0) return "Waiting for the incubator's queue";
             if (Incubating) return "Incubating";
             if (Hatchlings.Count > 0) return HasSorter && Chute != null ? "Waiting for the sorter to clear the tray" : "Waiting: take the hatchlings out of the incubator";
             if (Chamber.Count > 0) return "The chamber has doses: start them or take them back";

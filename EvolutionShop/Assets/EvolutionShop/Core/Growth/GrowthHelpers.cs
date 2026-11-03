@@ -542,6 +542,7 @@ namespace EvolutionShop.Growth
         {
             if (MossRecipe == null) return "Choose a recipe on my card";
             if (MossBatch) return null;
+            if (MakeQueue.Count > 0) return "The incubator's queue runs it";
             if (AutoDoser && AutoOn) return "The auto-doser runs the incubator";
             if (AutoBatch) return "The auto-doser is dosing";
             if (Incubating) return "Waiting: the incubator is incubating";

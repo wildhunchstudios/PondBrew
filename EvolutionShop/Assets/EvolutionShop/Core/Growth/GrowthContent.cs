@@ -355,7 +355,7 @@ namespace EvolutionShop.Growth
             {
                 L(1, 0, "One creature in 12 s; mixes of 2-3 doses", 1, 1, 0, ("seconds", 12), ("maxDoses", 3), ("clutch", 1)),
                 L(2, 25, "8 s; mixes up to 4; the mix log screen", 1, 1, 0, ("seconds", 8), ("maxDoses", 4), ("clutch", 1)),
-                L(3, 250, "Hatches 2 at a time; mixes up to 6; a tint port", 2, 2, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 2), ("tint", 1)),
+                L(3, 250, "Hatches 2 at a time; mixes up to 6; a tint port; a queue of batches", 2, 2, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 2), ("tint", 1)),
                 L(4, 3000, "Hatches 3 at a time; the auto-doser port (needs power)", 4, 4, 0, ("seconds", 8), ("maxDoses", 6), ("clutch", 3), ("tint", 1), ("autoDoser", 1)),
             }},
             new StationDef { Id = "breeding", Name = "Breeding tank", Levels = new[]

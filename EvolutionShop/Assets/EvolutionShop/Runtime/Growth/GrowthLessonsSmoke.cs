@@ -21,7 +21,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string LessonsScenarioText = "R09.4 lessons for every part of the game, R10.3 tomorrow's forecast and GR-26 the journal's collection: from a shop past its first night, each of the 36 lessons in its order staged where its system appears, its card opening by itself, Show me with the next-step line and the marker over the thing to use, the system used and the lesson learned; Got it for a card only; skipped from a card and from the pause screen; the setting off and on; the night's receipt and the pinboard forecasting tomorrow's first 8 visitors and their wishes, and the next day's first 8 those; the journal's found and left, its Collection of all 72 and its Guide; saved and reloaded";
+        const string LessonsScenarioText = "R09.4 lessons for every part of the game, R10.3 tomorrow's forecast and GR-26 the journal's collection: from a shop past its first night, each of the 37 lessons in its order staged where its system appears, its card opening by itself, Show me with the next-step line and the marker over the thing to use, the system used and the lesson learned; Got it for a card only; skipped from a card and from the pause screen; the setting off and on; the night's receipt and the pinboard forecasting tomorrow's first 8 visitors and their wishes, and the next day's first 8 those; the journal's found and left, its Collection of all 72 and its Guide; saved and reloaded";
 
         int lessonShot = 900;
 

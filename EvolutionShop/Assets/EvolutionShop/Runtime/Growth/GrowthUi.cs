@@ -654,7 +654,7 @@ namespace EvolutionShop
                 b.Append('|').Append(shop.Held.Count).Append(string.Join(",", shop.Held)).Append('|').Append(string.Join(",", shop.Chamber)).Append('|').Append(shop.Incubating).Append('|').Append(shop.Hatchling?.Id ?? 0)
                     .Append('|').Append(shop.Hatchlings.Count).Append(shop.IncubatorTint).Append('|').Append(shop.Tint).Append('|').Append(string.Join(",", shop.Carried.Select(c => c.Id))).Append('|').Append(s.CarriedChoice)
                     .Append('|').Append(string.Join(",", shop.Parents.Select(p => p.Id))).Append('|').Append(shop.Offspring?.Id ?? 0).Append('|').Append(string.Join(",", shop.Pairs[1].Parents.Select(p => p.Id))).Append(shop.Pairs[1].Offspring?.Id ?? 0)
-                    .Append('|').Append(s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0).Append('|').Append(PowerSignature()).Append('|').Append(LineSignature()).Append('|').Append(ResearchSignature());
+                    .Append('|').Append(s.Card == GrowthCard.Grower ? Mathf.FloorToInt(shop.GrowerUnits.Values.Sum()) : 0).Append('|').Append(PowerSignature()).Append('|').Append(LineSignature()).Append('|').Append(ResearchSignature()).Append('|').Append(string.Join(",", shop.MakeQueue));
             return b.ToString();
         }
 
@@ -821,6 +821,8 @@ namespace EvolutionShop
                 found.Add(choose);
             }
             body.Add(found);
+            // GR-35 (F73): the queue: a found recipe made again and again, dosed from the buffers and growers.
+            if (shop.HasMakeQueue && everyRecipe.Count > 0) body.Add(QueueSection(recipes));
             // The chamber: a chip for each culture in the siphon or the chamber, − and + on either side.
             body = left;
             var chamber = Box("gr-section");
@@ -914,7 +916,7 @@ namespace EvolutionShop
             if (everyRecipe.Count > 0)
             {
                 var all = AddTab("Recipes");
-                all.Add(L("Pin " + GrowthShop.QuickRecipeSlots + " to keep them at hand on the Mix tab.", "gr-hint"));
+                all.Add(L("Pin " + GrowthShop.QuickRecipeSlots + " to keep them at hand on the Mix tab." + (shop.HasMakeQueue ? " Make adds a batch to the incubator's queue." : ""), "gr-hint"));
                 foreach (var id in everyRecipe)
                 {
                     var def = GrowthContent.Get(id);
@@ -925,7 +927,10 @@ namespace EvolutionShop
                     what.Add(L(def.Name, "gr-hint"));
                     row.Add(what);
                     bool pinned = shop.PinnedRecipes.Contains(id);
-                    row.Add(ChipButton(pinned ? "Pinned" : "Pin", () => s.Act(() => shop.PinRecipe(id)), pinned || shop.PinnedRecipes.Count < GrowthShop.QuickRecipeSlots, pinned ? "Take its pin off" : "Keep it at hand"));
+                    var buttons = Box("gr-row");
+                    if (shop.HasMakeQueue) buttons.Add(MakeButton(id));
+                    buttons.Add(ChipButton(pinned ? "Pinned" : "Pin", () => s.Act(() => shop.PinRecipe(id)), pinned || shop.PinnedRecipes.Count < GrowthShop.QuickRecipeSlots, pinned ? "Take its pin off" : "Keep it at hand"));
+                    row.Add(buttons);
                     all.Add(row);
                 }
             }
@@ -945,6 +950,60 @@ namespace EvolutionShop
             b.AddToClassList("gr-pm");
             b.SetEnabled(enabled);
             if (!enabled) b.tooltip = why;
+            return b;
+        }
+
+        /// <summary>
+        /// GR-35 (F73): the incubator's queue: each recipe queued, in turn, with its batches and − to take one off; what it is
+        /// doing (live); and Make for the recipes at hand. Its batches come from the buffers and growers, never the siphon.
+        /// </summary>
+        VisualElement QueueSection(List<string> atHand)
+        {
+            var shop = s.Shop;
+            var box = Box("gr-section");
+            var head = Box("gr-row", "gr-row--spread");
+            head.Add(Eyebrow("Queue · " + shop.MakeQueue.Count + " of " + GrowthShop.MakeQueueLimit));
+            if (shop.MakeQueue.Count > 0) head.Add(Link("Clear", () => s.Act(shop.ClearMakeQueue)));
+            box.Add(head);
+            if (shop.MakeQueue.Count == 0)
+                box.Add(L("Make a recipe and the incubator makes it by itself, batch after batch, from the buffers and growers.", "gr-hint"));
+            else
+            {
+                var row = Box("gr-row");
+                row.style.flexWrap = Wrap.Wrap;
+                for (int i = 0; i < shop.MakeQueue.Count;)
+                {
+                    int j = i;
+                    while (j < shop.MakeQueue.Count && shop.MakeQueue[j] == shop.MakeQueue[i]) j++;
+                    string id = shop.MakeQueue[i];
+                    var def = GrowthContent.Get(id);
+                    var chip = Box("gr-qchip");
+                    chip.Add(CreatureIcon(def, Colour.Classic, 28, "gr-rs-icon"));
+                    chip.Add(L(def.Name + " ×" + (j - i), "gr-qchip__text"));
+                    var minus = PlusMinus("−", () => s.Act(() => shop.UnqueueMake(id)), true, null);
+                    minus.tooltip = "Take a " + def.Name + " off the queue";
+                    chip.Add(minus);
+                    row.Add(chip);
+                    i = j;
+                }
+                box.Add(row);
+                box.Add(LiveL(() => shop.MakeStatus, "gr-hint"));
+            }
+            var make = Box("gr-row");
+            make.style.flexWrap = Wrap.Wrap;
+            make.Add(L("Make:", "gr-hint"));
+            foreach (var id in atHand) make.Add(MakeButton(id, GrowthContent.Get(id).Name + " +1"));
+            box.Add(make);
+            return box;
+        }
+
+        /// <summary>GR-35 (F73): Make: one batch of a found recipe into the incubator's queue, saying why when it can't.</summary>
+        Button MakeButton(string species, string text = "Make")
+        {
+            var shop = s.Shop;
+            bool can = shop.MakeCheck(species, out string why) == GrowthFailure.None;
+            var b = ChipButton(text, () => s.Act(() => shop.QueueMake(species)), can, can ? "Add a " + GrowthContent.Get(species).Name + " to the incubator's queue" : why);
+            b.name = "gr-make-" + species;
             return b;
         }
 

@@ -596,6 +596,114 @@ namespace EvolutionShop.Growth
             return GrowthResult.Ok("on");
         }
 
+        // ---------------------------------------------------------------- GR-35 (F73): the incubator's queue
+
+        /// <summary>The incubator level the queue comes with.</summary>
+        public const int MakeQueueLevel = 3;
+        /// <summary>How many batches the queue holds.</summary>
+        public const int MakeQueueLimit = 12;
+        /// <summary>The batches asked for, in turn: each a found recipe, dosed from the buffers and growers (never the siphon)
+        /// when the incubator comes free, the next starting by itself.</summary>
+        public readonly List<string> MakeQueue = new List<string>();
+        /// <summary>Batches the queue has started.</summary>
+        public int MadeFromQueue;
+        public bool HasMakeQueue => Level("incubator") >= MakeQueueLevel;
+
+        /// <summary>Why a recipe cannot be added to the queue (None when it can): only a recipe found, that the chamber holds.</summary>
+        public GrowthFailure MakeCheck(string species, out string why)
+        {
+            why = null;
+            if (!HasMakeQueue) { why = "The incubator's queue comes with its level " + MakeQueueLevel; return GrowthFailure.Locked; }
+            var def = GrowthContent.Get(species);
+            if (def == null || !FoundRecipes().Contains(species)) { why = "Only a recipe you have found"; return GrowthFailure.NotDiscovered; }
+            if (def.Doses > MaxDoses) { why = "Up to " + MaxDoses + " doses"; return GrowthFailure.ChamberFull; }
+            if (MakeQueue.Count >= MakeQueueLimit) { why = "The queue holds " + MakeQueueLimit + " batches"; return GrowthFailure.Busy; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Adds batches of a found recipe to the queue (as many as it has room for); the first starts at once when it can.</summary>
+        public GrowthResult QueueMake(string species, int batches = 1)
+        {
+            var failure = MakeCheck(species, out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            int added = 0;
+            while (added < Math.Max(1, batches) && MakeQueue.Count < MakeQueueLimit) { MakeQueue.Add(species); added++; }
+            TickMakeQueue();
+            return GrowthResult.Ok(added.ToString());
+        }
+
+        /// <summary>Takes the last batch of a recipe off the queue, or with all, every batch of it.</summary>
+        public GrowthResult UnqueueMake(string species, bool all = false)
+        {
+            int at = MakeQueue.LastIndexOf(species);
+            if (at < 0) return GrowthResult.Fail(GrowthFailure.NoDose, "No " + (GrowthContent.Get(species)?.Name ?? species) + " in the queue");
+            if (all) MakeQueue.RemoveAll(x => x == species); else MakeQueue.RemoveAt(at);
+            return GrowthResult.Ok();
+        }
+
+        public GrowthResult ClearMakeQueue()
+        {
+            if (MakeQueue.Count == 0) return GrowthResult.Fail(GrowthFailure.NoDose, "The queue is empty");
+            MakeQueue.Clear();
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>A culture's units the queue may draw: every buffer of it, then its grower.</summary>
+        public float MakeUnits(string culture) => Buffers.Where(b => b.Culture == culture).Sum(b => b.Units) + (Owns(culture) && GrowerUnits.TryGetValue(culture, out float u) ? u : 0);
+
+        /// <summary>Why the queue's next batch does not start now, or null when it can (or the queue is empty).</summary>
+        public string MakeWaiting()
+        {
+            if (MakeQueue.Count == 0) return null;
+            if (AutoBatch) return "Waiting for the auto-doser's batch";
+            if (MossBatch) return "Waiting for the batch Moss is dosing";
+            if (Incubating) return "Incubating";
+            if (Hatchlings.Count > 0) return HasSorter && Chute != null ? "Waiting for the sorter to clear the tray" : "Waiting: take the hatchlings out";
+            if (Chamber.Count > 0) return "The chamber has doses: start them or take them back";
+            var def = GrowthContent.Get(MakeQueue[0]);
+            if (def.Doses > MaxDoses) return "The recipe needs more doses than the incubator takes";
+            for (int i = 0; i < def.Recipe.Length; i++)
+            {
+                if (def.Recipe[i] == 0) continue;
+                string c = GrowthContent.Cultures[i].Id;
+                if (MakeUnits(c) < def.Recipe[i]) return Owns(c) || Buffers.Any(b => b.Culture == c) ? "Waiting for " + def.Recipe[i] + " " + Name(c) + " in the buffers and growers" : "Needs " + Name(c) + ": its grower";
+            }
+            return null;
+        }
+
+        /// <summary>What the queue is doing, in a sentence (the incubator's card).</summary>
+        public string MakeStatus => MakeQueue.Count == 0 ? "Empty" : MakeWaiting() ?? "Starting a " + GrowthContent.Get(MakeQueue[0]).Name;
+
+        /// <summary>Starts the queue's next batch when the incubator is free and the buffers and growers hold its doses.</summary>
+        void TickMakeQueue()
+        {
+            if (MakeQueue.Count == 0 || MakeWaiting() != null) return;
+            string species = MakeQueue[0];
+            var recipe = GrowthContent.Get(species).Recipe;
+            for (int i = 0; i < recipe.Length; i++)
+                for (int n = 0; n < recipe[i]; n++) { string c = GrowthContent.Cultures[i].Id; TakeMakeUnit(c); Chamber.Add(c); }
+            MakeQueue.RemoveAt(0);
+            if (StartIncubation().Success)
+            {
+                MadeFromQueue++;
+                Raise(GrowthEventKind.AutoDosed, "The incubator started a " + GrowthContent.Get(species).Name + (MakeQueue.Count > 0 ? ": " + MakeQueue.Count + " more queued" : ""), species);
+            }
+        }
+
+        /// <summary>One unit for a batch: from the fullest buffers of the culture first, the rest from its grower.</summary>
+        void TakeMakeUnit(string culture)
+        {
+            float need = 1;
+            foreach (var b in Buffers.Where(x => x.Culture == culture && x.Units > 0).OrderByDescending(x => x.Units).ThenBy(x => x.Place).ToList())
+            {
+                float take = Math.Min(need, b.Units);
+                b.Units -= take; need -= take;
+                ForgetIfDry(b.Place);
+                if (need <= 1e-4f) return;
+            }
+            GrowerUnits[culture] = Math.Max(0, GrowerUnits[culture] - need);
+        }
+
         /// <summary>GR-29 (F19): a click on the incubator: as many doses from the siphon as the chamber takes, the rest staying in the siphon.</summary>
         public GrowthResult FillChamber()
         {
@@ -1336,6 +1444,7 @@ namespace EvolutionShop.Growth
                 IncubationLeft -= seconds;
                 if (IncubationLeft <= 0) Hatch();
             }
+            TickMakeQueue();
             foreach (var pair in ActivePairs)
             {
                 if (!pair.Breeding) continue;
@@ -1756,7 +1865,7 @@ namespace EvolutionShop.Growth
             discovered = Discovered.ToArray(),
             vialCultures = Vials.Keys.ToArray(), vialDoses = Vials.Values.ToArray(), orders = Orders.ToArray(),
             mixLog = MixLog.Select(m => new GrowthSave.Mix { doses = m.Doses, species = m.Species, exact = m.Exact, wasNew = m.WasNew, distanceToNew = m.DistanceToNew, count = m.Count }).ToArray(),
-            pinnedRecipes = PinnedRecipes.ToArray(), autoOpenAt = AutoOpenAt,
+            pinnedRecipes = PinnedRecipes.ToArray(), autoOpenAt = AutoOpenAt, makeQueue = MakeQueue.ToArray(), madeFromQueue = MadeFromQueue,
             pendingMix = PendingMix == null ? new GrowthSave.Mix[0] : new[] { new GrowthSave.Mix { doses = PendingMix.Doses, species = PendingMix.Species, exact = PendingMix.Exact, wasNew = PendingMix.WasNew, distanceToNew = PendingMix.DistanceToNew, count = PendingMix.Count } },
             parents = Parents.Select(GrowthSave.Specimen.Of).ToArray(),
             offspring = Offspring == null ? new GrowthSave.Specimen[0] : new[] { GrowthSave.Specimen.Of(Offspring) },
@@ -1867,6 +1976,11 @@ namespace EvolutionShop.Growth
             shop.AutoOpenAt = Array.IndexOf(AutoOpenChoices, s.autoOpenAt) >= 0 ? s.autoOpenAt : 0;
             foreach (var b in s.containers ?? new GrowthSave.Box[0]) { var c = shop.Container(b.id); if (c != null && Array.IndexOf(TankRules, b.rule ?? "") >= 0) c.Rule = b.rule ?? ""; }
             if (s.pinnedRecipes != null) shop.PinnedRecipes.AddRange(s.pinnedRecipes.Where(r => GrowthContent.Get(r) != null));
+            // GR-35 (F73, version 16): the incubator's queue.
+            var queue = s.makeQueue ?? new string[0];
+            if (queue.Length > MakeQueueLimit || queue.Any(q => !Known(q))) { problem = "An incubator queue that cannot be"; return null; }
+            shop.MakeQueue.AddRange(queue);
+            shop.MadeFromQueue = Math.Max(0, s.madeFromQueue);
             // GR-29: the mix in the incubator, logged when it hatches (version 13 and older logged it when it started).
             if (s.incubating && s.pendingMix != null && s.pendingMix.Length > 0)
             {
@@ -1897,8 +2011,9 @@ namespace EvolutionShop.Growth
         /// 6: GR-07 (the lab annex, buffers, pipes, the power board's order and the auto-doser);
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
-        /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now). Older saves load.</summary>
-        public const int CurrentVersion = 15;
+        /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now).
+        /// 16: tester round 2 (what research jobs made lately, F72; the incubator's queue, F73). Older saves load.</summary>
+        public const int CurrentVersion = 16;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -1909,6 +2024,8 @@ namespace EvolutionShop.Growth
         public int researchDone;
         public Specimen[] specimens, researchTray;
         public ResearchJob[] researchJobs;
+        /// <summary>GR-33 (F72, version 16): what the research jobs made lately.</summary>
+        public ResearchJob[] researchResults;
         public bool exhibitionPrepared, exhibitionToday, exhibitionDone;
         public int exhibitionAttempts;
         public string exhibitionFailure;
@@ -1935,6 +2052,9 @@ namespace EvolutionShop.Growth
         public string[] pinnedRecipes;
         /// <summary>GR-31: the stock the shop opens by itself at (0: off).</summary>
         public int autoOpenAt;
+        /// <summary>GR-35 (F73, version 16): the incubator's queue, in turn, and the batches it has started.</summary>
+        public string[] makeQueue;
+        public int madeFromQueue;
         public string[] vialCultures, orders;
         public int[] vialDoses;
         public Specimen[] parents, offspring, secondParents, secondOffspring;
@@ -1983,6 +2103,9 @@ namespace EvolutionShop.Growth
 
         [Serializable] public sealed class ResearchJob
         {
+            /// <summary>For a result (version 16): what it made, and whether that was new then.</summary>
+            public string made;
+            public bool wasNew;
             public string a, b;
             public bool mix;
             public int[] doses;
