@@ -413,7 +413,7 @@ namespace EvolutionShop
             if (!Ready) return;
             // A card's chosen tab, its open Move list and a Sell waiting for its yes last while it stays open (refreshes rebuild it).
             string key = which + "|" + target;
-            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; recipesOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; menuAskNew = false; }
+            if (key != tabCard) { tabCard = key; tabChosen = null; moveOpen = false; sellAsked = false; closeAsked = false; pageShown = 0; guidePage = 0; menuAskNew = false; }
             heldCard = null; shownCard = null; keepScroll = null; keepIn = null;
             cardLayer.Clear(); screenLayer.Clear(); card = null; liveLabel = null; statusLabel = null; liveValues.Clear();
             tabList.Clear(); tabRow = null; footer = null; rings.Clear(); notebook = false;
@@ -1110,7 +1110,7 @@ namespace EvolutionShop
 
         // ---------------------------------------------------------------- containers (GR.13)
 
-        bool moveOpen, recipesOpen, sellAsked;
+        bool moveOpen, sellAsked;
 
         static string Holds(ContainerDef def) => def.Largest == SizeClass.Large ? "creatures of every size" : "small and medium creatures";
 
