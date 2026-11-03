@@ -18,7 +18,7 @@ namespace EvolutionShop.Growth
     {
         public string A, B;
         public int[] Doses;
-        /// <summary>The tank working on it (0 to 2), or -1 while it waits.</summary>
+        /// <summary>The tank working on it (0 to 5), or -1 while it waits.</summary>
         public int Tank = -1;
         /// <summary>Seconds of work left; at 0 with its tank still taken, a new creature waits for room on the tray.</summary>
         public float Left;
@@ -32,13 +32,19 @@ namespace EvolutionShop.Growth
     public sealed partial class GrowthShop
     {
         public const string ResearchPower = "research";
-        public const int ResearchTankCount = 3, SpecimenJars = 15, ResearchTrayPlaces = 6, ResearchQueueLimit = 120;
+        public const int ResearchTanksMost = 6, JarsMost = 36, JarSection = 6, ResearchTrayPlaces = 6, ResearchQueueLimit = 120;
+        /// <summary>GR-35 (F71, GR.77): a shelf section of six jars for 400, and tanks 2 to 6 for 1,000 to 5,000, bought at the desk;
+        /// a save from before keeps its 15 jars and 3 tanks.</summary>
+        public const int JarSectionCredits = 400, OldJars = 15, OldResearchTanks = 3;
+        public static readonly int[] ResearchTankCredits = { 0, 1000, 2000, 3000, 4000, 5000 };
         /// <summary>What each working tank draws from the generator.</summary>
         public const float ResearchTankUnits = 1;
 
         public static ExpansionDef ResearchDef => GrowthContent.Expansions.First(e => e.Id == "research");
 
         public bool ResearchRoom;
+        /// <summary>GR-35 (F71): the jars and research tanks bought (6 and 1 with the room).</summary>
+        public int Jars, ResearchTanks;
         /// <summary>The creatures in the jars: one of each kind.</summary>
         public readonly List<GrowthSpecimen> Specimens = new List<GrowthSpecimen>();
         /// <summary>New creatures the room made, waiting to be taken.</summary>
@@ -96,9 +102,60 @@ namespace EvolutionShop.Growth
             if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
             Credits -= ResearchDef.Credits;
             ResearchRoom = true;
+            Jars = JarSection; ResearchTanks = 1;
             Levels["research"] = 1;
             if (!PowerOrder.Contains(ResearchPower)) PowerOrder.Add(ResearchPower);
             Raise(GrowthEventKind.Opened, ResearchDef.Name + " opened", amount: ResearchDef.Credits);
+            return GrowthResult.Ok();
+        }
+
+        // ---------------------------------------------------------------- jars and tanks bought (F71)
+
+        /// <summary>How many jars the next shelf section adds (six, or what is left to 36).</summary>
+        public int JarsNext => Math.Min(JarSection, JarsMost - Jars);
+
+        public GrowthFailure JarsCheck(out string why)
+        {
+            why = null;
+            if (!ResearchRoom) { why = "Open the research room first"; return GrowthFailure.Locked; }
+            if (Jars >= JarsMost) { why = "Every shelf is up: " + JarsMost + " jars"; return GrowthFailure.MaxLevel; }
+            if (Credits < JarSectionCredits) { why = "Needs " + JarSectionCredits + " credits"; return GrowthFailure.NotEnoughCredits; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Puts up another shelf section of jars on the jar wall.</summary>
+        public GrowthResult BuyJars()
+        {
+            var failure = JarsCheck(out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            int more = JarsNext;
+            Credits -= JarSectionCredits;
+            Jars += more;
+            Raise(GrowthEventKind.Bought, more + " more jars on the jar wall", amount: JarSectionCredits);
+            return GrowthResult.Ok();
+        }
+
+        /// <summary>The next research tank's price (0 when all six stand).</summary>
+        public int ResearchTankNextCredits => ResearchTanks < ResearchTanksMost ? ResearchTankCredits[ResearchTanks] : 0;
+
+        public GrowthFailure ResearchTankCheck(out string why)
+        {
+            why = null;
+            if (!ResearchRoom) { why = "Open the research room first"; return GrowthFailure.Locked; }
+            if (ResearchTanks >= ResearchTanksMost) { why = "All " + ResearchTanksMost + " tanks stand"; return GrowthFailure.MaxLevel; }
+            if (Credits < ResearchTankNextCredits) { why = "Needs " + ResearchTankNextCredits + " credits"; return GrowthFailure.NotEnoughCredits; }
+            return GrowthFailure.None;
+        }
+
+        /// <summary>Places the next research tank: it takes a job from the queue at once, on a unit of the generator's power.</summary>
+        public GrowthResult BuyResearchTank()
+        {
+            var failure = ResearchTankCheck(out string why);
+            if (failure != GrowthFailure.None) return GrowthResult.Fail(failure, why);
+            int cost = ResearchTankNextCredits;
+            Credits -= cost;
+            ResearchTanks++;
+            Raise(GrowthEventKind.Bought, "Research tank " + ResearchTanks + " placed", amount: cost);
             return GrowthResult.Ok();
         }
 
@@ -110,7 +167,7 @@ namespace EvolutionShop.Growth
             why = null;
             if (!ResearchRoom) { why = "Open the research room first"; return GrowthFailure.Locked; }
             if (SpecimenOf(specimen.Species) != null) { why = "One of each kind is enough: a " + specimen.Def.Name + " is already in a jar"; return GrowthFailure.Owned; }
-            if (Specimens.Count >= SpecimenJars) { why = "Every jar is taken: take a creature back first"; return GrowthFailure.Busy; }
+            if (Specimens.Count >= Jars) { why = Jars < JarsMost ? "Every jar is taken: take a creature back, or buy more jars at the desk" : "Every jar is taken: take a creature back first"; return GrowthFailure.Busy; }
             return GrowthFailure.None;
         }
 
@@ -289,7 +346,7 @@ namespace EvolutionShop.Growth
         {
             if (!ResearchRoom) return;
             FinishResearch();
-            for (int tank = 0; tank < ResearchTankCount; tank++)
+            for (int tank = 0; tank < ResearchTanks; tank++)
             {
                 if (ResearchInTank(tank) != null) continue;
                 var job = ResearchWaiting.FirstOrDefault(j => !j.IsMix || MixHasDoses(j.Doses));
@@ -371,17 +428,19 @@ namespace EvolutionShop.Growth
         public string ResearchTankLine(int tank)
         {
             var job = ResearchInTank(tank);
+            if (tank >= ResearchTanks) return "Tank " + (tank + 1) + ": not bought yet · " + ResearchTankCredits[tank] + " cr at the desk";
             if (job == null) return "Tank " + (tank + 1) + ": free";
             string what = job.IsMix ? GrowthReport.Recipe(job.Doses) : GrowthContent.Get(job.A).Name + " × " + GrowthContent.Get(job.B).Name;
             return "Tank " + (tank + 1) + ": " + what + (job.Left > 0 ? " · " + Math.Max(1, (int)Math.Ceiling(job.Left)) + " s" : " · waiting for room on the tray");
         }
 
-        // ---------------------------------------------------------------- saving (version 15; the results from 16)
+        // ---------------------------------------------------------------- saving (version 15; the results from 16; jars and tanks bought from 17)
 
         void SaveResearch(GrowthSave s)
         {
             s.researchRoom = ResearchRoom;
             s.researchDone = ResearchDone;
+            s.jars = Jars; s.researchTanks = ResearchTanks;
             s.specimens = Specimens.Select(GrowthSave.Specimen.Of).ToArray();
             s.researchTray = ResearchTray.Select(GrowthSave.Specimen.Of).ToArray();
             s.researchJobs = ResearchJobs.Select(j => new GrowthSave.ResearchJob { a = j.A ?? "", b = j.B ?? "", mix = j.IsMix, doses = j.Doses, tank = j.Tank, left = j.Left }).ToArray();
@@ -395,13 +454,17 @@ namespace EvolutionShop.Growth
             bool any = shop.Level("research") > 0 || (s.specimens?.Length ?? 0) > 0 || (s.researchTray?.Length ?? 0) > 0 || (s.researchJobs?.Length ?? 0) > 0;
             if (any && !shop.ResearchRoom) return "Research without the research room";
             if (shop.ResearchRoom && (!shop.Annex || shop.Level("research") < 1)) return "A research room without its place";
+            // GR-35 (F71, version 17): the jars and tanks bought; a save from before keeps its 15 jars and 3 tanks.
+            shop.Jars = !shop.ResearchRoom ? 0 : s.version < 17 ? OldJars : s.jars;
+            shop.ResearchTanks = !shop.ResearchRoom ? 0 : s.version < 17 ? OldResearchTanks : s.researchTanks;
+            if (shop.ResearchRoom && (shop.Jars < JarSection || shop.Jars > JarsMost || shop.ResearchTanks < 1 || shop.ResearchTanks > ResearchTanksMost)) return "Research jars or tanks that cannot be";
             foreach (var x in s.specimens ?? new GrowthSave.Specimen[0])
             {
                 if (GrowthContent.Get(x.species) == null) return "An unknown creature in a jar";
                 if (shop.SpecimenOf(x.species) != null) return "Two jars of one kind";
                 shop.Specimens.Add(x.ToSpecimen());
             }
-            if (shop.Specimens.Count > SpecimenJars) return "More creatures than jars";
+            if (shop.Specimens.Count > shop.Jars) return "More creatures than jars";
             foreach (var x in s.researchTray ?? new GrowthSave.Specimen[0])
             {
                 if (GrowthContent.Get(x.species) == null) return "An unknown creature on the tray";
@@ -410,7 +473,7 @@ namespace EvolutionShop.Growth
             if (shop.ResearchTray.Count > ResearchTrayPlaces) return "More creatures than the tray holds";
             foreach (var j in s.researchJobs ?? new GrowthSave.ResearchJob[0])
             {
-                if (j.tank < -1 || j.tank >= ResearchTankCount || j.tank >= 0 && shop.ResearchInTank(j.tank) != null) return "Two jobs in one research tank";
+                if (j.tank < -1 || j.tank >= shop.ResearchTanks || j.tank >= 0 && shop.ResearchInTank(j.tank) != null) return "Two jobs in one research tank";
                 if (j.left < 0 || j.left > 3600) return "A research job's time that cannot be";
                 if (j.mix)
                 {

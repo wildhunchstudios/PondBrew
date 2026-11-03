@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "91316e6e02eece1d31058ee075a62fbd5db1b09a8727bc3adb0c0962692fc829",
+  "source_script_sha256": "2fd30ba4de603f049f0edd847e51f01a5d4ebcd3da646cb71afe72fcab77bb2e",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -2130,8 +2130,8 @@
       },
       "id": "AnnexDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/AnnexDressing.fbx",
-      "sha256": "8a54546af3925894cd32f0efdc83ea62e206da5879ea23a60cee29c934aa9957",
-      "bytes": 567884
+      "sha256": "90905410df463185be1f6a97e448a78599137e56264db4a2080c8c092b0c985a",
+      "bytes": 567836
     },
     {
       "triangles": 5196,
@@ -3405,31 +3405,28 @@
       "bytes": 101196
     },
     {
-      "triangles": 22156,
+      "triangles": 14776,
       "materials": [
         "GK_Cream",
-        "GK_Glass",
         "GK_Ink",
-        "GK_Teal",
-        "GK_TealDark",
-        "GK_Yellow"
+        "GK_Teal"
       ],
       "bounds_unity_m": {
         "min": [
-          -12.4,
-          0.67,
-          15.15
+          -12.39,
+          2.39,
+          18.42
         ],
         "max": [
-          -12.06,
+          -12.327,
           2.73,
-          18.85
+          20.78
         ]
       },
       "id": "ResearchJars",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchJars.fbx",
-      "sha256": "1b9cebda8785d098e8c172b708b6dc9c0691410087a1feb828bae39809867529",
-      "bytes": 476940
+      "sha256": "2b03b1259b676321733f4d804508f928c643b8985d752abd1335f78f92f3ef37",
+      "bytes": 334428
     },
     {
       "triangles": 2512,
@@ -3566,6 +3563,53 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorDuck.fbx",
       "sha256": "64cc052010c40eb96f63100827bfe0043bef6ec42c74d1845ac297fb5594b19e",
       "bytes": 50524
+    },
+    {
+      "triangles": 2100,
+      "materials": [
+        "GK_Cream",
+        "GK_Teal",
+        "GK_TealDark"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.52,
+          0.67,
+          -0.18
+        ],
+        "max": [
+          0.52,
+          2.23,
+          0.18
+        ]
+      },
+      "id": "JarShelf",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/JarShelf.fbx",
+      "sha256": "d52246efd295c4d1e2868c9922e11d60d0854a92f1dc12ae791310d3d4fddccf",
+      "bytes": 60204
+    },
+    {
+      "triangles": 392,
+      "materials": [
+        "GK_Glass",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.145,
+          -0.15,
+          -0.145
+        ],
+        "max": [
+          0.145,
+          0.18,
+          0.145
+        ]
+      },
+      "id": "SpecimenJar",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SpecimenJar.fbx",
+      "sha256": "4a094f20fd6c544c0735dda2844780248bed9d823e9331e5b2ad0ee09394cb25",
+      "bytes": 24652
     }
   ]
 }

@@ -17,6 +17,7 @@ namespace EvolutionShop.Tests
             Assert.That(shop.BuyAnnex().Success, Is.True);
             for (int i = 0; i < generator; i++) Assert.That(shop.Upgrade("generator").Success, Is.True);
             if (room) Assert.That(shop.BuyResearchRoom().Success, Is.True);
+            if (room) { shop.ResearchTanks = 3; shop.Jars = 18; } // GR-35 (F71): three tanks and three shelf sections bought
             return shop;
         }
 
@@ -135,8 +136,8 @@ namespace EvolutionShop.Tests
         public void F1_TheJarsHaveALimit()
         {
             var shop = Ready();
-            var kinds = GrowthContent.Species.Select(s => s.Id).Take(GrowthShop.SpecimenJars + 1).ToArray();
-            InJars(shop, kinds.Take(GrowthShop.SpecimenJars).ToArray());
+            var kinds = GrowthContent.Species.Select(s => s.Id).Take(shop.Jars + 1).ToArray();
+            InJars(shop, kinds.Take(shop.Jars).ToArray());
             Assert.That(shop.DevelopmentGive(kinds.Last()).Success, Is.True);
             var refused = shop.PutSpecimen();
             Assert.That(refused.Failure, Is.EqualTo(GrowthFailure.Busy));
@@ -679,6 +680,52 @@ namespace EvolutionShop.Tests
             Assert.That(problem, Is.Null.Or.Empty);
             Assert.That(back.ResearchRoom, Is.False);
             Assert.That(back.Specimens, Is.Empty);
+        }
+
+        [Test]
+        public void F71_JarsAndTanksAreBoughtInSteps_AndASaveFromBeforeKeepsItsFifteenAndThree()
+        {
+            var shop = Ready();
+            shop.ResearchTanks = 1; shop.Jars = GrowthShop.JarSection;
+            var fresh = Ready(room: false);
+            Assert.That(fresh.BuyResearchRoom().Success && fresh.Jars == 6 && fresh.ResearchTanks == 1, Is.True, "the room opens with 6 jars and tank 1");
+            // Jars: six more a shelf section, 400 each, up to 36.
+            int credits = fresh.Credits;
+            for (int i = 0; i < 5; i++) Assert.That(fresh.BuyJars().Success, Is.True);
+            Assert.That((fresh.Jars, fresh.Credits), Is.EqualTo((36, credits - 5 * 400)));
+            Assert.That(fresh.BuyJars().Failure, Is.EqualTo(GrowthFailure.MaxLevel), "no more than 36");
+            // Tanks 2 to 6 at 1,000 to 5,000.
+            credits = fresh.Credits;
+            for (int t = 2; t <= 6; t++) { Assert.That(fresh.ResearchTankNextCredits, Is.EqualTo((t - 1) * 1000)); Assert.That(fresh.BuyResearchTank().Success, Is.True); }
+            Assert.That((fresh.ResearchTanks, fresh.Credits), Is.EqualTo((6, credits - 15000)));
+            Assert.That(fresh.BuyResearchTank().Failure, Is.EqualTo(GrowthFailure.MaxLevel), "no more than 6");
+            var poor = Ready(room: false); poor.BuyResearchRoom(); poor.Credits = 999;
+            Assert.That(poor.BuyResearchTank().Failure, Is.EqualTo(GrowthFailure.NotEnoughCredits));
+            poor.Credits = 399;
+            Assert.That(poor.BuyJars().Failure, Is.EqualTo(GrowthFailure.NotEnoughCredits));
+            Assert.That(Ready(room: false).BuyJars().Failure, Is.EqualTo(GrowthFailure.Locked), "not before the room");
+            // Only the jars bought take creatures; only the tanks bought take jobs.
+            InJars(shop, GrowthContent.Species.Select(x => x.Id).Take(6).ToArray());
+            shop.DevelopmentGive(GrowthContent.Species[6].Id);
+            Assert.That(shop.PutSpecimen().Failure, Is.EqualTo(GrowthFailure.Busy), "a seventh waits for more jars");
+            Assert.That(shop.QueueAllPairs().Success, Is.True);
+            shop.Tick(0.1f);
+            Assert.That(shop.ResearchRunning.Count(), Is.EqualTo(1), "one tank, one job at a time");
+            Assert.That(shop.BuyResearchTank().Success, Is.True);
+            shop.Tick(0.1f);
+            Assert.That(shop.ResearchRunning.Count(), Is.EqualTo(2), "a new tank takes the next job at once");
+            Assert.That(shop.ResearchTankLine(2), Does.Contain("Tank 3: not bought yet · 2000 cr"));
+            // Saved and loaded as they are; a save from before (version 16) keeps its 15 jars and 3 tanks.
+            var back = GrowthShop.Restore(UnityEngine.JsonUtility.FromJson<GrowthSave>(UnityEngine.JsonUtility.ToJson(fresh.Snapshot())), out string problem);
+            Assert.That(problem, Is.Null);
+            Assert.That((back.Jars, back.ResearchTanks), Is.EqualTo((36, 6)));
+            var old = Ready().Snapshot(); old.version = 16; old.jars = 0; old.researchTanks = 0;
+            var before = GrowthShop.Restore(old, out problem);
+            Assert.That(problem, Is.Null);
+            Assert.That((before.Jars, before.ResearchTanks), Is.EqualTo((15, 3)));
+            var broken = fresh.Snapshot(); broken.jars = 40;
+            GrowthShop.Restore(broken, out problem);
+            Assert.That(problem, Is.EqualTo("Research jars or tanks that cannot be"));
         }
     }
 }

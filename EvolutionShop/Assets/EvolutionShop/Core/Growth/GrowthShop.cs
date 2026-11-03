@@ -2020,8 +2020,9 @@ namespace EvolutionShop.Growth
         /// 5: GR-06 (clutches, the incubator's tint, the breeding tank's second pair, the bench and vat levels);
         /// 4: GR-05 (the breeding tank, the pair log, the journal's colours); 3: GR-04 (vials and supplier orders);
         /// 2: GR-03 (container water). 13: R09.4 (the lessons met and learned, the notes they read, the lesson now).
-        /// 16: tester round 2 (what research jobs made lately, F72; the incubator's queue, F73). Older saves load.</summary>
-        public const int CurrentVersion = 16;
+        /// 16: tester round 2 (what research jobs made lately, F72; the incubator's queue, F73). 17: the research room's jars and
+        /// tanks bought (F71). Older saves load.</summary>
+        public const int CurrentVersion = 17;
         public int version = CurrentVersion;
         public int credits, reputation, rp, era, day, sales, refusals, nextId;
         public string phase;
@@ -2034,6 +2035,8 @@ namespace EvolutionShop.Growth
         public ResearchJob[] researchJobs;
         /// <summary>GR-33 (F72, version 16): what the research jobs made lately.</summary>
         public ResearchJob[] researchResults;
+        /// <summary>GR-35 (F71, version 17): the jars and research tanks bought (a save from before has 15 and 3).</summary>
+        public int jars, researchTanks;
         public bool exhibitionPrepared, exhibitionToday, exhibitionDone;
         public int exhibitionAttempts;
         public string exhibitionFailure;

@@ -62,6 +62,25 @@ namespace EvolutionShop
             Check(shop.Credits == 9000 - GrowthShop.ResearchDef.Credits && shop.Level("research") == 1 && shop.PowerOrder.Contains(GrowthShop.ResearchPower), "It cost its price, and its tanks are on the power board");
             yield return Wait(() => !s.World.ResearchWallStanding && !s.World.Revealing("research"), 8, "the hoarding to come down");
             Check(!s.World.PartitionShowing("research"), "The hoarding is gone");
+
+            // ---- F71: the room opens with 6 jars and tank 1; more of each are bought at the desk
+            yield return null; yield return null;
+            Check(shop.Jars == GrowthShop.JarSection && shop.ResearchTanks == 1 && s.World.JarsShown == 6 && s.World.JarSectionsShown == 1 && s.World.ResearchTanksShown == 1 && s.World.ResearchTankSlotsShown == 5,
+                "F71: the room opens with 6 jars and tank 1, the other tanks' places dashed (" + s.World.JarsShown + " jars, " + s.World.ResearchTanksShown + " tanks, " + s.World.ResearchTankSlotsShown + " places)");
+            s.SetCard(GrowthCard.Research, GrowthUi.ResearchTanksTab);
+            yield return new WaitForSeconds(0.2f);
+            Check(s.Ui.CardText().Contains("Buy tank 2 · 1000 cr") && s.Ui.CardText().Contains("0 of 1 tank at work"), "F71: the Tanks tab offers tank 2 for 1,000");
+            yield return ClickOn(e => e is Button b && b.name == "gr-buy-tank", "Buy tank 2");
+            yield return ClickOn(e => e is Button b && b.name == "gr-buy-tank", "Buy tank 3");
+            Check(shop.ResearchTanks == 3 && s.Ui.CardText().Contains("Buy tank 4 · 3000 cr"), "F71: tanks 2 and 3 bought, tank 4 next for 3,000");
+            s.Ui.ShowTabNamed(GrowthUi.ResearchJarsTab);
+            yield return null; yield return null;
+            Check(s.Ui.CardText().Contains("Buy 6 more jars · " + GrowthShop.JarSectionCredits + " cr"), "F71: the Jars tab offers six more jars");
+            yield return ClickOn(e => e is Button b && b.name == "gr-buy-jars", "Buy 6 more jars");
+            yield return null; yield return null;
+            Check(shop.Jars == 12 && s.World.JarsShown == 12 && s.World.JarSectionsShown == 2 && s.World.ResearchTanksShown == 3 && s.World.ResearchTankSlotsShown == 3 && shop.Credits == 9000 - GrowthShop.ResearchDef.Credits - 3000 - GrowthShop.JarSectionCredits,
+                "F71: a second shelf section of jars stands, and tanks 2 and 3 in their places, each paid for");
+            shop.Credits = 9000 - GrowthShop.ResearchDef.Credits; // the rest of the route as before
             s.SetCard(GrowthCard.None);
             yield return null;
             LookAt(P(-0.6f, 0, 15.35f), P(-6f, 1.3f, 15.35f));
@@ -82,7 +101,7 @@ namespace EvolutionShop
 
             // ---- F1: a click puts a creature in a jar; one of each; the take button takes it back
             shop.DevelopmentGive(founders[0]); shop.DevelopmentGive(founders[1]); shop.DevelopmentGive(founders[2]);
-            LookAt(P(-8.2f, 0, 13.6f), GrowthWorld.JarPosition(7));
+            LookAt(GrowthWorld.JarPosition(7) + new Vector3(1.9f, -GrowthWorld.JarPosition(7).y, 0), GrowthWorld.JarPosition(7));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchJar, "7", "The reticle focuses a jar");
             s.FocusName(out prompt);
@@ -99,7 +118,7 @@ namespace EvolutionShop
             shop.Carried.Clear();
             yield return null;
             Check(s.World.JarCreaturesShown == 3, "The jars show the three creatures");
-            LookAt(P(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
+            LookAt(GrowthWorld.JarPosition(0) + new Vector3(1.9f, -GrowthWorld.JarPosition(0).y, 0), GrowthWorld.JarPosition(0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchJar, "0", "The reticle focuses the first jar");
             s.FocusName(out prompt);
@@ -111,7 +130,7 @@ namespace EvolutionShop
             shop.DevelopmentGive(founders[3]);
             yield return Click();
             Check(shop.Specimens.Count == 4, "A fourth kind");
-            LookAt(P(-8.0f, 0, 13.6f), P(-9.8f, 1.4f, 13.6f));
+            LookAt(new Vector3(GrowthWorld.JarSectionPosition(0).x + 2.1f, 0, 19.6f), new Vector3(GrowthWorld.JarSectionPosition(0).x - 0.1f, 1.4f, 19.6f));
             yield return null; yield return null;
             yield return Shot("1305-jars");
 
@@ -156,7 +175,7 @@ namespace EvolutionShop
             Check(s.Ui.CardBuilds == builds && Left(after) != leftBefore && leftBefore != "", "F61: the time left counts down in place, without rebuilding the card");
             yield return Shot("1308b-tanks-tab");
             yield return Press(Key.Escape);
-            LookAt(P(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
+            LookAt(GrowthWorld.JarPosition(0) + new Vector3(1.9f, -GrowthWorld.JarPosition(0).y, 0), GrowthWorld.JarPosition(0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchJar, "0", "The reticle focuses the first jar again");
             yield return Press(Key.E);
@@ -167,11 +186,11 @@ namespace EvolutionShop
             Check(jarsText.Contains("PUT A CREATURE IN A JAR") || jarsText.Contains("Put a creature in a jar: one of each kind"), "F70: the Jars tab says what jars are for, in four steps");
             Check(jarsText.Contains("A tank breeds them by itself") && jarsText.Contains("Anything new waits on the tray"), "F70: the steps go on to the tank and the tray");
             int emptyShown = UQueryExtensions.Query<VisualElement>(s.Ui.CardElement, className: "gr-rs-jar--empty").ToList().Count;
-            Check(emptyShown == Mathf.Min(3, GrowthShop.SpecimenJars - shop.Specimens.Count) && (jarsText.Contains("Click a jar with a creature in hand") || jarsText.Contains("Press Put in a jar above")), "F70: the empty jars say how to fill one (" + emptyShown + " shown)");
+            Check(emptyShown == Mathf.Min(3, shop.Jars - shop.Specimens.Count) && (jarsText.Contains("Click a jar with a creature in hand") || jarsText.Contains("Press Put in a jar above")), "F70: the empty jars say how to fill one (" + emptyShown + " shown)");
             yield return Shot("1308c-jars-tab");
             yield return Press(Key.Escape);
             // F70: the sign over the jar wall says what the jars are for.
-            LookAt(P(-7.4f, 0, 13.6f), P(-9.9f, 2.0f, 13.6f));
+            LookAt(new Vector3(GrowthWorld.JarSectionPosition(0).x + 2.8f, 0, 19.6f), new Vector3(GrowthWorld.JarSectionPosition(0).x - 0.1f, 2.0f, 19.6f));
             yield return null; yield return null;
             yield return Shot("1308d-jar-wall-sign");
             LookAt(P(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
@@ -290,7 +309,7 @@ namespace EvolutionShop
             // ---- F3: what the microscope and the planner add
             Check(s.Ui.ShowTabNamed("Jars"), "The Jars tab");
             yield return null; yield return null;
-            Check(s.Ui.CardText().Contains("IN THE JARS · 4 OF " + GrowthShop.SpecimenJars) && CardButtons(b => b.text == "Take back").Count == 4, "It lists the jars, each with Take back");
+            Check(s.Ui.CardText().Contains("IN THE JARS · 4 OF " + shop.Jars) && CardButtons(b => b.text == "Take back").Count == 4, "It lists the jars, each with Take back");
             yield return Shot("1316-jars-tab");
             shop.DevelopmentGive(founders[4]);
             yield return new WaitForSeconds(0.25f); // the card shows what is in hand when it next rebuilds

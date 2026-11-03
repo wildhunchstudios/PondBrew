@@ -34,7 +34,7 @@ namespace EvolutionShop.Tests
             "PartitionB", "PartitionC", "PartitionAnnex", "PartitionWorkshop", "BannerCoral", "BannerYellow", "BannerBlue", "HallSpot",
             "ExhibitionSign", "Award", "DisplayTag", "StaffBoard", "HallBoard",
             "DecorReeds", "DecorLilyLamp", "DecorWatermill", "DecorVolcano", "DecorLantern", "DecorDuckSpa", "DecorLighthouse", "DecorChest", "DecorCoralArch",
-            "SiphonBin", "DecorDuck",
+            "SiphonBin", "DecorDuck", "JarShelf", "SpecimenJar",
         };
 
         static GameObject Piece(string name) => Resources.Load<GameObject>(GrowthWorld.KitPath + name);

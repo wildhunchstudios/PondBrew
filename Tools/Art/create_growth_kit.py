@@ -256,7 +256,7 @@ PLAN_K, PLAN_HUG, PLAN_EDGE_HUG, PLAN_LONG, PLAN_TOUCH = 1.25, 0.6, 0.35, 1.2, 0
 PLAN_OLD_ROOMS = [(-4, -4, 4, 4), (4, -4, 12, 4), (2, 4, 12, 9), (-4, 4, 2, 9), (-4, 9, 4, 17), (4, 9, 12, 15), (-10, 11, -4, 17)]
 PLAN_FLOORS = {'UnitAFloor', 'BackRoomFloor', 'AnnexFloor', 'WorkshopFloor', 'UnitBFloor', 'UnitCFloor', 'ResearchFloor'}
 PLAN_DRESSING = {'UnitADressing', 'Street', 'BackRoomDressing', 'AnnexDressing', 'WorkshopDressing', 'UnitBDressing', 'StreetEast',
-                 'UnitCDressing', 'FeatureWall', 'ResearchDressing', 'ResearchJars'}
+                 'UnitCDressing', 'FeatureWall', 'ResearchDressing'}  # ResearchJars is drawn on the new plan (F71)
 PLAN_TAG = None
 
 
@@ -2890,23 +2890,34 @@ def research_tank():
 
 
 def research_jars():
-    """The specimen jars on the west wall (GrowthWorldResearch.JarPosition): three shelves of five lit jars with yellow lids,
-    each holding one creature at run time, and a sign over them saying what they are for (F70). Standing in the room's own coordinates."""
-    x = -10 + 0.1
-    box((x + 0.03, 1.42, 13.6), (0.06, 1.5, 2.9), 'GK_TealDark', r=0.03)
-    box((x + 0.17, 2.2, 13.6), (0.34, 0.06, 2.96), 'GK_Teal', r=0.025)
-    for row in range(3):
-        y = 0.92 + row * 0.46
-        box((x + 0.17, y - 0.14, 13.6), (0.34, 0.04, 2.9), 'GK_Cream', r=0.015)
-        for col in range(5):
-            z = 12.55 + col * 0.525
-            cyl((x + 0.18, y + 0.04, z), 0.14, 0.3, 'GK_Glass', r=0, verts=20)
-            cyl((x + 0.18, y + 0.205, z), 0.145, 0.03, 'GK_Yellow', r=0.01, verts=20)
-    # GR-35 (F70): a sign over the jars saying what they are for, in one line, facing into the room.
-    box((x + 0.03, 2.56, 13.6), (0.04, 0.34, 2.36), 'GK_Teal', r=0.02)
-    box((x + 0.055, 2.56, 13.6), (0.02, 0.28, 2.28), 'GK_Cream', r=0.012)
-    text('One of each kind in a jar, for pairing', (x + 0.067, 2.56, 13.6), 0.085, 'GK_Ink', euler=(0, -90, 0), extrude=0.005, res=3)
+    """The jar wall's sign (F70), over its first two shelf sections on the west wall, saying what the jars are for, facing into the
+    room. GR-35 (F71): the shelves and jars are pieces of their own the game places as they are bought (JarShelf, SpecimenJar).
+    In the room's own coordinates, on GR-34's plan (GrowthWorldResearch.JarSectionPosition)."""
+    x, z = -12.5 + 0.1, 19.6
+    box((x + 0.03, 2.56, z), (0.04, 0.34, 2.36), 'GK_Teal', r=0.02)
+    box((x + 0.055, 2.56, z), (0.02, 0.28, 2.28), 'GK_Cream', r=0.012)
+    text('One of each kind in a jar, for pairing', (x + 0.067, 2.56, z), 0.085, 'GK_Ink', euler=(0, -90, 0), extrude=0.005, res=3)
     return join('ResearchJars')
+
+
+def jar_wall_section():
+    """GR-35 (F71): a shelf section of the jar wall (GrowthWorldResearch.JarSectionPosition; its front +Z, into the room): a dark teal
+    back, three cream shelves for two jars each and a teal top, a metre wide."""
+    box((0, 1.42, -0.15), (1.0, 1.5, 0.06), 'GK_TealDark', r=0.03)
+    box((0, 2.2, 0), (1.04, 0.06, 0.36), 'GK_Teal', r=0.025)
+    for row in range(3):
+        box((0, 0.78 + row * 0.46, 0), (1.0, 0.04, 0.34), 'GK_Cream', r=0.015)
+    for sx in (-1, 1):
+        box((sx * 0.5, 1.45, -0.02), (0.03, 1.46, 0.3), 'GK_Teal', r=0.012)
+    return join('JarShelf')
+
+
+def specimen_jar():
+    """GR-35 (F71): one specimen jar (GrowthWorldResearch.JarPosition, its centre the glass's): the glass and a yellow lid; a
+    creature swims in it at run time."""
+    cyl((0, 0, 0), 0.14, 0.3, 'GK_Glass', r=0, verts=20)
+    cyl((0, 0.165, 0), 0.145, 0.03, 'GK_Yellow', r=0.01, verts=20)
+    return join('SpecimenJar')
 
 
 def research_desk():
@@ -2982,7 +2993,7 @@ def decor_duck():
     return join('DecorDuck')
 
 
-WAVE_ROUND2 = [siphon_bin, decor_duck]
+WAVE_ROUND2 = [siphon_bin, decor_duck, jar_wall_section, specimen_jar]
 
 # GR-34: the parts these make are a wall's: they stretch along it on the new plan.
 lab_panels, wall_boards, wall_strip, door_frame, arch_frame_east_corner = (plan_wall(f) for f in (lab_panels, wall_boards, wall_strip, door_frame, arch_frame_east_corner))

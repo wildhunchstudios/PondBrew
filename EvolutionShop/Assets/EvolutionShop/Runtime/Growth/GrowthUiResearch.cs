@@ -25,9 +25,9 @@ namespace EvolutionShop
             var shop = s.Shop;
             var room = GrowthShop.ResearchDef;
             var body = Head("Research room", shop.ResearchRoom ? "open" : room.Credits + " credits", null, "Through the power room's west wall, once the generator stands. Era 3 and 3 stars.");
-            if (shop.ResearchRoom) { body.Add(L("Open: three research tanks, the specimen jars, the tray and the desk.", "gr-hint")); Footer(body); return; }
+            if (shop.ResearchRoom) { body.Add(L("Open: " + shop.ResearchTanks + (shop.ResearchTanks == 1 ? " research tank, " : " research tanks, ") + shop.Jars + " specimen jars, the tray and the desk. More jars and tanks are bought at the desk.", "gr-hint")); Footer(body); return; }
             var failure = shop.ResearchCheck(out string why);
-            BuyPanel(body, "The power room's west wall", "The research room", "Three small tanks that try pairs and mixes by themselves on the generator's power, jars for one creature of each kind, and a desk to plan it all.",
+            BuyPanel(body, "The power room's west wall", "The research room", "A small tank that tries pairs and mixes by itself on the generator's power, six jars for one creature of each kind, and a desk to plan it all; more jars and tanks are bought there.",
                 Gates(room.Era, room.Stars, room.Credits, 0, false), failure, why, "Open the research room for " + room.Credits + " cr", shop.BuyResearchRoom);
             Footer(body);
         }
@@ -36,7 +36,7 @@ namespace EvolutionShop
         {
             var shop = s.Shop;
             int working = shop.ResearchRunning.Count(j => j.Left > 0), waiting = shop.ResearchWaiting.Count();
-            string line = working + " of " + GrowthShop.ResearchTankCount + " tanks at work · " + waiting + " waiting";
+            string line = working + " of " + shop.ResearchTanks + (shop.ResearchTanks == 1 ? " tank" : " tanks") + " at work · " + waiting + " waiting";
             if (working > 0) line += " · next done in " + Mathf.Max(1, Mathf.CeilToInt(shop.ResearchRunning.Where(j => j.Left > 0).Min(j => j.Left))) + " s";
             var use = shop.PowerUse(GrowthShop.ResearchPower);
             if (use != null && use.Draw > 0 && use.Got < use.Draw - 0.001f) line += " · short of power";
@@ -77,7 +77,7 @@ namespace EvolutionShop
             var shop = s.Shop;
             body.Add(L("Each tank works through the queue by itself, by day and night, on a unit of the generator's power: " + shop.ResearchSeconds.ToString("0") + " s a job.", "gr-hint"));
             var tanks = Box("gr-rs-tanks");
-            for (int t = 0; t < GrowthShop.ResearchTankCount; t++)
+            for (int t = 0; t < shop.ResearchTanks; t++)
             {
                 int tank = t;
                 var job = shop.ResearchInTank(tank);
@@ -102,6 +102,14 @@ namespace EvolutionShop
                 tanks.Add(panel);
             }
             body.Add(tanks);
+            // GR-35 (F71): the next tank, bought here.
+            if (shop.ResearchTanks < GrowthShop.ResearchTanksMost)
+            {
+                var failure = shop.ResearchTankCheck(out string why);
+                var buy = Wide("Buy tank " + (shop.ResearchTanks + 1) + " · " + shop.ResearchTankNextCredits + " cr", () => s.Act(shop.BuyResearchTank), false, failure == GrowthFailure.None, why);
+                buy.name = "gr-buy-tank";
+                body.Add(buy);
+            }
             int waiting = shop.ResearchWaiting.Count();
             body.Add(L(waiting == 0 ? "Nothing waits in the queue." : waiting + (waiting == 1 ? " job waits" : " jobs wait") + " in the queue: pairs on the Pairs tab, mixes on the Mixes tab.", "gr-hint"));
             if (shop.ResearchTray.Count > 0)
@@ -372,7 +380,7 @@ namespace EvolutionShop
                 hands.Add(tile);
             }
             body.Add(hands);
-            body.Add(Eyebrow("In the jars · " + shop.Specimens.Count + " of " + GrowthShop.SpecimenJars));
+            body.Add(Eyebrow("In the jars · " + shop.Specimens.Count + " of " + shop.Jars));
             var jars = Box("gr-row");
             foreach (var specimen in shop.Specimens)
             {
@@ -387,7 +395,7 @@ namespace EvolutionShop
                 jars.Add(tile);
             }
             // GR-35 (F70): the empty jars say how to fill one (a few, then how many more).
-            int empty = GrowthShop.SpecimenJars - shop.Specimens.Count;
+            int empty = shop.Jars - shop.Specimens.Count;
             for (int i = 0; i < Mathf.Min(empty, EmptyJarsShown); i++)
             {
                 var tile = Box("gr-rs-jar", "gr-rs-jar--empty");
@@ -397,6 +405,14 @@ namespace EvolutionShop
             }
             if (empty > EmptyJarsShown) jars.Add(L("and " + (empty - EmptyJarsShown) + " more empty", "gr-hint"));
             body.Add(jars);
+            // GR-35 (F71): another shelf section, bought here.
+            if (shop.Jars < GrowthShop.JarsMost)
+            {
+                var failure = shop.JarsCheck(out string why);
+                var buy = Wide("Buy " + shop.JarsNext + " more jars · " + GrowthShop.JarSectionCredits + " cr", () => s.Act(shop.BuyJars), false, failure == GrowthFailure.None, why);
+                buy.name = "gr-buy-jars";
+                body.Add(buy);
+            }
             body.Add(L("A creature in a jar is kept for pairing: it never sells, and you can take it back any time.", "gr-hint"));
         }
 

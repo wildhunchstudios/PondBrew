@@ -6,20 +6,33 @@ using UnityEngine;
 namespace EvolutionShop
 {
     /// <summary>
-    /// GR-30 (tester round 1, F1): the research room west of the power room (x -10 to -4, z 11 to 17), behind a hoarding in the power
-    /// room's west wall until it opens. Three small tanks along its north wall, each with a round timer that fills as its job goes;
-    /// fifteen jars on its west wall, each showing the creature put in it; the desk against its south wall, its screen lighting a cell
-    /// for the first six jars' pairs; and the tray beside the desk, where new creatures wait to be taken. Kit pieces dress it; the
-    /// greybox's shapes keep the colliders and targets.
+    /// GR-30 (tester round 1, F1): the research room west of the power room (GR-34: x -12.5 to -5, z 13.75 to 21.25), behind a hoarding in
+    /// the power room's west wall until it opens. Its small tanks, four along its north wall and two along its east wall, each with a
+    /// round timer that fills as its job goes (GR-35, F71: the first with the room, the others bought at the desk, each place a dashed
+    /// slot until then); its jars on its west wall in six shelf sections of six, two across and three high (the first with the room),
+    /// each showing the creature put in it; the desk against its south wall, its screen lighting a cell for the first six jars' pairs;
+    /// and the tray beside the desk, where new creatures wait to be taken. Kit pieces dress it; the greybox's shapes keep the colliders
+    /// and targets.
     /// </summary>
     public sealed partial class GrowthWorld
     {
         /// <summary>The doorway along the power room's west wall, in metres from its south end (z 14.65 to 16.05).</summary>
         public const float ResearchDoorFrom = 5.65f, ResearchDoorTo = 7.05f;
         public static readonly Vector3 ResearchDeskPosition = At(-6.9f, 0, 11.6f), ResearchTrayPosition = At(-8.8f, 0, 11.45f);
-        public static Vector3 ResearchTankPosition(int tank) => At(-8.7f + tank * 1.4f, 0, 16.55f);
-        /// <summary>A jar's centre: three shelves of five, the lowest first.</summary>
-        public static Vector3 JarPosition(int jar) => At(-9.72f, 0.96f + jar / 5 * 0.46f, 12.55f + jar % 5 * 0.525f);
+        /// <summary>GR-35 (F71): a research tank's place: tanks 1 to 4 along the north wall facing south, 5 and 6 along the east wall
+        /// facing west, clear of the doorway (on the new plan, as previewed).</summary>
+        public static Vector3 ResearchTankPosition(int tank) => tank < 4 ? new Vector3(-11.3f + tank * 1.514f, 0, 20.84f) : new Vector3(-5.41f, 0, tank == 4 ? 17.11f : 15.54f);
+        public static float ResearchTankYaw(int tank) => tank < 4 ? 0 : 90;
+        /// <summary>GR-35 (F71): a shelf section's centre on the jar wall, the first at its north end.</summary>
+        public static Vector3 JarSectionPosition(int section) => new Vector3(JarWallX, 0, 20.12f - section * 1.043f);
+        /// <summary>A jar's centre: in its section, two across (north first) and three high, the lowest first.</summary>
+        public static Vector3 JarPosition(int jar)
+        {
+            int i = jar % GrowthShop.JarSection;
+            return JarSectionPosition(jar / GrowthShop.JarSection) + new Vector3(0, 0.96f + i / 2 * 0.46f, i % 2 == 0 ? 0.25f : -0.25f);
+        }
+        const float JarWallX = -12.22f;
+        public static int JarSections(int jars) => (jars + GrowthShop.JarSection - 1) / GrowthShop.JarSection;
         public static Vector3 ResearchTrayPlace(int place) => new Vector3(-0.45f + place * 0.18f, 0.92f, 0);
 
         const float ResearchWaterY = 1.04f, JarLength = 0.2f, TrayLength = 0.16f, TankLeast = 0.18f;
@@ -29,12 +42,14 @@ namespace EvolutionShop
         Light researchLight;
         Transform researchRoot, researchDesk, researchTray;
         Material wallResearch, tickOn, tickOff, cellOff, cellSame, cellTried, cellQueued;
-        readonly Transform[] researchTanks = new Transform[GrowthShop.ResearchTankCount];
-        readonly Renderer[][] researchTicks = new Renderer[GrowthShop.ResearchTankCount][];
-        readonly int[] ticksLit = new int[GrowthShop.ResearchTankCount];
-        readonly GrowthResearchJob[] tankShows = new GrowthResearchJob[GrowthShop.ResearchTankCount];
-        readonly List<GrowthCreatureView>[] tankViews = { new List<GrowthCreatureView>(), new List<GrowthCreatureView>(), new List<GrowthCreatureView>() };
-        readonly List<Transform>[] tankDoses = { new List<Transform>(), new List<Transform>(), new List<Transform>() };
+        readonly Transform[] researchTanks = new Transform[GrowthShop.ResearchTanksMost], tankSlots = new Transform[GrowthShop.ResearchTanksMost];
+        readonly Transform[] jarRoots = new Transform[GrowthShop.JarsMost], jarSections = new Transform[GrowthShop.JarsMost / GrowthShop.JarSection];
+        readonly Renderer[][] researchTicks = new Renderer[GrowthShop.ResearchTanksMost][];
+        readonly int[] ticksLit = new int[GrowthShop.ResearchTanksMost];
+        readonly GrowthResearchJob[] tankShows = new GrowthResearchJob[GrowthShop.ResearchTanksMost];
+        readonly List<GrowthCreatureView>[] tankViews = Enumerable.Range(0, GrowthShop.ResearchTanksMost).Select(_ => new List<GrowthCreatureView>()).ToArray();
+        readonly List<Transform>[] tankDoses = Enumerable.Range(0, GrowthShop.ResearchTanksMost).Select(_ => new List<Transform>()).ToArray();
+        int shownTanks = -1, shownJars = -1;
         readonly Dictionary<int, GrowthCreatureView> jarViews = new Dictionary<int, GrowthCreatureView>(), trayViews = new Dictionary<int, GrowthCreatureView>();
         readonly Renderer[,] screenCells = new Renderer[ScreenCells, ScreenCells];
         string screenShows;
@@ -49,6 +64,11 @@ namespace EvolutionShop
         public int ScreenCellsTried { get { int n = 0; foreach (var r in screenCells) if (r.sharedMaterial == cellTried) n++; return n; } }
         public int ScreenCellsQueued { get { int n = 0; foreach (var r in screenCells) if (r.sharedMaterial == cellQueued) n++; return n; } }
         public Transform ResearchTankRoot(int tank) => researchTanks[tank];
+        /// <summary>Validation (F71): the tanks, tank slots, jars and shelf sections showing.</summary>
+        public int ResearchTanksShown => researchTanks.Count(t => t != null && t.gameObject.activeSelf);
+        public int ResearchTankSlotsShown => tankSlots.Count(t => t != null && t.gameObject.activeSelf);
+        public int JarsShown => jarRoots.Count(t => t != null && t.gameObject.activeSelf);
+        public int JarSectionsShown => jarSections.Count(t => t != null && t.gameObject.activeSelf);
 
         void ResearchRoom()
         {
@@ -86,8 +106,9 @@ namespace EvolutionShop
             for (int k = 0; k < researchTanks.Length; k++)
             {
                 var root = new GameObject("Research tank " + (k + 1)).transform; root.SetParent(researchRoot, false);
-                root.localPosition = ResearchTankPosition(k);
+                root.localPosition = ResearchTankPosition(k); root.localRotation = Quaternion.Euler(0, ResearchTankYaw(k), 0);
                 researchTanks[k] = root;
+                tankSlots[k] = ResearchTankSlot(k);
                 Box(root, "Cabinet", new Vector3(0, 0.39f, 0), new Vector3(1.1f, 0.78f, 0.5f), cabinet);
                 Box(root, "Frame", new Vector3(0, 0.81f, 0), new Vector3(1.14f, 0.06f, 0.52f), trim);
                 Box(root, "Glass", new Vector3(0, 1.05f, 0), new Vector3(1.06f, 0.46f, 0.44f), glass);
@@ -102,13 +123,25 @@ namespace EvolutionShop
                     ticks[i] = tick.GetComponent<Renderer>();
                 }
             }
-            for (int jar = 0; jar < GrowthShop.SpecimenJars; jar++)
+            // GR-35 (F71): the jar wall's six shelf sections and their jars, each shown once bought.
+            for (int section = 0; section < jarSections.Length; section++)
+            {
+                var shelf = new GameObject("Jar shelf " + (section + 1)).transform; shelf.SetParent(researchRoot, false);
+                shelf.localPosition = JarSectionPosition(section); shelf.localRotation = Quaternion.Euler(0, 90, 0); // its front (+z) into the room
+                Box(shelf, "Back", new Vector3(0, 1.42f, -0.15f), new Vector3(1.0f, 1.5f, 0.06f), cabinet);
+                for (int row = 0; row < 3; row++) Box(shelf, "Shelf", new Vector3(0, 0.78f + row * 0.46f, 0), new Vector3(1.0f, 0.04f, 0.34f), stand);
+                jarSections[section] = shelf;
+                shelf.gameObject.SetActive(false);
+            }
+            for (int jar = 0; jar < GrowthShop.JarsMost; jar++)
             {
                 var g = new GameObject("Jar " + (jar + 1)); g.transform.SetParent(researchRoot, false);
                 g.transform.localPosition = JarPosition(jar);
                 Target(g, GrowthTargetKind.ResearchJar, jar.ToString());
                 AddCollider(g, Vector3.zero, new Vector3(0.3f, 0.42f, 0.5f));
-                if (!LookOn) Box(g.transform, "Jar", Vector3.zero, new Vector3(0.28f, 0.34f, 0.28f), glass);
+                Box(g.transform, "Jar", Vector3.zero, new Vector3(0.28f, 0.34f, 0.28f), glass);
+                jarRoots[jar] = g.transform;
+                g.SetActive(false);
             }
             var desk = new GameObject("Research desk").transform; desk.SetParent(researchRoot, false);
             desk.localPosition = ResearchDeskPosition;
@@ -133,12 +166,34 @@ namespace EvolutionShop
             AddCollider(tray.gameObject, new Vector3(0, 0.53f, 0), new Vector3(1.26f, 1.06f, 0.56f));
         }
 
+        /// <summary>GR-35 (F71): a tank's place before it is bought: a dashed outline and a card, focused to open the desk's Tanks tab.</summary>
+        Transform ResearchTankSlot(int k)
+        {
+            var slot = new GameObject("Research tank place " + (k + 1)).transform; slot.SetParent(researchRoot, false);
+            slot.localPosition = ResearchTankPosition(k); slot.localRotation = Quaternion.Euler(0, ResearchTankYaw(k), 0);
+            for (int i = 0; i < 5; i++)
+            {
+                float a = -0.48f + 0.24f * i;
+                Box(slot, "Dash", new Vector3(a, 0.01f, 0.25f), new Vector3(0.14f, 0.01f, 0.03f), marker);
+                Box(slot, "Dash", new Vector3(a, 0.01f, -0.25f), new Vector3(0.14f, 0.01f, 0.03f), marker);
+            }
+            foreach (int side in new[] { -1, 1 }) Box(slot, "Dash", new Vector3(side * 0.55f, 0.01f, 0), new Vector3(0.03f, 0.01f, 0.3f), marker);
+            Box(slot, "Sign", new Vector3(0, 0.02f, 0), new Vector3(0.36f, 0.02f, 0.2f), paper);
+            Target(slot.gameObject, GrowthTargetKind.ResearchTank, k.ToString());
+            var c = slot.gameObject.AddComponent<BoxCollider>();
+            c.center = new Vector3(0, 0.45f, 0); c.size = new Vector3(1.1f, 0.9f, 0.5f); c.isTrigger = true; // focus, not a wall
+            slot.gameObject.SetActive(false);
+            return slot;
+        }
+
         /// <summary>The look's pieces for the room.</summary>
         void DressResearch(Transform dressing)
         {
             Hide(researchRoot, "Research floor");
             foreach (var asset in new[] { "ResearchFloor", "ResearchDressing", "ResearchJars" }) Kit(dressing, asset);
             foreach (var tank in researchTanks) Kit(tank, "ResearchTank", default, null, "Cabinet", "Frame");
+            foreach (var shelf in jarSections) Kit(shelf, "JarShelf", default, null, "Back", "Shelf");
+            foreach (var jar in jarRoots) Kit(jar, "SpecimenJar", default, null, "Jar");
             Kit(researchDesk, "ResearchDesk", default, null, "Desk body", "Desk top", "Screen");
             Kit(researchTray, "ResearchTray", default, null, "Tray stand", "Tray glass");
             // The hoarding is built facing -X with the others, so it is turned to face the power room.
@@ -154,6 +209,20 @@ namespace EvolutionShop
         {
             SyncViews(jarViews, shop.Specimens, researchRoot);
             SyncViews(trayViews, shop.ResearchTray, researchTray);
+            // GR-35 (F71): what is bought shows; a tank's place shows its slot until then.
+            int tanksNow = shop.ResearchRoom ? shop.ResearchTanks : 1, jarsNow = shop.ResearchRoom ? shop.Jars : GrowthShop.JarSection; // behind its hoarding, as it opens
+            int tanksKey = shop.ResearchRoom ? tanksNow : 0; // the places show once the room is open
+            if (tanksKey != shownTanks)
+            {
+                shownTanks = tanksKey;
+                for (int k = 0; k < researchTanks.Length; k++) { researchTanks[k].gameObject.SetActive(k < tanksNow); tankSlots[k].gameObject.SetActive(shop.ResearchRoom && k >= tanksNow); }
+            }
+            if (jarsNow != shownJars)
+            {
+                shownJars = jarsNow;
+                for (int j = 0; j < jarRoots.Length; j++) jarRoots[j].gameObject.SetActive(j < jarsNow);
+                for (int k = 0; k < jarSections.Length; k++) jarSections[k].gameObject.SetActive(k < JarSections(jarsNow));
+            }
             for (int k = 0; k < researchTanks.Length; k++)
             {
                 var job = shop.ResearchRoom ? shop.ResearchInTank(k) : null;

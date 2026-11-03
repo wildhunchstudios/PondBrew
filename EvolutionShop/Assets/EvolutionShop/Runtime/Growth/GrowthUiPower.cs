@@ -66,7 +66,7 @@ namespace EvolutionShop
                 bool machine = id == GrowthShop.DoserPower || id == GrowthShop.SorterPower || id == GrowthShop.ResearchPower;
                 string status = id == GrowthShop.DoserPower ? shop.AutoStatus : id == GrowthShop.SorterPower ? shop.SorterStatus : id == GrowthShop.ResearchPower ? shop.ResearchStatus : shop.LineStatus(shop.Pipe(int.Parse(id.Substring(5))));
                 bool electric = machine || shop.ElectricPumps;
-                int units = id == GrowthShop.DoserPower ? GrowthContent.AutoDoserUnits : id == GrowthShop.SorterPower ? (int)shop.SorterUnits : id == GrowthShop.ResearchPower ? (int)(GrowthShop.ResearchTankCount * GrowthShop.ResearchTankUnits) : shop.PumpUnits;
+                int units = id == GrowthShop.DoserPower ? GrowthContent.AutoDoserUnits : id == GrowthShop.SorterPower ? (int)shop.SorterUnits : id == GrowthShop.ResearchPower ? (int)(Mathf.Max(1, shop.ResearchTanks) * GrowthShop.ResearchTankUnits) : shop.PumpUnits;
                 // A machine short of power says so in words as well as its pill's colour.
                 int tone = use != null && use.Draw > 0 && use.Got < use.Draw - 0.001f ? (use.Got > 0.001f ? 1 : 2) : status.StartsWith("Waiting") ? 2 : 0;
                 int index = i;

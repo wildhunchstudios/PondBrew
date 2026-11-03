@@ -29,6 +29,8 @@ namespace EvolutionShop
             var shop = GrowthStarts.Make(GrowthStarts.Look);
             shop.Credits = 10000000; shop.Rp = 100000; shop.Reputation = Mathf.Max(shop.Reputation, GrowthContent.StarThresholds[4] + 5); shop.Era = Mathf.Max(shop.Era, 5);
             if (!shop.ResearchRoom) Ok(shop.BuyResearchRoom(), "Open the research room");
+            while (shop.ResearchTanks < GrowthShop.ResearchTanksMost) Ok(shop.BuyResearchTank(), "Buy research tank " + (shop.ResearchTanks + 1));
+            while (shop.Jars < GrowthShop.JarsMost) Ok(shop.BuyJars(), "Buy more jars");
             foreach (var r in new[] { "r1", "r2", "r3", "r4" }) if (shop.ContainerAt(r) == null) shop.BuyRack(r);
             for (int b = 0; b < GrowthLab.BufferPlaces; b++) if (shop.BufferAt(b) == null) shop.BuyBuffer(b);
             foreach (var place in shop.FreePlaces.ToList())
