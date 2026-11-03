@@ -19,8 +19,8 @@ namespace EvolutionShop
     public sealed partial class GrowthWorld
     {
         public const float RevealSeconds = 2f;
-        public static readonly Vector3 UnitCArch = new Vector3(10.875f, 0, 4f), HallBoardPosition = new Vector3(10.3f, 1.6f, 8.86f), FeatureTankPosition = new Vector3(5.975f, 0, 8.75f);
-        public static readonly Vector3 BayWindowBenchPosition = new Vector3(8f, 0, -3.675f), WorkshopDomePosition = new Vector3(8f, 3.6f, 12f);
+        public static readonly Vector3 UnitCArch = new Vector3(S(10.875f), 0, S(4f)), HallBoardPosition = At(10.3f, 1.6f, 8.86f), FeatureTankPosition = At(5.975f, 0, 8.75f);
+        public static readonly Vector3 BayWindowBenchPosition = At(8f, 0, -3.675f), WorkshopDomePosition = At(8f, 3.6f, 12f);
 
         /// <summary>A room's opening: its partition (sunk into the floor as it opens), its lamp, and for the hall the banners it
         /// unrolls and the spotlights it brings up; Progress runs from 0 to 1 through a reveal.</summary>
@@ -159,10 +159,10 @@ namespace EvolutionShop
             Vector3 centre = new Vector3((room.X0 + room.X1) * 0.5f, 0, (room.Z0 + room.Z1) * 0.5f), size = new Vector3(room.X1 - room.X0, 0.1f, room.Z1 - room.Z0);
             Box(rooms, "Unit C floor", centre + new Vector3(0, -0.05f, 0), size, floorB, true);
             Box(rooms, "Unit C ceiling", centre + new Vector3(0, 3.25f, 0), size, wall);
-            Wall("Unit C east wall", new Vector2(room.X1, room.Z0), new Vector2(room.X1, room.Z1), 3.2f, wall);
+            Wall("Unit C east wall", new Vector2(12, 4), new Vector2(12, 9), 3.2f, wall); // the plan before (GR-34)
             unitCLight = Lamp("Shop unit C lamp", new Vector3(centre.x, 2.3f, centre.z), 10, 1.25f);
             // The feature wall: an accent panel along the north wall, with a built-in feature tank between its two Show tank places.
-            Box(rooms, "Feature wall", new Vector3(6f, 1.6f, room.Z1 - 0.11f), new Vector3(7.6f, 3.2f, 0.02f), accent);
+            RoomBox(rooms, "Feature wall", new Vector3(6f, 1.6f, 9 - 0.11f), new Vector3(7.6f, 3.2f, 0.02f), accent);
             var tank = new GameObject("Feature tank (set piece)").transform; tank.SetParent(rooms, false);
             tank.localPosition = FeatureTankPosition;
             Box(tank, "Frame", new Vector3(0, 1.2f, 0), new Vector3(1.25f, 1.6f, 0.3f), cabinet, true);
@@ -199,8 +199,8 @@ namespace EvolutionShop
         {
             var root = new GameObject("Set pieces").transform; root.SetParent(transform, false);
             // Unit B's bay window (the window is a gap in its front wall) and its bench.
-            Box(root, "Bay window sill", new Vector3(BayWindowBenchPosition.x, 0.45f, -4), new Vector3(1.8f, 0.9f, 0.22f), wall, true);
-            Box(root, "Bay window glass", new Vector3(BayWindowBenchPosition.x, 1.65f, -4), new Vector3(1.8f, 1.5f, 0.05f), glass, true);
+            RoomBox(root, "Bay window sill", new Vector3(8f, 0.45f, -4), new Vector3(1.8f, 0.9f, 0.22f), wall, true);
+            RoomBox(root, "Bay window glass", new Vector3(8f, 1.65f, -4), new Vector3(1.8f, 1.5f, 0.05f), glass, true);
             var bench = new GameObject("Bay window bench").transform; bench.SetParent(root, false);
             bench.localPosition = BayWindowBenchPosition;
             Box(bench, "Seat", new Vector3(0, 0.225f, 0), new Vector3(1.8f, 0.45f, 0.45f), counterMat, true);
@@ -208,14 +208,14 @@ namespace EvolutionShop
             foreach (int side in new[] { -1, 1 }) Box(bench, "Pillow", new Vector3(side * 0.62f, 0.62f, -0.1f), new Vector3(0.32f, 0.22f, 0.12f), bannerMats[side < 0 ? 1 : 2]);
             // Unit A's window display: a small lit tank on the sill.
             var display = new GameObject("Window display").transform; display.SetParent(root, false);
-            display.localPosition = new Vector3(-2.6f, 0.9f, -3.93f);
+            display.localPosition = At(-2.6f, 0.9f, -3.93f);
             Box(display, "Stand", new Vector3(0, 0.04f, 0), new Vector3(0.7f, 0.08f, 0.16f), stand);
             Box(display, "Water", new Vector3(0, 0.25f, 0), new Vector3(0.6f, 0.32f, 0.12f), water);
             Box(display, "Glass", new Vector3(0, 0.26f, 0), new Vector3(0.62f, 0.36f, 0.14f), glass);
             Box(display, "Price card", new Vector3(0.38f, 0.12f, 0.06f), new Vector3(0.1f, 0.07f, 0.01f), paper);
             // The annex's pipe gallery: a manifold of copper pipes, headers, valves and gauges on its west wall.
             var gallery = new GameObject("Pipe gallery").transform; gallery.SetParent(root, false);
-            gallery.localPosition = new Vector3(-3.84f, 0, 12.7f);
+            gallery.localPosition = At(-3.84f, 0, 12.7f);
             for (int i = 0; i < 4; i++)
             {
                 float z = -1.2f + 0.8f * i;
@@ -246,7 +246,7 @@ namespace EvolutionShop
             var root = new GameObject("Exhibition hall finish").transform; root.SetParent(transform, false);
             var hall = new Opening();
             int index = 0;
-            foreach (var (position, yaw) in new[] { (new Vector3(2.4f, 3.15f, 3.82f), 0f), (new Vector3(7.0f, 3.15f, 3.82f), 0f), (new Vector3(8.0f, 3.15f, -3.82f), 180f), (new Vector3(10.9f, 3.15f, 8.8f), 0f), (new Vector3(2.2f, 3.15f, 6.5f), 90f) })
+            foreach (var (position, yaw) in new[] { (At(2.4f, 3.15f, 3.82f), 0f), (At(7.0f, 3.15f, 3.82f), 0f), (At(8.0f, 3.15f, -3.82f), 180f), (At(10.9f, 3.15f, 8.8f), 0f), (At(2.2f, 3.15f, 6.5f), 90f) })
             {
                 var rod = Box(root, "Banner rod", position, new Vector3(0.9f, 0.04f, 0.04f), trim);
                 rod.localRotation = Quaternion.Euler(0, yaw, 0);

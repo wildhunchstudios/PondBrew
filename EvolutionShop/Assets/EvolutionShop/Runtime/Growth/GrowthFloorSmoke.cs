@@ -56,7 +56,7 @@ namespace EvolutionShop
             Check(shop.Era == 4 && shop.Containers.Any(c => c.Place == "a3" && c.Kind == "large"), "Fixture: an era 4 shop with a Large tank and no helpers");
 
             // ---- F22: the run button is faster than walking
-            var gap = new Vector3(1.32f, 0, -0.2f);
+            var gap = P(1.32f, 0, -0.2f);
             Stand(gap, 180, 0);
             yield return null; yield return null;
             yield return WalkKeys(0.45f, null, Key.W);
@@ -70,12 +70,12 @@ namespace EvolutionShop
             // ---- F24: the real body fits between the catalog and the counter, and walks behind the counter
             Stand(gap, 180, 0);
             yield return null; yield return null;
-            yield return WalkKeys(3, () => s.Player.transform.position.z < -3.45f, Key.W);
-            Check(s.Player.transform.position.z < -3.45f, "Walking south, the body passes between the catalog and the counter (z " + s.Player.transform.position.z.ToString("0.00") + ")");
-            Stand(new Vector3(s.Player.transform.position.x, 0, -3.5f), 90, 0);
+            yield return WalkKeys(3, () => s.Player.transform.position.z < P(0, 0, -3.45f).z, Key.W);
+            Check(s.Player.transform.position.z < P(0, 0, -3.45f).z, "Walking south, the body passes between the catalog and the counter (z " + s.Player.transform.position.z.ToString("0.00") + ")");
+            Stand(new Vector3(s.Player.transform.position.x, 0, P(0, 0, -3.5f).z), 90, 0);
             yield return null; yield return null;
-            yield return WalkKeys(3, () => s.Player.transform.position.x > 3.2f, Key.W);
-            Check(s.Player.transform.position.x > 3.2f, "Walking east, the body gets behind the counter (x " + s.Player.transform.position.x.ToString("0.00") + ")");
+            yield return WalkKeys(3, () => s.Player.transform.position.x > P(3.2f, 0, -3.5f).x, Key.W);
+            Check(s.Player.transform.position.x > P(3.2f, 0, -3.5f).x, "Walking east, the body gets behind the counter (x " + s.Player.transform.position.x.ToString("0.00") + ")");
             LookAt(s.Player.transform.position, GrowthWorld.CounterPosition + new Vector3(0, 0.9f, 0));
             yield return Shot("1200-behind-the-counter");
 
@@ -151,7 +151,7 @@ namespace EvolutionShop
             var large = shop.Containers.First(c => c.Place == "a3");
             for (int i = 0; i < 3; i++) Ok(shop.DevelopmentStock(tank.Id, "pondlet"), "Stock a Pondlet");
             for (int i = 0; i < 3; i++) Ok(shop.DevelopmentStock(large.Id, "pondlet"), "Stock a Pondlet in the Large tank");
-            var counterFront = GrowthWorld.CounterPosition + new Vector3(0, 0, -1.25f);
+            var counterFront = GrowthWorld.CounterPosition + new Vector3(0, 0, -1.0f); // GR-34: where the front wall used to push the player to
             var counterAim = GrowthWorld.CounterPosition + new Vector3(0, 0.9f, 0);
             yield return AimAt(counterFront, counterAim, GrowthTargetKind.Counter, null, "From behind it, the reticle focuses the counter");
             yield return Press(Key.E);

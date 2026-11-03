@@ -170,7 +170,7 @@ namespace EvolutionShop
             // ---- the frame budget with the bubbles in view (uncapped, as the other routes measure)
             int previousRate = Application.targetFrameRate, previousVSync = QualitySettings.vSyncCount;
             Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
-            yield return Measure("614-wishes-bubbles", new Vector3(1.25f, 0, -1.9f), new Vector3(0.6f, 1.8f, 1.9f), 6);
+            yield return Measure("614-wishes-bubbles", P(1.25f, 0, -1.9f), P(0.6f, 1.8f, 1.9f), 6);
             Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
             int inView = staged.Count(v => ViewOf(v).Bubble.BubbleTransform.GetComponentsInChildren<Renderer>().Any(r => r.isVisible));
             Check(inView >= 3, "The measure's view has " + inView + " of the five bubbles in it");
@@ -203,7 +203,7 @@ namespace EvolutionShop
                 "The sale's note says the wish was granted, with its tip");
             Check(ViewOf(first).Bubble.Content == "heart" && ViewOf(first).Bubble.HeartShown, "The bubble pops into a heart");
             Check(s.Audio.Chimes == chimes + 1, "A chime by the visitor (" + s.Audio.Chimes + ")");
-            LookAt(new Vector3(1.25f, 0, -1.9f), ViewOf(first).transform.position + Vector3.up * 1.7f);
+            LookAt(P(1.25f, 0, -1.9f), ViewOf(first).transform.position + Vector3.up * 1.7f);
             yield return new WaitForSeconds(0.2f);
             Check(ViewOf(first).Bubble.HeartShown, "The heart still rising as the view turns to it");
             yield return Shot("610-wish-granted-heart");

@@ -16,10 +16,10 @@ namespace EvolutionShop
     {
         /// <summary>The doorway along the power room's west wall, in metres from its south end (z 14.65 to 16.05).</summary>
         public const float ResearchDoorFrom = 5.65f, ResearchDoorTo = 7.05f;
-        public static readonly Vector3 ResearchDeskPosition = new Vector3(-6.9f, 0, 11.6f), ResearchTrayPosition = new Vector3(-8.8f, 0, 11.45f);
-        public static Vector3 ResearchTankPosition(int tank) => new Vector3(-8.7f + tank * 1.4f, 0, 16.55f);
+        public static readonly Vector3 ResearchDeskPosition = At(-6.9f, 0, 11.6f), ResearchTrayPosition = At(-8.8f, 0, 11.45f);
+        public static Vector3 ResearchTankPosition(int tank) => At(-8.7f + tank * 1.4f, 0, 16.55f);
         /// <summary>A jar's centre: three shelves of five, the lowest first.</summary>
-        public static Vector3 JarPosition(int jar) => new Vector3(-9.72f, 0.96f + jar / 5 * 0.46f, 12.55f + jar % 5 * 0.525f);
+        public static Vector3 JarPosition(int jar) => At(-9.72f, 0.96f + jar / 5 * 0.46f, 12.55f + jar % 5 * 0.525f);
         public static Vector3 ResearchTrayPlace(int place) => new Vector3(-0.45f + place * 0.18f, 0.92f, 0);
 
         const float ResearchWaterY = 1.04f, JarLength = 0.2f, TrayLength = 0.16f, TankLeast = 0.18f;
@@ -55,22 +55,22 @@ namespace EvolutionShop
             wallResearch = LookOn ? Plastic("research wall", C("#EFE9FF"), 0.12f) : ShopWorld.MakeMaterial("GR research wall", new Color(0.87f, 0.84f, 0.95f), 0, 0.2f);
             var rooms = new GameObject("Research room").transform; rooms.SetParent(transform, false);
             researchRoot = rooms;
-            Box(rooms, "Research floor", new Vector3(-7, -0.05f, 14), new Vector3(6, 0.1f, 6), floorTile, true);
-            Box(rooms, "Research ceiling", new Vector3(-7, 3.65f, 14), new Vector3(6, 0.1f, 6), wallResearch);
+            RoomBox(rooms, "Research floor", new Vector3(-7, -0.05f, 14), new Vector3(6, 0.1f, 6), floorTile, true);
+            RoomBox(rooms, "Research ceiling", new Vector3(-7, 3.65f, 14), new Vector3(6, 0.1f, 6), wallResearch);
             Wall("Research north wall", new Vector2(-10, 17), new Vector2(-4, 17), 3.6f, wallResearch);
             Wall("Research west wall", new Vector2(-10, 11), new Vector2(-10, 17), 3.6f, wallResearch);
             Wall("Research south wall", new Vector2(-10, 11), new Vector2(-4, 11), 3.6f, wallResearch);
             // The power room's west wall is this room's east wall: a lilac face on this side of it, round the doorway.
-            Box(rooms, "Research east face", new Vector3(-4.105f, 1.8f, 12.825f), new Vector3(0.01f, 3.6f, 3.65f), wallResearch);
-            Box(rooms, "Research east face", new Vector3(-4.105f, 1.8f, 16.525f), new Vector3(0.01f, 3.6f, 0.95f), wallResearch);
-            Box(rooms, "Research east face", new Vector3(-4.105f, 3.2f, 15.35f), new Vector3(0.01f, 0.8f, 1.4f), wallResearch);
-            researchLight = Lamp("Research lamp", new Vector3(-7, 3.3f, 14), 9, 1.15f);
+            RoomBox(rooms, "Research east face", new Vector3(-4.105f, 1.8f, 12.825f), new Vector3(0.01f, 3.6f, 3.65f), wallResearch);
+            RoomBox(rooms, "Research east face", new Vector3(-4.105f, 1.8f, 16.525f), new Vector3(0.01f, 3.6f, 0.95f), wallResearch);
+            RoomBox(rooms, "Research east face", new Vector3(-4.105f, 3.2f, 15.35f), new Vector3(0.01f, 0.8f, 1.4f), wallResearch);
+            researchLight = Lamp("Research lamp", At(-7, 3.3f, 14), 9, 1.15f);
             researchWall = new GameObject("Research partition");
             researchWall.transform.SetParent(transform, false);
             float w = ResearchDoorTo - ResearchDoorFrom, z = 9 + (ResearchDoorFrom + ResearchDoorTo) * 0.5f;
-            var board = Box(researchWall.transform, "Partition", new Vector3(-4, 1.4f, z), new Vector3(0.12f, 2.8f, w), partition, true);
-            Box(researchWall.transform, "Coming soon sign", new Vector3(-3.93f, 1.6f, z), new Vector3(0.02f, 0.5f, w * 0.75f), sign);
-            Box(researchWall.transform, "Sign stripe", new Vector3(-3.91f, 1.6f, z), new Vector3(0.02f, 0.1f, w * 0.55f), paper);
+            var board = RoomBox(researchWall.transform, "Partition", new Vector3(-4, 1.4f, z), new Vector3(0.12f, 2.8f, w), partition, true);
+            RoomBox(researchWall.transform, "Coming soon sign", new Vector3(-3.93f, 1.6f, z), new Vector3(0.02f, 0.5f, w * 0.75f), sign);
+            RoomBox(researchWall.transform, "Sign stripe", new Vector3(-3.91f, 1.6f, z), new Vector3(0.02f, 0.1f, w * 0.55f), paper);
             Target(board.gameObject, GrowthTargetKind.ResearchWall, "research");
             ResearchStations();
         }
@@ -144,7 +144,7 @@ namespace EvolutionShop
             // The hoarding is built facing -X with the others, so it is turned to face the power room.
             var hoarding = Kit(researchWall.transform, "PartitionResearch", default, null, "Partition", "Coming soon sign", "Sign stripe");
             if (hoarding) hoarding.localRotation = Quaternion.Euler(0, 180, 0);
-            if (researchLight) researchLight.transform.localPosition = new Vector3(-7, 3.3f, 14);
+            if (researchLight) researchLight.transform.localPosition = At(-7, 3.3f, 14);
             labLamps = labLamps.Append(researchLight).ToArray();
         }
 
@@ -210,7 +210,7 @@ namespace EvolutionShop
         {
             if (!shop.ResearchRoom || session.Player == null) return;
             var at = session.Player.transform.position;
-            if (at.x > 2 || at.z < 7) return;
+            if (at.x > S(2) || at.z < S(7)) return;
             int index = 0;
             foreach (var s in shop.Specimens)
             {

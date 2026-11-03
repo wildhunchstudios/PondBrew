@@ -280,7 +280,7 @@ namespace EvolutionShop.Tests
         {
             var counter = GrowthSpaces.Fixtures.First(f => f.id == "counter").area;
             var catalog = GrowthSpaces.Fixtures.First(f => f.id == "catalog").area;
-            const float body = 0.6f, frontWall = -4;
+            const float body = 0.6f, frontWall = -4f * GrowthPlan.K; // GR-34: the front wall on the new plan
             Assert.That(counter.X0 - catalog.X1, Is.GreaterThanOrEqualTo(body), "between the catalog and the counter");
             Assert.That(counter.Z0 - frontWall, Is.GreaterThanOrEqualTo(body), "behind the counter");
             Assert.That(GrowthSpaces.Problems(), Is.Empty, "and the layout's own checks still pass");

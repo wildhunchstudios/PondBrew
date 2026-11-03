@@ -91,8 +91,8 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.GrowerCapacity == 16 && shop.RefillSeconds == 1 && shop.GrowerCapacityOf("mist") == 32 && shop.RefillSecondsOf("mist") == 0.5f &&
                 s.World.LookLevel("grower:bloom") == 4 && s.World.LookLevel("grower:mist") == 3, "Growers hold 16 and refill a dose a second; the vat holds 32 and refills twice as fast; their looks follow");
-            LookAt(new Vector3(-1.6f, 0, 6.2f), new Vector3(-3.45f, 0.9f, 6.0f)); yield return Shot("93-growers");
-            LookAt(new Vector3(-1.75f, 0, 7.5f), GrowthWorld.GrowerPositions["mist"] + new Vector3(0, 0.8f, 0));
+            LookAt(P(-1.6f, 0, 6.2f), P(-3.45f, 0.9f, 6.0f)); yield return Shot("93-growers");
+            LookAt(P(-1.75f, 0, 7.5f), GrowthWorld.GrowerPositions["mist"] + new Vector3(0, 0.8f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Grower, "mist", "The reticle focuses the vat");
             yield return Press(Key.E);
@@ -187,7 +187,7 @@ namespace EvolutionShop
             Check(shop.UpgradeCheck("bench", out var bench3, out string waits) == GrowthFailure.None && bench3.Level == 3 &&
                 shop.UpgradeCheck("counter", out _, out waits) == GrowthFailure.Locked && waits.Contains("Hire Pip first"), "The second till needs Pip (GR-09); the bench's analyzer is on offer");
             Check(new[] { "siphon", "grower", "incubator", "breeding", "vat" }.All(st => shop.UpgradeCheck(st, out _, out _) == GrowthFailure.MaxLevel), "Every other station is at its highest level");
-            LookAt(new Vector3(0.9f, 0, 5.0f), new Vector3(-2.0f, 0.8f, 7.6f)); yield return Shot("99-back-room-levels");
+            LookAt(P(0.9f, 0, 5.0f), P(-2.0f, 0.8f, 7.6f)); yield return Shot("99-back-room-levels");
 
             Check(s.SaveNow(), "Save");
             string before = JsonUtility.ToJson(s.Shop.Snapshot());

@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "f4e0b56230059e51e652b38481dff4974c9ecd0afde487a1a91a3a0ec274477c",
+  "source_script_sha256": "91316e6e02eece1d31058ee075a62fbd5db1b09a8727bc3adb0c0962692fc829",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -641,23 +641,23 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -4.0,
+          -5.0,
           -0.044,
-          -4.0
+          -5.0
         ],
         "max": [
-          4.0,
+          5.0,
           0.006,
-          4.0
+          5.0
         ]
       },
       "id": "UnitAFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/UnitAFloor.fbx",
-      "sha256": "bcfbda12d82ed58f06ad10a880f08eb6d1bf43dd93612af0e29f50c033dde3b6",
-      "bytes": 289052
+      "sha256": "ea3df168232ad09fa80c721789a9439f83a3e8da389220b9fb71f8e69e1c75ff",
+      "bytes": 291884
     },
     {
-      "triangles": 76556,
+      "triangles": 76664,
       "materials": [
         "GK_Beam",
         "GK_Coral",
@@ -686,20 +686,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -4.0,
+          -5.0,
           0.0,
-          -4.0
+          -5.0
         ],
         "max": [
-          4.0,
+          5.0,
           3.2,
-          4.0
+          5.0
         ]
       },
       "id": "UnitADressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/UnitADressing.fbx",
-      "sha256": "0c7a0ab6c6fa821201e5bdf848b9cc0c3e5cc3d545671f0cb6f561292b7da980",
-      "bytes": 1627452
+      "sha256": "4c7ff98e6803d87ac20a00dcd9394aa773f541aecd186517a1431dd868efadfa",
+      "bytes": 1654572
     },
     {
       "triangles": 21536,
@@ -721,20 +721,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -20.0,
+          -25.0,
           -0.21,
-          -36.574
+          -37.574
         ],
         "max": [
-          20.0,
+          25.0,
           12.485,
-          -4.1
+          -5.1
         ]
       },
       "id": "Street",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/Street.fbx",
-      "sha256": "09ee2421debe537a931b8db0da3199925c590a01022300aba6b9db4de2327dc7",
-      "bytes": 455708
+      "sha256": "95893f7d3be8d5760e14c16709d5543f3ce100144c58917da233b5b339104e78",
+      "bytes": 463708
     },
     {
       "triangles": 12972,
@@ -746,20 +746,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -4.0,
+          -5.0,
           -0.044,
-          4.0
+          5.0
         ],
         "max": [
-          2.0,
+          2.5,
           0.006,
-          9.0
+          11.25
         ]
       },
       "id": "BackRoomFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BackRoomFloor.fbx",
-      "sha256": "c187e5370dd2f68c687c6c5776dab1442cd085fc3678cf94ae9813a17767a09f",
-      "bytes": 217020
+      "sha256": "f24a9449608bb482dd6c28a19ea540220cde0fbd1b1fc20ac0c1505e778c1dda",
+      "bytes": 232492
     },
     {
       "triangles": 15964,
@@ -780,20 +780,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -4.0,
+          -5.0,
           0.0,
-          4.0
+          5.0
         ],
         "max": [
-          2.0,
+          2.5,
           3.6,
-          9.0
+          11.25
         ]
       },
       "id": "BackRoomDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/BackRoomDressing.fbx",
-      "sha256": "1875a9dd0279791bc52b3ecd525046ca9150cafc10895f52fe4e5b14244d7a71",
-      "bytes": 358268
+      "sha256": "eecbb19afb246d237ec059e34f571a2357834aa3b322ae70ca7a8d90fdac1c99",
+      "bytes": 362252
     },
     {
       "triangles": 12896,
@@ -2078,20 +2078,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -4.0,
+          -5.0,
           -0.044,
-          9.0
+          11.25
         ],
         "max": [
-          4.0,
+          5.0,
           0.006,
-          17.0
+          21.25
         ]
       },
       "id": "AnnexFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/AnnexFloor.fbx",
-      "sha256": "c558d40a0c98f98777c956e67ee571470893a5da736ea459afcd583e3db62b6c",
-      "bytes": 386588
+      "sha256": "fa9404800d7a20f281345afb0d93a29b7ff049099572bcbd9c21626866e74c6d",
+      "bytes": 422476
     },
     {
       "triangles": 26200,
@@ -2118,20 +2118,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -4.0,
+          -5.0,
           0.0,
-          9.0
+          11.25
         ],
         "max": [
-          4.0,
+          5.0,
           3.6,
-          17.0
+          21.25
         ]
       },
       "id": "AnnexDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/AnnexDressing.fbx",
-      "sha256": "7a7afdf5a26805f022a5640f277feb33cfcc3b28faea100ea2f3730d6e3691a6",
-      "bytes": 553452
+      "sha256": "8a54546af3925894cd32f0efdc83ea62e206da5879ea23a60cee29c934aa9957",
+      "bytes": 567884
     },
     {
       "triangles": 5196,
@@ -2143,20 +2143,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          4.0,
+          5.0,
           -0.044,
-          9.0
+          11.25
         ],
         "max": [
-          12.0,
+          15.0,
           0.006,
-          15.0
+          18.75
         ]
       },
       "id": "WorkshopFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/WorkshopFloor.fbx",
-      "sha256": "cd0a2e81592f1369ea6d34307664c349eed0937dfe903e971c52b79d52a6373a",
-      "bytes": 95724
+      "sha256": "55b7049560396d8b478173a69808925557e0bcdbcceed921ccc5c1c400da3655",
+      "bytes": 105900
     },
     {
       "triangles": 25004,
@@ -2182,20 +2182,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          4.0,
+          5.0,
           0.0,
-          9.0
+          11.25
         ],
         "max": [
-          12.0,
+          15.0,
           3.6,
-          15.0
+          18.75
         ]
       },
       "id": "WorkshopDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/WorkshopDressing.fbx",
-      "sha256": "948455090e2f57c2e9bfa9dfb265e6d52b372ed9aeffb4e32da193f8bc9d4519",
-      "bytes": 552828
+      "sha256": "19f9aa2a04d57ee7261306b1f539506c8e435f7e7a1482acaebfe60d05c8ac6c",
+      "bytes": 558924
     },
     {
       "triangles": 14160,
@@ -2207,20 +2207,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          4.0,
+          5.0,
           -0.044,
-          -4.0
+          -5.0
         ],
         "max": [
-          12.0,
+          15.0,
           0.006,
-          4.0
+          5.0
         ]
       },
       "id": "UnitBFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/UnitBFloor.fbx",
-      "sha256": "a388b6f562c14af907351ceccd95e3569f11482d9764882e86936f23e4863ae6",
-      "bytes": 289884
+      "sha256": "d42a5e48bf97f318284117236a92a83a71ad71ad01a4494ee39ec228343b3810",
+      "bytes": 292556
     },
     {
       "triangles": 36064,
@@ -2246,20 +2246,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          4.0,
+          5.0,
           0.0,
-          -4.0
+          -5.0
         ],
         "max": [
-          12.0,
+          15.0,
           3.2,
-          4.0
+          5.0
         ]
       },
       "id": "UnitBDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/UnitBDressing.fbx",
-      "sha256": "18f0b1ee7cce1a05c2ec60f6c30f765cd3e56af7bc7258435d8545687c326672",
-      "bytes": 746892
+      "sha256": "5193db0808c725df821080c17fd4df34cebf9ea74d8de9d5a7537b52b794b165",
+      "bytes": 765900
     },
     {
       "triangles": 7760,
@@ -2276,20 +2276,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          6.0,
+          7.5,
           -0.186,
-          -11.94
+          -12.94
         ],
         "max": [
-          16.0,
+          20.0,
           4.32,
-          -4.1
+          -5.1
         ]
       },
       "id": "StreetEast",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/StreetEast.fbx",
-      "sha256": "920baa8ca543a80603c40cdea186d9f780021bd83fab323a5ef6ded9e0c6c5a7",
-      "bytes": 183116
+      "sha256": "8d6868fe08022f0055de2344e3d1b17d07c3a6ea1dcd4b3f6cef9d7abd303024",
+      "bytes": 186716
     },
     {
       "triangles": 14852,
@@ -2376,20 +2376,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          2.0,
+          2.5,
           -0.044,
-          4.0
+          5.0
         ],
         "max": [
-          12.0,
+          15.0,
           0.006,
-          9.0
+          11.25
         ]
       },
       "id": "UnitCFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/UnitCFloor.fbx",
-      "sha256": "4737290da5243f65c7e02bfb36a6d06efbc0c26b40975ed7ff4a4e9345ad60c9",
-      "bytes": 335532
+      "sha256": "594127463ba48678e47d204e91ba9465d71fad31f487f4ea344624b00fb552a4",
+      "bytes": 381404
     },
     {
       "triangles": 25308,
@@ -2409,20 +2409,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          2.0,
+          2.5,
           0.0,
-          4.0
+          5.0
         ],
         "max": [
-          12.0,
+          15.0,
           3.2,
-          9.0
+          11.25
         ]
       },
       "id": "UnitCDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/UnitCDressing.fbx",
-      "sha256": "308d01cda314ad0e766a26ae2074144c705240ff64212f3568bf20de751c2873",
-      "bytes": 526396
+      "sha256": "c52bda8527d21847d9d21a64227ddf1c2ffb23980e3746f90dfcc799a74dba6d",
+      "bytes": 543964
     },
     {
       "triangles": 12512,
@@ -2440,20 +2440,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          2.19,
+          2.738,
           0.0,
-          8.8
+          11.05
         ],
         "max": [
-          9.81,
+          12.263,
           3.2,
-          8.9
+          11.15
         ]
       },
       "id": "FeatureWall",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/FeatureWall.fbx",
-      "sha256": "9715df9a793991cb0dbee32691b34d8a36079c898a652d6c81526f6d4f0a4103",
-      "bytes": 231676
+      "sha256": "83f3c84739632fe27d23f35d48752caa8347aec19e09dd97073e2450175ad700",
+      "bytes": 249388
     },
     {
       "triangles": 13520,
@@ -2496,7 +2496,7 @@
       "bytes": 308636
     },
     {
-      "triangles": 18320,
+      "triangles": 20816,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2508,23 +2508,23 @@
       ],
       "bounds_unity_m": {
         "min": [
-          3.921,
+          4.92,
           0.0,
-          -1.602
+          -2.002
         ],
         "max": [
-          4.06,
+          5.06,
           2.4,
-          1.602
+          2.002
         ]
       },
       "id": "PartitionB",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionB.fbx",
-      "sha256": "9656e649daa6a1a279d551c6ef37d2756a0d7bccd3f551d3addc35e04870779b",
-      "bytes": 410572
+      "sha256": "a0a7d870fe506ed52a0dde4a7a4c6d2d97ac44a01aed436d02314b8e77802a48",
+      "bytes": 456524
     },
     {
-      "triangles": 13944,
+      "triangles": 15508,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2536,23 +2536,23 @@
       ],
       "bounds_unity_m": {
         "min": [
-          9.898,
+          12.373,
           0.0,
-          3.921
+          4.92
         ],
         "max": [
-          11.844,
+          14.807,
           2.4,
-          4.06
+          5.06
         ]
       },
       "id": "PartitionC",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionC.fbx",
-      "sha256": "49c1c1db02b7ebf81fd9c542d593d44b6425e962dd5f3d5122c068cdd1ed4b6a",
-      "bytes": 316636
+      "sha256": "52009b510d86fe1b43283dfe49bb2590f8aab10e8c10be909f2b35fcdd4b1cec",
+      "bytes": 345020
     },
     {
-      "triangles": 15128,
+      "triangles": 16392,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2564,23 +2564,23 @@
       ],
       "bounds_unity_m": {
         "min": [
-          0.448,
+          0.56,
           0.0,
-          8.921
+          11.171
         ],
         "max": [
-          1.844,
+          2.306,
           2.8,
-          9.06
+          11.31
         ]
       },
       "id": "PartitionAnnex",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionAnnex.fbx",
-      "sha256": "1a7c113e52b51679f4c8ec1feee1a5fd7ba19b862010925d8f949425e89b2092",
-      "bytes": 353340
+      "sha256": "cca70a5c4121eb59d8b79295b3080647f730c673cfa62de4a4b3b1ecf73a315f",
+      "bytes": 376044
     },
     {
-      "triangles": 14296,
+      "triangles": 15560,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -2592,20 +2592,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          3.921,
+          4.92,
           0.0,
-          9.606
+          12.006
         ],
         "max": [
-          4.06,
+          5.06,
           2.8,
-          11.002
+          13.752
         ]
       },
       "id": "PartitionWorkshop",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionWorkshop.fbx",
-      "sha256": "216bb37b4ec9fd2f355da99734113fa906ef6f264ad8255acf650754d8734797",
-      "bytes": 333116
+      "sha256": "05beff33ddcd5211d8d8dfe27bc8a59db63851841e2b9cd8aec295cc1b70348f",
+      "bytes": 346652
     },
     {
       "triangles": 6848,
@@ -3327,20 +3327,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -10.0,
+          -12.5,
           -0.044,
-          11.0
+          13.75
         ],
         "max": [
-          -4.0,
+          -5.0,
           0.006,
-          17.0
+          21.25
         ]
       },
       "id": "ResearchFloor",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchFloor.fbx",
-      "sha256": "35b50e9af3d5694d20d9c0d60eb7ebbbdbec6f94017e721a4674a1290fd81a85",
-      "bytes": 116300
+      "sha256": "68c3b5cac012c298bb893553b48ae415776605c93a4468659c66439eecf179c4",
+      "bytes": 126572
     },
     {
       "triangles": 14108,
@@ -3360,20 +3360,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -10.0,
+          -12.5,
           0.0,
-          11.0
+          13.75
         ],
         "max": [
-          -4.0,
+          -5.0,
           3.6,
-          17.0
+          21.25
         ]
       },
       "id": "ResearchDressing",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchDressing.fbx",
-      "sha256": "42af173c56a318ccafb38827bf814401296aef031ed6d2cd674f4d265bf82018",
-      "bytes": 319084
+      "sha256": "1eb694a4a52f96c11be2689f97411576a02b5a6ed482e1e901fb29fab4dfabd4",
+      "bytes": 322444
     },
     {
       "triangles": 3764,
@@ -3416,20 +3416,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          -9.9,
+          -12.4,
           0.67,
-          12.12
+          15.15
         ],
         "max": [
-          -9.56,
+          -12.06,
           2.73,
-          15.08
+          18.85
         ]
       },
       "id": "ResearchJars",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchJars.fbx",
-      "sha256": "a75e522e0ed37dc8a16cbf94e8121bfd1fe701c18d8588359085a7e2f207c1a5",
-      "bytes": 468748
+      "sha256": "1b9cebda8785d098e8c172b708b6dc9c0691410087a1feb828bae39809867529",
+      "bytes": 476940
     },
     {
       "triangles": 2512,
@@ -3485,7 +3485,7 @@
       "bytes": 67916
     },
     {
-      "triangles": 15956,
+      "triangles": 17220,
       "materials": [
         "GK_Coral",
         "GK_Cream",
@@ -3498,20 +3498,20 @@
       ],
       "bounds_unity_m": {
         "min": [
-          3.921,
+          4.92,
           0.0,
-          -16.05
+          -20.062
         ],
         "max": [
-          4.06,
+          5.06,
           2.8,
-          -14.648
+          -18.31
         ]
       },
       "id": "PartitionResearch",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionResearch.fbx",
-      "sha256": "09db064f7a388a51ac802ab8bd9282122952bba95f4fd35af79e57e8acdddd9b",
-      "bytes": 370300
+      "sha256": "6e6f05d3c20bd53a3934cf0f7ac7fb1e0dde27897d09ebba559b52a4602566c9",
+      "bytes": 380380
     },
     {
       "triangles": 6512,

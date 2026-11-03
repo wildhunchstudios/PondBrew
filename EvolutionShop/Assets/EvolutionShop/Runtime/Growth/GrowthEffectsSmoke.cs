@@ -154,7 +154,7 @@ namespace EvolutionShop
             for (int i = 0; i < 400 && shop.Visitors.Count == 0; i++) { s.Advance(0.1f); if (i % 5 == 0) yield return null; }
             yield return null; yield return null;
             Check(fx.Emitted(GrowthFx.Puff) > puffs, "A visitor comes in: a puff at the door");
-            LookAt(new Vector3(-1.2f, 0, -0.6f), new Vector3(-2.6f, 1.2f, -3.6f));
+            LookAt(P(-1.2f, 0, -0.6f), P(-2.6f, 1.2f, -3.6f));
             yield return new WaitForSeconds(2f);
             Check(fx.Emitted(GrowthFx.Dust) > 3 && GrowthWorld.Sunbeams.Any(b => Vector3.Distance(fx.Last[GrowthFx.Dust], b) < 4), "By day, dust drifts in the sunlight by the window and the door (" + fx.Emitted(GrowthFx.Dust) + " motes)");
             yield return Shot("808-sunlit-dust");
@@ -178,7 +178,7 @@ namespace EvolutionShop
             Check(fx.Emitted(GrowthFx.Cloud) > clouds, "and a grey cloud over one tired of waiting (patience run out, labelled)");
 
             // ---- big moments
-            LookAt(new Vector3(-0.5f, 0, -1f), new Vector3(-0.5f, 1.5f, 1f));
+            LookAt(P(-0.5f, 0, -1f), P(-0.5f, 1.5f, 1f));
             stars = fx.Emitted(GrowthFx.Star);
             fx.Event(new GrowthEvent { Kind = GrowthEventKind.StarUp });
             yield return new WaitForSeconds(0.3f);
@@ -208,7 +208,7 @@ namespace EvolutionShop
             // ---- the frame budget with the effects playing (uncapped)
             int previousRate = Application.targetFrameRate, previousVSync = QualitySettings.vSyncCount;
             Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
-            yield return Measure("812-effects-unit-a", new Vector3(1.25f, 0, -1.9f), new Vector3(0.6f, 1.6f, 1.9f), 5);
+            yield return Measure("812-effects-unit-a", P(1.25f, 0, -1.9f), P(0.6f, 1.6f, 1.9f), 5);
             yield return Measure("813-effects-back-room", GrowthWorld.GrowerFront("bloom") + new Vector3(0.8f, 0, 1.2f), bloom + new Vector3(0, 1.1f, 0), 5);
             Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
             Check(fx.AliveTotal < 1500, "Never more than a few hundred particles at once (" + fx.AliveTotal + " now)");

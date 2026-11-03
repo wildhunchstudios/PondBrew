@@ -80,7 +80,7 @@ namespace EvolutionShop
             {
                 var holder = new GameObject(list[i].kind + " " + list[i].seed).transform;
                 holder.SetParent(root, false);
-                holder.SetPositionAndRotation(new Vector3(-0.05f + 0.65f * i, 0, z), Quaternion.Euler(0, 180, 0));
+                holder.SetPositionAndRotation(P(-0.05f, 0, z) + new Vector3(0.65f * i, 0, 0), Quaternion.Euler(0, 180, 0));
                 var p = GrowthPerson.Build(GrowthPersonLook.For(list[i].kind, list[i].seed), holder);
                 var pose = new GrowthPersonPose();
                 GrowthPeopleMotion.Stand(pose, i * 0.7f, 0.2f);
@@ -131,8 +131,8 @@ namespace EvolutionShop
             var casuals = variety.GetComponentsInChildren<GrowthPerson>();
             int looks = casuals.Select(p => p.Look.Hair + p.Look.Colours["TOP"] + p.Look.Colours["SKIN"] + p.Look.Colours["HAIR"] + p.Look.Bottom).Distinct().Count();
             Check(looks == casuals.Length, "Five casual visitors, five looks of their own (hair, top, skin, hair colour, trousers or shorts)");
-            LookAt(new Vector3(1.25f, 0, -0.6f), new Vector3(1.25f, 0.95f, 1.9f)); yield return Shot("500-everyone-night");
-            LookAt(new Vector3(1.25f, 0, 0.55f), new Vector3(1.25f, 1.15f, 1.6f)); yield return Shot("501-faces-night");
+            LookAt(P(1.25f, 0, -0.6f), P(1.25f, 0.95f, 1.9f)); yield return Shot("500-everyone-night");
+            LookAt(P(1.25f, 0, 0.55f), P(1.25f, 1.15f, 1.6f)); yield return Shot("501-faces-night");
             Destroy(variety.gameObject); Destroy(everyone.gameObject);
             yield return null;
 
@@ -158,7 +158,7 @@ namespace EvolutionShop
                         armSwing = Mathf.Max(armSwing, Quaternion.Angle(arm, first.Person.Joint("shoulder.R").localRotation));
                     }
                     Check(hipSwing > 15f && armSwing > 10f, "Walking, their legs and arms swing (" + hipSwing.ToString("0") + " degrees at the hip and " + armSwing.ToString("0") + " at the shoulder over 0.6 s)");
-                    LookAt(new Vector3(1.1f, 0, -0.9f), new Vector3(-0.6f, 1.0f, -3.4f)); yield return Shot("502-walking-in");
+                    LookAt(P(1.1f, 0, -0.9f), P(-0.6f, 1.0f, -3.4f)); yield return Shot("502-walking-in");
                 }
                 else if (i < 3) yield return new WaitForSeconds(1.2f);
             }
@@ -180,7 +180,7 @@ namespace EvolutionShop
                 yield return new WaitForSeconds(0.8f);
                 Check(Quaternion.Angle(spine, p.Joint("spine").localRotation) > 1f, "Browsing, they keep moving (leaning in and out)");
             }
-            LookAt(new Vector3(1.6f, 0, -2.9f), new Vector3(-1.6f, 0.9f, 0.9f)); yield return Shot("503-browsing-unit-a");
+            LookAt(P(1.6f, 0, -2.9f), P(-1.6f, 0.9f, 0.9f)); yield return Shot("503-browsing-unit-a");
             for (int i = 0; i < 4; i++) { FaceOf(ViewOf(visitors[i]).transform, 1.4f, i == 1 ? -1 : 1, 0.2f); yield return Shot("50" + (4 + i) + "-browsing-" + types[i].Item1); }
 
             // Three of them decide and queue: the front one pays, the others wait.
@@ -193,13 +193,13 @@ namespace EvolutionShop
                 "The front of the queue holds out the coins (" + string.Join(", ", payer.Person.HeldShown) + ")");
             Check(ViewOf(queue[1]).Activity == "wait" && ViewOf(queue[2]).Activity == "wait", "The others in the queue wait");
             Check(queue.All(v => Vector3.Angle(ViewOf(v).transform.forward, Vector3.back) < 20f), "The queue faces the counter");
-            LookAt(new Vector3(0.6f, 0, -2.5f), new Vector3(2.6f, 1.0f, -0.9f)); yield return Shot("510-the-queue");
+            LookAt(P(0.6f, 0, -2.5f), P(2.6f, 1.0f, -0.9f)); yield return Shot("510-the-queue");
 
             var tired = queue[2]; var tiredView = ViewOf(tired);
             tired.Patience = GrowthShop.QueuePatience * 0.12f;
             yield return new WaitForSeconds(0.5f);
             Check(tiredView.Activity == "wait" && tiredView.Person.MouthShown == "o", "Patience running low: the last in the queue taps a foot, checks the time, and the mouth falls open");
-            LookAt(new Vector3(1.4f, 0, -1.3f), tiredView.transform.position + Vector3.up * 1.2f); yield return Shot("511-impatient");
+            LookAt(P(1.4f, 0, -1.3f), tiredView.transform.position + Vector3.up * 1.2f); yield return Shot("511-impatient");
             tired.Patience = 0.05f;
             yield return Wait(() => tiredView.Activity == "leave-huff", 5, "the tired visitor leaving in a huff");
             Check(tired.Outcome == GrowthVisitOutcome.TiredOfWaiting, "Out of patience, they leave in a huff, arms folded (the rules' TiredOfWaiting)");
@@ -244,18 +244,18 @@ namespace EvolutionShop
             variety = Lineup("variety", Enumerable.Range(21, 5).Select(i => ("casual", i)), 2.35f);
             yield return new WaitForSeconds(2.5f);
             Check(w.LookKeyName == "morning", "By day, the morning key");
-            LookAt(new Vector3(1.25f, 0, -0.6f), new Vector3(1.25f, 0.95f, 1.9f)); yield return Shot("520-everyone-day");
-            LookAt(new Vector3(1.25f, 0, 0.55f), new Vector3(1.25f, 1.15f, 1.6f)); yield return Shot("521-faces-day");
+            LookAt(P(1.25f, 0, -0.6f), P(1.25f, 0.95f, 1.9f)); yield return Shot("520-everyone-day");
+            LookAt(P(1.25f, 0, 0.55f), P(1.25f, 1.15f, 1.6f)); yield return Shot("521-faces-day");
             yield return Wait(() => shop.Visitors.Count > 0 && w.VisitorViews.Values.Any(v => v.Person != null && v.Activity == "walk"), 20, "a visitor of the shop's own");
             var own = shop.Visitors.First(); var ownView = ViewOf(own);
             PersonChecks(ownView.Person, GrowthPersonLook.KindOf(own.Type), "The day's first visitor (a " + own.Type + " the rules sent)");
             yield return new WaitForSeconds(1.2f);
-            LookAt(new Vector3(1.1f, 0, -0.9f), ownView.transform.position + Vector3.up * 1.0f); yield return Shot("522-a-visitor-of-the-day");
+            LookAt(P(1.1f, 0, -0.9f), ownView.transform.position + Vector3.up * 1.0f); yield return Shot("522-a-visitor-of-the-day");
 
             int previousRate = Application.targetFrameRate, previousVSync = QualitySettings.vSyncCount;
             Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
             int people = FindObjectsByType<GrowthPerson>(FindObjectsSortMode.None).Length;
-            yield return Measure("530-people-crowd", new Vector3(1.25f, 0, -1.9f), new Vector3(0.6f, 1.0f, 1.9f), 6);
+            yield return Measure("530-people-crowd", P(1.25f, 0, -1.9f), P(0.6f, 1.0f, 1.9f), 6);
             Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
             Check(people >= 10, "The crowd in view: " + people + " people (the lineups and the day's visitors)");
             File.WriteAllText(Path.Combine(evidence, "people-timings.json"), JsonUtility.ToJson(new DensityReport
@@ -302,8 +302,8 @@ namespace EvolutionShop
             Check(w.FigurePerson("nori").HeldShown.Contains("R.jar") && w.FigurePerson("moss").HeldShown.Contains("R.pipette") && w.FigurePerson("moss").HeldShown.Contains("L.clipboard") && !w.FigurePerson("pip").HeldShown.Any(),
                 "Nori holds the shop's jar; Moss the pipette and the clipboard; Pip's hands are free for the till");
             Check(w.FigurePerson("moss").Colour("DOSE") == GrowthPersonLook.EmptyDose, "Moss's pipette holds no dose yet (rinsed pale)");
-            LookAt(new Vector3(2.0f, 0, -1.4f), w.FigurePosition("pip") + Vector3.up * 1.2f); yield return Shot("540-pip-behind-the-counter");
-            LookAt(new Vector3(0.8f, 0, 2.2f), new Vector3(0.45f, 1.0f, 5.8f)); yield return Shot("541-nori-and-moss-in-the-back-room");
+            LookAt(P(2.0f, 0, -1.4f), w.FigurePosition("pip") + Vector3.up * 1.2f); yield return Shot("540-pip-behind-the-counter");
+            LookAt(P(0.8f, 0, 2.2f), P(0.45f, 1.0f, 5.8f)); yield return Shot("541-nori-and-moss-in-the-back-room");
 
             // Nori carries the player's clutch to the shop's tank, the Pondlet swimming in the jar, and reaches in at the tank.
             Ok(s.Act(() => shop.SetTarget("pondlet", 2)), "Target 2 Pondlets (Nori's card's + button)");
@@ -339,7 +339,7 @@ namespace EvolutionShop
             var mossPerson = w.FigurePerson("moss");
             Check(moss.Dose != null && w.FigureHoldsDose("moss") && mossPerson.Colour("DOSE") == GrowthContent.Culture(moss.Dose).Hex && w.FigureActivity("moss") == "walk",
                 "Moss brings a dose of " + moss.Dose + " to the incubator, the pipette filled in its colour (" + mossPerson.Colour("DOSE") + ")");
-            LookAt(new Vector3(1.3f, 0, 5.8f), w.FigurePosition("moss") + Vector3.up * 1.0f); yield return Shot("544-moss-with-a-dose");
+            LookAt(P(1.3f, 0, 5.8f), w.FigurePosition("moss") + Vector3.up * 1.0f); yield return Shot("544-moss-with-a-dose");
             yield return Wait(() => moss.Step == "dose-back" && moss.Progress > Walk(moss), 20, "Moss at the incubator");
             yield return null;
             Check(w.FigureActivity("moss") == "work", "At the incubator Moss squeezes the drops in (the board's drops)");
@@ -356,7 +356,7 @@ namespace EvolutionShop
             var pipPerson = w.FigurePerson("pip");
             Check(pip.Step == "serve" && w.FigureActivity("pip") == "work" && pipPerson.HandShape("L") == "grip" && pipPerson.HandShape("R") == "open",
                 "Pip bags an order at the till: the scanner's sweep in the left hand, the right open to wave");
-            LookAt(new Vector3(1.6f, 0, -2.9f), w.FigurePosition("pip") + Vector3.up * 1.2f); yield return Shot("546-pip-at-the-till");
+            LookAt(P(1.6f, 0, -2.9f), w.FigurePosition("pip") + Vector3.up * 1.2f); yield return Shot("546-pip-at-the-till");
             var arm = pipPerson.Joint("shoulder.R").localRotation; float wave = 0;
             for (float until = Time.time + 1.2f; Time.time < until && pip.Step == "serve";)
             {
@@ -546,7 +546,7 @@ namespace EvolutionShop
             // Pip's little dance after a sale, only with nobody waiting; it stops the moment a visitor queues.
             gags.Policy.Clear();
             var buyer = Visitor(35, "bargain", 500, at["a1"]); buyer.BrowseFor = 0.5f;
-            LookAt(new Vector3(1.6f, 0, -2.9f), w.FigurePosition("pip") + Vector3.up * 1.2f);
+            LookAt(P(1.6f, 0, -2.9f), w.FigurePosition("pip") + Vector3.up * 1.2f);
             var pip = shop.Helper("pip");
             int sold = shop.SalesTotal;
             yield return Wait(() => shop.SalesTotal > sold, 30, "Pip to sell to the visitor");
@@ -641,7 +641,7 @@ namespace EvolutionShop
                 "Fixture: the power room open, the generator's hand crank, growers with a tap, the twin-chamber siphon, four creatures in the a1 tank, at night");
 
             // Empty-handed, the hands are out of view.
-            LookAt(new Vector3(1.6f, 0, -2.9f), new Vector3(-1.2f, 1.2f, 1.6f));
+            LookAt(P(1.6f, 0, -2.9f), P(-1.2f, 1.2f, 1.6f));
             yield return new WaitForSeconds(0.8f);
             Check(!hands.Shown("L") && !hands.Shown("R") && hands.LeftDoing == "rest" && hands.RightDoing == "rest", "Empty-handed, the hands are lowered out of view");
 

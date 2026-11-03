@@ -502,12 +502,12 @@ namespace EvolutionShop.Growth
 
         public static readonly ExpansionDef[] Expansions =
         {
-            new ExpansionDef { Id = "unit-a", Name = "Shop unit A and laboratory", Room = "shop", Credits = 0, Stars = 1, Era = 1, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 2, ExtraWalkSeconds = 0 },
-            new ExpansionDef { Id = "unit-b", Name = "Shop unit B (east)", Room = "shop", Credits = 400, Stars = 2, Era = 2, Width = 8, Depth = 8, ContainerPlaces = 4, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
-            new ExpansionDef { Id = "annex", Name = "Power room", Room = "lab", Credits = 1000, Stars = 3, Era = 3, Width = 8, Depth = 8, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 2 },
-            new ExpansionDef { Id = "research", Name = "Research room", Room = "lab", Credits = 1500, Stars = 3, Era = 3, Width = 6, Depth = 6, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 0 },
-            new ExpansionDef { Id = "unit-c", Name = "Shop unit C (north-east)", Room = "shop", Credits = 4000, Stars = 4, Era = 4, Width = 10, Depth = 5, ContainerPlaces = 6, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
-            new ExpansionDef { Id = "workshop", Name = "Workshop", Room = "lab", Credits = 5000, Stars = 4, Era = 4, Width = 8, Depth = 6, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 1 },
+            new ExpansionDef { Id = "unit-a", Name = "Shop unit A and laboratory", Room = "shop", Credits = 0, Stars = 1, Era = 1, Width = 10, Depth = 10, ContainerPlaces = 4, VisitorsAtOnce = 2, ExtraWalkSeconds = 0 },
+            new ExpansionDef { Id = "unit-b", Name = "Shop unit B (east)", Room = "shop", Credits = 400, Stars = 2, Era = 2, Width = 10, Depth = 10, ContainerPlaces = 4, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
+            new ExpansionDef { Id = "annex", Name = "Power room", Room = "lab", Credits = 1000, Stars = 3, Era = 3, Width = 10, Depth = 10, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 2 },
+            new ExpansionDef { Id = "research", Name = "Research room", Room = "lab", Credits = 1500, Stars = 3, Era = 3, Width = 7.5f, Depth = 7.5f, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 0 },
+            new ExpansionDef { Id = "unit-c", Name = "Shop unit C (north-east)", Room = "shop", Credits = 4000, Stars = 4, Era = 4, Width = 12.5f, Depth = 6.25f, ContainerPlaces = 6, VisitorsAtOnce = 1, ExtraWalkSeconds = 2 },
+            new ExpansionDef { Id = "workshop", Name = "Workshop", Room = "lab", Credits = 5000, Stars = 4, Era = 4, Width = 10, Depth = 7.5f, ContainerPlaces = 0, VisitorsAtOnce = 0, ExtraWalkSeconds = 1 },
             new ExpansionDef { Id = "exhibition-hall", Name = "Exhibition hall finish", Room = "shop", Credits = 6000, Stars = 5, Era = 5, Width = 0, Depth = 0, ContainerPlaces = 2, VisitorsAtOnce = 1, ExtraWalkSeconds = 0 },
         };
 

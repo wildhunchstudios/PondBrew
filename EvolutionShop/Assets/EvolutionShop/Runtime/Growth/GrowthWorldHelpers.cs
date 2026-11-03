@@ -22,7 +22,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthWorld
     {
-        public static readonly Vector3 StaffBoardPosition = new Vector3(-0.45f, 1.6f, 3.86f);
+        public static readonly Vector3 StaffBoardPosition = At(-0.45f, 1.6f, 3.86f);
 
         sealed class HelperFigure
         {

@@ -56,7 +56,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.Level("breeding") == 1 && shop.Credits == 640 && shop.Rp == 10 && s.World.BreedingTankStanding, "The breeding tank stands in its place: 60 credits and 5 RP paid");
             s.SetCard(GrowthCard.None);
-            LookAt(new Vector3(0.7f, 0, 6.4f), GrowthWorld.BreedingPosition + new Vector3(0, 0.8f, 0)); yield return Shot("81-breeding-tank");
+            LookAt(P(0.7f, 0, 6.4f), GrowthWorld.BreedingPosition + new Vector3(0, 0.8f, 0)); yield return Shot("81-breeding-tank");
 
             // A Bubblebelly and a Pondlet from the Starter tank, put in with clicks.
             Ok(s.Act(() => shop.TakeOut(starter.Id, bubble.Id)), "Take the Bubblebelly out of the Starter tank (as the tank card's button does)");
@@ -129,7 +129,7 @@ namespace EvolutionShop
             // The two Pondlets for later stay in hand through the day, so no visitor buys them.
             Ok(s.Act(() => shop.TakeOut(starter.Id, pondletA.Id)), "Take a Pondlet out of the Starter tank and keep it in hand");
             Ok(s.Act(() => shop.TakeOut(starter.Id, pondletB.Id)), "Take the other Pondlet too");
-            LookAt(new Vector3(1.6f, 0, 0.6f), GrowthWorld.CounterPosition + new Vector3(0, 1.0f, 0));
+            LookAt(P(1.6f, 0, 0.6f), GrowthWorld.CounterPosition + new Vector3(0, 1.0f, 0));
             Ok(s.Act(shop.OpenShop), "Open the shop");
             bool eraShot = false;
             for (int i = 0; i < 3000 && shop.Phase == GrowthPhase.Day; i++)

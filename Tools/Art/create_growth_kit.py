@@ -141,6 +141,8 @@ def finish(obj, mat, bevel=0.0, segments=4, smooth=True, weighted=True):
     if weighted:
         wn = obj.modifiers.new('Normals', 'WEIGHTED_NORMAL'); wn.keep_sharp = True; wn.weight = 50; wn.mode = 'FACE_AREA'
         bpy.ops.object.modifier_apply(modifier=wn.name)
+    if PLAN_TAG:
+        obj['plan'] = PLAN_TAG
     PARTS.append(obj)
     return obj
 
@@ -214,7 +216,10 @@ def text(body, center, size, mat, euler=(0, 0, 0), extrude=0.02, res=None):
     for v in o.data.vertices:
         v.co = u(A @ v.co)
     o.data.update()
-    return finish(o, mat, weighted=False)
+    o = finish(o, mat, weighted=False)
+    if not PLAN_TAG:
+        o['plan'] = 'text'  # GR-34: letters never stretch
+    return o
 
 
 def tilt_x(center, a, out=0.0, along=0.0, side=0.0):
@@ -229,6 +234,8 @@ def join(name):
     global PARTS
     root = bpy.data.objects.new(name, None); bpy.context.collection.objects.link(root)
     parts = [p for p in PARTS if p.name in bpy.data.objects]
+    if name in PLAN_FLOORS or name in PLAN_DRESSING:
+        plan_parts(parts, name in PLAN_FLOORS)  # GR-34: the plan before, on the new one
     bpy.ops.object.select_all(action='DESELECT')
     for p in parts: p.select_set(True)
     bpy.context.view_layer.objects.active = parts[0]
@@ -238,6 +245,129 @@ def join(name):
     mesh.parent = root
     PARTS = []
     return root
+
+
+# ================================================================ GR-34: the rooms a quarter larger (GrowthPlan.cs's rule, the same here)
+# The rooms' floors and dressing are written in the coordinates of the plan before; join() moves their parts onto the new one:
+# a floor scales; in the dressing, a wall's boards, rails, panels and door frames stretch along their wall and keep their
+# distance to it, a long part (1.2 m or more) stretches along its length, and every other thing (the parts touching each
+# other, as one) keeps its size: against a wall it keeps its distance to it, otherwise its centre scales with its room.
+PLAN_K, PLAN_HUG, PLAN_EDGE_HUG, PLAN_LONG, PLAN_TOUCH = 1.25, 0.6, 0.35, 1.2, 0.02
+PLAN_OLD_ROOMS = [(-4, -4, 4, 4), (4, -4, 12, 4), (2, 4, 12, 9), (-4, 4, 2, 9), (-4, 9, 4, 17), (4, 9, 12, 15), (-10, 11, -4, 17)]
+PLAN_FLOORS = {'UnitAFloor', 'BackRoomFloor', 'AnnexFloor', 'WorkshopFloor', 'UnitBFloor', 'UnitCFloor', 'ResearchFloor'}
+PLAN_DRESSING = {'UnitADressing', 'Street', 'BackRoomDressing', 'AnnexDressing', 'WorkshopDressing', 'UnitBDressing', 'StreetEast',
+                 'UnitCDressing', 'FeatureWall', 'ResearchDressing', 'ResearchJars'}
+PLAN_TAG = None
+
+
+def plan_room(x, z):
+    for r in PLAN_OLD_ROOMS:
+        if r[0] - 1e-3 <= x <= r[2] + 1e-3 and r[1] - 1e-3 <= z <= r[3] + 1e-3:
+            return r
+    return None
+
+
+def plan_axis(v, lo, hi, half):
+    to_lo, to_hi = (v - half - lo, hi - v - half) if half >= 0 else (v - lo, hi - v)
+    near = PLAN_EDGE_HUG if half >= 0 else PLAN_HUG
+    by_lo, by_hi = to_lo <= near, to_hi <= near
+    if by_lo and (not by_hi or to_lo <= to_hi):
+        return v + lo * (PLAN_K - 1)
+    if by_hi:
+        return v + hi * (PLAN_K - 1)
+    return v * PLAN_K
+
+
+def plan_outside(v, lo, hi, shift_lo, shift_hi):
+    return v - shift_lo if v < lo else v + shift_hi if v > hi else v * PLAN_K
+
+
+def plan_at(x, z, hx=-1.0, hz=-1.0):
+    """GrowthPlan.At: where a thing at (x, z) on the plan before stands now (hx, hz: its half sizes, if it has them)."""
+    r = plan_room(x, z)
+    if r is None:
+        return plan_outside(x, -10, 12, 2.5, 3.0), plan_outside(z, -4, 17, 1.0, 4.25)
+    return plan_axis(x, r[0], r[2], hx), plan_axis(z, r[1], r[3], hz)
+
+
+def plan_wall(f):
+    """Marks the parts a helper makes as a wall's (boards, rails, panels, frames): they stretch along their wall."""
+    def wrapped(*args, **kwargs):
+        global PLAN_TAG
+        before, PLAN_TAG = PLAN_TAG, 'wall'
+        try:
+            return f(*args, **kwargs)
+        finally:
+            PLAN_TAG = before
+    return wrapped
+
+
+def plan_bounds(o):
+    xs = [-v.co.x for v in o.data.vertices]; zs = [-v.co.y for v in o.data.vertices]
+    return min(xs), max(xs), min(zs), max(zs)
+
+
+def plan_move(o, dx, dz, sx=1.0, sz=1.0):
+    """Unity x' = x * sx + dx, z' = z * sz + dz on a part's vertices (Blender x is Unity -x, Blender y Unity -z)."""
+    for v in o.data.vertices:
+        ux, uz = -v.co.x, -v.co.y
+        v.co.x = -(ux * sx + dx); v.co.y = -(uz * sz + dz)
+    o.data.update()
+
+
+def plan_place(o, b, long_x, long_z):
+    """A part or a group on the new plan: along a long axis it scales about the shop's centre, along a short one it moves
+    as GrowthPlan.At moves its centre. Outside the rooms (the street) nothing stretches away from the shop's front: it keeps
+    its distance to it."""
+    x0, x1, z0, z1 = b
+    cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+    if plan_room(cx, cz) is None:
+        long_z = False
+    tx, tz = plan_at(cx, cz, (x1 - x0) / 2, (z1 - z0) / 2)
+    return (0.0 if long_x else tx - cx, 0.0 if long_z else tz - cz, PLAN_K if long_x else 1.0, PLAN_K if long_z else 1.0)
+
+
+def plan_parts(parts, floor):
+    if floor:
+        for o in parts:
+            plan_move(o, 0.0, 0.0, PLAN_K, PLAN_K)
+        return
+    loose = []
+    for o in parts:
+        b = plan_bounds(o)
+        w, d = b[1] - b[0], b[3] - b[2]
+        tag = o.get('plan')
+        if tag == 'wall':
+            plan_move(o, *plan_place(o, b, w >= d, d > w))
+        elif tag != 'text' and (w >= PLAN_LONG or d >= PLAN_LONG):
+            plan_move(o, *plan_place(o, b, w >= PLAN_LONG, d >= PLAN_LONG))
+        else:
+            loose.append((o, b))
+    # The rest in groups of parts that touch, each moved as one thing.
+    group = list(range(len(loose)))
+
+    def top(i):
+        while group[i] != i:
+            group[i] = group[group[i]]; i = group[i]
+        return i
+    for i in range(len(loose)):
+        a = loose[i][1]
+        for j in range(i + 1, len(loose)):
+            c = loose[j][1]
+            if a[0] - PLAN_TOUCH <= c[1] and c[0] - PLAN_TOUCH <= a[1] and a[2] - PLAN_TOUCH <= c[3] and c[2] - PLAN_TOUCH <= a[3]:
+                group[top(i)] = top(j)
+    groups = {}
+    for i, (o, b) in enumerate(loose):
+        groups.setdefault(top(i), []).append((o, b))
+    for members in groups.values():
+        b = (min(m[1][0] for m in members), max(m[1][1] for m in members), min(m[1][2] for m in members), max(m[1][3] for m in members))
+        # A long row of small parts (tiles, boards, a wavy edge) stretches; a big thing made of big parts (a tree, a cloud) does not.
+        big_x, big_z = max(m[1][1] - m[1][0] for m in members), max(m[1][3] - m[1][2] for m in members)
+        long_x = b[1] - b[0] >= PLAN_LONG * 1.25 and big_x <= 0.4 * (b[1] - b[0])
+        long_z = b[3] - b[2] >= PLAN_LONG * 1.25 and big_z <= 0.4 * (b[3] - b[2])
+        move = plan_place(None, b, long_x, long_z)
+        for o, _ in members:
+            plan_move(o, *move)
 
 
 # ================================================================ the stations (origin: the greybox station's root; front is local +Z
@@ -1593,10 +1723,17 @@ def wall_boards(a, b, inner, height, gaps, mats, width=0.166, depth=0.035):
     count = int(length // width)
     t = (length - count * width) / 2
     while t + width <= length + 1e-6:
-        c = t + width * 0.5
-        if not any(g0 - 0.02 < c < g1 + 0.02 for g0, g1 in gaps):
+        # GR-34: a board beside a gap stops at its edge (one used to reach up to 6 cm into a doorway).
+        s0, s1 = t, t + width
+        for g0, g1 in gaps:
+            if s0 < g1 and s1 > g0:
+                if (s0 + s1) / 2 < g0: s1 = min(s1, g0)
+                elif (s0 + s1) / 2 > g1: s0 = max(s0, g1)
+                else: s1 = s0
+        if s1 - s0 >= 0.04:
+            c, w = (s0 + s1) / 2, s1 - s0
             p = a + d * c + n * (0.1 + depth / 2)
-            size = (width - 0.008, height, depth) if abs(d.x) > 0.5 else (depth, height, width - 0.008)
+            size = (w - 0.008, height, depth) if abs(d.x) > 0.5 else (depth, height, w - 0.008)
             box((p.x, height / 2, p.y), size, mats[k % len(mats)], r=0.01, seg=2)
         t += width; k += 1
 
@@ -2276,10 +2413,10 @@ def hall_board():
 
 WAVE4 = [unit_b_floor, unit_b_dressing, street_east, bay_window, window_display, unit_c_floor, unit_c_dressing, feature_wall,
          feature_tank,
-         lambda: hoarding('PartitionB', -1.6, 1.6, 4.0, False, 2.4, 'UNIT B'),
-         lambda: hoarding('PartitionC', 9.9, 11.85, 4.0, True, 2.4, 'UNIT C'),
-         lambda: hoarding('PartitionAnnex', 0.45, 1.85, 9.0, True, 2.8, 'POWER ROOM'),
-         lambda: hoarding('PartitionWorkshop', 9.6, 11.0, 4.0, False, 2.8, 'WORKSHOP'),
+         lambda: hoarding('PartitionB', PLAN_K * -1.6, PLAN_K * 1.6, PLAN_K * 4.0, False, 2.4, 'UNIT B'),  # GR-34: each on its doorway on the new plan
+         lambda: hoarding('PartitionC', PLAN_K * 9.9, PLAN_K * 11.85, PLAN_K * 4.0, True, 2.4, 'UNIT C'),
+         lambda: hoarding('PartitionAnnex', PLAN_K * 0.45, PLAN_K * 1.85, PLAN_K * 9.0, True, 2.8, 'POWER ROOM'),
+         lambda: hoarding('PartitionWorkshop', PLAN_K * 9.6, PLAN_K * 11.0, PLAN_K * 4.0, False, 2.8, 'WORKSHOP'),
          lambda: banner('BannerCoral', 'GK_Coral', 'GK_Yellow'), lambda: banner('BannerYellow', 'GK_Yellow', 'GK_Teal'),
          lambda: banner('BannerBlue', 'GK_Sky', 'GK_Coral'), hall_spot, exhibition_sign, award, display_tag, staff_board, hall_board]
 
@@ -2803,7 +2940,7 @@ def research_tray():
 
 
 WAVE_RESEARCH = [research_floor, research_dressing, research_tank, research_jars, research_desk, research_tray,
-                 lambda: hoarding('PartitionResearch', -16.05, -14.65, 4.0, False, 2.8, 'RESEARCH ROOM', backed=True)]
+                 lambda: hoarding('PartitionResearch', PLAN_K * -16.05, PLAN_K * -14.65, PLAN_K * 4.0, False, 2.8, 'RESEARCH ROOM', backed=True)]
 
 # ---------------------------------------------------------------- tester round 2 (F80): the bin by the laboratory's door
 
@@ -2846,6 +2983,9 @@ def decor_duck():
 
 
 WAVE_ROUND2 = [siphon_bin, decor_duck]
+
+# GR-34: the parts these make are a wall's: they stretch along it on the new plan.
+lab_panels, wall_boards, wall_strip, door_frame, arch_frame_east_corner = (plan_wall(f) for f in (lab_panels, wall_boards, wall_strip, door_frame, arch_frame_east_corner))
 
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,

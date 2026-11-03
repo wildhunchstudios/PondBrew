@@ -54,10 +54,10 @@ namespace EvolutionShop
             yield return Shot("60-journal-cultures");
             s.SetCard(GrowthCard.None);
             Check(GrowthWorld.GrowerPositions.Count == 7 && !s.World.HasSource("ember"), "The laboratory has a slot for each of the seven sources; Ember's is empty");
-            LookAt(new Vector3(0.9f, 0, 6.6f), new Vector3(-2.4f, 0.6f, 7.4f)); yield return Shot("61-back-room-slots");
+            LookAt(P(0.9f, 0, 6.6f), P(-2.4f, 0.6f, 7.4f)); yield return Shot("61-back-room-slots");
 
             // The supplier catalog by the counter: an Ember grower and a Spark vial ordered at night; the Spark vial taken back and ordered again.
-            LookAt(new Vector3(1.2f, 0, -2.2f), GrowthWorld.CatalogPosition + new Vector3(0, 1.05f, 0));
+            LookAt(P(1.2f, 0, -2.2f), GrowthWorld.CatalogPosition + new Vector3(0, 1.05f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Catalog, "catalog", "The reticle focuses the supplier catalog");
             yield return Press(Key.E);
@@ -84,7 +84,7 @@ namespace EvolutionShop
             Check(shop.Owns("ember") && s.World.HasSource("ember") && shop.Vials.TryGetValue("spark", out int sparkDoses) && sparkDoses == GrowthContent.VialDoses && shop.Orders.Count == 0,
                 "As the shop opens the Ember grower stands in its slot and the Spark vial (3 doses) on its shelf");
             Check(s.Ui.Log.Any(l => l.StartsWith("New culture: Ember")) && s.Ui.Log.Any(l => l == "Delivered: Ember grower"), "The delivery and the new culture are announced");
-            LookAt(new Vector3(-1.0f, 0, 6.2f), new Vector3(-3.2f, 0.9f, 6.2f)); yield return Shot("64-delivered");
+            LookAt(P(-1.0f, 0, 6.2f), P(-3.2f, 0.9f, 6.2f)); yield return Shot("64-delivered");
 
             // Ember from its new grower, held, and Bloom: a new Cinderling (medium) in the real 12 s.
             yield return CollectWithHeldMouse(GrowthWorld.GrowerFront("ember"), GrowthWorld.GrowerPositions["ember"] + new Vector3(0, 1.0f, 0), GrowthTargetKind.Grower, "ember",
@@ -115,8 +115,8 @@ namespace EvolutionShop
 
             // The Spark vial, held: three doses, Spark not owned; with Flow they make a new Sparkline.
             var bottle = GrowthWorld.VialShelfPosition + new Vector3(-0.5f + 0.25f * 1, 1.1f, 0.06f);
-            LookAt(new Vector3(bottle.x + 0.4f, 0, 5.4f), bottle); yield return Shot("66-vial-on-shelf");
-            yield return CollectWithHeldMouse(new Vector3(bottle.x, 0, 5.3f), bottle, GrowthTargetKind.Vial, "spark",
+            LookAt(new Vector3(bottle.x + 0.4f, 0, P(0, 0, 5.4f).z), bottle); yield return Shot("66-vial-on-shelf");
+            yield return CollectWithHeldMouse(new Vector3(bottle.x, 0, P(0, 0, 5.3f).z), bottle, GrowthTargetKind.Vial, "spark",
                 () => !shop.Vials.ContainsKey("spark") || shop.Held.Count >= shop.SiphonCapacity, "the Spark vial's doses");
             Check(shop.Held.Count(c => c == "spark") == GrowthContent.VialDoses && !shop.Vials.ContainsKey("spark") && !shop.Owns("spark"),
                 "Holding the siphon on the vial collects its three Spark doses; the vial is used up and Spark is still not owned");
@@ -132,7 +132,7 @@ namespace EvolutionShop
             Ok(s.Act(shop.TakeHatchling), "Take the Sparkminnow");
 
             // Research at the pinboard: Spark.
-            LookAt(new Vector3(0.5f, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition);
+            LookAt(new Vector3(P(0.5f, 0, 5.6f).x, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition);
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Board, null, "The reticle focuses the pinboard on the laboratory's east wall");
             yield return Press(Key.E);
@@ -144,7 +144,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.Owns("spark") && shop.Rp == rp - 10 && s.World.HasSource("spark"), "Spark is owned and its grower stands in the laboratory");
             s.SetCard(GrowthCard.None);
-            LookAt(new Vector3(-1.6f, 0, 6.6f), GrowthWorld.GrowerPositions["spark"] + new Vector3(0, 0.9f, 0)); yield return Shot("68-spark-grower");
+            LookAt(P(-1.6f, 0, 6.6f), GrowthWorld.GrowerPositions["spark"] + new Vector3(0, 0.9f, 0)); yield return Shot("68-spark-grower");
             for (int i = 0; i < 2000 && shop.Phase == GrowthPhase.Day; i++)
             {
                 s.Advance(0.5f);
@@ -169,8 +169,8 @@ namespace EvolutionShop
             Ok(s.Act(shop.OpenShop), "Open the shop");
             yield return null; yield return null;
             Check(GrowthContent.Cultures.All(c => shop.Owns(c.Id) && s.World.HasSource(c.Id)), "All seven cultures are owned, each with its source in the laboratory");
-            LookAt(new Vector3(1.4f, 0, 4.6f), new Vector3(-2.0f, 0.8f, 7.6f)); yield return Shot("69-all-seven");
-            LookAt(new Vector3(-1.75f, 0, 7.5f), GrowthWorld.GrowerPositions["mist"] + new Vector3(0, 0.8f, 0)); // beside the incubator, not in it
+            LookAt(P(1.4f, 0, 4.6f), P(-2.0f, 0.8f, 7.6f)); yield return Shot("69-all-seven");
+            LookAt(P(-1.75f, 0, 7.5f), GrowthWorld.GrowerPositions["mist"] + new Vector3(0, 0.8f, 0)); // beside the incubator, not in it
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Grower, "mist", "The reticle focuses the conditioning vat");
             Check(s.FocusName(out _) == "Conditioning vat (Mist)", "The vat is named as the Mist source");

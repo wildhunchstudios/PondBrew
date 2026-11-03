@@ -139,6 +139,9 @@ namespace EvolutionShop
             s.Player.Pitch = pitch;
         }
 
+        /// <summary>GR-34: a spot of the plan before (where a route's camera stood or looked), on the new plan.</summary>
+        static Vector3 P(float x, float y, float z) => GrowthWorld.At(x, y, z);
+
         /// <summary>Stands at a point looking at a target point (eye 1.6 m above the feet).</summary>
         void LookAt(Vector3 feet, Vector3 target)
         {
@@ -256,8 +259,8 @@ namespace EvolutionShop
 
             s.SetCard(GrowthCard.Welcome); yield return Shot("00-welcome"); s.SetCard(GrowthCard.None);
             Stand(GrowthWorld.Spawn, -90, 8); yield return Shot("01-back-room");
-            LookAt(new Vector3(0.8f, 0, 4.6f), new Vector3(-0.5f, 1.2f, -1.5f)); yield return Shot("02-shop-from-the-back-room");
-            LookAt(new Vector3(1.6f, 0, -3.4f), new Vector3(-1.2f, 1.2f, 2.2f)); yield return Shot("03-shop-unit-a");
+            LookAt(P(0.8f, 0, 4.6f), P(-0.5f, 1.2f, -1.5f)); yield return Shot("02-shop-from-the-back-room");
+            LookAt(P(1.6f, 0, -3.4f), P(-1.2f, 1.2f, 2.2f)); yield return Shot("03-shop-unit-a");
 
             // A held mouse on the Bloom grower fills the siphon, one dose every 0.8 s, three at level 1.
             LookAt(GrowthWorld.GrowerPositions["bloom"] + new Vector3(1.4f, 0, 0), GrowthWorld.GrowerPositions["bloom"] + new Vector3(0, 1.0f, 0));
@@ -420,7 +423,7 @@ namespace EvolutionShop
             Ok(s.Act(() => shop.Upgrade("siphon")), "Upgrade the siphon at the tool bench");
             Check(shop.SiphonCapacity == 6 && shop.Era == 2, "The level 2 siphon holds 6, and era 2 is open (2 stars, 3 creatures, 2 tanks)");
             s.SetCard(GrowthCard.Workbench); yield return Shot("16-workbench"); s.SetCard(GrowthCard.None);
-            LookAt(new Vector3(2.4f, 0, 0), GrowthWorld.UnitBWallPosition + new Vector3(0, 1.4f, 0));
+            LookAt(P(2.4f, 0, 0), GrowthWorld.UnitBWallPosition + new Vector3(0, 1.4f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.UnitBWall, null, "The reticle focuses unit B's wall");
             yield return Press(Key.E);
@@ -430,8 +433,8 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             yield return null;
             Check(shop.UnitB && !s.World.UnitBWallStanding && shop.FreePlaces.Count(p => p.StartsWith("b")) == 4 && shop.VisitorsAtOnce == 3, "The wall opens: unit B's four places and a third visitor at a time");
-            LookAt(new Vector3(1.0f, 0, -0.6f), new Vector3(8.0f, 1.0f, 0.5f)); yield return Shot("18-unit-b-open");
-            LookAt(new Vector3(9.5f, 0, -2.6f), new Vector3(4.0f, 1.2f, 1.0f)); yield return Shot("19-unit-b-inside");
+            LookAt(P(1.0f, 0, -0.6f), P(8.0f, 1.0f, 0.5f)); yield return Shot("18-unit-b-open");
+            LookAt(P(9.5f, 0, -2.6f), P(4.0f, 1.2f, 1.0f)); yield return Shot("19-unit-b-inside");
             s.SetCard(GrowthCard.Board); yield return Shot("20-pinboard"); s.SetCard(GrowthCard.None);
             s.SetCard(GrowthCard.Journal); s.Ui.ShowTabNamed("Creatures"); yield return Shot("21-journal"); s.SetCard(GrowthCard.None);
 

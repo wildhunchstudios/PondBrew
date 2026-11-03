@@ -47,7 +47,7 @@ namespace EvolutionShop
                 "Fixture: an era 4, five-star shop with the power room piped to the incubator's port, and the workshop closed");
 
             // The workshop: its partition in the annex's east doorway, opened at night.
-            yield return AimAt(new Vector3(2.4f, 0, 10.3f), new Vector3(4f, 1.4f, 10.3f), GrowthTargetKind.WorkshopWall, "workshop", "The reticle focuses the workshop's partition");
+            yield return AimAt(P(2.4f, 0, 10.3f), P(4f, 1.4f, 10.3f), GrowthTargetKind.WorkshopWall, "workshop", "The reticle focuses the workshop's partition");
             Check(s.FocusName(out string status) == "Workshop" && status == "E see what it needs", "It is the workshop");
             yield return Shot("110-workshop-closed");
             yield return Press(Key.E);
@@ -75,7 +75,7 @@ namespace EvolutionShop
             Check(shop.GeneratorUnits == 6 && s.World.GeneratorInWorkshop && s.World.GeneratorLookLevel == 3, "Six units; the generator stands in the workshop's corner with two turbine columns");
 
             // Lab racks on the rack places.
-            yield return AimAt(new Vector3(7.0f, 0, 11.6f), new Vector3(7.0f, 0.45f, 9.6f), GrowthTargetKind.Place, "r1", "The reticle focuses rack place 1");
+            yield return AimAt(P(7.0f, 0, 11.6f), P(7.0f, 0.45f, 9.6f), GrowthTargetKind.Place, "r1", "The reticle focuses rack place 1");
             Check(s.FocusName(out status) == "Rack place 1" && status == "E place a lab rack", "It is a rack place");
             yield return Press(Key.E);
             card = s.Ui.CardText();
@@ -106,7 +106,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.Chute != null && shop.Credits == credits - cost && s.PipeFrom == null && s.World.ChuteBuilt && shop.Objectives().Any(o => o.text.StartsWith("Buy the sorter") && o.done),
                 "E lays it: the chute runs from the incubator's outlet over the power room to the sorter, and the goal is ticked");
-            LookAt(new Vector3(3.4f, 0, 9.5f), new Vector3(1.4f, 3.0f, 13.4f)); yield return Shot("112-chute-overhead");
+            LookAt(P(3.4f, 0, 9.5f), P(1.4f, 3.0f, 13.4f)); yield return Shot("112-chute-overhead");
 
             // Stock targets on the sorter's card, and the auto-doser by targets.
             Ok(s.Act(() => shop.SetTarget("pondlet", 2)), "Target 2 Pondlets (the card's + button)");
@@ -122,7 +122,7 @@ namespace EvolutionShop
                 bool sorting = shop.Hatchlings.Count > 0 && use != null && use.Got > 0;
                 if (!beadShot && sorting && shop.SortProgress >= 0.88f && shop.SortProgress <= 0.92f)
                 {
-                    LookAt(new Vector3(6.2f, 0, 11.4f), new Vector3(6.0f, 2.0f, 13.6f));
+                    LookAt(P(6.2f, 0, 11.4f), P(6.0f, 2.0f, 13.6f));
                     yield return null;
                     Check(s.World.BeadShowing, "A hatchling slides down the chute into the sorter's hopper while it sorts");
                     yield return Shot("113-sorting");
@@ -137,7 +137,7 @@ namespace EvolutionShop
             Check(shop.AutoStatus == "Every stock target the port can make is met" && shop.SorterStatus == "Waiting for hatchlings", "Both wait with their targets met, saying so");
             yield return null; yield return null;
             Check(s.World.Tanks.Values.Where(t => t.Place == "r1" || t.Place == "r2").Sum(t => t.Creatures.Count) == 2, "The racks show their creatures");
-            LookAt(new Vector3(8.0f, 0, 11.8f), new Vector3(7.9f, 0.8f, 9.6f)); yield return Shot("114-racks");
+            LookAt(P(8.0f, 0, 11.8f), P(7.9f, 0.8f, 9.6f)); yield return Shot("114-racks");
             yield return AimAt(SorterFront, SorterAim, GrowthTargetKind.Sorter, "sorter", "The reticle focuses the sorter again");
             yield return Press(Key.E);
             card = s.Ui.CardText();
@@ -145,7 +145,7 @@ namespace EvolutionShop
                 "The sorter's card: the targets met, the chute, the racks");
             yield return Shot("115-sorter-card");
             s.SetCard(GrowthCard.None);
-            yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
+            yield return AimAt(P(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(card.Contains("Sorter · draws 1 · Waiting for hatchlings") && card.Contains("Auto-doser · draws 1"), "The power board lists the sorter with what it draws and does");
@@ -206,7 +206,7 @@ namespace EvolutionShop
                 "The version 7 (and later) save brings the line back: the workshop, racks, the chute, the targets, the line's day and the analyzer's hint");
             yield return null; yield return null;
             Check(!s.World.WorkshopWallStanding && s.World.BuiltRacks == 2 && s.World.ChuteBuilt && s.World.SorterLookLevel == 1 && s.World.GeneratorInWorkshop, "The reloaded workshop looks the same");
-            LookAt(new Vector3(4.8f, 0, 10.2f), new Vector3(9.5f, 1.0f, 13.2f)); yield return Shot("119-workshop");
+            LookAt(P(4.8f, 0, 10.2f), P(9.5f, 1.0f, 13.2f)); yield return Shot("119-workshop");
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
         }
     }

@@ -63,7 +63,7 @@ namespace EvolutionShop
                 "Fixture: an era 3, four-star shop with 12 species, growers at level 3 and the power room closed");
 
             // The lab annex: its partition in the back room's north doorway, opened at night.
-            yield return AimAt(new Vector3(0.5f, 0, 6.6f), new Vector3(1.15f, 1.4f, 9f), GrowthTargetKind.AnnexWall, "annex", "The reticle focuses the power room's partition");
+            yield return AimAt(P(0.5f, 0, 6.6f), P(1.15f, 1.4f, 9f), GrowthTargetKind.AnnexWall, "annex", "The reticle focuses the power room's partition");
             Check(s.FocusName(out string status) == "Power room" && status == "E see what it needs", "It is the power room");
             yield return Shot("100-annex-closed");
             yield return Press(Key.E);
@@ -86,7 +86,7 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             yield return null; yield return null;
             Check(shop.HandCrank && s.World.GeneratorLookLevel == 1, "The hand crank stands in the power room's corner");
-            yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
+            yield return AimAt(P(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(s.Card == GrowthCard.PowerBoard && card.Contains("Pumps and pipes · level 0 of 3") && card.Contains("Buy · 150 cr") && card.Contains("Nothing to power yet"),
@@ -135,7 +135,7 @@ namespace EvolutionShop
             yield return Press(Key.Escape);
             Check(s.PipeFrom == null && s.Card == GrowthCard.None, "Esc stops pipe mode (and does not pause)");
             Ok(s.Act(() => shop.LayPipe(GrowthLab.Tap("ember"), GrowthLab.Buffer(2))), "The Ember line to buffer 3 (as pipe mode lays it)");
-            LookAt(new Vector3(-1.0f, 0, 5.4f), new Vector3(-3.0f, 3.0f, 8.8f)); yield return Shot("102-pipes-overhead");
+            LookAt(P(-1.0f, 0, 5.4f), P(-3.0f, 3.0f, 8.8f)); yield return Shot("102-pipes-overhead");
 
             // The hand pump: hold the mouse on its crank and the buffer fills in bulk.
             float before = shop.BufferAt(0).Units, grower = shop.GrowerUnits["bloom"];
@@ -158,7 +158,7 @@ namespace EvolutionShop
             Check(shop.BufferAt(1).Units == b2, "One unit runs the first pump on the board; the Flow pump waits");
             yield return Shot("104-crank");
             Ok(s.Act(() => shop.MovePower(shop.Pipes[1].PowerId, -1)), "Move the Flow pump to the top of the board");
-            yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board again");
+            yield return AimAt(P(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board again");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(card.Contains("1. Flow pump to buffer 2") && card.Contains("2. Bloom pump to buffer 1") && card.Contains("Waiting for power"), "The board lists its machines in order, each with what it is doing");
@@ -176,7 +176,7 @@ namespace EvolutionShop
             foreach (var c in new[] { "bloom", "flow", "ember" }) shop.GrowerUnits[c] = 10;
             foreach (var b in shop.Buffers) b.Units = Mathf.Min(b.Units, 4);
             s.Advance(0.3f);
-            yield return AimAt(new Vector3(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
+            yield return AimAt(P(2.6f, 0, 12.5f), GrowthWorld.PowerBoardPosition - new Vector3(0.05f, 0, 0), GrowthTargetKind.PowerBoard, "board", "The reticle focuses the power board");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(shop.Draw == 6 && shop.Supply == 3 && card.Contains("Slowed: power for 1 of 2 units") && card.Contains("Waiting for power"), "Over budget: 6 units asked for, 3 supplied; the second is slowed and the third waits, each saying so");
@@ -236,8 +236,8 @@ namespace EvolutionShop
             foreach (var c in shop.Cultures) shop.GrowerUnits[c] = 0;
             for (int i = 0; i < 20 && !shop.Incubating; i++) s.Advance(0.1f);
             Check(shop.Incubating && shop.AutoBatches == 2, "The batch carries on and incubates");
-            LookAt(new Vector3(0.6f, 0, 9.6f), new Vector3(-0.5f, 1.2f, 14.5f)); yield return Shot("108-annex");
-            LookAt(new Vector3(1.15f, 0, 16.2f), new Vector3(-1.6f, 1.0f, 9.6f)); yield return Shot("109-buffers");
+            LookAt(P(0.6f, 0, 9.6f), P(-0.5f, 1.2f, 14.5f)); yield return Shot("108-annex");
+            LookAt(P(1.15f, 0, 16.2f), P(-1.6f, 1.0f, 9.6f)); yield return Shot("109-buffers");
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");
         }
     }

@@ -117,12 +117,12 @@ namespace EvolutionShop
                 "Low: no shadows, no bloom, no reflections, no anti-aliasing, the shop drawn at 75%, creatures in Low detail");
             s.SetCard(GrowthCard.None);
             Application.targetFrameRate = -1; QualitySettings.vSyncCount = 0;
-            yield return Measure("710-low-preset", new Vector3(1.25f, 0, -1.9f), new Vector3(0.6f, 1.6f, 1.9f), 4);
+            yield return Measure("710-low-preset", P(1.25f, 0, -1.9f), P(0.6f, 1.6f, 1.9f), 4);
             s.OpenSettings("Graphics");
             yield return ClickNamed("gr-choice-quality-high", "Click High");
             Check(g.preset == 2 && w.SunShadows == LightShadows.Soft && w.BloomOn && w.ReflectionsOn && CameraAa == AntialiasingMode.SubpixelMorphologicalAntiAliasing && s.RenderScaleNow == 1f && !w.LowDetail, "High again: every choice back");
             s.SetCard(GrowthCard.None);
-            yield return Measure("711-high-preset", new Vector3(1.25f, 0, -1.9f), new Vector3(0.6f, 1.6f, 1.9f), 4);
+            yield return Measure("711-high-preset", P(1.25f, 0, -1.9f), P(0.6f, 1.6f, 1.9f), 4);
             Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
             s.OpenSettings("Graphics");
             yield return ClickNamed("gr-choice-shadows-hard", "Click Hard shadows");

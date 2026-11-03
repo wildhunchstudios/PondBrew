@@ -264,7 +264,10 @@ namespace EvolutionShop.Tests
             many.OpenShop();
             Run(many, 4.5f);
             Assert.That(many.Visitors[0].Plan, Has.Count.EqualTo(GrowthShop.MostBrowsed));
-            Run(many, GrowthShop.BrowseSeconds + 2 * GrowthShop.NextBrowseSeconds + 0.5f);
+            // Its three looks, each as long as its walk there and a look (GR-34: some walks are a little longer than before).
+            var v0 = many.Visitors[0];
+            var planned = v0.Plan.Select(id => many.Containers.First(c => c.Id == id).Place).ToList();
+            Run(many, GrowthSpaces.FirstLook(planned[0]) + GrowthSpaces.NextLook(planned[0], planned[1]) + GrowthSpaces.NextLook(planned[1], planned[2]) - v0.Clock + 0.5f);
             Assert.That(many.Visitors[0].Outcome, Is.EqualTo(GrowthVisitOutcome.NothingAffordable));
             Assert.That(many.Visitors[0].Browsed, Is.EqualTo(GrowthShop.MostBrowsed));
         }

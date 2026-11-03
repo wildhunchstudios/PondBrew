@@ -223,7 +223,7 @@ namespace EvolutionShop
                 "The little volcano on b1 and the lighthouse on b2, each standing in its tank; the box is empty");
             ViewDecor(b1); yield return Shot("588-volcano-on-b1");
             ViewDecor(b2); yield return Shot("589-lighthouse-on-b2");
-            LookAt(new Vector3(5.0f, 0, -1.8f), new Vector3(7.2f, 1.5f, 3.4f)); yield return Shot("590-unit-b-decor");
+            LookAt(P(5.0f, 0, -1.8f), P(7.2f, 1.5f, 3.4f)); yield return Shot("590-unit-b-decor");
 
             // ---- what decor does: appeal, and themed creatures' budgets (capped with a school)
             float Expected(GrowthContainer c, string species) => 1f + Mathf.Min(GrowthContent.ToleranceCap, (c.InSchool(species) ? GrowthContent.SchoolTolerance : 0) +
@@ -272,7 +272,7 @@ namespace EvolutionShop
             Check(shop.DecorOwned.Count == 3 && b1.Decor == "volcano" && b2.Decor == "reeds" && shop.DecorBox.SequenceEqual(new[] { "lighthouse" }) &&
                   HasKit(s.World.DecorOf(b1.Id), "DecorVolcano") && HasKit(s.World.DecorOf(b2.Id), "DecorReeds"),
                 "After a reload the decor is where it was: the volcano on b1, the reeds on b2, the lighthouse in the box");
-            LookAt(new Vector3(5.0f, 0, -1.8f), new Vector3(7.2f, 1.5f, 3.4f)); yield return Shot("593-after-reload");
+            LookAt(P(5.0f, 0, -1.8f), P(7.2f, 1.5f, 3.4f)); yield return Shot("593-after-reload");
         }
     }
 }

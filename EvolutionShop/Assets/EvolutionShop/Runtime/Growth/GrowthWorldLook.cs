@@ -229,13 +229,13 @@ namespace EvolutionShop
             var a = transform.Find("Shop unit A lamp")?.GetComponent<Light>();
             if (a)
             {
-                a.transform.localPosition = new Vector3(-1.4f, 2.35f, 1.2f);
+                a.transform.localPosition = At(-1.4f, 2.35f, 1.2f);
                 var b = Instantiate(a.gameObject, transform).GetComponent<Light>();
-                b.name = "Shop unit A lamp 2"; b.transform.localPosition = new Vector3(1.7f, 2.35f, -1.0f);
+                b.name = "Shop unit A lamp 2"; b.transform.localPosition = At(1.7f, 2.35f, -1.0f);
                 shopLamps = new[] { a, b };
             }
             labLamp = transform.Find("Back room lamp")?.GetComponent<Light>();
-            if (labLamp) { labLamp.transform.localPosition = new Vector3(-1, 3.3f, 6.5f); labLamp.range = 10; }
+            if (labLamp) { labLamp.transform.localPosition = At(-1, 3.3f, 6.5f); labLamp.range = 10; }
             // Wave 3: the lab annex and the workshop, their lamps under their light strips, and GR-10's pipe gallery and dome light.
             Hide(labRoot, "Annex floor");
             Hide(transform.Find("Workshop"), "Workshop floor");
@@ -243,8 +243,8 @@ namespace EvolutionShop
             var sets = transform.Find("Set pieces");
             Kit(sets.Find("Pipe gallery"), "PipeGallery", default, null, "Riser", "Valve", "Gauge", "Header", "Placard");
             Kit(sets.Find("Workshop dome"), "WorkshopDome", default, null, "Dome", "Ring", "Glow");
-            if (annexLight) annexLight.transform.localPosition = new Vector3(0, 3.3f, 13);
-            if (workshopLight) workshopLight.transform.localPosition = new Vector3(8, 3.1f, 12);
+            if (annexLight) annexLight.transform.localPosition = At(0, 3.3f, 13);
+            if (workshopLight) workshopLight.transform.localPosition = At(8, 3.1f, 12);
             labLamps = new[] { annexLight, workshopLight };
             DressResearch(dressing);
             // Wave 4: unit B and unit C, and the street outside unit B's bay window; their lamps hang where the kit's pendants are,
@@ -252,8 +252,8 @@ namespace EvolutionShop
             Hide(rooms, "Unit B floor");
             Hide(transform.Find("Shop unit C"), "Unit C floor", "Feature wall");
             foreach (var asset in new[] { "UnitBFloor", "UnitBDressing", "StreetEast", "UnitCFloor", "UnitCDressing", "FeatureWall" }) Kit(dressing, asset);
-            RoomLamp("unit-b", unitBLight, new Vector3(6.0f, 2.35f, 2.0f), new Vector3(9.8f, 2.35f, -2.0f));
-            RoomLamp("unit-c", unitCLight, new Vector3(5.0f, 2.35f, 6.5f), new Vector3(9.0f, 2.35f, 6.5f));
+            RoomLamp("unit-b", unitBLight, At(6.0f, 2.35f, 2.0f), At(9.8f, 2.35f, -2.0f));
+            RoomLamp("unit-c", unitCLight, At(5.0f, 2.35f, 6.5f), At(9.0f, 2.35f, 6.5f));
         }
 
         /// <summary>A room's lamp moved under the first pendant, and a copy of it under the second, which its opening reveals too.</summary>
@@ -502,8 +502,8 @@ namespace EvolutionShop
                                                          ("unit B", new Vector3(8, 1.6f, 0), new Vector3(8, 3.2f, 8)), ("unit C", new Vector3(7, 1.6f, 6.5f), new Vector3(10, 3.2f, 5)) })
             {
                 var probe = new GameObject("Look / reflections (" + name + ")").AddComponent<ReflectionProbe>();
-                probe.transform.SetParent(transform, false); probe.transform.localPosition = center;
-                probe.size = size; probe.mode = ReflectionProbeMode.Realtime; probe.refreshMode = ReflectionProbeRefreshMode.ViaScripting;
+                probe.transform.SetParent(transform, false); probe.transform.localPosition = new Vector3(S(center.x), center.y, S(center.z)); // GR-34: the rooms grew
+                probe.size = new Vector3(S(size.x), size.y, S(size.z)); probe.mode = ReflectionProbeMode.Realtime; probe.refreshMode = ReflectionProbeRefreshMode.ViaScripting;
                 probe.timeSlicingMode = ReflectionProbeTimeSlicingMode.AllFacesAtOnce; probe.resolution = 128; probe.boxProjection = true;
                 probe.hdr = true; probe.importance = 1; probe.farClipPlane = 20;
                 lookProbes.Add(probe);

@@ -14,7 +14,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthWorld
     {
-        public static readonly Vector3 GeneratorPosition = new Vector3(2.9f, 0, 15.9f), PowerBoardPosition = new Vector3(3.88f, 1.5f, 12.5f), AnnexDoorway = new Vector3(1.15f, 0, 9f);
+        public static readonly Vector3 GeneratorPosition = At(2.9f, 0, 15.9f), PowerBoardPosition = At(3.88f, 1.5f, 12.5f), AnnexDoorway = At(1.15f, 0, 9f);
         public const float AnnexDoorFrom = 0.45f, AnnexDoorTo = 1.85f, PipeRadius = 0.045f, HopHeight = 0.18f, LaneSpacing = 0.1f;
         public static Vector3 BufferPosition(int place) { var p = GrowthLab.BufferPoint(place); return new Vector3(p.x, 0, p.z); }
         public static Vector3 PortPosition => new Vector3(GrowthLab.PortPoint.x, 0, GrowthLab.PortPoint.z);
@@ -72,21 +72,21 @@ namespace EvolutionShop
         {
             var rooms = new GameObject("Lab annex").transform; rooms.SetParent(transform, false);
             labRoot = rooms;
-            Box(rooms, "Annex floor", new Vector3(0, -0.05f, 13), new Vector3(8, 0.1f, 8), floorTile, true);
-            Box(rooms, "Annex ceiling", new Vector3(0, 3.65f, 13), new Vector3(8, 0.1f, 8), wallLab);
+            RoomBox(rooms, "Annex floor", new Vector3(0, -0.05f, 13), new Vector3(8, 0.1f, 8), floorTile, true);
+            RoomBox(rooms, "Annex ceiling", new Vector3(0, 3.65f, 13), new Vector3(8, 0.1f, 8), wallLab);
             // GR-30: a doorway into the research room, closed by a partition until it opens (GrowthWorldResearch).
             Wall("Annex west wall", new Vector2(-4, 9), new Vector2(-4, 17), 3.6f, wallLab, new Vector2(ResearchDoorFrom, ResearchDoorTo));
             Wall("Annex north wall", new Vector2(-4, 17), new Vector2(4, 17), 3.6f, wallLab);
             // GR-08: a doorway into the workshop, closed by a partition until it opens (GrowthWorldLine).
             Wall("Annex east wall", new Vector2(4, 9), new Vector2(4, 17), 3.6f, wallLab, new Vector2(WorkshopDoorFrom, WorkshopDoorTo));
             Wall("Annex south wall (east of the back room)", new Vector2(2, 9), new Vector2(4, 9), 3.6f, wallLab);
-            annexLight = Lamp("Lab annex lamp", new Vector3(0, 2.8f, 13), 9, 1.15f);
+            annexLight = Lamp("Lab annex lamp", At(0, 2.8f, 13), 9, 1.15f);
             annexWall = new GameObject("Lab annex partition");
             annexWall.transform.SetParent(transform, false);
             float w = AnnexDoorTo - AnnexDoorFrom, x = (AnnexDoorFrom + AnnexDoorTo) * 0.5f;
-            var board = Box(annexWall.transform, "Partition", new Vector3(x, 1.4f, 9), new Vector3(w, 2.8f, 0.12f), partition, true);
-            Box(annexWall.transform, "Coming soon sign", new Vector3(x, 1.6f, 8.93f), new Vector3(w * 0.75f, 0.5f, 0.02f), sign);
-            Box(annexWall.transform, "Sign stripe", new Vector3(x, 1.6f, 8.91f), new Vector3(w * 0.55f, 0.1f, 0.02f), paper);
+            var board = RoomBox(annexWall.transform, "Partition", new Vector3(x, 1.4f, 9), new Vector3(w, 2.8f, 0.12f), partition, true);
+            RoomBox(annexWall.transform, "Coming soon sign", new Vector3(x, 1.6f, 8.93f), new Vector3(w * 0.75f, 0.5f, 0.02f), sign);
+            RoomBox(annexWall.transform, "Sign stripe", new Vector3(x, 1.6f, 8.91f), new Vector3(w * 0.55f, 0.1f, 0.02f), paper);
             Target(board.gameObject, GrowthTargetKind.AnnexWall, "annex");
         }
 

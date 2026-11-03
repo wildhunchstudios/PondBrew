@@ -23,7 +23,29 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthWorld : MonoBehaviour
     {
-        public static readonly Vector3 Spawn = new Vector3(0.6f, 0.05f, 5.4f);
+        public static readonly Vector3 Spawn = At(0.6f, 0.05f, 5.4f);
+
+        // ---------------------------------------------------------------- GR-34: the plan before, on the new one
+
+        /// <summary>GR-34 (F68): where a thing of the plan before (the coordinates this code was written in) stands now, at its
+        /// height: GrowthPlan.At, with its half sizes when they decide it (a thing whose side is near a wall keeps its distance).</summary>
+        public static Vector3 At(float x, float y, float z, float hx = -1, float hz = -1) { var p = GrowthPlan.At(x, z, hx, hz); return new Vector3(p.x, y, p.z); }
+        /// <summary>A length of the plan before that grows with the rooms (a room's side, a doorway).</summary>
+        public static float S(float v) => GrowthPlan.S(v);
+        static Vector2 Scaled(Vector2 v) => v * GrowthPlan.K;
+
+        /// <summary>
+        /// A box of a room's own (a floor, a ceiling, a sill, a partition, a wall's face) given on the plan before: along a side
+        /// of 0.9 m or more it grows with the room, along a shorter one it keeps its size and moves as GrowthPlan.At has it.
+        /// </summary>
+        Transform RoomBox(Transform parent, string name, Vector3 center, Vector3 size, Material material, bool solid = false)
+        {
+            // Outside the rooms (the street) nothing stretches away from the shop's front: it keeps its distance to it.
+            bool alongX = size.x >= 0.9f, alongZ = size.z >= 0.9f && GrowthPlan.RoomAt(center.x, center.z) != null;
+            var at = GrowthPlan.At(center.x, center.z, size.x * 0.5f, size.z * 0.5f);
+            return Box(parent, name, new Vector3(alongX ? S(center.x) : at.x, center.y, alongZ ? S(center.z) : at.z),
+                new Vector3(alongX ? S(size.x) : size.x, size.y, alongZ ? S(size.z) : size.z), material, solid);
+        }
         public const float FullDistance = 6f, FreezeDistance = 12f;
         /// <summary>GR-12: kit creatures show their full rig (face, blinks, tricks) within this distance and in view; further, their
         /// shared baked look (with its outline to FullDistance, without beyond). Peek is within 1.6 m of the glass.</summary>
@@ -58,7 +80,7 @@ namespace EvolutionShop
 
         /// <summary>Queue spots in front of the counter, first in line nearest it.</summary>
         public static readonly Vector3[] QueueSpots = GrowthSpaces.QueueSpots.Select(V).ToArray();
-        public static readonly Vector3 CounterPosition = new Vector3(2.8f, 0, -2.6f);
+        public static readonly Vector3 CounterPosition = new Vector3(GrowthSpaces.Counter.x, 0, GrowthSpaces.Counter.z);
         public static readonly Vector3 IncubatorPosition = new Vector3(GrowthLab.Incubator.x, 0, GrowthLab.Incubator.z);
         /// <summary>
         /// GR-04: a slot in the back room for each culture's source: Bloom, Flow, Ember and Brine growers along the west wall
@@ -66,19 +88,19 @@ namespace EvolutionShop
         /// as a dashed square with the culture's colour until its source arrives.
         /// </summary>
         public static readonly Dictionary<string, Vector3> GrowerPositions = GrowthLab.Growers.ToDictionary(kv => kv.Key, kv => new Vector3(kv.Value.x, 0, kv.Value.z));
-        public static float GrowerYaw(string culture) => GrowerPositions[culture].z > 8.2f ? 180 : 90;
+        public static float GrowerYaw(string culture) => GrowthLab.OnNorthWall(culture) ? 180 : 90;
         /// <summary>Where a player stands to use a source: 1.3 m in front of it.</summary>
         public static Vector3 GrowerFront(string culture) => GrowerPositions[culture] + Quaternion.Euler(0, GrowerYaw(culture), 0) * new Vector3(0, 0, 1.3f);
         /// <summary>GR-07 moved the research bench 0.8 m south, clear of the doorway into the lab annex.</summary>
-        public static readonly Vector3 WorkbenchPosition = new Vector3(1.55f, 0, 6.9f), BoardPosition = new Vector3(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(4f, 0, 0);
+        public static readonly Vector3 WorkbenchPosition = At(1.55f, 0, 6.9f), BoardPosition = At(1.86f, 1.55f, 5.6f), UnitBWallPosition = new Vector3(S(4f), 0, 0);
         /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.
         /// GR-05 moved the shelf 0.2 m west to make room for the breeding tank.</summary>
-        public static readonly Vector3 VialShelfPosition = new Vector3(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(0.7f, 0, -3.3f);
+        public static readonly Vector3 VialShelfPosition = At(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(GrowthSpaces.Catalog.x, 0, GrowthSpaces.Catalog.z);
         /// <summary>Tester round 2 (F80): the bin under the laboratory's pinboard, facing into the room (west).</summary>
-        public static readonly Vector3 BinPosition = new Vector3(1.68f, 0, 5.4f);
+        public static readonly Vector3 BinPosition = At(1.68f, 0, 5.4f);
         /// <summary>GR-05: the breeding tank against the back room's south wall, west of the door, facing the incubator (GR.7.2).
         /// Its glass is 1.06 m wide: the pair's compartment, and a nursery behind a divider at its east end.</summary>
-        public static readonly Vector3 BreedingPosition = new Vector3(-0.5f, 0, 4.42f);
+        public static readonly Vector3 BreedingPosition = At(-0.5f, 0, 4.42f);
         public const float BreedingWaterY = 1.0f, BreedingDivider = 0.22f, SecondPairDivider = -0.145f;
 
         GrowthSession session;
@@ -168,9 +190,9 @@ namespace EvolutionShop
             sun.transform.rotation = Quaternion.Euler(58, -30, 0);
             sun.intensity = 0.55f;
             sun.shadows = LightShadows.Soft;
-            Lamp("Shop unit A lamp", new Vector3(0, 2.3f, 0), 10, 1.25f);
-            Lamp("Back room lamp", new Vector3(-1, 2.6f, 6.5f), 8, 1.15f);
-            unitBLight = Lamp("Shop unit B lamp", new Vector3(8, 2.3f, 0), 10, 1.25f);
+            Lamp("Shop unit A lamp", At(0, 2.3f, 0), 10, 1.25f);
+            Lamp("Back room lamp", At(-1, 2.6f, 6.5f), 8, 1.15f);
+            unitBLight = Lamp("Shop unit B lamp", At(8, 2.3f, 0), 10, 1.25f);
 
             Rooms();
             Stations();
@@ -240,9 +262,11 @@ namespace EvolutionShop
         Transform Box(Transform parent, string name, Vector3 center, Vector3 size, Material material, bool solid = false) =>
             ShopWorld.Shape(parent, name, PrimitiveType.Cube, center, size, material, solid);
 
-        /// <summary>A wall from a to b (on the floor plane) with its height, leaving out the gaps given along it (from, to).</summary>
+        /// <summary>A wall from a to b (on the floor plane) with its height, leaving out the gaps given along it (from, to). GR-34:
+        /// given on the plan before, the wall and its gaps scale with the rooms.</summary>
         void Wall(string name, Vector2 a, Vector2 b, float height, Material material, params Vector2[] gaps)
         {
+            a = Scaled(a); b = Scaled(b); gaps = gaps.Select(Scaled).ToArray();
             var root = new GameObject(name).transform; root.SetParent(transform, false);
             Vector2 dir = (b - a).normalized; float length = Vector2.Distance(a, b);
             var spans = new List<Vector2> { new Vector2(0, length) };
@@ -276,37 +300,37 @@ namespace EvolutionShop
         {
             var rooms = new GameObject("Rooms").transform; rooms.SetParent(transform, false);
             // Shop unit A, 8 x 8 m, 3.2 m ceiling; the street is to the south (-z).
-            Box(rooms, "Unit A floor", new Vector3(0, -0.05f, 0), new Vector3(8, 0.1f, 8), floorWood, true);
-            Box(rooms, "Unit A ceiling", new Vector3(0, 3.25f, 0), new Vector3(8, 0.1f, 8), wall);
+            RoomBox(rooms, "Unit A floor", new Vector3(0, -0.05f, 0), new Vector3(8, 0.1f, 8), floorWood, true);
+            RoomBox(rooms, "Unit A ceiling", new Vector3(0, 3.25f, 0), new Vector3(8, 0.1f, 8), wall);
             Wall("Unit A front wall (entrance and window)", new Vector2(-4, -4), new Vector2(4, -4), 3.2f, wall, new Vector2(0.4f, 2.4f), new Vector2(2.8f, 4.2f));
-            Box(rooms, "Window sill", new Vector3(-2.6f, 0.45f, -4), new Vector3(2.0f, 0.9f, 0.22f), wall, true);
-            Box(rooms, "Window glass", new Vector3(-2.6f, 1.65f, -4), new Vector3(2.0f, 1.5f, 0.05f), glass, true);
+            RoomBox(rooms, "Window sill", new Vector3(-2.6f, 0.45f, -4), new Vector3(2.0f, 0.9f, 0.22f), wall, true);
+            RoomBox(rooms, "Window glass", new Vector3(-2.6f, 1.65f, -4), new Vector3(2.0f, 1.5f, 0.05f), glass, true);
             Wall("Unit A west wall", new Vector2(-4, -4), new Vector2(-4, 4), 3.2f, wall);
             // The north wall rises to the back room's taller ceiling, so no light or void shows over it from the back room.
             Wall("Unit A north wall (back room door)", new Vector2(-4, 4), new Vector2(4, 4), 3.7f, wall, new Vector2(4.2f, 5.4f));
             Wall("Unit A east wall (arch to unit B)", new Vector2(4, -4), new Vector2(4, 4), 3.2f, wall, new Vector2(2.4f, 5.6f));
-            Box(rooms, "Skirting", new Vector3(0, 0.05f, -3.88f), new Vector3(8, 0.1f, 0.04f), trim);
+            RoomBox(rooms, "Skirting", new Vector3(0, 0.05f, -3.88f), new Vector3(8, 0.1f, 0.04f), trim);
             // Back room, 6 x 5 m behind unit A, 3.6 m ceiling for overhead pipes later.
-            Box(rooms, "Back room floor", new Vector3(-1, -0.05f, 6.5f), new Vector3(6, 0.1f, 5), floorTile, true);
-            Box(rooms, "Back room ceiling", new Vector3(-1, 3.65f, 6.5f), new Vector3(6, 0.1f, 5), wallLab);
+            RoomBox(rooms, "Back room floor", new Vector3(-1, -0.05f, 6.5f), new Vector3(6, 0.1f, 5), floorTile, true);
+            RoomBox(rooms, "Back room ceiling", new Vector3(-1, 3.65f, 6.5f), new Vector3(6, 0.1f, 5), wallLab);
             Wall("Back room west wall", new Vector2(-4, 4), new Vector2(-4, 9), 3.6f, wallLab);
             // GR-07: a doorway into the lab annex, closed by a partition until the annex opens (GrowthWorldLab).
             Wall("Back room north wall", new Vector2(-4, 9), new Vector2(2, 9), 3.6f, wallLab, new Vector2(4 + AnnexDoorFrom, 4 + AnnexDoorTo));
             Wall("Back room east wall", new Vector2(2, 4), new Vector2(2, 9), 3.6f, wallLab);
             // Shop unit B, 8 x 8 m to the east.
-            Box(rooms, "Unit B floor", new Vector3(8, -0.05f, 0), new Vector3(8, 0.1f, 8), floorB, true);
-            Box(rooms, "Unit B ceiling", new Vector3(8, 3.25f, 0), new Vector3(8, 0.1f, 8), wall);
+            RoomBox(rooms, "Unit B floor", new Vector3(8, -0.05f, 0), new Vector3(8, 0.1f, 8), floorB, true);
+            RoomBox(rooms, "Unit B ceiling", new Vector3(8, 3.25f, 0), new Vector3(8, 0.1f, 8), wall);
             // GR-10: an arch at the north wall's east end into unit C, and the bay window in the front wall (GrowthWorldSpaces).
             Wall("Unit B north wall (arch to unit C)", new Vector2(4, 4), new Vector2(12, 4), 3.2f, wall, new Vector2(5.9f, 7.85f));
             Wall("Unit B east wall", new Vector2(12, -4), new Vector2(12, 4), 3.2f, wall);
             Wall("Unit B front wall (bay window)", new Vector2(4, -4), new Vector2(12, -4), 3.2f, wall, new Vector2(3.1f, 4.9f));
             // The street outside the entrance.
-            Box(rooms, "Pavement", new Vector3(0, -0.06f, -6.5f), new Vector3(10, 0.1f, 5), ShopWorld.MakeMaterial("GR pavement", new Color(0.55f, 0.56f, 0.55f), 0, 0.2f), true);
+            RoomBox(rooms, "Pavement", new Vector3(0, -0.06f, -6.5f), new Vector3(10, 0.1f, 5), ShopWorld.MakeMaterial("GR pavement", new Color(0.55f, 0.56f, 0.55f), 0, 0.2f), true);
             // The temporary partition that closes the arch until unit B is bought.
             unitBWall = new GameObject("Unit B partition").gameObject; unitBWall.transform.SetParent(transform, false);
-            var wallBox = Box(unitBWall.transform, "Partition", new Vector3(4, 1.6f, 0), new Vector3(0.12f, 3.2f, 3.2f), partition, true);
-            unitBSign = Box(unitBWall.transform, "Coming soon sign", new Vector3(3.92f, 1.6f, 0), new Vector3(0.04f, 0.7f, 1.6f), sign).gameObject;
-            Box(unitBWall.transform, "Sign stripe", new Vector3(3.9f, 1.6f, 0), new Vector3(0.04f, 0.12f, 1.2f), paper);
+            var wallBox = RoomBox(unitBWall.transform, "Partition", new Vector3(4, 1.6f, 0), new Vector3(0.12f, 3.2f, 3.2f), partition, true);
+            unitBSign = RoomBox(unitBWall.transform, "Coming soon sign", new Vector3(3.92f, 1.6f, 0), new Vector3(0.04f, 0.7f, 1.6f), sign).gameObject;
+            RoomBox(unitBWall.transform, "Sign stripe", new Vector3(3.9f, 1.6f, 0), new Vector3(0.04f, 0.12f, 1.2f), paper);
             Target(wallBox.gameObject, GrowthTargetKind.UnitBWall, "unit-b");
         }
 
@@ -904,7 +928,7 @@ namespace EvolutionShop
         /// <summary>GR-25: the shop's door (visitors come and go there) and where the sun comes in by day (unit A's window, unit
         /// B's bay window).</summary>
         public static Vector3 DoorPoint => Door;
-        public static readonly Vector3[] Sunbeams = { new Vector3(-2.6f, 0.3f, -3.3f), new Vector3(8f, 0.3f, -3.3f) };
+        public static readonly Vector3[] Sunbeams = { At(-2.6f, 0.3f, -3.3f), At(8f, 0.3f, -3.3f) };
 
         /// <summary>GR-06: the owned sources within reach of a point on the floor (the vacuum's range), nearest first.</summary>
         public List<string> SourcesNear(Vector3 point, float range)

@@ -19,7 +19,7 @@ namespace EvolutionShop
     {
         const string PlansScenarioText = "GR-34 the plans (F68): the building with everything bought, from straight above: how it looks, and what stands in the way between 7 cm and 1.9 m, for measuring the walkways";
         /// <summary>The plan's extent in the world (x and z), and its pixels per metre.</summary>
-        const float PlanX0 = -10.5f, PlanX1 = 12.5f, PlanZ0 = -4.5f, PlanZ1 = 17.5f, PlanPixelsPerMetre = 40, ObstacleCell = 0.05f;
+        const float PlanX0 = -13.5f, PlanX1 = 15.5f, PlanZ0 = -5.5f, PlanZ1 = 22f, PlanPixelsPerMetre = 40, ObstacleCell = 0.05f;
 
         IEnumerator PlansScenario()
         {
@@ -44,7 +44,7 @@ namespace EvolutionShop
             shop.TakeEvents();
             s.LoadFixture(shop);
             yield return new WaitForSeconds(4f);
-            LookAt(new Vector3(-0.5f, 0, -6.5f), new Vector3(-0.5f, 1.5f, -9f));
+            LookAt(P(-0.5f, 0, -6.5f), P(-0.5f, 1.5f, -9f));
             yield return new WaitForSeconds(1f);
             Check(shop.ResearchRoom && shop.Workshop && shop.UnitC && shop.Hall && shop.Buffers.Count == GrowthLab.BufferPlaces, "Every room open and every buffer bought (" + shop.Buffers.Count + ")");
             Check(shop.FreePlaces.Count() == 0, "Every place holds a tank (" + string.Join(",", shop.FreePlaces) + " free)");

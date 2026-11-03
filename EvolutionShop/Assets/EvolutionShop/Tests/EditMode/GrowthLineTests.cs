@@ -154,7 +154,7 @@ namespace EvolutionShop.Tests
                 if (i > 0) Assert.That(GrowthLab.Adjacent(chute.Cells[i - 1], chute.Cells[i]), Is.True);
             }
             Assert.That(chute.Cells.Any(c => c.r >= GrowthLab.AnnexFirstRow && c.c < GrowthLab.AnnexColumns) && chute.Cells.Any(c => c.c >= GrowthLab.AnnexColumns), Is.True, "over the power room into the workshop");
-            Assert.That(chute.Length, Is.EqualTo((chute.Cells.Count - 1) * 0.5f + (GrowthLab.PipeHeight - 0.95f) + (GrowthLab.PipeHeight - 1.6f)).Within(0.001f));
+            Assert.That(chute.Length, Is.EqualTo((chute.Cells.Count - 1) * GrowthLab.CellSize + (GrowthLab.PipeHeight - 0.95f) + (GrowthLab.PipeHeight - 1.6f)).Within(0.001f));
             Assert.That(shop.PowerOrder.Contains(chute.PowerId), Is.False, "the chute needs no pump: clutches slide");
             Assert.That(shop.PipeCheck(GrowthLab.Out, GrowthLab.Sorter, out _, out why), Is.EqualTo(GrowthFailure.Busy));
             Assert.That(why, Is.EqualTo("The chute is laid already"));

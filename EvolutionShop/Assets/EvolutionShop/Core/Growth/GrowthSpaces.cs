@@ -13,7 +13,8 @@ namespace EvolutionShop.Growth
     // either side of the bay window bench), and set-piece placeholders. GR.11's proportions are checked here, not only
     // drawn: every place inside its room and clear of every other, 1.2 m of browse access in front of each, the main aisle
     // 1.6 m wide from the entrance to unit C's arch, the counter's queue inside the shop, and every visitor's and helper's
-    // walk clear of the tanks and through doorways only (Problems).
+    // walk clear of the tanks and through doorways only (Problems). GR-34 (F68) made every room a quarter larger each way:
+    // the coordinates below are the plan before, put on the new one by GrowthPlan.
 
     /// <summary>
     /// The rooms, doorways, the places' positions and the walking network (GR.11). Coordinates are metres on the floor
@@ -67,47 +68,61 @@ namespace EvolutionShop.Growth
         }
 
         public const float WallThickness = 0.2f, BrowseAccess = 1.2f, MainAisle = 1.6f, Body = 0.25f, ShopCeiling = 3.2f, LabCeiling = 3.6f;
-        /// <summary>Visitors walk at 2 m/s and look into a tank for at least a second once they are at it (GR-10: a visitor's
+        /// <summary>Visitors walk at 2 m/s on the plan before GR-34, 2.5 m/s since (the rooms a quarter larger, each walk takes
+        /// the time it took), and look into a tank for at least a second once they are at it (GR-10: a visitor's
         /// look counts from the door, so one bound for a far tank has the time to walk there).</summary>
-        public const float VisitorSpeed = 2f, LookSeconds = 1f;
+        public const float VisitorSpeed = 2f * GrowthPlan.K, LookSeconds = 1f;
 
         /// <summary>GR-32 (F56): the places with no wall behind them, in the middle of a room: seen from every side, their tanks have no backdrop.</summary>
         public static bool FreeStanding(string place) => place == "a3" || place == "b3";
 
         public static readonly Room[] Rooms =
         {
-            new Room { Id = "unit-a", Name = "shop unit A", Expansion = "unit-a", Shop = true, Area = new Rect(-4, -4, 4, 4), Ceiling = ShopCeiling },
-            new Room { Id = "unit-b", Name = "shop unit B", Expansion = "unit-b", Shop = true, Area = new Rect(4, -4, 12, 4), Ceiling = ShopCeiling },
-            new Room { Id = "unit-c", Name = "shop unit C", Expansion = "unit-c", Shop = true, Area = new Rect(2, 4, 12, 9), Ceiling = ShopCeiling },
-            new Room { Id = "back", Name = "the laboratory", Expansion = "unit-a", Shop = false, Area = new Rect(-4, 4, 2, 9), Ceiling = LabCeiling },
-            new Room { Id = "annex", Name = "the power room", Expansion = "annex", Shop = false, Area = new Rect(-4, 9, 4, 17), Ceiling = LabCeiling },
-            new Room { Id = "workshop", Name = "the workshop", Expansion = "workshop", Shop = false, Area = new Rect(4, 9, 12, 15), Ceiling = LabCeiling },
-            new Room { Id = "research", Name = "the research room", Expansion = "research", Shop = false, Area = new Rect(-10, 11, -4, 17), Ceiling = LabCeiling },
+            new Room { Id = "unit-a", Name = "shop unit A", Expansion = "unit-a", Shop = true, Area = Scaled(-4, -4, 4, 4), Ceiling = ShopCeiling },
+            new Room { Id = "unit-b", Name = "shop unit B", Expansion = "unit-b", Shop = true, Area = Scaled(4, -4, 12, 4), Ceiling = ShopCeiling },
+            new Room { Id = "unit-c", Name = "shop unit C", Expansion = "unit-c", Shop = true, Area = Scaled(2, 4, 12, 9), Ceiling = ShopCeiling },
+            new Room { Id = "back", Name = "the laboratory", Expansion = "unit-a", Shop = false, Area = Scaled(-4, 4, 2, 9), Ceiling = LabCeiling },
+            new Room { Id = "annex", Name = "the power room", Expansion = "annex", Shop = false, Area = Scaled(-4, 9, 4, 17), Ceiling = LabCeiling },
+            new Room { Id = "workshop", Name = "the workshop", Expansion = "workshop", Shop = false, Area = Scaled(4, 9, 12, 15), Ceiling = LabCeiling },
+            new Room { Id = "research", Name = "the research room", Expansion = "research", Shop = false, Area = Scaled(-10, 11, -4, 17), Ceiling = LabCeiling },
         };
 
         /// <summary>The street outside the entrance (visitors arrive and leave there).</summary>
-        public static readonly Rect Street = new Rect(-5, -8, 13, -4);
+        public static readonly Rect Street = Moved(-5, -8, 13, -4);
+
+        /// <summary>GR-34: a rectangle of the plan before, scaled with the rooms (a room's walls), or with its corners moved as
+        /// things outside the rooms are (the street).</summary>
+        static Rect Scaled(float x0, float z0, float x1, float z1) => new Rect(GrowthPlan.S(x0), GrowthPlan.S(z0), GrowthPlan.S(x1), GrowthPlan.S(z1));
+        static Rect Moved(float x0, float z0, float x1, float z1) { var a = GrowthPlan.At(x0, z0); var b = GrowthPlan.At(x1, z1); return new Rect(a.x, a.z, b.x, b.z); }
+        static (float x, float z) On((float x, float z) p) => GrowthPlan.Scaled(p.x, p.z);
+        static (float x, float z) At((float x, float z) p) => GrowthPlan.At(p);
+        /// <summary>A thing of the plan before kept its size: its rectangle around its centre, moved as GrowthPlan.At moves it.</summary>
+        static Rect Kept(float x0, float z0, float x1, float z1)
+        {
+            var c = GrowthPlan.At((x0 + x1) * 0.5f, (z0 + z1) * 0.5f);
+            return new Rect(c.x - (x1 - x0) * 0.5f, c.z - (z1 - z0) * 0.5f, c.x + (x1 - x0) * 0.5f, c.z + (z1 - z0) * 0.5f);
+        }
 
         public static readonly Doorway[] Doorways =
         {
-            new Doorway { Id = "entrance", A = "street", B = "unit-a", From = (-1.2f, -4), To = (0.2f, -4) },
-            new Doorway { Id = "arch-ab", A = "unit-a", B = "unit-b", From = (4, -1.6f), To = (4, 1.6f) },
-            new Doorway { Id = "arch-bc", A = "unit-b", B = "unit-c", From = (9.9f, 4), To = (11.85f, 4) },
-            new Doorway { Id = "back-door", A = "unit-a", B = "back", From = (0.2f, 4), To = (1.4f, 4) },
-            new Doorway { Id = "annex-door", A = "back", B = "annex", From = (0.45f, 9), To = (1.85f, 9) },
-            new Doorway { Id = "workshop-door", A = "annex", B = "workshop", From = (4, 9.6f), To = (4, 11) },
-            new Doorway { Id = "research-door", A = "annex", B = "research", From = (-4, 14.65f), To = (-4, 16.05f) },
+            new Doorway { Id = "entrance", A = "street", B = "unit-a", From = On((-1.2f, -4)), To = On((0.2f, -4)) },
+            new Doorway { Id = "arch-ab", A = "unit-a", B = "unit-b", From = On((4, -1.6f)), To = On((4, 1.6f)) },
+            new Doorway { Id = "arch-bc", A = "unit-b", B = "unit-c", From = On((9.9f, 4)), To = On((11.85f, 4)) },
+            new Doorway { Id = "back-door", A = "unit-a", B = "back", From = On((0.2f, 4)), To = On((1.4f, 4)) },
+            new Doorway { Id = "annex-door", A = "back", B = "annex", From = On((0.45f, 9)), To = On((1.85f, 9)) },
+            new Doorway { Id = "workshop-door", A = "annex", B = "workshop", From = On((4, 9.6f)), To = On((4, 11)) },
+            new Doorway { Id = "research-door", A = "annex", B = "research", From = On((-4, 14.65f)), To = On((-4, 16.05f)) },
         };
 
         /// <summary>The walking network's waypoints: the visitors' (the street, the door, the hub inside it and the aisles),
         /// and the helpers' way in from the back room's door (BackA).</summary>
         public static readonly Dictionary<string, (float x, float z)> Points = new Dictionary<string, (float x, float z)>
         {
-            ["Outside"] = (-0.5f, -5.8f), ["Door"] = (-0.5f, -3.3f), ["Hub"] = (-0.5f, -1.6f),
-            ["West"] = (-2.2f, -1.2f), ["NorthWest"] = (-2.2f, 2.0f), ["East"] = (1.5f, -1.0f), ["BackA"] = (1.1f, 2.3f),
-            ["ArchWest"] = (3.3f, 0), ["ArchEast"] = (4.7f, 0), ["UnitBWest"] = (5.6f, 1.55f), ["UnitBNorth"] = (8.0f, 1.6f), ["UnitBSouth"] = (5.6f, -1.4f),
-            ["UnitBSouthEast"] = (8.9f, -1.55f), ["UnitBCorner"] = (10.05f, 2.05f), ["ArchCSouth"] = (10.9f, 2.9f), ["ArchC"] = (10.9f, 4.0f),
-            ["ArchCNorth"] = (10.45f, 5.6f), ["UnitCAisle"] = (6.0f, 6.25f),
+            ["Outside"] = At((-0.5f, -5.8f)), ["Door"] = At((-0.5f, -3.3f)), ["Hub"] = At((-0.5f, -1.6f)),
+            ["West"] = At((-2.2f, -1.2f)), ["NorthWest"] = At((-2.2f, 2.0f)), ["East"] = At((1.5f, -1.0f)), ["BackA"] = At((1.1f, 2.3f)),
+            ["ArchWest"] = At((3.3f, 0)), ["ArchEast"] = At((4.7f, 0)), ["UnitBWest"] = At((5.6f, 1.55f)), ["UnitBNorth"] = At((8.0f, 1.6f)), ["UnitBSouth"] = At((5.6f, -1.4f)),
+            ["UnitBSouthEast"] = At((8.9f, -1.55f)), ["UnitBCorner"] = At((10.05f, 2.05f)), ["ArchCSouth"] = At((10.9f, 2.9f)), ["ArchC"] = At((10.9f, 4.0f)),
+            ["ArchCNorth"] = At((10.45f, 5.6f)), ["UnitCAisle"] = At((6.0f, 6.25f)),
         };
 
         /// <summary>The walking network's paths between waypoints (visitors keep to them; helpers too, in the shop).</summary>
@@ -126,38 +141,60 @@ namespace EvolutionShop.Growth
         static readonly string[] ToC = { "East", "ArchWest", "ArchEast", "UnitBNorth", "UnitBCorner", "ArchCSouth", "ArchC", "ArchCNorth" };
         static string[] With(string[] route, params string[] more) => route.Concat(more).ToArray();
 
+        /// <summary>GR-34: a place of the plan before: against its wall (behind its back) it keeps its distance to it, a
+        /// free-standing one moves as GrowthPlan.At has it; its browse spot stays where it was in front of it.</summary>
+        static Spot Placed(string id, (float x, float z) centre, int yaw, (float x, float z) browse, string[] route)
+        {
+            var c = GrowthPlan.At(centre);
+            if (!FreeStanding(id))
+            {
+                var room = GrowthPlan.RoomAt(centre.x, centre.z); var front = Front(yaw);
+                if (front.x != 0) c.x = centre.x + (front.x > 0 ? room[0] : room[2]) * (GrowthPlan.K - 1);
+                if (front.z != 0) c.z = centre.z + (front.z > 0 ? room[1] : room[3]) * (GrowthPlan.K - 1);
+            }
+            return new Spot { Id = id, Centre = c, Yaw = yaw, Browse = (c.x + browse.x - centre.x, c.z + browse.z - centre.z), Route = route };
+        }
+
         public static readonly Spot[] Spots =
         {
-            new Spot { Id = "a1", Centre = (-2.2f, 3.35f), Yaw = 180, Browse = (-2.2f, 2.2f), Route = new[] { "West", "NorthWest" } },
-            new Spot { Id = "a2", Centre = (-3.35f, 0.9f), Yaw = 90, Browse = (-2.2f, 0.9f), Route = new[] { "West" } },
-            new Spot { Id = "a3", Centre = (-0.4f, 0.2f), Yaw = 180, Browse = (-0.4f, -0.95f), Route = new string[0] },
-            new Spot { Id = "a4", Centre = (-3.35f, -1.6f), Yaw = 90, Browse = (-2.2f, -1.6f), Route = new[] { "West" } },
-            new Spot { Id = "b1", Centre = (5.6f, 3.35f), Yaw = 180, Browse = (5.6f, 2.2f), Route = ToB },
-            new Spot { Id = "b2", Centre = (8.4f, 3.35f), Yaw = 180, Browse = (8.4f, 2.2f), Route = ToB },
-            new Spot { Id = "b3", Centre = (7.6f, -0.2f), Yaw = 180, Browse = (7.6f, -1.35f), Route = With(ToB, "UnitBSouth") },
-            new Spot { Id = "b4", Centre = (11.15f, -0.2f), Yaw = -90, Browse = (9.8f, -0.2f), Route = With(ToB, "UnitBNorth") },
-            new Spot { Id = "c1", Centre = (3.75f, 8.15f), Yaw = 180, Browse = (3.75f, 6.2f), Route = With(ToC, "UnitCAisle") },
-            new Spot { Id = "c2", Centre = (8.2f, 8.15f), Yaw = 180, Browse = (8.2f, 6.2f), Route = ToC },
-            new Spot { Id = "c3", Centre = (3.45f, 4.6f), Yaw = 0, Browse = (3.45f, 6.3f), Route = With(ToC, "UnitCAisle") },
-            new Spot { Id = "c4", Centre = (6.1f, 4.6f), Yaw = 0, Browse = (6.1f, 6.3f), Route = With(ToC, "UnitCAisle") },
-            new Spot { Id = "c5", Centre = (8.75f, 4.6f), Yaw = 0, Browse = (8.75f, 6.3f), Route = ToC },
-            new Spot { Id = "c6", Centre = (11.4f, 7.25f), Yaw = -90, Browse = (10.1f, 7.0f), Route = ToC },
-            new Spot { Id = "e1", Centre = (5.65f, -3.4f), Yaw = 0, Browse = (5.65f, -1.7f), Route = With(ToB, "UnitBSouth") },
-            new Spot { Id = "e2", Centre = (10.2f, -3.4f), Yaw = 0, Browse = (9.9f, -1.75f), Route = With(ToB, "UnitBSouth", "UnitBSouthEast") },
+            Placed("a1", (-2.2f, 3.35f), 180, (-2.2f, 2.2f), new[] { "West", "NorthWest" }),
+            Placed("a2", (-3.35f, 0.9f), 90, (-2.2f, 0.9f), new[] { "West" }),
+            Placed("a3", (-0.4f, 0.2f), 180, (-0.4f, -0.95f), new string[0]),
+            Placed("a4", (-3.35f, -1.6f), 90, (-2.2f, -1.6f), new[] { "West" }),
+            Placed("b1", (5.6f, 3.35f), 180, (5.6f, 2.2f), ToB),
+            Placed("b2", (8.4f, 3.35f), 180, (8.4f, 2.2f), ToB),
+            Placed("b3", (7.6f, -0.2f), 180, (7.6f, -1.35f), With(ToB, "UnitBSouth")),
+            Placed("b4", (11.15f, -0.2f), -90, (9.8f, -0.2f), With(ToB, "UnitBNorth")),
+            Placed("c1", (3.75f, 8.15f), 180, (3.75f, 6.2f), With(ToC, "UnitCAisle")),
+            Placed("c2", (8.2f, 8.15f), 180, (8.2f, 6.2f), ToC),
+            Placed("c3", (3.45f, 4.6f), 0, (3.45f, 6.3f), With(ToC, "UnitCAisle")),
+            Placed("c4", (6.1f, 4.6f), 0, (6.1f, 6.3f), With(ToC, "UnitCAisle")),
+            Placed("c5", (8.75f, 4.6f), 0, (8.75f, 6.3f), ToC),
+            Placed("c6", (11.4f, 7.25f), -90, (10.1f, 7.0f), ToC),
+            Placed("e1", (5.65f, -3.4f), 0, (5.65f, -1.7f), With(ToB, "UnitBSouth")),
+            Placed("e2", (10.2f, -3.4f), 0, (9.9f, -1.75f), With(ToB, "UnitBSouth", "UnitBSouthEast")),
         };
 
         /// <summary>The shop's fixed pieces on the floor, which places and walks keep clear of: the counter, the supplier
         /// catalog's stand, unit B's bay window bench and unit C's feature tank (set pieces, GR.11).</summary>
+        /// <summary>GR-34: the supplier catalog's stand, its back against the front wall (scaled with the room it left a pocket
+        /// behind it too narrow to walk), where it was along the wall.</summary>
+        /// <summary>The counter's centre: the shop's queue and the staff side behind it are placed from it.</summary>
+        public static readonly (float x, float z) Counter = GrowthPlan.At(2.8f, -2.6f);
+        public static readonly (float x, float z) Catalog = (GrowthPlan.At(0.7f, -3.3f).x, GrowthPlan.S(-4f) + WallThickness * 0.5f + 0.175f + 0.02f);
+
         public static readonly (string id, Rect area)[] Fixtures =
         {
-            ("counter", new Rect(1.75f, -2.975f, 3.85f, -2.225f)),
-            ("catalog", new Rect(0.475f, -3.475f, 0.925f, -3.125f)), // GR-31 (F24): moved 0.5 m west: a way behind the counter
-            ("bay window bench", new Rect(7.1f, -3.9f, 8.9f, -3.45f)),
-            ("feature tank", new Rect(5.35f, 8.6f, 6.6f, 8.9f)),
+            ("counter", new Rect(Counter.x - 1.05f, Counter.z - 0.375f, Counter.x + 1.05f, Counter.z + 0.375f)),
+            ("catalog", new Rect(Catalog.x - 0.225f, Catalog.z - 0.175f, Catalog.x + 0.225f, Catalog.z + 0.175f)), // GR-31 (F24): moved 0.5 m west: a way behind the counter
+            ("bay window bench", Kept(7.1f, -3.9f, 8.9f, -3.45f)),
+            ("feature tank", Kept(5.35f, 8.6f, 6.6f, 8.9f)),
         };
 
         /// <summary>The counter's queue, first in line nearest it (inside the shop, GR.11).</summary>
-        public static readonly (float x, float z)[] QueueSpots = { (2.8f, -1.7f), (2.8f, -0.95f), (2.8f, -0.2f), (2.05f, -0.2f), (1.3f, -0.2f) };
+        /// <summary>GR-34: as before, from the counter's centre (scaled with the room, the first in line was out of a boop's reach
+        /// across it).</summary>
+        public static readonly (float x, float z)[] QueueSpots = new[] { (0f, 0.9f), (0f, 1.65f), (0f, 2.4f), (-0.75f, 2.4f), (-1.5f, 2.4f) }.Select(d => (Counter.x + d.Item1, Counter.z + d.Item2)).ToArray();
 
         public static Spot SpotOf(string place) => Spots.FirstOrDefault(s => s.Id == place);
         public static Room RoomById(string id) => Rooms.First(r => r.Id == id);
@@ -251,7 +288,7 @@ namespace EvolutionShop.Growth
         {
             var s = Spots.FirstOrDefault(x => Distance(x.Browse, p) < 1e-3f);
             if (s != null) return s.Route.Length > 0 ? s.Route[s.Route.Length - 1] : "Hub";
-            if (Distance(p, (0.8f, 3.5f)) < 1e-3f) return "BackA";
+            if (Distance(p, GrowthWalk.BackDoorShop) < 1e-3f) return "BackA";
             return Points.Where(kv => kv.Key != "Outside" && kv.Key != "Door").OrderBy(kv => Distance(kv.Value, p)).ThenBy(kv => kv.Key, StringComparer.Ordinal).First().Key;
         }
 

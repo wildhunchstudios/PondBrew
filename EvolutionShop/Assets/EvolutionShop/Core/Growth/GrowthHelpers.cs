@@ -22,31 +22,35 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthWalk
     {
-        public const float Speed = 2f, Handle = 0.6f;
+        /// <summary>GR-34: 2 m/s on the plan before, scaled with the rooms, so each walk takes the time it took.</summary>
+        public const float Speed = 2f * GrowthPlan.K, Handle = 0.6f;
         public enum Room { A, B, C, Back, Annex, Workshop }
 
         public static Room RoomOf((float x, float z) p) =>
-            p.z < 4 ? (p.x < 4 ? Room.A : Room.B) : p.z < 9 ? (p.x < 2 ? Room.Back : Room.C) : p.x < 4 ? Room.Annex : Room.Workshop;
+            p.z < S(4) ? (p.x < S(4) ? Room.A : Room.B) : p.z < S(9) ? (p.x < S(2) ? Room.Back : Room.C) : p.x < S(4) ? Room.Annex : Room.Workshop;
+
+        static float S(float v) => GrowthPlan.S(v);
+        static (float x, float z) At(float x, float z) => GrowthPlan.At(x, z);
 
         static bool InShop(Room r) => r == Room.A || r == Room.B || r == Room.C;
 
         /// <summary>The back room's door into unit A: a point on either side of it (walked through straight).</summary>
-        static readonly (float x, float z) BackDoorShop = (0.8f, 3.5f), BackDoorLab = (0.8f, 4.5f);
+        public static readonly (float x, float z) BackDoorShop = At(0.8f, 3.5f), BackDoorLab = At(0.8f, 4.5f);
 
         /// <summary>The lab's doorways: the two rooms and a point on either side of each (walked through straight).</summary>
         static readonly (Room a, Room b, (float x, float z) pa, (float x, float z) pb)[] Doors =
         {
-            (Room.Back, Room.Annex, (1.15f, 8.5f), (1.15f, 9.5f)),
-            (Room.Annex, Room.Workshop, (3.5f, 10.3f), (4.5f, 10.3f)),
+            (Room.Back, Room.Annex, At(1.15f, 8.5f), At(1.15f, 9.5f)),
+            (Room.Annex, Room.Workshop, At(3.5f, 10.3f), At(4.5f, 10.3f)),
         };
 
         /// <summary>The counter's staff side, where Pip stands; each helper's home spot.</summary>
-        public static readonly (float x, float z) Counter = (3.4f, -3.3f), NoriHome = (0.6f, 5.4f), MossHome = (0.2f, 6.3f);
+        public static readonly (float x, float z) Counter = (GrowthSpaces.Counter.x + 0.6f, GrowthSpaces.Counter.z - 0.7f), NoriHome = At(0.6f, 5.4f), MossHome = At(0.2f, 6.3f);
         /// <summary>In front of the incubator's tray, and of the breeding tank's nursery.</summary>
-        public static readonly (float x, float z) Tray = (-0.8f, 6.05f), Nursery = (-0.5f, 5.15f);
+        public static readonly (float x, float z) Tray = (GrowthLab.Incubator.x, GrowthLab.Incubator.z - 0.85f), Nursery = At(-0.5f, 5.15f);
         /// <summary>Where a visitor or a helper stands at each shop place (GrowthWorld.Places' browse spots) and each rack place.</summary>
         public static readonly Dictionary<string, (float x, float z)> Places = GrowthSpaces.Spots.Select(s => (s.Id, s.Browse))
-            .Concat(new[] { ("r1", (7.0f, 10.8f)), ("r2", (8.75f, 10.8f)), ("r3", (10.2f, 11.6f)), ("r4", (10.2f, 13.4f)) })
+            .Concat(GrowthLab.Racks.Select(kv => (kv.Key, kv.Value.yaw == 0 ? (kv.Value.at.x, kv.Value.at.z + 1.2f) : (kv.Value.at.x - 1.2f, kv.Value.at.z))))
             .ToDictionary(x => x.Item1, x => x.Item2);
 
         public static (float x, float z) Home(string helper) => helper == "pip" ? Counter : helper == "nori" ? NoriHome : MossHome;

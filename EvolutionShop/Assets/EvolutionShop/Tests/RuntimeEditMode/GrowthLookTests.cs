@@ -261,12 +261,13 @@ namespace EvolutionShop.Tests
         [Test] public void NoRoomsDressingCrossesADoorway()
         {
             // Each doorway: its centre on the floor plane, whether its wall runs along x, and its width (GrowthWorld.Rooms, AnnexRoom, WorkshopRoom).
+            // GR-34: on the plan before, scaled with the rooms (a quarter larger each way).
             var doorways = new[]
             {
                 ("unit A's entrance", new Vector2(-0.5f, -4f), true, 1.4f), ("the back room's door", new Vector2(0.8f, 4f), true, 1.2f),
                 ("the arch to unit B", new Vector2(4f, 0f), false, 3.2f), ("the lab annex's doorway", new Vector2(1.15f, 9f), true, 1.4f),
                 ("the workshop's doorway", new Vector2(4f, 10.3f), false, 1.4f), ("the arch to unit C", new Vector2(10.875f, 4f), true, 1.95f),
-            };
+            }.Select(d => (d.Item1, d.Item2 * GrowthPlan.K, d.Item3, d.Item4 * GrowthPlan.K)).ToArray();
             foreach (var name in new[] { "UnitADressing", "BackRoomDressing", "AnnexDressing", "WorkshopDressing", "UnitBDressing", "UnitCDressing", "FeatureWall" })
             {
                 var filter = Piece(name).GetComponentInChildren<MeshFilter>(true);
@@ -300,11 +301,12 @@ namespace EvolutionShop.Tests
                 var b = MeshBounds(Piece(name));
                 for (int a = 0; a < 3; a++)
                 {
-                    Assert.That(b.min[a], Is.GreaterThanOrEqualTo(min[a] - 0.01f), name + " min on axis " + a);
-                    Assert.That(b.max[a], Is.LessThanOrEqualTo(max[a] + 0.01f), name + " max on axis " + a);
+                    float k = a == 1 ? 1 : GrowthPlan.K; // GR-34: the rooms a quarter larger each way
+                    Assert.That(b.min[a], Is.GreaterThanOrEqualTo(min[a] * k - 0.01f), name + " min on axis " + a);
+                    Assert.That(b.max[a], Is.LessThanOrEqualTo(max[a] * k + 0.01f), name + " max on axis " + a);
                 }
             }
-            Assert.That(MeshBounds(Piece("Street")).max.z, Is.LessThanOrEqualTo(-4.05f), "the street stays outside unit A's front wall");
+            Assert.That(MeshBounds(Piece("Street")).max.z, Is.LessThanOrEqualTo(GrowthPlan.S(-4f) - 0.05f), "the street stays outside unit A's front wall");
             // GR-16 wave 4: unit B, x 4..12, z -4..4, and unit C, x 2..12, z 4..9, both with a 3.2 m ceiling; the street outside unit B.
             foreach (var (name, min, max) in new[] { ("UnitBFloor", new Vector3(4, -0.05f, -4), new Vector3(12, 0.01f, 4)), ("UnitBDressing", new Vector3(4, 0, -4), new Vector3(12, 3.2f, 4)),
                                                     ("UnitCFloor", new Vector3(2, -0.05f, 4), new Vector3(12, 0.01f, 9)), ("UnitCDressing", new Vector3(2, 0, 4), new Vector3(12, 3.2f, 9)) })
@@ -312,11 +314,12 @@ namespace EvolutionShop.Tests
                 var b = MeshBounds(Piece(name));
                 for (int a = 0; a < 3; a++)
                 {
-                    Assert.That(b.min[a], Is.GreaterThanOrEqualTo(min[a] - 0.01f), name + " min on axis " + a);
-                    Assert.That(b.max[a], Is.LessThanOrEqualTo(max[a] + 0.01f), name + " max on axis " + a);
+                    float k = a == 1 ? 1 : GrowthPlan.K; // GR-34: the rooms a quarter larger each way
+                    Assert.That(b.min[a], Is.GreaterThanOrEqualTo(min[a] * k - 0.01f), name + " min on axis " + a);
+                    Assert.That(b.max[a], Is.LessThanOrEqualTo(max[a] * k + 0.01f), name + " max on axis " + a);
                 }
             }
-            Assert.That(MeshBounds(Piece("StreetEast")).max.z, Is.LessThanOrEqualTo(-4.05f), "the street stays outside unit B's front wall");
+            Assert.That(MeshBounds(Piece("StreetEast")).max.z, Is.LessThanOrEqualTo(GrowthPlan.S(-4f) - 0.05f), "the street stays outside unit B's front wall");
         }
 
         /// <summary>Wave 4's pieces where their greybox has them: the bay window bench in front of its wall, its bowls hanging over
@@ -334,14 +337,15 @@ namespace EvolutionShop.Tests
             var tank = MeshBounds(Piece("FeatureTank"));
             Assert.That(Mathf.Max(tank.max.x, -tank.min.x), Is.LessThanOrEqualTo(0.725f), "the feature tank between the feature places (c1 to x 5.25, c2 from 6.7)");
             Assert.That(tank.max.z, Is.LessThanOrEqualTo(0.15f + 0.001f), "its back against unit C's north wall");
-            Assert.That(Vertices("FeatureWall").All(v => v.x >= 2.18f && v.x <= 9.82f && v.z <= 8.9f + 0.001f && (v.z >= 8.85f || v.y >= 3.05f)), Is.True,
+            float K = GrowthPlan.K, wallFace = 9f * K - 0.1f; // GR-34: unit C's north wall on the new plan
+            Assert.That(Vertices("FeatureWall").All(v => v.x >= 2.18f * K && v.x <= 9.82f * K && v.z <= wallFace + 0.001f && (v.z >= wallFace - 0.05f || v.y >= 3.05f)), Is.True,
                 "the feature wall a paint layer on the wall's face, only its cove of light standing out at the top");
             Assert.That(MeshBounds(Piece("StaffBoard")).max.z, Is.LessThanOrEqualTo(0.04f), "the staff board on unit A's north wall");
             Assert.That(MeshBounds(Piece("HallBoard")).min.z, Is.GreaterThanOrEqualTo(-0.04f), "the hall's plans on unit C's north wall");
             Assert.That(MeshBounds(Piece("Award")).min.z, Is.GreaterThanOrEqualTo(-0.03f - 0.001f), "the award on unit A's front wall");
             Assert.That(MeshBounds(Piece("ExhibitionSign")).min.z, Is.GreaterThanOrEqualTo(-0.04f - 0.001f), "the sign on unit A's front wall");
-            foreach (var (name, alongX, line, a0, a1, height) in new[] { ("PartitionB", false, 4f, -1.6f, 1.6f, 2.4f), ("PartitionC", true, 4f, 9.9f, 11.85f, 2.4f),
-                                                                       ("PartitionAnnex", true, 9f, 0.45f, 1.85f, 2.8f), ("PartitionWorkshop", false, 4f, 9.6f, 11.0f, 2.8f) })
+            foreach (var (name, alongX, line, a0, a1, height) in new[] { ("PartitionB", false, 4f * K, -1.6f * K, 1.6f * K, 2.4f), ("PartitionC", true, 4f * K, 9.9f * K, 11.85f * K, 2.4f),
+                                                                       ("PartitionAnnex", true, 9f * K, 0.45f * K, 1.85f * K, 2.8f), ("PartitionWorkshop", false, 4f * K, 9.6f * K, 11.0f * K, 2.8f) })
             {
                 var b = MeshBounds(Piece(name));
                 float along0 = alongX ? b.min.x : b.min.z, along1 = alongX ? b.max.x : b.max.z, across0 = alongX ? b.min.z : b.min.x, across1 = alongX ? b.max.z : b.max.x;

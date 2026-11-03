@@ -49,11 +49,11 @@ namespace EvolutionShop
             var unitsAB = GrowthShop.Places.Where(p => p.Unit == "unit-a" || p.Unit == "unit-b").ToList();
             Check(unitsAB.Count(p => p.Size == "long") == 5 && unitsAB.Count(p => p.Size == "standard") == 2 && unitsAB.Count(p => p.Size == "feature") == 1,
                 "Places: five long, two standard and one feature place across units A and B");
-            LookAt(new Vector3(1.6f, 0, -3.4f), new Vector3(-1.4f, 1.0f, 1.2f)); yield return Shot("30-unit-a-places");
+            LookAt(P(1.6f, 0, -3.4f), P(-1.4f, 1.0f, 1.2f)); yield return Shot("30-unit-a-places");
 
             // A standard place refuses a Large tank and says why; a long place takes it.
             var a2 = GrowthWorld.Places["a2"];
-            LookAt(new Vector3(-1.9f, 0, 0.9f), a2.Position + new Vector3(0, 0.4f, 0));
+            LookAt(P(-1.9f, 0, 0.9f), a2.Position + new Vector3(0, 0.4f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Place, "a2", "The reticle focuses the standard place a2");
             yield return Press(Key.E);
@@ -63,7 +63,7 @@ namespace EvolutionShop
             Check(shop.BuyContainer("large", "a2").Failure == GrowthFailure.TooBigForPlace, "Buying a Large tank for a2 is refused: too big for the place");
             s.SetCard(GrowthCard.None);
             var a3 = GrowthWorld.Places["a3"];
-            LookAt(new Vector3(-0.4f, 0, -1.3f), a3.Position + new Vector3(0, 0.4f, 0));
+            LookAt(P(-0.4f, 0, -1.3f), a3.Position + new Vector3(0, 0.4f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Place, "a3", "The reticle focuses the long place a3");
             yield return Press(Key.E);
@@ -75,7 +75,7 @@ namespace EvolutionShop
             var large = shop.ContainerAt("a3");
             Check(large != null && large.Spaces == 8 && shop.Credits == credits - 200, "A Large tank of 8 spaces stands on a3 for 200 credits");
             Check(s.World.Tanks.TryGetValue(large.Id, out var largeView) && Mathf.Approximately(largeView.Width, 2.5f), "The world builds it 2.5 m wide");
-            LookAt(new Vector3(1.4f, 0, -1.9f), a3.Position + new Vector3(0, 1.0f, 0)); yield return Shot("32-large-tank");
+            LookAt(P(1.4f, 0, -1.9f), a3.Position + new Vector3(0, 1.0f, 0)); yield return Shot("32-large-tank");
 
             // The development crate (labelled): a large and a medium creature in hand.
             yield return Press(Key.F8);
@@ -84,7 +84,7 @@ namespace EvolutionShop
             Ok(s.Act(() => shop.DevelopmentGive("shellback")), "Crate: a Shellback (large) in hand");
             s.SetCard(GrowthCard.None);
             // The Starter tank refuses a large creature: E on it says so.
-            LookAt(new Vector3(-2.2f, 0, 2.0f), GrowthWorld.Places["a1"].Position + new Vector3(0, 1.1f, 0));
+            LookAt(P(-2.2f, 0, 2.0f), GrowthWorld.Places["a1"].Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, starter.Id, "The reticle focuses the Starter tank");
             yield return Click();
@@ -93,7 +93,7 @@ namespace EvolutionShop
             Ok(s.Act(() => shop.DevelopmentGive("emberpuff")), "Crate: an Emberpuff (medium) in hand");
             Ok(s.Act(() => shop.DevelopmentGive("lanternfin")), "Crate: a Lanternfin (small) in hand");
             // The Large tank takes all three sizes: E three times.
-            LookAt(new Vector3(-0.4f, 0, -1.2f), a3.Position + new Vector3(0, 1.1f, 0));
+            LookAt(P(-0.4f, 0, -1.2f), a3.Position + new Vector3(0, 1.1f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.Tank, large.Id, "The reticle focuses the Large tank");
             for (int i = 0; i < 3; i++) yield return Click();
@@ -103,7 +103,7 @@ namespace EvolutionShop
             Stock(shop, large, "pondlet");
             Check(large.Free == 0 && shop.PutIn(large.Id).Failure == GrowthFailure.HandsEmpty, "A fourth, small, fills the Large tank");
             yield return new WaitForSeconds(0.5f);
-            LookAt(new Vector3(0.9f, 0, -1.5f), a3.Position + new Vector3(0, 1.15f, 0)); yield return Shot("34-sizes-side-by-side");
+            LookAt(P(0.9f, 0, -1.5f), a3.Position + new Vector3(0, 1.15f, 0)); yield return Shot("34-sizes-side-by-side");
             // Peek reads a medium or large creature with its size: the view follows the Shellback as a player would.
             var peekFeet = new Vector3(-0.4f, 0, -0.75f);
             LookAt(peekFeet, a3.Position + new Vector3(0, 1.15f, 0));
@@ -137,12 +137,12 @@ namespace EvolutionShop
             yield return null;
             Check(starter.Level == 3 && starter.Spaces == 8 && starter.Occupants.Count == 3, "The Starter tank at level 3 holds 8 spaces and kept its three Pondlets");
             Check(s.World.Tanks[starter.Id].Signature.Contains("|3|"), "The world rebuilds it with its filter and lid");
-            LookAt(new Vector3(-1.4f, 0, 1.7f), GrowthWorld.Places["a1"].Position + new Vector3(0, 1.3f, 0)); yield return Shot("37-starter-level-3");
+            LookAt(P(-1.4f, 0, 1.7f), GrowthWorld.Places["a1"].Position + new Vector3(0, 1.3f, 0)); yield return Shot("37-starter-level-3");
             // Moving it with its creatures, and selling an empty one for half.
             Ok(s.Act(() => shop.MoveContainer(starter.Id, "a2")), "Move the Starter tank, with its creatures, to a2");
             yield return null;
             Check(s.World.Tanks[starter.Id].Place == "a2" && starter.Occupants.Count == 3 && shop.ContainerAt("a1") == null, "It stands on a2 with its three Pondlets; a1 is free");
-            LookAt(new Vector3(-1.0f, 0, 1.6f), new Vector3(-3.0f, 1.0f, 1.5f)); yield return Shot("38-moved");
+            LookAt(P(-1.0f, 0, 1.6f), P(-3.0f, 1.0f, 1.5f)); yield return Shot("38-moved");
             credits = shop.Credits;
             Ok(s.Act(() => shop.BuyContainer("starter", "b1")), "Buy a Starter tank for b1");
             string spare = shop.ContainerAt("b1").Id;
@@ -168,7 +168,7 @@ namespace EvolutionShop
             var showView = s.World.Tanks[show.Id];
             Check(showView.HarmonyFrame.activeSelf && showView.ShowLight != null, "The Show tank glows in harmony and is lit");
             var b4 = GrowthWorld.Places["b4"];
-            LookAt(new Vector3(8.4f, 0, -1.4f), b4.Position + new Vector3(0, 1.1f, 0)); yield return Shot("39-show-tank-harmony");
+            LookAt(P(8.4f, 0, -1.4f), b4.Position + new Vector3(0, 1.1f, 0)); yield return Shot("39-show-tank-harmony");
             s.SetCard(GrowthCard.Tank, show.Id); yield return new WaitForSeconds(0.2f);
             Check(s.Ui.CardText().Contains("in harmony: +1 appeal") && s.Ui.CardText().Contains("Appeal +2"), "The Show tank's card shows its water, harmony and appeal");
             yield return Shot("40-show-tank-card");
@@ -182,7 +182,7 @@ namespace EvolutionShop
             Check(walker.Plan.Count >= 2 && walker.Plan[0] == show.Id, "Visitors look into the most appealing container first (the Show tank), then the next");
             yield return null;
             Check(s.World.VisitorViews.TryGetValue(walker.Id, out var walkerView) && !walkerView.Arrived, "The visitor walks on to the next container");
-            LookAt(new Vector3(6.6f, 0, -3.3f), walkerView.transform.position + Vector3.up); yield return Shot("41-walking-on");
+            LookAt(P(6.6f, 0, -3.3f), walkerView.transform.position + Vector3.up); yield return Shot("41-walking-on");
             // Collectors at four stars take a pair of one species (on the shop's own clock, labelled accelerated; the counter
             // serves whoever is first in line meanwhile, as a player would).
             GrowthVisitor pair = null;
@@ -296,10 +296,10 @@ namespace EvolutionShop
             Check(s.World.Tanks.Count == 8 && s.World.Tanks.Values.Count(v => v.Width >= 3f) == 1, "Every place holds a container; one Show tank");
             // GR-18 wave 3: the player's hands are the look's (none in the greybox, -evolutionGrowthPlain); lowered here, empty-handed.
             Check(GrowthWorld.LookOn == (s.Hands != null) && (s.Hands == null || !s.Hands.Shown("L") && !s.Hands.Shown("R")), GrowthWorld.LookOn ? "The player's hands are on the camera, lowered while empty-handed" : "The greybox has no hands (-evolutionGrowthPlain)");
-            yield return Measure("50-dense-unit-a", new Vector3(0.6f, 0, -3.2f), new Vector3(-1.5f, 1.1f, 1.5f));
-            yield return Measure("51-dense-unit-b", new Vector3(5.0f, 0, -3.2f), new Vector3(10.5f, 1.1f, 1.8f));
-            yield return Measure("52-dense-across", new Vector3(-3.0f, 0, -3.3f), new Vector3(11.0f, 1.1f, 0.8f));
-            yield return Measure("53-dense-show-close", new Vector3(9.6f, 0, 0.2f), new Vector3(11.15f, 1.15f, 0.2f));
+            yield return Measure("50-dense-unit-a", P(0.6f, 0, -3.2f), P(-1.5f, 1.1f, 1.5f));
+            yield return Measure("51-dense-unit-b", P(5.0f, 0, -3.2f), P(10.5f, 1.1f, 1.8f));
+            yield return Measure("52-dense-across", P(-3.0f, 0, -3.3f), P(11.0f, 1.1f, 0.8f));
+            yield return Measure("53-dense-show-close", P(9.6f, 0, 0.2f), P(11.15f, 1.15f, 0.2f));
             yield return Measure("54-dense-back-room", GrowthWorld.Spawn, GrowthWorld.Spawn + new Vector3(-3f, 1.2f, 0));
             // The stress: 60 view-only creatures more, spread over the tanks (labelled), 180 in all.
             var tanks = s.World.Tanks.Values.ToList();
@@ -309,12 +309,12 @@ namespace EvolutionShop
             yield return null;
             count = s.World.Tanks.Values.Sum(v => v.Creatures.Count);
             Check(count == 180, "The stress: 180 creatures on screen in the two shop units (60 of them view-only)");
-            yield return Measure("55-stress-unit-a", new Vector3(0.6f, 0, -3.2f), new Vector3(-1.5f, 1.1f, 1.5f));
-            yield return Measure("56-stress-across", new Vector3(-3.0f, 0, -3.3f), new Vector3(11.0f, 1.1f, 0.8f));
+            yield return Measure("55-stress-unit-a", P(0.6f, 0, -3.2f), P(-1.5f, 1.1f, 1.5f));
+            yield return Measure("56-stress-across", P(-3.0f, 0, -3.3f), P(11.0f, 1.1f, 0.8f));
             Ok(s.Act(s.Shop.OpenShop), "Open the shop for a day of visitors in the dense layout");
             yield return new WaitForSeconds(8);
             Check(s.Shop.Visitors.Count > 0, "Visitors are in the shop");
-            yield return Measure("57-stress-day", new Vector3(2.0f, 0, -3.5f), new Vector3(4.0f, 1.0f, 1.0f), 10);
+            yield return Measure("57-stress-day", P(2.0f, 0, -3.5f), P(4.0f, 1.0f, 1.0f), 10);
             Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
             var report = new DensityReport
             {

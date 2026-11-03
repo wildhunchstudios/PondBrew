@@ -57,4 +57,4 @@ From the tester build of 2026-10-31 (GR-28's second package), with the user's ow
 
 ## Status (2026-11-03)
 
-Technically complete (GR.75): F58 to F66 (GR-33); F75 to F79, F81 to F84, F86, F87. Technically complete (GR.76): F72, F73, F80, F85 with F67. Technically complete (GR.78): F70, F74. Approved and in progress (GR.77): F68 and F69 (GR-34), F71 (GR-35).
+Technically complete (GR.75): F58 to F66 (GR-33); F75 to F79, F81 to F84, F86, F87. Technically complete (GR.76): F72, F73, F80, F85 with F67. Technically complete (GR.78): F70, F74. Technically complete (GR.79): F68. Approved and in progress (GR.77): F69 (GR-34), F71 (GR-35).

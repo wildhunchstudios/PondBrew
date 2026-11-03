@@ -35,7 +35,7 @@ namespace EvolutionShop
             Check(problems.Count == 0, "GR.11's proportions and navigation hold for every place, walk, the queue and the main aisle" + (problems.Count == 0 ? "" : ": " + string.Join("; ", problems.Take(3))));
             Check(new[] { "Bay window bench", "Window display", "Pipe gallery", "Workshop dome", "Feature tank (set piece)", "Exhibition hall plans" }.All(n => GameObject.Find(n) != null),
                 "The set pieces' placeholders stand: the bay window bench, the window display, the pipe gallery, the workshop's dome, unit C's feature tank and the hall's plans");
-            LookAt(new Vector3(-0.5f, 0, -3.4f), new Vector3(1.6f, 1.2f, 1.5f)); yield return Shot("130-entrance");
+            LookAt(P(-0.5f, 0, -3.4f), P(1.6f, 1.2f, 1.5f)); yield return Shot("130-entrance");
 
             // Unit C: its partition in unit B's arch, opened at night.
             yield return AimAt(GrowthWorld.UnitCArch + new Vector3(-0.3f, 0, -2.4f), GrowthWorld.UnitCArch + new Vector3(0, 1.2f, 0), GrowthTargetKind.UnitCWall, "unit-c", "The reticle focuses unit C's partition in unit B's arch");
@@ -60,7 +60,7 @@ namespace EvolutionShop
             yield return Wait(() => !s.World.Revealing("unit-c"), 6, "unit C's reveal");
             Check(!s.World.PartitionShowing("unit-c") && Mathf.Abs(s.World.LampIntensity("unit-c") - s.World.LampFull("unit-c")) < 0.01f && s.World.LampFull("unit-c") >= 1.25f && shop.FreePlaces.Count(p => p.StartsWith("c")) == 6,
                 "Revealed: the partition is gone, the lamp full, and unit C's six places show");
-            LookAt(new Vector3(10.6f, 0, 5.2f), new Vector3(4.0f, 1.1f, 7.2f)); yield return Shot("133-unit-c-open");
+            LookAt(P(10.6f, 0, 5.2f), P(4.0f, 1.1f, 7.2f)); yield return Shot("133-unit-c-open");
 
             // Tanks on unit C's places: Show tanks on its feature wall, Large and Starter tanks on its long places.
             foreach (var (kind, place) in new[] { ("show", "c1"), ("show", "c2"), ("large", "c3"), ("starter", "c4"), ("starter", "c5"), ("starter", "c6") })
@@ -73,7 +73,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.ShopContainers.Where(c => c.Place.StartsWith("c")).All(c => c.Occupants.Count > 0) && s.World.Tanks.Values.Count(t => t.Place != null && t.Place.StartsWith("c")) == 6,
                 "Unit C's six tanks stand stocked (development stock; the other tanks emptied, labelled)");
-            LookAt(new Vector3(10.6f, 0, 5.4f), new Vector3(4.0f, 1.1f, 7.0f)); yield return Shot("134-unit-c-tanks");
+            LookAt(P(10.6f, 0, 5.4f), P(4.0f, 1.1f, 7.0f)); yield return Shot("134-unit-c-tanks");
 
             // A day: visitors walk from the door through unit A, unit B and the arch to browse in unit C, and buy there. The
             // figures walk in real time, so the walk in runs at the game's own pace; the rest of the day is accelerated.
@@ -95,7 +95,7 @@ namespace EvolutionShop
                         walkedIn = true;
                         if (!shot)
                         {
-                            LookAt(new Vector3(10.6f, 0, 5.3f), new Vector3(b.x, 1.0f, b.z));
+                            LookAt(P(10.6f, 0, 5.3f), new Vector3(b.x, 1.0f, b.z));
                             yield return Shot("135-visitor-in-unit-c");
                             shot = true;
                         }
@@ -120,12 +120,12 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.Workshop && !s.World.WorkshopWallStanding && s.World.Revealing("workshop") && s.World.PartitionShowing("workshop"), "The workshop's partition comes down too");
             yield return new WaitForSeconds(0.9f);
-            LookAt(new Vector3(2.4f, 0, 10.3f), new Vector3(8f, 2.2f, 11.6f)); yield return Shot("136-workshop-revealing");
+            LookAt(P(2.4f, 0, 10.3f), P(8f, 2.2f, 11.6f)); yield return Shot("136-workshop-revealing");
             yield return Wait(() => !s.World.Revealing("workshop"), 6, "the workshop's reveal");
             Check(!s.World.PartitionShowing("workshop") && s.Ui.Log.Any(l => l == "Workshop opened"), "Revealed, and the banner named it");
 
             // The exhibition hall finish, bought at its plans in unit C's north-east corner.
-            yield return AimAt(new Vector3(GrowthWorld.HallBoardPosition.x, 0, 6.8f), GrowthWorld.HallBoardPosition, GrowthTargetKind.HallBoard, "hall", "The reticle focuses the exhibition hall's plans");
+            yield return AimAt(new Vector3(GrowthWorld.HallBoardPosition.x, 0, P(10.3f, 0, 6.8f).z), GrowthWorld.HallBoardPosition, GrowthTargetKind.HallBoard, "hall", "The reticle focuses the exhibition hall's plans");
             Check(s.FocusName(out status) == "Exhibition hall plans" && status == "E see what it needs", "It is the exhibition hall's plans");
             yield return Press(Key.E);
             card = s.Ui.CardText();
@@ -137,12 +137,12 @@ namespace EvolutionShop
             yield return new WaitForSeconds(0.9f);
             float spots = s.World.LampIntensity("hall");
             Check(spots > 0.5f && spots < s.World.LampFull("hall") - 0.01f && Mathf.Abs(s.World.LampFull("hall") - 11f) < 0.01f && s.Ui.Log.Any(l => l == "The exhibition hall is finished"), "Halfway: the spotlights at " + spots.ToString("0.0") + " of 11; the banner names it");
-            LookAt(new Vector3(8f, 0, 1.2f), new Vector3(8f, 2.0f, -3.6f)); yield return Shot("137-hall-revealing");
+            LookAt(P(8f, 0, 1.2f), P(8f, 2.0f, -3.6f)); yield return Shot("137-hall-revealing");
             yield return Wait(() => !s.World.Revealing("hall"), 6, "the hall's reveal");
             Check(s.World.BannersShown == 5 && Mathf.Abs(s.World.LampIntensity("hall") - 11f) < 0.01f && shop.FreePlaces.Contains("e1") && shop.FreePlaces.Contains("e2") && shop.VisitorsAtOnce == 5,
                 "Finished: five banners, the spotlights full, the two exhibition places along unit B's front wall, and five visitors at a time");
             yield return null; yield return null;
-            LookAt(new Vector3(8f, 0, 0.8f), new Vector3(8f, 1.1f, -3.6f)); yield return Shot("138-exhibition-hall");
+            LookAt(P(8f, 0, 0.8f), P(8f, 1.1f, -3.6f)); yield return Shot("138-exhibition-hall");
 
             // Save and reload: every room open at once, no reveal.
             Check(s.SaveNow(), "Save");
@@ -155,7 +155,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(new[] { "unit-b", "annex", "workshop", "unit-c", "hall" }.All(r => !s.World.Standing(r) && !s.World.Revealing(r) && !s.World.PartitionShowing(r)) && s.World.BannersShown == 5,
                 "Reloaded, every room is open at once, without a reveal");
-            LookAt(new Vector3(-1.0f, 0, 12.7f), new Vector3(-3.84f, 1.6f, 12.7f)); yield return Shot("139-pipe-gallery");
+            LookAt(P(-1.0f, 0, 12.7f), P(-3.84f, 1.6f, 12.7f)); yield return Shot("139-pipe-gallery");
 
             // GR.5's budget at the final layout: every place of all three units holding its largest container, full.
             int previousRate = Application.targetFrameRate, previousVSync = QualitySettings.vSyncCount;
@@ -164,9 +164,9 @@ namespace EvolutionShop
             yield return null; yield return null;
             int creatures = s.World.Tanks.Values.Sum(v => v.Creatures.Count);
             Check(s.Shop.Stock.Count() == 264 && creatures == 264 && s.World.Tanks.Count == 16, "The final layout at its densest (labelled fixture): 16 containers, 264 creatures in the world");
-            yield return Measure("140-final-unit-c", new Vector3(10.6f, 0, 5.2f), new Vector3(4.0f, 1.1f, 7.2f), 6);
-            yield return Measure("141-final-across", new Vector3(8.9f, 0, -1.55f), new Vector3(10.9f, 1.1f, 6.0f), 6);
-            yield return Measure("142-final-hall", new Vector3(4.7f, 0, 0f), new Vector3(9.0f, 1.0f, -3.4f), 6);
+            yield return Measure("140-final-unit-c", P(10.6f, 0, 5.2f), P(4.0f, 1.1f, 7.2f), 6);
+            yield return Measure("141-final-across", P(8.9f, 0, -1.55f), P(10.9f, 1.1f, 6.0f), 6);
+            yield return Measure("142-final-hall", P(4.7f, 0, 0f), P(9.0f, 1.0f, -3.4f), 6);
             Application.targetFrameRate = previousRate; QualitySettings.vSyncCount = previousVSync;
             File.WriteAllText(Path.Combine(evidence, "final-density-timings.json"), JsonUtility.ToJson(new DensityReport
             {

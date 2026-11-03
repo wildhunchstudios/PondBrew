@@ -100,8 +100,8 @@ namespace EvolutionShop
 
             // By night: the lamps carry the rooms.
             float nightSun = w.LookSunIntensity;
-            LookAt(new Vector3(0.8f, 0, 3.2f), new Vector3(-1.5f, 1.2f, -2.0f)); yield return Shot("400-unit-a-night");
-            LookAt(new Vector3(1.2f, 0, 4.6f), new Vector3(-2.8f, 1.1f, 7.6f)); yield return Shot("401-back-room-night");
+            LookAt(P(0.8f, 0, 3.2f), P(-1.5f, 1.2f, -2.0f)); yield return Shot("400-unit-a-night");
+            LookAt(P(1.2f, 0, 4.6f), P(-2.8f, 1.1f, 7.6f)); yield return Shot("401-back-room-night");
             LookAt(GrowthWorld.GrowerFront("flow") + new Vector3(0.2f, 0, 0), GrowthWorld.GrowerPositions["flow"] + new Vector3(0, 1.0f, 0)); yield return Shot("402-growers-night");
             LookAt(GrowthWorld.IncubatorPosition + new Vector3(0.6f, 0, -1.5f), GrowthWorld.IncubatorPosition + new Vector3(0, 0.9f, 0)); yield return Shot("403-incubator-night");
 
@@ -135,10 +135,10 @@ namespace EvolutionShop
             var t2 = w.Tanks[fx2.Containers[0].Id].Root; var t3 = w.Tanks["tank-look"].Root;
             Check(HasPiece(t2, "TankFilter") && !HasPiece(t2, "TankLid"), "A level 2 Starter tank: its filter");
             Check(HasPiece(t3, "TankFilter") && HasPiece(t3, "TankLid"), "A level 3 Starter tank: its filter and its lid");
-            LookAt(new Vector3(-1.6f, 0, 6.3f), new Vector3(-3.45f, 1.1f, 5.3f)); yield return Shot("404-growers-level-4");
+            LookAt(P(-1.6f, 0, 6.3f), P(-3.45f, 1.1f, 5.3f)); yield return Shot("404-growers-level-4");
             LookAt(GrowthWorld.IncubatorPosition + new Vector3(0.8f, 0, -1.5f), GrowthWorld.IncubatorPosition + new Vector3(0, 0.9f, 0)); yield return Shot("405-incubator-level-4");
             LookAt(GrowthWorld.CounterPosition + new Vector3(-0.6f, 0, 1.6f), GrowthWorld.CounterPosition + new Vector3(0, 1.0f, 0)); yield return Shot("406-counter-level-4");
-            LookAt(new Vector3(0.9f, 0, -1.9f), new Vector3(-1.2f, 1.1f, 2.0f)); yield return Shot("407-tank-levels");
+            LookAt(P(0.9f, 0, -1.9f), P(-1.2f, 1.1f, 2.0f)); yield return Shot("407-tank-levels");
 
             // Wave 2: the vat, the breeding tank, the research bench and its siphon at their top levels, the vial shelf with five
             // vials, the catalog, the pinboard, Large and Show tanks and lab racks.
@@ -218,7 +218,7 @@ namespace EvolutionShop
             Aimed(GrowthTargetKind.Vial, "ember", "The reticle focuses the Ember vial through its bottle");
             LookAt(GrowthWorld.CatalogPosition + new Vector3(0, 0, 1.2f), GrowthWorld.CatalogPosition + new Vector3(0, 0.8f, 0)); yield return null; yield return null;
             Aimed(GrowthTargetKind.Catalog, null, "The reticle focuses the catalog");
-            LookAt(new Vector3(0.6f, 0, 5.6f), GrowthWorld.BoardPosition); yield return null; yield return null;
+            LookAt(P(0.6f, 0, 5.6f), GrowthWorld.BoardPosition); yield return null; yield return null;
             Aimed(GrowthTargetKind.Board, null, "The reticle focuses the pinboard");
             var b4 = GrowthWorld.Places["b4"]; var r1 = GrowthWorld.RackPlaces["r1"];
             LookAt(b4.Browse, b4.Position + new Vector3(0, 1.0f, 0)); yield return null; yield return null;
@@ -230,13 +230,13 @@ namespace EvolutionShop
             LookAt(GrowthWorld.GrowerFront("mist") + new Vector3(0.6f, 0, 0.1f), GrowthWorld.GrowerPositions["mist"] + new Vector3(0, 0.95f, 0)); yield return Shot("430-vat-level-3");
             LookAt(GrowthWorld.BreedingPosition + new Vector3(0.45f, 0, 1.5f), GrowthWorld.BreedingPosition + new Vector3(0, 0.9f, 0)); yield return Shot("431-breeding-tank-level-3");
             LookAt(GrowthWorld.WorkbenchPosition + new Vector3(-1.3f, 0, -0.35f), GrowthWorld.WorkbenchPosition + new Vector3(0, 1.05f, 0)); yield return Shot("432-research-bench-level-4");
-            LookAt(new Vector3(-1.3f, 0, 6.2f), new Vector3(-1.3f, 0.95f, 4.3f)); yield return Shot("433-vials-and-breeding");
-            LookAt(new Vector3(0.1f, 0, 5.4f), GrowthWorld.BoardPosition + new Vector3(0, -0.05f, 0)); yield return Shot("434-pinboard");
+            LookAt(P(-1.3f, 0, 6.2f), P(-1.3f, 0.95f, 4.3f)); yield return Shot("433-vials-and-breeding");
+            LookAt(P(0.1f, 0, 5.4f), GrowthWorld.BoardPosition + new Vector3(0, -0.05f, 0)); yield return Shot("434-pinboard");
             LookAt(GrowthWorld.CatalogPosition + new Vector3(0.25f, 0, 1.3f), GrowthWorld.CatalogPosition + new Vector3(0, 0.95f, 0)); yield return Shot("435-catalog");
             var a3 = GrowthWorld.Places["a3"];
-            LookAt(new Vector3(a3.Position.x, 0, -2.3f), a3.Position + new Vector3(0, 1.0f, 0)); yield return Shot("436-large-tank-level-3");
-            LookAt(new Vector3(8.4f, 0, -0.2f), b4.Position + new Vector3(0, 1.1f, 0)); yield return Shot("437-show-tank-level-2");
-            LookAt(new Vector3(7.9f, 0, 11.9f), new Vector3(7.9f, 0.9f, 9.6f)); yield return Shot("438-lab-racks");
+            LookAt(new Vector3(a3.Position.x, 0, P(-0.4f, 0, -2.3f).z), a3.Position + new Vector3(0, 1.0f, 0)); yield return Shot("436-large-tank-level-3");
+            LookAt(P(8.4f, 0, -0.2f), b4.Position + new Vector3(0, 1.1f, 0)); yield return Shot("437-show-tank-level-2");
+            LookAt(P(7.9f, 0, 11.9f), P(7.9f, 0.9f, 9.6f)); yield return Shot("438-lab-racks");
 
             // Wave 3: the machines, the lab annex and the workshop, the pipes and the chute, on the look start point.
             s.LoadFixture(GrowthStarts.Make(GrowthStarts.Look));
@@ -282,7 +282,7 @@ namespace EvolutionShop
             var gen = generator.position; var board = lab.Find("Power board").position;
             LookAt(gen + new Vector3(0, 0, -1.6f), gen + new Vector3(0, 0.9f, 0)); yield return null; yield return null;
             Aimed(GrowthTargetKind.Generator, null, "The reticle focuses the tide engine");
-            LookAt(new Vector3(2.4f, 0, board.z), board); yield return null; yield return null;
+            LookAt(new Vector3(P(2.4f, 0, 12.5f).x, 0, board.z), board); yield return null; yield return null;
             Aimed(GrowthTargetKind.PowerBoard, null, "The reticle focuses the power board");
             LookAt(buffers[0].position + new Vector3(0, 0, 1.2f), buffers[0].position + new Vector3(0, 0.8f, 0)); yield return null; yield return null;
             Aimed(GrowthTargetKind.Buffer, (int.Parse(buffers[0].name.Substring(7)) - 1).ToString(), "The reticle focuses " + buffers[0].name);
@@ -292,17 +292,17 @@ namespace EvolutionShop
             Aimed(GrowthTargetKind.Pump, "bloom", "The reticle focuses the Bloom grower's pump");
 
             // By night: the annex, the workshop, the line.
-            LookAt(new Vector3(2.6f, 0, 10.0f), new Vector3(-2.0f, 1.2f, 13.5f)); yield return Shot("440-annex");
-            LookAt(new Vector3(-1.0f, 0, 12.2f), new Vector3(-2.2f, 1.2f, 9.4f)); yield return Shot("441-buffers-and-pipes");
-            LookAt(new Vector3(2.0f, 0, 12.5f), board); yield return Shot("442-power-board");
-            LookAt(new Vector3(-1.6f, 0, 12.4f), new Vector3(-3.84f, 1.8f, 12.7f)); yield return Shot("443-pipe-gallery");
-            LookAt(new Vector3(6.2f, 0, 10.8f), new Vector3(8.8f, 1.2f, 13.6f)); yield return Shot("444-workshop");
+            LookAt(P(2.6f, 0, 10.0f), P(-2.0f, 1.2f, 13.5f)); yield return Shot("440-annex");
+            LookAt(P(-1.0f, 0, 12.2f), P(-2.2f, 1.2f, 9.4f)); yield return Shot("441-buffers-and-pipes");
+            LookAt(P(2.0f, 0, 12.5f), board); yield return Shot("442-power-board");
+            LookAt(P(-1.6f, 0, 12.4f), P(-3.84f, 1.8f, 12.7f)); yield return Shot("443-pipe-gallery");
+            LookAt(P(6.2f, 0, 10.8f), P(8.8f, 1.2f, 13.6f)); yield return Shot("444-workshop");
             LookAt(gen + new Vector3(-0.6f, 0, -2.2f), gen + new Vector3(0, 1.0f, 0)); yield return Shot("445-tide-engine-level-4");
             LookAt(sorter.position + new Vector3(0.8f, 0, -2.0f), sorter.position + new Vector3(0, 1.0f, 0)); yield return Shot("446-sorter-and-chute");
-            LookAt(new Vector3(-2.2f, 0, 5.4f), new Vector3(-3.0f, 2.6f, 7.4f)); yield return Shot("447-pipes-over-the-back-room");
+            LookAt(P(-2.2f, 0, 5.4f), P(-3.0f, 2.6f, 7.4f)); yield return Shot("447-pipes-over-the-back-room");
             LookAt(GrowthWorld.GrowerFront("flow") + new Vector3(0.3f, 0, -0.5f), GrowthWorld.GrowerPositions["flow"] + new Vector3(0, 0.6f, 0)); yield return Shot("448-electric-pumps");
-            yield return Measure("423-look-annex", new Vector3(2.6f, 0, 10.0f), new Vector3(-2.0f, 1.2f, 13.5f), 6);
-            yield return Measure("424-look-workshop", new Vector3(6.2f, 0, 10.8f), new Vector3(8.8f, 1.2f, 13.6f), 6);
+            yield return Measure("423-look-annex", P(2.6f, 0, 10.0f), P(-2.0f, 1.2f, 13.5f), 6);
+            yield return Measure("424-look-workshop", P(6.2f, 0, 10.8f), P(8.8f, 1.2f, 13.6f), 6);
 
             // Every level of the generator and the pumps (set back on the same shop, labelled): the hand crank and the hand pump,
             // the bubble turbine and electric pumps, the twin turbine.
@@ -369,22 +369,22 @@ namespace EvolutionShop
             Check(!w.LookPieces.Any(p => p.GetComponentInChildren<Collider>(true) != null), "Still no kit piece brings a collider");
 
             // The reticle still focuses the boards.
-            LookAt(new Vector3(-0.45f, 0, 2.4f), GrowthWorld.StaffBoardPosition); yield return null; yield return null;
+            LookAt(P(-0.45f, 0, 2.4f), GrowthWorld.StaffBoardPosition); yield return null; yield return null;
             Aimed(GrowthTargetKind.StaffBoard, null, "The reticle focuses the staff board");
             yield return Shot("464-staff-board");
-            LookAt(new Vector3(10.3f, 0, 7.3f), GrowthWorld.HallBoardPosition); yield return null; yield return null;
+            LookAt(P(10.3f, 0, 7.3f), GrowthWorld.HallBoardPosition); yield return null; yield return null;
             Aimed(GrowthTargetKind.HallBoard, null, "The reticle focuses the hall's plans");
             yield return Shot("465-hall-plans");
 
             // By night: unit B, the bay window, unit C, the feature tank, the window display, the banners.
-            LookAt(new Vector3(4.8f, 0, 1.6f), new Vector3(10.5f, 1.3f, -2.4f)); yield return Shot("460-unit-b");
-            LookAt(new Vector3(8.0f, 0, -1.2f), new Vector3(8.0f, 1.6f, -3.9f)); yield return Shot("461-bay-window");
-            LookAt(new Vector3(11.0f, 0, 4.6f), new Vector3(4.0f, 1.4f, 8.4f)); yield return Shot("462-unit-c");
-            LookAt(new Vector3(5.975f, 0, 6.4f), new Vector3(5.975f, 1.4f, 8.75f)); yield return Shot("463-feature-tank");
-            LookAt(new Vector3(-2.6f, 0, -2.6f), new Vector3(-2.6f, 1.1f, -3.93f)); yield return Shot("470-window-display");
-            LookAt(new Vector3(6.0f, 0, 1.0f), new Vector3(8.0f, 2.6f, -3.8f)); yield return Shot("471-hall-banners");
-            yield return Measure("425-look-unit-b", new Vector3(4.8f, 0, 1.6f), new Vector3(10.5f, 1.3f, -2.4f), 6);
-            yield return Measure("426-look-unit-c", new Vector3(11.0f, 0, 4.6f), new Vector3(4.0f, 1.4f, 8.4f), 6);
+            LookAt(P(4.8f, 0, 1.6f), P(10.5f, 1.3f, -2.4f)); yield return Shot("460-unit-b");
+            LookAt(P(8.0f, 0, -1.2f), P(8.0f, 1.6f, -3.9f)); yield return Shot("461-bay-window");
+            LookAt(P(11.0f, 0, 4.6f), P(4.0f, 1.4f, 8.4f)); yield return Shot("462-unit-c");
+            LookAt(P(5.975f, 0, 6.4f), P(5.975f, 1.4f, 8.75f)); yield return Shot("463-feature-tank");
+            LookAt(P(-2.6f, 0, -2.6f), P(-2.6f, 1.1f, -3.93f)); yield return Shot("470-window-display");
+            LookAt(P(6.0f, 0, 1.0f), P(8.0f, 2.6f, -3.8f)); yield return Shot("471-hall-banners");
+            yield return Measure("425-look-unit-b", P(4.8f, 0, 1.6f), P(10.5f, 1.3f, -2.4f), 6);
+            yield return Measure("426-look-unit-c", P(11.0f, 0, 4.6f), P(4.0f, 1.4f, 8.4f), 6);
 
             // GR-11's pieces: the sign while the exhibition is prepared and on its day, a tag over a tank on display, the award once
             // it is held (the shop's flags and a display mark set directly for a few frames: labelled).
@@ -392,18 +392,18 @@ namespace EvolutionShop
             var grand = w.transform.Find("Grand Exhibition");
             Check(w.SignShowing && !w.SignToday && HasPiece(grand.Find("Exhibition sign"), "ExhibitionSign") && grand.Find("Exhibition sign/Face").GetComponent<Renderer>().enabled,
                 "The exhibition sign over the door, prepared: its board, letters and rosette round the pale gold face");
-            LookAt(new Vector3(-0.2f, 0, -1.6f), new Vector3(-0.5f, 2.6f, -3.86f)); yield return Shot("466-exhibition-sign-prepared");
+            LookAt(P(-0.2f, 0, -1.6f), P(-0.5f, 2.6f, -3.86f)); yield return Shot("466-exhibition-sign-prepared");
             shop.ExhibitionPrepared = false; shop.ExhibitionToday = true; yield return null; yield return null;
             Check(w.SignToday && grand.Find("Exhibition sign/Face").GetComponent<Renderer>().sharedMaterial.IsKeywordEnabled("_EMISSION"), "On its day: the face glows gold and its lamp is lit");
             yield return Shot("467-exhibition-sign-today");
             var shown = shop.ContainerAt("b4").Occupants[0];
             shown.ReservedBy = GrowthShop.ExhibitionReservation; yield return null; yield return null;
             Check(w.DisplayTagsShown >= 1 && HasPiece(grand.Find("Display tag b4"), "DisplayTag"), "A tag over the Show tank on display: a coral ribbon, ON SHOW and a gold rosette");
-            LookAt(new Vector3(9.6f, 0, -0.2f), new Vector3(11.1f, 2.1f, -0.2f)); yield return Shot("468-display-tag");
+            LookAt(P(9.6f, 0, -0.2f), P(11.1f, 2.1f, -0.2f)); yield return Shot("468-display-tag");
             shown.ReservedBy = 0; shop.ExhibitionToday = false; shop.ExhibitionDone = true; shop.ExhibitionResults = new GrowthExhibitionResults { Day = shop.Day };
             yield return null; yield return null;
             Check(w.AwardShowing && HasPiece(grand.Find("Grand Exhibition award"), "Award"), "Once it is held, the award on unit A's front wall: a wooden plaque, a gold medal and its card");
-            LookAt(new Vector3(0.6f, 0, -1.8f), GrowthWorld.AwardPosition); yield return null; yield return null;
+            LookAt(P(0.6f, 0, -1.8f), GrowthWorld.AwardPosition); yield return null; yield return null;
             Aimed(GrowthTargetKind.Award, null, "The reticle focuses the award");
             yield return Shot("469-award");
             shop.ExhibitionDone = false; shop.ExhibitionResults = null; yield return null; yield return null;
@@ -418,8 +418,8 @@ namespace EvolutionShop
                 Check(w.PartitionShowing(room) && HasPiece(w.transform.Find(root), piece), "Closed, the " + room + " partition is a painted hoarding: COMING SOON");
                 Replaced(w.transform.Find(root), "Partition", true, "The " + room + " partition");
             }
-            LookAt(new Vector3(1.4f, 0, 0.4f), new Vector3(4.0f, 1.3f, 0f)); yield return Shot("472-partition-unit-b");
-            LookAt(new Vector3(0.9f, 0, 6.6f), new Vector3(1.15f, 1.4f, 9f)); yield return Shot("473-partition-annex");
+            LookAt(P(1.4f, 0, 0.4f), P(4.0f, 1.3f, 0f)); yield return Shot("472-partition-unit-b");
+            LookAt(P(0.9f, 0, 6.6f), P(1.15f, 1.4f, 9f)); yield return Shot("473-partition-annex");
             var half = new GrowthShop { Era = 5, Reputation = GrowthContent.StarThresholds[4] + 50, Credits = 30000, UnitB = true, Annex = true };
             s.LoadFixture(half);
             yield return null; yield return null; yield return null;
@@ -428,8 +428,8 @@ namespace EvolutionShop
                 Check(w.PartitionShowing(room) && HasPiece(w.transform.Find(root), piece), "Closed, the " + room + " partition is a painted hoarding: COMING SOON");
                 Replaced(w.transform.Find(root), "Partition", true, "The " + room + " partition");
             }
-            LookAt(new Vector3(10.6f, 0, 1.4f), new Vector3(10.875f, 1.3f, 4f)); yield return Shot("474-partition-unit-c");
-            LookAt(new Vector3(1.6f, 0, 10.4f), new Vector3(4.0f, 1.4f, 10.3f)); yield return Shot("475-partition-workshop");
+            LookAt(P(10.6f, 0, 1.4f), P(10.875f, 1.3f, 4f)); yield return Shot("474-partition-unit-c");
+            LookAt(P(1.6f, 0, 10.4f), P(4.0f, 1.4f, 10.3f)); yield return Shot("475-partition-workshop");
             Ok(s.Act(half.BuyUnitC), "Open unit C (the card's button)");
             yield return new WaitForSeconds(0.9f);
             float lamps = w.LampIntensity("unit-c"), lampsFull = w.LampFull("unit-c");
@@ -512,23 +512,23 @@ namespace EvolutionShop
             Ok(s.Act(shop.OpenShop), "Open the shop");
             yield return new WaitForSeconds(2.5f);
             Check(w.LookKeyName == "morning" && w.LookSunIntensity > nightSun + 0.8f, "The morning key: the sun up (" + w.LookSunIntensity.ToString("0.00") + " against " + nightSun.ToString("0.00") + " at night)");
-            LookAt(new Vector3(1.0f, 0, 3.0f), new Vector3(-2.2f, 1.0f, -3.0f)); yield return Shot("410-unit-a-morning");
+            LookAt(P(1.0f, 0, 3.0f), P(-2.2f, 1.0f, -3.0f)); yield return Shot("410-unit-a-morning");
             shop.DaySecondsLeft = GrowthContent.DaySeconds * 0.5f;
             yield return new WaitForSeconds(2.5f);
             Check(w.LookKeyName == "midday", "Halfway through the day, the midday key");
-            LookAt(new Vector3(0.6f, 0, 2.6f), new Vector3(-2.4f, 0.4f, -2.4f)); yield return Shot("411-unit-a-midday-window");
-            LookAt(new Vector3(1.2f, 0, 4.6f), new Vector3(-2.8f, 1.1f, 7.6f)); yield return Shot("412-back-room-day");
-            LookAt(new Vector3(-0.5f, 0, -2.0f), new Vector3(-0.5f, 1.2f, -8.0f)); yield return Shot("413-the-street");
-            LookAt(new Vector3(-2.2f, 0, 5.0f), new Vector3(1.4f, 1.0f, 7.0f)); yield return Shot("415-back-room-bench-day");
-            LookAt(new Vector3(-1.6f, 0, 6.6f), new Vector3(-0.8f, 0.9f, 4.2f)); yield return Shot("416-breeding-and-vials-day");
-            LookAt(new Vector3(8.4f, 0, -0.2f), b4.Position + new Vector3(0, 1.1f, 0)); yield return Shot("417-show-tank-day");
-            yield return Measure("420-look-unit-a", new Vector3(0.8f, 0, 3.2f), new Vector3(-1.5f, 1.2f, -2.0f), 6);
-            yield return Measure("421-look-back-room", new Vector3(1.2f, 0, 4.6f), new Vector3(-2.8f, 1.1f, 7.6f), 6);
-            yield return Measure("422-look-unit-b-show-tank", new Vector3(8.4f, 0, -0.2f), b4.Position + new Vector3(0, 1.1f, 0), 6);
+            LookAt(P(0.6f, 0, 2.6f), P(-2.4f, 0.4f, -2.4f)); yield return Shot("411-unit-a-midday-window");
+            LookAt(P(1.2f, 0, 4.6f), P(-2.8f, 1.1f, 7.6f)); yield return Shot("412-back-room-day");
+            LookAt(P(-0.5f, 0, -2.0f), P(-0.5f, 1.2f, -8.0f)); yield return Shot("413-the-street");
+            LookAt(P(-2.2f, 0, 5.0f), P(1.4f, 1.0f, 7.0f)); yield return Shot("415-back-room-bench-day");
+            LookAt(P(-1.6f, 0, 6.6f), P(-0.8f, 0.9f, 4.2f)); yield return Shot("416-breeding-and-vials-day");
+            LookAt(P(8.4f, 0, -0.2f), b4.Position + new Vector3(0, 1.1f, 0)); yield return Shot("417-show-tank-day");
+            yield return Measure("420-look-unit-a", P(0.8f, 0, 3.2f), P(-1.5f, 1.2f, -2.0f), 6);
+            yield return Measure("421-look-back-room", P(1.2f, 0, 4.6f), P(-2.8f, 1.1f, 7.6f), 6);
+            yield return Measure("422-look-unit-b-show-tank", P(8.4f, 0, -0.2f), b4.Position + new Vector3(0, 1.1f, 0), 6);
             shop.DaySecondsLeft = GrowthContent.DaySeconds * 0.1f;
             yield return new WaitForSeconds(2.5f);
             Check(w.LookKeyName == "closing", "Near the day's end, the closing key: the low amber sun");
-            LookAt(new Vector3(1.0f, 0, 3.0f), new Vector3(-2.2f, 1.0f, -3.0f)); yield return Shot("414-unit-a-closing");
+            LookAt(P(1.0f, 0, 3.0f), P(-2.2f, 1.0f, -3.0f)); yield return Shot("414-unit-a-closing");
         }
     }
 }

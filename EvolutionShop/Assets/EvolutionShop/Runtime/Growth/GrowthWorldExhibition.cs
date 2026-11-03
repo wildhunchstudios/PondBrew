@@ -13,7 +13,7 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthWorld
     {
-        public static readonly Vector3 AwardPosition = new Vector3(0.75f, 2.05f, -3.87f), ExhibitionSignPosition = new Vector3(-0.5f, 2.78f, -3.86f);
+        public static readonly Vector3 AwardPosition = At(0.75f, 2.05f, -3.87f), ExhibitionSignPosition = At(-0.5f, 2.78f, -3.86f);
         const float ConfettiSeconds = 4f;
 
         Transform award, exhibitionSign;

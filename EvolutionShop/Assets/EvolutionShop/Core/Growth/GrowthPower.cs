@@ -25,24 +25,31 @@ namespace EvolutionShop.Growth
     /// </summary>
     public static class GrowthLab
     {
-        public const float CellSize = 0.5f, MinX = -4f, MinZ = 4f, PipeHeight = 3.1f;
+        /// <summary>GR-34: the pipe grid's cells grew with the rooms (0.5 m on the plan before), so a save's pipes stay where they were.</summary>
+        public const float CellSize = 0.5f * GrowthPlan.K, MinX = -4f * GrowthPlan.K, MinZ = 4f * GrowthPlan.K, PipeHeight = 3.1f;
         public const int Columns = 32, Rows = 26, BackRoomColumns = 12, AnnexColumns = 16, AnnexFirstRow = 10, WorkshopRows = 12, BufferPlaces = 6;
         public const string Port = "port", Out = "out", Sorter = "sorter";
 
         /// <summary>GR-04's slots for each culture's source: four growers along the west wall facing east, three along the north wall facing south.</summary>
         public static readonly Dictionary<string, (float x, float z)> Growers = new Dictionary<string, (float x, float z)>
         {
-            ["bloom"] = (-3.45f, 4.75f), ["flow"] = (-3.45f, 5.85f), ["ember"] = (-3.45f, 6.95f), ["brine"] = (-3.45f, 8.05f),
-            ["spark"] = (-2.5f, 8.5f), ["mist"] = (-1.3f, 8.5f), ["dusk"] = (-0.1f, 8.5f),
+            ["bloom"] = GrowthPlan.At(-3.45f, 4.75f), ["flow"] = GrowthPlan.At(-3.45f, 5.85f), ["ember"] = GrowthPlan.At(-3.45f, 6.95f), ["brine"] = GrowthPlan.At(-3.45f, 8.05f),
+            ["spark"] = GrowthPlan.At(-2.5f, 8.5f), ["mist"] = GrowthPlan.At(-1.3f, 8.5f), ["dusk"] = GrowthPlan.At(-0.1f, 8.5f),
         };
-        public static readonly (float x, float z) Incubator = (-0.8f, 6.9f), PortPoint = (-0.8f, 7.35f), OutPoint = (-0.3f, 6.9f);
+        public static readonly (float x, float z) Incubator = GrowthPlan.At(-0.8f, 6.9f), PortPoint = (Incubator.x, Incubator.z + 0.45f), OutPoint = (Incubator.x + 0.5f, Incubator.z);
         /// <summary>GR-08: the workshop east of the annex (x 4 to 12, z 9 to 15): the sorter against its north wall, its hopper in front.</summary>
-        public static readonly (float x, float z) SorterStand = (6f, 14.2f), SorterPoint = (6f, 13.55f);
+        public static readonly (float x, float z) SorterStand = GrowthPlan.At(6f, 14.2f, 0.85f, 0.55f), SorterPoint = (SorterStand.x, SorterStand.z - 0.65f);
+        /// <summary>GR-08's rack places in the workshop: two along its south wall facing north, two along its east wall facing west.</summary>
+        public static readonly Dictionary<string, ((float x, float z) at, int yaw)> Racks = new Dictionary<string, ((float x, float z) at, int yaw)>
+        {
+            ["r1"] = (GrowthPlan.At(7.0f, 9.6f, 0.75f, 0.5f), 0), ["r2"] = (GrowthPlan.At(8.75f, 9.6f, 0.75f, 0.5f), 0),
+            ["r3"] = (GrowthPlan.At(11.4f, 11.6f, 0.5f, 0.75f), -90), ["r4"] = (GrowthPlan.At(11.4f, 13.4f, 0.5f, 0.75f), -90),
+        };
 
-        public static bool OnNorthWall(string culture) => Growers[culture].z > 8.2f;
-        public static (float x, float z) TapPoint(string culture) { var g = Growers[culture]; return OnNorthWall(culture) ? (g.x, 8.85f) : (-3.85f, g.z); }
+        public static bool OnNorthWall(string culture) => Growers[culture].z > GrowthPlan.At(0, 8.2f).z;
+        public static (float x, float z) TapPoint(string culture) { var g = Growers[culture]; return OnNorthWall(culture) ? (g.x, g.z + 0.35f) : (g.x - 0.4f, g.z); }
         /// <summary>The buffer places, 0.5 m apart along the annex's south wall (behind the back room's north wall), facing north.</summary>
-        public static (float x, float z) BufferPoint(int place) => (MinX + (place + 1.5f) * CellSize, 9.4f);
+        public static (float x, float z) BufferPoint(int place) => (MinX + (place + 1.5f) * CellSize, GrowthPlan.At(0, 9.4f).z);
 
         public static string Tap(string culture) => "tap:" + culture;
         public static string Buffer(int place) => "buffer:" + place;

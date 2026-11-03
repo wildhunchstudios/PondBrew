@@ -60,7 +60,7 @@ namespace EvolutionShop
                 "Fixture: an era 4, four-star shop with no helpers yet, and the staff board on the wall");
 
             // The staff board on unit A's north wall, west of the back room's door.
-            yield return AimAt(new Vector3(-0.45f, 0, 2.0f), GrowthWorld.StaffBoardPosition, GrowthTargetKind.StaffBoard, "staff", "The reticle focuses the staff board");
+            yield return AimAt(P(-0.45f, 0, 2.0f), GrowthWorld.StaffBoardPosition, GrowthTargetKind.StaffBoard, "staff", "The reticle focuses the staff board");
             Check(s.FocusName(out string status) == "Staff board" && status == "E see who could work here", "It is the staff board, with no one hired");
             yield return Shot("120-staff-board");
             yield return Press(Key.E);
@@ -85,7 +85,7 @@ namespace EvolutionShop
                 (Flat(s.World.FigurePosition("moss")) - Flat(GrowthWalk.MossHome)).magnitude < 0.05f, "Their figures stand at work: Pip behind the counter, Nori and Moss in the laboratory");
 
             // Nori's card: the stock targets (Nori's from era 3; the sorter shares them).
-            yield return AimAt(new Vector3(0.8f, 0, 2.2f), new Vector3(0.6f, 1.1f, 5.4f), GrowthTargetKind.Helper, "nori", "The reticle focuses Nori through the laboratory's door");
+            yield return AimAt(P(0.8f, 0, 3.0f), P(0.6f, 1.1f, 5.4f), GrowthTargetKind.Helper, "nori", "The reticle focuses Nori through the laboratory's door"); // GR-34: as far from the door as before
             Check(s.FocusName(out status) == "Nori, stocker (level 1)" && status == "Nothing waiting to move · E card", "It is Nori, saying there is nothing waiting to move");
             yield return Press(Key.E);
             card = s.Ui.CardText();
@@ -119,7 +119,7 @@ namespace EvolutionShop
                 {
                     yield return null;
                     var at = s.World.FigurePosition("nori");
-                    LookAt(new Vector3(-2.0f, 0, 0.9f), at + new Vector3(0, 1.0f, 0));
+                    LookAt(P(-2.0f, 0, 0.9f), at + new Vector3(0, 1.0f, 0));
                     yield return null;
                     Check(nori.Hands.Count == 1 && s.World.FigureCarrying("nori") == nori.Hands[0].Id && nori.Status == "Carrying a Pondlet to the starter tank at a1",
                         "Nori carries a Pondlet from the tray to the starter tank at a1, the creature in hand");
@@ -162,7 +162,7 @@ namespace EvolutionShop
                 if (!dose && moss.Step == "dose-back" && moss.Progress >= 0.4f * (moss.StepSeconds - GrowthWalk.Handle))
                 {
                     yield return null;
-                    LookAt(new Vector3(1.3f, 0, 5.8f), s.World.FigurePosition("moss") + new Vector3(0, 1.0f, 0));
+                    LookAt(P(1.3f, 0, 5.8f), s.World.FigurePosition("moss") + new Vector3(0, 1.0f, 0));
                     yield return null;
                     Check(moss.Dose != null && s.World.FigureHoldsDose("moss") && moss.Status.StartsWith("Bringing 1 ") && shop.MossBatch, "Moss brings a dose from its grower to the incubator, the dose in hand");
                     yield return Shot("124-moss-dose");
@@ -175,7 +175,7 @@ namespace EvolutionShop
             for (int i = 0; i < 40; i++) { s.Advance(0.1f); if (i % 10 == 0) yield return null; }
             Check(shop.Hatchlings.Count == 2 && nori.Status == "No room for what is waiting: the tanks are at their targets or full, and no rack has room" && moss.Status == "Waiting for the hatchlings to be taken off the tray",
                 "With the target met the clutch waits on the tray, and both say why: Nori has no room for it, Moss waits for the tray");
-            yield return AimAt(new Vector3(-0.45f, 0, 2.0f), GrowthWorld.StaffBoardPosition, GrowthTargetKind.StaffBoard, "staff", "The reticle focuses the staff board again");
+            yield return AimAt(P(-0.45f, 0, 2.0f), GrowthWorld.StaffBoardPosition, GrowthTargetKind.StaffBoard, "staff", "The reticle focuses the staff board again");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(card.Contains("No room for what is waiting") && card.Contains("Waiting for the hatchlings to be taken off the tray") && card.Contains("Wages: 93 credits a night and day."),
@@ -205,7 +205,7 @@ namespace EvolutionShop
                 if (!tillShot && shop.Phase == GrowthPhase.Day && shop.Helper("pip").Step == "serve" && shop.Queue.Any())
                 {
                     yield return null;
-                    LookAt(new Vector3(0.6f, 0, -1.0f), new Vector3(3.0f, 1.1f, -2.8f));
+                    LookAt(P(0.6f, 0, -1.0f), P(3.0f, 1.1f, -2.8f));
                     yield return null;
                     Check(s.World.FigureShowing("pip") && shop.Helper("pip").Status.StartsWith("Bagging an order"), "Pip bags an order behind the counter, a visitor waiting");
                     yield return Shot("126-pip-at-till");
@@ -259,7 +259,7 @@ namespace EvolutionShop
                     yield return null; yield return null;
                     Check(s.World.FigureCarrying("moss") == hand && (Flat(s.World.FigurePosition("moss")) - Expected(moss)).magnitude < 0.05f && moss.Status.StartsWith("Carrying a "),
                         "Moss's figure is back where he was, the same creature in hand, saying what he is doing");
-                    LookAt(new Vector3(1.2f, 0, 6.2f), s.World.FigurePosition("moss") + new Vector3(0, 1.0f, 0));
+                    LookAt(P(1.2f, 0, 6.2f), s.World.FigurePosition("moss") + new Vector3(0, 1.0f, 0));
                     yield return Shot("127-moss-pair");
                     saved = true;
                 }
@@ -304,7 +304,7 @@ namespace EvolutionShop
             card = s.Ui.CardText();
             Check(card.Contains("Level 1 · home · 25 credits a night and day. Home today.") && card.Contains("Level 2 · home · 80 credits a night and day.") && card.Contains("Wages: 8 credits a night and day."),
                 "The staff card shows who is home");
-            LookAt(new Vector3(-0.45f, 0, 1.6f), GrowthWorld.StaffBoardPosition);
+            LookAt(P(-0.45f, 0, 1.6f), GrowthWorld.StaffBoardPosition);
             yield return Shot("129-staying-home");
             s.SetCard(GrowthCard.None);
             Check(frames > 0, "Frame timings recorded (average " + (frameSum / Mathf.Max(1, frames) * 1000f).ToString("0.0") + " ms, worst " + (worstFrame * 1000f).ToString("0") + " ms)");

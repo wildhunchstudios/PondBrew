@@ -855,7 +855,7 @@ namespace EvolutionShop
                 Music?.Event(e);
                 Effects?.Event(e);
                 // GR-11: the Grand Exhibition held: confetti around the player.
-                if (e.Kind == GrowthEventKind.ExhibitionWon) World.Celebrate(Player != null ? Player.transform.position : new Vector3(-0.5f, 0, -1.6f), Player != null && Player.View != null ? Player.View.transform.forward : Vector3.forward);
+                if (e.Kind == GrowthEventKind.ExhibitionWon) World.Celebrate(Player != null ? Player.transform.position : GrowthWorld.At(-0.5f, 0, -1.6f), Player != null && Player.View != null ? Player.View.transform.forward : Vector3.forward);
                 // GR-32 (F50): the journal no longer pauses the shop, so a day can end while it is open.
                 if (e.Kind == GrowthEventKind.DayEnded) { SaveNow(); if (Card == GrowthCard.None || Card == GrowthCard.Counter || Card == GrowthCard.Journal) SetCard(GrowthCard.Receipt); }
                 if (e.Kind == GrowthEventKind.Discovery || e.Kind == GrowthEventKind.NewColour || e.Kind == GrowthEventKind.EraUp || e.Kind == GrowthEventKind.StarUp || e.Kind == GrowthEventKind.CultureOwned) SaveNow();

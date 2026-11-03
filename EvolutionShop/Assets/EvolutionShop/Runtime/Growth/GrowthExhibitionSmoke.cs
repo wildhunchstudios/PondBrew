@@ -30,7 +30,7 @@ namespace EvolutionShop
             s.LoadFixture(new GrowthShop());
             var shop = s.Shop;
             yield return null; yield return null;
-            yield return AimAt(new Vector3(0.4f, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition, GrowthTargetKind.Board, null, "The reticle focuses the pinboard in the laboratory");
+            yield return AimAt(new Vector3(P(0.4f, 0, 5.6f).x, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition, GrowthTargetKind.Board, null, "The reticle focuses the pinboard in the laboratory");
             yield return Press(Key.E);
             string card = s.Ui.CardText();
             Check(s.Card == GrowthCard.Board && card.Contains("Now · Era 1 · Laboratory") && card.Contains("Next: Era 2 · Real shop") && card.Contains("Gate: 2 stars, 3 creatures discovered, 2 tanks") &&
@@ -51,7 +51,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(shop.ExhibitionOpen && shop.DisplayReady == 0 && !shop.ExhibitionPrepared && shop.Phase == GrowthPhase.Night && !s.World.AwardShowing && !s.World.SignShowing,
                 "Fixture: the exhibition start point, every requirement met, no crown on display yet, no sign and no award");
-            var hallFeet = new Vector3(GrowthWorld.HallBoardPosition.x, 0, 6.8f);
+            var hallFeet = new Vector3(GrowthWorld.HallBoardPosition.x, 0, P(10.3f, 0, 6.8f).z);
             yield return AimAt(hallFeet, GrowthWorld.HallBoardPosition, GrowthTargetKind.HallBoard, "hall", "The reticle focuses the hall's board in unit C");
             Check(s.FocusName(out string status) == "Exhibition hall" && status == "E the Grand Exhibition", "It is the Grand Exhibition's board");
             yield return Press(Key.E);
@@ -70,7 +70,7 @@ namespace EvolutionShop
             }
             yield return null; yield return null;
             Check(crowns.Count == 5 && shop.DisplayReady == 5 && shop.PrepareCheck(out _) == GrowthFailure.None, "Five different crowns on the spotlit places: it can be prepared");
-            LookAt(new Vector3(11.0f, 0, 6.0f), new Vector3(5.5f, 1.2f, 8.4f)); yield return Shot("153-crowns-on-display");
+            LookAt(P(11.0f, 0, 6.0f), P(5.5f, 1.2f, 8.4f)); yield return Shot("153-crowns-on-display");
 
             // Prepared: the crowns go on display (protected), six creatures are announced, the sign goes up over the door.
             yield return AimAt(hallFeet, GrowthWorld.HallBoardPosition, GrowthTargetKind.HallBoard, "hall", "The reticle focuses the hall's board again");
@@ -90,8 +90,8 @@ namespace EvolutionShop
             var take = shop.TakeOut(shop.HolderOf(shown.Id).Id, shown.Id);
             Check(!take.Success && take.Detail == "on display for the Grand Exhibition" && s.World.SignShowing && !s.World.SignToday && s.World.DisplayTagsShown == 5,
                 "On display a crown cannot be taken out (as E would); the sign over the door is up for tomorrow; each spotlit tank wears a tag");
-            LookAt(new Vector3(-0.5f, 0, -0.2f), GrowthWorld.ExhibitionSignPosition); yield return Shot("155-sign-tomorrow");
-            LookAt(new Vector3(11.0f, 0, 6.0f), new Vector3(5.5f, 1.8f, 8.4f)); yield return Shot("156-display-tags");
+            LookAt(P(-0.5f, 0, -0.2f), GrowthWorld.ExhibitionSignPosition); yield return Shot("155-sign-tomorrow");
+            LookAt(P(11.0f, 0, 6.0f), P(5.5f, 1.8f, 8.4f)); yield return Shot("156-display-tags");
 
             // The first attempt (labelled): one of the six withheld from stock all day.
             string withheld = six[5];
@@ -164,7 +164,7 @@ namespace EvolutionShop
                 "The results card: the six guests' creatures, the five crowns, the collection, the day's takings, the attempts, free play");
             yield return Shot("161-results");
             s.SetCard(GrowthCard.None);
-            yield return AimAt(new Vector3(0.75f, 0, -2.4f), GrowthWorld.AwardPosition, GrowthTargetKind.Award, "award", "The reticle focuses the award on unit A's front wall, east of the door");
+            yield return AimAt(P(0.75f, 0, -2.4f), GrowthWorld.AwardPosition, GrowthTargetKind.Award, "award", "The reticle focuses the award on unit A's front wall, east of the door");
             Check(s.FocusName(out status) == "The Grand Exhibition award" && status == "Held on day " + day + " · E the results", "It is the Grand Exhibition's award");
             yield return Shot("162-award");
             yield return Press(Key.E);
@@ -172,7 +172,7 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
 
             // Free play on the board.
-            yield return AimAt(new Vector3(0.4f, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition, GrowthTargetKind.Board, null, "The reticle focuses the pinboard again");
+            yield return AimAt(new Vector3(P(0.4f, 0, 5.6f).x, 0, GrowthWorld.BoardPosition.z), GrowthWorld.BoardPosition, GrowthTargetKind.Board, null, "The reticle focuses the pinboard again");
             yield return Press(Key.E);
             card = s.Ui.CardText();
             Check(card.Contains("Now · Free play") && card.Contains("Next: free play") && card.Contains("Exhibition: held on day " + day) && card.Contains("Fill the journal"), "The pinboard: free play, and the journal is the long goal");

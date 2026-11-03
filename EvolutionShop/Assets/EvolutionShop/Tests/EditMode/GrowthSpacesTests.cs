@@ -25,12 +25,13 @@ namespace EvolutionShop.Tests
         public void TheLayoutKeepsGR11sProportionsAndNavigation()
         {
             Assert.That(GrowthSpaces.Problems(), Is.Empty);
-            // The rooms: the shop's units at 3.2 m, the lab at 3.6 m; unit C 10 x 5 m behind unit B and the back room.
+            // The rooms: the shop's units at 3.2 m, the lab at 3.6 m; unit C 12.5 x 6.25 m behind unit B and the back room
+            // (10 x 5 m before GR-34 made every room a quarter larger each way).
             var c = GrowthSpaces.RoomById("unit-c").Area;
-            Assert.That((c.X1 - c.X0, c.Z1 - c.Z0), Is.EqualTo((10f, 5f)));
+            Assert.That((c.X1 - c.X0, c.Z1 - c.Z0), Is.EqualTo((12.5f, 6.25f)));
             Assert.That(GrowthSpaces.Rooms.Where(r => r.Shop).All(r => r.Ceiling == 3.2f) && GrowthSpaces.Rooms.Where(r => !r.Shop).All(r => r.Ceiling == 3.6f), Is.True);
             var unitC = GrowthContent.Expansions.First(e => e.Id == "unit-c");
-            Assert.That((unitC.Width, unitC.Depth), Is.EqualTo((10f, 5f)));
+            Assert.That((unitC.Width, unitC.Depth), Is.EqualTo((12.5f, 6.25f)));
             // Places: A 4, B 4, C 6 (two of them feature places for Show tanks), the hall 2: sixteen in all (GR.11's tier 5).
             Assert.That(GrowthShop.Places.Length, Is.EqualTo(16));
             Assert.That(GrowthShop.Places.GroupBy(p => p.Unit).ToDictionary(g => g.Key, g => g.Count()),
@@ -41,7 +42,7 @@ namespace EvolutionShop.Tests
             Assert.That(GrowthShop.Places.All(p => GrowthSpaces.SpotOf(p.Id) != null && GrowthWalk.Places.ContainsKey(p.Id)), Is.True, "every place has its position and a helper's spot");
             // The main aisle runs from inside the entrance through unit A and unit B to unit C's arch.
             Assert.That(GrowthSpaces.Spine.First(), Is.EqualTo("Hub"));
-            Assert.That(GrowthSpaces.Points[GrowthSpaces.Spine.Last()], Is.EqualTo((10.9f, 4f)));
+            Assert.That(GrowthSpaces.Points[GrowthSpaces.Spine.Last()], Is.EqualTo(GrowthPlan.At(10.9f, 4f)));
         }
 
         [Test]
@@ -55,12 +56,14 @@ namespace EvolutionShop.Tests
                 try { s.Centre = centre; s.Browse = browse; Assert.That(GrowthSpaces.Problems(), Has.Some.Contains(expected), spot); }
                 finally { s.Centre = oldCentre; s.Browse = oldBrowse; }
             }
-            Broken("b4", (11.15f, 0.2f), (9.8f, 0.2f), "the main aisle passes");
-            Broken("c3", (3.75f, 7.6f), (3.45f, 6.3f), "c3 overlaps c1");
-            Broken("c4", (6.1f, 4.0f), (6.1f, 5.7f), "c4 is not inside its room");
-            Broken("a1", (-2.2f, 3.35f), (-2.2f, 1.2f), "a1's browse spot is not in front of it");
-            Broken("e1", (5.65f, -3.4f), (5.65f, -4.6f), "goes through a wall");
-            Broken("b3", (7.6f, -1.6f), (7.6f, -2.75f), "b3's browse access is blocked by e1");
+            // GR-34: each break as a move from where the place stands now.
+            (float x, float z) Off(string spot, bool browse, float dx, float dz) { var s = GrowthSpaces.SpotOf(spot); var p = browse ? s.Browse : s.Centre; return (p.x + dx, p.z + dz); }
+            Broken("b4", Off("b4", false, 0, 1.2f), Off("b4", true, 0, 1.2f), "the main aisle passes");
+            Broken("c3", Off("c1", false, 0, -0.55f), Off("c3", true, 0, 0), "c3 overlaps c1");
+            Broken("c4", Off("c4", false, 0, -0.6f), Off("c4", true, 0, -0.6f), "c4 is not inside its room");
+            Broken("a1", Off("a1", false, 0, 0), Off("a1", true, 0, -1f), "a1's browse spot is not in front of it");
+            Broken("e1", Off("e1", false, 0, 0), Off("e1", true, 0, -2.9f), "goes through a wall");
+            Broken("b3", Off("e1", false, 1.95f, 2.0f), Off("e1", false, 1.95f, 0.85f), "b3's browse access is blocked by e1");
             Assert.That(GrowthSpaces.Problems(), Is.Empty, "and back as it was");
         }
 
@@ -146,7 +149,7 @@ namespace EvolutionShop.Tests
             Assert.That(GrowthWalk.RoomOf(browse), Is.EqualTo(GrowthWalk.Room.C));
             Assert.That(GrowthWalk.RoomOf(GrowthWalk.NoriHome), Is.EqualTo(GrowthWalk.Room.Back), "the laboratory stays the laboratory");
             var path = GrowthWalk.Path(GrowthWalk.Tray, browse);
-            Assert.That(path, Has.Member((0.8f, 3.5f)).And.Member(GrowthSpaces.Points["ArchC"]).And.Member(GrowthSpaces.Points["UnitCAisle"]), "through the laboratory's door, unit A, unit B and unit C's arch");
+            Assert.That(path, Has.Member(GrowthWalk.BackDoorShop).And.Member(GrowthSpaces.Points["ArchC"]).And.Member(GrowthSpaces.Points["UnitCAisle"]), "through the laboratory's door, unit A, unit B and unit C's arch");
             Assert.That(GrowthWalk.Path(browse, GrowthWalk.NoriHome).Last(), Is.EqualTo(GrowthWalk.NoriHome));
             Assert.That(GrowthWalk.Path(GrowthWalk.Counter, GrowthWalk.Counter), Is.EqualTo(new[] { GrowthWalk.Counter, GrowthWalk.Counter }), "standing still is no walk");
             // Nori stocks a tank in unit C: the shop's only tank with room for the target's species.

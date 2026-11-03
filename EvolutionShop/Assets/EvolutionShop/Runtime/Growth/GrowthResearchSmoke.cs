@@ -40,7 +40,7 @@ namespace EvolutionShop
             Check(shop.Annex && !shop.HasGenerator && !shop.ResearchRoom && s.World.ResearchWallStanding, "Fixture: the power room open, no generator, the research room closed behind its hoarding");
 
             // ---- F1: the hoarding in the power room's west wall, and what it needs
-            LookAt(new Vector3(-2.4f, 0, 15.35f), new Vector3(-4f, 1.4f, 15.35f));
+            LookAt(P(-2.4f, 0, 15.35f), P(-4f, 1.4f, 15.35f));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchWall, "research", "The reticle focuses the hoarding");
             s.FocusName(out string prompt);
@@ -64,25 +64,25 @@ namespace EvolutionShop
             Check(!s.World.PartitionShowing("research"), "The hoarding is gone");
             s.SetCard(GrowthCard.None);
             yield return null;
-            LookAt(new Vector3(-0.6f, 0, 15.35f), new Vector3(-6f, 1.3f, 15.35f));
+            LookAt(P(-0.6f, 0, 15.35f), P(-6f, 1.3f, 15.35f));
             yield return null; yield return null;
             yield return Shot("1303b-the-doorway");
 
             // ---- Walking in with the real body, through the doorway
-            Stand(new Vector3(-2.6f, 0, 15.35f), -90, 0);
+            Stand(P(-2.6f, 0, 15.35f), -90, 0);
             yield return null;
-            yield return WalkKeys(8, () => s.Player.transform.position.x < -6f, Key.W);
-            Check(s.Player.transform.position.x < -6f, "Walked through the doorway into the room (x " + s.Player.transform.position.x.ToString("0.0") + ")");
-            Stand(new Vector3(-4.7f, 0, 15.35f), -100, 8);
+            yield return WalkKeys(8, () => s.Player.transform.position.x < GrowthWorld.S(-6f), Key.W);
+            Check(s.Player.transform.position.x < GrowthWorld.S(-6f), "Walked through the doorway into the room (x " + s.Player.transform.position.x.ToString("0.0") + ")");
+            Stand(P(-4.7f, 0, 15.35f), -100, 8);
             yield return null; yield return null;
             yield return Shot("1304-the-room");
-            LookAt(new Vector3(-7.4f, 0, 15.35f), new Vector3(-3f, 1.3f, 15.35f));
+            LookAt(P(-7.4f, 0, 15.35f), P(-3f, 1.3f, 15.35f));
             yield return null; yield return null;
             yield return Shot("1304b-the-doorway-from-inside");
 
             // ---- F1: a click puts a creature in a jar; one of each; the take button takes it back
             shop.DevelopmentGive(founders[0]); shop.DevelopmentGive(founders[1]); shop.DevelopmentGive(founders[2]);
-            LookAt(new Vector3(-8.2f, 0, 13.6f), GrowthWorld.JarPosition(7));
+            LookAt(P(-8.2f, 0, 13.6f), GrowthWorld.JarPosition(7));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchJar, "7", "The reticle focuses a jar");
             s.FocusName(out prompt);
@@ -99,7 +99,7 @@ namespace EvolutionShop
             shop.Carried.Clear();
             yield return null;
             Check(s.World.JarCreaturesShown == 3, "The jars show the three creatures");
-            LookAt(new Vector3(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
+            LookAt(P(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchJar, "0", "The reticle focuses the first jar");
             s.FocusName(out prompt);
@@ -111,12 +111,12 @@ namespace EvolutionShop
             shop.DevelopmentGive(founders[3]);
             yield return Click();
             Check(shop.Specimens.Count == 4, "A fourth kind");
-            LookAt(new Vector3(-8.0f, 0, 13.6f), new Vector3(-9.8f, 1.4f, 13.6f));
+            LookAt(P(-8.0f, 0, 13.6f), P(-9.8f, 1.4f, 13.6f));
             yield return null; yield return null;
             yield return Shot("1305-jars");
 
             // ---- F4: the desk's grid; a press queues a pair; the tank takes it
-            LookAt(new Vector3(-6.9f, 0, 13.3f), GrowthWorld.ResearchDeskPosition + new Vector3(0, 1.4f, -0.1f));
+            LookAt(P(-6.9f, 0, 13.3f), GrowthWorld.ResearchDeskPosition + new Vector3(0, 1.4f, -0.1f));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchDesk, "desk", "The reticle focuses the desk");
             yield return Shot("1306-desk");
@@ -133,7 +133,7 @@ namespace EvolutionShop
             yield return new WaitForSeconds(0.3f);
             Check(CardButtons(b => b.text == "…").Count == 2 && CardButtons(b => b.text == "?").Count == 10, "The grid says it is in a tank");
             yield return Press(Key.Escape);
-            LookAt(new Vector3(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
+            LookAt(P(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchTank, "0", "The reticle focuses the first tank");
             s.FocusName(out prompt);
@@ -156,7 +156,7 @@ namespace EvolutionShop
             Check(s.Ui.CardBuilds == builds && Left(after) != leftBefore && leftBefore != "", "F61: the time left counts down in place, without rebuilding the card");
             yield return Shot("1308b-tanks-tab");
             yield return Press(Key.Escape);
-            LookAt(new Vector3(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
+            LookAt(P(-8.2f, 0, 12.55f), GrowthWorld.JarPosition(0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchJar, "0", "The reticle focuses the first jar again");
             yield return Press(Key.E);
@@ -171,15 +171,15 @@ namespace EvolutionShop
             yield return Shot("1308c-jars-tab");
             yield return Press(Key.Escape);
             // F70: the sign over the jar wall says what the jars are for.
-            LookAt(new Vector3(-7.4f, 0, 13.6f), new Vector3(-9.9f, 2.0f, 13.6f));
+            LookAt(P(-7.4f, 0, 13.6f), P(-9.9f, 2.0f, 13.6f));
             yield return null; yield return null;
             yield return Shot("1308d-jar-wall-sign");
-            LookAt(new Vector3(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
+            LookAt(P(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
             yield return null; yield return null;
 
             // ---- F4: every pair left, three at once
             Check(CardButton("Queue every pair left") == null, "Closed, the card is gone");
-            LookAt(new Vector3(-6.9f, 0, 13.3f), GrowthWorld.ResearchDeskPosition + new Vector3(0, 1.4f, -0.1f));
+            LookAt(P(-6.9f, 0, 13.3f), GrowthWorld.ResearchDeskPosition + new Vector3(0, 1.4f, -0.1f));
             yield return null; yield return null;
             yield return Press(Key.E);
             yield return ClickOn(e => e is Button b && b.text.StartsWith("Queue every pair left"), "Press Queue every pair left");
@@ -189,7 +189,7 @@ namespace EvolutionShop
             Check(s.Ui.CardText().Contains("3 of 3 tanks at work · 3 waiting"), "The desk says how it goes (" + s.Ui.CardText().Substring(0, Mathf.Min(70, s.Ui.CardText().Length)) + ")");
             yield return Shot("1309-queue");
             s.SetCard(GrowthCard.None);
-            LookAt(new Vector3(-7.3f, 0, 14.2f), GrowthWorld.ResearchTankPosition(1) + new Vector3(0, 0.9f, 0));
+            LookAt(P(-7.3f, 0, 14.2f), GrowthWorld.ResearchTankPosition(1) + new Vector3(0, 0.9f, 0));
             yield return null; yield return null;
             yield return Shot("1310-three-tanks");
             yield return Wait(() => shop.ResearchJobs.Count == 0, 60, "the queue to finish");
@@ -234,7 +234,7 @@ namespace EvolutionShop
 
             // ---- F1: the tray
             int onTray = shop.ResearchTray.Count;
-            LookAt(new Vector3(-8.8f, 0, 13.0f), GrowthWorld.ResearchTrayPosition + new Vector3(0, 0.9f, 0));
+            LookAt(P(-8.8f, 0, 13.0f), GrowthWorld.ResearchTrayPosition + new Vector3(0, 0.9f, 0));
             yield return null; yield return null;
             Aimed(GrowthTargetKind.ResearchTray, "tray", "The reticle focuses the tray");
             yield return Shot("1311-tray");
@@ -271,7 +271,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             Check(s.World.TankDosesShown(shop.QueuedMix(doses).Tank) == 1, "A drop of the culture swims in the tank");
             s.SetCard(GrowthCard.None);
-            LookAt(new Vector3(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(shop.QueuedMix(doses).Tank) + new Vector3(0, 0.9f, 0));
+            LookAt(P(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(shop.QueuedMix(doses).Tank) + new Vector3(0, 0.9f, 0));
             yield return null; yield return null;
             yield return Shot("1314-mix-in-a-tank");
             yield return Wait(() => shop.MixEntry(doses) != null, 30, "the mix to finish");
@@ -379,7 +379,7 @@ namespace EvolutionShop
             Check(shop.ResearchRoom && !s.World.ResearchWallStanding && shop.Specimens.Count == jars && shop.ResearchTray.Count == onTrayNow && shop.ResearchJobs.Count == jobs, "The room comes back as it was");
             Check(Mathf.Abs(shop.ResearchInTank(0).Left - left) < 2 && s.World.TankCreaturesShown(0) + s.World.TankDosesShown(0) > 0, "A tank carries on where it was");
             Check(s.World.JarCreaturesShown == jars && s.World.TrayCreaturesShown == onTrayNow, "The jars and tray show theirs");
-            LookAt(new Vector3(-4.8f, 0, 12.0f), new Vector3(-8.0f, 1.2f, 15.2f));
+            LookAt(P(-4.8f, 0, 12.0f), P(-8.0f, 1.2f, 15.2f));
             yield return null; yield return null;
             yield return Shot("1322-after-the-save");
 
@@ -388,7 +388,7 @@ namespace EvolutionShop
             Check(shop.OpenShop().Success, "The shop opens");
             yield return new WaitForSeconds(3);
             Check(shop.Phase == GrowthPhase.Day && shop.ResearchRunning.Any(), "By day the tanks carry on");
-            LookAt(new Vector3(-4.8f, 0, 12.0f), new Vector3(-8.0f, 1.2f, 15.2f));
+            LookAt(P(-4.8f, 0, 12.0f), P(-8.0f, 1.2f, 15.2f));
             yield return null; yield return null;
             yield return Shot("1323-by-day");
         }

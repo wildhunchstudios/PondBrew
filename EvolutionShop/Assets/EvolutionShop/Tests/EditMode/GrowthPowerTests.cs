@@ -43,7 +43,7 @@ namespace EvolutionShop.Tests
                 Assert.That(GrowthLab.InLab(p.Cells[i], annex), Is.True, "every cell under the lab's ceiling");
                 if (i > 0) Assert.That(GrowthLab.Adjacent(p.Cells[i - 1], p.Cells[i]), Is.True, "a pipe runs cell to cell");
             }
-            Assert.That(p.Length, Is.EqualTo((p.Cells.Count - 1) * 0.5f + (GrowthLab.PipeHeight - GrowthLab.Height(p.From)) + (GrowthLab.PipeHeight - GrowthLab.Height(p.To))).Within(0.001f));
+            Assert.That(p.Length, Is.EqualTo((p.Cells.Count - 1) * GrowthLab.CellSize + (GrowthLab.PipeHeight - GrowthLab.Height(p.From)) + (GrowthLab.PipeHeight - GrowthLab.Height(p.To))).Within(0.001f));
             Assert.That(p.Paid, Is.EqualTo((int)Math.Ceiling(p.Length * GrowthContent.PipeCreditsPerMetre - 1e-4f)));
         }
 

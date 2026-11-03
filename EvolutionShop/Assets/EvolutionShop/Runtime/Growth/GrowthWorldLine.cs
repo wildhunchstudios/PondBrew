@@ -14,19 +14,13 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthWorld
     {
-        public static readonly Vector3 SorterPosition = new Vector3(GrowthLab.SorterStand.x, 0, GrowthLab.SorterStand.z), WorkshopGeneratorPosition = new Vector3(9.6f, 0, 14.35f);
+        public static readonly Vector3 SorterPosition = new Vector3(GrowthLab.SorterStand.x, 0, GrowthLab.SorterStand.z), WorkshopGeneratorPosition = At(9.6f, 0, 14.35f, 0.55f, 0.45f) - new Vector3(0.5f, 0, 0);
         public static readonly Vector3 OutletPosition = new Vector3(GrowthLab.OutPoint.x, 0, GrowthLab.OutPoint.z);
         /// <summary>The annex's east doorway into the workshop, along the wall from its south end (z 9.6 to 11).</summary>
         public const float WorkshopDoorFrom = 0.6f, WorkshopDoorTo = 2.0f, ChuteRadius = 0.075f;
 
         /// <summary>The workshop's rack places: two along its south wall facing north, two along its east wall facing west.</summary>
-        public static readonly Dictionary<string, Place> RackPlaces = new Dictionary<string, Place>
-        {
-            ["r1"] = Rack(new Vector3(7.0f, 0, 9.6f), 0),
-            ["r2"] = Rack(new Vector3(8.75f, 0, 9.6f), 0),
-            ["r3"] = Rack(new Vector3(11.4f, 0, 11.6f), -90),
-            ["r4"] = Rack(new Vector3(11.4f, 0, 13.4f), -90),
-        };
+        public static readonly Dictionary<string, Place> RackPlaces = GrowthLab.Racks.ToDictionary(kv => kv.Key, kv => Rack(new Vector3(kv.Value.at.x, 0, kv.Value.at.z), kv.Value.yaw));
 
         static Place Rack(Vector3 position, float yaw) =>
             new Place { Position = position, Yaw = yaw, Browse = position + Quaternion.Euler(0, yaw, 0) * new Vector3(0, 0, 1.2f), Route = new Vector3[0], Width = 1.5f, Depth = 1f };
@@ -52,18 +46,18 @@ namespace EvolutionShop
         void WorkshopRoom()
         {
             var rooms = new GameObject("Workshop").transform; rooms.SetParent(transform, false);
-            Box(rooms, "Workshop floor", new Vector3(8, -0.05f, 12), new Vector3(8, 0.1f, 6), floorTile, true);
-            Box(rooms, "Workshop ceiling", new Vector3(8, 3.65f, 12), new Vector3(8, 0.1f, 6), wallLab);
+            RoomBox(rooms, "Workshop floor", new Vector3(8, -0.05f, 12), new Vector3(8, 0.1f, 6), floorTile, true);
+            RoomBox(rooms, "Workshop ceiling", new Vector3(8, 3.65f, 12), new Vector3(8, 0.1f, 6), wallLab);
             Wall("Workshop north wall", new Vector2(4, 15), new Vector2(12, 15), 3.6f, wallLab);
             Wall("Workshop east wall", new Vector2(12, 9), new Vector2(12, 15), 3.6f, wallLab);
             Wall("Workshop south wall", new Vector2(4, 9), new Vector2(12, 9), 3.6f, wallLab);
-            workshopLight = Lamp("Workshop lamp", new Vector3(8, 2.8f, 12), 9, 1.15f);
+            workshopLight = Lamp("Workshop lamp", At(8, 2.8f, 12), 9, 1.15f);
             workshopWall = new GameObject("Workshop partition");
             workshopWall.transform.SetParent(transform, false);
             float w = WorkshopDoorTo - WorkshopDoorFrom, z = 9 + (WorkshopDoorFrom + WorkshopDoorTo) * 0.5f;
-            var board = Box(workshopWall.transform, "Partition", new Vector3(4, 1.4f, z), new Vector3(0.12f, 2.8f, w), partition, true);
-            Box(workshopWall.transform, "Coming soon sign", new Vector3(3.93f, 1.6f, z), new Vector3(0.02f, 0.5f, w * 0.75f), sign);
-            Box(workshopWall.transform, "Sign stripe", new Vector3(3.91f, 1.6f, z), new Vector3(0.02f, 0.1f, w * 0.55f), paper);
+            var board = RoomBox(workshopWall.transform, "Partition", new Vector3(4, 1.4f, z), new Vector3(0.12f, 2.8f, w), partition, true);
+            RoomBox(workshopWall.transform, "Coming soon sign", new Vector3(3.93f, 1.6f, z), new Vector3(0.02f, 0.5f, w * 0.75f), sign);
+            RoomBox(workshopWall.transform, "Sign stripe", new Vector3(3.91f, 1.6f, z), new Vector3(0.02f, 0.1f, w * 0.55f), paper);
             Target(board.gameObject, GrowthTargetKind.WorkshopWall, "workshop");
         }
 
