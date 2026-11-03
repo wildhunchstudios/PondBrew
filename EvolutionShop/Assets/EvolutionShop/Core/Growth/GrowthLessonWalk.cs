@@ -145,7 +145,7 @@ namespace EvolutionShop.Growth
                     return null;
                 case "large": return Do(s.BuyContainer("large", TargetId(s, id)), "buy a Large tank");
                 case "tank-levels": return Do(s.UpgradeContainer(TargetId(s, id)), "upgrade a tank");
-                case "decor": return Do(s.PutDecor("reeds", TargetId(s, id)), "put the reeds beside a tank");
+                case "decor": return Do(s.PutDecor("reeds", TargetId(s, id)), "put the reeds in a tank");
                 case "colours": s.Journal.Add(GrowthShop.JournalKey("pondlet", Colour.Sunny)); return null;
                 case "queue":
                     if ((e = Do(s.QueueMake(s.FoundRecipes().First()), "make a recipe in the incubator's queue")) != null) return e;

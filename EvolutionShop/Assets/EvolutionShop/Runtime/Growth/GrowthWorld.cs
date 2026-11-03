@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 
 namespace EvolutionShop
 {
-    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard, Award, ResearchWall, ResearchDesk, ResearchTank, ResearchJar, ResearchTray }
+    public enum GrowthTargetKind { Grower, Incubator, Tank, Place, Counter, Workbench, UnitBWall, Board, Catalog, Vial, Breeding, AnnexWall, Generator, PowerBoard, Buffer, Pump, WorkshopWall, Sorter, StaffBoard, Helper, UnitCWall, HallBoard, Award, ResearchWall, ResearchDesk, ResearchTank, ResearchJar, ResearchTray, Bin }
 
     /// <summary>Something the reticle can focus on in the greybox; Id is a culture, a container id or a place.</summary>
     public sealed class GrowthTarget : MonoBehaviour
@@ -74,6 +74,8 @@ namespace EvolutionShop
         /// <summary>GR-04: the vial shelf on the back room's south wall, and the supplier catalog on its stand beside the counter.
         /// GR-05 moved the shelf 0.2 m west to make room for the breeding tank.</summary>
         public static readonly Vector3 VialShelfPosition = new Vector3(-1.9f, 0, 4.25f), CatalogPosition = new Vector3(0.7f, 0, -3.3f);
+        /// <summary>Tester round 2 (F80): the bin under the laboratory's pinboard, facing into the room (west).</summary>
+        public static readonly Vector3 BinPosition = new Vector3(1.68f, 0, 5.4f);
         /// <summary>GR-05: the breeding tank against the back room's south wall, west of the door, facing the incubator (GR.7.2).
         /// Its glass is 1.06 m wide: the pair's compartment, and a nursery behind a divider at its east end.</summary>
         public static readonly Vector3 BreedingPosition = new Vector3(-0.5f, 0, 4.42f);
@@ -371,6 +373,12 @@ namespace EvolutionShop
             Box(catalog, "Pages", new Vector3(0, 1.1f, 0.01f), new Vector3(0.36f, 0.02f, 0.26f), paper).localRotation = Quaternion.Euler(12, 0, 0);
             Target(catalog.gameObject, GrowthTargetKind.Catalog, "catalog");
             AddCollider(catalog.gameObject, new Vector3(0, 0.6f, 0), new Vector3(0.5f, 1.2f, 0.4f));
+            // Tester round 2 (F80): the bin, where the siphon is poured out.
+            var bin = new GameObject("Siphon bin").transform; bin.SetParent(root, false);
+            bin.localPosition = BinPosition; bin.localRotation = Quaternion.Euler(0, -90, 0);
+            Box(bin, "Drum", new Vector3(0, 0.34f, 0), new Vector3(0.38f, 0.68f, 0.38f), counterMat);
+            Target(bin.gameObject, GrowthTargetKind.Bin, "bin");
+            AddCollider(bin.gameObject, new Vector3(0, 0.35f, 0.02f), new Vector3(0.42f, 0.7f, 0.48f));
             incubatorRoot = new GameObject("Incubator").transform; incubatorRoot.SetParent(root, false);
             incubatorRoot.localPosition = IncubatorPosition;
             Box(incubatorRoot, "Base", new Vector3(0, 0.45f, 0), new Vector3(0.9f, 0.9f, 0.7f), cabinet, true);
@@ -954,11 +962,13 @@ namespace EvolutionShop
             Target(root.gameObject, GrowthTargetKind.Tank, c.Id);
             AddCollider(root.gameObject, new Vector3(0, top * 0.5f, 0), new Vector3(W, top, D));
             if (LookOn) DressTank(root, c, W, D, top, frame);
-            BuildDecor(root, c, W, D, top);
+            var decor = BuildDecor(root, c, standH, waterH);
             return new TankView
             {
                 Root = root, ContainerId = c.Id, Place = c.Place, Signature = TankView.SignatureOf(c), HarmonyFrame = frame, ShowLight = showLight,
                 Inner = WaterOf(c.Kind), WaterY = waterY, Width = W, Depth = D, Top = top,
+                Decor = decor?.Holder, Duck = decor?.Duck, DecorMotion = decor?.Motion ?? DecorMotion.Still, DecorBack = decor?.Back ?? 0, DecorTop = decor?.Top ?? 0,
+                DecorAsset = decor?.Asset, DecorBase = decor?.Base ?? default,
             };
         }
 
@@ -1114,6 +1124,13 @@ namespace EvolutionShop
             public float WaterY, Width, Depth, Top;
             public GameObject HarmonyFrame;
             public Light ShowLight;
+            /// <summary>Tester round 2 (F85): its decor in the water (null for none), the duck in the duck spa's pool, how it moves,
+            /// how far forward of the water's back the creatures keep, its height in its own space, its kit piece and where it stands.</summary>
+            public Transform Decor, Duck;
+            public DecorMotion DecorMotion;
+            public float DecorBack, DecorTop;
+            public string DecorAsset;
+            public Vector3 DecorBase;
             /// <summary>The update level last frame: 0 full, 1 cheaper, 2 frozen.</summary>
             public int Detail;
             int shownDetail = -1;
@@ -1182,13 +1199,16 @@ namespace EvolutionShop
                     creature.FitTo(Inner);
                     float grow = creature.PeekScale;
                     float hx = Mathf.Max(0.02f, Inner.x * 0.5f - creature.TrickReach * grow - 0.03f), hz = Mathf.Max(0.02f, Inner.z * 0.5f - creature.TrickReach * grow - 0.03f), hy = Mathf.Max(0.01f, Inner.y * 0.5f - creature.TrickHalf * grow - 0.03f);
+                    // Tester round 2 (F85): with decor at the back, the creatures swim in front of it (where the water leaves room).
+                    float zc = 0;
+                    if (DecorBack > 0 && hz - DecorBack * 0.5f >= 0.06f) { zc = DecorBack * 0.5f; hz -= DecorBack * 0.5f; }
                     float speed = (reduced ? 0.5f : 1f) * (L > 0.2f ? 0.6f : L > 0.1f ? 0.8f : 1f) * Mathf.Clamp(1.4f / Mathf.Max(0.5f, Inner.x), 0.45f, 1f);
                     // A school shares its leader's path and keeps a loose formation behind it; others wander alone.
                     int hash = Stable(creature.Species);
                     float phase = school ? (hash & 1023) * 0.01f : creature.SpecimenId * 1.37f;
                     float layer = ((hash >> 3) % 5 - 2) * 0.22f * hy;
                     float time = t * speed;
-                    Vector3 Path(float tt) => new Vector3(hx * Mathf.Sin(0.31f * tt + phase), layer + 0.35f * hy * Mathf.Sin(0.57f * tt + phase * 2f), 0.8f * hz * Mathf.Sin(0.63f * tt + phase * 0.7f));
+                    Vector3 Path(float tt) => new Vector3(hx * Mathf.Sin(0.31f * tt + phase), layer + 0.35f * hy * Mathf.Sin(0.57f * tt + phase * 2f), zc + 0.8f * hz * Mathf.Sin(0.63f * tt + phase * 0.7f));
                     Vector3 pos = Path(time), ahead = Path(time + 0.2f);
                     if (school)
                     {
@@ -1199,13 +1219,25 @@ namespace EvolutionShop
                         pos += offset + Vector3.up * (0.25f * L * Mathf.Sin(t * 2.1f + k));
                         ahead += offset;
                     }
-                    pos.x = Mathf.Clamp(pos.x, -hx, hx); pos.z = Mathf.Clamp(pos.z, -hz, hz); pos.y = Mathf.Clamp(pos.y, -hy, hy);
+                    pos.x = Mathf.Clamp(pos.x, -hx, hx); pos.z = Mathf.Clamp(pos.z, zc - hz, zc + hz); pos.y = Mathf.Clamp(pos.y, -hy, hy);
                     // A trick (GR-12) eases the creature to mid-water and back, as AD-B's do in the classic tanks.
                     pos.y *= 1 - creature.Settle;
                     creature.transform.localPosition = new Vector3(pos.x, WaterY + pos.y, pos.z);
                     Vector3 dir = ahead - pos; dir.y *= 0.3f;
                     if (dir.sqrMagnitude > 1e-6f) creature.transform.localRotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
                     if (full) creature.Tick(t, reduced);
+                }
+                // Tester round 2 (F85): the decor's own motion, still with reduced motion.
+                if (Decor != null)
+                {
+                    float sway = reduced ? 0 : Mathf.Sin(t * 1.1f), bob = reduced ? 0 : Mathf.Sin(t * 1.4f);
+                    if (DecorMotion == DecorMotion.Sway) Decor.localRotation = Quaternion.Euler(sway * 1.5f, 0, sway * 3f);
+                    else if (DecorMotion == DecorMotion.Bob) Decor.localPosition = DecorBase + Vector3.up * (0.012f * bob);
+                    if (Duck != null)
+                    {
+                        Duck.localPosition = DuckAt + Vector3.up * (0.006f * bob);
+                        Duck.localRotation = Quaternion.Euler(reduced ? 0 : 4f * Mathf.Sin(t * 1.9f), 0, 3f * bob);
+                    }
                 }
             }
 

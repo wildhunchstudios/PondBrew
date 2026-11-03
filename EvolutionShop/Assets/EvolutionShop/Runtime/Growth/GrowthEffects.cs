@@ -345,6 +345,23 @@ namespace EvolutionShop
                 float rise = t.Inner.y * 0.9f;
                 for (int i = 0; i < b; i++)
                     Emit(GrowthFx.Bubble, bed + new Vector3((Rand() - 0.5f) * 0.05f, 0, (Rand() - 0.5f) * 0.05f), 1, new Color(1, 1, 1, 0.85f), new Vector3(0, 0.3f, 0), 0.03f, 0.04f, rise / 0.3f, 0, false);
+                // Tester round 2 (F85): bubbles from the decor in the water, in warm puffs from the volcano's crater.
+                if (t.Decor != null)
+                {
+                    var from = t.Decor.TransformPoint(new Vector3(0, t.DecorTop * 0.92f, 0));
+                    float up = t.Root.TransformPoint(new Vector3(0, t.WaterY + t.Inner.y * 0.5f, 0)).y - from.y, life = Mathf.Max(0.3f, up / 0.3f);
+                    if (t.DecorAsset == "DecorVolcano")
+                    {
+                        if (Due("decor/" + kv.Key, 0.45f, dt) > 0)
+                            Emit(GrowthFx.Bubble, from, 7, new Color(1f, 0.86f, 0.72f, 0.9f), new Vector3(0, 0.32f, 0), 0.25f, 0.045f, life, 0.025f, false);
+                    }
+                    else
+                    {
+                        int d = Due("decor/" + kv.Key, 0.6f, dt);
+                        for (int i = 0; i < d; i++)
+                            Emit(GrowthFx.Bubble, from + new Vector3((Rand() - 0.5f) * 0.08f, 0, (Rand() - 0.5f) * 0.08f), 1, new Color(1, 1, 1, 0.85f), new Vector3(0, 0.3f, 0), 0.03f, 0.035f, life, 0, false);
+                    }
+                }
                 if (Ambient && count > 0)
                 {
                     int m = Due("motes/" + kv.Key, 1.2f, dt);

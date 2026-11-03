@@ -2424,7 +2424,8 @@ def decor_watermill():
 
 
 def decor_volcano():
-    """Hot springs: a little volcano, lava glowing in its crater and running down its front, a puff of steam above."""
+    """Hot springs: a little volcano, lava glowing in its crater and running down its front. Tester round 2 (F85): it stands
+    in the water now, so its steam is the game's bubbles, puffing from its crater (its puff of cloud went)."""
     decor_base('GK_Rock')
     h = 0.27
     cone((0, DECOR_BASE + h / 2, -0.01), 0.16, 0.055, h, 'GK_Rock', verts=24)
@@ -2434,8 +2435,6 @@ def decor_volcano():
     ball((0, top + 0.004, -0.01), (0.042, 0.02, 0.042), 'GK_GlowCoral', seg=18)
     tube([(0.01, top - 0.005, 0.035), (0.03, top - 0.07, 0.06), (0.015, top - 0.15, 0.1), (0.04, DECOR_BASE + 0.04, 0.15)], 0.013, 'GK_GlowYellow')
     tube([(-0.02, top - 0.01, 0.03), (-0.05, top - 0.09, 0.07), (-0.07, DECOR_BASE + 0.07, 0.12)], 0.009, 'GK_GlowCoral')
-    for x, y, z, r in ((0.0, top + 0.06, -0.02, 0.04), (0.035, top + 0.115, -0.03, 0.032), (-0.012, top + 0.165, -0.035, 0.025), (0.03, top + 0.2, -0.04, 0.017)):
-        ball((x, y, z), r, 'GK_Cloud', seg=16)
     for x, z, r, m in ((0.13, 0.07, 0.03, 'GK_Rock'), (-0.12, 0.09, 0.025, 'GK_Pebble2'), (0.1, -0.12, 0.022, 'GK_Pebble2')):
         ball((x, DECOR_BASE + r * 0.6, z), (r, r * 0.75, r), m, seg=14)
     # GR-24: lava running down its back and side too (it ran down the front only), and cracks glowing at its foot.
@@ -2471,24 +2470,14 @@ def decor_lantern():
 
 
 def decor_duck_spa():
-    """Hot springs: a round rock pool of steaming warm water with a yellow rubber duck afloat in it."""
+    """Hot springs: a round rock pool of warm water with a towel on a rock. Tester round 2 (F85): its rubber duck is a piece of
+    its own (DecorDuck), afloat in the pool so it can bob, and its steam is the game's bubbles (its cloud went)."""
     decor_base('GK_Rock')
     cyl((0, DECOR_BASE + 0.025, 0), 0.135, 0.05, 'GK_Rock', r=0.02)
     cyl((0, DECOR_BASE + 0.048, 0), 0.105, 0.01, 'GK_GlowTeal', r=0)
     for i in range(10):
         a = math.radians(i * 36 + 8)
         ball((0.125 * math.cos(a), DECOR_BASE + 0.055, 0.125 * math.sin(a)), (0.035, 0.026, 0.03), 'GK_Rock' if i % 3 else 'GK_Pebble2', seg=14, rot=(0, -i * 36, 0))
-    dx, dz = 0.01, 0.01
-    y = DECOR_BASE + 0.07
-    ball((dx, y, dz), (0.045, 0.032, 0.058), 'GK_Yellow', seg=20)
-    ball((dx, y + 0.01, dz - 0.052), (0.02, 0.022, 0.02), 'GK_Yellow', seg=14)
-    ball((dx, y + 0.052, dz + 0.035), 0.03, 'GK_Yellow', seg=18)
-    ball((dx, y + 0.046, dz + 0.068), (0.02, 0.008, 0.018), 'GK_Coral', seg=14)
-    for sx in (-1, 1):
-        ball((dx + sx * 0.016, y + 0.062, dz + 0.056), 0.006, 'GK_Ink', seg=10)
-        ball((dx + sx * 0.04, y + 0.008, dz), (0.012, 0.016, 0.03), 'GK_Gold', seg=12)
-    for x, yy, z, r in ((-0.06, 0.12, -0.03, 0.03), (-0.04, 0.17, -0.05, 0.025), (0.07, 0.15, -0.06, 0.024), (-0.07, 0.21, -0.06, 0.017)):
-        ball((x, DECOR_BASE + yy, z), r, 'GK_Cloud', seg=14)
     box((0.1, DECOR_BASE + 0.085, -0.1), (0.06, 0.016, 0.045), 'GK_Pink', r=0.006, rot=(0, 30, 0))  # GR-24: a towel folded on a rock
     box((0.1, DECOR_BASE + 0.095, -0.1), (0.055, 0.004, 0.04), 'GK_Cream', r=0.002, rot=(0, 30, 0))
     return join('DecorDuckSpa')
@@ -2812,9 +2801,51 @@ def research_tray():
 WAVE_RESEARCH = [research_floor, research_dressing, research_tank, research_jars, research_desk, research_tray,
                  lambda: hoarding('PartitionResearch', -16.05, -14.65, 4.0, False, 2.8, 'RESEARCH ROOM', backed=True)]
 
+# ---------------------------------------------------------------- tester round 2 (F80): the bin by the laboratory's door
+
+
+def siphon_bin():
+    """F80's bin, where the siphon is poured out (front +Z, the pedal's side): a teal drum on a dark foot, a cream lid with a
+    glass funnel and a yellow collar, a lime puddle in the funnel, three drips of culture down the front and a label with a
+    coral drop on it, and a pedal."""
+    cyl((0, 0.025, 0), 0.2, 0.05, 'GK_TealDark', r=0.015)
+    cyl((0, 0.29, 0), 0.185, 0.48, 'GK_Teal', r=0.03)
+    ring((0, 0.53, 0), 0.188, 0.016, 'GK_TealDark')
+    cyl((0, 0.56, 0), 0.198, 0.045, 'GK_Cream', r=0.016)
+    cone((0, 0.625, 0), 0.04, 0.115, 0.085, 'GK_Glass')
+    ring((0, 0.668, 0), 0.115, 0.012, 'GK_Yellow')
+    ball((0, 0.598, 0), (0.05, 0.012, 0.05), 'GK_Lime', seg=16)
+    for x, z_off, low, mat in ((-0.09, 0.0, 0.43, 'GK_Coral'), (0.0, 0.004, 0.38, 'GK_Lime'), (0.085, 0.0, 0.46, 'GK_Lilac')):
+        z = math.sqrt(max(0.0, 0.188 ** 2 - x ** 2)) + 0.004 + z_off
+        tube([(x, 0.545, z - 0.004), (x, 0.5, z), (x, low, z + 0.002)], 0.011, mat, sides=8)
+        ball((x, low - 0.006, z + 0.002), (0.017, 0.022, 0.013), mat, seg=12)
+    cyl((0, 0.27, 0.187), 0.072, 0.012, 'GK_Cream', r=0.004, rot=(90, 0, 0))
+    ball((0, 0.268, 0.195), (0.026, 0.036, 0.008), 'GK_Coral', seg=14)
+    ball((0, 0.293, 0.195), (0.012, 0.016, 0.006), 'GK_Coral', seg=10)
+    box((0, 0.035, 0.225), (0.15, 0.03, 0.08), 'GK_TealDark', r=0.012)
+    box((0, 0.05, 0.255), (0.13, 0.012, 0.025), 'GK_Yellow', r=0.005)
+    return join('SiphonBin')
+
+
+def decor_duck():
+    """The duck spa's rubber duck (tester round 2, F85), a piece of its own so it bobs in the pool: its body's bottom at its
+    origin, the game floats it in the pool (GrowthWorld.DuckAt)."""
+    y = 0.032
+    ball((0, y, 0), (0.045, 0.032, 0.058), 'GK_Yellow', seg=20)
+    ball((0, y + 0.01, -0.052), (0.02, 0.022, 0.02), 'GK_Yellow', seg=14)
+    ball((0, y + 0.052, 0.035), 0.03, 'GK_Yellow', seg=18)
+    ball((0, y + 0.046, 0.068), (0.02, 0.008, 0.018), 'GK_Coral', seg=14)
+    for sx in (-1, 1):
+        ball((sx * 0.016, y + 0.062, 0.056), 0.006, 'GK_Ink', seg=10)
+        ball((sx * 0.04, y + 0.008, 0), (0.012, 0.016, 0.03), 'GK_Gold', seg=12)
+    return join('DecorDuck')
+
+
+WAVE_ROUND2 = [siphon_bin, decor_duck]
+
 BUILDS = [grower, grower_ring, grower_tap, grower_lid, incubator, incubator_screen, incubator_port, incubator_doser,
           tank_starter, tank_bed, tank_filter, tank_lid, counter, counter_bags, counter_reader, counter_till,
-          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1 + WAVE_RESEARCH  # later waves last, so earlier ones draw their random numbers as before
+          unit_a_floor, unit_a_dressing, street, back_room_floor, back_room_dressing] + WAVE2 + WAVE3 + WAVE4 + WAVE_DECOR + WAVE_ROUND1 + WAVE_RESEARCH + WAVE_ROUND2  # later waves last, so earlier ones draw their random numbers as before
 
 
 def stats(root):

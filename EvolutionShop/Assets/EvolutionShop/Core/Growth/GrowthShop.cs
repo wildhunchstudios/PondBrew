@@ -76,7 +76,7 @@ namespace EvolutionShop.Growth
         public int Level = 1;
         /// <summary>GR.5: the water the container keeps (fresh unless a water kit changed it, era 3).</summary>
         public Water Water = Water.Fresh;
-        /// <summary>GR-19: the piece of decor on its top (null for none; shop tanks only).</summary>
+        /// <summary>GR-19: the piece of decor in its water (null for none; shop tanks only; on its top before tester round 2).</summary>
         public string Decor;
         /// <summary>GR-31 (F37): what Nori and the sorter may put here: "" anything, a water ("fresh", "warm", "brine"), a temperament ("calm", "lively") or "one kind".</summary>
         public string Rule = "";
@@ -418,6 +418,14 @@ namespace EvolutionShop.Growth
         public const float AutoOpenWait = 15f;
         public static readonly int[] AutoOpenChoices = { 0, 3, 6, 10, 15, 20, 30 };
         float nightClock;
+
+        /// <summary>Chooses how many on show open the shop by itself; the wait starts again, so it never opens the moment it is
+        /// chosen, with the counter's card still open.</summary>
+        public void ChooseAutoOpen(int at)
+        {
+            AutoOpenAt = Array.IndexOf(AutoOpenChoices, at) >= 0 ? at : 0;
+            nightClock = 0;
+        }
 
         void TickAutoOpen(float seconds)
         {

@@ -34,6 +34,7 @@ namespace EvolutionShop.Tests
             "PartitionB", "PartitionC", "PartitionAnnex", "PartitionWorkshop", "BannerCoral", "BannerYellow", "BannerBlue", "HallSpot",
             "ExhibitionSign", "Award", "DisplayTag", "StaffBoard", "HallBoard",
             "DecorReeds", "DecorLilyLamp", "DecorWatermill", "DecorVolcano", "DecorLantern", "DecorDuckSpa", "DecorLighthouse", "DecorChest", "DecorCoralArch",
+            "SiphonBin", "DecorDuck",
         };
 
         static GameObject Piece(string name) => Resources.Load<GameObject>(GrowthWorld.KitPath + name);
@@ -67,10 +68,11 @@ namespace EvolutionShop.Tests
             return filter.sharedMesh.vertices.Select(v => toPiece.MultiplyPoint3x4(v)).ToArray();
         }
 
-        /// <summary>GR-19: every piece of decor is the kit's, stands on its base (its origin at the middle of its bottom), within
-        /// 0.36 m across and 0.56 m tall, and fits on the back corner of every shop tank's top, above its lid and light bar and
-        /// well under the shop's ceiling.</summary>
-        [Test] public void EveryPieceOfDecorStandsOnEveryShopTanksTop()
+        /// <summary>GR-19, in the water since tester round 2 (F67, F85): every piece of decor is the kit's, stands on its base (its
+        /// origin at the middle of its bottom), within 0.36 m across and 0.56 m tall; in every shop tank it stands on the gravel
+        /// at the back inside the water, scaled no smaller than 0.75 and with its top under the surface, and the creatures keep
+        /// in front of it.</summary>
+        [Test] public void EveryPieceOfDecorStandsInEveryShopTanksWater()
         {
             Assert.That(EvolutionShop.Growth.GrowthContent.Decor.Select(d => d.Asset), Is.SubsetOf(Pieces));
             foreach (var d in EvolutionShop.Growth.GrowthContent.Decor)
@@ -82,14 +84,22 @@ namespace EvolutionShop.Tests
             }
             foreach (var (kind, stand, glass) in new[] { ("starter", 0.9f, 0.62f), ("large", 0.8f, 0.75f), ("show", 0.55f, 1.0f) })
             {
-                var def = EvolutionShop.Growth.GrowthContent.Container(kind);
-                float top = stand + glass;
-                var at = GrowthWorld.DecorAt(def.Width, def.Depth, top);
-                Assert.That(Mathf.Abs(at.x) + 0.18f, Is.LessThanOrEqualTo(def.Width * 0.5f + 1e-4f), kind + ": inside its top, side to side");
-                Assert.That(Mathf.Abs(at.z) + 0.18f, Is.LessThanOrEqualTo(def.Depth * 0.5f + 1e-4f), kind + ": inside its top, back to front");
+                var inner = GrowthWorld.WaterOf(kind);
+                float waterH = glass - 0.12f;
+                var at = GrowthWorld.DecorAt(kind, stand);
                 Assert.That(at.z, Is.LessThan(0), kind + ": at the back");
-                Assert.That(at.y, Is.GreaterThanOrEqualTo(top + 0.09f), kind + ": above the lid and the light bar");
-                Assert.That(at.y + 0.56f, Is.LessThan(3.2f - 0.3f), kind + ": well under the shop's ceiling");
+                Assert.That(at.y, Is.EqualTo(stand + 0.055f).Within(1e-4f), kind + ": on the gravel");
+                foreach (var d in EvolutionShop.Growth.GrowthContent.Decor)
+                {
+                    float h = MeshBounds(Piece(d.Asset)).max.y, s = GrowthWorld.DecorScale(h, waterH);
+                    Assert.That(s, Is.GreaterThanOrEqualTo(0.75f), kind + ", " + d.Asset + ": no smaller than three quarters");
+                    Assert.That(Mathf.Abs(at.x) + 0.18f * s, Is.LessThanOrEqualTo(inner.x * 0.5f + 1e-4f), kind + ", " + d.Asset + ": inside the water, side to side");
+                    Assert.That(-at.z + 0.18f * s, Is.LessThanOrEqualTo(inner.z * 0.5f + 1e-4f), kind + ", " + d.Asset + ": inside the water at the back");
+                    Assert.That(at.y + h * s, Is.LessThanOrEqualTo(stand + 0.05f + waterH - 0.04f + 1e-4f), kind + ", " + d.Asset + ": its top under the surface");
+                    float back = GrowthWorld.DecorBack(at, s, inner.z);
+                    Assert.That(-inner.z * 0.5f + back, Is.GreaterThanOrEqualTo(at.z + 0.17f * s - 1e-4f), kind + ", " + d.Asset + ": the creatures keep in front of it");
+                    Assert.That(back, Is.LessThan(inner.z * 0.6f), kind + ", " + d.Asset + ": and still have most of the water");
+                }
             }
         }
 

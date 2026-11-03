@@ -159,7 +159,7 @@ namespace EvolutionShop
             Check(s.Card == GrowthCard.Counter && s.Ui.CardText().Contains("Open by itself, with this many on show") && s.Ui.CardText().Contains("Off: you open the shop yourself, here.") && s.Ui.CardText().Contains("visitors at once"), "The counter's card offers the auto-open, off");
             yield return ClickOn(e => e.name == "gr-autoopen-3", "Press 3");
             yield return null; yield return null;
-            Check(shop.AutoOpenAt == 3 && s.Ui.CardText().Contains("Once 3 or more creatures are on show, the night ends and the shop opens by itself"), "Set to 3, the card says when it opens");
+            Check(shop.AutoOpenAt == 3 && shop.Phase == GrowthPhase.Night && s.Ui.CardText().Contains("Once 3 or more creatures are on show, the night ends and the shop opens by itself"), "Set to 3, the card says when it opens, and the shop waits its seconds again (still night)");
             yield return Shot("1203-auto-open");
             s.SetCard(GrowthCard.None);
             yield return Wait(() => shop.Phase == GrowthPhase.Day, GrowthShop.AutoOpenWait + 5, "the shop opening by itself");

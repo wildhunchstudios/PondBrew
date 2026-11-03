@@ -157,7 +157,7 @@ namespace EvolutionShop.Growth
                 Card = new[]
                 {
                     "The supplier catalog, on the stand by the counter, is where you order things for your shop. Its pages open as you earn stars.",
-                    "A grower gives you a new culture for good. A starter vial is a few doses of one, to try it first. A decoration goes on top of a tank, and the creatures that suit its theme can sell for more.",
+                    "A grower gives you a new culture for good. A starter vial is a few doses of one, to try it first. A decoration goes in a tank's water, and the creatures that suit its theme can sell for more.",
                     "Order at night. What you order arrives when you next open the shop.",
                 },
                 Appears = s => s.Era >= 2,
@@ -259,7 +259,7 @@ namespace EvolutionShop.Growth
                 Id = "decor", Title = "Décor and themes", Era = 2,
                 Card = new[]
                 {
-                    "Décor from the catalog stands beside a tank: a riverbank, a hot spring or, later, the seaside. Creatures of its water are themed there, and their visitors pay a little more.",
+                    "Décor from the catalog stands in a tank's water, at the back: a riverbank, a hot spring or, later, the seaside. Creatures of its water are themed there, and their visitors pay a little more.",
                     "Every piece makes its tank more appealing, so visitors look there first.",
                 },
                 Appears = s => s.Era >= 2 && s.Stars >= GrowthContent.Decor.Min(d => d.Stars),
@@ -270,7 +270,7 @@ namespace EvolutionShop.Growth
                         return s.Orders.Any(o => o.StartsWith("decor-", StringComparison.Ordinal)) ? V("Your decoration arrives when the shop next opens: then put it by a tank")
                                                                                      : V("Order a decoration from the catalog's Décor page: it arrives next night", "Catalog", "Supplier catalog");
                     var tank = AShopTank(s);
-                    return V("Open a tank (E) and put your decoration beside it", tank == null ? null : "Tank:" + tank.Id, "Décor here");
+                    return V("Open a tank (E) and put your decoration in it", tank == null ? null : "Tank:" + tank.Id, "Décor here");
                 },
             },
             new GrowthLessonDef

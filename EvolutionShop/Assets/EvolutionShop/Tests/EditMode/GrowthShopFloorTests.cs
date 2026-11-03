@@ -90,6 +90,14 @@ namespace EvolutionShop.Tests
             off.DevelopmentStock(off.Containers[0].Id, "pondlet");
             Run(off, GrowthShop.AutoOpenWait + 1);
             Assert.That(off.Phase, Is.EqualTo(GrowthPhase.Night), "off unless chosen");
+            // Chosen late in the night, it waits its seconds again, so it never opens the moment it is chosen.
+            off.DevelopmentStock(off.Containers[0].Id, "pondlet"); off.DevelopmentStock(off.Containers[0].Id, "pondlet");
+            off.ChooseAutoOpen(3);
+            Assert.That(off.AutoOpenAt, Is.EqualTo(3), "one of the choices");
+            off.Tick(0.1f);
+            Assert.That(off.Phase, Is.EqualTo(GrowthPhase.Night), "not the moment it is chosen");
+            Run(off, GrowthShop.AutoOpenWait + 0.5f);
+            Assert.That(off.Phase, Is.EqualTo(GrowthPhase.Day), "but once its seconds have passed again");
         }
 
         [Test]

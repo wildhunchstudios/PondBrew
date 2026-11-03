@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "0eae88e84ab5efeeaf0ece3513e924b0a5c85c9c76ad33e3467bdbd5e9f78a6e",
+  "source_script_sha256": "29572f928cced0ea8971ccd141768bbd8977252da70c79a4b532c2289264be60",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -2947,9 +2947,8 @@
       "bytes": 282460
     },
     {
-      "triangles": 3296,
+      "triangles": 2400,
       "materials": [
-        "GK_Cloud",
         "GK_GlowCoral",
         "GK_GlowYellow",
         "GK_Lilac",
@@ -2964,14 +2963,14 @@
         ],
         "max": [
           0.17,
-          0.522,
+          0.329,
           0.17
         ]
       },
       "id": "DecorVolcano",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorVolcano.fbx",
-      "sha256": "2be664a854cdba3ac7ce874ca7ed48ad1e60b7ab9ecd7179f4a8f269eac46e0b",
-      "bytes": 94876
+      "sha256": "0eb298494385d017b8f096adcf639e53cb3b3c3418c8f83a0295d7a1bbbfec12",
+      "bytes": 75212
     },
     {
       "triangles": 4300,
@@ -3003,18 +3002,13 @@
       "bytes": 111628
     },
     {
-      "triangles": 6140,
+      "triangles": 3700,
       "materials": [
-        "GK_Cloud",
-        "GK_Coral",
         "GK_Cream",
         "GK_GlowTeal",
-        "GK_Gold",
-        "GK_Ink",
         "GK_Pebble2",
         "GK_Pink",
-        "GK_Rock",
-        "GK_Yellow"
+        "GK_Rock"
       ],
       "bounds_unity_m": {
         "min": [
@@ -3024,14 +3018,14 @@
         ],
         "max": [
           0.17,
-          0.262,
+          0.132,
           0.17
         ]
       },
       "id": "DecorDuckSpa",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorDuckSpa.fbx",
-      "sha256": "2a449851dc0851c000917daccef747a3f1f4d819bfb07d62b4f2433b67b40f2d",
-      "bytes": 155820
+      "sha256": "4349c3b929808a04c368f227428fcb6246aab33f03eb39c4ed2718d0fe0e963b",
+      "bytes": 97788
     },
     {
       "triangles": 7872,
@@ -3517,6 +3511,60 @@
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/PartitionResearch.fbx",
       "sha256": "09db064f7a388a51ac802ab8bd9282122952bba95f4fd35af79e57e8acdddd9b",
       "bytes": 370300
+    },
+    {
+      "triangles": 6512,
+      "materials": [
+        "GK_Coral",
+        "GK_Cream",
+        "GK_Glass",
+        "GK_Lilac",
+        "GK_Lime",
+        "GK_Teal",
+        "GK_TealDark",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.204,
+          0.0,
+          -0.204
+        ],
+        "max": [
+          0.204,
+          0.68,
+          0.267
+        ]
+      },
+      "id": "SiphonBin",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/SiphonBin.fbx",
+      "sha256": "58f3a5c9f806ada158361d665a86206d5ec15712751e0c46f42e0be7eba8eea2",
+      "bytes": 161948
+    },
+    {
+      "triangles": 1656,
+      "materials": [
+        "GK_Coral",
+        "GK_Gold",
+        "GK_Ink",
+        "GK_Yellow"
+      ],
+      "bounds_unity_m": {
+        "min": [
+          -0.052,
+          0.0,
+          -0.072
+        ],
+        "max": [
+          0.052,
+          0.114,
+          0.086
+        ]
+      },
+      "id": "DecorDuck",
+      "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/DecorDuck.fbx",
+      "sha256": "64cc052010c40eb96f63100827bfe0043bef6ec42c74d1845ac297fb5594b19e",
+      "bytes": 50524
     }
   ]
 }

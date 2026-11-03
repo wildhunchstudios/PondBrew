@@ -57,4 +57,4 @@ From the tester build of 2026-10-31 (GR-28's second package), with the user's ow
 
 ## Status (2026-11-03)
 
-Technically complete (GR.75): F58 to F66 (GR-33); F75 to F79, F81 to F84, F86, F87. Open: F68 and F69 (GR-34, a preview first), F70 to F74 (GR-35), F80, F85 with F67 (GR-36).
+Technically complete (GR.75): F58 to F66 (GR-33); F75 to F79, F81 to F84, F86, F87. Technically complete (GR.76): F72, F73, F80, F85 with F67. In a preview, the user's choices open: F68 and F69 (GR-34), F70, F71 and F74 (GR-35).

@@ -6,7 +6,7 @@ namespace EvolutionShop.Growth
 {
     // GR-19: decor (GR.60 and GR.61, the user's choices; GR.6, GR.10). Nine pieces in three themes, each bought once from the
     // supplier catalog: ordered at night, delivered into the decor box when the shop next opens. At night a piece goes on a
-    // shop tank's top (one a tank; the user chose a tank's top over floor spots, which the packed places left no room for);
+    // shop tank (one a tank; the user chose a tank's top over floor spots, which the packed places left no room for, and in tester round 2, F67 and F85, its water, at the back);
     // it moves with its tank and goes back to the box when the tank is sold. A tank with a piece is more appealing (visitors
     // look into it first, and pay a little more there, as for a Show tank or harmony); its creatures whose water matches the
     // piece's theme are themed: visitors pay up to a quarter more for them (GR.10.1's +25, capped with schools at +40).

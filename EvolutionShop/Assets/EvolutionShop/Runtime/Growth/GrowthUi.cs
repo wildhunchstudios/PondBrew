@@ -699,6 +699,7 @@ namespace EvolutionShop
                 case GrowthCard.Place: FillPlace(target); break;
                 case GrowthCard.Crate: FillCrate(); break;
                 case GrowthCard.Catalog: FillCatalog(); break;
+                case GrowthCard.Bin: FillBin(); break;
                 case GrowthCard.Breeding: FillBreeding(); break;
                 case GrowthCard.Counter: FillCounter(); break;
                 case GrowthCard.Workbench: FillWorkbench(); break;
@@ -749,7 +750,7 @@ namespace EvolutionShop
             body.Add(fill);
             var siphon = Box("gr-row", "gr-row--spread");
             siphon.Add(L("Your siphon: " + shop.Held.Count + " of " + shop.SiphonCapacity + " doses", "gr-hint"));
-            siphon.Add(Link("Pour out your siphon", () => s.Act(() => shop.PourOutSiphon()), shop.Held.Count > 0, "Your siphon is empty"));
+            if (shop.Held.Count > 0) siphon.Add(L("Pour it out at the bin", "gr-hint"));
             body.Add(siphon);
             if (shop.Taps >= 1) TapSection(AddTab("Pipes"), culture);
             if (vat) UpgradeSection(body, "vat", "The vat");
@@ -767,7 +768,7 @@ namespace EvolutionShop
         void FillIncubator()
         {
             var shop = s.Shop;
-            var body = Head("Incubator", "", "Mix", "Click the incubator to put your siphon's doses in. Here, + adds a dose, − takes it back, and × pours your siphon's doses of it away. Each dose is a gene, and the genes you mix decide the creature: every mix makes one, and an exact recipe finds a new one. A recipe you have found doses itself in one press.");
+            var body = Head("Incubator", "", "Mix", "Click the incubator to put your siphon's doses in. Here, + adds a dose and − takes it back; pour your siphon out at the bin, under the laboratory's pinboard. Each dose is a gene, and the genes you mix decide the creature: every mix makes one, and an exact recipe finds a new one. A recipe you have found doses itself in one press.");
             LiveStatus();
             bool locked = shop.Incubating || shop.ChamberLock != null;
             // GR-33 (F76): two columns so the card never scrolls: the chamber and Start on the left; on the right, the hatchling,
@@ -835,16 +836,13 @@ namespace EvolutionShop
                 int inChamber = shop.Chamber.Count(x => x == c), held = shop.Held.Count(x => x == c);
                 var chip = Box("gr-dose"); chip.style.backgroundColor = CultureGround(c);
                 chip.Add(PlusMinus("−", () => s.Act(() => shop.ReturnDose(c)), !locked && inChamber > 0 && shop.Held.Count < shop.SiphonCapacity,
-                    locked ? "The incubator is busy" : inChamber == 0 ? "None of it in the chamber" : "Your siphon is full: pour something out first"));
+                    locked ? "The incubator is busy" : inChamber == 0 ? "None of it in the chamber" : "Your siphon is full: pour something out at the bin first"));
                 var words = Box("gr-dose__text");
                 words.Add(L(GrowthShop.Name(c) + " " + inChamber, "gr-dose__name"));
                 words.Add(L(held + " in siphon", "gr-dose__count"));
                 chip.Add(words);
                 chip.Add(PlusMinus("+", () => s.Act(() => shop.AddDose(c)), !locked && held > 0 && shop.Chamber.Count < shop.MaxDoses,
                     locked ? "The incubator is busy" : held == 0 ? "Collect " + GrowthShop.Name(c) + " at its grower" : "The chamber holds " + shop.MaxDoses));
-                var pour = PlusMinus("×", () => s.Act(() => shop.PourOutSiphon(c)), held > 0, "None of it in your siphon");
-                if (held > 0) pour.tooltip = "Pour out the " + held + " " + GrowthShop.Name(c) + " in your siphon";
-                chip.Add(pour);
                 doses.Add(chip);
             }
             if (shop.Held.Count == 0 && shop.Chamber.Count == 0) doses.Add(L("Your siphon is empty: hold the mouse on a grower to collect.", "gr-hint"));
@@ -882,7 +880,7 @@ namespace EvolutionShop
             var links = Box("gr-row", "gr-row--spread");
             links.style.flexWrap = Wrap.Wrap;
             bool roomInSiphon = shop.Held.Count < shop.SiphonCapacity;
-            var back = Link("Return doses", () => { foreach (var c in shop.Chamber.ToList()) shop.ReturnDose(c); s.SaveNow(); }, !locked && shop.Chamber.Count > 0 && roomInSiphon, shop.Chamber.Count == 0 ? "Nothing in the chamber" : "Your siphon is full: pour something out first");
+            var back = Link("Return doses", () => { foreach (var c in shop.Chamber.ToList()) shop.ReturnDose(c); s.SaveNow(); }, !locked && shop.Chamber.Count > 0 && roomInSiphon, shop.Chamber.Count == 0 ? "Nothing in the chamber" : "Your siphon is full: pour something out at the bin first");
             back.style.marginLeft = 0;
             links.Add(back);
             // GR-29 (F10): the way out when the doses cannot go back.
@@ -1007,6 +1005,39 @@ namespace EvolutionShop
             return b;
         }
 
+        /// <summary>
+        /// Tester round 2 (F80): the bin by the laboratory's east wall: each culture in the siphon with its doses and Pour out,
+        /// and Pour out everything. A dose poured out is gone.
+        /// </summary>
+        void FillBin()
+        {
+            var shop = s.Shop;
+            var body = Head("Bin", "Siphon " + shop.Held.Count + "/" + shop.SiphonCapacity, null, "Pour your siphon's doses away here when it is full of what you don't need. A dose poured out is gone; your growers make more.");
+            var cultures = GrowthContent.Cultures.Select(c => c.Id).Where(shop.Held.Contains).ToList();
+            if (cultures.Count == 0) body.Add(L("Your siphon is empty: nothing to pour out.", "gr-hint"));
+            var rows = Box("gr-row");
+            rows.style.flexWrap = Wrap.Wrap;
+            foreach (var culture in cultures)
+            {
+                string c = culture;
+                int held = shop.Held.Count(x => x == c);
+                var chip = Box("gr-dose"); chip.style.backgroundColor = CultureGround(c);
+                var words = Box("gr-dose__text");
+                words.Add(L(GrowthShop.Name(c), "gr-dose__name"));
+                words.Add(L(held + " in your siphon", "gr-dose__count"));
+                chip.Add(words);
+                var pour = ChipButton("Pour out", () => s.Act(() => shop.PourOutSiphon(c)), true, "Pour out the " + held + " " + GrowthShop.Name(c) + " in your siphon");
+                pour.name = "gr-bin-" + c;
+                chip.Add(pour);
+                rows.Add(chip);
+            }
+            body.Add(rows);
+            var all = Wide("Pour out everything · " + shop.Held.Count, () => s.Act(() => shop.PourOutSiphon()), true, shop.Held.Count > 0, "Your siphon is empty");
+            all.name = "gr-bin-all";
+            body.Add(all);
+            Footer(body);
+        }
+
         /// <summary>GR-33 (F76): the incubator's card is wide enough for two columns, so it never scrolls.</summary>
         const int IncubatorWidth = 1100;
 
@@ -1127,7 +1158,7 @@ namespace EvolutionShop
             string rules = c.Def.Lab ? "In the workshop, off the shop floor: visitors never see it. Holds " + Holds(c.Def) + "; carry creatures from here to the shop's tanks." :
                 "Holds " + Holds(c.Def) + ": a small one takes 1 space, a medium one 2, a large one 4. Three of a kind swim as a school and sell a little better." +
                 (comfort ? " Creatures that share a temperament and the tank's water are in harmony: +1 appeal." : "") + " Click a tank to put in the creature you chose, or with empty hands to take the one you aim at; right-click takes it with others in hand. Look closely at the glass to peek." +
-                (c.Def.Lab ? "" : " A piece of decor on its top (the Decor tab) makes it more appealing, and visitors pay more for the creatures its theme suits.");
+                (c.Def.Lab ? "" : " A piece of decor in its water (the Decor tab) makes it more appealing, and visitors pay more for the creatures its theme suits.");
             var body = Head(c.Def.Name, c.Used + " of " + c.Spaces + " spaces", c.Def.Lab ? "Rack" : "Tank", rules, !c.Def.Lab);
             body.Add(SpaceGrid(c));
             // Each species with its count and price; a press takes one out.
@@ -1240,7 +1271,7 @@ namespace EvolutionShop
             }
             body.Add(arrange);
             // Upgrade: the container's levels as every station's are.
-            // GR-19: decor on the tank's top, in a tab of its own (shop tanks only).
+            // GR-19: decor in the tank's water, in a tab of its own (shop tanks only).
             if (!c.Def.Lab) DecorTab(c);
             var upgrade = AddTab(UpgradeTab);
             var check = shop.ContainerUpgradeCheck(c.Id, out var next, out string upgradeWhy);
@@ -1251,7 +1282,7 @@ namespace EvolutionShop
         /// <summary>GR-19: a theme's colour: Riverbank green, Hot springs coral, Seaside blue.</summary>
         static Color DecorColour(Water w) => w == Water.Fresh ? new Color(0.34f, 0.73f, 0.28f) : w == Water.Warm ? new Color(1f, 0.48f, 0.3f) : new Color(0.25f, 0.66f, 1f);
 
-        /// <summary>GR-19: a tank's Decor tab: the piece on its top (what its theme suits, and Take it off at night), and every
+        /// <summary>GR-19: a tank's Decor tab: the piece in its water (what its theme suits, and Take it off at night), and every
         /// other piece the shop owns, in the box or on another tank, with Put it on (from the box, or moved here).</summary>
         void DecorTab(GrowthContainer c)
         {
@@ -1358,14 +1389,14 @@ namespace EvolutionShop
             foreach (int at in GrowthShop.AutoOpenChoices)
             {
                 int value = at;
-                var b = ChipButton(value == 0 ? "Off" : value.ToString(), () => { shop.AutoOpenAt = value; s.SaveNow(); RefreshCard(); }, true);
+                var b = ChipButton(value == 0 ? "Off" : value.ToString(), () => { shop.ChooseAutoOpen(value); s.SaveNow(); RefreshCard(); }, true);
                 b.name = "gr-autoopen-" + value;
                 if (value == shop.AutoOpenAt) b.AddToClassList("gr-chip--on");
                 chips.Add(b);
             }
             auto.Add(chips);
             auto.Add(L(shop.AutoOpenAt == 0 ? "Off: you open the shop yourself, here." :
-                "Once " + shop.AutoOpenAt + " or more creatures are on show, the night ends and the shop opens by itself. Never in the night's first " + GrowthShop.AutoOpenWait.ToString("0") + " seconds, so you have time to look around.", "gr-hint"));
+                "Once " + shop.AutoOpenAt + " or more creatures are on show, the night ends and the shop opens by itself. Never in the night's first " + GrowthShop.AutoOpenWait.ToString("0") + " seconds, or that long after you choose, so you have time to look around.", "gr-hint"));
             body.Add(auto);
         }
 

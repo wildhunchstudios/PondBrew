@@ -20,14 +20,23 @@ namespace EvolutionShop
     /// </summary>
     public sealed partial class GrowthSmoke
     {
-        const string DecorScenarioText = "GR-19 decor and GR-22 closing early: three pieces ordered from the supplier catalog's pages with its buttons, delivered into the decor box when the shop opens; the counter card's Close for the day asking first, Stay open, then Close, the receipt saying so; each piece put on a tank's top from the Decor tab and standing there; appeal and themed budgets; a swap, a decorated tank moved with its piece, a piece taken off; the Decor tab by day; save and reload";
+        const string DecorScenarioText = "GR-19 decor and GR-22 closing early: three pieces ordered from the supplier catalog's pages with its buttons, delivered into the decor box when the shop opens; the counter card's Close for the day asking first, Stay open, then Close, the receipt saying so; each piece put in a tank's water from the Decor tab and standing there, under the surface, the creatures in front; appeal and themed budgets; a swap, a decorated tank moved with its piece, a piece taken off; the Decor tab by day; save and reload";
 
         /// <summary>Clicks a control of the open card with the route's mouse (UI Toolkit reads the Input System's pointer).</summary>
+        /// <summary>Whether a control shows: neither it nor any parent is out of the layout (a hidden tab, display none).</summary>
+        static bool Shown(UnityEngine.UIElements.VisualElement e)
+        {
+            for (var v = e; v != null; v = v.parent)
+                if (v.resolvedStyle.display == UnityEngine.UIElements.DisplayStyle.None || v.style.display == UnityEngine.UIElements.DisplayStyle.None) return false;
+            return true;
+        }
+
         IEnumerator ClickOn(Func<UnityEngine.UIElements.VisualElement, bool> which, string what)
         {
             yield return null; yield return null;
             var card = s.Ui.CardElement;
-            var element = card == null ? null : UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(card).ToList().FirstOrDefault(which);
+            // Tester round 2: a control on a hidden tab (display none) is never the one meant: the shown one is.
+            var element = card == null ? null : UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(card).ToList().Where(Shown).FirstOrDefault(which);
             if (element == null) { Check(false, what + " (no such control on the card; it says: " + s.Ui.CardText() + ")"); yield break; }
             var scroll = element.GetFirstAncestorOfType<UnityEngine.UIElements.ScrollView>();
             if (scroll != null) { scroll.ScrollTo(element); yield return null; yield return null; }
@@ -37,7 +46,7 @@ namespace EvolutionShop
             InputSystem.QueueStateEvent(mouse, new MouseState { position = at });
             yield return null; yield return null;
             // A card rebuilt while the pointer moved (it is rebuilt as the shop changes) has the same control in the same place.
-            if (element.panel == null) element = s.Ui.CardElement == null ? null : UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(s.Ui.CardElement).ToList().FirstOrDefault(which);
+            if (element.panel == null) element = s.Ui.CardElement == null ? null : UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.VisualElement>(s.Ui.CardElement).ToList().Where(Shown).FirstOrDefault(which);
             if (element == null) { Check(false, what + " (gone from the card before the press)"); yield break; }
             // GR-20 run 2: and where it is now, since a rebuild may have moved it; the press goes there.
             r = element.worldBound; panel = s.Ui.Root.layout.size;
@@ -167,7 +176,7 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             yield return new WaitForSeconds(GrowthShop.LeaveSeconds * 0.6f);
 
-            // ---- GR-19: the Decor tab, at night; a piece on a1's top
+            // ---- GR-19: the Decor tab, at night; a piece in a1's water (F67, F85)
             s.SetCard(GrowthCard.Tank, a1.Id);
             yield return ClickOn(e => ButtonText(e, "Decor") && e.ClassListContains("gr-tab"), "Click the tank card's Decor tab");
             card = s.Ui.CardText();
@@ -178,7 +187,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             var reeds = s.World.DecorOf(a1.Id);
             Check(a1.Decor == "reeds" && reeds != null && reeds.GetComponentsInChildren<Renderer>().Any(r => r.enabled) && HasKit(reeds, "DecorReeds"),
-                "The reeds stand on a1's top, the kit's piece");
+                "The reeds stand in a1, the kit's piece");
             card = s.Ui.CardText();
             Check(card.Contains("Take it off") && card.Contains("Riverbank: fresh-water creatures sell for more here") && card.Contains("5 creatures themed") && card.Contains("Appeal +1"),
                 "The tab says what the piece does: Riverbank, five themed creatures, appeal +1");
@@ -190,6 +199,18 @@ namespace EvolutionShop
             s.FocusName(out string status);
             Check(status != null && status.Contains(" · Riverbank"), "Focused, the tank says its theme (" + status + ")");
             ViewDecor(a1); yield return Shot("587-reeds-on-a1");
+            // Tester round 2 (F67, F85): in the water at the back, under the surface, the creatures in front, swaying.
+            var view = s.World.Tanks[a1.Id];
+            var low = view.Root.InverseTransformPoint(reeds.position);
+            float scale = reeds.localScale.y, surface = view.WaterY + view.Inner.y * 0.5f, floor = view.WaterY - view.Inner.y * 0.5f;
+            Check(low.z < 0 && low.y >= floor - 0.01f && low.y + view.DecorTop * scale <= surface - 0.03f && scale >= 0.75f,
+                "F67: the reeds stand on the gravel at the back, inside the water, their top " + (surface - low.y - view.DecorTop * scale).ToString("0.00") + " m under the surface (scale " + scale.ToString("0.00") + ")");
+            yield return new WaitForSeconds(0.6f);
+            var swimmers = view.Creatures.Values.Where(cr => cr != null).Select(cr => view.Root.InverseTransformPoint(cr.transform.position).z).ToList();
+            Check(swimmers.Count > 0 && swimmers.All(z => z > low.z + 0.17f * scale), "F85: the creatures swim in front of it (" + swimmers.Count + ", the nearest " + (swimmers.Count == 0 ? 0 : swimmers.Min() - low.z - 0.17f * scale).ToString("0.00") + " m in front)");
+            var sway0 = reeds.localRotation;
+            yield return new WaitForSeconds(0.7f);
+            Check(Quaternion.Angle(sway0, reeds.localRotation) > 0.3f, "F85: the reeds sway (" + Quaternion.Angle(sway0, reeds.localRotation).ToString("0.0") + " degrees in 0.7 s)");
 
             // ---- the volcano on b1 (clicked) and the lighthouse on b2 (as the button does)
             s.SetCard(GrowthCard.Tank, b1.Id);
@@ -199,7 +220,7 @@ namespace EvolutionShop
             s.SetCard(GrowthCard.None);
             yield return null; yield return null;
             Check(b1.Decor == "volcano" && b2.Decor == "lighthouse" && HasKit(s.World.DecorOf(b1.Id), "DecorVolcano") && HasKit(s.World.DecorOf(b2.Id), "DecorLighthouse") && !shop.DecorBox.Any(),
-                "The little volcano on b1 and the lighthouse on b2, each standing on its tank; the box is empty");
+                "The little volcano on b1 and the lighthouse on b2, each standing in its tank; the box is empty");
             ViewDecor(b1); yield return Shot("588-volcano-on-b1");
             ViewDecor(b2); yield return Shot("589-lighthouse-on-b2");
             LookAt(new Vector3(5.0f, 0, -1.8f), new Vector3(7.2f, 1.5f, 3.4f)); yield return Shot("590-unit-b-decor");
@@ -221,7 +242,7 @@ namespace EvolutionShop
             yield return null; yield return null;
             var moved = s.World.DecorOf(a1.Id);
             Check(a1.Place == "a4" && a1.Decor == "lighthouse" && moved != null && Vector3.Distance(new Vector3(moved.position.x, 0, moved.position.z), GrowthWorld.Places["a4"].Position) < 1.5f,
-                "The tank moved to a4 with the lighthouse on its top");
+                "The tank moved to a4 with the lighthouse in its water");
             ViewDecor(a1); yield return Shot("591-moved-with-its-tank");
             s.SetCard(GrowthCard.Tank, a1.Id);
             yield return ClickOn(e => ButtonText(e, "Decor") && e.ClassListContains("gr-tab"), "Click the moved tank's Decor tab");

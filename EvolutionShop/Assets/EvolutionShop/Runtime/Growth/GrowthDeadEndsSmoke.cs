@@ -70,15 +70,28 @@ namespace EvolutionShop
             yield return Press(Key.E);
             yield return null; yield return null;
             var back = CardButton("Return doses");
-            Check(s.Card == GrowthCard.Incubator && back != null && !back.enabledSelf && s.Ui.CardText().Contains("Your siphon is full: pour something out first"), "With the chamber and the siphon full, Return doses is off and says why");
+            Check(s.Card == GrowthCard.Incubator && back != null && !back.enabledSelf && s.Ui.CardText().Contains("Your siphon is full: pour something out at the bin first"), "With the chamber and the siphon full, Return doses is off and says why (and where to pour)");
             yield return Shot("1102-incubator-full");
             yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "Pour out the chamber", "Press Pour out the chamber");
             yield return null;
             Check(shop.Chamber.Count == 0 && shop.Held.Count == shop.SiphonCapacity, "The chamber pours out, and the siphon keeps its doses");
-            Check(s.Ui.CardText().Contains("Pour out the " + shop.SiphonCapacity + " Flow in your siphon"), "The × says what it pours out");
-            yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "×" && b.enabledSelf && b.tooltip != null && b.tooltip.StartsWith("Pour out"), "Press × on Flow");
+            // F80: the siphon is poured out at the bin, not on the incubator's card.
+            Check(!UnityEngine.UIElements.UQueryExtensions.Query<UnityEngine.UIElements.Button>(s.Ui.CardElement).ToList().Any(b => b.text == "×" && !b.ClassListContains("gr-close")) && s.Ui.CardText().Contains("pour your siphon out at the bin"), "F80: the incubator has no × to pour the siphon away, and says where the bin is");
+            s.SetCard(GrowthCard.None);
+            yield return AimAt(GrowthWorld.BinPosition + new Vector3(-1.3f, 0, 0), GrowthWorld.BinPosition + new Vector3(0, 0.45f, 0), GrowthTargetKind.Bin, null, "F80: the reticle focuses the bin");
+            s.FocusName(out string binPrompt);
+            Check(binPrompt.Contains(shop.SiphonCapacity + " in your siphon") && binPrompt.Contains("E pour out"), "The bin's prompt says what is in the siphon and what E does (" + binPrompt + ")");
+            yield return Click();
+            Check(s.Card == GrowthCard.None && shop.Held.Count == shop.SiphonCapacity, "A click on the bin pours nothing away (it says to open it)");
+            yield return Press(Key.E);
+            yield return null; yield return null;
+            Check(s.Card == GrowthCard.Bin && s.Ui.CardText().Contains("Flow") && s.Ui.CardText().Contains(shop.SiphonCapacity + " in your siphon"), "E opens the bin: the Flow in the siphon, with Pour out");
+            yield return Shot("1102-bin");
+            yield return ClickOn(e => e.name == "gr-bin-flow", "Press Pour out on Flow");
             yield return null;
-            Check(shop.Held.Count == 0, "The × pours the siphon's Flow away");
+            Check(shop.Held.Count == 0, "The bin pours the siphon's Flow away");
+            s.SetCard(GrowthCard.None);
+            yield return AimAt(GrowthWorld.IncubatorPosition + new Vector3(0, 0, -1.5f), GrowthWorld.IncubatorPosition + new Vector3(0, 1.0f, 0), GrowthTargetKind.Incubator, null, "Back at the incubator");
 
             // ---- F9 and F11: the mix log waits for the hatch; Start says what holds it
             shop.Held.AddRange(new[] { "bloom", "bloom", "flow" });
@@ -202,11 +215,15 @@ namespace EvolutionShop
             yield return Shot("1107-scrolled");
 
             // ---- F17, F18: the grower's card and a buffer's pour out
+            if (shop.Held.Count == 0) shop.Held.Add(shop.Cultures.First());
             s.SetCard(GrowthCard.Grower, shop.Cultures.First());
             yield return null; yield return null;
-            yield return ClickOn(e => e is UnityEngine.UIElements.Button b && b.text == "Pour out your siphon", "Press Pour out your siphon");
+            Check(s.Ui.CardText().Contains("Pour it out at the bin"), "F80: the grower's card sends the siphon to the bin");
+            s.SetCard(GrowthCard.Bin);
+            yield return null; yield return null;
+            yield return ClickOn(e => e.name == "gr-bin-all", "Press Pour out everything");
             yield return null;
-            Check(shop.Held.Count == 0, "The grower's card pours the siphon out");
+            Check(shop.Held.Count == 0, "The bin's Pour out everything empties the siphon");
             var buffer = shop.Buffers.First();
             buffer.Units = Mathf.Max(buffer.Units, 5);
             if (buffer.Culture == null) buffer.Culture = shop.Cultures.First();

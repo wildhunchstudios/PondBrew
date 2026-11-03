@@ -317,6 +317,7 @@ namespace EvolutionShop
             Kit(stationsRoot.Find("Vial shelf"), "VialShelf", default, null, "Shelf", "Bracket");
             foreach (var bottle in vials.Values) Kit(bottle, "VialBottle", default, null, "Glass", "Cork");
             Kit(stationsRoot.Find("Supplier catalog"), "Catalog", default, null, "Stand", "Book", "Pages");
+            Kit(stationsRoot.Find("Siphon bin"), "SiphonBin", default, null, "Drum");
             Kit(stationsRoot.Find("Pinboard"), "Pinboard", default, null, "Board", "Note 0", "Note 1", "Note 2");
             // Wave 3: the power board (its bars and lamp stay, they move) and the incubator's outlet.
             Kit(labRoot.Find("Power board"), "PowerBoard", default, null, "Board", "Supply track", "Draw track");

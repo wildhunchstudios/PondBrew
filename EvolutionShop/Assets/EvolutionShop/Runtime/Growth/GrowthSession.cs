@@ -31,7 +31,7 @@ namespace EvolutionShop
             ShopSession.Arg(PowerSmokeArgument) != null ? "power" : ShopSession.Arg(LineSmokeArgument) != null ? "line" : ShopSession.Arg(HelpersSmokeArgument) != null ? "helpers" : ShopSession.Arg(SpacesSmokeArgument) != null ? "spaces" : ShopSession.Arg(ExhibitionSmokeArgument) != null ? "exhibition" : ShopSession.Arg(CreaturesSmokeArgument) != null ? "creatures" : ShopSession.Arg(GuideSmokeArgument) != null ? "guide" : ShopSession.Arg(LookSmokeArgument) != null ? "look" : ShopSession.Arg(PeopleSmokeArgument) != null ? "people" : ShopSession.Arg(DecorSmokeArgument) != null ? "decor" : ShopSession.Arg(WishesSmokeArgument) != null ? "wishes" : ShopSession.Arg(SettingsSmokeArgument) != null ? "settings" : ShopSession.Arg(EffectsSmokeArgument) != null ? "effects" : ShopSession.Arg(LessonsSmokeArgument) != null ? "lessons" : ShopSession.Arg(MenuSmokeArgument) != null ? "menu" : ShopSession.Arg(DeadEndsSmokeArgument) != null ? "deadends" : ShopSession.Arg(FloorSmokeArgument) != null ? "floor" : ShopSession.Arg(ResearchSmokeArgument) != null ? "research" : ShopSession.Arg(WordsSmokeArgument) != null ? "words" : ShopSession.Arg(PlansSmokeArgument) != null ? "plans" : null;
     }
 
-    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu, ResearchWall, Research, Stock }
+    public enum GrowthCard { None, Welcome, Grower, Incubator, Tank, Place, Counter, Workbench, UnitB, Board, Journal, Receipt, Pause, Crate, Catalog, Breeding, Annex, Generator, PowerBoard, Buffer, Workshop, Sorter, Staff, Helper, UnitC, Hall, Results, Settings, Lesson, Menu, ResearchWall, Research, Stock, Bin }
 
     /// <summary>
     /// GR-02: the greybox of the redesign's first era. Owns the GrowthShop (Core rules), the player, the greybox rooms
@@ -547,6 +547,7 @@ namespace EvolutionShop
                 case GrowthTargetKind.UnitBWall: SetCard(GrowthCard.UnitB); break;
                 case GrowthTargetKind.Board: SetCard(GrowthCard.Board); break;
                 case GrowthTargetKind.Catalog: SetCard(GrowthCard.Catalog); break;
+                case GrowthTargetKind.Bin: SetCard(GrowthCard.Bin); break;
                 case GrowthTargetKind.Breeding: SetCard(GrowthCard.Breeding); break;
                 case GrowthTargetKind.Vial: Ui.Hint("Hold the mouse on a vial to collect its doses"); break;
                 case GrowthTargetKind.AnnexWall: SetCard(GrowthCard.Annex); break;
@@ -774,6 +775,9 @@ namespace EvolutionShop
                 case GrowthTargetKind.ResearchDesk:
                 case GrowthTargetKind.ResearchTank:
                     Ui?.Hint("Open the desk (E) to queue pairs and mixes");
+                    break;
+                case GrowthTargetKind.Bin:
+                    Ui?.Hint(Shop.Held.Count > 0 ? "Open the bin (E) to pour out your siphon" : "Your siphon is empty");
                     break;
             }
         }
@@ -1027,6 +1031,9 @@ namespace EvolutionShop
                 case GrowthTargetKind.Vial:
                     status = (Shop.Vials.TryGetValue(Focused.Id, out int left) ? left : 0) + " doses · hold mouse to collect";
                     return GrowthShop.Name(Focused.Id) + " starter vial";
+                case GrowthTargetKind.Bin:
+                    status = Shop.Held.Count == 0 ? "Your siphon is empty" : Shop.Held.Count + " in your siphon · E pour out";
+                    return "Bin";
                 case GrowthTargetKind.Catalog:
                     status = (Shop.Phase == GrowthPhase.Night ? "E order" : "E browse · orders at night") + (Shop.Orders.Count > 0 ? " · " + Shop.Orders.Count + " on order" : "");
                     return "Supplier catalog";
