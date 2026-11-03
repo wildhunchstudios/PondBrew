@@ -9,7 +9,7 @@
   },
   "blender_version": "5.0.1",
   "source_script": "Tools/Art/create_growth_kit.py",
-  "source_script_sha256": "29572f928cced0ea8971ccd141768bbd8977252da70c79a4b532c2289264be60",
+  "source_script_sha256": "f4e0b56230059e51e652b38481dff4974c9ecd0afde487a1a91a3a0ec274477c",
   "axis_mapping": "Unity (x, y, z) -> Blender (-x, -z, y), a reflection; probed to import exactly (create_diorama_kit.py)",
   "export_settings": {
     "format": "FBX",
@@ -3405,10 +3405,11 @@
       "bytes": 101196
     },
     {
-      "triangles": 7380,
+      "triangles": 22156,
       "materials": [
         "GK_Cream",
         "GK_Glass",
+        "GK_Ink",
         "GK_Teal",
         "GK_TealDark",
         "GK_Yellow"
@@ -3421,14 +3422,14 @@
         ],
         "max": [
           -9.56,
-          2.23,
+          2.73,
           15.08
         ]
       },
       "id": "ResearchJars",
       "export": "EvolutionShop/Assets/EvolutionShop/Resources/Art/GrowthKit/ResearchJars.fbx",
-      "sha256": "2e88e387d19e2c316d566757c12b3c75409d22891f4b9044df8d8c8722cc531c",
-      "bytes": 146908
+      "sha256": "a75e522e0ed37dc8a16cbf94e8121bfd1fe701c18d8588359085a7e2f207c1a5",
+      "bytes": 468748
     },
     {
       "triangles": 2512,

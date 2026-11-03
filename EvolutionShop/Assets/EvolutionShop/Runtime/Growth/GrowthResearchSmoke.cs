@@ -164,8 +164,16 @@ namespace EvolutionShop
             string jarsText = s.Ui.CardText();
             Check(s.Card == GrowthCard.Research && s.Ui.CurrentTab == GrowthUi.ResearchJarsTab && jarsText.Contains("IN YOUR HANDS") && jarsText.Contains("IN THE JARS · " + shop.Specimens.Count + " OF"),
                 "F59, F63: E on a jar opens the Jars tab: what you carry, then the jars, each under its heading (" + s.Card + ", " + s.Ui.CurrentTab + ", " + shop.Specimens.Count + " jars)");
+            Check(jarsText.Contains("PUT A CREATURE IN A JAR") || jarsText.Contains("Put a creature in a jar: one of each kind"), "F70: the Jars tab says what jars are for, in four steps");
+            Check(jarsText.Contains("A tank breeds them by itself") && jarsText.Contains("Anything new waits on the tray"), "F70: the steps go on to the tank and the tray");
+            int emptyShown = UQueryExtensions.Query<VisualElement>(s.Ui.CardElement, className: "gr-rs-jar--empty").ToList().Count;
+            Check(emptyShown == Mathf.Min(3, GrowthShop.SpecimenJars - shop.Specimens.Count) && (jarsText.Contains("Click a jar with a creature in hand") || jarsText.Contains("Press Put in a jar above")), "F70: the empty jars say how to fill one (" + emptyShown + " shown)");
             yield return Shot("1308c-jars-tab");
             yield return Press(Key.Escape);
+            // F70: the sign over the jar wall says what the jars are for.
+            LookAt(new Vector3(-7.4f, 0, 13.6f), new Vector3(-9.9f, 2.0f, 13.6f));
+            yield return null; yield return null;
+            yield return Shot("1308d-jar-wall-sign");
             LookAt(new Vector3(-8.7f, 0, 15.2f), GrowthWorld.ResearchTankPosition(0) + new Vector3(0, 0.9f, 0));
             yield return null; yield return null;
 
@@ -199,6 +207,29 @@ namespace EvolutionShop
             Check(shop.ResearchResults.Count == 6 && results.Contains("RESULTS · THE LAST 6") && shop.ResearchResults.All(r => results.Contains(GrowthContent.Get(r.Made).Name)),
                 "F72: the Tanks tab lists what each of the six jobs made (" + string.Join(", ", shop.ResearchResults.Select(r => GrowthContent.Get(r.Made).Name + (r.WasNew ? " new" : " repeat"))) + ")");
             yield return Shot("1310-results");
+            s.SetCard(GrowthCard.None);
+
+            // ---- F74: the family tree: found creatures joined to the pair that treeChild them, the rest a "?"
+            s.SetCard(GrowthCard.Research, GrowthUi.FamilyTreeTab);
+            yield return new WaitForSeconds(0.2f);
+            Check(s.Ui.CurrentTab == GrowthUi.FamilyTreeTab, "F74: the desk has a Family tree tab (" + s.Ui.CurrentTab + ")");
+            var treeChild = shop.PairLog.Select(p => GrowthContent.Get(p.Species)).First();
+            yield return ClickOn(e => e is Button b && b.name == "gr-tree-family-" + treeChild.Family, "Choose the family of the first pair's child");
+            yield return new WaitForSeconds(0.2f);
+            string tree = s.Ui.CardText();
+            var family = GrowthContent.Species.Where(x => x.Family == treeChild.Family).ToList();
+            var nodes = UQueryExtensions.Query<VisualElement>(s.Ui.CardElement, className: "gr-tree__node").ToList();
+            Check(nodes.Count == family.Count, "F74: a node for each of the family's " + family.Count + " creatures (" + nodes.Count + ")");
+            Check(tree.Contains(treeChild.Name) && family.Where(x => !shop.Discovered.Contains(x.Id)).All(x => !tree.Contains(x.Name)) && tree.Contains("Not found yet") == family.Any(x => !shop.Discovered.Contains(x.Id)),
+                "F74: what is found is named, what is not is a ? and not named");
+            var have = family.Where(x => shop.Discovered.Contains(x.Id)).Select(x => x.Id).ToList();
+            int possible = have.Count * (have.Count - 1) / 2;
+            int treeTried = shop.PairLog.Where(p => p.A != p.B && have.Contains(p.A) && have.Contains(p.B)).Select(p => string.CompareOrdinal(p.A, p.B) < 0 ? p.A + p.B : p.B + p.A).Distinct().Count();
+            Check(tree.Contains("Pairs left to try") && tree.Contains(have.Count < 2 ? "Find two of the family" : "of " + possible + ", with the " + have.Count), "F74: the pairs left to try with the family's creatures found (" + (possible - treeTried) + " of " + possible + ")");
+            yield return Shot("1310b-family-tree");
+            yield return ClickOn(e => e is Button b && b.name == "gr-tree-to-pairs", "Show them on Pairs");
+            yield return new WaitForSeconds(0.2f);
+            Check(s.Ui.CurrentTab == "Pairs", "F74: its link opens the Pairs tab");
             s.SetCard(GrowthCard.None);
 
             // ---- F1: the tray

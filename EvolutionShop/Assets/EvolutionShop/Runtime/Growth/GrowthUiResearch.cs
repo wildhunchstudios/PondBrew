@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using EvolutionShop.Growth;
 using UnityEngine;
@@ -63,6 +64,7 @@ namespace EvolutionShop
             FillResearchMixes(mixes);
             FillResearchTanks(AddTab(ResearchTanksTab));
             FillResearchJars(AddTab(ResearchJarsTab));
+            FillFamilyTree(AddTab(FamilyTreeTab));
             UpgradeSection(body, "research");
             NotebookFooter("Close");
         }
@@ -345,7 +347,16 @@ namespace EvolutionShop
         void FillResearchJars(VisualElement body)
         {
             var shop = s.Shop;
-            body.Add(L("One creature of each kind lives in a jar: not for sale and not used up. Every two kinds in the jars make a pair to try on the Pairs tab.", "gr-hint"));
+            // GR-35 (F70): what the jars are for, in four steps.
+            var steps = Box("gr-rs-steps");
+            foreach (var (n, words) in new[] { ("1", "Put a creature in a jar: one of each kind"), ("2", "Pick two on the Pairs tab"), ("3", "A tank breeds them by itself"), ("4", "Anything new waits on the tray") })
+            {
+                var step = Box("gr-rs-step");
+                step.Add(L(n, "gr-rs-step__n"));
+                step.Add(L(words, "gr-rs-step__text"));
+                steps.Add(step);
+            }
+            body.Add(steps);
             // GR-33 (F63): what you carry, as tiles like the jars', under its own heading (a row of its own read as coming from nowhere).
             body.Add(Eyebrow("In your hands"));
             var hands = Box("gr-row");
@@ -375,7 +386,130 @@ namespace EvolutionShop
                 tile.Add(take);
                 jars.Add(tile);
             }
+            // GR-35 (F70): the empty jars say how to fill one (a few, then how many more).
+            int empty = GrowthShop.SpecimenJars - shop.Specimens.Count;
+            for (int i = 0; i < Mathf.Min(empty, EmptyJarsShown); i++)
+            {
+                var tile = Box("gr-rs-jar", "gr-rs-jar--empty");
+                tile.Add(L("Empty", "gr-tile__name"));
+                tile.Add(L(shop.Carried.Count > 0 ? "Press Put in a jar above" : "Click a jar with a creature in hand", "gr-rs-jar__how"));
+                jars.Add(tile);
+            }
+            if (empty > EmptyJarsShown) jars.Add(L("and " + (empty - EmptyJarsShown) + " more empty", "gr-hint"));
             body.Add(jars);
+            body.Add(L("A creature in a jar is kept for pairing: it never sells, and you can take it back any time.", "gr-hint"));
+        }
+
+        const int EmptyJarsShown = 3;
+        public const string FamilyTreeTab = "Family tree";
+        string treeFamily;
+
+        // ---------------------------------------------------------------- the family tree (F74)
+
+        /// <summary>
+        /// GR-35 (F74, GR.77): one family at a time: its founders at the top (their recipe's dots once found), its hybrids
+        /// below, its crown at the bottom; a line from each creature found to the pair that made it (a parent from another
+        /// family is named under it); a "?" with no line for what is not found, so the tree never gives a pair away; and the
+        /// pairs left to try with the family's creatures found. Every pair tried counts, at the breeding tank or in this room.
+        /// </summary>
+        void FillFamilyTree(VisualElement body)
+        {
+            var shop = s.Shop;
+            var families = GrowthContent.Families;
+            if (treeFamily == null || families.All(f => f.Id != treeFamily))
+                treeFamily = (families.LastOrDefault(f => GrowthContent.Species.Any(x => x.Family == f.Id && shop.Discovered.Contains(x.Id))) ?? families[0]).Id;
+            var chips = Box("gr-row");
+            chips.style.flexWrap = Wrap.Wrap;
+            foreach (var family in families)
+            {
+                var f = family;
+                var members = GrowthContent.Species.Where(x => x.Family == f.Id).ToList();
+                var chip = ChipButton(f.Name + " " + members.Count(x => shop.Discovered.Contains(x.Id)) + "/" + members.Count, () => { treeFamily = f.Id; RefreshCard(); }, true);
+                chip.name = "gr-tree-family-" + f.Id;
+                chip.AddToClassList("gr-tree__chip");
+                if (f.Id == treeFamily) chip.AddToClassList("gr-chip--on");
+                chips.Add(chip);
+            }
+            body.Add(chips);
+            var all = GrowthContent.Species.Where(x => x.Family == treeFamily).ToList();
+            var rows = new[] { all.Where(x => x.Kind == SpeciesKind.Founder).ToList(), all.Where(x => x.Kind == SpeciesKind.Hybrid).ToList(), all.Where(x => x.Kind == SpeciesKind.Crown).ToList() };
+            var where = new Dictionary<string, Vector2>();
+            // The tree takes the left part; the pairs left to try stand in the top right corner, clear of it.
+            float[] rowY = { 0.13f, 0.5f, 0.86f };
+            for (int r = 0; r < rows.Length; r++)
+                for (int i = 0; i < rows[r].Count; i++) where[rows[r][i].Id] = new Vector2(0.03f + 0.64f * (i + 0.5f) / rows[r].Count, rowY[r]);
+            // The pair that made each creature found, as found (the first logged).
+            var madeBy = new Dictionary<string, GrowthPairEntry>();
+            foreach (var p in shop.PairLog) if (!madeBy.ContainsKey(p.Species) && shop.Discovered.Contains(p.Species)) madeBy[p.Species] = p;
+            var tree = Box("gr-tree");
+            var lines = new VisualElement { name = "gr-tree-lines", pickingMode = PickingMode.Ignore };
+            lines.AddToClassList("gr-tree__lines");
+            var edges = new List<(Vector2 a, Vector2 b)>();
+            foreach (var sp in all)
+                if (madeBy.TryGetValue(sp.Id, out var p))
+                    foreach (var parent in new[] { p.A, p.B }.Distinct())
+                        if (where.TryGetValue(parent, out var from)) edges.Add((from, where[sp.Id]));
+            lines.generateVisualContent += mgc =>
+            {
+                var r = lines.contentRect;
+                var painter = mgc.painter2D;
+                painter.strokeColor = new Color(0.13f, 0.75f, 0.69f);
+                painter.lineWidth = 5;
+                painter.lineCap = LineCap.Round;
+                foreach (var (a, b) in edges)
+                {
+                    Vector2 pa = new Vector2(a.x * r.width, a.y * r.height + 48), pb = new Vector2(b.x * r.width, b.y * r.height - 36);
+                    float mid = (pa.y + pb.y) * 0.5f;
+                    painter.BeginPath();
+                    painter.MoveTo(pa);
+                    painter.BezierCurveTo(new Vector2(pa.x, mid), new Vector2(pb.x, mid), pb);
+                    painter.Stroke();
+                }
+            };
+            lines.RegisterCallback<GeometryChangedEvent>(_ => lines.MarkDirtyRepaint());
+            tree.Add(lines);
+            foreach (var sp in all)
+            {
+                var at = where[sp.Id];
+                bool found = shop.Discovered.Contains(sp.Id);
+                var node = Box("gr-tree__node");
+                node.name = "gr-tree-node-" + sp.Id;
+                node.style.left = Length.Percent(at.x * 100); node.style.top = Length.Percent(at.y * 100);
+                if (sp.Kind == SpeciesKind.Crown) node.Add(L("Crown", "gr-tree__crown"));
+                if (found) node.Add(CreatureIcon(sp, ColourFound(shop, sp), 54, "gr-rs-icon"));
+                else node.Add(L("?", "gr-tree__unknown"));
+                node.Add(L(found ? sp.Name : "Not found yet", found ? "gr-tree__name" : "gr-tree__name gr-tree__name--unknown"));
+                if (found && sp.Recipe != null) node.Add(DoseDots(sp.Recipe));
+                if (found && madeBy.TryGetValue(sp.Id, out var pair))
+                {
+                    var outside = new[] { pair.A, pair.B }.Distinct().Where(x => !where.ContainsKey(x)).Select(x => GrowthContent.Get(x).Name).ToList();
+                    if (outside.Count > 0) node.Add(L("with " + string.Join(" and ", outside), "gr-tree__with"));
+                }
+                RecipeTipFor(node, sp, found);
+                tree.Add(node);
+            }
+            // What is left to try with the family's creatures found.
+            var have = all.Where(x => shop.Discovered.Contains(x.Id)).Select(x => x.Id).ToList();
+            int possible = have.Count * (have.Count - 1) / 2;
+            int tried = shop.PairLog.Where(p => p.A != p.B && have.Contains(p.A) && have.Contains(p.B)).Select(p => string.CompareOrdinal(p.A, p.B) < 0 ? p.A + "|" + p.B : p.B + "|" + p.A).Distinct().Count();
+            var side = Box("gr-tree__side");
+            side.Add(L("Pairs left to try", "gr-tree__side-title"));
+            side.Add(L((possible - tried).ToString(), "gr-tree__side-count"));
+            side.Add(L(have.Count < 2 ? "Find two of the family to pair them." : "of " + possible + ", with the " + have.Count + " " + GrowthContent.Families.First(f => f.Id == treeFamily).Name + " you have.", "gr-tree__side-text"));
+            var show = Link("Show them on Pairs", () => { tabChosen = "Pairs"; ShowTab(); });
+            show.name = "gr-tree-to-pairs";
+            show.style.marginLeft = 0;
+            side.Add(show);
+            tree.Add(side);
+            body.Add(tree);
+        }
+
+        /// <summary>A node's hover tip: a found creature's name and how it is made; one not found, only that it is to find.</summary>
+        void RecipeTipFor(VisualElement node, SpeciesDef sp, bool found)
+        {
+            if (!found) { node.tooltip = "Not found yet: try your pairs and mixes"; return; }
+            if (sp.Recipe != null) RecipeTip(node, sp.Name + ": " + GrowthReport.Recipe(sp.Recipe), sp.Recipe);
+            else node.tooltip = sp.Name;
         }
     }
 }

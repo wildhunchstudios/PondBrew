@@ -2754,7 +2754,7 @@ def research_tank():
 
 def research_jars():
     """The specimen jars on the west wall (GrowthWorldResearch.JarPosition): three shelves of five lit jars with yellow lids,
-    each holding one creature at run time. Standing in the room's own coordinates."""
+    each holding one creature at run time, and a sign over them saying what they are for (F70). Standing in the room's own coordinates."""
     x = -10 + 0.1
     box((x + 0.03, 1.42, 13.6), (0.06, 1.5, 2.9), 'GK_TealDark', r=0.03)
     box((x + 0.17, 2.2, 13.6), (0.34, 0.06, 2.96), 'GK_Teal', r=0.025)
@@ -2765,6 +2765,10 @@ def research_jars():
             z = 12.55 + col * 0.525
             cyl((x + 0.18, y + 0.04, z), 0.14, 0.3, 'GK_Glass', r=0, verts=20)
             cyl((x + 0.18, y + 0.205, z), 0.145, 0.03, 'GK_Yellow', r=0.01, verts=20)
+    # GR-35 (F70): a sign over the jars saying what they are for, in one line, facing into the room.
+    box((x + 0.03, 2.56, 13.6), (0.04, 0.34, 2.36), 'GK_Teal', r=0.02)
+    box((x + 0.055, 2.56, 13.6), (0.02, 0.28, 2.28), 'GK_Cream', r=0.012)
+    text('One of each kind in a jar, for pairing', (x + 0.067, 2.56, 13.6), 0.085, 'GK_Ink', euler=(0, -90, 0), extrude=0.005, res=3)
     return join('ResearchJars')
 
 

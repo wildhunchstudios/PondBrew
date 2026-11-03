@@ -2562,3 +2562,180 @@
     -unity-font-style: bold;
     white-space: nowrap;
 }
+
+/* GR-35 (F70): the Jars tab's four steps, and the empty jars. */
+.gr-rs-steps {
+    flex-direction: row;
+    margin: 4px 0 12px 0;
+}
+
+.gr-rs-step {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 10px;
+    padding: 10px 12px 10px 12px;
+    align-items: center;
+    background-color: #F2ECFF;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.gr-rs-step__n {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 30px;
+    color: #7D6BD0;
+    margin: 0;
+    padding: 0;
+}
+
+.gr-rs-step__text {
+    font-size: 18px;
+    color: #4C3E8F;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 0;
+}
+
+.gr-rs-jar--empty {
+    background-color: #FFFBEF;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    border-right-width: 2px;
+    border-top-color: #D9CFBD;
+    border-bottom-color: #D9CFBD;
+    border-left-color: #D9CFBD;
+    border-right-color: #D9CFBD;
+    min-height: 120px;
+    justify-content: center;
+}
+
+.gr-rs-jar__how {
+    font-size: 15px;
+    color: #8A7E6B;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+/* GR-35 (F74): the family tree. Nodes stand at their place (left, top) by their middle; the lines are drawn under them. */
+.gr-tree__chip {
+    font-size: 15px;
+    padding: 3px 8px 3px 8px;
+    margin: 0 6px 6px 0;
+}
+
+.gr-tree {
+    height: 470px;
+    margin-top: 8px;
+    background-color: #FFFCF4;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.gr-tree__lines {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.gr-tree__node {
+    position: absolute;
+    width: 180px;
+    margin-left: -90px;
+    margin-top: -40px;
+    align-items: center;
+}
+
+.gr-tree__unknown {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 32px;
+    color: #A59BBF;
+    width: 54px;
+    height: 54px;
+    -unity-text-align: middle-center;
+    background-color: #F6F2FF;
+    border-top-width: 3px;
+    border-bottom-width: 3px;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-top-color: #C9C3D6;
+    border-bottom-color: #C9C3D6;
+    border-left-color: #C9C3D6;
+    border-right-color: #C9C3D6;
+    border-top-left-radius: 27px;
+    border-top-right-radius: 27px;
+    border-bottom-left-radius: 27px;
+    border-bottom-right-radius: 27px;
+    padding: 0;
+    margin: 0;
+}
+
+.gr-tree__name {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 18px;
+    color: var(--es-ink);
+    white-space: nowrap;
+    margin: 2px 0 0 0;
+}
+
+.gr-tree__name--unknown {
+    color: #A59BBF;
+}
+
+.gr-tree__crown {
+    font-size: 15px;
+    color: #B9713D;
+    background-color: #FFE7A0;
+    padding: 1px 10px 1px 10px;
+    margin-bottom: 2px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.gr-tree__with {
+    font-size: 15px;
+    color: #8A7E6B;
+    white-space: nowrap;
+}
+
+.gr-tree__side {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 230px;
+    padding: 14px 16px 14px 16px;
+    background-color: #F2ECFF;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+}
+
+.gr-tree__side-title {
+    font-size: 18px;
+    color: #4C3E8F;
+    -unity-font-style: bold;
+    margin: 0;
+}
+
+.gr-tree__side-count {
+    -unity-font-definition: url("/Assets/EvolutionShop/UI/Fonts/Baloo2-ExtraBold.ttf");
+    font-size: 40px;
+    color: #7D6BD0;
+    margin: 0;
+}
+
+.gr-tree__side-text {
+    font-size: 16px;
+    color: #4C3E8F;
+    white-space: normal;
+    margin: 0 0 4px 0;
+}
